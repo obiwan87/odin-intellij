@@ -34,7 +34,32 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
         return new OdinLexerAdapter();
     }
 
-    private static final List<IElementType> keywords = List.of(OdinTypes.RETURN, OdinTypes.PROC, OdinTypes.PACKAGE, OdinTypes.IMPORT);
+    private static final List<IElementType> keywords = List.of(
+            OdinTypes.STRUCT,
+            OdinTypes.IN,
+            OdinTypes.FOR,
+            OdinTypes.RETURN,
+            OdinTypes.PROC,
+            OdinTypes.PACKAGE,
+            OdinTypes.IMPORT);
+
+//    private static final List<IElementType> escapedSequences = List.of(
+//            OdinTypes.ESCAPE_E,
+//            OdinTypes.ESCAPE_B,
+//            OdinTypes.ESCAPE_A,
+//            OdinTypes.ESCAPE_F,
+//            OdinTypes.ESCAPE_N,
+//            OdinTypes.ESCAPE_R,
+//            OdinTypes.ESCAPE_T,
+//            OdinTypes.ESCAPE_V,
+//            OdinTypes.ESCAPE_BACKSLASH,
+//            OdinTypes.ESCAPE_DOUBLE_QUOTE,
+//            OdinTypes.ESCAPE_HEX2,
+//            OdinTypes.ESCAPE_HEX4,
+//            OdinTypes.ESCAPE_HEX8,
+//            OdinTypes.ESCAPE_OCT
+//            );
+
     private static final List<IElementType> numericLiteral = List.of(OdinTypes.INTEGER_DEC_LITERAL, OdinTypes.INTEGER_HEX_LITERAL, OdinTypes.INTEGER_OCT_LITERAL);
 
     @Override
@@ -43,7 +68,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return KEYWORD_KEYS;
         }
 
-        if(tokenType.equals(OdinTypes.STRING_LITERAL)) {
+        if (tokenType.equals(OdinTypes.STRING_LITERAL)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.STRING};
         }
 
@@ -55,12 +80,36 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.LINE_COMMENT};
         }
 
-        if(tokenType.equals(OdinTypes.BLOCK_COMMENT)) {
+        if (tokenType.equals(OdinTypes.BLOCK_COMMENT)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BLOCK_COMMENT};
         }
 
-        if(numericLiteral.contains(tokenType)) {
+        if (numericLiteral.contains(tokenType)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.NUMBER};
+        }
+
+//        if(escapedSequences.contains(tokenType)) {
+//            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE};
+//        }
+
+        if(tokenType.equals(OdinTypes.COMMA)) {
+            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.COMMA};
+        }
+
+        if(tokenType.equals(OdinTypes.SEMICOLON)) {
+            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.SEMICOLON};
+        }
+
+        if(tokenType.equals(OdinTypes.DOT)) {
+            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.DOT};
+        }
+
+        if(tokenType.equals(OdinTypes.LPAREN) || tokenType.equals(OdinTypes.RPAREN)) {
+            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.PARENTHESES};
+        }
+
+        if(tokenType.equals(OdinTypes.LBRACE) || tokenType.equals(OdinTypes.RBRACE)) {
+            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BRACES};
         }
 
         return EMPTY_KEYS;

@@ -21,6 +21,9 @@
         PROC='regexp:proc'
         RETURN='regexp:return'
         DEFER='regexp:defer'
+        STRUCT='regexp:struct'
+        FOR='regexp:for'
+        IN='regexp:in'
 
         IDENTIFIER='regexp:[a-zA-Z_][a-zA-Z0-9_]*'
         STRING_LITERAL='regexp:"[^"]*"'
@@ -29,8 +32,6 @@
         INTEGER_OCT_LITERAL='regexp:0o[0-7][0-7_]*'
 
         EQ='regexp:='
-        ASSIGN='regexp::='
-        DOUBLE_COLON='regexp:::'
         COLON='regexp::'
 
         LBRACE='regexp:\{'
@@ -40,56 +41,172 @@
         DOT='regexp:\.'
         ARROW='regexp:->'
         COMMA='regexp:,'
+        SEMICOLON='regexp:;'
+
+        // Operators
+        EQEQ='regexp:=='
+        NEQ='regexp:!='
+        LT='regexp:<'
+        GT='regexp:>'
+        LTE='regexp:<='
+        GTE='regexp:>='
+
+        // Boolean operators
+        ANDAND='regexp:&&'
+        OROR='regexp:\|\|'
+        NOT='regexp:!'
+
+
+        // Arithmetic operators
+        PLUS='regexp:\+'
+        MINUS='regexp:-'
+        STAR='regexp:\*'
+        DIV='regexp:/'
+        MOD='regexp:%'
+        REMAINDER='regexp:%%'
+
+        // Bitwise operators
+        AND_BITWISE='regexp:&'
+        OR_BITWISE='regexp:\|'
+        XOR_BITWISE='regexp:~'
+        LSHIFT='regexp:<<'
+        RSHIFT='regexp:>>'
+
+
+        // Assignment operators
+        PLUS_EQ='regexp:\+='
+        MINUS_EQ='regexp:-='
+        STAR_EQ='regexp:\*='
+        DIV_EQ='regexp:/='
+        MOD_EQ='regexp:%='
+        REMAINDER_EQ='regexp:%%='
+        AND_EQ='regexp:&='
+        OR_EQ='regexp:\|='
+        XOR_EQ='regexp:~='
+        ANDAND_EQ='regexp:&&='
+        OROR_EQ='regexp:\|\|='
+        LSHIFT_EQ='regexp:<<='
+        RSHIFT_EQ='regexp:>>='
+
+        // Range Operators
+        RANGE_INCLUSIVE='regexp:\.\.='
+        RANGE_EXCLUSIVE='regexp:\.\.<'
 
         WHITE_SPACE='regexp:\s+|\r?\n'
+//        ESCAPE_T='regexp:\\t'
+//        ESCAPE_N='regexp:\\n'
+//        ESCAPE_R='regexp:\\r'
+//        ESCAPE_V='regexp:\\v'
+//        ESCAPE_E='regexp:\\e'
+//        ESCAPE_A='regexp:\\a'
+//        ESCAPE_B='regexp:\\b'
+//        ESCAPE_F='regexp:\\f'
+//        ESCAPE_OCT='regexp:\\[0-7]{2}'
+//        ESCAPE_HEX2='regexp:\\x[0-9a-fA-F]{2}'
+//        ESCAPE_HEX4='regexp:\\u[0-9a-fA-F]{4}'
+//        ESCAPE_HEX8='regexp:\\U[0-9a-fA-F]{8}'
+//        ESCAPE_DOUBLE_QUOTE='regexp:\\"'
+//        ESCAPE_BACKSLASH='regexp:\\\\'
+//        UNESCAPED_CONTENT='STRING_CHAR'
   ]
+
+  extends('.*_expression') = expression
 }
 
-
-odinFile ::= packageDeclaration statement*
+odinFile ::= packageDeclaration globalStatement*
 packageDeclaration ::= PACKAGE IDENTIFIER
 importDeclaration ::= IMPORT IDENTIFIER? STRING_LITERAL
 
-statement  ::= importDeclaration
-| functionCall
-| variableAssignmentDeclaration
-| variableTypedDeclarationAssigment
-| variableAssignment
+globalStatement ::= importDeclaration | structDeclaration | statement
+
+statement  ::= variableAssignmentDeclaration
 | variableDeclaration
-| constantDeclaration
+| constantAssigment
 | procedureDeclaration
+| forStatement
 
+// Struct
+structDeclaration ::= IDENTIFIER COLON COLON STRUCT LBRACE (variableDeclaration COMMA)* RBRACE
 
-
-constantDeclaration ::= IDENTIFIER DOUBLE_COLON literal
-
-procedureDeclaration ::= IDENTIFIER DOUBLE_COLON PROC LPAREN parameterList* RPAREN (ARROW returnType)?
-                        LBRACE (statement|returnStatement)* RBRACE
-
+// Procedure
+procedureDeclaration ::= IDENTIFIER COLON COLON PROC LPAREN parameterList* RPAREN (ARROW returnType)?
+                        LBRACE (statement|variableAssignment|functionCall_expression|returnStatement)* RBRACE
 returnType ::= IDENTIFIER
             | LPAREN parameterList* RPAREN
 
 returnStatement ::= RETURN argumentList?
 
-variableAssignmentDeclaration ::= IDENTIFIER ASSIGN expression
-variableAssignment ::= assignable EQ expression
-variableDeclaration ::= IDENTIFIER COLON IDENTIFIER
-variableTypedDeclarationAssigment ::= IDENTIFIER COLON IDENTIFIER EQ expression
+// Variables and constants
+constantAssigment ::= IDENTIFIER COLON IDENTIFIER? COLON expression
+variableAssignmentDeclaration ::= (typelessParameterList COLON EQ | IDENTIFIER COLON IDENTIFIER EQ) expression
+variableAssignment ::= IDENTIFIER assignmentOperator expression
+assignmentOperator ::= EQ
+                       | PLUS_EQ
+                       | MINUS_EQ
+                       | STAR_EQ
+                       | DIV_EQ
+                       | MOD_EQ
+                       | REMAINDER_EQ
+                       | AND_EQ
+                       | OR_EQ
+                       | XOR_EQ
+                       | ANDAND_EQ
+                       | OROR_EQ
+                       | LSHIFT_EQ
+                       | RSHIFT_EQ
 
+variableDeclaration ::= IDENTIFIER COLON IDENTIFIER
+
+// Parameters for procedures and assignments
+typelessParameterList ::= IDENTIFIER (COMMA IDENTIFIER)*
 parameterList ::= parameter (COMMA parameter)*
 parameter ::= IDENTIFIER (COLON IDENTIFIER)?
 
+// Expressions
 argumentList ::= expression (COMMA expression)*
+functionCall_expression ::= expression LPAREN argumentList* RPAREN
 
-functionCall ::= assignable LPAREN argumentList* RPAREN
+binary_expression ::= expression binaryOperator expression
+binaryOperator ::= PLUS
+                   | MINUS
+                   | STAR
+                   | DIV
+                   | MOD
+                   | REMAINDER
+                   | AND_BITWISE
+                   | OR_BITWISE
+                   | XOR_BITWISE
+                   | ANDAND
+                   | OROR
+                   | LSHIFT
+                   | RSHIFT
+                   | EQEQ
+                   | NEQ
+                   | LT
+                   | GT
+                   | LTE
+                   | GTE
+                   | RANGE_INCLUSIVE
+                   | RANGE_EXCLUSIVE
 
-assignable ::= IDENTIFIER (DOT IDENTIFIER)*
+parenthesized_expression ::= LPAREN expression RPAREN
 
-expression ::= functionCall
-               | assignable
-               | literal
+chain_expression ::= IDENTIFIER (DOT IDENTIFIER)*
+expression ::= parenthesized_expression
+               | functionCall_expression
+               | chain_expression
+               | literal_expression
+               | binary_expression
 
-literal ::= STRING_LITERAL
+literal_expression ::= STRING_LITERAL
          | INTEGER_DEC_LITERAL
          | INTEGER_HEX_LITERAL
          | INTEGER_OCT_LITERAL
+
+forStatement ::= forHead LBRACE (statement|variableAssignment|functionCall_expression)* RBRACE
+forHead ::= forIn|forTraditional
+forTraditional ::= FOR (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
+forIn ::= FOR IDENTIFIER IN expression
+
+private forStartStatement ::=   variableAssignmentDeclaration | variableAssignment | functionCall_expression
+private forEndStatement ::=   variableAssignment | functionCall_expression

@@ -49,6 +49,9 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
       "proc"       { return PROC; }
       "return"     { return RETURN; }
       "defer"      { return DEFER; }
+      "struct"     { return STRUCT; }
+      "for"     { return FOR; }
+      "in"      { return IN; }
 
       {LineComment} { return LINE_COMMENT; }
       {BlockComment} { return BLOCK_COMMENT; }
@@ -61,10 +64,8 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
       {IntegerDecLiteral} { return INTEGER_DEC_LITERAL; }
       {IntegerHexLiteral} { return INTEGER_HEX_LITERAL; }
 
-      "="          { return EQ; }
-      ":="         { return ASSIGN; }
-      "::"         { return DOUBLE_COLON; }
       ":"          { return COLON; }
+      "="          { return EQ; }
       \{          { return LBRACE; }
       \}          { return RBRACE; }
       \(          { return LPAREN; }
@@ -72,25 +73,71 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
       \.          { return DOT; }
       ","         { return COMMA; }
       "->"        { return ARROW; }
+      ";"         { return SEMICOLON; }
+
+      // Operators
+        "=="        { return EQEQ; }
+        "!="        { return NEQ; }
+        "<"         { return LT; }
+        "<="        { return LTE; }
+        ">"         { return GT; }
+        ">="        { return GTE; }
+        "&&"        { return ANDAND; }
+        "||"        { return OROR; }
+
+        "!"         { return NOT; }
+
+        "+"         { return PLUS; }
+        "-"         { return MINUS; }
+        "*"         { return STAR; }
+        "/"         { return DIV; }
+        "%%"        { return REMAINDER; }
+        "%"         { return MOD; }
+        "&"         { return AND_BITWISE; }
+        "|"         { return OR_BITWISE; }
+        "~"         { return XOR_BITWISE; }
+        "<<"        { return LSHIFT; }
+        ">>"        { return RSHIFT; }
+
+        // Assignment operators
+        "+="        { return PLUS_EQ; }
+        "-="        { return MINUS_EQ; }
+        "*="        { return STAR_EQ; }
+        "/="        { return DIV_EQ; }
+        "%="        { return MOD_EQ; }
+        "%%="       { return REMAINDER_EQ; }
+        "&="        { return AND_EQ; }
+        "|="        { return OR_EQ; }
+        "~="        { return XOR_EQ; }
+        "<<="       { return LSHIFT_EQ; }
+        ">>="       { return RSHIFT_EQ; }
+        "&&="       { return ANDAND_EQ; }
+        "||="       { return OROR_EQ; }
+
+        // Range operators
+        "..<"        { return RANGE_EXCLUSIVE; }
+        "..="        { return RANGE_INCLUSIVE; }
+
+
 }
 
     <STRING_STATE> {
       \"                             { yybegin(YYINITIAL); return STRING_LITERAL; }
-      [^\n\r\"\\]+                   {  }
-      \\t                            {  }
-      \\n                            {  }
-      \\r                            {  }
-      \\v                            {  }
-      \\e                            {  }
-      \\a                            {  }
-      \\b                            {  }
-      \\f                            {  }
-      \\[0-7]{2}                     {  }
-      \\x[0-9a-fA-F]{2}              {  }
-      \\u[0-9a-fA-F]{4}              {  }
-      \\U[0-9a-fA-F]{8}              {  }
-      \\\"                           {  }
-      \\                             {  }
+      \\n                            { }//{ return ESCAPE_N; }
+      \\t                            { }//{ return ESCAPE_T; }
+      \\r                            { }//{ return ESCAPE_R; }
+      \\v                            { }//{ return ESCAPE_V; }
+      \\e                            { }//{ return ESCAPE_E; }
+      \\a                            { }//{ return ESCAPE_A; }
+      \\b                            { }//{ return ESCAPE_B; }
+      \\f                            { }//{ return ESCAPE_F; }
+      \\[0-7]{2}                     { }//{ return ESCAPE_OCT; }
+      \\x[0-9a-fA-F]{2}              { }//{ return ESCAPE_HEX2; }
+      \\u[0-9a-fA-F]{4}              { }//{ return ESCAPE_HEX4; }
+      \\U[0-9a-fA-F]{8}              { }//{ return ESCAPE_HEX8; }
+      \\\"                           { }//{ return ESCAPE_DOUBLE_QUOTE; }
+      \\                             { }//{ return ESCAPE_BACKSLASH; }
+      [^\n\r\"\\]+                   { }//{ return UNESCAPED_CONTENT; }
     }
 
 [^] { return BAD_CHARACTER; }
