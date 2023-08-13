@@ -16,13 +16,14 @@ repositories {
 
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij
-{
+intellij {
   version.set("2023.2")
   type.set("IU") // Target IDE Platform
 
   plugins.set(listOf(/* Plugin Dependencies */))
 }
+
+sourceSets.main.get().java.srcDirs("src/main/gen")
 
 tasks {
   // Set the JVM compatibility versions

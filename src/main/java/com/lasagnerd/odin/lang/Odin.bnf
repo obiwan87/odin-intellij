@@ -1,0 +1,95 @@
+{
+  parserClass="com.lasagnerd.odin.lang.OdinParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="Odin"
+  psiImplClassSuffix="Impl"
+  psiPackage="com.lasagnerd.odin.lang.psi"
+  psiImplPackage="com.lasagnerd.odin.lang.psi.impl"
+
+  elementTypeHolderClass="com.lasagnerd.odin.lang.psi.OdinTypes"
+  elementTypeClass="com.lasagnerd.odin.lang.psi.OdinElementType"
+  tokenTypeClass="com.lasagnerd.odin.lang.psi.OdinTokenType"
+
+  tokens=[
+        LINE_COMMENT='regexp://[^\r\n]*'
+        BLOCK_COMMENT='regexp:/\*[\s\S]*?\*/'
+
+        PACKAGE='regexp:package'
+        IMPORT='regexp:import'
+        PROC='regexp:proc'
+        RETURN='regexp:return'
+        DEFER='regexp:defer'
+
+        IDENTIFIER='regexp:[a-zA-Z_][a-zA-Z0-9_]*'
+        STRING_LITERAL='regexp:"[^"]*"'
+        INTEGER_DEC_LITERAL='regexp:[0-9][0-9_]*'
+        INTEGER_HEX_LITERAL='regexp:0x[0-9a-fA-F][0-9a-fA-F_]*'
+        INTEGER_OCT_LITERAL='regexp:0o[0-7][0-7_]*'
+
+        EQ='regexp:='
+        ASSIGN='regexp::='
+        DOUBLE_COLON='regexp:::'
+        COLON='regexp::'
+
+        LBRACE='regexp:\{'
+        RBRACE='regexp:}'
+        LPAREN='regexp:\('
+        RPAREN='regexp:\)'
+        DOT='regexp:\.'
+        ARROW='regexp:->'
+        COMMA='regexp:,'
+
+        WHITE_SPACE='regexp:\s+|\r?\n'
+  ]
+}
+
+
+odinFile ::= packageDeclaration statement*
+packageDeclaration ::= PACKAGE IDENTIFIER
+importDeclaration ::= IMPORT IDENTIFIER? STRING_LITERAL
+
+statement  ::= importDeclaration
+| functionCall
+| variableAssignmentDeclaration
+| variableTypedDeclarationAssigment
+| variableAssignment
+| variableDeclaration
+| constantDeclaration
+| procedureDeclaration
+
+
+
+constantDeclaration ::= IDENTIFIER DOUBLE_COLON literal
+
+procedureDeclaration ::= IDENTIFIER DOUBLE_COLON PROC LPAREN parameterList* RPAREN (ARROW returnType)?
+                        LBRACE (statement|returnStatement)* RBRACE
+
+returnType ::= IDENTIFIER
+            | LPAREN parameterList* RPAREN
+
+returnStatement ::= RETURN argumentList?
+
+variableAssignmentDeclaration ::= IDENTIFIER ASSIGN expression
+variableAssignment ::= assignable EQ expression
+variableDeclaration ::= IDENTIFIER COLON IDENTIFIER
+variableTypedDeclarationAssigment ::= IDENTIFIER COLON IDENTIFIER EQ expression
+
+parameterList ::= parameter (COMMA parameter)*
+parameter ::= IDENTIFIER (COLON IDENTIFIER)?
+
+argumentList ::= expression (COMMA expression)*
+
+functionCall ::= assignable LPAREN argumentList* RPAREN
+
+assignable ::= IDENTIFIER (DOT IDENTIFIER)*
+
+expression ::= functionCall
+               | assignable
+               | literal
+
+literal ::= STRING_LITERAL
+         | INTEGER_DEC_LITERAL
+         | INTEGER_HEX_LITERAL
+         | INTEGER_OCT_LITERAL

@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-package com.lasagnerd.odinlsp
+package com.lasagnerd.odin
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project

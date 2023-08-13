@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-package com.lasagnerd.odinlsp
+package com.lasagnerd.odin
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
