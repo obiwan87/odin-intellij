@@ -52,6 +52,9 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
       "struct"     { return STRUCT; }
       "for"     { return FOR; }
       "in"      { return IN; }
+      "do"      { return DO; }
+      "if"      { return IF; }
+      "else"    { return ELSE; }
 
       {LineComment} { return LINE_COMMENT; }
       {BlockComment} { return BLOCK_COMMENT; }
@@ -64,8 +67,8 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
       {IntegerDecLiteral} { return INTEGER_DEC_LITERAL; }
       {IntegerHexLiteral} { return INTEGER_HEX_LITERAL; }
 
-      ":"          { return COLON; }
-      "="          { return EQ; }
+      ":"         { return COLON; }
+      "="         { return EQ; }
       \{          { return LBRACE; }
       \}          { return RBRACE; }
       \(          { return LPAREN; }
@@ -74,6 +77,9 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
       ","         { return COMMA; }
       "->"        { return ARROW; }
       ";"         { return SEMICOLON; }
+      "["         { return LBRACKET; }
+      "]"         { return RBRACKET; }
+      "#"         { return HASH; }
 
       // Operators
         "=="        { return EQEQ; }

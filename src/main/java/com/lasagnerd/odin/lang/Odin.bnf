@@ -24,6 +24,9 @@
         STRUCT='regexp:struct'
         FOR='regexp:for'
         IN='regexp:in'
+        DO='regexp:do'
+        IF='regexp:if'
+        ELSE='regexp:else'
 
         IDENTIFIER='regexp:[a-zA-Z_][a-zA-Z0-9_]*'
         STRING_LITERAL='regexp:"[^"]*"'
@@ -38,6 +41,11 @@
         RBRACE='regexp:}'
         LPAREN='regexp:\('
         RPAREN='regexp:\)'
+
+        LBRACKET='regexp:\['
+        RBRACKET='regexp:]'
+        HASH='regexp:#'
+
         DOT='regexp:\.'
         ARROW='regexp:->'
         COMMA='regexp:,'
@@ -124,6 +132,7 @@ statement  ::= variableAssignmentDeclaration
 | constantAssigment
 | procedureDeclaration
 | forStatement
+| ifStatement
 
 // Struct
 structDeclaration ::= IDENTIFIER COLON COLON STRUCT LBRACE (variableDeclaration COMMA)* RBRACE
@@ -203,10 +212,26 @@ literal_expression ::= STRING_LITERAL
          | INTEGER_HEX_LITERAL
          | INTEGER_OCT_LITERAL
 
-forStatement ::= forHead LBRACE (statement|variableAssignment|functionCall_expression)* RBRACE
+directive ::= HASH IDENTIFIER
+
+forStatement ::= directive? forHead forBody
 forHead ::= forIn|forTraditional
+forBody ::= forBlock | forSingleStatement
+forBlock ::= LBRACE (statementAllowedInBlock)* RBRACE
+forSingleStatement ::= DO statementAllowedInBlock
+
+// Statements that are allowed in "blocks" like for loops, if statements, etc.
+private statementAllowedInBlock ::= statement|variableAssignment|functionCall_expression
+
 forTraditional ::= FOR (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
-forIn ::= FOR IDENTIFIER IN expression
+forIn ::= FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression
 
 private forStartStatement ::=   variableAssignmentDeclaration | variableAssignment | functionCall_expression
 private forEndStatement ::=   variableAssignment | functionCall_expression
+
+
+ifStatement ::= IF  ifHead ifBlock (elseIfBlock)* (elseBlock)?
+ifHead ::=  (variableAssignmentDeclaration (COMMA variableAssignmentDeclaration)* SEMICOLON)? expression
+ifBlock ::= LBRACE (statementAllowedInBlock)* RBRACE
+elseIfBlock ::= ELSE IF ifHead ifBlock
+elseBlock ::= ELSE ifBlock

@@ -25,6 +25,7 @@
                   implementationClass="com.lasagnerd.odin.lang.OdinFileType"/>
         <lang.parserDefinition language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinParserDefinition"/>
         <lang.syntaxHighlighterFactory language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinSyntaxHighlighterFactory"/>
+        <lang.braceMatcher language="Odin" implementationClass="com.lasagnerd.odin.OdinBraceMatcher"/>
     </extensions>
 
 

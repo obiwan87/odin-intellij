@@ -35,6 +35,9 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
     }
 
     private static final List<IElementType> keywords = List.of(
+            OdinTypes.IF,
+            OdinTypes.ELSE,
+            OdinTypes.DO,
             OdinTypes.STRUCT,
             OdinTypes.IN,
             OdinTypes.FOR,

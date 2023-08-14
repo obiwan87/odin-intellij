@@ -20,7 +20,6 @@ public class OdinParserDefinition implements ParserDefinition {
 
     public static final IFileElementType FILE = new IFileElementType(OdinLanguage.INSTANCE);
 
-
     @Override
     public @NotNull Lexer createLexer(Project project) {
         return new OdinLexerAdapter();
