@@ -6,12 +6,10 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
-import com.lasagnerd.odin.lang.psi.OdinElementType;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
@@ -35,6 +33,9 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
     }
 
     private static final List<IElementType> keywords = List.of(
+            OdinTypes.DEFER,
+            OdinTypes.TRUE,
+            OdinTypes.FALSE,
             OdinTypes.SWITCH,
             OdinTypes.CASE,
             OdinTypes.FALLTHROUGH,
@@ -49,21 +50,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.PACKAGE,
             OdinTypes.IMPORT);
 
-//    private static final List<IElementType> escapedSequences = List.of(
-//            OdinTypes.ESCAPE_E,
-//            OdinTypes.ESCAPE_B,
-//            OdinTypes.ESCAPE_A,
-//            OdinTypes.ESCAPE_F,
-//            OdinTypes.ESCAPE_N,
-//            OdinTypes.ESCAPE_R,
-//            OdinTypes.ESCAPE_T,
-//            OdinTypes.ESCAPE_V,
-//            OdinTypes.ESCAPE_BACKSLASH,
-//            OdinTypes.ESCAPE_DOUBLE_QUOTE,
-//            OdinTypes.ESCAPE_HEX2,
-//            OdinTypes.ESCAPE_HEX4,
-//            OdinTypes.ESCAPE_HEX8,
-//            OdinTypes.ESCAPE_OCT
+
 //            );
 
     private static final List<IElementType> numericLiteral = List.of(OdinTypes.INTEGER_DEC_LITERAL, OdinTypes.INTEGER_HEX_LITERAL, OdinTypes.INTEGER_OCT_LITERAL);
