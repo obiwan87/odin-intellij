@@ -35,6 +35,7 @@
         WHEN='regexp:when'
         BREAK='regexp:break'
         CONTINUE='regexp:continue'
+        NIL='regexp:nil'
 
         IDENTIFIER='regexp:[a-zA-Z_][a-zA-Z0-9_]*'
         DQ_STRING_LITERAL='regexp:"[^"]*"'
@@ -154,7 +155,8 @@ procedureDeclaration ::= IDENTIFIER COLON COLON PROC LPAREN parameterList* RPARE
 returnType ::= IDENTIFIER
             | LPAREN parameterList* RPAREN
 
-returnStatement ::= RETURN argumentList?
+returnStatement ::= RETURN returnArgumentList?
+private returnArgumentList ::= expression (COMMA expression)*
 
 // Variables and constants
 typeIdentifier ::= (LBRACKET (INTEGER_DEC_LITERAL|IDENTIFIER)? RBRACKET)? IDENTIFIER
@@ -181,11 +183,18 @@ variableDeclaration ::= IDENTIFIER COLON typeIdentifier
 // Parameters for procedures and assignments
 typelessParameterList ::= IDENTIFIER (COMMA IDENTIFIER)*
 parameterList ::= parameter (COMMA parameter)*
-parameter ::= IDENTIFIER (COLON IDENTIFIER)?
+parameter ::= variableAssignment
+              | variableInitialization
+              | variableDeclaration
 
-// Expressions
-argumentList ::= expression (COMMA expression)*
-functionCall_expression ::= expression LPAREN argumentList* RPAREN
+// Function calls
+argumentList  ::= argument (COMMA argument)*
+namedArgument ::= IDENTIFIER EQ expression { extends = argument}
+argument      ::= namedArgument
+                  | unnamedArgument
+unnamedArgument ::= expression { extends = argument}
+
+functionCall_expression ::= expression LPAREN argumentList? RPAREN
 
 binary_expression ::= expression binaryOperator expression
 binaryOperator ::= PLUS
@@ -215,27 +224,37 @@ parenthesized_expression ::= LPAREN expression RPAREN
 
 // Does it make sense to have literal expressions in the chain?
 
-expression ::= parenthesized_expression
-               | chain_expression
+expression ::= chain_expression
                | functionCall_expression
-               | literal_expression
+               | parenthesized_expression
                | binary_expression
+               | unary_expression
                | fixedArray_expression
                | arraySlice_expression
                | arrayIndex_expression
                | identifier_expression
+               | literal_expression
+               | nil_expression
 
+nil_expression ::= NIL
 identifier_expression ::= IDENTIFIER
 chain_expression ::= expression (DOT expression)
+
+unaryOperator ::= PLUS
+                  | MINUS
+                  | NOT
+                  | XOR_BITWISE
+unary_expression ::= unaryOperator expression
+
 
 string_literal ::= DQ_STRING_LITERAL
 numeric_literal ::= INTEGER_DEC_LITERAL
                     | INTEGER_HEX_LITERAL
                     | INTEGER_OCT_LITERAL
                     | INTEGER_BIN_LITERAL
+                    | FLOAT_DEC_LITERAL
                     | COMPLEX_INTEGER_DEC_LITERAL
                     | COMPLEX_FLOAT_LITERAL
-                    | FLOAT_DEC_LITERAL
 
 
 boolean_literal ::= TRUE

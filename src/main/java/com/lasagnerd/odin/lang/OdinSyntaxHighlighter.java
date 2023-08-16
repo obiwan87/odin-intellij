@@ -54,7 +54,15 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.IMPORT
     );
 
-    private static final List<IElementType> numericLiteral = List.of(OdinTypes.INTEGER_DEC_LITERAL, OdinTypes.INTEGER_HEX_LITERAL, OdinTypes.INTEGER_OCT_LITERAL);
+    private static final List<IElementType> numericLiteral = List.of(
+            OdinTypes.INTEGER_DEC_LITERAL,
+            OdinTypes.INTEGER_HEX_LITERAL,
+            OdinTypes.INTEGER_OCT_LITERAL,
+            OdinTypes.INTEGER_BIN_LITERAL,
+            OdinTypes.FLOAT_DEC_LITERAL,
+            OdinTypes.COMPLEX_FLOAT_LITERAL,
+            OdinTypes.COMPLEX_INTEGER_DEC_LITERAL
+    );
 
     @Override
     public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
@@ -105,6 +113,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
         if (tokenType.equals(OdinTypes.LBRACE) || tokenType.equals(OdinTypes.RBRACE)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BRACES};
         }
+
 
         return EMPTY_KEYS;
     }

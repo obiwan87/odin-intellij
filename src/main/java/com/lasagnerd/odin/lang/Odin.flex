@@ -41,9 +41,9 @@ ComplexIntegerDecLiteral = {IntegerDecLiteral}i
 IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
 IntegerBinLiteral = 0b[01][01_]*
 
-
-FloatDecLiteral = [0-9][0-9_]*\.[0-9][0-9_]*([eE][+-]?[0-9][0-9_]*)?
-ComplexFloatLiteral = {FloatDecLiteral}i
+FloatLiteral = [0-9][0-9_]*\.[0-9][0-9_]*{ExponentPart}? | {IntegerDecLiteral}{ExponentPart}
+ExponentPart = [eE][+-]?[0-9][0-9_]*
+ComplexFloatLiteral = {FloatLiteral}i
 
 
 %state DQ_STRING_STATE
@@ -70,6 +70,7 @@ ComplexFloatLiteral = {FloatDecLiteral}i
         "when"    { return WHEN; }
         "break"   { return BREAK; }
         "continue" { return CONTINUE; }
+        "nil"     { return NIL; }
 
 
         {LineComment} { return LINE_COMMENT; }
@@ -83,7 +84,8 @@ ComplexFloatLiteral = {FloatDecLiteral}i
         {IntegerDecLiteral} { return INTEGER_DEC_LITERAL; }
         {IntegerHexLiteral} { return INTEGER_HEX_LITERAL; }
         {IntegerBinLiteral} { return INTEGER_BIN_LITERAL; }
-        {FloatDecLiteral} { return FLOAT_DEC_LITERAL; }
+        {FloatLiteral} { return FLOAT_DEC_LITERAL; }
+
         {ComplexFloatLiteral} { return COMPLEX_FLOAT_LITERAL; }
         {ComplexIntegerDecLiteral} { return COMPLEX_INTEGER_DEC_LITERAL; }
 
