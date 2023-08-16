@@ -27,6 +27,9 @@
         DO='regexp:do'
         IF='regexp:if'
         ELSE='regexp:else'
+        SWITCH='regexp:switch'
+        CASE='regexp:case'
+        FALLTHROUGH='regexp:fallthrough'
 
         IDENTIFIER='regexp:[a-zA-Z_][a-zA-Z0-9_]*'
         STRING_LITERAL='regexp:"[^"]*"'
@@ -50,6 +53,7 @@
         ARROW='regexp:->'
         COMMA='regexp:,'
         SEMICOLON='regexp:;'
+        QUESTION='regexp:\?'
 
         // Operators
         EQEQ='regexp:=='
@@ -97,6 +101,7 @@
         RSHIFT_EQ='regexp:>>='
 
         // Range Operators
+        RANGE = 'regexp:\.\.'
         RANGE_INCLUSIVE='regexp:\.\.='
         RANGE_EXCLUSIVE='regexp:\.\.<'
 
@@ -133,6 +138,7 @@ statement  ::= variableAssignmentDeclaration
 | procedureDeclaration
 | forStatement
 | ifStatement
+| switchStatement
 
 // Struct
 structDeclaration ::= IDENTIFIER COLON COLON STRUCT LBRACE (variableDeclaration COMMA)* RBRACE
@@ -146,8 +152,9 @@ returnType ::= IDENTIFIER
 returnStatement ::= RETURN argumentList?
 
 // Variables and constants
-constantAssigment ::= IDENTIFIER COLON IDENTIFIER? COLON expression
-variableAssignmentDeclaration ::= (typelessParameterList COLON EQ | IDENTIFIER COLON IDENTIFIER EQ) expression
+typeIdentifier ::= (LBRACKET (INTEGER_DEC_LITERAL|IDENTIFIER)? RBRACKET)? IDENTIFIER
+constantAssigment ::= IDENTIFIER COLON typeIdentifier? COLON expression
+variableAssignmentDeclaration ::= (typelessParameterList COLON EQ | IDENTIFIER COLON typeIdentifier EQ) expression
 variableAssignment ::= IDENTIFIER assignmentOperator expression
 assignmentOperator ::= EQ
                        | PLUS_EQ
@@ -164,7 +171,8 @@ assignmentOperator ::= EQ
                        | LSHIFT_EQ
                        | RSHIFT_EQ
 
-variableDeclaration ::= IDENTIFIER COLON IDENTIFIER
+variableDeclaration ::= IDENTIFIER COLON typeIdentifier
+
 
 // Parameters for procedures and assignments
 typelessParameterList ::= IDENTIFIER (COMMA IDENTIFIER)*
@@ -197,6 +205,7 @@ binaryOperator ::= PLUS
                    | GTE
                    | RANGE_INCLUSIVE
                    | RANGE_EXCLUSIVE
+                   | RANGE
 
 parenthesized_expression ::= LPAREN expression RPAREN
 
@@ -235,3 +244,7 @@ ifHead ::=  (variableAssignmentDeclaration (COMMA variableAssignmentDeclaration)
 ifBlock ::= LBRACE (statementAllowedInBlock)* RBRACE
 elseIfBlock ::= ELSE IF ifHead ifBlock
 elseBlock ::= ELSE ifBlock
+
+switchStatement ::= SWITCH ifHead? LBRACE (switchCaseBlock)* RBRACE
+switchCaseBlock ::= CASE (expression(COMMA expression)*)? COLON (statementAllowedInBlock|FALLTHROUGH)*
+

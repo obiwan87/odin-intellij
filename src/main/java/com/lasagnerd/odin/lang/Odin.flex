@@ -55,6 +55,10 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
       "do"      { return DO; }
       "if"      { return IF; }
       "else"    { return ELSE; }
+      "switch"  { return SWITCH; }
+      "case"    { return CASE; }
+      "fallthrough" { return FALLTHROUGH; }
+
 
       {LineComment} { return LINE_COMMENT; }
       {BlockComment} { return BLOCK_COMMENT; }
@@ -80,6 +84,7 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
       "["         { return LBRACKET; }
       "]"         { return RBRACKET; }
       "#"         { return HASH; }
+      "?"         { return QUESTION; }
 
       // Operators
         "=="        { return EQEQ; }
@@ -121,6 +126,7 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
         "||="       { return OROR_EQ; }
 
         // Range operators
+        ".."        { return RANGE; }
         "..<"        { return RANGE_EXCLUSIVE; }
         "..="        { return RANGE_INCLUSIVE; }
 

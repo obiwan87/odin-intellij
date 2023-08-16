@@ -858,6 +858,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // | procedureDeclaration
   // | forStatement
   // | ifStatement
+  // | switchStatement
   public static boolean statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "statement")) return false;
     boolean r;
@@ -868,6 +869,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = procedureDeclaration(b, l + 1);
     if (!r) r = forStatement(b, l + 1);
     if (!r) r = ifStatement(b, l + 1);
+    if (!r) r = switchStatement(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -915,6 +917,125 @@ public class OdinParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = variableDeclaration(b, l + 1);
     r = r && consumeToken(b, COMMA);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // CASE (expression(COMMA expression)*)? COLON (statementAllowedInBlock|FALLTHROUGH)*
+  public static boolean switchCaseBlock(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCaseBlock")) return false;
+    if (!nextTokenIs(b, CASE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, CASE);
+    r = r && switchCaseBlock_1(b, l + 1);
+    r = r && consumeToken(b, COLON);
+    r = r && switchCaseBlock_3(b, l + 1);
+    exit_section_(b, m, SWITCH_CASE_BLOCK, r);
+    return r;
+  }
+
+  // (expression(COMMA expression)*)?
+  private static boolean switchCaseBlock_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCaseBlock_1")) return false;
+    switchCaseBlock_1_0(b, l + 1);
+    return true;
+  }
+
+  // expression(COMMA expression)*
+  private static boolean switchCaseBlock_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCaseBlock_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expression(b, l + 1, -1);
+    r = r && switchCaseBlock_1_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (COMMA expression)*
+  private static boolean switchCaseBlock_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCaseBlock_1_0_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!switchCaseBlock_1_0_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "switchCaseBlock_1_0_1", c)) break;
+    }
+    return true;
+  }
+
+  // COMMA expression
+  private static boolean switchCaseBlock_1_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCaseBlock_1_0_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (statementAllowedInBlock|FALLTHROUGH)*
+  private static boolean switchCaseBlock_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCaseBlock_3")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!switchCaseBlock_3_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "switchCaseBlock_3", c)) break;
+    }
+    return true;
+  }
+
+  // statementAllowedInBlock|FALLTHROUGH
+  private static boolean switchCaseBlock_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCaseBlock_3_0")) return false;
+    boolean r;
+    r = statementAllowedInBlock(b, l + 1);
+    if (!r) r = consumeToken(b, FALLTHROUGH);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // SWITCH ifHead? LBRACE (switchCaseBlock)* RBRACE
+  public static boolean switchStatement(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchStatement")) return false;
+    if (!nextTokenIs(b, SWITCH)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, SWITCH);
+    r = r && switchStatement_1(b, l + 1);
+    r = r && consumeToken(b, LBRACE);
+    r = r && switchStatement_3(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, m, SWITCH_STATEMENT, r);
+    return r;
+  }
+
+  // ifHead?
+  private static boolean switchStatement_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchStatement_1")) return false;
+    ifHead(b, l + 1);
+    return true;
+  }
+
+  // (switchCaseBlock)*
+  private static boolean switchStatement_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchStatement_3")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!switchStatement_3_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "switchStatement_3", c)) break;
+    }
+    return true;
+  }
+
+  // (switchCaseBlock)
+  private static boolean switchStatement_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchStatement_3_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = switchCaseBlock(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
