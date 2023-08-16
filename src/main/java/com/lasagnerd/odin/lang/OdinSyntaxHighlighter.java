@@ -33,6 +33,9 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
     }
 
     private static final List<IElementType> keywords = List.of(
+            OdinTypes.BREAK,
+            OdinTypes.CONTINUE,
+            OdinTypes.WHEN,
             OdinTypes.DEFER,
             OdinTypes.TRUE,
             OdinTypes.FALSE,
@@ -48,10 +51,8 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.RETURN,
             OdinTypes.PROC,
             OdinTypes.PACKAGE,
-            OdinTypes.IMPORT);
-
-
-//            );
+            OdinTypes.IMPORT
+    );
 
     private static final List<IElementType> numericLiteral = List.of(OdinTypes.INTEGER_DEC_LITERAL, OdinTypes.INTEGER_HEX_LITERAL, OdinTypes.INTEGER_OCT_LITERAL);
 
@@ -61,7 +62,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return KEYWORD_KEYS;
         }
 
-        if (tokenType.equals(OdinTypes.STRING_LITERAL)) {
+        if (tokenType.equals(OdinTypes.DQ_STRING_LITERAL)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.STRING};
         }
 
@@ -85,23 +86,23 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
 //            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE};
 //        }
 
-        if(tokenType.equals(OdinTypes.COMMA)) {
+        if (tokenType.equals(OdinTypes.COMMA)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.COMMA};
         }
 
-        if(tokenType.equals(OdinTypes.SEMICOLON)) {
+        if (tokenType.equals(OdinTypes.SEMICOLON)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.SEMICOLON};
         }
 
-        if(tokenType.equals(OdinTypes.DOT)) {
+        if (tokenType.equals(OdinTypes.DOT)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.DOT};
         }
 
-        if(tokenType.equals(OdinTypes.LPAREN) || tokenType.equals(OdinTypes.RPAREN)) {
+        if (tokenType.equals(OdinTypes.LPAREN) || tokenType.equals(OdinTypes.RPAREN)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.PARENTHESES};
         }
 
-        if(tokenType.equals(OdinTypes.LBRACE) || tokenType.equals(OdinTypes.RBRACE)) {
+        if (tokenType.equals(OdinTypes.LBRACE) || tokenType.equals(OdinTypes.RBRACE)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BRACES};
         }
 

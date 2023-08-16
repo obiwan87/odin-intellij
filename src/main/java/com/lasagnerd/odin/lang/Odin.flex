@@ -34,8 +34,17 @@ BlockComment = \/\*([^*]|\*[^/])*\*\/
 // Literals
 
 IntegerOctLiteral = 0o[0-7][0-7_]*
+
 IntegerDecLiteral = [0-9][0-9_]*
+ComplexIntegerDecLiteral = {IntegerDecLiteral}i
+
 IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
+IntegerBinLiteral = 0b[01][01_]*
+
+
+FloatDecLiteral = [0-9][0-9_]*\.[0-9][0-9_]*([eE][+-]?[0-9][0-9_]*)?
+ComplexFloatLiteral = {FloatDecLiteral}i
+
 
 %state DQ_STRING_STATE
 %%
@@ -58,6 +67,9 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
         "fallthrough" { return FALLTHROUGH; }
         "true"    { return TRUE; }
         "false"   { return FALSE; }
+        "when"    { return WHEN; }
+        "break"   { return BREAK; }
+        "continue" { return CONTINUE; }
 
 
         {LineComment} { return LINE_COMMENT; }
@@ -70,6 +82,10 @@ IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
         {IntegerOctLiteral} { return INTEGER_OCT_LITERAL; }
         {IntegerDecLiteral} { return INTEGER_DEC_LITERAL; }
         {IntegerHexLiteral} { return INTEGER_HEX_LITERAL; }
+        {IntegerBinLiteral} { return INTEGER_BIN_LITERAL; }
+        {FloatDecLiteral} { return FLOAT_DEC_LITERAL; }
+        {ComplexFloatLiteral} { return COMPLEX_FLOAT_LITERAL; }
+        {ComplexIntegerDecLiteral} { return COMPLEX_INTEGER_DEC_LITERAL; }
 
         ":"         { return COLON; }
         "="         { return EQ; }
