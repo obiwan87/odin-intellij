@@ -6,10 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.lasagnerd.odin.lang.psi.OdinCallExpression;
-import com.lasagnerd.odin.lang.psi.OdinIdentifierExpression;
-import com.lasagnerd.odin.lang.psi.OdinStringLiteral;
-import com.lasagnerd.odin.lang.psi.OdinTypeDefinitionExpression;
+import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -122,6 +119,20 @@ public class OdinLangSyntaxAnnotator implements Annotator {
         if (psiElement instanceof OdinStringLiteral stringLiteral) {
             highlightEscapeSequences(stringLiteral, annotationHolder);
         }
+
+
+        if (psiElement instanceof OdinTagHead tagHead) {
+            highlightTagHead(tagHead, annotationHolder);
+        }
+    }
+
+    private static void highlightTagHead(OdinTagHead tagHead, @NotNull AnnotationHolder annotationHolder) {
+
+        var matchRange = tagHead.getTextRange();
+        annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                .range(matchRange)
+                .textAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION)
+                .create();
     }
 
     private static void highlightBuiltInIdentifiers(@NotNull AnnotationHolder annotationHolder, OdinCallExpression callExpression) {

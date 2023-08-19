@@ -48,6 +48,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
 
 %state DQ_STRING_STATE
 %state SQ_STRING_STATE
+%state RAW_STRING_STATE
 %%
 
 <YYINITIAL> {
@@ -96,6 +97,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
 
         \"           { yybegin(DQ_STRING_STATE); string.setLength(0); }
         \'           { yybegin(SQ_STRING_STATE); }
+        \`           { yybegin(RAW_STRING_STATE); }
 
         {IntegerOctLiteral} { return INTEGER_OCT_LITERAL; }
         {IntegerDecLiteral} { return INTEGER_DEC_LITERAL; }
@@ -168,6 +170,8 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         "..="       { return RANGE_INCLUSIVE; }
 
         "---"       { return TRIPLE_DASH; }
+
+        "$"         { return DOLLAR; }
 }
 
     <DQ_STRING_STATE> {
@@ -195,6 +199,12 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         [^\n\r\'\\]+                 { }
         \\\'                         { }
         \\                           { }
+    }
+
+    // Raw string delimited by `
+    <RAW_STRING_STATE> {
+        \`                           {yybegin(YYINITIAL); return RAW_STRING_LITERAL; }
+        [^`]+                        { }
     }
 
 [^] { return BAD_CHARACTER; }

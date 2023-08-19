@@ -81,7 +81,8 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
         }
 
         if (tokenType.equals(OdinTypes.DQ_STRING_LITERAL) ||
-            tokenType.equals(OdinTypes.SQ_STRING_LITERAL)
+            tokenType.equals(OdinTypes.SQ_STRING_LITERAL) ||
+            tokenType.equals(OdinTypes.RAW_STRING_LITERAL)
         ) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.STRING};
         }
