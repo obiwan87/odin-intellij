@@ -24,6 +24,7 @@
         STRUCT='regexp:struct'
         FOR='regexp:for'
         IN='regexp:in'
+        NOT_IN='regexp:not_in'
         DO='regexp:do'
         IF='regexp:if'
         ELSE='regexp:else'
@@ -36,17 +37,31 @@
         BREAK='regexp:break'
         CONTINUE='regexp:continue'
         NIL='regexp:nil'
+        TRIPLE_DASH='regexp:---'
+        OR_ELSE='regexp:or_else'
+        OR_RETURN='regexp:or_return'
+        FOREIGN='regexp:foreign'
+        CAST='regexp:cast'
+        AUTO_CAST='regexp:AUTO_CAST'
+        TRANSMUTE='regexp:TRANSMUTE'
+        DYNAMIC='regexp:dynamic'
+        BIT_SET='regexp:bit_set'
+        MAP='regexp:map'
+        USING='regexp:using'
+        ENUM='regexp:enum'
+        UNION='regexp:union'
+        DISTINCT='regexp:distinct'
 
         IDENTIFIER='regexp:[a-zA-Z_][a-zA-Z0-9_]*'
         DQ_STRING_LITERAL='regexp:"[^"]*"'
+        SQ_STRING_LITERAL="regexp:'[^']+?'"
         INTEGER_DEC_LITERAL='regexp:[0-9][0-9_]*'
         INTEGER_HEX_LITERAL='regexp:0x[0-9a-fA-F][0-9a-fA-F_]*'
         INTEGER_OCT_LITERAL='regexp:0o[0-7][0-7_]*'
         INTEGER_BIN_LITERAL='regexp:0b[01][01_]*'
         FLOAT_DEC_LITERAL='regexp:[0-9][0-9_]*\.[0-9][0-9_]*'
-        COMPLEX_FLOAT_LITERAL='regexp:[0-9][0-9_]*\.[0-9][0-9_]*i'
-        COMPLEX_INTEGER_DEC_LITERAL='regexp:[0-9][0-9_]*i'
-
+        COMPLEX_FLOAT_LITERAL='regexp:[0-9][0-9_]*\.[0-9][0-9_]*[ijk]'
+        COMPLEX_INTEGER_DEC_LITERAL='regexp:[0-9][0-9_]*[ijk]'
 
         EQ='regexp:='
         COLON='regexp::'
@@ -65,6 +80,8 @@
         COMMA='regexp:,'
         SEMICOLON='regexp:;'
         QUESTION='regexp:\?'
+        CARET='regexp:\^'
+        AT='regexp:@'
 
         // Operators
         EQEQ='regexp:=='
@@ -78,6 +95,7 @@
         ANDAND='regexp:&&'
         OROR='regexp:\|\|'
         NOT='regexp:!'
+        ANDNOT='regexp:&~'
 
 
         // Arithmetic operators
@@ -89,9 +107,9 @@
         REMAINDER='regexp:%%'
 
         // Bitwise operators
-        AND_BITWISE='regexp:&'
-        OR_BITWISE='regexp:\|'
-        XOR_BITWISE='regexp:~'
+        AND='regexp:&'
+        PIPE='regexp:\|'
+        TILDE='regexp:~'
         LSHIFT='regexp:<<'
         RSHIFT='regexp:>>'
 
@@ -117,7 +135,6 @@
         RANGE_EXCLUSIVE='regexp:\.\.<'
 
         WHITE_SPACE='regexp:\s+|\r?\n'
-
   ]
 
   extends('.*_expression') = expression
@@ -126,43 +143,109 @@
 odinFile ::= packageDeclaration globalStatement*
 packageDeclaration ::= PACKAGE IDENTIFIER
 importDeclaration ::= IMPORT IDENTIFIER? DQ_STRING_LITERAL
+
 globalStatement ::= importDeclaration
+                | enumDeclaration
+                | unionDeclaration
+                | typeAliasDeclaration
+                | foreignImportDeclaration
                 | structDeclaration
+                | bitsetDeclaration
+                | constantInitialization
                 | variableDeclaration
                 | variableInitialization
+                | procedureOverloadStatement
                 | procedureDeclaration
+                | foreignStatement
+
+
+foreignImportDeclaration ::= FOREIGN IMPORT ( IDENTIFIER DQ_STRING_LITERAL | LBRACE DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* RBRACE)
 
 statement  ::= variableInitialization
-    | variableDeclaration
-    | constantAssigment
-    | procedureDeclaration
-    | forStatement
-    | ifStatement
-    | whenStatement
-    | switchStatement
-    | deferStatement
-    | returnStatement
-    | breakStatement
-    | continueStatement
+               | enumDeclaration
+               | variableDeclaration
+               | constantInitialization
+               | procedureOverloadStatement
+               | procedureDeclaration
+               | bitsetDeclaration
+               | forStatement
+               | ifStatement
+               | whenStatement
+               | switchStatement
+               | deferStatement
+               | returnStatement
+               | breakStatement
+               | continueStatement
+               | attributeStatement
+               | usingStatement
 
+foreignStatement ::= attributeStatement? FOREIGN IDENTIFIER foreignBlock
+foreignBlock ::= LBRACE (foreignProcedureDeclaration|variableDeclaration) RBRACE
+foreignProcedureDeclaration ::= attributeStatement? IDENTIFIER COLON COLON PROC string_literal? LPAREN parameterList* RPAREN (ARROW returnType)? TRIPLE_DASH
+
+// Attributes
+attributeStatement ::=  AT IDENTIFIER
+                       | AT LPAREN IDENTIFIER (EQ (literal_expression | IDENTIFIER))? RPAREN
 // Struct
-structDeclaration ::= IDENTIFIER COLON COLON STRUCT LBRACE (variableDeclaration COMMA)* RBRACE
+structDeclaration ::= attributeStatement? IDENTIFIER COLON COLON STRUCT tag? structSpec
+structSpec ::= LBRACE (fieldDeclaration COMMA)* RBRACE
+fieldDeclaration ::= USING? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
+
+// Enum
+enumDeclaration ::= attributeStatement? IDENTIFIER COLON COLON ENUM enumSpec
+enumSpec ::= LBRACE (IDENTIFIER COMMA)* RBRACE
+
+// Union
+unionDeclaration ::= attributeStatement? IDENTIFIER COLON COLON UNION tag? unionSpec
+unionSpec ::= LBRACE typeDefinition_expression (COMMA typeDefinition_expression)* RBRACE
+
+
+
+// Bit Set
+bitsetDeclaration ::= IDENTIFIER COLON COLON BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
 
 // Procedure
-procedureDeclaration ::= IDENTIFIER COLON COLON PROC LPAREN parameterList* RPAREN (ARROW returnType)?
-                         block
+procedureDeclaration ::= attributeStatement? IDENTIFIER COLON COLON PROC string_literal? LPAREN parameterList* RPAREN (ARROW returnType)? block
 
-returnType ::= IDENTIFIER
-            | LPAREN parameterList* RPAREN
+returnType          ::= IDENTIFIER | LPAREN returnParameterList RPAREN
+returnParameterList ::= returnParameter (COMMA returnParameter)*
+returnParameter     ::= (identifierList COLON)? typeDefinition_expression
 
 returnStatement ::= RETURN returnArgumentList?
 private returnArgumentList ::= expression (COMMA expression)*
 
+usingStatement ::= USING expression
+
+// Procedure overloading
+procedureOverloadStatement ::= IDENTIFIER COLON COLON PROC LBRACE IDENTIFIER (COMMA IDENTIFIER)* RBRACE
+
 // Variables and constants
-typeIdentifier ::= (LBRACKET (INTEGER_DEC_LITERAL|IDENTIFIER)? RBRACKET)? IDENTIFIER
-constantAssigment ::= IDENTIFIER COLON typeIdentifier? COLON expression
-variableInitialization ::= (typelessParameterList COLON EQ | IDENTIFIER COLON typeIdentifier EQ) expression
-variableAssignment ::= IDENTIFIER assignmentOperator expression
+typeDefinition_expression   ::= CARET? typeType
+private typeType ::= mapType|matrixType|bitSetType|arrayType|IDENTIFIER
+bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON identifier_expression] RBRACKET
+mapType          ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression
+matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
+arrayType        ::= LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression
+
+
+constantInitialization ::= IDENTIFIER COLON typeDefinition_expression? COLON (expression|tag)
+typeAliasDeclaration ::= IDENTIFIER COLON COLON DISTINCT? typeDefinition_expression
+
+variableInitialization ::= identifierList COLON EQ expressionsList
+                           | attributeStatement? IDENTIFIER COLON typeDefinition_expression? EQ expression
+identifierList ::= IDENTIFIER (COMMA IDENTIFIER)*
+
+assignmentStatement ::=  leftHandExpressionList assignmentOperator expressionsList
+leftHandExpressionList ::= leftHandExpression (COMMA leftHandExpression)*
+leftHandExpression ::= matrixIndex_expression
+    | arrayIndex_expression
+    | arraySlice_expression
+    | reference_expression
+    | identifier_expression
+    | dereference_expression
+
+expressionsList ::= expression (COMMA expression)*
+
 assignmentOperator ::= EQ
                        | PLUS_EQ
                        | MINUS_EQ
@@ -178,14 +261,17 @@ assignmentOperator ::= EQ
                        | LSHIFT_EQ
                        | RSHIFT_EQ
 
-variableDeclaration ::= IDENTIFIER COLON typeIdentifier
+variableDeclaration ::= attributeStatement? IDENTIFIER COLON typeDefinition_expression
 
 // Parameters for procedures and assignments
-typelessParameterList ::= IDENTIFIER (COMMA IDENTIFIER)*
 parameterList ::= parameter (COMMA parameter)*
-parameter ::= variableAssignment
-              | variableInitialization
-              | variableDeclaration
+parameter ::= parameterDeclaration
+              | parameterInitialization
+              | variadicParameter
+
+private parameterDeclaration ::= USING? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
+private parameterInitialization ::= IDENTIFIER COLON EQ expression
+private variadicParameter ::= IDENTIFIER COLON RANGE typeDefinition_expression
 
 // Function calls
 argumentList  ::= argument (COMMA argument)*
@@ -194,8 +280,9 @@ argument      ::= namedArgument
                   | unnamedArgument
 unnamedArgument ::= expression { extends = argument}
 
-functionCall_expression ::= expression LPAREN argumentList? RPAREN
-
+call_expression ::= caller LPAREN argumentList? RPAREN
+caller ::= identifier_expression
+           | parenthesized_expression
 binary_expression ::= expression binaryOperator expression
 binaryOperator ::= PLUS
                    | MINUS
@@ -203,10 +290,11 @@ binaryOperator ::= PLUS
                    | DIV
                    | MOD
                    | REMAINDER
-                   | AND_BITWISE
-                   | OR_BITWISE
-                   | XOR_BITWISE
+                   | PIPE
+                   | TILDE
                    | ANDAND
+                   | ANDNOT
+                   | AND
                    | OROR
                    | LSHIFT
                    | RSHIFT
@@ -216,38 +304,65 @@ binaryOperator ::= PLUS
                    | GT
                    | LTE
                    | GTE
+                   | RANGE
                    | RANGE_INCLUSIVE
                    | RANGE_EXCLUSIVE
-                   | RANGE
+                   | OR_ELSE
+                   | IN
+                   | NOT_IN
 
 parenthesized_expression ::= LPAREN expression RPAREN
 
 // Does it make sense to have literal expressions in the chain?
 
-expression ::= chain_expression
-               | functionCall_expression
+expression ::= implicitSelector_expression
+               | reference_expression
                | parenthesized_expression
+               | call_expression
                | binary_expression
                | unary_expression
-               | fixedArray_expression
+               | or_return_expression
+               | set_expression
                | arraySlice_expression
                | arrayIndex_expression
-               | identifier_expression
                | literal_expression
+               | dereference_expression
+               | uninitialized_expression
+               | cast_expression
+               | transmute_expression
+               | auto_cast_expression
                | nil_expression
+               | identifier_expression
+               | typeDefinition_expression
+
+
+//ternary_cond_expression ::= expression QUESTION expression COLON expression
+//ternary_if_expression ::= expression IF expression ELSE expression
+//ternary_when_expression ::= expression WHEN expression ELSE expression
+
+cast_expression ::= CAST LPAREN typeDefinition_expression RPAREN expression
+transmute_expression ::= TRANSMUTE LPAREN typeDefinition_expression RPAREN expression
+auto_cast_expression ::= AUTO_CAST expression
 
 nil_expression ::= NIL
+uninitialized_expression ::= TRIPLE_DASH
 identifier_expression ::= IDENTIFIER
-chain_expression ::= expression (DOT expression)
+set_expression ::= LBRACE [expression (COMMA expression)*] RBRACE
+reference_expression ::= expression DOT expression
+implicitSelector_expression ::= DOT expression
+dereference_expression ::= expression CARET
 
-unaryOperator ::= PLUS
-                  | MINUS
-                  | NOT
-                  | XOR_BITWISE
+unaryOperator ::= PLUS      // Arithmetic identity
+                  | MINUS   // Arithmetic negation
+                  | NOT     // Boolean not
+                  | TILDE   // Bitwise not
+                  | AND     // Address of
 unary_expression ::= unaryOperator expression
+or_return_expression ::= expression OR_RETURN
 
 
-string_literal ::= DQ_STRING_LITERAL
+string_literal  ::= DQ_STRING_LITERAL
+                    | SQ_STRING_LITERAL
 numeric_literal ::= INTEGER_DEC_LITERAL
                     | INTEGER_HEX_LITERAL
                     | INTEGER_OCT_LITERAL
@@ -256,23 +371,26 @@ numeric_literal ::= INTEGER_DEC_LITERAL
                     | COMPLEX_INTEGER_DEC_LITERAL
                     | COMPLEX_FLOAT_LITERAL
 
-
 boolean_literal ::= TRUE
                     | FALSE
-
 
 literal_expression ::= string_literal
          | numeric_literal
          | boolean_literal
+         | matrixLiteral_expression
+         | arrayLiteral_expression
 
+arrayLiteral_expression ::= LBRACKET (INTEGER_DEC_LITERAL|QUESTION) RBRACKET LBRACE expression (COMMA expression)* RBRACE
+matrixLiteral_expression ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* RBRACE
 
-fixedArray_expression ::= LBRACKET (INTEGER_DEC_LITERAL|QUESTION) RBRACKET LBRACE expression (COMMA expression)* RBRACE
 arrayIndex_expression ::= expression LBRACKET expression RBRACKET
 arraySlice_expression ::= expression LBRACKET expression? COLON expression? RBRACKET
 
-directive ::= HASH IDENTIFIER
+matrixIndex_expression ::= expression LBRACKET expression COMMA expression RBRACKET
 
-forStatement ::= label? directive? forHead forBody
+tag ::= HASH IDENTIFIER ( literal_expression | (LPAREN expressionsList? RPAREN))?
+
+forStatement ::= label? tag? forHead forBody
 private label ::= IDENTIFIER COLON
 
 
@@ -286,13 +404,13 @@ continueStatement ::= CONTINUE label?
 // Statements that are allowed in "blocks" like for loops, if statements, etc.
 // A block is a sequence of statements contained in braces.
 block ::= LBRACE (statementAllowedInBlock)* RBRACE
-statementAllowedInBlock ::= statement|variableAssignment|expression
+statementAllowedInBlock ::= statement|assignmentStatement|expression
 
 forTraditional ::= FOR (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
 forIn ::= FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression
 
-private forStartStatement ::=   variableInitialization | variableAssignment | functionCall_expression
-private forEndStatement ::=   variableAssignment | functionCall_expression
+private forStartStatement ::=   variableInitialization | assignmentStatement | call_expression
+private forEndStatement ::=   assignmentStatement | call_expression
 
 ifStatement ::= IF  ifHead block (elseIfBlock)* (elseBlock)?
 ifHead ::=  (variableInitialization (COMMA variableInitialization)* SEMICOLON)? expression
@@ -302,11 +420,16 @@ elseBlock ::= ELSE block
 whenStatement ::= WHEN expression block (elseWhenBlock)* (elseBlock)?
 elseWhenBlock ::= ELSE WHEN expression block
 
-switchStatement ::= SWITCH ifHead? LBRACE (switchCaseBlock)* RBRACE
-switchCaseBlock ::= CASE (expression(COMMA expression)*)? COLON (statementAllowedInBlock|FALLTHROUGH)*
+switchStatement ::= tag? SWITCH IN? ifHead? LBRACE (switchCaseBlock)* RBRACE
+switchCaseBlock ::= CASE (caseExpression(COMMA caseExpression)*)? COLON (statementAllowedInBlock|FALLTHROUGH)*
+
+caseExpression ::= expression
+                  | typeDefinition_expression
+                  | DOT IDENTIFIER
 
 deferStatement ::= DEFER expression
-            | ifStatement
-            | forStatement
-            | switchStatement
-            | block
+                | ifStatement
+                | forStatement
+                | switchStatement
+                | assignmentStatement
+                | block

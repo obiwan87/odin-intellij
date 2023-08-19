@@ -36,41 +36,57 @@ BlockComment = \/\*([^*]|\*[^/])*\*\/
 IntegerOctLiteral = 0o[0-7][0-7_]*
 
 IntegerDecLiteral = [0-9][0-9_]*
-ComplexIntegerDecLiteral = {IntegerDecLiteral}i
+ComplexIntegerDecLiteral = {IntegerDecLiteral}[ijk]
 
 IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
 IntegerBinLiteral = 0b[01][01_]*
 
 FloatLiteral = [0-9][0-9_]*\.[0-9][0-9_]*{ExponentPart}? | {IntegerDecLiteral}{ExponentPart}
 ExponentPart = [eE][+-]?[0-9][0-9_]*
-ComplexFloatLiteral = {FloatLiteral}i
+ComplexFloatLiteral = {FloatLiteral}[ijk]
 
 
 %state DQ_STRING_STATE
+%state SQ_STRING_STATE
 %%
 
 <YYINITIAL> {
 
-        "package"    { return PACKAGE; }
-        "import"     { return IMPORT; }
-        "proc"       { return PROC; }
-        "return"     { return RETURN; }
-        "defer"      { return DEFER; }
-        "struct"     { return STRUCT; }
-        "for"     { return FOR; }
-        "in"      { return IN; }
-        "do"      { return DO; }
-        "if"      { return IF; }
-        "else"    { return ELSE; }
-        "switch"  { return SWITCH; }
-        "case"    { return CASE; }
+        "package"     { return PACKAGE; }
+        "import"      { return IMPORT; }
+        "proc"        { return PROC; }
+        "return"      { return RETURN; }
+        "defer"       { return DEFER; }
+        "struct"      { return STRUCT; }
+        "for"         { return FOR; }
+        "in"          { return IN; }
+        "do"          { return DO; }
+        "if"          { return IF; }
+        "else"        { return ELSE; }
+        "switch"      { return SWITCH; }
+        "case"        { return CASE; }
         "fallthrough" { return FALLTHROUGH; }
-        "true"    { return TRUE; }
-        "false"   { return FALSE; }
-        "when"    { return WHEN; }
-        "break"   { return BREAK; }
-        "continue" { return CONTINUE; }
-        "nil"     { return NIL; }
+        "true"        { return TRUE; }
+        "false"       { return FALSE; }
+        "when"        { return WHEN; }
+        "break"       { return BREAK; }
+        "continue"    { return CONTINUE; }
+        "nil"         { return NIL; }
+        "or_else"     { return OR_ELSE; }
+        "or_return"   { return OR_RETURN; }
+        "foreign"     { return FOREIGN; }
+        "cast"        { return CAST; }
+        "transmute"   { return TRANSMUTE; }
+        "auto_cast"   { return AUTO_CAST; }
+        "not_in"      { return NOT_IN; }
+        "dynamic"     { return DYNAMIC; }
+        "bit_set"     { return BIT_SET; }
+        "map"         { return MAP; }
+        "using"       { return USING; }
+        "enum"        { return ENUM; }
+        "union"       { return UNION; }
+        "distinct"    { return DISTINCT; }
+        "matrix"    { return MATRIX; }
 
 
         {LineComment} { return LINE_COMMENT; }
@@ -79,6 +95,7 @@ ComplexFloatLiteral = {FloatLiteral}i
         {WhiteSpace} { return WHITE_SPACE; }
 
         \"           { yybegin(DQ_STRING_STATE); string.setLength(0); }
+        \'           { yybegin(SQ_STRING_STATE); }
 
         {IntegerOctLiteral} { return INTEGER_OCT_LITERAL; }
         {IntegerDecLiteral} { return INTEGER_DEC_LITERAL; }
@@ -103,6 +120,9 @@ ComplexFloatLiteral = {FloatLiteral}i
         "]"         { return RBRACKET; }
         "#"         { return HASH; }
         "?"         { return QUESTION; }
+        "^"         { return CARET; }
+        "@"         { return AT; }
+
 
         // Operators
         "=="        { return EQEQ; }
@@ -120,9 +140,10 @@ ComplexFloatLiteral = {FloatLiteral}i
         "/"         { return DIV; }
         "%%"        { return REMAINDER; }
         "%"         { return MOD; }
-        "&"         { return AND_BITWISE; }
-        "|"         { return OR_BITWISE; }
-        "~"         { return XOR_BITWISE; }
+        "&"         { return AND; }
+        "&~"        { return ANDNOT; }
+        "|"         { return PIPE; }
+        "~"         { return TILDE; }
         "<<"        { return LSHIFT; }
         ">>"        { return RSHIFT; }
 
@@ -145,6 +166,8 @@ ComplexFloatLiteral = {FloatLiteral}i
         ".."        { return RANGE; }
         "..<"       { return RANGE_EXCLUSIVE; }
         "..="       { return RANGE_INCLUSIVE; }
+
+        "---"       { return TRIPLE_DASH; }
 }
 
     <DQ_STRING_STATE> {
@@ -164,6 +187,14 @@ ComplexFloatLiteral = {FloatLiteral}i
       \\\"                           { }
       \\                             { }
       [^\n\r\"\\]+                   { }
+    }
+
+    // Single quote strings
+    <SQ_STRING_STATE> {
+        \'                           {yybegin(YYINITIAL); return SQ_STRING_LITERAL; }
+        [^\n\r\'\\]+                 { }
+        \\\'                         { }
+        \\                           { }
     }
 
 [^] { return BAD_CHARACTER; }

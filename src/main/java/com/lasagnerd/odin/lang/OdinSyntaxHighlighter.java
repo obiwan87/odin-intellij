@@ -33,6 +33,12 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
     }
 
     private static final List<IElementType> keywords = List.of(
+            OdinTypes.BIT_SET,
+            OdinTypes.DYNAMIC,
+            OdinTypes.NOT_IN,
+            OdinTypes.CAST,
+            OdinTypes.AUTO_CAST,
+            OdinTypes.TRANSMUTE,
             OdinTypes.BREAK,
             OdinTypes.CONTINUE,
             OdinTypes.WHEN,
@@ -51,7 +57,11 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.RETURN,
             OdinTypes.PROC,
             OdinTypes.PACKAGE,
-            OdinTypes.IMPORT
+            OdinTypes.IMPORT,
+            OdinTypes.MAP,
+            OdinTypes.USING,
+            OdinTypes.NIL,
+            OdinTypes.MATRIX
     );
 
     private static final List<IElementType> numericLiteral = List.of(
@@ -70,7 +80,9 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return KEYWORD_KEYS;
         }
 
-        if (tokenType.equals(OdinTypes.DQ_STRING_LITERAL)) {
+        if (tokenType.equals(OdinTypes.DQ_STRING_LITERAL) ||
+            tokenType.equals(OdinTypes.SQ_STRING_LITERAL)
+        ) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.STRING};
         }
 
@@ -89,10 +101,6 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
         if (numericLiteral.contains(tokenType)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.NUMBER};
         }
-
-//        if(escapedSequences.contains(tokenType)) {
-//            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE};
-//        }
 
         if (tokenType.equals(OdinTypes.COMMA)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.COMMA};
@@ -114,6 +122,9 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BRACES};
         }
 
+        if(tokenType.equals(OdinTypes.AT)) {
+            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.METADATA};
+        }
 
         return EMPTY_KEYS;
     }
