@@ -147,11 +147,17 @@ public class OdinLangSyntaxAnnotator implements Annotator {
         }
     }
 
-    private static void highlightReservedTypes(@NotNull AnnotationHolder annotationHolder, OdinTypeDefinitionExpression typeDefinitionExpression) {
-        var identifierExpression = typeDefinitionExpression.getIdentifier();
-        if (identifierExpression != null) {
-            if (reservedTypes.contains(identifierExpression.getText())) {
-                TextRange matchRange = identifierExpression.getTextRange();
+    private static void highlightReservedTypes(@NotNull AnnotationHolder annotationHolder, PsiElement psiElement) {
+        PsiElement identifier = null;
+        if(psiElement instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+            identifier = typeDefinitionExpression.getIdentifier();
+        } else if(psiElement instanceof OdinIdentifierExpression identifierExpression) {
+            identifier = identifierExpression.getIdentifier();
+        }
+
+        if (identifier != null) {
+            if (reservedTypes.contains(identifier.getText())) {
+                TextRange matchRange = identifier.getTextRange();
                 annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                         .range(matchRange)
                         .textAttributes(DefaultLanguageHighlighterColors.KEYWORD)
