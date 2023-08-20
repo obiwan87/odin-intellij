@@ -327,6 +327,7 @@ parenthesized_expression ::= LPAREN expression RPAREN
 
 // Does it make sense to have literal expressions in the chain?
 
+// All expressions
 expression ::= implicitSelector_expression
                | procedure_expression
                | reference_expression
@@ -394,8 +395,10 @@ literal_expression ::= string_literal
          | boolean_literal
          | matrixLiteral_expression
          | arrayLiteral_expression
+         | sliceLiteral_expression
 
-arrayLiteral_expression ::= LBRACKET (INTEGER_DEC_LITERAL|QUESTION) RBRACKET LBRACE expression (COMMA expression)* RBRACE
+arrayLiteral_expression ::= LBRACKET (expression|QUESTION) RBRACKET expression LBRACE [expression (COMMA expression)*] RBRACE
+sliceLiteral_expression ::= LBRACKET RBRACKET expression LBRACE [expression (COMMA expression)*] RBRACE
 matrixLiteral_expression ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* RBRACE
 
 arrayIndex_expression ::= expression LBRACKET expression RBRACKET
