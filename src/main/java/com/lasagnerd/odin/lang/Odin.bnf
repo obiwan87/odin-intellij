@@ -222,7 +222,7 @@ private returnArgumentList ::= expression (COMMA expression)*
 usingStatement ::= USING expression
 
 // Procedure overloading
-procedureOverloadStatement ::= IDENTIFIER COLON COLON PROC LBRACE IDENTIFIER (COMMA IDENTIFIER)* RBRACE
+procedureOverloadStatement ::= IDENTIFIER COLON COLON PROC LBRACE IDENTIFIER (COMMA IDENTIFIER)* COMMA? RBRACE
 
 // Variables and constants
 typeDefinition_expression   ::= CARET? typeType
@@ -333,6 +333,7 @@ expression ::= implicitSelector_expression
                | reference_expression
                | parenthesized_expression
                | call_expression
+               | matrixIndex_expression
                | arraySlice_expression
                | arrayIndex_expression
                | binary_expression
@@ -446,9 +447,10 @@ caseExpression ::= expression
                   | typeDefinition_expression
                   | DOT IDENTIFIER
 
-deferStatement ::= DEFER expression
-                | ifStatement
-                | forStatement
-                | switchStatement
-                | assignmentStatement
-                | block
+deferStatement ::= DEFER deferrableStatement
+private deferrableStatement ::= expression
+                                | ifStatement
+                                | forStatement
+                                | switchStatement
+                                | assignmentStatement
+                                | block

@@ -51,6 +51,7 @@ public class OdinLangSyntaxAnnotator implements Annotator {
             "b16",
             "b32",
             "b64",
+            "byte",
             "int",
             "i8",
             "i16",
