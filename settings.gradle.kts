@@ -5,4 +5,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "odin-lsp"
+rootProject.name = "odin-intellij"
