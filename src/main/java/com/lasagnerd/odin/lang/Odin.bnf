@@ -142,14 +142,15 @@
   extends('.*_expression') = expression
 }
 
+
 odinFile ::= packageDeclaration globalStatement*
 packageDeclaration ::= PACKAGE IDENTIFIER
 importDeclaration ::= IMPORT IDENTIFIER? DQ_STRING_LITERAL
 
 globalStatement ::= foreignImportDeclaration
                 | importDeclaration
-                | constantInitialization
                 | procedureDeclaration
+                | constantInitialization
                 | enumDeclaration
                 | unionDeclaration
                 | typeAliasDeclaration
@@ -192,13 +193,13 @@ foreignProcedureDeclaration ::= attributeStatement? IDENTIFIER COLON COLON PROC 
 attributeStatement ::=  AT IDENTIFIER
                        | AT LPAREN IDENTIFIER (EQ (literal_expression | IDENTIFIER))? RPAREN
 // Struct
-structDeclaration ::= attributeStatement? IDENTIFIER COLON COLON STRUCT tagStatement_expression? structSpec
-structSpec ::= LBRACE (fieldDeclaration COMMA)* RBRACE
+structDeclaration ::= attributeStatement? IDENTIFIER COLON COLON structSpec
+structSpec ::= STRUCT tagStatement_expression? LBRACE (fieldDeclaration COMMA)* RBRACE
 fieldDeclaration ::= USING? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
 
 // Enum
-enumDeclaration ::= attributeStatement? IDENTIFIER COLON COLON ENUM typeDefinition_expression? enumSpec
-enumSpec ::= LBRACE (IDENTIFIER EQ expression COMMA)* RBRACE
+enumDeclaration ::= attributeStatement? IDENTIFIER COLON COLON enumSpec
+enumSpec ::= ENUM typeDefinition_expression? LBRACE (IDENTIFIER EQ expression COMMA)* RBRACE
 
 // Union
 unionDeclaration ::= attributeStatement? IDENTIFIER COLON COLON UNION tagStatement_expression? unionSpec
@@ -210,9 +211,9 @@ unionSpec ::= LBRACE typeDefinition_expression (COMMA typeDefinition_expression)
 bitsetDeclaration ::= IDENTIFIER COLON COLON BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
 
 // Procedure
-procedureDeclaration ::= attributeStatement? IDENTIFIER COLON COLON PROC string_literal? LPAREN parameterList* RPAREN (ARROW returnType)? block
+procedureDeclaration ::= attributeStatement? IDENTIFIER COLON COLON procedureType block
 
-returnType          ::= typeDefinition_expression | LPAREN returnParameterList RPAREN
+returnType          ::= LPAREN returnParameterList RPAREN | expression
 returnParameterList ::= returnParameter (COMMA returnParameter)*
 returnParameter     ::= (identifierList COLON)? expression
 
@@ -231,26 +232,29 @@ private typeType ::= mapType
                      | bitSetType
                      | arrayType
                      | procedureType
+                     | structSpec
+                     | enumSpec
+                     | unionSpec
                      | (DOLLAR? IDENTIFIER)
+
 
 bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON identifier_expression] RBRACKET
 mapType          ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression
 matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
 arrayType        ::= LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression
-procedureType    ::= PROC LPAREN parameterList* RPAREN (ARROW returnType)?
+procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType]
 
 constantInitialization ::= attributeStatement? IDENTIFIER COLON typeDefinition_expression? COLON (expression | tagStatement_expression)
 typeAliasDeclaration ::= IDENTIFIER COLON COLON DISTINCT? typeDefinition_expression
 
-variableInitialization ::= identifierList COLON EQ expressionsList
-                           | attributeStatement? IDENTIFIER COLON typeDefinition_expression? EQ expression
+variableInitialization ::= attributeStatement? identifierList COLON typeDefinition_expression? EQ expressionsList
 identifierList ::= IDENTIFIER (COMMA IDENTIFIER)*
 
-assignmentStatement ::=  leftHandExpressions assignmentOperator expressionsList
+assignmentStatement ::=  leftHandExpressions assignmentOperator expressionsList {pin=2}
 leftHandExpressions ::= leftHandExpression (COMMA leftHandExpression)*
 leftHandExpression ::= matrixIndex_expression
-    | arrayIndex_expression
     | arraySlice_expression
+    | arrayIndex_expression
     | reference_expression
     | identifier_expression
     | dereference_expression
@@ -295,6 +299,8 @@ unnamedArgument ::= expression { extends = argument}
 call_expression ::= caller LPAREN argumentList? RPAREN
 caller ::= identifier_expression
            | parenthesized_expression
+
+
 binary_expression ::= expression binaryOperator expression
 binaryOperator ::= PLUS
                    | MINUS
@@ -328,14 +334,16 @@ parenthesized_expression ::= LPAREN expression RPAREN
 // Does it make sense to have literal expressions in the chain?
 
 // All expressions
-expression ::= implicitSelector_expression
+expression ::= /*ternary_expression
+               | */
+               implicitSelector_expression
+               | arraySlice_expression
+               | matrixIndex_expression
+               | arrayIndex_expression
                | procedure_expression
                | reference_expression
-               | parenthesized_expression
                | call_expression
-               | matrixIndex_expression
-               | arraySlice_expression
-               | arrayIndex_expression
+               | parenthesized_expression
                | binary_expression
                | unary_expression
                | or_return_expression
@@ -352,9 +360,13 @@ expression ::= implicitSelector_expression
                | tagStatement_expression
 
 
-//ternary_cond_expression ::= expression QUESTION expression COLON expression
-//ternary_if_expression ::= expression IF expression ELSE expression
-//ternary_when_expression ::= expression WHEN expression ELSE expression
+private ternary_expression ::=
+                       ternary_if_expression
+                       | ternary_cond_expression
+                       | ternary_when_expression
+ternary_cond_expression ::= expression QUESTION expression COLON expression
+ternary_if_expression ::= expression IF expression ELSE expression
+ternary_when_expression ::= expression WHEN expression ELSE expression
 
 cast_expression ::= CAST LPAREN typeDefinition_expression RPAREN expression
 transmute_expression ::= TRANSMUTE LPAREN expression RPAREN expression
@@ -363,7 +375,16 @@ nil_expression ::= NIL
 uninitialized_expression ::= TRIPLE_DASH
 identifier_expression ::= IDENTIFIER
 set_expression ::= LBRACE [expression (COMMA expression)*] RBRACE
-reference_expression ::= expression DOT expression
+reference_expression ::= referenceable_expression DOT referenceable_expression { pin=2 }
+private referenceable_expression ::=
+    parenthesized_expression
+    | call_expression
+    | arraySlice_expression
+    | arrayIndex_expression
+    | matrixIndex_expression
+    | identifier_expression
+    | unary_expression
+
 implicitSelector_expression ::= DOT expression
 dereference_expression ::= expression CARET
 procedure_expression ::= PROC LPAREN parameterList* RPAREN (ARROW returnType)? block
@@ -397,15 +418,16 @@ literal_expression ::= string_literal
          | matrixLiteral_expression
          | arrayLiteral_expression
          | sliceLiteral_expression
+         | TRIPLE_DASH
 
-arrayLiteral_expression ::= LBRACKET (expression|QUESTION) RBRACKET expression LBRACE [expression (COMMA expression)*] RBRACE
+arrayLiteral_expression ::= LBRACKET (expression|QUESTION) RBRACKET expression LBRACE [expression (COMMA expression)* COMMA?] RBRACE
 sliceLiteral_expression ::= LBRACKET RBRACKET expression LBRACE [expression (COMMA expression)*] RBRACE
 matrixLiteral_expression ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* RBRACE
 
-arrayIndex_expression ::= expression LBRACKET expression RBRACKET
-arraySlice_expression ::= expression LBRACKET expression? COLON expression? RBRACKET
-
-matrixIndex_expression ::= expression LBRACKET expression COMMA expression RBRACKET
+// indexing operator can be applied to same expressions that can be called?
+arrayIndex_expression ::= caller LBRACKET expression RBRACKET
+arraySlice_expression ::= caller LBRACKET expression? COLON expression? RBRACKET
+matrixIndex_expression ::= caller LBRACKET expression COMMA expression RBRACKET
 
 tagStatement_expression ::= tagHead ( literal_expression | (LPAREN expressionsList? RPAREN))?
 tagHead ::= HASH IDENTIFIER
@@ -424,7 +446,7 @@ continueStatement ::= CONTINUE label?
 // Statements that are allowed in "blocks" like for loops, if statements, etc.
 // A block is a sequence of statements contained in braces.
 block ::= LBRACE (statementAllowedInBlock)* RBRACE
-statementAllowedInBlock ::= statement|assignmentStatement|expression
+statementAllowedInBlock ::= assignmentStatement|statement|expression
 
 forTraditional ::= FOR (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
 forIn ::= FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression
