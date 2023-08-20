@@ -113,9 +113,8 @@ public class OdinLangSyntaxAnnotator implements Annotator {
             highlightBuiltInIdentifiers(annotationHolder, callExpression);
         }
 
-        if (psiElement instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
-            highlightReservedTypes(annotationHolder, typeDefinitionExpression);
-        }
+        highlightReservedTypes(annotationHolder, psiElement);
+
 
         if (psiElement instanceof OdinStringLiteral stringLiteral) {
             highlightEscapeSequences(stringLiteral, annotationHolder);
@@ -151,7 +150,7 @@ public class OdinLangSyntaxAnnotator implements Annotator {
     private static void highlightReservedTypes(@NotNull AnnotationHolder annotationHolder, PsiElement psiElement) {
         PsiElement identifier = null;
         if(psiElement instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
-            identifier = typeDefinitionExpression.getIdentifier();
+            identifier = typeDefinitionExpression.getIdentifierExpression();
         } else if(psiElement instanceof OdinIdentifierExpression identifierExpression) {
             identifier = identifierExpression.getIdentifier();
         }

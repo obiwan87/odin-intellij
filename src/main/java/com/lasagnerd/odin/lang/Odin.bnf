@@ -143,11 +143,12 @@
 }
 
 
-odinFile ::= packageDeclaration globalStatement*
+odinFile ::= packageDeclaration (globalStatement)*
 packageDeclaration ::= PACKAGE IDENTIFIER
 importDeclaration ::= IMPORT IDENTIFIER? DQ_STRING_LITERAL
 
-globalStatement ::= foreignImportDeclaration
+globalStatement ::= singleGlobalStatement (SEMICOLON singleGlobalStatement)*
+singleGlobalStatement ::= foreignImportDeclaration
                 | importDeclaration
                 | procedureDeclaration
                 | constantInitialization
@@ -156,34 +157,14 @@ globalStatement ::= foreignImportDeclaration
                 | typeAliasDeclaration
                 | structDeclaration
                 | bitsetDeclaration
-                | variableDeclaration
                 | variableInitialization
+                | variableDeclaration
                 | procedureOverloadStatement
                 | foreignStatement
                 | tagStatement_expression
 
 
 foreignImportDeclaration ::= FOREIGN IMPORT ( IDENTIFIER? DQ_STRING_LITERAL | LBRACE DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* RBRACE)
-
-
-statement  ::= procedureDeclaration
-               | variableInitialization
-               | enumDeclaration
-               | variableDeclaration
-               | constantInitialization
-               | procedureOverloadStatement
-               | bitsetDeclaration
-               | forStatement
-               | ifStatement
-               | whenStatement
-               | switchStatement
-               | deferStatement
-               | returnStatement
-               | breakStatement
-               | continueStatement
-               | attributeStatement
-               | usingStatement
-               | tagStatement_expression
 
 foreignStatement ::= attributeStatement? FOREIGN IDENTIFIER foreignBlock
 foreignBlock ::= LBRACE (foreignProcedureDeclaration|variableDeclaration) RBRACE
@@ -205,8 +186,6 @@ enumSpec ::= ENUM typeDefinition_expression? LBRACE (IDENTIFIER EQ expression CO
 unionDeclaration ::= attributeStatement? IDENTIFIER COLON COLON UNION tagStatement_expression? unionSpec
 unionSpec ::= LBRACE typeDefinition_expression (COMMA typeDefinition_expression)* RBRACE
 
-
-
 // Bit Set
 bitsetDeclaration ::= IDENTIFIER COLON COLON BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
 
@@ -226,7 +205,7 @@ usingStatement ::= USING expression
 procedureOverloadStatement ::= IDENTIFIER COLON COLON PROC LBRACE IDENTIFIER (COMMA IDENTIFIER)* COMMA? RBRACE
 
 // Variables and constants
-typeDefinition_expression   ::= CARET? typeType
+typeDefinition_expression   ::= CARET? (IDENTIFIER DOT)* typeType
 private typeType ::= mapType
                      | matrixType
                      | bitSetType
@@ -235,7 +214,7 @@ private typeType ::= mapType
                      | structSpec
                      | enumSpec
                      | unionSpec
-                     | (DOLLAR? IDENTIFIER)
+                     | (DOLLAR? identifier_expression)
 
 
 bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON identifier_expression] RBRACKET
@@ -284,7 +263,7 @@ parameter ::= parameterDeclaration
               | parameterInitialization
               | variadicParameter
 
-parameterDeclaration ::= [USING|DOLLAR] IDENTIFIER (COMMA DOLLAR? IDENTIFIER)* COLON expression parameterTypeSpecialization?
+parameterDeclaration ::= [USING|DOLLAR] tagStatement_expression? IDENTIFIER (COMMA DOLLAR? IDENTIFIER)* COLON expression parameterTypeSpecialization?
 parameterTypeSpecialization ::= DIV expression
 private parameterInitialization ::= IDENTIFIER COLON EQ expression
 private variadicParameter ::= IDENTIFIER COLON RANGE expression
@@ -334,9 +313,9 @@ parenthesized_expression ::= LPAREN expression RPAREN
 // Does it make sense to have literal expressions in the chain?
 
 // All expressions
-expression ::= /*ternary_expression
-               | */
+expression ::= // ternary_expression
                implicitSelector_expression
+               | literal_expression
                | arraySlice_expression
                | matrixIndex_expression
                | arrayIndex_expression
@@ -348,7 +327,6 @@ expression ::= /*ternary_expression
                | unary_expression
                | or_return_expression
                | set_expression
-               | literal_expression
                | dereference_expression
                | uninitialized_expression
                | cast_expression
@@ -360,10 +338,9 @@ expression ::= /*ternary_expression
                | tagStatement_expression
 
 
-private ternary_expression ::=
-                       ternary_if_expression
-                       | ternary_cond_expression
-                       | ternary_when_expression
+//private ternary_expression ::= ternary_cond_expression
+//                               | ternary_if_expression
+//                               | ternary_when_expression
 ternary_cond_expression ::= expression QUESTION expression COLON expression
 ternary_if_expression ::= expression IF expression ELSE expression
 ternary_when_expression ::= expression WHEN expression ELSE expression
@@ -374,10 +351,11 @@ auto_cast_expression ::= AUTO_CAST expression
 nil_expression ::= NIL
 uninitialized_expression ::= TRIPLE_DASH
 identifier_expression ::= IDENTIFIER
-set_expression ::= LBRACE [expression (COMMA expression)*] RBRACE
+set_expression ::= LBRACE [expression (COMMA expression)* COMMA?] RBRACE
 reference_expression ::= referenceable_expression DOT referenceable_expression { pin=2 }
 private referenceable_expression ::=
     parenthesized_expression
+    | structLiteral_expression
     | call_expression
     | arraySlice_expression
     | arrayIndex_expression
@@ -418,9 +396,11 @@ literal_expression ::= string_literal
          | matrixLiteral_expression
          | arrayLiteral_expression
          | sliceLiteral_expression
+         | structLiteral_expression
          | TRIPLE_DASH
 
-arrayLiteral_expression ::= LBRACKET (expression|QUESTION) RBRACKET expression LBRACE [expression (COMMA expression)* COMMA?] RBRACE
+structLiteral_expression ::= IDENTIFIER LBRACE (IDENTIFIER EQ expression COMMA)* RBRACE
+arrayLiteral_expression ::= LBRACKET (expression|QUESTION) RBRACKET typeDefinition_expression LBRACE [expression (COMMA expression)* COMMA?] RBRACE
 sliceLiteral_expression ::= LBRACKET RBRACKET expression LBRACE [expression (COMMA expression)*] RBRACE
 matrixLiteral_expression ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* RBRACE
 
@@ -438,15 +418,36 @@ private label ::= IDENTIFIER COLON
 
 forHead ::= forIn|forTraditional
 forBody ::= block | forSingleStatement
-forSingleStatement ::= DO statementAllowedInBlock
+forSingleStatement ::= DO statement
 
 breakStatement ::= BREAK label?
 continueStatement ::= CONTINUE label?
 
 // Statements that are allowed in "blocks" like for loops, if statements, etc.
 // A block is a sequence of statements contained in braces.
-block ::= LBRACE (statementAllowedInBlock)* RBRACE
-statementAllowedInBlock ::= assignmentStatement|statement|expression
+block ::= tagStatement_expression? LBRACE (statement)* RBRACE
+
+statement ::= singleStatement (SEMICOLON singleStatement)*
+singleStatement ::= assignmentStatement
+                       | procedureDeclaration
+                       | variableInitialization
+                       | enumDeclaration
+                       | variableDeclaration
+                       | constantInitialization
+                       | procedureOverloadStatement
+                       | bitsetDeclaration
+                       | forStatement
+                       | ifStatement
+                       | whenStatement
+                       | switchStatement
+                       | deferStatement
+                       | returnStatement
+                       | breakStatement
+                       | continueStatement
+                       | attributeStatement
+                       | usingStatement
+                       | block
+                       | expression
 
 forTraditional ::= FOR (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
 forIn ::= FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression
@@ -463,7 +464,7 @@ whenStatement ::= WHEN expression block (elseWhenBlock)* (elseBlock)?
 elseWhenBlock ::= ELSE WHEN expression block
 
 switchStatement ::= tagStatement_expression? SWITCH IN? ifHead? LBRACE (switchCaseBlock)* RBRACE
-switchCaseBlock ::= CASE (caseExpression(COMMA caseExpression)*)? COLON (statementAllowedInBlock|FALLTHROUGH)*
+switchCaseBlock ::= CASE (caseExpression(COMMA caseExpression)*)? COLON (statement|FALLTHROUGH)*
 
 caseExpression ::= expression
                   | typeDefinition_expression
