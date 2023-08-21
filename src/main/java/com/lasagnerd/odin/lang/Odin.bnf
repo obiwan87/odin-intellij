@@ -140,57 +140,61 @@
   ]
 
   extends('.*_expression') = expression
+  extends('.*[sS]tatement') = statement
 }
 
 
-odinFile ::= packageDeclaration (globalStatement)*
-packageDeclaration ::= PACKAGE IDENTIFIER
-importDeclaration ::= IMPORT IDENTIFIER? DQ_STRING_LITERAL
+odinFile ::= packageDeclarationStatement (globalStatement)*
+packageDeclarationStatement ::= PACKAGE IDENTIFIER
+importDeclarationStatement ::= IMPORT IDENTIFIER? DQ_STRING_LITERAL
 
-globalStatement ::= singleGlobalStatement (SEMICOLON singleGlobalStatement)*
-singleGlobalStatement ::= foreignImportDeclaration
-                | importDeclaration
-                | procedureDeclaration
+private globalStatement ::= singleGlobalStatement (SEMICOLON singleGlobalStatement)*
+
+// TODO We have to distinguish between statements that have to be alone in a line or can be chained using a semicolon
+
+private singleGlobalStatement ::= foreignImportDeclarationStatement
+                | importDeclarationStatement
+                | procedureDeclarationStatement
                 | constantInitialization
-                | enumDeclaration
-                | unionDeclaration
-                | typeAliasDeclaration
-                | structDeclaration
-                | bitsetDeclaration
+                | enumDeclarationStatement
+                | unionDeclarationStatement
+                | typeAliasDeclarationStatement
+                | structDeclarationStatement
+                | bitsetDeclarationStatement
                 | variableInitialization
-                | variableDeclaration
+                | variableDeclarationStatement
                 | procedureOverloadStatement
                 | foreignStatement
                 | tagStatement_expression
 
 
-foreignImportDeclaration ::= FOREIGN IMPORT ( IDENTIFIER? DQ_STRING_LITERAL | LBRACE DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* RBRACE)
+foreignImportDeclarationStatement ::= FOREIGN IMPORT ( IDENTIFIER? DQ_STRING_LITERAL | LBRACE DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* RBRACE)
 
 foreignStatement ::= attributeStatement? FOREIGN IDENTIFIER foreignBlock
-foreignBlock ::= LBRACE (foreignProcedureDeclaration|variableDeclaration) RBRACE
-foreignProcedureDeclaration ::= attributeStatement? IDENTIFIER COLON COLON PROC string_literal? LPAREN parameterList* RPAREN (ARROW returnType)? TRIPLE_DASH
+foreignBlock ::= LBRACE (foreignProcedureDeclarationStatement|variableDeclarationStatement) RBRACE
+foreignProcedureDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON PROC string_literal? LPAREN parameterList* RPAREN (ARROW returnType)? TRIPLE_DASH
 
 // Attributes
 attributeStatement ::=  AT IDENTIFIER
                        | AT LPAREN IDENTIFIER (EQ (literal_expression | IDENTIFIER))? RPAREN
 // Struct
-structDeclaration ::= attributeStatement? IDENTIFIER COLON COLON structSpec
-structSpec ::= STRUCT tagStatement_expression? LBRACE (fieldDeclaration COMMA)* RBRACE
-fieldDeclaration ::= USING? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
+structDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON structSpec
+structSpec ::= STRUCT tagStatement_expression? LBRACE (fieldDeclarationStatement COMMA)* RBRACE
+fieldDeclarationStatement ::= USING? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
 
 // Enum
-enumDeclaration ::= attributeStatement? IDENTIFIER COLON COLON enumSpec
+enumDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON enumSpec
 enumSpec ::= ENUM typeDefinition_expression? LBRACE (IDENTIFIER EQ expression COMMA)* RBRACE
 
 // Union
-unionDeclaration ::= attributeStatement? IDENTIFIER COLON COLON UNION tagStatement_expression? unionSpec
+unionDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON UNION tagStatement_expression? unionSpec
 unionSpec ::= LBRACE typeDefinition_expression (COMMA typeDefinition_expression)* RBRACE
 
 // Bit Set
-bitsetDeclaration ::= IDENTIFIER COLON COLON BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
+bitsetDeclarationStatement ::= IDENTIFIER COLON COLON BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
 
 // Procedure
-procedureDeclaration ::= attributeStatement? IDENTIFIER COLON COLON procedureType block
+procedureDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON procedureType (block|TRIPLE_DASH)
 
 returnType          ::= LPAREN returnParameterList RPAREN | expression
 returnParameterList ::= returnParameter (COMMA returnParameter)*
@@ -224,7 +228,7 @@ arrayType        ::= LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinit
 procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType]
 
 constantInitialization ::= attributeStatement? IDENTIFIER COLON typeDefinition_expression? COLON (expression | tagStatement_expression)
-typeAliasDeclaration ::= IDENTIFIER COLON COLON DISTINCT? typeDefinition_expression
+typeAliasDeclarationStatement ::= IDENTIFIER COLON COLON DISTINCT? typeDefinition_expression
 
 variableInitialization ::= attributeStatement? identifierList COLON typeDefinition_expression? EQ expressionsList
 identifierList ::= IDENTIFIER (COMMA IDENTIFIER)*
@@ -255,15 +259,15 @@ assignmentOperator ::= EQ
                        | LSHIFT_EQ
                        | RSHIFT_EQ
 
-variableDeclaration ::= attributeStatement? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
+variableDeclarationStatement ::= attributeStatement? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
 
 // Parameters for procedures and assignments
 parameterList ::= parameter (COMMA parameter)*
-parameter ::= parameterDeclaration
+parameter ::= parameterDeclarationStatement
               | parameterInitialization
               | variadicParameter
 
-parameterDeclaration ::= [USING|DOLLAR] tagStatement_expression? IDENTIFIER (COMMA DOLLAR? IDENTIFIER)* COLON expression parameterTypeSpecialization?
+parameterDeclarationStatement ::= [USING|DOLLAR] tagStatement_expression? IDENTIFIER (COMMA DOLLAR? IDENTIFIER)* COLON expression parameterTypeSpecialization?
 parameterTypeSpecialization ::= DIV expression
 private parameterInitialization ::= IDENTIFIER COLON EQ expression
 private variadicParameter ::= IDENTIFIER COLON RANGE expression
@@ -341,9 +345,9 @@ expression ::= // ternary_expression
 //private ternary_expression ::= ternary_cond_expression
 //                               | ternary_if_expression
 //                               | ternary_when_expression
-ternary_cond_expression ::= expression QUESTION expression COLON expression
-ternary_if_expression ::= expression IF expression ELSE expression
-ternary_when_expression ::= expression WHEN expression ELSE expression
+//ternary_cond_expression ::= expression QUESTION expression COLON expression
+//ternary_if_expression ::= expression IF expression ELSE expression
+//ternary_when_expression ::= expression WHEN expression ELSE expression
 
 cast_expression ::= CAST LPAREN typeDefinition_expression RPAREN expression
 transmute_expression ::= TRANSMUTE LPAREN expression RPAREN expression
@@ -352,8 +356,8 @@ nil_expression ::= NIL
 uninitialized_expression ::= TRIPLE_DASH
 identifier_expression ::= IDENTIFIER
 set_expression ::= LBRACE [expression (COMMA expression)* COMMA?] RBRACE
-reference_expression ::= referenceable_expression DOT referenceable_expression { pin=2 }
-private referenceable_expression ::=
+reference_expression ::= referable_expression DOT referable_expression { pin=2 }
+private referable_expression ::=
     parenthesized_expression
     | structLiteral_expression
     | call_expression
@@ -428,14 +432,14 @@ continueStatement ::= CONTINUE label?
 block ::= tagStatement_expression? LBRACE (statement)* RBRACE
 
 statement ::= singleStatement (SEMICOLON singleStatement)*
-singleStatement ::= assignmentStatement
-                       | procedureDeclaration
+private singleStatement ::= assignmentStatement
+                       | procedureDeclarationStatement
                        | variableInitialization
-                       | enumDeclaration
-                       | variableDeclaration
+                       | enumDeclarationStatement
+                       | variableDeclarationStatement
                        | constantInitialization
                        | procedureOverloadStatement
-                       | bitsetDeclaration
+                       | bitsetDeclarationStatement
                        | forStatement
                        | ifStatement
                        | whenStatement
