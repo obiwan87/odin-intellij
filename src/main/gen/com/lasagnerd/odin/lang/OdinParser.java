@@ -4,12 +4,13 @@ package com.lasagnerd.odin.lang;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import static com.lasagnerd.odin.lang.psi.OdinTypes.*;
-import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
+import static com.lasagnerd.odin.lang.OdinParserUtil.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.PsiParser;
 import com.intellij.lang.LightPsiParser;
+import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class OdinParser implements PsiParser, LightPsiParser {
@@ -2857,11 +2858,11 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // Operator priority table:
   // 0: PREFIX(implicitSelector_expression)
   // 1: ATOM(literal_expression)
-  // 2: ATOM(arraySlice_expression)
-  // 3: ATOM(matrixIndex_expression)
-  // 4: PREFIX(arrayIndex_expression)
-  // 5: ATOM(procedure_expression)
-  // 6: ATOM(reference_expression)
+  // 2: ATOM(reference_expression)
+  // 3: ATOM(arraySlice_expression)
+  // 4: ATOM(matrixIndex_expression)
+  // 5: PREFIX(arrayIndex_expression)
+  // 6: ATOM(procedure_expression)
   // 7: ATOM(call_expression)
   // 8: POSTFIX(dereference_expression)
   // 9: PREFIX(parenthesized_expression)
@@ -2884,11 +2885,11 @@ public class OdinParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, "<expression>");
     r = implicitSelector_expression(b, l + 1);
     if (!r) r = literal_expression(b, l + 1);
+    if (!r) r = reference_expression(b, l + 1);
     if (!r) r = arraySlice_expression(b, l + 1);
     if (!r) r = matrixIndex_expression(b, l + 1);
     if (!r) r = arrayIndex_expression(b, l + 1);
     if (!r) r = procedure_expression(b, l + 1);
-    if (!r) r = reference_expression(b, l + 1);
     if (!r) r = call_expression(b, l + 1);
     if (!r) r = parenthesized_expression(b, l + 1);
     if (!r) r = unary_expression(b, l + 1);
@@ -2968,6 +2969,39 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  // referable_expression (DOT referable_expression)*
+  public static boolean reference_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "reference_expression")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, REFERENCE_EXPRESSION, "<reference expression>");
+    r = referable_expression(b, l + 1);
+    r = r && reference_expression_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (DOT referable_expression)*
+  private static boolean reference_expression_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "reference_expression_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!reference_expression_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "reference_expression_1", c)) break;
+    }
+    return true;
+  }
+
+  // DOT referable_expression
+  private static boolean reference_expression_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "reference_expression_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, DOT);
+    r = r && referable_expression(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // caller LBRACKET expression? COLON expression? RBRACKET
   public static boolean arraySlice_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arraySlice_expression")) return false;
@@ -3021,7 +3055,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, null);
     r = arrayIndex_expression_0(b, l + 1);
     p = r;
-    r = p && expression(b, l, 4);
+    r = p && expression(b, l, 5);
     r = p && report_error_(b, consumeToken(b, RBRACKET)) && r;
     exit_section_(b, l, m, ARRAY_INDEX_EXPRESSION, r, p, null);
     return r || p;
@@ -3078,39 +3112,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, ARROW);
     r = r && returnType(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // referable_expression (DOT referable_expression)*
-  public static boolean reference_expression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "reference_expression")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, REFERENCE_EXPRESSION, "<reference expression>");
-    r = referable_expression(b, l + 1);
-    r = r && reference_expression_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // (DOT referable_expression)*
-  private static boolean reference_expression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "reference_expression_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!reference_expression_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "reference_expression_1", c)) break;
-    }
-    return true;
-  }
-
-  // DOT referable_expression
-  private static boolean reference_expression_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "reference_expression_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, DOT);
-    r = r && referable_expression(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

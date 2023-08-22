@@ -1,4 +1,5 @@
 {
+  parserImports="static com.intellij.lang.parser.GeneratedParserUtilBase.*"
   parserClass="com.lasagnerd.odin.lang.OdinParser"
 
   extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
@@ -11,6 +12,7 @@
   elementTypeHolderClass="com.lasagnerd.odin.lang.psi.OdinTypes"
   elementTypeClass="com.lasagnerd.odin.lang.psi.OdinElementType"
   tokenTypeClass="com.lasagnerd.odin.lang.psi.OdinTokenType"
+  parserUtilClass="com.lasagnerd.odin.lang.OdinParserUtil"
 
   tokens=[
         LINE_COMMENT='regexp://[^\r\n]*'
@@ -235,6 +237,7 @@ variableInitialization ::= attributeStatement? identifierList COLON typeDefiniti
 identifierList ::= IDENTIFIER (COMMA IDENTIFIER)*
 
 assignmentStatement ::=  leftHandExpressions assignmentOperator expressionsList
+
 leftHandExpressions ::= leftHandExpression (COMMA leftHandExpression)*
 leftHandExpression ::= matrixIndex_expression
     | arraySlice_expression
@@ -322,11 +325,11 @@ parenthesized_expression ::= LPAREN expression RPAREN
 // All expressions
 expression ::= implicitSelector_expression
                | literal_expression
+               | reference_expression
                | arraySlice_expression
                | matrixIndex_expression
                | arrayIndex_expression
                | procedure_expression
-               | reference_expression
                | call_expression
                | dereference_expression
                | parenthesized_expression
