@@ -51,6 +51,7 @@
         ENUM='regexp:enum'
         UNION='regexp:union'
         DISTINCT='regexp:distinct'
+        WHERE='regexp:where'
 
         IDENTIFIER='regexp:[a-zA-Z_][a-zA-Z0-9_]*'
         DQ_STRING_LITERAL='regexp:"[^"]*"'
@@ -144,15 +145,15 @@
 }
 
 
-odinFile ::= packageDeclarationStatement (globalStatement)*
+odinFile ::= packageDeclarationStatement (fileScopeStatement)*
 packageDeclarationStatement ::= PACKAGE IDENTIFIER
 importDeclarationStatement ::= IMPORT IDENTIFIER? DQ_STRING_LITERAL
 
-private globalStatement ::= singleGlobalStatement (SEMICOLON singleGlobalStatement)*
+private fileScopeStatement ::= singleFileScopeStatement (SEMICOLON singleFileScopeStatement)*
 
 // TODO We have to distinguish between statements that have to be alone in a line or can be chained using a semicolon
 
-private singleGlobalStatement ::= foreignImportDeclarationStatement
+private singleFileScopeStatement ::= foreignImportDeclarationStatement
                 | importDeclarationStatement
                 | procedureDeclarationStatement
                 | constantInitialization
@@ -179,7 +180,7 @@ attributeStatement ::=  AT IDENTIFIER
                        | AT LPAREN IDENTIFIER (EQ (literal_expression | IDENTIFIER))? RPAREN
 // Struct
 structDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON structSpec
-structSpec ::= STRUCT tagStatement_expression? LBRACE (fieldDeclarationStatement COMMA)* RBRACE
+structSpec ::= STRUCT [LPAREN parameterList RPAREN [WHERE expression]] tagStatement_expression? LBRACE (fieldDeclarationStatement COMMA)* RBRACE
 fieldDeclarationStatement ::= USING? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
 
 // Enum
@@ -196,9 +197,7 @@ bitsetDeclarationStatement ::= IDENTIFIER COLON COLON BIT_SET LBRACKET expressio
 // Procedure
 procedureDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON procedureType (block|TRIPLE_DASH)
 
-returnType          ::= LPAREN returnParameterList RPAREN | expression
-returnParameterList ::= returnParameter (COMMA returnParameter)*
-returnParameter     ::= (identifierList COLON)? expression
+returnType          ::= LPAREN parameterList RPAREN | expression
 
 returnStatement ::= RETURN returnArgumentList?
 private returnArgumentList ::= expression (COMMA expression)*
@@ -218,8 +217,10 @@ private typeType ::= mapType
                      | structSpec
                      | enumSpec
                      | unionSpec
+                     | structType
                      | (DOLLAR? identifier_expression)
 
+structType      ::= IDENTIFIER (DOT IDENTIFIER)* LPAREN argumentList* RPAREN
 
 bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON identifier_expression] RBRACKET
 mapType          ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression
@@ -233,14 +234,14 @@ typeAliasDeclarationStatement ::= IDENTIFIER COLON COLON DISTINCT? typeDefinitio
 variableInitialization ::= attributeStatement? identifierList COLON typeDefinition_expression? EQ expressionsList
 identifierList ::= IDENTIFIER (COMMA IDENTIFIER)*
 
-assignmentStatement ::=  leftHandExpressions assignmentOperator expressionsList {pin=2}
+assignmentStatement ::=  leftHandExpressions assignmentOperator expressionsList
 leftHandExpressions ::= leftHandExpression (COMMA leftHandExpression)*
 leftHandExpression ::= matrixIndex_expression
     | arraySlice_expression
     | arrayIndex_expression
+    | dereference_expression
     | reference_expression
     | identifier_expression
-    | dereference_expression
 
 expressionsList ::= expression (COMMA expression)*
 
@@ -263,14 +264,16 @@ variableDeclarationStatement ::= attributeStatement? IDENTIFIER (COMMA IDENTIFIE
 
 // Parameters for procedures and assignments
 parameterList ::= parameter (COMMA parameter)*
-parameter ::= parameterDeclarationStatement
-              | parameterInitialization
+parameter ::= parameterInitialization
+              | parameterDeclarationStatement
+              | typeDefinition_expression
               | variadicParameter
 
 parameterDeclarationStatement ::= [USING|DOLLAR] tagStatement_expression? IDENTIFIER (COMMA DOLLAR? IDENTIFIER)* COLON expression parameterTypeSpecialization?
 parameterTypeSpecialization ::= DIV expression
-private parameterInitialization ::= IDENTIFIER COLON EQ expression
+private parameterInitialization ::= IDENTIFIER COLON typeDefinition_expression? EQ expression
 private variadicParameter ::= IDENTIFIER COLON RANGE expression
+
 
 // Function calls
 argumentList  ::= argument (COMMA argument)*
@@ -280,8 +283,8 @@ argument      ::= namedArgument
 unnamedArgument ::= expression { extends = argument}
 
 call_expression ::= caller LPAREN argumentList? RPAREN
-caller ::= identifier_expression
-           | parenthesized_expression
+caller ::=  parenthesized_expression
+            | identifier_expression
 
 
 binary_expression ::= expression binaryOperator expression
@@ -326,12 +329,12 @@ expression ::= // ternary_expression
                | procedure_expression
                | reference_expression
                | call_expression
+               | dereference_expression
                | parenthesized_expression
                | binary_expression
                | unary_expression
                | or_return_expression
                | set_expression
-               | dereference_expression
                | uninitialized_expression
                | cast_expression
                | transmute_expression
@@ -356,19 +359,22 @@ nil_expression ::= NIL
 uninitialized_expression ::= TRIPLE_DASH
 identifier_expression ::= IDENTIFIER
 set_expression ::= LBRACE [expression (COMMA expression)* COMMA?] RBRACE
-reference_expression ::= referable_expression DOT referable_expression { pin=2 }
+reference_expression ::= referable_expression (DOT referable_expression)*
+
 private referable_expression ::=
-    parenthesized_expression
+    call_expression
+    | parenthesized_expression
     | structLiteral_expression
-    | call_expression
     | arraySlice_expression
     | arrayIndex_expression
     | matrixIndex_expression
-    | identifier_expression
     | unary_expression
+    | identifier_expression
 
 implicitSelector_expression ::= DOT expression
-dereference_expression ::= expression CARET
+dereference_expression ::= expression
+                        CARET { pin=2 }
+
 procedure_expression ::= PROC LPAREN parameterList* RPAREN (ARROW returnType)? block
 
 unaryOperator ::= PLUS      // Arithmetic identity

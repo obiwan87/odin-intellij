@@ -88,6 +88,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         "union"       { return UNION; }
         "distinct"    { return DISTINCT; }
         "matrix"    { return MATRIX; }
+        "where"    { return WHERE; }
 
 
         {LineComment} { return LINE_COMMENT; }
