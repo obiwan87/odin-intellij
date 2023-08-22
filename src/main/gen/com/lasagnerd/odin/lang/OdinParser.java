@@ -616,20 +616,20 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // expression
+  // assignmentStatement
+  //                                 | expression
   //                                 | ifStatement
   //                                 | forStatement
   //                                 | switchStatement
-  //                                 | assignmentStatement
   //                                 | block
   static boolean deferrableStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "deferrableStatement")) return false;
     boolean r;
-    r = expression(b, l + 1, -1);
+    r = assignmentStatement(b, l + 1);
+    if (!r) r = expression(b, l + 1, -1);
     if (!r) r = ifStatement(b, l + 1);
     if (!r) r = forStatement(b, l + 1);
     if (!r) r = switchStatement(b, l + 1);
-    if (!r) r = assignmentStatement(b, l + 1);
     if (!r) r = block(b, l + 1);
     return r;
   }

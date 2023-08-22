@@ -320,8 +320,7 @@ parenthesized_expression ::= LPAREN expression RPAREN
 // Does it make sense to have literal expressions in the chain?
 
 // All expressions
-expression ::= // ternary_expression
-               implicitSelector_expression
+expression ::= implicitSelector_expression
                | literal_expression
                | arraySlice_expression
                | matrixIndex_expression
@@ -481,9 +480,9 @@ caseExpression ::= expression
                   | DOT IDENTIFIER
 
 deferStatement ::= DEFER deferrableStatement
-private deferrableStatement ::= expression
+private deferrableStatement ::= assignmentStatement
+                                | expression
                                 | ifStatement
                                 | forStatement
                                 | switchStatement
-                                | assignmentStatement
                                 | block
