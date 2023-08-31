@@ -139,7 +139,9 @@
         RANGE_INCLUSIVE='regexp:\.\.='
         RANGE_EXCLUSIVE='regexp:\.\.<'
 
-        WHITE_SPACE='regexp:\s+|\r?\n'
+        WHITE_SPACE='regexp:[ \t\f]+'
+        NEW_LINE='regexp:(\r|\n|\r\n)+'
+        EOS='EOS'
   ]
 
   extends('.*_expression') = expression
@@ -147,35 +149,36 @@
 }
 
 
-odinFile ::= packageDeclarationStatement (fileScopeStatement)*
-packageDeclarationStatement ::= PACKAGE IDENTIFIER
+odinFile ::= packageClause eosRule (importDeclarationStatement eosRule)* (fileScopeStatement eosRule)* <<eof>>
+packageClause ::= PACKAGE IDENTIFIER
 importDeclarationStatement ::= IMPORT IDENTIFIER? DQ_STRING_LITERAL
 
-private fileScopeStatement ::= singleFileScopeStatement (SEMICOLON singleFileScopeStatement)*
-
-// TODO We have to distinguish between statements that have to be alone in a line or can be chained using a semicolon
-
-private singleFileScopeStatement ::= foreignImportDeclarationStatement
+private fileScopeStatement ::= foreignImportDeclarationStatement
                 | importDeclarationStatement
                 | procedureDeclarationStatement
-                | constantInitialization
+                | constantInitializationStatement
                 | enumDeclarationStatement
                 | unionDeclarationStatement
                 | typeAliasDeclarationStatement
                 | structDeclarationStatement
                 | bitsetDeclarationStatement
-                | variableInitialization
+                | variableInitializationStatement
                 | variableDeclarationStatement
                 | procedureOverloadStatement
                 | foreignStatement
+                | whenStatement
                 | tagStatement_expression
 
 
 foreignImportDeclarationStatement ::= FOREIGN IMPORT ( IDENTIFIER? DQ_STRING_LITERAL | LBRACE DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* RBRACE)
 
-foreignStatement ::= attributeStatement? FOREIGN IDENTIFIER foreignBlock
-foreignBlock ::= LBRACE (foreignProcedureDeclarationStatement|variableDeclarationStatement) RBRACE
-foreignProcedureDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON PROC string_literal? LPAREN parameterList* RPAREN (ARROW returnType)? TRIPLE_DASH
+foreignStatement ::= (attributeStatement eosRule)* FOREIGN IDENTIFIER foreignBlock
+
+foreignBlock ::= LBRACE foreignStatementList? RBRACE
+
+foreignBlockStatement ::= foreignProcedureDeclarationStatement|variableDeclarationStatement
+private foreignStatementList ::= ((SEMICOLON | NEW_LINE | EOS | <<closingBracket>>)? foreignBlockStatement eosRule)+
+foreignProcedureDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] TRIPLE_DASH
 
 // Attributes
 attributeStatement ::=  AT IDENTIFIER
@@ -197,9 +200,18 @@ unionSpec ::= LBRACE typeDefinition_expression (COMMA typeDefinition_expression)
 bitsetDeclarationStatement ::= IDENTIFIER COLON COLON BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
 
 // Procedure
-procedureDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON procedureType (block|TRIPLE_DASH)
 
-returnType          ::= LPAREN parameterList RPAREN | expression
+// TODO define declaration as literal expression
+// This will be elegant since all declaration follow the pattern
+//  IDENTIFIER COLON TYPE COLON LITERAL_EXPRESSION
+procedureDeclarationStatement ::= (attributeStatement EOS*) IDENTIFIER COLON COLON procedureType procedureBody
+procedure_expression ::= procedureType block
+procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] [whereClause]
+
+whereClause ::= WHERE expression
+procedureBody ::= block|TRIPLE_DASH
+
+returnType          ::= LPAREN parameterList RPAREN | typeDefinition_expression
 
 returnStatement ::= RETURN returnArgumentList?
 private returnArgumentList ::= expression (COMMA expression)*
@@ -210,7 +222,9 @@ usingStatement ::= USING expression
 procedureOverloadStatement ::= IDENTIFIER COLON COLON PROC LBRACE IDENTIFIER (COMMA IDENTIFIER)* COMMA? RBRACE
 
 // Variables and constants
-typeDefinition_expression   ::= CARET? (IDENTIFIER DOT)* typeType
+typeDefinition_expression   ::= [pointer|multiPointer] (IDENTIFIER DOT)* typeType
+private pointer ::= CARET
+private multiPointer ::= LBRACKET CARET RBRACKET
 private typeType ::= mapType
                      | matrixType
                      | bitSetType
@@ -228,12 +242,11 @@ bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON identifier_expressio
 mapType          ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression
 matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
 arrayType        ::= LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression
-procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType]
 
-constantInitialization ::= attributeStatement? IDENTIFIER COLON typeDefinition_expression? COLON (expression | tagStatement_expression)
+constantInitializationStatement ::= (attributeStatement eosRule)* IDENTIFIER COLON typeDefinition_expression? COLON tagStatement_expression? expression
 typeAliasDeclarationStatement ::= IDENTIFIER COLON COLON DISTINCT? typeDefinition_expression
 
-variableInitialization ::= attributeStatement? identifierList COLON typeDefinition_expression? EQ expressionsList
+variableInitializationStatement ::= (attributeStatement eosRule)* identifierList COLON typeDefinition_expression? EQ expressionsList
 identifierList ::= IDENTIFIER (COMMA IDENTIFIER)*
 
 assignmentStatement ::=  leftHandExpressions assignmentOperator expressionsList
@@ -263,7 +276,7 @@ assignmentOperator ::= EQ
                        | LSHIFT_EQ
                        | RSHIFT_EQ
 
-variableDeclarationStatement ::= attributeStatement? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
+variableDeclarationStatement ::= (attributeStatement eosRule)* IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
 
 // Parameters for procedures and assignments
 parameterList ::= parameter (COMMA parameter)*
@@ -286,6 +299,7 @@ argument      ::= namedArgument
 unnamedArgument ::= expression { extends = argument}
 
 call_expression ::= caller LPAREN argumentList? RPAREN
+
 caller ::=  parenthesized_expression
             | identifier_expression
 
@@ -324,6 +338,7 @@ parenthesized_expression ::= LPAREN expression RPAREN
 
 // All expressions
 expression ::= implicitSelector_expression
+               | ternary_expression
                | literal_expression
                | reference_expression
                | arraySlice_expression
@@ -347,12 +362,13 @@ expression ::= implicitSelector_expression
                | tagStatement_expression
 
 
-//private ternary_expression ::= ternary_cond_expression
-//                               | ternary_if_expression
-//                               | ternary_when_expression
-//ternary_cond_expression ::= expression QUESTION expression COLON expression
-//ternary_if_expression ::= expression IF expression ELSE expression
-//ternary_when_expression ::= expression WHEN expression ELSE expression
+
+private ternary_expression ::= ternary_cond_expression
+                               | ternary_if_expression
+                               | ternary_when_expression
+ternary_cond_expression ::= expression QUESTION expression COLON expression
+ternary_if_expression ::= expression IF expression ELSE expression
+ternary_when_expression ::= expression WHEN expression ELSE expression
 
 cast_expression ::= CAST LPAREN typeDefinition_expression RPAREN expression
 transmute_expression ::= TRANSMUTE LPAREN expression RPAREN expression
@@ -376,8 +392,6 @@ private referable_expression ::=
 implicitSelector_expression ::= DOT expression
 dereference_expression ::= expression
                         CARET { pin=2 }
-
-procedure_expression ::= PROC LPAREN parameterList* RPAREN (ARROW returnType)? block
 
 unaryOperator ::= PLUS      // Arithmetic identity
                   | MINUS   // Arithmetic negation
@@ -432,43 +446,56 @@ forHead ::= forIn|forTraditional
 forBody ::= block | forSingleStatement
 forSingleStatement ::= DO statement
 
-breakStatement ::= BREAK label?
-continueStatement ::= CONTINUE label?
+breakStatement ::= BREAK IDENTIFIER?
+continueStatement ::= CONTINUE IDENTIFIER?
 
 // Statements that are allowed in "blocks" like for loops, if statements, etc.
 // A block is a sequence of statements contained in braces.
-block ::= tagStatement_expression? LBRACE (statement)* RBRACE
+block ::= tagStatement_expression? LBRACE statementList? RBRACE
 
-statement ::= singleStatement (SEMICOLON singleStatement)*
-private singleStatement ::= assignmentStatement
-                       | procedureDeclarationStatement
-                       | variableInitialization
-                       | enumDeclarationStatement
-                       | variableDeclarationStatement
-                       | constantInitialization
-                       | procedureOverloadStatement
-                       | bitsetDeclarationStatement
-                       | forStatement
-                       | ifStatement
-                       | whenStatement
-                       | switchStatement
-                       | deferStatement
-                       | returnStatement
-                       | breakStatement
-                       | continueStatement
-                       | attributeStatement
-                       | usingStatement
-                       | block
-                       | expression
+
+// In the current implementation, when entering a parenthesis, bracket or brace block, the parser will expect to find
+// a statement or an end of statement. The problem is that empty blocks are allowed, but will lead to a parsing error.
+
+// TODO introduce new lexer state that ignores EOS tokens
+
+eosRule ::= SEMICOLON | <<eof>> | EOS | <<closingBracket>>
+statementList ::= ((SEMICOLON | NEW_LINE | EOS | <<closingBracket>>)? statement eosRule)+
+statement ::= assignmentStatement
+                | procedureDeclarationStatement
+                | variableInitializationStatement
+                | variableDeclarationStatement
+                | enumDeclarationStatement
+                | procedureOverloadStatement
+                | constantInitializationStatement
+                | bitsetDeclarationStatement
+                | forStatement
+                | ifStatement
+                | whenStatement
+                | switchStatement
+                | deferStatement
+                | returnStatement
+                | breakStatement
+                | continueStatement
+                | attributeStatement
+                | usingStatement
+                | expressionStatement
+                | fallthroughStatement
+                | blockStatement
+                | foreignImportDeclarationStatement
+
+fallthroughStatement ::= FALLTHROUGH
+expressionStatement ::= expression
+blockStatement ::= block
 
 forTraditional ::= FOR (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
 forIn ::= FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression
 
-private forStartStatement ::=   variableInitialization | assignmentStatement | call_expression
+private forStartStatement ::=   variableInitializationStatement | assignmentStatement | call_expression
 private forEndStatement ::=   assignmentStatement | call_expression
 
 ifStatement ::= IF  ifHead block (elseIfBlock)* (elseBlock)?
-ifHead ::=  (variableInitialization (COMMA variableInitialization)* SEMICOLON)? expression
+ifHead ::=  (variableInitializationStatement (COMMA variableInitializationStatement)* SEMICOLON)? expression
 elseIfBlock ::= ELSE IF ifHead block
 elseBlock ::= ELSE block
 
@@ -476,7 +503,7 @@ whenStatement ::= WHEN expression block (elseWhenBlock)* (elseBlock)?
 elseWhenBlock ::= ELSE WHEN expression block
 
 switchStatement ::= tagStatement_expression? SWITCH IN? ifHead? LBRACE (switchCaseBlock)* RBRACE
-switchCaseBlock ::= CASE (caseExpression(COMMA caseExpression)*)? COLON (statement|FALLTHROUGH)*
+switchCaseBlock ::= CASE (caseExpression(COMMA caseExpression)*)? COLON (statementList)*
 
 caseExpression ::= expression
                   | typeDefinition_expression

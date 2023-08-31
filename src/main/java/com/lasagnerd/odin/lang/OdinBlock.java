@@ -30,7 +30,7 @@ public class OdinBlock extends AbstractBlock {
             }
 
             if (child instanceof OdinProcedureDeclarationStatement psi) {
-                var block = psi.getBlock();
+                var block = psi.getProcedureBody().getBlock();
                 if(block != null) {
                     blocks.add(new OdinBlock(block.getNode(), Wrap.createWrap(WrapType.NONE, false),
                             Alignment.createAlignment(), spacingBuilder));

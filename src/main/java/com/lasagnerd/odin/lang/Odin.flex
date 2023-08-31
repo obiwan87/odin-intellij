@@ -10,8 +10,6 @@ import static com.lasagnerd.odin.lang.psi.OdinTypes.*;
 %%
 
 %{
- StringBuffer string = new StringBuffer();
-
   public OdinLexer() {
     this((java.io.Reader)null);
   }
@@ -24,8 +22,8 @@ import static com.lasagnerd.odin.lang.psi.OdinTypes.*;
 %type IElementType
 %unicode
 
-LineTerminator=\r|\n|\r\n
-WhiteSpace={LineTerminator}{LineTerminator}* | [ \t\f]+{LineTerminator}?
+NewLine=(\r|\n|\r\n)+
+WhiteSpace=[ \t\f]+
 Identifier = [a-zA-Z_][a-zA-Z0-9_]*
 
 LineComment = \/\/[^\r\n]*
@@ -48,7 +46,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
 
 %state DQ_STRING_STATE
 %state SQ_STRING_STATE
-%state RAW_STRING_STATE
+%state NLSEMI_STATE
 %%
 
 <YYINITIAL> {
@@ -56,7 +54,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         "package"     { return PACKAGE; }
         "import"      { return IMPORT; }
         "proc"        { return PROC; }
-        "return"      { return RETURN; }
+        "return"      { yybegin(NLSEMI_STATE); return RETURN; }
         "defer"       { return DEFER; }
         "struct"      { return STRUCT; }
         "for"         { return FOR; }
@@ -66,15 +64,15 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         "else"        { return ELSE; }
         "switch"      { return SWITCH; }
         "case"        { return CASE; }
-        "fallthrough" { return FALLTHROUGH; }
-        "true"        { return TRUE; }
-        "false"       { return FALSE; }
+        "fallthrough" { yybegin(NLSEMI_STATE); return FALLTHROUGH; }
+        "true"        { yybegin(NLSEMI_STATE); return TRUE; }
+        "false"       { yybegin(NLSEMI_STATE); return FALSE; }
         "when"        { return WHEN; }
         "break"       { return BREAK; }
-        "continue"    { return CONTINUE; }
-        "nil"         { return NIL; }
+        "continue"    { yybegin(NLSEMI_STATE); return CONTINUE; }
+        "nil"         { yybegin(NLSEMI_STATE); return NIL; }
         "or_else"     { return OR_ELSE; }
-        "or_return"   { return OR_RETURN; }
+        "or_return"   { yybegin(NLSEMI_STATE); return OR_RETURN; }
         "foreign"     { return FOREIGN; }
         "cast"        { return CAST; }
         "transmute"   { return TRANSMUTE; }
@@ -93,34 +91,35 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
 
         {LineComment} { return LINE_COMMENT; }
         {BlockComment} { return BLOCK_COMMENT; }
-        {Identifier} { return IDENTIFIER; }
+        {Identifier} { yybegin(NLSEMI_STATE); return IDENTIFIER; }
         {WhiteSpace} { return WHITE_SPACE; }
+        {NewLine}   { return NEW_LINE; }
 
-        \"           { yybegin(DQ_STRING_STATE); string.setLength(0); }
-        \'           { yybegin(SQ_STRING_STATE); }
-        \`           { yybegin(RAW_STRING_STATE); }
+        \"            { yybegin(DQ_STRING_STATE); }
+        \'            { yybegin(SQ_STRING_STATE); }
+        \`[^`]*\`     { yybegin(NLSEMI_STATE); return RAW_STRING_LITERAL; }
 
-        {IntegerOctLiteral} { return INTEGER_OCT_LITERAL; }
-        {IntegerDecLiteral} { return INTEGER_DEC_LITERAL; }
-        {IntegerHexLiteral} { return INTEGER_HEX_LITERAL; }
-        {IntegerBinLiteral} { return INTEGER_BIN_LITERAL; }
-        {FloatLiteral} { return FLOAT_DEC_LITERAL; }
+        {IntegerOctLiteral} { yybegin(NLSEMI_STATE); return INTEGER_OCT_LITERAL; }
+        {IntegerDecLiteral} { yybegin(NLSEMI_STATE); return INTEGER_DEC_LITERAL; }
+        {IntegerHexLiteral} { yybegin(NLSEMI_STATE); return INTEGER_HEX_LITERAL; }
+        {IntegerBinLiteral} { yybegin(NLSEMI_STATE); return INTEGER_BIN_LITERAL; }
+        {FloatLiteral} { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
 
-        {ComplexFloatLiteral} { return COMPLEX_FLOAT_LITERAL; }
-        {ComplexIntegerDecLiteral} { return COMPLEX_INTEGER_DEC_LITERAL; }
+        {ComplexFloatLiteral} { yybegin(NLSEMI_STATE); return COMPLEX_FLOAT_LITERAL; }
+        {ComplexIntegerDecLiteral} { yybegin(NLSEMI_STATE); return COMPLEX_INTEGER_DEC_LITERAL; }
 
         ":"         { return COLON; }
         "="         { return EQ; }
         \{          { return LBRACE; }
-        \}          { return RBRACE; }
+        \}          { yybegin(NLSEMI_STATE); return RBRACE; }
         \(          { return LPAREN; }
-        \)          { return RPAREN; }
+        \)          { yybegin(NLSEMI_STATE); return RPAREN; }
         \.          { return DOT; }
         ","         { return COMMA; }
         "->"        { return ARROW; }
         ";"         { return SEMICOLON; }
         "["         { return LBRACKET; }
-        "]"         { return RBRACKET; }
+        "]"         { yybegin(NLSEMI_STATE); return RBRACKET; }
         "#"         { return HASH; }
         "?"         { return QUESTION; }
         "^"         { return CARET; }
@@ -170,13 +169,13 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         "..<"       { return RANGE_EXCLUSIVE; }
         "..="       { return RANGE_INCLUSIVE; }
 
-        "---"       { return TRIPLE_DASH; }
+        "---"       { yybegin(NLSEMI_STATE); return TRIPLE_DASH; }
 
         "$"         { return DOLLAR; }
 }
 
     <DQ_STRING_STATE> {
-      \"                             { yybegin(YYINITIAL); return DQ_STRING_LITERAL; }
+      \"                             { yybegin(NLSEMI_STATE); return DQ_STRING_LITERAL; }
       \\n                            { }
       \\t                            { }
       \\r                            { }
@@ -196,16 +195,19 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
 
     // Single quote strings
     <SQ_STRING_STATE> {
-        \'                           {yybegin(YYINITIAL); return SQ_STRING_LITERAL; }
+        \'                           {yybegin(NLSEMI_STATE); return SQ_STRING_LITERAL; }
         [^\n\r\'\\]+                 { }
         \\\'                         { }
         \\                           { }
     }
 
-    // Raw string delimited by `
-    <RAW_STRING_STATE> {
-        \`                           {yybegin(YYINITIAL); return RAW_STRING_LITERAL; }
-        [^`]+                        { }
+
+    <NLSEMI_STATE> {
+        [ \t]+                               { return WHITE_SPACE; }
+        "\*" [^\r\n]*? "*/"                  { return BLOCK_COMMENT; }
+        "//" [^\r\n]*                        { return LINE_COMMENT; }
+        ([\r\n]+ | ';' | "/*" .*? "*/" | \z) { yybegin(YYINITIAL); return EOS; }
+        [^]                                  { yypushback(1); yybegin(YYINITIAL); }
     }
 
 [^] { return BAD_CHARACTER; }

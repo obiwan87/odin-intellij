@@ -16,7 +16,7 @@ import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
 public class OdinParserDefinition implements ParserDefinition {
-    public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
+    public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE, OdinTypes.NEW_LINE);
 
     public static final IFileElementType FILE = new IFileElementType(OdinLanguage.INSTANCE);
 
@@ -42,7 +42,7 @@ public class OdinParserDefinition implements ParserDefinition {
 
     @Override
     public @NotNull TokenSet getStringLiteralElements() {
-        return TokenSet.create(OdinTypes.STRING_LITERAL);
+        return TokenSet.create(OdinTypes.DQ_STRING_LITERAL, OdinTypes.RAW_STRING_LITERAL);
     }
 
     @Override
