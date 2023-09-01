@@ -146,6 +146,7 @@
 
   extends('.*_expression') = expression
   extends('.*[sS]tatement') = statement
+  extends('.*_primary') = primary
 }
 
 
@@ -300,8 +301,7 @@ unnamedArgument ::= expression { extends = argument}
 
 call_expression ::= caller LPAREN argumentList? RPAREN
 
-caller ::=  parenthesized_expression
-            | identifier_expression
+caller ::=  parenthesized_expression | identifier_expression
 
 
 binary_expression ::= expression binaryOperator expression
@@ -338,16 +338,10 @@ parenthesized_expression ::= LPAREN expression RPAREN
 
 // All expressions
 expression ::= implicitSelector_expression
+               | primary_expression
                | ternary_expression
-               | literal_expression
-               | reference_expression
-               | arraySlice_expression
-               | matrixIndex_expression
-               | arrayIndex_expression
                | procedure_expression
-               | call_expression
                | dereference_expression
-               | parenthesized_expression
                | binary_expression
                | unary_expression
                | or_return_expression
@@ -361,6 +355,18 @@ expression ::= implicitSelector_expression
                | typeDefinition_expression
                | tagStatement_expression
 
+primary_expression ::= primary
+primary ::= operand_primary | combined_primary
+combined_primary ::= primary ( DOT IDENTIFIER
+                              | index
+                              | slice
+                              | arguments
+                              )
+operand_primary ::= IDENTIFIER | literal_expression | parenthesized_expression
+
+private index ::= LBRACKET expression [COMMA expression] RBRACKET
+private slice ::= LBRACKET expression? COLON expression? RBRACKET
+private arguments ::= LPAREN argumentList? RPAREN
 
 
 private ternary_expression ::= ternary_cond_expression
@@ -431,9 +437,9 @@ sliceLiteral_expression ::= LBRACKET RBRACKET expression LBRACE [expression (COM
 matrixLiteral_expression ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* RBRACE
 
 // indexing operator can be applied to same expressions that can be called?
-arrayIndex_expression ::= caller LBRACKET expression RBRACKET
-arraySlice_expression ::= caller LBRACKET expression? COLON expression? RBRACKET
-matrixIndex_expression ::= caller LBRACKET expression COMMA expression RBRACKET
+arrayIndex_expression ::= operand_primary LBRACKET expression RBRACKET
+arraySlice_expression ::= operand_primary LBRACKET expression? COLON expression? RBRACKET
+matrixIndex_expression ::= operand_primary LBRACKET expression COMMA expression RBRACKET
 
 tagStatement_expression ::= tagHead ( literal_expression | (LPAREN expressionsList? RPAREN))?
 tagHead ::= HASH IDENTIFIER
