@@ -68,7 +68,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         "true"        { yybegin(NLSEMI_STATE); return TRUE; }
         "false"       { yybegin(NLSEMI_STATE); return FALSE; }
         "when"        { return WHEN; }
-        "break"       { return BREAK; }
+        "break"       { yybegin(NLSEMI_STATE); return BREAK; }
         "continue"    { yybegin(NLSEMI_STATE); return CONTINUE; }
         "nil"         { yybegin(NLSEMI_STATE); return NIL; }
         "or_else"     { return OR_ELSE; }
@@ -122,7 +122,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         "]"         { yybegin(NLSEMI_STATE); return RBRACKET; }
         "#"         { return HASH; }
         "?"         { return QUESTION; }
-        "^"         { return CARET; }
+        "^"         { yybegin(NLSEMI_STATE); return CARET; }
         "@"         { return AT; }
 
 
@@ -172,6 +172,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         "---"       { yybegin(NLSEMI_STATE); return TRIPLE_DASH; }
 
         "$"         { return DOLLAR; }
+        ".?"        { yybegin(NLSEMI_STATE); return DOT_QUESTION; }
 }
 
     <DQ_STRING_STATE> {

@@ -16,7 +16,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!--suppress PluginXmlValidity -->
-        <platform.lsp.serverSupportProvider implementation="com.lasagnerd.odin.OdinLspServerSupportProvider"/>
+<!--        <platform.lsp.serverSupportProvider implementation="com.lasagnerd.odin.OdinLspServerSupportProvider"/>-->
 
         <fileType name="Odin"
                   language="Odin"

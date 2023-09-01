@@ -6,7 +6,7 @@ import com.lasagnerd.odin.lang.psi.OdinTypes;
 
 public class OdinParserUtil {
     public static boolean closingBracket(PsiBuilder builder, int level) {
-        IElementType iElementType = builder.lookAhead(1);
+        IElementType iElementType = builder.getTokenType();
         return iElementType == OdinTypes.RPAREN || iElementType == OdinTypes.RBRACE;
     }
 
