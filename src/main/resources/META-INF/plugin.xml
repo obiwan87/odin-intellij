@@ -12,12 +12,8 @@
   ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.ultimate</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <!--suppress PluginXmlValidity -->
-<!--        <platform.lsp.serverSupportProvider implementation="com.lasagnerd.odin.OdinLspServerSupportProvider"/>-->
-
         <fileType name="Odin"
                   language="Odin"
                   fieldName="INSTANCE"
