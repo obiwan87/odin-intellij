@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
+import com.lasagnerd.odin.lang.psi.OdinTokenType;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,65 @@ import java.util.List;
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
 public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
+
+    private static final List<String> reservedTypes = List.of(
+            "bool",
+            "b8",
+            "b16",
+            "b32",
+            "b64",
+            "byte",
+            "int",
+            "i8",
+            "i16",
+            "i32",
+            "i64",
+            "i128",
+            "uint",
+            "u8",
+            "u16",
+            "u32",
+            "u64",
+            "u128",
+            "uintptr",
+            "i16le",
+            "i32le",
+            "i64le",
+            "i128le",
+            "u16le",
+            "u32le",
+            "u64le",
+            "u128le",
+            "i16be",
+            "i32be",
+            "i64be",
+            "i128be",
+            "u16be",
+            "u32be",
+            "u64be",
+            "u128be",
+            "f16",
+            "f32",
+            "f64",
+            "f16le",
+            "f32le",
+            "f64le",
+            "f16be",
+            "f32be",
+            "f64be",
+            "complex32",
+            "complex64",
+            "complex128",
+            "quaternion64",
+            "quaternion128",
+            "quaternion256",
+            "rune",
+            "string",
+            "cstring",
+            "rawptr",
+            "typeid",
+            "any"
+    );
 
     public static final TextAttributesKey BAD_CHARACTER =
             createTextAttributesKey("ODIN_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
@@ -130,6 +190,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
         if(tokenType.equals(OdinTypes.AT)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.METADATA};
         }
+
 
         return EMPTY_KEYS;
     }

@@ -187,12 +187,12 @@ attributeStatement ::=  AT IDENTIFIER
                        | AT arguments
 // Struct
 structDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON structSpec
-structSpec ::= STRUCT [LPAREN parameterList RPAREN [WHERE expression]] tagStatement_expression? LBRACE (fieldDeclarationStatement COMMA)* RBRACE
+structSpec ::= STRUCT [LPAREN parameterList RPAREN [WHERE expression]] tagStatement_expression? LBRACE [fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?] RBRACE
 fieldDeclarationStatement ::= USING? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
 
 // Enum
 enumDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON enumSpec
-enumSpec ::= ENUM IDENTIFIER? LBRACE ([IDENTIFIER EQ] expression COMMA)* RBRACE
+enumSpec ::= ENUM [IDENTIFIER (DOT IDENTIFIER)*] LBRACE ([IDENTIFIER EQ] expression COMMA)* RBRACE
 
 // Union
 unionDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON UNION tagStatement_expression? unionSpec
@@ -207,10 +207,10 @@ bitsetDeclarationStatement ::= IDENTIFIER COLON COLON BIT_SET LBRACKET expressio
 // This will be elegant since all declaration follow the pattern
 //  IDENTIFIER COLON TYPE COLON LITERAL_EXPRESSION
 procedureDeclarationStatement ::= (attributeStatement EOS*) IDENTIFIER COLON COLON procedureType procedureBody
-procedure_expression ::= procedureType block
-procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW (returnType|NOT)] [whereClause]
+procedure_expression ::= procedureType procedureBody
+procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW (returnType|NOT)] <<enterMode "BLOCK">> [whereClause] <<exitMode "BLOCK">>
 
-whereClause ::= WHERE expression
+whereClause ::= WHERE expression (COMMA expression)*
 procedureBody ::= block|TRIPLE_DASH
 
 returnType          ::= LPAREN parameterList RPAREN | typeDefinition_expression
@@ -225,23 +225,26 @@ procedureOverloadStatement ::= IDENTIFIER COLON COLON PROC LBRACE IDENTIFIER (CO
 
 // This is not complete: pointe rand multipointer can be repeated multiple times, e.g. ^^^int or ^[^]int
 // Variables and constants
-typeDefinition_expression   ::= [pointer|multiPointer] DISTINCT? (IDENTIFIER DOT)* typeType
-private pointer ::= CARET
-private multiPointer ::= LBRACKET CARET RBRACKET
-private typeType ::= mapType
-                     | matrixType
-                     | bitSetType
-                     | arrayType
-                     | procedureType
-                     | structSpec
-                     | enumSpec
-                     | unionSpec
-                     | structType
-                     | (DOLLAR? identifier_expression)
+typeDefinition_expression   ::= DISTINCT? typeType
+typeType ::= mapType
+             | matrixType
+             | bitSetType
+             | multiPointerType
+             | arrayType
+             | procedureType
+             | structSpec
+             | enumSpec
+             | unionSpec
+             | structType
+             | pointerType
+             | (DOLLAR? primary_expression)
+
+pointerType ::= CARET typeType
+multiPointerType ::= LBRACKET CARET RBRACKET typeType
 
 structType      ::= IDENTIFIER (DOT IDENTIFIER)* LPAREN argumentList* RPAREN
 
-bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON identifier_expression] RBRACKET
+bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON primary_expression] RBRACKET
 mapType          ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression
 matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
 arrayType        ::= LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression
@@ -335,7 +338,7 @@ binaryOperator ::= PLUS
                    | IN
                    | NOT_IN
 
-parenthesized_expression ::= LPAREN expression RPAREN
+parenthesized_expression ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
 
 // Does it make sense to have literal expressions in the chain?
 
@@ -442,8 +445,12 @@ composite_literal ::= matrixLiteral
 
 literal ::= basic_literal | composite_literal
 
-structLiteral ::= IDENTIFIER LBRACE [[IDENTIFIER EQ] expression (COMMA [IDENTIFIER EQ] expression)* COMMA?] RBRACE
-arrayLiteral ::= LBRACKET (expression|QUESTION) RBRACKET typeDefinition_expression LBRACE [expression (COMMA expression)* COMMA?] RBRACE
+structLiteral ::= IDENTIFIER literalValue
+literalValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>)  LBRACE [[IDENTIFIER EQ] expression (COMMA [IDENTIFIER EQ] expression)* COMMA?] RBRACE
+arrayLiteral ::= LBRACKET (expression|QUESTION) RBRACKET typeDefinition_expression LBRACE [arrayIndexedList|arrayExpressionsList] RBRACE
+private arrayExpressionsList ::=expression (COMMA expression)* COMMA?
+private arrayIndexedList ::= arrayIndexedInitialization COMMA (arrayIndexedInitialization COMMA)* COMMA?
+private arrayIndexedInitialization ::= ((INTEGER_DEC_LITERAL (RANGE_INCLUSIVE|RANGE_EXCLUSIVE) INTEGER_DEC_LITERAL)|INTEGER_DEC_LITERAL) EQ expression
 sliceLiteral ::= LBRACKET RBRACKET expression LBRACE [expression (COMMA expression)* COMMA?] RBRACE
 matrixLiteral ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* RBRACE
 tripleDashLiteral_expression ::= TRIPLE_DASH
@@ -459,7 +466,7 @@ forStatement ::= label? tagStatement_expression? forHead forBody
 private label ::= IDENTIFIER COLON
 
 
-forHead ::= forIn|forTraditional
+forHead ::= FOR <<enterMode "BLOCK">> (forIn|forTraditional) <<exitMode "BLOCK">>
 forBody ::= block | forSingleStatement
 forSingleStatement ::= DO statement
 
@@ -506,22 +513,23 @@ fallthroughStatement ::= FALLTHROUGH
 expressionStatement ::= expression
 blockStatement ::= block
 
-forTraditional ::= FOR (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
-forIn ::= FOR IDENTIFIER (COMMA IDENTIFIER)* IN expression
+private forTraditional ::= (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
+private forIn ::=  IDENTIFIER (COMMA IDENTIFIER)* IN expression
 
 private forStartStatement ::=   variableInitializationStatement | assignmentStatement | call_expression
 private forEndStatement ::=   assignmentStatement | call_expression
 
-ifStatement ::= IF ifHead block (eosRule* elseIfBlock)* (eosRule* elseBlock)?
-ifHead ::= [ifInit SEMICOLON] expression
-ifInit ::= [variableInitializationStatement (COMMA variableInitializationStatement)*]
-elseIfBlock ::= ELSE IF ifHead block
+ifStatement ::= IF condition block (eosRule* elseIfBlock)* (eosRule* elseBlock)?
+private condition ::= <<enterMode "BLOCK">> [ifInit SEMICOLON] expression <<exitMode "BLOCK">>
+switchCondition ::= [ifInit SEMICOLON] expression
+private ifInit ::= [variableInitializationStatement (COMMA variableInitializationStatement)*]
+elseIfBlock ::= ELSE IF condition block
 elseBlock ::= ELSE block
 
 whenStatement ::= WHEN expression block (elseWhenBlock)* (elseBlock)?
 elseWhenBlock ::= ELSE WHEN expression block
 
-switchStatement ::= tagStatement_expression? SWITCH IN? ifHead? LBRACE (switchCaseBlock)* RBRACE
+switchStatement ::= tagStatement_expression? SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">> LBRACE (switchCaseBlock)* RBRACE
 switchCaseBlock ::= CASE (caseExpression(COMMA caseExpression)*)? COLON statementList?
 
 caseExpression ::= expression
