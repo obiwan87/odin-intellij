@@ -191,6 +191,8 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
       \\U[0-9a-fA-F]{8}              { }
       \\\"                           { }
       \\                             { }
+      // double backslash
+      \\\\                           { }
       [^\n\r\"\\]+                   { }
     }
 
@@ -200,6 +202,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         [^\n\r\'\\]+                 { }
         \\\'                         { }
         \\                           { }
+        \\\\                         { }
     }
 
 

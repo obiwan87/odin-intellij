@@ -224,21 +224,20 @@ usingStatement ::= USING expression
 // Procedure overloading
 procedureOverloadStatement ::= IDENTIFIER COLON COLON PROC LBRACE IDENTIFIER (COMMA IDENTIFIER)* COMMA? RBRACE
 
-// This is not complete: pointe rand multipointer can be repeated multiple times, e.g. ^^^int or ^[^]int
 // Variables and constants
 typeDefinition_expression   ::= DISTINCT? type
 type ::= mapType
-             | matrixType
-             | bitSetType
-             | multiPointerType
-             | arrayType
-             | procedureType
-             | structSpec
-             | enumSpec
-             | unionSpec
-             | structType
-             | pointerType
-             | (DOLLAR? primary_expression)
+         | matrixType
+         | bitSetType
+         | multiPointerType
+         | arrayType
+         | procedureType
+         | structSpec
+         | enumSpec
+         | unionSpec
+         | structType
+         | pointerType
+         | (DOLLAR? primary_expression)
 
 pointerType ::= CARET type
 multiPointerType ::= LBRACKET CARET RBRACKET type
@@ -250,7 +249,7 @@ mapType          ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinit
 matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
 arrayType        ::= LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression
 
-constantInitializationStatement ::= (attributeStatement eosRule)* IDENTIFIER COLON typeDefinition_expression? COLON tagStatement_expression? expression
+constantInitializationStatement ::= (attributeStatement eosRule*)* IDENTIFIER COLON typeDefinition_expression? COLON tagStatement_expression? expression
 typeAliasDeclarationStatement ::= IDENTIFIER COLON COLON DISTINCT? typeDefinition_expression
 
 variableInitializationStatement ::= (attributeStatement eosRule*)* identifierList COLON typeDefinition_expression? EQ expressionsList
@@ -263,7 +262,7 @@ leftHandExpression ::= matrixIndex_expression
     | arraySlice_expression
     | arrayIndex_expression
     | dereference_expression
-    | reference_expression
+    | primary_expression
     | identifier_expression
 
 expressionsList ::= expression (COMMA expression)*
@@ -363,13 +362,14 @@ expression ::= implicitSelector_expression
                | tagStatement_expression
 
 primary_expression ::= primary
-primary ::= operand_primary | combined_primary
+primary ::= operand_primary | caret_primary | combined_primary
 combined_primary ::= primary ( DOT IDENTIFIER
                               | index
                               | typeAssertion
                               | slice
                               | arguments
                               )
+caret_primary ::= primary CARET
 operand_primary ::=  literal | identifier_expression | parenthesized_expression
 
 private index ::= LBRACKET expression [COMMA expression] RBRACKET
@@ -391,17 +391,6 @@ nil_literal ::= NIL
 uninitialized_expression ::= TRIPLE_DASH
 identifier_expression ::= IDENTIFIER
 set_expression ::= LBRACE [expression (COMMA expression)* COMMA?] RBRACE
-reference_expression ::= referable_expression (DOT referable_expression)*
-
-private referable_expression ::=
-    call_expression
-    | parenthesized_expression
-    | structLiteral
-    | arraySlice_expression
-    | arrayIndex_expression
-    | matrixIndex_expression
-    | unary_expression
-    | identifier_expression
 
 implicitSelector_expression ::= DOT expression
 dereference_expression ::= expression CARET
@@ -438,7 +427,8 @@ basic_literal ::= nil_literal
                   | boolean_literal
                   | tripleDashLiteral_expression
 
-composite_literal ::= matrixLiteral
+composite_literal ::= mapLiteral
+                      | matrixLiteral
                       | arrayLiteral
                       | sliceLiteral
                       | structLiteral
@@ -446,14 +436,26 @@ composite_literal ::= matrixLiteral
 
 literal ::= basic_literal | composite_literal
 
-structLiteral ::= IDENTIFIER literalValue
+intLiteral ::= INTEGER_DEC_LITERAL
+              | INTEGER_HEX_LITERAL
+              | INTEGER_OCT_LITERAL
+              | INTEGER_BIN_LITERAL
+              | SQ_STRING_LITERAL
+              | DOT IDENTIFIER
+
+
+structLiteral ::= IDENTIFIER (DOT IDENTIFIER)* literalValue
 literalValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>)  LBRACE [[IDENTIFIER EQ] expression (COMMA [IDENTIFIER EQ] expression)* COMMA?] RBRACE
 arrayLiteral ::= LBRACKET (expression|QUESTION) RBRACKET typeDefinition_expression LBRACE [arrayIndexedList|arrayExpressionsList] RBRACE
 private arrayExpressionsList ::=expression (COMMA expression)* COMMA?
-private arrayIndexedList ::= arrayIndexedInitialization COMMA (arrayIndexedInitialization COMMA)* COMMA?
-private arrayIndexedInitialization ::= ((INTEGER_DEC_LITERAL (RANGE_INCLUSIVE|RANGE_EXCLUSIVE) INTEGER_DEC_LITERAL)|INTEGER_DEC_LITERAL) EQ expression
+private arrayIndexedList ::= arrayIndexedInitialization (COMMA arrayIndexedInitialization)* COMMA?
+private arrayIndexedInitialization ::= ((intLiteral (RANGE_INCLUSIVE|RANGE_EXCLUSIVE) intLiteral)|intLiteral) EQ expression
+
 sliceLiteral ::= LBRACKET RBRACKET expression LBRACE [expression (COMMA expression)* COMMA?] RBRACE
 matrixLiteral ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* RBRACE
+mapLiteral ::= mapType LBRACE [mapInitAssignments] RBRACE
+mapInitAssignments ::= mapInitAssigment (COMMA mapInitAssigment)* COMMA?
+mapInitAssigment ::= expression EQ expression
 tripleDashLiteral_expression ::= TRIPLE_DASH
 // indexing operator can be applied to same expressions that can be called?
 arrayIndex_expression ::= operand_primary LBRACKET expression RBRACKET
@@ -512,7 +514,7 @@ statement ::= assignmentStatement
 
 fallthroughStatement ::= FALLTHROUGH
 expressionStatement ::= expression
-blockStatement ::= [tagStatement_expression eosRule*] block
+blockStatement ::= [(tagStatement_expression eosRule*)|label] block
 
 private forTraditional ::= (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
 private forIn ::=  IDENTIFIER (COMMA IDENTIFIER)* IN expression
@@ -522,8 +524,8 @@ private forEndStatement ::=   assignmentStatement | call_expression
 
 ifStatement ::= IF condition block (eosRule* elseIfBlock)* (eosRule* elseBlock)?
 private condition ::= <<enterMode "BLOCK">> [ifInit SEMICOLON] expression <<exitMode "BLOCK">>
-switchCondition ::= [ifInit SEMICOLON] expression
-private ifInit ::= [variableInitializationStatement (COMMA variableInitializationStatement)*]
+private switchCondition ::= [ifInit SEMICOLON] expression?
+private ifInit ::= assignmentStatement|variableInitializationStatement
 elseIfBlock ::= ELSE IF condition block
 elseBlock ::= ELSE block
 
