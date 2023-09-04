@@ -178,9 +178,10 @@ foreignStatement ::= (attributeStatement eosRule)* FOREIGN IDENTIFIER foreignBlo
 
 foreignBlock ::= LBRACE foreignStatementList? RBRACE
 
-foreignBlockStatement ::= variableDeclarationStatement|foreignProcedureDeclarationStatement
-private foreignStatementList ::= ((SEMICOLON | NEW_LINE | EOS | <<closingBracket>>)? foreignBlockStatement eosRule)+
-foreignProcedureDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] TRIPLE_DASH
+foreignStatementList ::= ((SEMICOLON | NEW_LINE | EOS | <<closingBracket>>)? foreignBlockStatement eosRule)+
+foreignBlockStatement ::= variableDeclarationStatement
+                         |foreignProcedureDeclarationStatement
+foreignProcedureDeclarationStatement ::= (attributeStatement eosRule*)* IDENTIFIER COLON COLON PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] TRIPLE_DASH
 
 // Attributes
 attributeStatement ::=  AT IDENTIFIER
@@ -206,14 +207,14 @@ bitsetDeclarationStatement ::= IDENTIFIER COLON COLON BIT_SET LBRACKET expressio
 // TODO define declaration as literal expression
 // This will be elegant since all declaration follow the pattern
 //  IDENTIFIER COLON TYPE COLON LITERAL_EXPRESSION
-procedureDeclarationStatement ::= (attributeStatement EOS*) IDENTIFIER COLON COLON procedureType procedureBody
+procedureDeclarationStatement ::= (attributeStatement eosRule*)* IDENTIFIER COLON COLON procedureType procedureBody
 procedure_expression ::= procedureType procedureBody
-procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW (returnType|NOT)] <<enterMode "BLOCK">> [whereClause] <<exitMode "BLOCK">>
+procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] <<enterMode "BLOCK">> [whereClause] <<exitMode "BLOCK">>
 
 whereClause ::= WHERE expression (COMMA expression)*
 procedureBody ::= block|TRIPLE_DASH
 
-returnType          ::= LPAREN parameterList RPAREN | typeDefinition_expression
+returnType          ::= NOT | LPAREN parameterList RPAREN | typeDefinition_expression
 
 returnStatement ::= RETURN returnArgumentList?
 private returnArgumentList ::= expression (COMMA expression)*
@@ -225,8 +226,8 @@ procedureOverloadStatement ::= IDENTIFIER COLON COLON PROC LBRACE IDENTIFIER (CO
 
 // This is not complete: pointe rand multipointer can be repeated multiple times, e.g. ^^^int or ^[^]int
 // Variables and constants
-typeDefinition_expression   ::= DISTINCT? typeType
-typeType ::= mapType
+typeDefinition_expression   ::= DISTINCT? type
+type ::= mapType
              | matrixType
              | bitSetType
              | multiPointerType
@@ -239,8 +240,8 @@ typeType ::= mapType
              | pointerType
              | (DOLLAR? primary_expression)
 
-pointerType ::= CARET typeType
-multiPointerType ::= LBRACKET CARET RBRACKET typeType
+pointerType ::= CARET type
+multiPointerType ::= LBRACKET CARET RBRACKET type
 
 structType      ::= IDENTIFIER (DOT IDENTIFIER)* LPAREN argumentList* RPAREN
 
@@ -459,7 +460,7 @@ arrayIndex_expression ::= operand_primary LBRACKET expression RBRACKET
 arraySlice_expression ::= operand_primary LBRACKET expression? COLON expression? RBRACKET
 matrixIndex_expression ::= operand_primary LBRACKET expression COMMA expression RBRACKET
 
-tagStatement_expression ::= tagHead ( literal | (LPAREN expressionsList? RPAREN))?
+tagStatement_expression ::= tagHead [literal | (LPAREN expressionsList? RPAREN)]
 tagHead ::= HASH IDENTIFIER
 
 forStatement ::= label? tagStatement_expression? forHead forBody
@@ -493,6 +494,7 @@ statement ::= assignmentStatement
                 | procedureOverloadStatement
                 | constantInitializationStatement
                 | bitsetDeclarationStatement
+                | blockStatement
                 | forStatement
                 | ifStatement
                 | whenStatement
@@ -505,13 +507,12 @@ statement ::= assignmentStatement
                 | usingStatement
                 | expressionStatement
                 | fallthroughStatement
-                | blockStatement
                 | foreignStatement
                 | foreignImportDeclarationStatement
 
 fallthroughStatement ::= FALLTHROUGH
 expressionStatement ::= expression
-blockStatement ::= block
+blockStatement ::= [tagStatement_expression eosRule*] block
 
 private forTraditional ::= (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
 private forIn ::=  IDENTIFIER (COMMA IDENTIFIER)* IN expression
@@ -526,7 +527,7 @@ private ifInit ::= [variableInitializationStatement (COMMA variableInitializatio
 elseIfBlock ::= ELSE IF condition block
 elseBlock ::= ELSE block
 
-whenStatement ::= WHEN expression block (elseWhenBlock)* (elseBlock)?
+whenStatement ::= WHEN condition block (eosRule* elseWhenBlock)* (eosRule* elseBlock)?
 elseWhenBlock ::= ELSE WHEN expression block
 
 switchStatement ::= tagStatement_expression? SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">> LBRACE (switchCaseBlock)* RBRACE
