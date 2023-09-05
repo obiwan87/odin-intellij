@@ -47,6 +47,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
 %state DQ_STRING_STATE
 %state SQ_STRING_STATE
 %state NLSEMI_STATE
+%state NEXT_LINE
 %%
 
 <YYINITIAL> {
@@ -208,10 +209,20 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
 
     <NLSEMI_STATE> {
         [ \t]+                               { return WHITE_SPACE; }
-        "\*" [^\r\n]*? "*/"                  { return BLOCK_COMMENT; }
+        "/*" [^\r\n]*? "*/"                  { return BLOCK_COMMENT; }
         "//" [^\r\n]*                        { return LINE_COMMENT; }
-        ([\r\n]+ | ';' | "/*" .*? "*/") { yybegin(YYINITIAL); return EOS; }
+
+        \\                                   { yybegin(NEXT_LINE);  }
+        ([\r\n]+ | ';' | "/*" .*? "*/")      { yybegin(YYINITIAL); return EOS; }
         [^]                                  { yypushback(1); yybegin(YYINITIAL); }
+    }
+
+    <NEXT_LINE> {
+        [ \t]+                               { return WHITE_SPACE; }
+        "/*" [^\r\n]*? "*/"                  { return BLOCK_COMMENT; }
+        "//" [^\r\n]*                        { return LINE_COMMENT; }
+        [\r\n]                               { yybegin(YYINITIAL); }
+        [^]                                  { return BAD_CHARACTER; }
     }
 
 [^] { return BAD_CHARACTER; }
