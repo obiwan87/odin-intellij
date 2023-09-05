@@ -235,14 +235,12 @@ type ::= mapType
          | structSpec
          | enumSpec
          | unionSpec
-         | structType
          | pointerType
          | (DOLLAR? primary_expression)
 
 pointerType ::= CARET type
 multiPointerType ::= LBRACKET CARET RBRACKET type
 
-structType      ::= IDENTIFIER (DOT IDENTIFIER)* LPAREN argumentList* RPAREN
 
 bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON primary_expression] RBRACKET
 mapType          ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression

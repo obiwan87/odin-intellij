@@ -3214,54 +3214,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER (DOT IDENTIFIER)* LPAREN argumentList* RPAREN
-  public static boolean structType(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "structType")) return false;
-    if (!nextTokenIs(b, IDENTIFIER)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
-    r = r && structType_1(b, l + 1);
-    r = r && consumeToken(b, LPAREN);
-    r = r && structType_3(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, STRUCT_TYPE, r);
-    return r;
-  }
-
-  // (DOT IDENTIFIER)*
-  private static boolean structType_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "structType_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!structType_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "structType_1", c)) break;
-    }
-    return true;
-  }
-
-  // DOT IDENTIFIER
-  private static boolean structType_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "structType_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, DOT, IDENTIFIER);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // argumentList*
-  private static boolean structType_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "structType_3")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!argumentList(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "structType_3", c)) break;
-    }
-    return true;
-  }
-
-  /* ********************************************************** */
   // CASE (caseExpression(COMMA caseExpression)*)? COLON statementList?
   public static boolean switchCaseBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switchCaseBlock")) return false;
@@ -3456,7 +3408,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
   //          | structSpec
   //          | enumSpec
   //          | unionSpec
-  //          | structType
   //          | pointerType
   //          | (DOLLAR? primary_expression)
   public static boolean type(PsiBuilder b, int l) {
@@ -3472,27 +3423,26 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = structSpec(b, l + 1);
     if (!r) r = enumSpec(b, l + 1);
     if (!r) r = unionSpec(b, l + 1);
-    if (!r) r = structType(b, l + 1);
     if (!r) r = pointerType(b, l + 1);
-    if (!r) r = type_11(b, l + 1);
+    if (!r) r = type_10(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   // DOLLAR? primary_expression
-  private static boolean type_11(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_11")) return false;
+  private static boolean type_10(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_10")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = type_11_0(b, l + 1);
+    r = type_10_0(b, l + 1);
     r = r && primary_expression(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // DOLLAR?
-  private static boolean type_11_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_11_0")) return false;
+  private static boolean type_10_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_10_0")) return false;
     consumeToken(b, DOLLAR);
     return true;
   }
