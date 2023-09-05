@@ -210,7 +210,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         [ \t]+                               { return WHITE_SPACE; }
         "\*" [^\r\n]*? "*/"                  { return BLOCK_COMMENT; }
         "//" [^\r\n]*                        { return LINE_COMMENT; }
-        ([\r\n]+ | ';' | "/*" .*? "*/" | \z) { yybegin(YYINITIAL); return EOS; }
+        ([\r\n]+ | ';' | "/*" .*? "*/") { yybegin(YYINITIAL); return EOS; }
         [^]                                  { yypushback(1); yybegin(YYINITIAL); }
     }
 
