@@ -25,8 +25,11 @@ public class OdinBlock extends AbstractBlock {
         var blocks = new java.util.ArrayList<Block>();
         while (child != null) {
             if (child instanceof OdinIfStatement ifStatement) {
-                blocks.add(new OdinBlock(ifStatement.getBlock().getNode(), Wrap.createWrap(WrapType.NONE, false),
-                        Alignment.createAlignment(), spacingBuilder));
+                com.lasagnerd.odin.lang.psi.OdinBlock block = ifStatement.getStatementBody().getBlock();
+                if(block != null) {
+                    blocks.add(new OdinBlock(block.getNode(), Wrap.createWrap(WrapType.NONE, false),
+                            Alignment.createAlignment(), spacingBuilder));
+                }
             }
 
             if (child instanceof OdinProcedureDeclarationStatement psi) {
@@ -38,8 +41,11 @@ public class OdinBlock extends AbstractBlock {
             }
 
             if (child instanceof OdinForStatement psi) {
-                blocks.add(new OdinBlock(psi.getForBody().getNode(), Wrap.createWrap(WrapType.NONE, false),
-                        Alignment.createAlignment(), spacingBuilder));
+                com.lasagnerd.odin.lang.psi.OdinBlock block = psi.getStatementBody().getBlock();
+                if(block != null) {
+                    blocks.add(new OdinBlock(block.getNode(), Wrap.createWrap(WrapType.NONE, false),
+                            Alignment.createAlignment(), spacingBuilder));
+                }
             }
 
             child = child.getTreeNext();

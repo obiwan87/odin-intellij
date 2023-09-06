@@ -1,7 +1,8 @@
 package com.lasagnerd.odin.lang;
 
 import com.intellij.lexer.FlexLexer;
-import com.intellij.psi.tree.IElementType;import com.lasagnerd.odin.lang.psi.OdinTokenType;
+import com.intellij.psi.tree.IElementType;
+import com.lasagnerd.odin.lang.psi.OdinTokenType;
 
 import static com.intellij.psi.TokenType.BAD_CHARACTER;
 import static com.intellij.psi.TokenType.WHITE_SPACE;
@@ -10,6 +11,8 @@ import static com.lasagnerd.odin.lang.psi.OdinTypes.*;
 %%
 
 %{
+  int commentNestingDepth = 0;
+
   public OdinLexer() {
     this((java.io.Reader)null);
   }
@@ -24,7 +27,7 @@ import static com.lasagnerd.odin.lang.psi.OdinTypes.*;
 
 NewLine=(\r|\n|\r\n)+
 WhiteSpace=[ \t\f]+
-Identifier = [a-zA-Z_][a-zA-Z0-9_]*
+Identifier = ([:letter:]|_)([:letter:]|[0-9_])*
 
 LineComment = \/\/[^\r\n]*
 BlockComment = \/\*([^*]|\*[^/])*\*\/
@@ -36,18 +39,23 @@ IntegerOctLiteral = 0o[0-7][0-7_]*
 IntegerDecLiteral = [0-9][0-9_]*
 ComplexIntegerDecLiteral = {IntegerDecLiteral}[ijk]
 
-IntegerHexLiteral = 0x[0-9a-fA-F][0-9a-fA-F_]*
+IntegerHexLiteral = 0[xh][0-9a-fA-F][0-9a-fA-F_]*
 IntegerBinLiteral = 0b[01][01_]*
 
-FloatLiteral = [0-9][0-9_]*\.[0-9][0-9_]*{ExponentPart}? | {IntegerDecLiteral}{ExponentPart}
+// TODO add support for <number>. and .<number>
+ZeroFloatLiteral = \.[0-9][0-9_]*{ExponentPart}?[ijk]?
 ExponentPart = [eE][+-]?[0-9][0-9_]*
-ComplexFloatLiteral = {FloatLiteral}[ijk]
 
 
 %state DQ_STRING_STATE
 %state SQ_STRING_STATE
 %state NLSEMI_STATE
 %state NEXT_LINE
+%state BLOCK_COMMENT_STATE
+%state NESTED_BLOCK_COMMENT_STATE
+%state INTEGER_LITERAL_STATE
+%state FLOAT_LITERAL_STATE
+
 %%
 
 <YYINITIAL> {
@@ -91,7 +99,9 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
 
 
         {LineComment} { return LINE_COMMENT; }
-        {BlockComment} { return BLOCK_COMMENT; }
+
+        \/\*          { yybegin(BLOCK_COMMENT_STATE); }
+
         {Identifier} { yybegin(NLSEMI_STATE); return IDENTIFIER; }
         {WhiteSpace} { return WHITE_SPACE; }
         {NewLine}   { return NEW_LINE; }
@@ -101,12 +111,10 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         \`[^`]*\`     { yybegin(NLSEMI_STATE); return RAW_STRING_LITERAL; }
 
         {IntegerOctLiteral} { yybegin(NLSEMI_STATE); return INTEGER_OCT_LITERAL; }
-        {IntegerDecLiteral} { yybegin(NLSEMI_STATE); return INTEGER_DEC_LITERAL; }
+        {IntegerDecLiteral} { yybegin(INTEGER_LITERAL_STATE); }
         {IntegerHexLiteral} { yybegin(NLSEMI_STATE); return INTEGER_HEX_LITERAL; }
         {IntegerBinLiteral} { yybegin(NLSEMI_STATE); return INTEGER_BIN_LITERAL; }
-        {FloatLiteral} { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
-
-        {ComplexFloatLiteral} { yybegin(NLSEMI_STATE); return COMPLEX_FLOAT_LITERAL; }
+        {ZeroFloatLiteral}  { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
         {ComplexIntegerDecLiteral} { yybegin(NLSEMI_STATE); return COMPLEX_INTEGER_DEC_LITERAL; }
 
         ":"         { return COLON; }
@@ -136,7 +144,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         ">="        { return GTE; }
         "&&"        { return ANDAND; }
         "||"        { return OROR; }
-        "!"         { return NOT; }
+        "!"         { yybegin(NLSEMI_STATE); return NOT; }
         "+"         { return PLUS; }
         "-"         { return MINUS; }
         "*"         { return STAR; }
@@ -164,6 +172,7 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         ">>="       { return RSHIFT_EQ; }
         "&&="       { return ANDAND_EQ; }
         "||="       { return OROR_EQ; }
+        "&~="       { return BITWISE_AND_NOT_EQ; }
 
         // Range operators
         ".."        { return RANGE; }
@@ -211,11 +220,11 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         [ \t]+                               { return WHITE_SPACE; }
         "/*" [^\r\n]*? "*/"                  { return BLOCK_COMMENT; }
         "//" [^\r\n]*                        { return LINE_COMMENT; }
-
-        \\                                   { yybegin(NEXT_LINE);  }
-        ([\r\n]+ | ';' | "/*" .*? "*/")      { yybegin(YYINITIAL); return EOS; }
+        ([\r\n]+ | ';' | "/*" .*? "*/")      { yybegin(YYINITIAL); return EOS_TOKEN; }
         [^]                                  { yypushback(1); yybegin(YYINITIAL); }
     }
+
+    \\                                       { yybegin(NEXT_LINE);  }
 
     <NEXT_LINE> {
         [ \t]+                               { return WHITE_SPACE; }
@@ -223,6 +232,32 @@ ComplexFloatLiteral = {FloatLiteral}[ijk]
         "//" [^\r\n]*                        { return LINE_COMMENT; }
         [\r\n]                               { yybegin(YYINITIAL); }
         [^]                                  { return BAD_CHARACTER; }
+    }
+
+    <BLOCK_COMMENT_STATE> {
+        "/*"                                  { yybegin(NESTED_BLOCK_COMMENT_STATE); }
+        "*/"                                  { yybegin(YYINITIAL); return BLOCK_COMMENT; }
+        [^]                                   { }
+    }
+
+    <NESTED_BLOCK_COMMENT_STATE> {
+        "/*"                                  { commentNestingDepth++; }
+        "*/"                                  { if (commentNestingDepth == 0) { yybegin(BLOCK_COMMENT_STATE); } else { commentNestingDepth--; } }
+        [^]                                   { }
+    }
+
+    <INTEGER_LITERAL_STATE> {
+        \.                                        { yybegin(FLOAT_LITERAL_STATE); }
+        \.\.                                      { yybegin(NLSEMI_STATE); yypushback(2); return INTEGER_DEC_LITERAL; }
+        {ExponentPart}                            { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+        [ijk]                                     { yybegin(NLSEMI_STATE); return INTEGER_DEC_LITERAL; }
+        [^]                                       { yybegin(NLSEMI_STATE); yypushback(1); return INTEGER_DEC_LITERAL; }
+    }
+
+    <FLOAT_LITERAL_STATE> {
+        [0-9][0-9_]*{ExponentPart}?[ijk]?               { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+        {IntegerDecLiteral}{ExponentPart}[ijk]?         { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+        [^]                                            { yybegin(NLSEMI_STATE); yypushback(1); return FLOAT_DEC_LITERAL; }
     }
 
 [^] { return BAD_CHARACTER; }
