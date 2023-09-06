@@ -144,6 +144,7 @@
         WHITE_SPACE='regexp:[ \t\f]+'
         NEW_LINE='regexp:(\r|\n|\r\n)+'
         EOS_TOKEN='EOS_TOKEN'
+        MULTI_LINE_BLOCK_COMMENT='MULTI_LINE_BLOCK_COMMENT'
   ]
 
   extends('.*_expression') = expression
@@ -482,8 +483,8 @@ block ::= tagStatement_expression* LBRACE statementList? RBRACE
 
 // TODO introduce new lexer state that ignores EOS_TOKEN tokens
 
-eos ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<closingBracket>>
-statementList ::= ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>>)? statement eos)+
+eos ::= SEMICOLON | <<eof>> | EOS_TOKEN | MULTI_LINE_BLOCK_COMMENT | <<closingBracket>>
+statementList ::= ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | MULTI_LINE_BLOCK_COMMENT)? statement eos)+
 statement ::= assignmentStatement
                 | procedureDeclarationStatement
                 | variableInitializationStatement

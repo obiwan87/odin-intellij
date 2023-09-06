@@ -106,6 +106,10 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BLOCK_COMMENT};
         }
 
+        if (tokenType.equals(OdinTypes.MULTI_LINE_BLOCK_COMMENT)) {
+            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BLOCK_COMMENT};
+        }
+
         if (numericLiteral.contains(tokenType)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.NUMBER};
         }

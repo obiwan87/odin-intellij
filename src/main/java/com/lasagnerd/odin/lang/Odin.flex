@@ -39,8 +39,8 @@ IntegerOctLiteral = 0o[0-7][0-7_]*
 IntegerDecLiteral = [0-9][0-9_]*
 ComplexIntegerDecLiteral = {IntegerDecLiteral}[ijk]
 
-IntegerHexLiteral = 0[xh][0-9a-fA-F][0-9a-fA-F_]*
-IntegerBinLiteral = 0b[01][01_]*
+IntegerHexLiteral = 0[xh][0-9a-fA-F_][0-9a-fA-F_]*
+IntegerBinLiteral = 0b[01_][01_]*
 
 // TODO add support for <number>. and .<number>
 ZeroFloatLiteral = \.[0-9][0-9_]*{ExponentPart}?[ijk]?
@@ -55,6 +55,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 %state NESTED_BLOCK_COMMENT_STATE
 %state INTEGER_LITERAL_STATE
 %state FLOAT_LITERAL_STATE
+%state EOS_BLOCK_COMMENT_STATE
 
 %%
 
@@ -100,7 +101,8 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 
         {LineComment} { return LINE_COMMENT; }
 
-        \/\*          { yybegin(BLOCK_COMMENT_STATE); }
+//        {BlockComment} { return BLOCK_COMMENT; }
+         "/*" [\s\S]* "*/"  { yypushback(yylength()-2); commentNestingDepth=1; yybegin(BLOCK_COMMENT_STATE); }
 
         {Identifier} { yybegin(NLSEMI_STATE); return IDENTIFIER; }
         {WhiteSpace} { return WHITE_SPACE; }
@@ -183,6 +185,8 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 
         "$"         { return DOLLAR; }
         ".?"        { yybegin(NLSEMI_STATE); return DOT_QUESTION; }
+
+        \\          { yybegin(NEXT_LINE);  }
 }
 
     <DQ_STRING_STATE> {
@@ -218,32 +222,25 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 
     <NLSEMI_STATE> {
         [ \t]+                               { return WHITE_SPACE; }
-        "/*" [^\r\n]*? "*/"                  { return BLOCK_COMMENT; }
+        "/*" [^\r\n]* "*/"                   { return BLOCK_COMMENT; }
         "//" [^\r\n]*                        { return LINE_COMMENT; }
-        ([\r\n]+ | ';' | "/*" .*? "*/")      { yybegin(YYINITIAL); return EOS_TOKEN; }
+        [\r\n]+ | ';'                        { yybegin(YYINITIAL); return EOS_TOKEN; }
         [^]                                  { yypushback(1); yybegin(YYINITIAL); }
     }
 
-    \\                                       { yybegin(NEXT_LINE);  }
-
     <NEXT_LINE> {
         [ \t]+                               { return WHITE_SPACE; }
-        "/*" [^\r\n]*? "*/"                  { return BLOCK_COMMENT; }
+        "/*" [^\r\n]* "*/"                  { return BLOCK_COMMENT; }
         "//" [^\r\n]*                        { return LINE_COMMENT; }
         [\r\n]                               { yybegin(YYINITIAL); }
         [^]                                  { return BAD_CHARACTER; }
     }
 
     <BLOCK_COMMENT_STATE> {
-        "/*"                                  { yybegin(NESTED_BLOCK_COMMENT_STATE); }
-        "*/"                                  { yybegin(YYINITIAL); return BLOCK_COMMENT; }
-        [^]                                   { }
-    }
-
-    <NESTED_BLOCK_COMMENT_STATE> {
         "/*"                                  { commentNestingDepth++; }
-        "*/"                                  { if (commentNestingDepth == 0) { yybegin(BLOCK_COMMENT_STATE); } else { commentNestingDepth--; } }
-        [^]                                   { }
+        "*/"                                  { commentNestingDepth--; if (commentNestingDepth <= 0) { yybegin(YYINITIAL); return BLOCK_COMMENT; } }
+        [\s\S]                                {  }
+        [^]                                   { return BAD_CHARACTER; }
     }
 
     <INTEGER_LITERAL_STATE> {
@@ -257,7 +254,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
     <FLOAT_LITERAL_STATE> {
         [0-9][0-9_]*{ExponentPart}?[ijk]?               { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
         {IntegerDecLiteral}{ExponentPart}[ijk]?         { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
-        [^]                                            { yybegin(NLSEMI_STATE); yypushback(1); return FLOAT_DEC_LITERAL; }
+        [^]                                            {  yybegin(NLSEMI_STATE); yypushback(1); return FLOAT_DEC_LITERAL; }
     }
 
 [^] { return BAD_CHARACTER; }
