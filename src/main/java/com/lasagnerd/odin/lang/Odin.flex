@@ -12,6 +12,8 @@ import static com.lasagnerd.odin.lang.psi.OdinTypes.*;
 
 %{
   int commentNestingDepth = 0;
+  boolean newLineSeen = false;
+  boolean endOfStatement = false;
 
   public OdinLexer() {
     this((java.io.Reader)null);
@@ -30,7 +32,6 @@ WhiteSpace=[ \t\f]+
 Identifier = ([:letter:]|_)([:letter:]|[0-9_])*
 
 LineComment = \/\/[^\r\n]*
-BlockComment = \/\*([^*]|\*[^/])*\*\/
 
 // Literals
 
@@ -52,11 +53,9 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 %state NLSEMI_STATE
 %state NEXT_LINE
 %state BLOCK_COMMENT_STATE
-%state NESTED_BLOCK_COMMENT_STATE
+
 %state INTEGER_LITERAL_STATE
 %state FLOAT_LITERAL_STATE
-%state EOS_BLOCK_COMMENT_STATE
-
 %%
 
 <YYINITIAL> {
@@ -100,9 +99,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 
 
         {LineComment} { return LINE_COMMENT; }
-
-//        {BlockComment} { return BLOCK_COMMENT; }
-         "/*" [\s\S]* "*/"  { yypushback(yylength()-2); commentNestingDepth=1; yybegin(BLOCK_COMMENT_STATE); }
+         "/*" [\s\S]* "*/"  { endOfStatement = false; newLineSeen = false; yypushback(yylength()-2); commentNestingDepth=1; yybegin(BLOCK_COMMENT_STATE); }
 
         {Identifier} { yybegin(NLSEMI_STATE); return IDENTIFIER; }
         {WhiteSpace} { return WHITE_SPACE; }
@@ -222,7 +219,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 
     <NLSEMI_STATE> {
         [ \t]+                               { return WHITE_SPACE; }
-        "/*" [^\r\n]* "*/"                   { return BLOCK_COMMENT; }
+        "/*" [\s\S]* "*/"                    { endOfStatement = true; newLineSeen = false; commentNestingDepth=1; yypushback(yylength()-2); yybegin(BLOCK_COMMENT_STATE);  }
         "//" [^\r\n]*                        { return LINE_COMMENT; }
         [\r\n]+ | ';'                        { yybegin(YYINITIAL); return EOS_TOKEN; }
         [^]                                  { yypushback(1); yybegin(YYINITIAL); }
@@ -230,7 +227,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 
     <NEXT_LINE> {
         [ \t]+                               { return WHITE_SPACE; }
-        "/*" [^\r\n]* "*/"                  { return BLOCK_COMMENT; }
+        "/*" [^\r\n]* "*/"                   { return BLOCK_COMMENT; }
         "//" [^\r\n]*                        { return LINE_COMMENT; }
         [\r\n]                               { yybegin(YYINITIAL); }
         [^]                                  { return BAD_CHARACTER; }
@@ -238,8 +235,30 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 
     <BLOCK_COMMENT_STATE> {
         "/*"                                  { commentNestingDepth++; }
-        "*/"                                  { commentNestingDepth--; if (commentNestingDepth <= 0) { yybegin(YYINITIAL); return BLOCK_COMMENT; } }
-        [\s\S]                                {  }
+        "*/"
+        {
+          commentNestingDepth--;
+          if (commentNestingDepth <= 0) {
+              if(endOfStatement && newLineSeen) {
+                  endOfStatement = false;
+                  newLineSeen = false;
+                  yybegin(YYINITIAL);
+                  return EOS_BLOCK_COMMENT;
+              } else if(endOfStatement) {
+                  endOfStatement = false;
+                  newLineSeen = false;
+                  yybegin(NLSEMI_STATE);
+                  return BLOCK_COMMENT;
+              } else {
+                  endOfStatement = false;
+                  newLineSeen = false;
+                  yybegin(YYINITIAL);
+                  return BLOCK_COMMENT;
+              }
+          }
+        }
+        \n                                    { newLineSeen = true; }
+        [\s\S]                                { if(yytext().charAt(0) == '\n') newLineSeen = true; }
         [^]                                   { return BAD_CHARACTER; }
     }
 

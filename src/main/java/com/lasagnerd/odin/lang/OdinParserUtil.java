@@ -17,6 +17,17 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
         return iElementType == OdinTypes.RPAREN || iElementType == OdinTypes.RBRACE;
     }
 
+    public static boolean multilineBlockComment(PsiBuilder builder, int level) {
+        IElementType iElementType = builder.getTokenType();
+        if (iElementType == OdinTypes.BLOCK_COMMENT) {
+            String tokenText = builder.getTokenText();
+            if (tokenText != null) {
+                return tokenText.contains("\n");
+            }
+        }
+        return false;
+    }
+
     public static boolean enterMode(PsiBuilder builder, int level, String mode) {
         TObjectIntHashMap<String> flags = getParsingModes(builder);
         flags.put(mode, flags.get(mode) + 1);
@@ -28,7 +39,7 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
 
         flags.put(mode, flags.get(mode) - 1);
 
-        if(flags.get(mode) <= 0) {
+        if (flags.get(mode) <= 0) {
             flags.remove(mode);
         }
         return true;
