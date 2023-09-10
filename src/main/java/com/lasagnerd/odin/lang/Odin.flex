@@ -188,7 +188,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         ".?"        { yybegin(NLSEMI_STATE); return DOT_QUESTION; }
 
         \\          { yybegin(NEXT_LINE);  }
-}
+    }
 
     <NLSEMI_STATE> {
         [ \t]+                               { return WHITE_SPACE; }
@@ -226,27 +226,27 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         [\r\n]     { yybegin(YYINITIAL); return NEW_LINE;}
     }
 
-        <SQ_STRING_STATE>
-        {
-            \'  {yybegin(NLSEMI_STATE); return SQ_STRING_END; }
+    <SQ_STRING_STATE>
+    {
+        \'  {yybegin(NLSEMI_STATE); return SQ_STRING_END; }
 
-            [^\'\r\n\\]+                   { return SQ_STRING_LITERAL; }
-            \\n                            { return SQ_STRING_LITERAL; }
-            \\t                            { return SQ_STRING_LITERAL; }
-            \\r                            { return SQ_STRING_LITERAL; }
-            \\v                            { return SQ_STRING_LITERAL; }
-            \\e                            { return SQ_STRING_LITERAL; }
-            \\a                            { return SQ_STRING_LITERAL; }
-            \\b                            { return SQ_STRING_LITERAL; }
-            \\f                            { return SQ_STRING_LITERAL; }
-            \\[0-7]{2}                     { return SQ_STRING_LITERAL; }
-            \\x[0-9a-fA-F]{2}              { return SQ_STRING_LITERAL; }
-            \\u[0-9a-fA-F]{4}              { return SQ_STRING_LITERAL; }
-            \\U[0-9a-fA-F]{8}              { return SQ_STRING_LITERAL; }
-            \\\'                           { return SQ_STRING_LITERAL; }
-            \\                             { return SQ_STRING_LITERAL; }
-            [\r\n]     { yybegin(YYINITIAL); return NEW_LINE;}
-        }
+        [^'\r\n\\]+                    { return SQ_STRING_LITERAL; }
+        \\n                            { return SQ_STRING_LITERAL; }
+        \\t                            { return SQ_STRING_LITERAL; }
+        \\r                            { return SQ_STRING_LITERAL; }
+        \\v                            { return SQ_STRING_LITERAL; }
+        \\e                            { return SQ_STRING_LITERAL; }
+        \\a                            { return SQ_STRING_LITERAL; }
+        \\b                            { return SQ_STRING_LITERAL; }
+        \\f                            { return SQ_STRING_LITERAL; }
+        \\[0-7]{2}                     { return SQ_STRING_LITERAL; }
+        \\x[0-9a-fA-F]{2}              { return SQ_STRING_LITERAL; }
+        \\u[0-9a-fA-F]{4}              { return SQ_STRING_LITERAL; }
+        \\U[0-9a-fA-F]{8}              { return SQ_STRING_LITERAL; }
+        \\\'                           { return SQ_STRING_LITERAL; }
+        \\                             { return SQ_STRING_LITERAL; }
+        [\r\n]     { yybegin(YYINITIAL); return NEW_LINE;}
+    }
 
     <BLOCK_COMMENT_STATE> {
         "/*" { commentNestingDepth++; return BLOCK_COMMENT; }

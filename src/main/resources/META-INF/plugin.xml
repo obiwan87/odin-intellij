@@ -25,6 +25,7 @@
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator"/>
         <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinFormattingBuilder"/>
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinAnnotator"/>
+        <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
     </extensions>
 
 
