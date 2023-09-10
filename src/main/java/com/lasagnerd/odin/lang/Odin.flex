@@ -103,18 +103,19 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         {NewLine}   { return NEW_LINE; }
 
 
-        \" (([^\"\r\n]|\\\")* [^\\])? \"            { yybegin(NLSEMI_STATE); return DQ_STRING_LITERAL; }
-        \' (([^\'\r\n]|\\\')* [^\\])? \'            { yybegin(NLSEMI_STATE); return SQ_STRING_LITERAL; }
-        \`[^`]*\`     { yybegin(NLSEMI_STATE); return RAW_STRING_LITERAL; }
+        \" {yybegin(DQ_STRING_STATE); return DQ_STRING_START; }
+        \'             { yybegin(SQ_STRING_STATE); return SQ_STRING_START;  }
+        \`[^`]*\`                                   { yybegin(NLSEMI_STATE); return RAW_STRING_LITERAL; }
 
-        {IntegerOctLiteral} { yybegin(NLSEMI_STATE); return INTEGER_OCT_LITERAL; }
         {IntegerDecLiteral} { yybegin(NLSEMI_STATE); return INTEGER_DEC_LITERAL; }
         {IntegerDecLiteral} "." / [^.] {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
         {IntegerDecLiteral}? "." {IntegerDecLiteral} {ExponentPart}? [ijk]? {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
         {IntegerDecLiteral}{ExponentPart}[ijk]? {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
 
+        {IntegerOctLiteral} { yybegin(NLSEMI_STATE); return INTEGER_OCT_LITERAL; }
         {IntegerHexLiteral} { yybegin(NLSEMI_STATE); return INTEGER_HEX_LITERAL; }
         {IntegerBinLiteral} { yybegin(NLSEMI_STATE); return INTEGER_BIN_LITERAL; }
+
         {ZeroFloatLiteral}  { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
         {ComplexIntegerDecLiteral} { yybegin(NLSEMI_STATE); return COMPLEX_INTEGER_DEC_LITERAL; }
 
@@ -203,20 +204,57 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         [^]                                  { return BAD_CHARACTER; }
     }
 
-    <BLOCK_COMMENT_STATE> {
+    <DQ_STRING_STATE>
+    {
+        \"  {yybegin(NLSEMI_STATE); return DQ_STRING_END; }
+        "\\\"" { return DQ_STRING_LITERAL; }
+        [^\"\r\n\\]+ { return DQ_STRING_LITERAL; }
+        \\n                            { return DQ_STRING_LITERAL; }
+        \\t                            { return DQ_STRING_LITERAL; }
+        \\r                            { return DQ_STRING_LITERAL; }
+        \\v                            { return DQ_STRING_LITERAL; }
+        \\e                            { return DQ_STRING_LITERAL; }
+        \\a                            { return DQ_STRING_LITERAL; }
+        \\b                            { return DQ_STRING_LITERAL; }
+        \\f                            { return DQ_STRING_LITERAL; }
+        \\[0-7]{2}                     { return DQ_STRING_LITERAL; }
+        \\x[0-9a-fA-F]{2}              { return DQ_STRING_LITERAL; }
+        \\u[0-9a-fA-F]{4}              { return DQ_STRING_LITERAL; }
+        \\U[0-9a-fA-F]{8}              { return DQ_STRING_LITERAL; }
+        \\\"                           { return DQ_STRING_LITERAL; }
+        \\                             { return DQ_STRING_LITERAL; }
+        [\r\n]     { yybegin(YYINITIAL); return NEW_LINE;}
+    }
 
-        "/*" { commentNestingDepth++; System.out.println("LEXER DEBUG: Incrementing nesting depth: "+commentNestingDepth); return BLOCK_COMMENT; }
+        <SQ_STRING_STATE>
+        {
+            \'  {yybegin(NLSEMI_STATE); return SQ_STRING_END; }
+
+            [^\"\r\n\\]+                   { return SQ_STRING_LITERAL; }
+            \\n                            { return SQ_STRING_LITERAL; }
+            \\t                            { return SQ_STRING_LITERAL; }
+            \\r                            { return SQ_STRING_LITERAL; }
+            \\v                            { return SQ_STRING_LITERAL; }
+            \\e                            { return SQ_STRING_LITERAL; }
+            \\a                            { return SQ_STRING_LITERAL; }
+            \\b                            { return SQ_STRING_LITERAL; }
+            \\f                            { return SQ_STRING_LITERAL; }
+            \\[0-7]{2}                     { return SQ_STRING_LITERAL; }
+            \\x[0-9a-fA-F]{2}              { return SQ_STRING_LITERAL; }
+            \\u[0-9a-fA-F]{4}              { return SQ_STRING_LITERAL; }
+            \\U[0-9a-fA-F]{8}              { return SQ_STRING_LITERAL; }
+            \\\'                           { return SQ_STRING_LITERAL; }
+            \\                             { return SQ_STRING_LITERAL; }
+            [\r\n]     { yybegin(YYINITIAL); return NEW_LINE;}
+        }
+
+    <BLOCK_COMMENT_STATE> {
+        "/*" { commentNestingDepth++; return BLOCK_COMMENT; }
         "*/" {
           commentNestingDepth--;
-          System.out.println("LEXER DEBUG: Decrementing nesting depth: "+commentNestingDepth);
-
           if (commentNestingDepth <= 0) {
-              System.out.println("LEXER DEBUG: commentNestingDepth: " + commentNestingDepth);
-
-              System.out.println("New line seen? " + newLineSeen);
               if(!newLineSeen) {
                   yybegin(previousState);
-                  System.out.println("Returning to prevous state: " + ((previousState==NLSEMI_STATE)? "NLSEMI_STATE" : "INITIAL"));
               } else {
                   yybegin(YYINITIAL);
               }

@@ -100,8 +100,20 @@ public class OdinLexerAdapter extends LexerBase {
                 } while(tokenType != OdinTypes.BLOCK_COMMENT_END && tokenType != null);
                 tokenType = multiLine? OdinTypes.MULTILINE_BLOCK_COMMENT : OdinTypes.BLOCK_COMMENT;
             }
-
+            if(tokenType == OdinTypes.DQ_STRING_START) {
+                do {
+                    tokenType = flexLexer.advance();
+                } while((tokenType != OdinTypes.DQ_STRING_END && tokenType != OdinTypes.NEW_LINE) && tokenType != null);
+                tokenType = OdinTypes.DQ_STRING_LITERAL;
+            }
+            if(tokenType == OdinTypes.SQ_STRING_START) {
+                do {
+                    tokenType = flexLexer.advance();
+                } while((tokenType != OdinTypes.SQ_STRING_END && tokenType != OdinTypes.NEW_LINE) && tokenType != null);
+                tokenType = OdinTypes.SQ_STRING_LITERAL;
+            }
             tokenEnd = flexLexer.getTokenEnd();
+
         }
         catch (ProcessCanceledException e) {
             throw e;
