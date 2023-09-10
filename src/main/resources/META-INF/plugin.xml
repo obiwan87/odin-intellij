@@ -24,6 +24,7 @@
         <lang.braceMatcher language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinBraceMatcher"/>
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator"/>
         <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinFormattingBuilder"/>
+        <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinAnnotator"/>
     </extensions>
 
 

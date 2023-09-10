@@ -105,7 +105,8 @@ public class OdinLangSyntaxAnnotator implements Annotator {
             "raw_data"
     );
 
-    static Pattern escapeSequences = Pattern.compile("\\\\n|\\\\r|\\\\v|\\\\t|\\\\e|\\\\a|\\\\b|\\\\f|\\\\[0-7]{2}|\\\\x[0-9a-fA-F]{2}|\\\\u[0-9a-fA-F]{4}|\\\\U[0-9a-fA-F]{8}|\\\\\"|\\\\\\\\");
+    public static final String ALL_ESCAPE_SEQUENCES = "\\\\n|\\\\r|\\\\v|\\\\t|\\\\e|\\\\a|\\\\b|\\\\f|\\\\[0-7]{2}|\\\\x[0-9a-fA-F]{2}|\\\\u[0-9a-fA-F]{4}|\\\\U[0-9a-fA-F]{8}|\\\\\"|\\\\\\\\";
+    public static Pattern ESCAPE_SEQUENCES_PATTERN = Pattern.compile(ALL_ESCAPE_SEQUENCES);
 
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
@@ -180,7 +181,7 @@ public class OdinLangSyntaxAnnotator implements Annotator {
         var text = stringElement.getText();
         // Find all indexes of escape sequences using regex
 
-        var matcher = escapeSequences.matcher(text);
+        var matcher = ESCAPE_SEQUENCES_PATTERN.matcher(text);
         while (matcher.find()) {
             var matchRange = TextRange.from(
                     stringElement.getTextRange().getStartOffset() + matcher.start(),

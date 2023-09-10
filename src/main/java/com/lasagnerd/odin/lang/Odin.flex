@@ -230,7 +230,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         {
             \'  {yybegin(NLSEMI_STATE); return SQ_STRING_END; }
 
-            [^\"\r\n\\]+                   { return SQ_STRING_LITERAL; }
+            [^\'\r\n\\]+                   { return SQ_STRING_LITERAL; }
             \\n                            { return SQ_STRING_LITERAL; }
             \\t                            { return SQ_STRING_LITERAL; }
             \\r                            { return SQ_STRING_LITERAL; }
