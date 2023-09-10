@@ -12,8 +12,8 @@ import static com.lasagnerd.odin.lang.psi.OdinTypes.*;
 
 %{
   int commentNestingDepth = 0;
+  int previousState = YYINITIAL;
   boolean newLineSeen = false;
-  boolean endOfStatement = false;
 
   public OdinLexer() {
     this((java.io.Reader)null);
@@ -32,7 +32,7 @@ WhiteSpace=[ \t\f]+
 Identifier = ([:letter:]|_)([:letter:]|[0-9_])*
 
 LineComment = \/\/[^\r\n]*
-
+BlockCommentContent = ([^*\/\r\n]|\/[^*\r\n]|\*[^\/\r\n])
 // Literals
 
 IntegerOctLiteral = 0o[0-7][0-7_]*
@@ -42,8 +42,6 @@ ComplexIntegerDecLiteral = {IntegerDecLiteral}[ijk]
 
 IntegerHexLiteral = 0[xh][0-9a-fA-F_][0-9a-fA-F_]*
 IntegerBinLiteral = 0b[01_][01_]*
-
-// TODO add support for <number>. and .<number>
 ZeroFloatLiteral = \.[0-9][0-9_]*{ExponentPart}?[ijk]?
 ExponentPart = [eE][+-]?[0-9][0-9_]*
 
@@ -54,7 +52,6 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 %state NEXT_LINE
 %state BLOCK_COMMENT_STATE
 
-%state INTEGER_LITERAL_STATE
 %state FLOAT_LITERAL_STATE
 %%
 
@@ -98,19 +95,24 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         "where"    { return WHERE; }
 
 
-        {LineComment} { return LINE_COMMENT; }
-         "/*" [\s\S]* "*/"  { endOfStatement = false; newLineSeen = false; yypushback(yylength()-2); commentNestingDepth=1; yybegin(BLOCK_COMMENT_STATE); }
+        {LineComment}  { return LINE_COMMENT; }
+        //        {BlockComment} { return BLOCK_COMMENT;}
 
         {Identifier} { yybegin(NLSEMI_STATE); return IDENTIFIER; }
         {WhiteSpace} { return WHITE_SPACE; }
         {NewLine}   { return NEW_LINE; }
 
-        \"            { yybegin(DQ_STRING_STATE); }
-        \'            { yybegin(SQ_STRING_STATE); }
+
+        \" (([^\"\r\n]|\\\")* [^\\])? \"            { yybegin(NLSEMI_STATE); return DQ_STRING_LITERAL; }
+        \' (([^\'\r\n]|\\\')* [^\\])? \'            { yybegin(NLSEMI_STATE); return SQ_STRING_LITERAL; }
         \`[^`]*\`     { yybegin(NLSEMI_STATE); return RAW_STRING_LITERAL; }
 
         {IntegerOctLiteral} { yybegin(NLSEMI_STATE); return INTEGER_OCT_LITERAL; }
-        {IntegerDecLiteral} { yybegin(INTEGER_LITERAL_STATE); }
+        {IntegerDecLiteral} { yybegin(NLSEMI_STATE); return INTEGER_DEC_LITERAL; }
+        {IntegerDecLiteral} "." / [^.] {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+        {IntegerDecLiteral}? "." {IntegerDecLiteral} {ExponentPart}? [ijk]? {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+        {IntegerDecLiteral}{ExponentPart}[ijk]? {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+
         {IntegerHexLiteral} { yybegin(NLSEMI_STATE); return INTEGER_HEX_LITERAL; }
         {IntegerBinLiteral} { yybegin(NLSEMI_STATE); return INTEGER_BIN_LITERAL; }
         {ZeroFloatLiteral}  { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
@@ -133,6 +135,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         "^"         { yybegin(NLSEMI_STATE); return CARET; }
         "@"         { return AT; }
 
+        "/*"        { yybegin(BLOCK_COMMENT_STATE); newLineSeen=false; commentNestingDepth = 1; previousState=YYINITIAL; return BLOCK_COMMENT_START; }
 
         // Operators
         "=="        { return EQEQ; }
@@ -186,94 +189,47 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         \\          { yybegin(NEXT_LINE);  }
 }
 
-    <DQ_STRING_STATE> {
-      \"                             { yybegin(NLSEMI_STATE); return DQ_STRING_LITERAL; }
-      \\n                            { }
-      \\t                            { }
-      \\r                            { }
-      \\v                            { }
-      \\e                            { }
-      \\a                            { }
-      \\b                            { }
-      \\f                            { }
-      \\[0-7]{2}                     { }
-      \\x[0-9a-fA-F]{2}              { }
-      \\u[0-9a-fA-F]{4}              { }
-      \\U[0-9a-fA-F]{8}              { }
-      \\\"                           { }
-      \\                             { }
-      // double backslash
-      \\\\                           { }
-      [^\n\r\"\\]+                   { }
-    }
-
-    // Single quote strings
-    <SQ_STRING_STATE> {
-        \'                           {yybegin(NLSEMI_STATE); return SQ_STRING_LITERAL; }
-        [^\n\r\'\\]+                 { }
-        \\\'                         { }
-        \\                           { }
-        \\\\                         { }
-    }
-
-
     <NLSEMI_STATE> {
         [ \t]+                               { return WHITE_SPACE; }
-        "/*" [\s\S]* "*/"                    { endOfStatement = true; newLineSeen = false; commentNestingDepth=1; yypushback(yylength()-2); yybegin(BLOCK_COMMENT_STATE);  }
         "//" [^\r\n]*                        { return LINE_COMMENT; }
+        "/*"                                 { yybegin(BLOCK_COMMENT_STATE); newLineSeen=false; commentNestingDepth=1; previousState=NLSEMI_STATE; return BLOCK_COMMENT_START; }
         [\r\n]+ | ';'                        { yybegin(YYINITIAL); return EOS_TOKEN; }
-        [^]                                  { yypushback(1); yybegin(YYINITIAL); }
+        [^]                                  { yypushback(yylength()); yybegin(YYINITIAL); }
     }
 
     <NEXT_LINE> {
         [ \t]+                               { return WHITE_SPACE; }
-        "/*" [^\r\n]* "*/"                   { return BLOCK_COMMENT; }
-        "//" [^\r\n]*                        { return LINE_COMMENT; }
-        [\r\n]                               { yybegin(YYINITIAL); }
+        [\r\n]                               { yybegin(YYINITIAL); return NEW_LINE; }
         [^]                                  { return BAD_CHARACTER; }
     }
 
     <BLOCK_COMMENT_STATE> {
-        "/*"                                  { commentNestingDepth++; }
-        "*/"
-        {
+
+        "/*" { commentNestingDepth++; System.out.println("LEXER DEBUG: Incrementing nesting depth: "+commentNestingDepth); return BLOCK_COMMENT; }
+        "*/" {
           commentNestingDepth--;
+          System.out.println("LEXER DEBUG: Decrementing nesting depth: "+commentNestingDepth);
+
           if (commentNestingDepth <= 0) {
-              if(endOfStatement && newLineSeen) {
-                  endOfStatement = false;
-                  newLineSeen = false;
-                  yybegin(YYINITIAL);
-                  return EOS_BLOCK_COMMENT;
-              } else if(endOfStatement) {
-                  endOfStatement = false;
-                  newLineSeen = false;
-                  yybegin(NLSEMI_STATE);
-                  return BLOCK_COMMENT;
+              System.out.println("LEXER DEBUG: commentNestingDepth: " + commentNestingDepth);
+
+              System.out.println("New line seen? " + newLineSeen);
+              if(!newLineSeen) {
+                  yybegin(previousState);
+                  System.out.println("Returning to prevous state: " + ((previousState==NLSEMI_STATE)? "NLSEMI_STATE" : "INITIAL"));
               } else {
-                  endOfStatement = false;
-                  newLineSeen = false;
                   yybegin(YYINITIAL);
-                  return BLOCK_COMMENT;
               }
+
+              return BLOCK_COMMENT_END;
+          } else {
+              return BLOCK_COMMENT;
           }
         }
-        \n                                    { newLineSeen = true; }
-        [\s\S]                                { if(yytext().charAt(0) == '\n') newLineSeen = true; }
-        [^]                                   { return BAD_CHARACTER; }
-    }
 
-    <INTEGER_LITERAL_STATE> {
-        \.                                        { yybegin(FLOAT_LITERAL_STATE); }
-        \.\.                                      { yybegin(NLSEMI_STATE); yypushback(2); return INTEGER_DEC_LITERAL; }
-        {ExponentPart}                            { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
-        [ijk]                                     { yybegin(NLSEMI_STATE); return INTEGER_DEC_LITERAL; }
-        [^]                                       { yybegin(NLSEMI_STATE); yypushback(1); return INTEGER_DEC_LITERAL; }
-    }
-
-    <FLOAT_LITERAL_STATE> {
-        [0-9][0-9_]*{ExponentPart}?[ijk]?               { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
-        {IntegerDecLiteral}{ExponentPart}[ijk]?         { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
-        [^]                                            {  yybegin(NLSEMI_STATE); yypushback(1); return FLOAT_DEC_LITERAL; }
+        {BlockCommentContent}+                { return BLOCK_COMMENT; }
+        [\r\n]+                               { newLineSeen = true; return NEW_LINE; }
+        [^]                                   { return BLOCK_COMMENT; }
     }
 
 [^] { return BAD_CHARACTER; }

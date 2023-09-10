@@ -1140,7 +1140,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // SEMICOLON | <<eof>> | EOS_TOKEN | <<closingBracket>> | EOS_BLOCK_COMMENT
+  // SEMICOLON | <<eof>> | EOS_TOKEN | <<closingBracket>> | <<multilineBlockComment>>
   public static boolean eos(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "eos")) return false;
     boolean r;
@@ -1149,7 +1149,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = eof(b, l + 1);
     if (!r) r = consumeToken(b, EOS_TOKEN);
     if (!r) r = closingBracket(b, l + 1);
-    if (!r) r = consumeToken(b, EOS_BLOCK_COMMENT);
+    if (!r) r = multilineBlockComment(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -3261,7 +3261,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | EOS_BLOCK_COMMENT)? statement eos)+
+  // ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | <<multilineBlockComment>>)? statement eos)+
   public static boolean statementList(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "statementList")) return false;
     boolean r;
@@ -3276,7 +3276,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | EOS_BLOCK_COMMENT)? statement eos
+  // (SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | <<multilineBlockComment>>)? statement eos
   private static boolean statementList_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "statementList_0")) return false;
     boolean r;
@@ -3288,14 +3288,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | EOS_BLOCK_COMMENT)?
+  // (SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | <<multilineBlockComment>>)?
   private static boolean statementList_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "statementList_0_0")) return false;
     statementList_0_0_0(b, l + 1);
     return true;
   }
 
-  // SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | EOS_BLOCK_COMMENT
+  // SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | <<multilineBlockComment>>
   private static boolean statementList_0_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "statementList_0_0_0")) return false;
     boolean r;
@@ -3304,7 +3304,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, NEW_LINE);
     if (!r) r = consumeToken(b, EOS_TOKEN);
     if (!r) r = closingBracket(b, l + 1);
-    if (!r) r = consumeToken(b, EOS_BLOCK_COMMENT);
+    if (!r) r = multilineBlockComment(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

@@ -37,7 +37,7 @@ public class OdinParserDefinition implements ParserDefinition {
 
     @Override
     public @NotNull TokenSet getCommentTokens() {
-        return TokenSet.create(OdinTypes.LINE_COMMENT, OdinTypes.BLOCK_COMMENT);
+        return TokenSet.create(OdinTypes.LINE_COMMENT, OdinTypes.BLOCK_COMMENT, OdinTypes.MULTILINE_BLOCK_COMMENT);
     }
 
     @Override

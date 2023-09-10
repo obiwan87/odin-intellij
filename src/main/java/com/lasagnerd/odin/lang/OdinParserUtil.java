@@ -3,6 +3,7 @@ package com.lasagnerd.odin.lang;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
@@ -18,14 +19,15 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
     }
 
     public static boolean multilineBlockComment(PsiBuilder builder, int level) {
-        IElementType iElementType = builder.getTokenType();
-        if (iElementType == OdinTypes.BLOCK_COMMENT) {
-            String tokenText = builder.getTokenText();
-            if (tokenText != null) {
-                return tokenText.contains("\n");
-            }
-        }
-        return false;
+        int i = 0;
+        IElementType tokenType;
+        int currentOffset = builder.getCurrentOffset();
+        do {
+            i--;
+            tokenType = builder.rawLookup(i);
+        } while ((tokenType == TokenType.WHITE_SPACE || tokenType == OdinTypes.NEW_LINE) && currentOffset + i > 0);
+
+        return tokenType == OdinTypes.MULTILINE_BLOCK_COMMENT;
     }
 
     public static boolean enterMode(PsiBuilder builder, int level, String mode) {

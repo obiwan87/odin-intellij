@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
-import com.lasagnerd.odin.lang.psi.OdinTokenType;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -106,7 +105,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BLOCK_COMMENT};
         }
 
-        if (tokenType.equals(OdinTypes.EOS_BLOCK_COMMENT)) {
+        if (tokenType.equals(OdinTypes.MULTILINE_BLOCK_COMMENT)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BLOCK_COMMENT};
         }
 

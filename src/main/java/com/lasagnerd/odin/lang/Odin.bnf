@@ -144,7 +144,11 @@
         WHITE_SPACE='regexp:[ \t\f]+'
         NEW_LINE='regexp:(\r|\n|\r\n)+'
         EOS_TOKEN='EOS_TOKEN'
-        EOS_BLOCK_COMMENT='EOS_BLOCK_COMMENT'
+
+        MULTILINE_BLOCK_COMMENT='MULTILINE_BLOCK_COMMENT'
+        BLOCK_COMMENT_CONTENT='BLOCK_COMMENT_CONTENT'
+        BLOCK_COMMENT_START='BLOCK_COMMENT_START'
+        BLOCK_COMMENT_END='BLOCK_COMMENT_END'
   ]
 
   extends('.*_expression') = expression
@@ -172,7 +176,6 @@ fileScopeStatement ::= foreignImportDeclarationStatement
                 | foreignStatement
                 | whenStatement
                 | tagStatement_expression
-
 
 foreignImportDeclarationStatement ::= (attributeStatement eos*)* FOREIGN IMPORT ( IDENTIFIER? DQ_STRING_LITERAL | IDENTIFIER? LBRACE DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? RBRACE)
 
@@ -483,8 +486,8 @@ block ::= tagStatement_expression* LBRACE statementList? RBRACE
 
 // TODO introduce new lexer state that ignores EOS_TOKEN tokens
 
-eos ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<closingBracket>> | EOS_BLOCK_COMMENT
-statementList ::= ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | EOS_BLOCK_COMMENT)? statement eos)+
+eos ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<closingBracket>> | <<multilineBlockComment>>
+statementList ::= ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | <<multilineBlockComment>>)? statement eos)+
 statement ::= assignmentStatement
                 | procedureDeclarationStatement
                 | variableInitializationStatement
