@@ -2,13 +2,13 @@
 
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-
+    <version>0.0.1</version>
     <name>Odin Lang Support</name>
 
     <vendor email="simon.distefano@gmx.de" url="https://lasagnerd.com">Lasagnerd</vendor>
 
     <description><![CDATA[
-    An LSP Integration for the programming Language Odin
+    A plugin for the Odin programming language.
   ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
