@@ -2,13 +2,14 @@
 
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <version>0.0.1</version>
+    <version>0.0.3</version>
     <name>Odin Lang Support</name>
 
     <vendor email="simon.distefano@gmx.de" url="https://lasagnerd.com">Lasagnerd</vendor>
 
     <description><![CDATA[
-    A plugin for the Odin programming language.
+    A plugin for the Odin programming language. In the current version it provides syntax
+     and error highlighting for ".odin" Files. More features will be added in the future.
   ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
@@ -27,6 +28,5 @@
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinAnnotator"/>
         <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
     </extensions>
-
 
 </idea-plugin>
