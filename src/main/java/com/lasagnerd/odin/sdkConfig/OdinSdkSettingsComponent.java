@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.config;
+package com.lasagnerd.odin.sdkConfig;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;

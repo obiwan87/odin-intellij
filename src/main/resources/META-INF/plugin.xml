@@ -34,10 +34,13 @@
         <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
         <applicationConfigurable
                 parentId="language"
-                instance="com.lasagnerd.odin.config.OdinSdkConfigurable"
-                id="com.lasagnerd.odin.config.OdinSdkConfigurable"
+                instance="com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable"
+                id="com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable"
                 displayName="Odin"/>
-        <applicationService serviceImplementation="com.lasagnerd.odin.config.OdinSdkConfigPersistentState"/>
+        <applicationService serviceImplementation="com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState"/>
+        <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType" id="OdinRunConfigurationType"/>
+        <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
+        <runLineMarkerContributor language="Odin" implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
     </extensions>
 
 </idea-plugin>

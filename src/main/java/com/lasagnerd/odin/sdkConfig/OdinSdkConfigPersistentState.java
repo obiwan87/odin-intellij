@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.config;
+package com.lasagnerd.odin.sdkConfig;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
