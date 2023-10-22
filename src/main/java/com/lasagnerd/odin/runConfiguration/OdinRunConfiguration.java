@@ -38,9 +38,10 @@ public class OdinRunConfiguration extends RunConfigurationBase<OdinRunConfigurat
             @Override
             protected @NotNull ProcessHandler startProcess() throws ExecutionException {
                 String sdkPath = OdinSdkConfigPersistentState.getInstance().getSdkPath();
+                String projectDirectoryPath = getOptions().getProjectDirectoryPath();
                 String compilerPath = sdkPath + "/odin";
 
-                GeneralCommandLine commandLine = new GeneralCommandLine(compilerPath, "run", ".");
+                GeneralCommandLine commandLine = new GeneralCommandLine(compilerPath, "run", projectDirectoryPath, getOptions().getCompilerOptions());
                 commandLine.setWorkDirectory(getProject().getBasePath());
                 OSProcessHandler processHandler = ProcessHandlerFactory.getInstance()
                         .createColoredProcessHandler(commandLine);

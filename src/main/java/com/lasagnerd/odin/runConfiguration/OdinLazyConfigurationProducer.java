@@ -32,7 +32,7 @@ public class OdinLazyConfigurationProducer extends LazyRunConfigurationProducer<
         Language language = containingFile.getLanguage();
         if (language.isKindOf(OdinLanguage.INSTANCE)) {
             OdinRunConfigurationOptions options = configuration.getOptions();
-            options.setFilePath(containingFile.getVirtualFile().getPath());
+            options.setProjectDirectoryPath(context.getProject().getBasePath());
             configuration.setName(containingFile.getName());
 
             return true;

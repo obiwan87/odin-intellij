@@ -11,28 +11,28 @@ public class OdinRunConfigurationSettingsEditor extends SettingsEditor<OdinRunCo
 
     private final JPanel panel;
     private final JTextField compilerOptions;
-    private final JTextField workingDirectory;
+    private final JTextField projectProjectDirectoryPath;
 
     public OdinRunConfigurationSettingsEditor() {
         // Get project
         compilerOptions = new JTextField("run .");
-        workingDirectory = new JTextField("$ProjectFileDir$");
+        projectProjectDirectoryPath = new JTextField("$ProjectFileDir$");
         panel = FormBuilder.createFormBuilder()
                 .addLabeledComponent(new JLabel("Compiler Options"), compilerOptions)
-                .addLabeledComponent(new JLabel("Working Directory"), workingDirectory)
+                .addLabeledComponent(new JLabel("Project Directory"), projectProjectDirectoryPath)
                 .getPanel();
     }
 
     @Override
     protected void resetEditorFrom(@NotNull OdinRunConfiguration s) {
         compilerOptions.setText(s.getOptions().getCompilerOptions());
-        workingDirectory.setText(s.getOptions().getFilePath());
+        projectProjectDirectoryPath.setText(s.getOptions().getProjectDirectoryPath());
     }
 
     @Override
-    protected void applyEditorTo(@NotNull OdinRunConfiguration s) throws ConfigurationException {
+    protected void applyEditorTo(@NotNull OdinRunConfiguration s) {
         s.getOptions().setCompilerOptions(compilerOptions.getText());
-        s.getOptions().setFilePath(workingDirectory.getText());
+        s.getOptions().setProjectDirectoryPath(projectProjectDirectoryPath.getText());
     }
 
     @Override

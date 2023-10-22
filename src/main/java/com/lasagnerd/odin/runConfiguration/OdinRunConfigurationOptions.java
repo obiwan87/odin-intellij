@@ -4,8 +4,8 @@ import com.intellij.execution.configurations.RunConfigurationOptions;
 import com.intellij.openapi.components.StoredProperty;
 
 public class OdinRunConfigurationOptions extends RunConfigurationOptions {
-    private final StoredProperty<String> filePath =
-            string("").provideDelegate(this, "filePath");
+    private final StoredProperty<String> projectDirectoryPath =
+            string("").provideDelegate(this, "projectDirectoryPath");
     private final StoredProperty<String> compilerOptions =
             string("").provideDelegate(this, "compilerOptions");
 
@@ -17,11 +17,11 @@ public class OdinRunConfigurationOptions extends RunConfigurationOptions {
         this.compilerOptions.setValue(this, compilerOptions);
     }
 
-    public String getFilePath() {
-        return filePath.getValue(this);
+    public String getProjectDirectoryPath() {
+        return projectDirectoryPath.getValue(this);
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath.setValue(this, filePath);
+    public void setProjectDirectoryPath(String projectDirectoryPath) {
+        this.projectDirectoryPath.setValue(this, projectDirectoryPath);
     }
 }
