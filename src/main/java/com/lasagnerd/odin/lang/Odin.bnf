@@ -485,7 +485,7 @@ continueStatement ::= CONTINUE IDENTIFIER?
 
 // Statements that are allowed in "blocks" like for loops, if statements, etc.
 // A block is a sequence of statements contained in braces.
-block ::= tagStatement_expression* LBRACE statementList? RBRACE
+block ::= eos* tagStatement_expression* LBRACE statementList? RBRACE
 
 
 // In the current implementation, when entering a parenthesis, bracket or brace block, the parser will expect to find

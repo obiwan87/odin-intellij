@@ -583,34 +583,45 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // tagStatement_expression* LBRACE statementList? RBRACE
+  // eos* tagStatement_expression* LBRACE statementList? RBRACE
   public static boolean block(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block")) return false;
-    if (!nextTokenIs(b, "<block>", HASH, LBRACE)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, BLOCK, "<block>");
     r = block_0(b, l + 1);
+    r = r && block_1(b, l + 1);
     r = r && consumeToken(b, LBRACE);
-    r = r && block_2(b, l + 1);
+    r = r && block_3(b, l + 1);
     r = r && consumeToken(b, RBRACE);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // tagStatement_expression*
+  // eos*
   private static boolean block_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_0")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!tagStatement_expression(b, l + 1)) break;
+      if (!eos(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "block_0", c)) break;
     }
     return true;
   }
 
+  // tagStatement_expression*
+  private static boolean block_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!tagStatement_expression(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "block_1", c)) break;
+    }
+    return true;
+  }
+
   // statementList?
-  private static boolean block_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "block_2")) return false;
+  private static boolean block_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "block_3")) return false;
     statementList(b, l + 1);
     return true;
   }
