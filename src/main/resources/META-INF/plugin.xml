@@ -29,7 +29,7 @@
         <lang.syntaxHighlighterFactory language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinSyntaxHighlighterFactory"/>
         <lang.braceMatcher language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinBraceMatcher"/>
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator"/>
-        <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinFormattingBuilder"/>
+        <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.formatter.OdinFormattingBuilder"/>
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinAnnotator"/>
         <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
     </extensions>
