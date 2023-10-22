@@ -10,7 +10,7 @@ public class OdinRunConfigurationType extends ConfigurationTypeBase {
 
     public OdinRunConfigurationType() {
         super(ID, "Odin", "Odin run configuration type",
-                NotNullLazyValue.createValue(() -> OdinIcons.OdinRunConfigurationIcon_Dark));
+                NotNullLazyValue.createValue(() -> OdinIcons.OdinRunConfigurationIcon));
         addFactory(new OdinRunConfigurationFactory(this));
     }
 }
