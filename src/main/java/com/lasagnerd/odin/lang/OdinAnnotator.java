@@ -4,7 +4,6 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -18,7 +17,7 @@ import java.util.regex.Pattern;
 
 public class OdinAnnotator implements Annotator {
 
-    private static Pattern ENTIRE_SQ_IS_ESCAPE_SEQ = Pattern.compile("^("+OdinLangSyntaxAnnotator.ALL_ESCAPE_SEQUENCES+")$");
+    private static final Pattern ENTIRE_SQ_IS_ESCAPE_SEQ = Pattern.compile("^(" + OdinLangSyntaxAnnotator.ALL_ESCAPE_SEQUENCES + ")$");
     public static final Pattern BLOCK_COMMENT_DELIMITERS = Pattern.compile("/\\*|\\*/");
 
     @Override
@@ -59,17 +58,17 @@ public class OdinAnnotator implements Annotator {
                 }
             }
 
-            if(stringLiteral.getSqStringLiteral() != null) {
+            if (stringLiteral.getSqStringLiteral() != null) {
                 if (!text.endsWith("'") || text.endsWith("\\'")) {
                     holder.newAnnotation(HighlightSeverity.ERROR, "Unclosed rune literal")
                             .highlightType(ProblemHighlightType.GENERIC_ERROR)
                             .range(element.getTextRange())
                             .create();
                 } else {
-                    if(text.length() > 2) {
+                    if (text.length() > 2) {
                         String textInsideRune = text.substring(1, text.length() - 1);
                         Matcher matcher = ENTIRE_SQ_IS_ESCAPE_SEQ.matcher(textInsideRune);
-                        if (!matcher.find() && textInsideRune.length() != 1) {
+                        if (!matcher.find() && textInsideRune.codePointCount(0, textInsideRune.length()) > 1) {
                             holder.newAnnotation(HighlightSeverity.ERROR, "Illegal rune literal")
                                     .highlightType(ProblemHighlightType.GENERIC_ERROR)
                                     .range(element.getTextRange())
@@ -79,7 +78,5 @@ public class OdinAnnotator implements Annotator {
                 }
             }
         }
-
-
     }
 }

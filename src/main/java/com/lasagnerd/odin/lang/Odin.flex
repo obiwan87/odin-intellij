@@ -245,6 +245,8 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         \\U[0-9a-fA-F]{8}              { return SQ_STRING_LITERAL; }
         \\\'                           { return SQ_STRING_LITERAL; }
         \\                             { return SQ_STRING_LITERAL; }
+        // Emojis
+        [\ud800-\udbff][\udc00-\udfff] { return SQ_STRING_LITERAL; }
         [\r\n]     { yybegin(YYINITIAL); return NEW_LINE;}
     }
 
