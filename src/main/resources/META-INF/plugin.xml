@@ -32,6 +32,12 @@
         <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.formatter.OdinFormattingBuilder"/>
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinAnnotator"/>
         <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
+        <applicationConfigurable
+                parentId="language"
+                instance="com.lasagnerd.odin.config.OdinSdkConfigurable"
+                id="com.lasagnerd.odin.config.OdinSdkConfigurable"
+                displayName="Odin"/>
+        <applicationService serviceImplementation="com.lasagnerd.odin.config.OdinSdkConfigPersistentState"/>
     </extensions>
 
 </idea-plugin>
