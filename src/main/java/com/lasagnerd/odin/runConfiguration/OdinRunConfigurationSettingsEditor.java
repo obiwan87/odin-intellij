@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.runConfiguration;
 
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;

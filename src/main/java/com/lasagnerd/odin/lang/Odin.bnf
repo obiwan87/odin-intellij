@@ -167,6 +167,7 @@
 odinFile ::= packageClause eos (importDeclarationStatement eos)* (fileScopeStatement eos)* <<eof>>
 packageClause ::= PACKAGE IDENTIFIER
 importDeclarationStatement ::= IMPORT IDENTIFIER? DQ_STRING_LITERAL
+doubleColonOperator ::= COLON COLON
 
 fileScopeStatement ::= foreignImportDeclarationStatement
                 | importDeclarationStatement
@@ -184,43 +185,43 @@ fileScopeStatement ::= foreignImportDeclarationStatement
                 | whenStatement
                 | tagStatement_expression
 
-foreignImportDeclarationStatement ::= (attributeStatement eos*)* FOREIGN IMPORT ( IDENTIFIER? DQ_STRING_LITERAL | IDENTIFIER? LBRACE DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? RBRACE)
+foreignImportDeclarationStatement ::= (attributeStatement eos*)* FOREIGN IMPORT ( IDENTIFIER? DQ_STRING_LITERAL | IDENTIFIER? blockStart DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? blockEnd)
 
 foreignStatement ::= (attributeStatement eos)* FOREIGN IDENTIFIER? foreignBlock
 
-foreignBlock ::= LBRACE foreignStatementList? RBRACE
+foreignBlock ::= blockStart foreignStatementList? blockEnd
 
 foreignStatementList ::= ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>>)? foreignBlockStatement eos)+
 foreignBlockStatement ::= variableDeclarationStatement
                          |foreignProcedureDeclarationStatement
                          |whenStatement
-foreignProcedureDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER COLON COLON PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] TRIPLE_DASH
+foreignProcedureDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] TRIPLE_DASH
 
 // Attributes
 attributeStatement ::=  AT IDENTIFIER
                        | AT arguments
 // Struct
-structDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON structSpec
+structDeclarationStatement ::= attributeStatement? IDENTIFIER doubleColonOperator structSpec
 structSpec ::= STRUCT [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> LBRACE [fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?] RBRACE
 fieldDeclarationStatement ::= USING? tagHead? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression [RAW_STRING_LITERAL]
 
 // Enum
-enumDeclarationStatement ::= (attributeStatement eos*) USING? IDENTIFIER COLON COLON enumSpec
+enumDeclarationStatement ::= (attributeStatement eos*) USING? IDENTIFIER doubleColonOperator enumSpec
 enumSpec ::= ENUM [IDENTIFIER (DOT IDENTIFIER)*] LBRACE [enumAssignment (COMMA enumAssignment)* COMMA?] RBRACE
 private enumAssignment ::= [IDENTIFIER EQ] expression
 // Union
-unionDeclarationStatement ::= attributeStatement? IDENTIFIER COLON COLON unionSpec
+unionDeclarationStatement ::= attributeStatement? IDENTIFIER doubleColonOperator unionSpec
 unionSpec ::= UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> LBRACE [typeDefinition_expression (COMMA typeDefinition_expression)* COMMA?] RBRACE
 
 // Bit Set
-bitsetDeclarationStatement ::= IDENTIFIER COLON COLON BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
+bitsetDeclarationStatement ::= IDENTIFIER doubleColonOperator BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
 
 // Procedure
 
 // TODO define declaration as literal expression
 // This will be elegant since all declaration follow the pattern
 //  IDENTIFIER COLON TYPE COLON LITERAL_EXPRESSION
-procedureDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER COLON COLON procedureType procedureBody
+procedureDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator procedureType procedureBody
 procedure_expression ::= procedureType procedureBody
 procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
 
@@ -235,7 +236,7 @@ private returnArgumentList ::= expression (COMMA expression)* COMMA?
 usingStatement ::= USING expression
 
 // Procedure overloading
-procedureOverloadStatement ::= (attributeStatement eos*)* IDENTIFIER COLON COLON PROC LBRACE IDENTIFIER (COMMA IDENTIFIER)* COMMA? RBRACE
+procedureOverloadStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator PROC LBRACE IDENTIFIER (COMMA IDENTIFIER)* COMMA? RBRACE
 
 // Variables and constants
 typeDefinition_expression   ::= DISTINCT? [tagStatement_expression] type
@@ -261,7 +262,7 @@ matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDe
 arrayType        ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression
 
 constantInitializationStatement ::= (attributeStatement eos*)* [USING] IDENTIFIER COLON typeDefinition_expression? COLON expression
-typeAliasDeclarationStatement ::= IDENTIFIER COLON COLON DISTINCT? typeDefinition_expression
+typeAliasDeclarationStatement ::= IDENTIFIER doubleColonOperator DISTINCT? typeDefinition_expression
 
 variableInitializationStatement ::= (attributeStatement eos*)* [tagHead] identifierList COLON typeDefinition_expression? (EQ|COLON) expressionsList
 identifierList ::= IDENTIFIER (COMMA IDENTIFIER)*
@@ -485,8 +486,9 @@ continueStatement ::= CONTINUE IDENTIFIER?
 
 // Statements that are allowed in "blocks" like for loops, if statements, etc.
 // A block is a sequence of statements contained in braces.
-block ::= eos* tagStatement_expression* LBRACE statementList? RBRACE
-
+block ::= eos* tagStatement_expression* blockStart statementList? blockEnd
+blockStart ::= LBRACE
+blockEnd ::= RBRACE
 
 // In the current implementation, when entering a parenthesis, bracket or brace block, the parser will expect to find
 // a statement or an end of statement. The problem is that empty blocks are allowed, but will lead to a parsing error.
@@ -543,7 +545,8 @@ elseBlock ::= ELSE statementBody
 whenStatement ::= WHEN condition block (eos* elseWhenBlock)* (eos* elseBlock)?
 elseWhenBlock ::= ELSE WHEN condition block
 
-switchStatement ::= [label] [tagStatement_expression] SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">> LBRACE (switchCaseBlock)* RBRACE
+switchStatement ::= [label] [tagStatement_expression] SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">> blockStart switchCases blockEnd
+switchCases ::= (switchCaseBlock)*
 switchCaseBlock ::= CASE (caseExpression(COMMA caseExpression)*)? COLON statementList?
 
 caseExpression ::= expression

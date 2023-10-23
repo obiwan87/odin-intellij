@@ -42,7 +42,7 @@ public class OdinFormatterBlock extends AbstractBlock {
                 continue;
             }
 
-            if (elementType == OdinTypes.STATEMENT_LIST) {
+            if (elementType == OdinTypes.STATEMENT_LIST || elementType == OdinTypes.SWITCH_CASES) {
                 Indent normalIndent = Indent.getNormalIndent();
                 OdinFormatterBlock block = createFormatterBlock(subNode, normalIndent);
                 blocks.add(block);
@@ -67,7 +67,6 @@ public class OdinFormatterBlock extends AbstractBlock {
                 spacingBuilder);
     }
 
-
     @NotNull
     private static OdinFormatterLeaf createLeaf(ASTNode subNode) {
         return new OdinFormatterLeaf(subNode, null,
@@ -81,7 +80,7 @@ public class OdinFormatterBlock extends AbstractBlock {
 
     @Override
     public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
-        return null;
+        return spacingBuilder.getSpacing(this, child1, child2);
     }
 
     @Nullable
