@@ -41,6 +41,8 @@
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType" id="OdinRunConfigurationType"/>
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
         <runLineMarkerContributor language="Odin" implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
+<!--        <codeStyleSettingsProvider implementation="com.lasagnerd.odin.formatter.OdinCodeStyleSettingsProvider"/>-->
+<!--        <langCodeStyleSettingsProvider implementation="com.lasagnerd.odin.formatter.OdinLanguageCodeStyleProvider"/>-->
     </extensions>
 
 </idea-plugin>
