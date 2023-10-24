@@ -32,12 +32,12 @@
         <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.formatter.OdinFormattingBuilder"/>
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinAnnotator"/>
         <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
-        <applicationConfigurable
+        <projectConfigurable
                 parentId="language"
                 instance="com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable"
                 id="com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable"
                 displayName="Odin"/>
-        <applicationService serviceImplementation="com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState"/>
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType" id="OdinRunConfigurationType"/>
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
         <runLineMarkerContributor language="Odin" implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
