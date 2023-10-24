@@ -36,13 +36,12 @@ public class OdinFormatterBlock extends AbstractBlock {
         for (ASTNode subNode = node.getFirstChildNode(); subNode != null; subNode = subNode.getTreeNext()) {
             IElementType elementType = subNode.getElementType();
             if (elementType == TokenType.WHITE_SPACE
-                    || elementType == OdinTypes.EOS
-                    || elementType == OdinTypes.EOS_TOKEN
+                    || (elementType == OdinTypes.EOS && subNode.getText().trim().isEmpty())
             ) {
                 continue;
             }
 
-            if (elementType == OdinTypes.STATEMENT_LIST || elementType == OdinTypes.SWITCH_CASES) {
+            if (elementType == OdinTypes.STATEMENT_LIST) {
                 Indent normalIndent = Indent.getNormalIndent();
                 OdinFormatterBlock block = createFormatterBlock(subNode, normalIndent);
                 blocks.add(block);

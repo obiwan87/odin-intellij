@@ -28,8 +28,8 @@
         IN='regexp:in'
         NOT_IN='regexp:not_in'
         DO='regexp:do'
-        IF='regexp:if'
-        ELSE='regexp:else'
+        IF_TOKEN='regexp:if'
+        ELSE_TOKEN='regexp:else'
         SWITCH='regexp:switch'
         CASE='regexp:case'
         FALLTHROUGH='regexp:fallthrough'
@@ -261,10 +261,16 @@ mapType          ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinit
 matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
 arrayType        ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression
 
-constantInitializationStatement ::= (attributeStatement eos*)* [USING] IDENTIFIER COLON typeDefinition_expression? COLON expression
+constantInitializationStatement ::= symbolDefinitionHead colonClosing expression
+colonClosing ::= COLON
+
 typeAliasDeclarationStatement ::= IDENTIFIER doubleColonOperator DISTINCT? typeDefinition_expression
 
-variableInitializationStatement ::= (attributeStatement eos*)* [tagHead] identifierList COLON typeDefinition_expression? (EQ|COLON) expressionsList
+private symbolDefinitionHead ::= (attributeStatement eos*)* [tagHead] identifierList colonOpening typeDefinition_expression?
+colonOpening ::= COLON
+
+variableInitializationStatement ::= symbolDefinitionHead EQ expressionsList
+
 identifierList ::= IDENTIFIER (COMMA IDENTIFIER)*
 
 assignmentStatement ::= [tagHead] leftHandExpressions assignmentOperator expressionsList
@@ -394,8 +400,8 @@ private ternary_expression ::= ternary_cond_expression
                                | ternary_if_expression
                                | ternary_when_expression
 ternary_cond_expression ::= expression QUESTION expression COLON expression
-ternary_if_expression ::= expression IF expression ELSE expression
-ternary_when_expression ::= expression WHEN expression ELSE expression
+ternary_if_expression ::= expression if expression else expression
+ternary_when_expression ::= expression WHEN expression else expression
 
 cast_expression ::= CAST LPAREN typeDefinition_expression RPAREN expression
 transmute_expression ::= TRANSMUTE LPAREN expression RPAREN expression
@@ -533,20 +539,24 @@ private forExpression ::= AND? primary_expression
 private forStartStatement ::=   variableInitializationStatement | assignmentStatement | call_expression
 private forEndStatement ::=   assignmentStatement | call_expression
 
-ifStatement ::= [label] [tagHead] IF condition statementBody (eos* elseIfBlock)* (eos* elseBlock)?
+ifStatement ::= [label] [tagHead] if condition statementBody (eos* elseIfBlock)* (eos* elseBlock)?
 
 statementBody ::= block|doStatement
-private condition ::= <<enterMode "BLOCK">> [ifInit SEMICOLON] expression <<exitMode "BLOCK">>
+condition ::= <<enterMode "BLOCK">> [ifInit SEMICOLON] expression <<exitMode "BLOCK">>
 private switchCondition ::= [ifInit SEMICOLON] expression?
 private ifInit ::= assignmentStatement|variableInitializationStatement|variableDeclarationStatement
-elseIfBlock ::= ELSE IF condition statementBody
-elseBlock ::= ELSE statementBody
-
+elseIfBlock ::= elseIf condition statementBody
+elseIf ::= else if
+elseBlock ::= else statementBody
+if ::= IF_TOKEN
+else ::= ELSE_TOKEN
 whenStatement ::= WHEN condition block (eos* elseWhenBlock)* (eos* elseBlock)?
-elseWhenBlock ::= ELSE WHEN condition block
+elseWhenBlock ::= else WHEN condition block
 
-switchStatement ::= [label] [tagStatement_expression] SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">> blockStart switchCases blockEnd
-switchCases ::= (switchCaseBlock)*
+switchStatement ::= [label] [tagStatement_expression] switchHead switchBody
+switchHead ::= SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">>
+switchBody ::= eos* blockStart switchCases blockEnd
+switchCases ::= switchCaseBlock*
 switchCaseBlock ::= CASE (caseExpression(COMMA caseExpression)*)? COLON statementList?
 
 caseExpression ::= expression

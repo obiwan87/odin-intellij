@@ -1326,7 +1326,7 @@ public class OdinLexer implements FlexLexer {
           // fall through
           case 190: break;
           case 69:
-            { return IF;
+            { return IF_TOKEN;
             }
           // fall through
           case 191: break;
@@ -1470,7 +1470,7 @@ public class OdinLexer implements FlexLexer {
           // fall through
           case 216: break;
           case 95:
-            { return ELSE;
+            { return ELSE_TOKEN;
             }
           // fall through
           case 217: break;

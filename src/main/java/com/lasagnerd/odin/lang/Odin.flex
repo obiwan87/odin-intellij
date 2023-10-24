@@ -66,8 +66,8 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         "for"         { return FOR; }
         "in"          { return IN; }
         "do"          { return DO; }
-        "if"          { return IF; }
-        "else"        { return ELSE; }
+        "if"          { return IF_TOKEN; }
+        "else"        { return ELSE_TOKEN; }
         "switch"      { return SWITCH; }
         "case"        { return CASE; }
         "fallthrough" { yybegin(NLSEMI_STATE); return FALLTHROUGH; }
