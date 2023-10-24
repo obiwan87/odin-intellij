@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessHandlerFactory;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -73,21 +76,48 @@ public class OdinRunConfiguration extends RunConfigurationBase<OdinRunConfigurat
                 List<String> command = new ArrayList<>();
                 String sdkPath = OdinSdkConfigPersistentState.getInstance(getProject()).getSdkPath();
                 String projectDirectoryPath = getOptions().getProjectDirectoryPath();
-
                 String compilerPath = sdkPath + "/odin";
-
                 String compilerOptions = Objects.requireNonNullElse(getOptions().getCompilerOptions(), "");
+                String outputPathString = Objects.requireNonNullElse(getOptions().getOutputPath(), "");
 
                 addCommandPart(command, compilerPath);
                 addCommandPart(command, "run");
                 addCommandPart(command, projectDirectoryPath);
                 addCommandPart(command, compilerOptions);
 
+                String basePath = getProject().getBasePath();
+                if(!outputPathString.isEmpty()) {
+                    ProgramParametersConfigurator configurator = new ProgramParametersConfigurator();
+                    String expandedPath = configurator.expandPathAndMacros(outputPathString, null , getProject());
+
+                    Path outputPath = getAbsolutePath(getProject(), expandedPath);
+                    if(!outputPath.getParent().toFile().exists()) {
+                        boolean success = outputPath.getParent().toFile().mkdirs();
+                        if(!success) {
+                            throw new ExecutionException("Failed to create output directory");
+                        }
+                    }
+
+                    addCommandPart(command, "-out:" + expandedPath);
+                }
+
+
                 GeneralCommandLine commandLine = new GeneralCommandLine(command);
-                commandLine.setWorkDirectory(getProject().getBasePath());
+                commandLine.setWorkDirectory(basePath);
                 OSProcessHandler processHandler = ProcessHandlerFactory.getInstance().createColoredProcessHandler(commandLine);
                 ProcessTerminatedListener.attach(processHandler);
                 return processHandler;
+            }
+
+            public Path getAbsolutePath(Project project, String expandedPath) {
+                String projectBasePathString = project.getBasePath();
+                if(projectBasePathString == null) {
+                    throw new RuntimeException("Project base path is null");
+                }
+                Path basePath = Paths.get(projectBasePathString);
+                Path outputPathFile = Paths.get(expandedPath);
+
+                return basePath.resolve(outputPathFile);
             }
 
             public void addCommandPart(List<String> list, String item) {
@@ -97,4 +127,6 @@ public class OdinRunConfiguration extends RunConfigurationBase<OdinRunConfigurat
             }
         };
     }
+
+
 }
