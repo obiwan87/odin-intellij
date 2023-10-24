@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,8 +23,8 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
     @Setter
     public String sdkPath = "";
 
-    public static OdinSdkConfigPersistentState getInstance() {
-        return ApplicationManager.getApplication().getService(OdinSdkConfigPersistentState.class);
+    public static OdinSdkConfigPersistentState getInstance(Project project) {
+        return project.getService(OdinSdkConfigPersistentState.class);
     }
 
     @Override

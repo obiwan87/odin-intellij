@@ -40,7 +40,7 @@ public class OdinSdkSettingsComponent {
 
 
         mainPanel = FormBuilder.createFormBuilder()
-                .addLabeledComponent(new JBLabel("SDK path: "), createTextFieldWithBrowseButton(), 1, false)
+                .addLabeledComponent(new JBLabel("Path to SDK: "), createTextFieldWithBrowseButton(), 1, false)
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
     }

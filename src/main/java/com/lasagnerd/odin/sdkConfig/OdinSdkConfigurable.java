@@ -1,13 +1,19 @@
 package com.lasagnerd.odin.sdkConfig;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class OdinSdkConfigurable implements Configurable {
+    private final Project project;
     private OdinSdkSettingsComponent sdkSettingsComponent;
+
+    public OdinSdkConfigurable(Project project) {
+        this.project = project;
+    }
 
     @Override
     public @NlsContexts.ConfigurableName String getDisplayName() {
@@ -23,18 +29,18 @@ public class OdinSdkConfigurable implements Configurable {
 
     @Override
     public boolean isModified() {
-        return !sdkSettingsComponent.getSdkPath().equals(OdinSdkConfigPersistentState.getInstance().getSdkPath());
+        return !sdkSettingsComponent.getSdkPath().equals(OdinSdkConfigPersistentState.getInstance(project).getSdkPath());
     }
 
     @Override
     public void apply() {
         String sdkPath = sdkSettingsComponent.getSdkPath();
-        OdinSdkConfigPersistentState.getInstance().setSdkPath(sdkPath);
+        OdinSdkConfigPersistentState.getInstance(project).setSdkPath(sdkPath);
     }
 
     @Override
     public void reset() {
-        String sdkPath = OdinSdkConfigPersistentState.getInstance().getSdkPath();
+        String sdkPath = OdinSdkConfigPersistentState.getInstance(project).getSdkPath();
         sdkSettingsComponent.setSdkPath(sdkPath);
     }
 
