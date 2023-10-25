@@ -108,8 +108,10 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         \`[^`]*\`                                   { yybegin(NLSEMI_STATE); return RAW_STRING_LITERAL; }
 
         {IntegerDecLiteral} { yybegin(NLSEMI_STATE); return INTEGER_DEC_LITERAL; }
-        {IntegerDecLiteral} "." / [^.] {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+
         {IntegerDecLiteral}? "." {IntegerDecLiteral} {ExponentPart}? [ijk]? {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+        {IntegerDecLiteral} "." / [^.] {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+        {IntegerDecLiteral} "." [0-9]+ { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
         {IntegerDecLiteral}{ExponentPart}[ijk]? {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
 
         {IntegerOctLiteral} { yybegin(NLSEMI_STATE); return INTEGER_OCT_LITERAL; }
