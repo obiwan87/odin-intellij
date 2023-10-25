@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.lasagnerd"
-version = "0.0.1"
+version = "0.1.0"
 
 repositories {
     mavenCentral()
@@ -42,12 +42,13 @@ tasks {
     }
 
     signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
+        certificateChainFile.set(File("certificate/chain.crt"))
+        privateKeyFile.set(File("certificate/private.pem"))
         password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
     }
 
     publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
+        val myToken = File("certificate/token").readText()
+        token.set(myToken)
     }
 }

@@ -2,9 +2,24 @@
 
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <version>0.0.1</version>
+    <version>0.1.0</version>
     <name>Odin Lang Support</name>
+    <change-notes><![CDATA[
+        <h2>New Features</h2>
+        <ul>
+            <li>Added simple code formatting and smart indentation</li>
+            <li>Added run configuration for <code>main</code> procedures</li>
+            <li>Added run line marker for <code>main</code> procedures</li>
+            <li>Added project SDK configuration</li>
+        </ul>
 
+        <h2>Coming with v0.2.0</h2>
+        <ul>
+            <li>Go To Symbol</li>
+            <li>Find Usages</li>
+        </ul>
+        ]]>
+    </change-notes>
     <vendor email="simon.distefano@gmx.de" url="https://lasagnerd.com">Lasagnerd</vendor>
 
     <description><![CDATA[
