@@ -13,11 +13,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OdinFormatterBlock extends AbstractBlock {
-
-
     private final Indent indent;
     private final SpacingBuilder spacingBuilder;
+    static List<IElementType> typesToIndent = List.of(
+            OdinTypes.STATEMENT_LIST,
+            OdinTypes.STRUCT_BODY,
+            OdinTypes.ENUM_BODY,
+            OdinTypes.UNION_BODY
+    );
 
+    static List<IElementType> typesToSmartIndent = List.of(
+            OdinTypes.BLOCK,
+            OdinTypes.STRUCT_BLOCK,
+            OdinTypes.CASE_BLOCK,
+            OdinTypes.ENUM_BLOCK
+    );
 
     public OdinFormatterBlock(@NotNull ASTNode node,
                               @Nullable Wrap wrap,
@@ -41,7 +51,7 @@ public class OdinFormatterBlock extends AbstractBlock {
                 continue;
             }
 
-            if (elementType == OdinTypes.STATEMENT_LIST) {
+            if (typesToIndent.contains(elementType)) {
                 Indent normalIndent = Indent.getNormalIndent();
                 OdinFormatterBlock block = createFormatterBlock(subNode, normalIndent);
                 blocks.add(block);
@@ -57,6 +67,7 @@ public class OdinFormatterBlock extends AbstractBlock {
 
         return blocks;
     }
+
 
     @NotNull
     private OdinFormatterBlock createFormatterBlock(ASTNode node, Indent indent) {
@@ -105,8 +116,8 @@ public class OdinFormatterBlock extends AbstractBlock {
 
     @Override
     public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
-        if (myNode.getElementType() == OdinTypes.BLOCK || myNode.getElementType() == OdinTypes.SWITCH_CASE_BLOCK) {
-
+        IElementType elementType = myNode.getElementType();
+        if (typesToSmartIndent.contains(elementType)) {
             return new ChildAttributes(Indent.getNormalIndent(), null);
         }
         return new ChildAttributes(Indent.getNoneIndent(), null);

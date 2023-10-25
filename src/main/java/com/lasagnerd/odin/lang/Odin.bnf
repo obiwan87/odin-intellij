@@ -202,16 +202,22 @@ attributeStatement ::=  AT IDENTIFIER
                        | AT arguments
 // Struct
 structDeclarationStatement ::= attributeStatement? IDENTIFIER doubleColonOperator structSpec
-structSpec ::= STRUCT [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> LBRACE [fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?] RBRACE
+structSpec ::= STRUCT [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> structBlock
+structBlock ::= blockStart [structBody] blockEnd
+structBody ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?
 fieldDeclarationStatement ::= USING? tagHead? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression [RAW_STRING_LITERAL]
 
 // Enum
 enumDeclarationStatement ::= (attributeStatement eos*) USING? IDENTIFIER doubleColonOperator enumSpec
-enumSpec ::= ENUM [IDENTIFIER (DOT IDENTIFIER)*] LBRACE [enumAssignment (COMMA enumAssignment)* COMMA?] RBRACE
+enumSpec ::= ENUM [IDENTIFIER (DOT IDENTIFIER)*] enumBlock
+enumBlock ::= blockStart [enumBody] blockEnd
+enumBody ::= enumAssignment (COMMA enumAssignment)* COMMA?
 private enumAssignment ::= [IDENTIFIER EQ] expression
 // Union
 unionDeclarationStatement ::= attributeStatement? IDENTIFIER doubleColonOperator unionSpec
-unionSpec ::= UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> LBRACE [typeDefinition_expression (COMMA typeDefinition_expression)* COMMA?] RBRACE
+unionSpec ::= UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> unionBlock
+unionBlock ::= blockStart [unionBody] blockEnd
+unionBody ::= typeDefinition_expression (COMMA typeDefinition_expression)* COMMA?
 
 // Bit Set
 bitsetDeclarationStatement ::= IDENTIFIER doubleColonOperator BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
@@ -556,8 +562,9 @@ elseWhenBlock ::= else WHEN condition block
 switchStatement ::= [label] [tagStatement_expression] switchHead switchBody
 switchHead ::= SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">>
 switchBody ::= eos* blockStart switchCases blockEnd
-switchCases ::= switchCaseBlock*
-switchCaseBlock ::= CASE (caseExpression(COMMA caseExpression)*)? COLON statementList?
+switchCases ::= switchCase*
+switchCase ::= CASE (caseExpression(COMMA caseExpression)*)? caseBlock
+caseBlock ::= COLON statementList?
 
 caseExpression ::= expression
                   | typeDefinition_expression

@@ -774,6 +774,26 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // COLON statementList?
+  public static boolean caseBlock(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "caseBlock")) return false;
+    if (!nextTokenIs(b, COLON)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COLON);
+    r = r && caseBlock_1(b, l + 1);
+    exit_section_(b, m, CASE_BLOCK, r);
+    return r;
+  }
+
+  // statementList?
+  private static boolean caseBlock_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "caseBlock_1")) return false;
+    statementList(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
   // expression
   //                   | typeDefinition_expression
   //                   | DOT IDENTIFIER
@@ -1042,6 +1062,69 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // blockStart [enumBody] blockEnd
+  public static boolean enumBlock(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumBlock")) return false;
+    if (!nextTokenIs(b, LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = blockStart(b, l + 1);
+    r = r && enumBlock_1(b, l + 1);
+    r = r && blockEnd(b, l + 1);
+    exit_section_(b, m, ENUM_BLOCK, r);
+    return r;
+  }
+
+  // [enumBody]
+  private static boolean enumBlock_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumBlock_1")) return false;
+    enumBody(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // enumAssignment (COMMA enumAssignment)* COMMA?
+  public static boolean enumBody(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumBody")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, ENUM_BODY, "<enum body>");
+    r = enumAssignment(b, l + 1);
+    r = r && enumBody_1(b, l + 1);
+    r = r && enumBody_2(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (COMMA enumAssignment)*
+  private static boolean enumBody_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumBody_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!enumBody_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "enumBody_1", c)) break;
+    }
+    return true;
+  }
+
+  // COMMA enumAssignment
+  private static boolean enumBody_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumBody_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && enumAssignment(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COMMA?
+  private static boolean enumBody_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumBody_2")) return false;
+    consumeToken(b, COMMA);
+    return true;
+  }
+
+  /* ********************************************************** */
   // (attributeStatement eos*) USING? IDENTIFIER doubleColonOperator enumSpec
   public static boolean enumDeclarationStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "enumDeclarationStatement")) return false;
@@ -1087,7 +1170,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ENUM [IDENTIFIER (DOT IDENTIFIER)*] LBRACE [enumAssignment (COMMA enumAssignment)* COMMA?] RBRACE
+  // ENUM [IDENTIFIER (DOT IDENTIFIER)*] enumBlock
   public static boolean enumSpec(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "enumSpec")) return false;
     if (!nextTokenIs(b, ENUM)) return false;
@@ -1095,9 +1178,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, ENUM);
     r = r && enumSpec_1(b, l + 1);
-    r = r && consumeToken(b, LBRACE);
-    r = r && enumSpec_3(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
+    r = r && enumBlock(b, l + 1);
     exit_section_(b, m, ENUM_SPEC, r);
     return r;
   }
@@ -1139,54 +1220,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     r = consumeTokens(b, 0, DOT, IDENTIFIER);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // [enumAssignment (COMMA enumAssignment)* COMMA?]
-  private static boolean enumSpec_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "enumSpec_3")) return false;
-    enumSpec_3_0(b, l + 1);
-    return true;
-  }
-
-  // enumAssignment (COMMA enumAssignment)* COMMA?
-  private static boolean enumSpec_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "enumSpec_3_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = enumAssignment(b, l + 1);
-    r = r && enumSpec_3_0_1(b, l + 1);
-    r = r && enumSpec_3_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA enumAssignment)*
-  private static boolean enumSpec_3_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "enumSpec_3_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!enumSpec_3_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "enumSpec_3_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA enumAssignment
-  private static boolean enumSpec_3_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "enumSpec_3_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && enumAssignment(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // COMMA?
-  private static boolean enumSpec_3_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "enumSpec_3_0_2")) return false;
-    consumeToken(b, COMMA);
-    return true;
   }
 
   /* ********************************************************** */
@@ -3393,6 +3426,69 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // blockStart [structBody] blockEnd
+  public static boolean structBlock(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "structBlock")) return false;
+    if (!nextTokenIs(b, LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = blockStart(b, l + 1);
+    r = r && structBlock_1(b, l + 1);
+    r = r && blockEnd(b, l + 1);
+    exit_section_(b, m, STRUCT_BLOCK, r);
+    return r;
+  }
+
+  // [structBody]
+  private static boolean structBlock_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "structBlock_1")) return false;
+    structBody(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?
+  public static boolean structBody(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "structBody")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, STRUCT_BODY, "<struct body>");
+    r = fieldDeclarationStatement(b, l + 1);
+    r = r && structBody_1(b, l + 1);
+    r = r && structBody_2(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (COMMA fieldDeclarationStatement)*
+  private static boolean structBody_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "structBody_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!structBody_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "structBody_1", c)) break;
+    }
+    return true;
+  }
+
+  // COMMA fieldDeclarationStatement
+  private static boolean structBody_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "structBody_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && fieldDeclarationStatement(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COMMA?
+  private static boolean structBody_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "structBody_2")) return false;
+    consumeToken(b, COMMA);
+    return true;
+  }
+
+  /* ********************************************************** */
   // attributeStatement? IDENTIFIER doubleColonOperator structSpec
   public static boolean structDeclarationStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "structDeclarationStatement")) return false;
@@ -3450,7 +3546,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // STRUCT [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> LBRACE [fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?] RBRACE
+  // STRUCT [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> structBlock
   public static boolean structSpec(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "structSpec")) return false;
     if (!nextTokenIs(b, STRUCT)) return false;
@@ -3461,9 +3557,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     r = r && enterMode(b, l + 1, "BLOCK");
     r = r && structSpec_3(b, l + 1);
     r = r && exitMode(b, l + 1, "BLOCK");
-    r = r && consumeToken(b, LBRACE);
-    r = r && structSpec_6(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
+    r = r && structBlock(b, l + 1);
     exit_section_(b, m, STRUCT_SPEC, r);
     return r;
   }
@@ -3536,54 +3630,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // [fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?]
-  private static boolean structSpec_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "structSpec_6")) return false;
-    structSpec_6_0(b, l + 1);
-    return true;
-  }
-
-  // fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?
-  private static boolean structSpec_6_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "structSpec_6_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = fieldDeclarationStatement(b, l + 1);
-    r = r && structSpec_6_0_1(b, l + 1);
-    r = r && structSpec_6_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA fieldDeclarationStatement)*
-  private static boolean structSpec_6_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "structSpec_6_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!structSpec_6_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "structSpec_6_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA fieldDeclarationStatement
-  private static boolean structSpec_6_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "structSpec_6_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && fieldDeclarationStatement(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // COMMA?
-  private static boolean structSpec_6_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "structSpec_6_0_2")) return false;
-    consumeToken(b, COMMA);
-    return true;
-  }
-
   /* ********************************************************** */
   // eos* blockStart switchCases blockEnd
   public static boolean switchBody(PsiBuilder b, int l) {
@@ -3610,52 +3656,51 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // CASE (caseExpression(COMMA caseExpression)*)? COLON statementList?
-  public static boolean switchCaseBlock(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switchCaseBlock")) return false;
+  // CASE (caseExpression(COMMA caseExpression)*)? caseBlock
+  public static boolean switchCase(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCase")) return false;
     if (!nextTokenIs(b, CASE)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, CASE);
-    r = r && switchCaseBlock_1(b, l + 1);
-    r = r && consumeToken(b, COLON);
-    r = r && switchCaseBlock_3(b, l + 1);
-    exit_section_(b, m, SWITCH_CASE_BLOCK, r);
+    r = r && switchCase_1(b, l + 1);
+    r = r && caseBlock(b, l + 1);
+    exit_section_(b, m, SWITCH_CASE, r);
     return r;
   }
 
   // (caseExpression(COMMA caseExpression)*)?
-  private static boolean switchCaseBlock_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switchCaseBlock_1")) return false;
-    switchCaseBlock_1_0(b, l + 1);
+  private static boolean switchCase_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCase_1")) return false;
+    switchCase_1_0(b, l + 1);
     return true;
   }
 
   // caseExpression(COMMA caseExpression)*
-  private static boolean switchCaseBlock_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switchCaseBlock_1_0")) return false;
+  private static boolean switchCase_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCase_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = caseExpression(b, l + 1);
-    r = r && switchCaseBlock_1_0_1(b, l + 1);
+    r = r && switchCase_1_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // (COMMA caseExpression)*
-  private static boolean switchCaseBlock_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switchCaseBlock_1_0_1")) return false;
+  private static boolean switchCase_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCase_1_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!switchCaseBlock_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "switchCaseBlock_1_0_1", c)) break;
+      if (!switchCase_1_0_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "switchCase_1_0_1", c)) break;
     }
     return true;
   }
 
   // COMMA caseExpression
-  private static boolean switchCaseBlock_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switchCaseBlock_1_0_1_0")) return false;
+  private static boolean switchCase_1_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "switchCase_1_0_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
@@ -3664,21 +3709,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // statementList?
-  private static boolean switchCaseBlock_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "switchCaseBlock_3")) return false;
-    statementList(b, l + 1);
-    return true;
-  }
-
   /* ********************************************************** */
-  // switchCaseBlock*
+  // switchCase*
   public static boolean switchCases(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switchCases")) return false;
     Marker m = enter_section_(b, l, _NONE_, SWITCH_CASES, "<switch cases>");
     while (true) {
       int c = current_position_(b);
-      if (!switchCaseBlock(b, l + 1)) break;
+      if (!switchCase(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "switchCases", c)) break;
     }
     exit_section_(b, l, m, true, false, null);
@@ -3973,6 +4011,69 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // blockStart [unionBody] blockEnd
+  public static boolean unionBlock(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unionBlock")) return false;
+    if (!nextTokenIs(b, LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = blockStart(b, l + 1);
+    r = r && unionBlock_1(b, l + 1);
+    r = r && blockEnd(b, l + 1);
+    exit_section_(b, m, UNION_BLOCK, r);
+    return r;
+  }
+
+  // [unionBody]
+  private static boolean unionBlock_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unionBlock_1")) return false;
+    unionBody(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // typeDefinition_expression (COMMA typeDefinition_expression)* COMMA?
+  public static boolean unionBody(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unionBody")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, UNION_BODY, "<union body>");
+    r = typeDefinition_expression(b, l + 1);
+    r = r && unionBody_1(b, l + 1);
+    r = r && unionBody_2(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (COMMA typeDefinition_expression)*
+  private static boolean unionBody_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unionBody_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!unionBody_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "unionBody_1", c)) break;
+    }
+    return true;
+  }
+
+  // COMMA typeDefinition_expression
+  private static boolean unionBody_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unionBody_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && typeDefinition_expression(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COMMA?
+  private static boolean unionBody_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unionBody_2")) return false;
+    consumeToken(b, COMMA);
+    return true;
+  }
+
+  /* ********************************************************** */
   // attributeStatement? IDENTIFIER doubleColonOperator unionSpec
   public static boolean unionDeclarationStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unionDeclarationStatement")) return false;
@@ -3995,7 +4096,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> LBRACE [typeDefinition_expression (COMMA typeDefinition_expression)* COMMA?] RBRACE
+  // UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> unionBlock
   public static boolean unionSpec(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unionSpec")) return false;
     if (!nextTokenIs(b, UNION)) return false;
@@ -4006,9 +4107,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     r = r && enterMode(b, l + 1, "BLOCK");
     r = r && unionSpec_3(b, l + 1);
     r = r && exitMode(b, l + 1, "BLOCK");
-    r = r && consumeToken(b, LBRACE);
-    r = r && unionSpec_6(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
+    r = r && unionBlock(b, l + 1);
     exit_section_(b, m, UNION_SPEC, r);
     return r;
   }
@@ -4078,54 +4177,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
   private static boolean unionSpec_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unionSpec_3")) return false;
     tagStatement_expression(b, l + 1);
-    return true;
-  }
-
-  // [typeDefinition_expression (COMMA typeDefinition_expression)* COMMA?]
-  private static boolean unionSpec_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unionSpec_6")) return false;
-    unionSpec_6_0(b, l + 1);
-    return true;
-  }
-
-  // typeDefinition_expression (COMMA typeDefinition_expression)* COMMA?
-  private static boolean unionSpec_6_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unionSpec_6_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = typeDefinition_expression(b, l + 1);
-    r = r && unionSpec_6_0_1(b, l + 1);
-    r = r && unionSpec_6_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA typeDefinition_expression)*
-  private static boolean unionSpec_6_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unionSpec_6_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!unionSpec_6_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "unionSpec_6_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA typeDefinition_expression
-  private static boolean unionSpec_6_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unionSpec_6_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && typeDefinition_expression(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // COMMA?
-  private static boolean unionSpec_6_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unionSpec_6_0_2")) return false;
-    consumeToken(b, COMMA);
     return true;
   }
 
