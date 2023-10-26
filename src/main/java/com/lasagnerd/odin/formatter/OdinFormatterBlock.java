@@ -106,7 +106,7 @@ public class OdinFormatterBlock extends AbstractBlock {
 
     @Override
     public @Nullable String getDebugName() {
-        return myNode.getElementType().getDebugName();
+        return myNode.getElementType().toString();
     }
 
     @Override
