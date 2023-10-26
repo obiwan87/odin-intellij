@@ -68,7 +68,9 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.UNION,
             OdinTypes.FOREIGN,
             OdinTypes.WHERE,
-            OdinTypes.DISTINCT
+            OdinTypes.DISTINCT,
+            OdinTypes.OR_ELSE,
+            OdinTypes.OR_RETURN
     );
 
     private static final List<IElementType> numericLiteral = List.of(
