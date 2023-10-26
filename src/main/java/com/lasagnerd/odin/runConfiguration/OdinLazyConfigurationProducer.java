@@ -48,9 +48,6 @@ public class OdinLazyConfigurationProducer extends LazyRunConfigurationProducer<
         if (psiLocation == null) return false;
 
         Language language = psiLocation.getLanguage();
-        if (language.equals(OdinLanguage.INSTANCE)) {
-            return true;
-        }
-        return false;
+        return language.equals(OdinLanguage.INSTANCE);
     }
 }
