@@ -42,6 +42,8 @@
         TRIPLE_DASH='regexp:---'
         OR_ELSE='regexp:or_else'
         OR_RETURN='regexp:or_return'
+        OR_BREAK='regexp:or_break'
+        OR_CONTINUE='regexp:or_continue'
         FOREIGN='regexp:foreign'
         CAST='regexp:cast'
         AUTO_CAST='regexp:AUTO_CAST'
@@ -374,6 +376,8 @@ expression ::= implicitSelector_expression
                | unary_expression
                | binary_expression
                | or_return_expression
+               | or_break_expression
+               | or_continue_expression
                | set_expression
                | uninitialized_expression
                | cast_expression
@@ -428,6 +432,8 @@ unaryOperator ::= PLUS      // Arithmetic identity
                   | RANGE
 unary_expression ::= unaryOperator primary_expression
 or_return_expression ::= expression OR_RETURN
+or_break_expression ::= expression OR_BREAK [IDENTIFIER]
+or_continue_expression ::= expression OR_CONTINUE [IDENTIFIER]
 
 
 string_literal  ::= DQ_STRING_LITERAL

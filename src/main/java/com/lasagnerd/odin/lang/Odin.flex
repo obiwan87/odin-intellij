@@ -79,6 +79,8 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         "nil"         { yybegin(NLSEMI_STATE); return NIL; }
         "or_else"     { return OR_ELSE; }
         "or_return"   { yybegin(NLSEMI_STATE); return OR_RETURN; }
+        "or_break"   { yybegin(NLSEMI_STATE); return OR_BREAK; }
+        "or_continue"   { yybegin(NLSEMI_STATE); return OR_CONTINUE; }
         "foreign"     { return FOREIGN; }
         "cast"        { return CAST; }
         "transmute"   { return TRANSMUTE; }

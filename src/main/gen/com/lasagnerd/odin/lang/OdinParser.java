@@ -41,10 +41,11 @@ public class OdinParser implements PsiParser, LightPsiParser {
     create_token_set_(CARET_PRIMARY, COMBINED_PRIMARY, OPERAND_PRIMARY, PRIMARY),
     create_token_set_(AUTO_CAST_EXPRESSION, BINARY_EXPRESSION, CALL_EXPRESSION, CAST_EXPRESSION,
       EXPRESSION, IDENTIFIER_EXPRESSION, IMPLICIT_SELECTOR_EXPRESSION, MAYBE_EXPRESSION,
-      OR_RETURN_EXPRESSION, PARENTHESIZED_EXPRESSION, PRIMARY_EXPRESSION, PROCEDURE_EXPRESSION,
-      SET_EXPRESSION, TAG_STATEMENT_EXPRESSION, TERNARY_COND_EXPRESSION, TERNARY_IF_EXPRESSION,
-      TERNARY_WHEN_EXPRESSION, TRANSMUTE_EXPRESSION, TRIPLE_DASH_LITERAL_EXPRESSION, TYPE_DEFINITION_EXPRESSION,
-      TYPE_DEFINITION_VALUE_EXPRESSION, UNARY_EXPRESSION, UNINITIALIZED_EXPRESSION),
+      OR_BREAK_EXPRESSION, OR_CONTINUE_EXPRESSION, OR_RETURN_EXPRESSION, PARENTHESIZED_EXPRESSION,
+      PRIMARY_EXPRESSION, PROCEDURE_EXPRESSION, SET_EXPRESSION, TAG_STATEMENT_EXPRESSION,
+      TERNARY_COND_EXPRESSION, TERNARY_IF_EXPRESSION, TERNARY_WHEN_EXPRESSION, TRANSMUTE_EXPRESSION,
+      TRIPLE_DASH_LITERAL_EXPRESSION, TYPE_DEFINITION_EXPRESSION, TYPE_DEFINITION_VALUE_EXPRESSION, UNARY_EXPRESSION,
+      UNINITIALIZED_EXPRESSION),
     create_token_set_(ASSIGNMENT_STATEMENT, ATTRIBUTE_STATEMENT, BITSET_DECLARATION_STATEMENT, BLOCK_STATEMENT,
       BREAK_STATEMENT, CONSTANT_INITIALIZATION_STATEMENT, CONTINUE_STATEMENT, DEFER_STATEMENT,
       DO_STATEMENT, ENUM_DECLARATION_STATEMENT, EXPRESSION_STATEMENT, FALLTHROUGH_STATEMENT,
@@ -4422,14 +4423,16 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // 6: PREFIX(unary_expression)
   // 7: BINARY(binary_expression)
   // 8: POSTFIX(or_return_expression)
-  // 9: ATOM(set_expression)
-  // 10: ATOM(uninitialized_expression)
-  // 11: ATOM(cast_expression)
-  // 12: ATOM(transmute_expression)
-  // 13: PREFIX(auto_cast_expression)
-  // 14: ATOM(typeDefinitionValue_expression)
-  // 15: ATOM(typeDefinition_expression)
-  // 16: ATOM(tagStatement_expression)
+  // 9: POSTFIX(or_break_expression)
+  // 10: POSTFIX(or_continue_expression)
+  // 11: ATOM(set_expression)
+  // 12: ATOM(uninitialized_expression)
+  // 13: ATOM(cast_expression)
+  // 14: ATOM(transmute_expression)
+  // 15: PREFIX(auto_cast_expression)
+  // 16: ATOM(typeDefinitionValue_expression)
+  // 17: ATOM(typeDefinition_expression)
+  // 18: ATOM(tagStatement_expression)
   public static boolean expression(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expression")) return false;
     addVariant(b, "<expression>");
@@ -4485,6 +4488,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
       else if (g < 8 && consumeTokenSmart(b, OR_RETURN)) {
         r = true;
         exit_section_(b, l, m, OR_RETURN_EXPRESSION, r, true, null);
+      }
+      else if (g < 9 && or_break_expression_0(b, l + 1)) {
+        r = true;
+        exit_section_(b, l, m, OR_BREAK_EXPRESSION, r, true, null);
+      }
+      else if (g < 10 && or_continue_expression_0(b, l + 1)) {
+        r = true;
+        exit_section_(b, l, m, OR_CONTINUE_EXPRESSION, r, true, null);
       }
       else {
         exit_section_(b, l, m, null, false, false, null);
@@ -4589,6 +4600,42 @@ public class OdinParser implements PsiParser, LightPsiParser {
     r = p && expression(b, l, 0);
     exit_section_(b, l, m, UNARY_EXPRESSION, r, p, null);
     return r || p;
+  }
+
+  // OR_BREAK [IDENTIFIER]
+  private static boolean or_break_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "or_break_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, OR_BREAK);
+    r = r && or_break_expression_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // [IDENTIFIER]
+  private static boolean or_break_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "or_break_expression_0_1")) return false;
+    consumeTokenSmart(b, IDENTIFIER);
+    return true;
+  }
+
+  // OR_CONTINUE [IDENTIFIER]
+  private static boolean or_continue_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "or_continue_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, OR_CONTINUE);
+    r = r && or_continue_expression_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // [IDENTIFIER]
+  private static boolean or_continue_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "or_continue_expression_0_1")) return false;
+    consumeTokenSmart(b, IDENTIFIER);
+    return true;
   }
 
   // LBRACE [expression (COMMA expression)* COMMA?] RBRACE
@@ -4698,7 +4745,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, null);
     r = consumeTokenSmart(b, AUTO_CAST);
     p = r;
-    r = p && expression(b, l, 13);
+    r = p && expression(b, l, 15);
     exit_section_(b, l, m, AUTO_CAST_EXPRESSION, r, p, null);
     return r || p;
   }
