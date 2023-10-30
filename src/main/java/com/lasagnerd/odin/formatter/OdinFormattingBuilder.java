@@ -78,6 +78,12 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
 
                 .after(OdinTypes.COMMA)
                 .spaces(1)
+
+                .aroundInside(OdinTypes.EQ, OdinTypes.LITERAL_VALUE)
+                .spaces(1)
+
+                .aroundInside(OdinTypes.EQ, OdinTypes.ENUM_BODY)
+                .spaces(1)
                 ;
 
 
