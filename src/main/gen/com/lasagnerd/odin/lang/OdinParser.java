@@ -1103,7 +1103,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // enumAssignment (COMMA enumAssignment)* COMMA?
+  // enumAssignment (COMMA enumAssignment)* [EOS_TOKEN|COMMA]
   public static boolean enumBody(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "enumBody")) return false;
     if (!nextTokenIs(b, IDENTIFIER)) return false;
@@ -1138,11 +1138,20 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // COMMA?
+  // [EOS_TOKEN|COMMA]
   private static boolean enumBody_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "enumBody_2")) return false;
-    consumeToken(b, COMMA);
+    enumBody_2_0(b, l + 1);
     return true;
+  }
+
+  // EOS_TOKEN|COMMA
+  private static boolean enumBody_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumBody_2_0")) return false;
+    boolean r;
+    r = consumeToken(b, EOS_TOKEN);
+    if (!r) r = consumeToken(b, COMMA);
+    return r;
   }
 
   /* ********************************************************** */
@@ -3422,7 +3431,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?
+  // fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
   public static boolean structBody(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "structBody")) return false;
     boolean r;
@@ -3456,11 +3465,20 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // COMMA?
+  // [COMMA|EOS_TOKEN]
   private static boolean structBody_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "structBody_2")) return false;
-    consumeToken(b, COMMA);
+    structBody_2_0(b, l + 1);
     return true;
+  }
+
+  // COMMA|EOS_TOKEN
+  private static boolean structBody_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "structBody_2_0")) return false;
+    boolean r;
+    r = consumeToken(b, COMMA);
+    if (!r) r = consumeToken(b, EOS_TOKEN);
+    return r;
   }
 
   /* ********************************************************** */
@@ -4102,7 +4120,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // typeDefinition_expression (COMMA typeDefinition_expression)* COMMA?
+  // typeDefinition_expression (COMMA typeDefinition_expression)* [COMMA|EOS_TOKEN]
   public static boolean unionBody(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unionBody")) return false;
     boolean r;
@@ -4136,11 +4154,20 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // COMMA?
+  // [COMMA|EOS_TOKEN]
   private static boolean unionBody_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unionBody_2")) return false;
-    consumeToken(b, COMMA);
+    unionBody_2_0(b, l + 1);
     return true;
+  }
+
+  // COMMA|EOS_TOKEN
+  private static boolean unionBody_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unionBody_2_0")) return false;
+    boolean r;
+    r = consumeToken(b, COMMA);
+    if (!r) r = consumeToken(b, EOS_TOKEN);
+    return r;
   }
 
   /* ********************************************************** */

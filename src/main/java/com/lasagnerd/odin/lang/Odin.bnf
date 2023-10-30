@@ -187,7 +187,6 @@ fileScopeStatement ::= foreignImportDeclarationStatement
                 | tagStatement_expression
 
 foreignImportDeclarationStatement ::= (attributeStatement eos*)* FOREIGN IMPORT ( IDENTIFIER? DQ_STRING_LITERAL | IDENTIFIER? blockStart DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? blockEnd)
-
 foreignStatement ::= (attributeStatement eos)* FOREIGN IDENTIFIER? foreignBlock
 
 foreignBlock ::= blockStart foreignStatementList? blockEnd
@@ -205,20 +204,20 @@ attributeStatement ::=  AT IDENTIFIER
 structDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator DISTINCT? structSpec
 structSpec ::= STRUCT [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> structBlock
 structBlock ::= blockStart [structBody] blockEnd
-structBody ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?
+structBody ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
 fieldDeclarationStatement ::= USING? tagHead? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression [RAW_STRING_LITERAL]
 
 // Enum
 enumDeclarationStatement ::= (attributeStatement eos*)* USING? IDENTIFIER doubleColonOperator DISTINCT? enumSpec
 enumSpec ::= ENUM [IDENTIFIER (DOT IDENTIFIER)*] enumBlock
 enumBlock ::= blockStart [enumBody] blockEnd
-enumBody ::= enumAssignment (COMMA enumAssignment)* COMMA?
+enumBody ::= enumAssignment (COMMA enumAssignment)* [EOS_TOKEN|COMMA]
 private enumAssignment ::= IDENTIFIER [EQ basic_literal]
 // Union
 unionDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator DISTINCT? unionSpec
 unionSpec ::= UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> unionBlock
 unionBlock ::= blockStart [unionBody] blockEnd
-unionBody ::= typeDefinition_expression (COMMA typeDefinition_expression)* COMMA?
+unionBody ::= typeDefinition_expression (COMMA typeDefinition_expression)* [COMMA|EOS_TOKEN]
 
 // Bit Set
 bitsetDeclarationStatement ::= IDENTIFIER doubleColonOperator DISTINCT? bitSetType
@@ -516,7 +515,6 @@ statementList ::= ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | <<mu
 statement ::= assignmentStatement
                 | procedureDeclarationStatement
                 | variableInitializationStatement
-
                 | structDeclarationStatement
                 | enumDeclarationStatement
                 | unionDeclarationStatement
