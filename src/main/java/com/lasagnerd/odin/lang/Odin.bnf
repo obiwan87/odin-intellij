@@ -174,11 +174,10 @@ doubleColonOperator ::= COLON COLON
 fileScopeStatement ::= foreignImportDeclarationStatement
                 | importDeclarationStatement
                 | enumDeclarationStatement
+                | unionDeclarationStatement
+                | structDeclarationStatement
                 | procedureDeclarationStatement
                 | constantInitializationStatement
-                | unionDeclarationStatement
-                | typeAliasDeclarationStatement
-                | structDeclarationStatement
                 | bitsetDeclarationStatement
                 | variableInitializationStatement
                 | variableDeclarationStatement
@@ -203,32 +202,28 @@ foreignProcedureDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER d
 attributeStatement ::=  AT IDENTIFIER
                        | AT arguments
 // Struct
-structDeclarationStatement ::= attributeStatement? IDENTIFIER doubleColonOperator structSpec
+structDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator DISTINCT? structSpec
 structSpec ::= STRUCT [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> structBlock
 structBlock ::= blockStart [structBody] blockEnd
 structBody ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)* COMMA?
 fieldDeclarationStatement ::= USING? tagHead? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression [RAW_STRING_LITERAL]
 
 // Enum
-enumDeclarationStatement ::= (attributeStatement eos*) USING? IDENTIFIER doubleColonOperator enumSpec
+enumDeclarationStatement ::= (attributeStatement eos*)* USING? IDENTIFIER doubleColonOperator DISTINCT? enumSpec
 enumSpec ::= ENUM [IDENTIFIER (DOT IDENTIFIER)*] enumBlock
 enumBlock ::= blockStart [enumBody] blockEnd
 enumBody ::= enumAssignment (COMMA enumAssignment)* COMMA?
-private enumAssignment ::= [IDENTIFIER EQ] expression
+private enumAssignment ::= IDENTIFIER [EQ basic_literal]
 // Union
-unionDeclarationStatement ::= attributeStatement? IDENTIFIER doubleColonOperator unionSpec
+unionDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator DISTINCT? unionSpec
 unionSpec ::= UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> unionBlock
 unionBlock ::= blockStart [unionBody] blockEnd
 unionBody ::= typeDefinition_expression (COMMA typeDefinition_expression)* COMMA?
 
 // Bit Set
-bitsetDeclarationStatement ::= IDENTIFIER doubleColonOperator BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
+bitsetDeclarationStatement ::= IDENTIFIER doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
-
-// TODO define declaration as literal expression
-// This will be elegant since all declaration follow the pattern
-//  IDENTIFIER COLON TYPE COLON LITERAL_EXPRESSION
 procedureDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator procedureType procedureBody
 procedure_expression ::= procedureType procedureBody
 procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
@@ -247,7 +242,7 @@ usingStatement ::= USING expression
 procedureOverloadStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator PROC LBRACE IDENTIFIER (COMMA IDENTIFIER)* COMMA? RBRACE
 
 // Variables and constants
-typeDefinition_expression   ::= DISTINCT? [tagStatement_expression] type
+typeDefinition_expression   ::= DISTINCT? [tagStatement_expression] type [DIV typeDefinition_expression]
 type ::= mapType
          | matrixType
          | bitSetType
@@ -258,21 +253,24 @@ type ::= mapType
          | enumSpec
          | unionSpec
          | pointerType
-         | (DOLLAR? primary_expression)
+         | typeWithParameters
+
+
+typeWithParameters ::= typeIdentifier [LPAREN type (COMMA type)* RPAREN]
+typeIdentifier ::= DOLLAR IDENTIFIER
+                   | IDENTIFIER (DOT IDENTIFIER)*
 
 pointerType ::= CARET type
 multiPointerType ::= LBRACKET CARET RBRACKET type
 
 
-bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON primary_expression] RBRACKET
+bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
 mapType          ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression
 matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
 arrayType        ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression
 
 constantInitializationStatement ::= symbolDefinitionHead colonClosing expression
 colonClosing ::= COLON
-
-typeAliasDeclarationStatement ::= IDENTIFIER doubleColonOperator DISTINCT? typeDefinition_expression
 
 private symbolDefinitionHead ::= (attributeStatement eos*)* [tagHead] identifierList colonOpening typeDefinition_expression?
 colonOpening ::= COLON
@@ -396,7 +394,6 @@ combined_primary ::= primary ( DOT IDENTIFIER
                               | typeAssertion
                               | slice
                               | arguments
-                              | literalValue
                               )
 caret_primary ::= primary CARET
 operand_primary ::=  literal | identifier_expression | parenthesized_expression
@@ -419,6 +416,7 @@ auto_cast_expression ::= AUTO_CAST expression
 nil_literal ::= NIL
 uninitialized_expression ::= TRIPLE_DASH
 identifier_expression ::= IDENTIFIER
+
 set_expression ::= LBRACE [expression (COMMA expression)* COMMA?] RBRACE
 
 implicitSelector_expression ::= DOT expression
@@ -459,8 +457,8 @@ basic_literal ::= nil_literal
 
 composite_literal ::= mapLiteral
                       | matrixLiteral
+                      | bitsetLiteral
                       | arrayLiteral
-                      | sliceLiteral
                       | structLiteral
                       | literalValue
 
@@ -476,15 +474,16 @@ intLiteral ::= INTEGER_DEC_LITERAL
 
 
 structLiteral ::= IDENTIFIER (DOT IDENTIFIER)* literalValue
-literalValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>)  LBRACE [[expression EQ] expression (COMMA [expression EQ] expression)* COMMA?] RBRACE
-arrayLiteral ::= [tagHead] LBRACKET (expression|QUESTION|DYNAMIC) RBRACKET typeDefinition_expression LBRACE [arrayIndexedList|arrayExpressionsList] RBRACE
+literalValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [[expression EQ] expression (COMMA [expression EQ] expression)* COMMA?] RBRACE
+arrayLiteral ::= [tagHead] LBRACKET [expression|QUESTION|DYNAMIC] RBRACKET typeDefinition_expression LBRACE [arrayIndexedList|arrayExpressionsList] RBRACE
+
 private arrayExpressionsList ::=expression (COMMA expression)* COMMA?
 private arrayIndexedList ::= arrayIndexedInitialization (COMMA arrayIndexedInitialization)* COMMA?
 private arrayIndexedInitialization ::= ((intLiteral (RANGE_INCLUSIVE|RANGE_EXCLUSIVE) intLiteral)|intLiteral) EQ expression
 
-sliceLiteral ::= LBRACKET RBRACKET expression LBRACE [expression (COMMA expression)* COMMA?] RBRACE
 matrixLiteral ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* RBRACE
 mapLiteral ::= mapType LBRACE [mapInitAssignments] RBRACE
+bitsetLiteral ::= bitSetType literalValue
 mapInitAssignments ::= mapInitAssigment (COMMA mapInitAssigment)* COMMA?
 mapInitAssigment ::= expression EQ expression
 tripleDashLiteral_expression ::= TRIPLE_DASH
@@ -494,7 +493,6 @@ tagHead ::= HASH IDENTIFIER
 
 forStatement ::= label? tagStatement_expression? forHead statementBody
 label ::= IDENTIFIER COLON
-
 
 forHead ::= FOR <<enterMode "BLOCK">> (forIn|forTraditional) <<exitMode "BLOCK">>
 doStatement ::= DO statement
@@ -518,11 +516,13 @@ statementList ::= ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | <<mu
 statement ::= assignmentStatement
                 | procedureDeclarationStatement
                 | variableInitializationStatement
-                | variableDeclarationStatement
+
                 | structDeclarationStatement
                 | enumDeclarationStatement
+                | unionDeclarationStatement
                 | procedureOverloadStatement
                 | constantInitializationStatement
+                | variableDeclarationStatement
                 | bitsetDeclarationStatement
                 | blockStatement
                 | forStatement
