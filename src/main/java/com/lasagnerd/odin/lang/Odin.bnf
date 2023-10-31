@@ -473,17 +473,17 @@ intLiteral ::= INTEGER_DEC_LITERAL
 
 
 structLiteral ::= IDENTIFIER (DOT IDENTIFIER)* literalValue
-literalValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [[expression EQ] expression (COMMA [expression EQ] expression)* COMMA?] RBRACE
+literalValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [[expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]] RBRACE
 arrayLiteral ::= [tagHead] LBRACKET [expression|QUESTION|DYNAMIC] RBRACKET typeDefinition_expression LBRACE [arrayIndexedList|arrayExpressionsList] RBRACE
 
 private arrayExpressionsList ::=expression (COMMA expression)* COMMA?
 private arrayIndexedList ::= arrayIndexedInitialization (COMMA arrayIndexedInitialization)* COMMA?
 private arrayIndexedInitialization ::= ((intLiteral (RANGE_INCLUSIVE|RANGE_EXCLUSIVE) intLiteral)|intLiteral) EQ expression
 
-matrixLiteral ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* RBRACE
+matrixLiteral ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* [EOS_TOKEN|COMMA] RBRACE
 mapLiteral ::= mapType LBRACE [mapInitAssignments] RBRACE
 bitsetLiteral ::= bitSetType literalValue
-mapInitAssignments ::= mapInitAssigment (COMMA mapInitAssigment)* COMMA?
+mapInitAssignments ::= mapInitAssigment (COMMA mapInitAssigment)* [EOS_TOKEN|COMMA]
 mapInitAssigment ::= expression EQ expression
 tripleDashLiteral_expression ::= TRIPLE_DASH
 

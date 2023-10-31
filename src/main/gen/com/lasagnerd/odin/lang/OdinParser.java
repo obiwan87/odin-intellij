@@ -2275,7 +2275,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [[expression EQ] expression (COMMA [expression EQ] expression)* COMMA?] RBRACE
+  // (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [[expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]] RBRACE
   public static boolean literalValue(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literalValue")) return false;
     boolean r;
@@ -2299,14 +2299,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [[expression EQ] expression (COMMA [expression EQ] expression)* COMMA?]
+  // [[expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]]
   private static boolean literalValue_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literalValue_2")) return false;
     literalValue_2_0(b, l + 1);
     return true;
   }
 
-  // [expression EQ] expression (COMMA [expression EQ] expression)* COMMA?
+  // [expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]
   private static boolean literalValue_2_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literalValue_2_0")) return false;
     boolean r;
@@ -2378,11 +2378,20 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // COMMA?
+  // [EOS_TOKEN|COMMA]
   private static boolean literalValue_2_0_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literalValue_2_0_3")) return false;
-    consumeToken(b, COMMA);
+    literalValue_2_0_3_0(b, l + 1);
     return true;
+  }
+
+  // EOS_TOKEN|COMMA
+  private static boolean literalValue_2_0_3_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "literalValue_2_0_3_0")) return false;
+    boolean r;
+    r = consumeToken(b, EOS_TOKEN);
+    if (!r) r = consumeToken(b, COMMA);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2399,7 +2408,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // mapInitAssigment (COMMA mapInitAssigment)* COMMA?
+  // mapInitAssigment (COMMA mapInitAssigment)* [EOS_TOKEN|COMMA]
   public static boolean mapInitAssignments(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mapInitAssignments")) return false;
     boolean r;
@@ -2433,11 +2442,20 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // COMMA?
+  // [EOS_TOKEN|COMMA]
   private static boolean mapInitAssignments_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mapInitAssignments_2")) return false;
-    consumeToken(b, COMMA);
+    mapInitAssignments_2_0(b, l + 1);
     return true;
+  }
+
+  // EOS_TOKEN|COMMA
+  private static boolean mapInitAssignments_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "mapInitAssignments_2_0")) return false;
+    boolean r;
+    r = consumeToken(b, EOS_TOKEN);
+    if (!r) r = consumeToken(b, COMMA);
+    return r;
   }
 
   /* ********************************************************** */
@@ -2478,7 +2496,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* RBRACE
+  // MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* [EOS_TOKEN|COMMA] RBRACE
   public static boolean matrixLiteral(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "matrixLiteral")) return false;
     if (!nextTokenIs(b, MATRIX)) return false;
@@ -2487,6 +2505,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     r = consumeTokens(b, 0, MATRIX, LBRACKET, INTEGER_DEC_LITERAL, COMMA, INTEGER_DEC_LITERAL, RBRACKET, LBRACE);
     r = r && expression(b, l + 1, -1);
     r = r && matrixLiteral_8(b, l + 1);
+    r = r && matrixLiteral_9(b, l + 1);
     r = r && consumeToken(b, RBRACE);
     exit_section_(b, m, MATRIX_LITERAL, r);
     return r;
@@ -2511,6 +2530,22 @@ public class OdinParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, COMMA);
     r = r && expression(b, l + 1, -1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // [EOS_TOKEN|COMMA]
+  private static boolean matrixLiteral_9(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matrixLiteral_9")) return false;
+    matrixLiteral_9_0(b, l + 1);
+    return true;
+  }
+
+  // EOS_TOKEN|COMMA
+  private static boolean matrixLiteral_9_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "matrixLiteral_9_0")) return false;
+    boolean r;
+    r = consumeToken(b, EOS_TOKEN);
+    if (!r) r = consumeToken(b, COMMA);
     return r;
   }
 
