@@ -1,8 +1,8 @@
-package com.lasagnerd.odin.formatter;
+package com.lasagnerd.odin.formatting;
 
 import com.intellij.formatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.lasagnerd.odin.formatting.block.OdinFormatterBlock;
 import com.lasagnerd.odin.lang.OdinLanguage;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
@@ -85,10 +85,10 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .aroundInside(OdinTypes.EQ, OdinTypes.ENUM_BODY)
                 .spaces(1)
 
-                .afterInside(OdinTypes.LBRACE, OdinTypes.COMPOUND_LITERAL_VALUE)
+                .afterInside(OdinTypes.COMPOUND_VALUE_START, OdinTypes.COMPOUND_LITERAL_VALUE)
                 .spaces(1)
 
-                .beforeInside(OdinTypes.RBRACE, OdinTypes.COMPOUND_LITERAL_VALUE)
+                .beforeInside(OdinTypes.COMPOUND_VALUE_END, OdinTypes.COMPOUND_LITERAL_VALUE)
                 .spaces(1)
                 ;
     }

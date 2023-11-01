@@ -102,12 +102,12 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 
         {Identifier} { yybegin(NLSEMI_STATE); return IDENTIFIER; }
         {WhiteSpace} { return WHITE_SPACE; }
-        {NewLine}   { return NEW_LINE; }
+        {NewLine}    { return NEW_LINE; }
 
 
-        \" {yybegin(DQ_STRING_STATE); return DQ_STRING_START; }
+        \"             {yybegin(DQ_STRING_STATE); return DQ_STRING_START; }
         \'             { yybegin(SQ_STRING_STATE); return SQ_STRING_START;  }
-        \`[^`]*\`                                   { yybegin(NLSEMI_STATE); return RAW_STRING_LITERAL; }
+        \`[^`]*\`      { yybegin(NLSEMI_STATE); return RAW_STRING_LITERAL; }
 
         {IntegerDecLiteral} { yybegin(NLSEMI_STATE); return INTEGER_DEC_LITERAL; }
 

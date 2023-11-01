@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.formatter;
+package com.lasagnerd.odin.formatting;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;

@@ -460,7 +460,9 @@ compound_types ::= arrayType | matrixType | bitSetType  | mapType | referenced_i
 compound_literal ::= compound_types compoundLiteralValue
 
 literal ::= basic_literal | compound_literal
-compoundLiteralValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [compoundLiteralValueBody]  RBRACE
+compoundLiteralValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) compoundValueStart [compoundLiteralValueBody] compoundValueEnd
+compoundValueStart  ::= LBRACE
+compoundValueEnd  ::= RBRACE
 compoundLiteralValueBody ::= [expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]
 
 tripleDashLiteral_expression ::= TRIPLE_DASH

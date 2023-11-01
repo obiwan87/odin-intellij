@@ -640,15 +640,15 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [compoundLiteralValueBody]  RBRACE
+  // (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) compoundValueStart [compoundLiteralValueBody] compoundValueEnd
   public static boolean compoundLiteralValue(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compoundLiteralValue")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, COMPOUND_LITERAL_VALUE, "<compound literal value>");
     r = compoundLiteralValue_0(b, l + 1);
-    r = r && consumeToken(b, LBRACE);
+    r = r && compoundValueStart(b, l + 1);
     r = r && compoundLiteralValue_2(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
+    r = r && compoundValueEnd(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -757,6 +757,30 @@ public class OdinParser implements PsiParser, LightPsiParser {
     boolean r;
     r = consumeToken(b, EOS_TOKEN);
     if (!r) r = consumeToken(b, COMMA);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // RBRACE
+  public static boolean compoundValueEnd(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compoundValueEnd")) return false;
+    if (!nextTokenIs(b, RBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, RBRACE);
+    exit_section_(b, m, COMPOUND_VALUE_END, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // LBRACE
+  public static boolean compoundValueStart(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "compoundValueStart")) return false;
+    if (!nextTokenIs(b, LBRACE)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, LBRACE);
+    exit_section_(b, m, COMPOUND_VALUE_START, r);
     return r;
   }
 

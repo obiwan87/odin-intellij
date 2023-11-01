@@ -42,9 +42,9 @@
                   implementationClass="com.lasagnerd.odin.lang.OdinFileType"/>
         <lang.parserDefinition language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinParserDefinition"/>
         <lang.syntaxHighlighterFactory language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinSyntaxHighlighterFactory"/>
-        <lang.braceMatcher language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinBraceMatcher"/>
+        <lang.braceMatcher language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinBraceMatcher"/>
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator"/>
-        <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.formatter.OdinFormattingBuilder"/>
+        <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFormattingBuilder"/>
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinAnnotator"/>
         <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
         <projectConfigurable
@@ -56,8 +56,10 @@
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType" id="OdinRunConfigurationType"/>
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
         <runLineMarkerContributor language="Odin" implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
-<!--        <codeStyleSettingsProvider implementation="com.lasagnerd.odin.formatter.OdinCodeStyleSettingsProvider"/>-->
-<!--        <langCodeStyleSettingsProvider implementation="com.lasagnerd.odin.formatter.OdinLanguageCodeStyleProvider"/>-->
+<!--        <codeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinCodeStyleSettingsProvider"/>-->
+<!--        <langCodeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinLanguageCodeStyleProvider"/>-->
+        <lang.quoteHandler language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinQuoteHandler"/>
+        <lang.commenter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinCommenter"/>
     </extensions>
 
 </idea-plugin>

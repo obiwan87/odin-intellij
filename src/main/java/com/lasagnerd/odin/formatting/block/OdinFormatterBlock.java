@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.formatter;
+package com.lasagnerd.odin.formatting.block;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;

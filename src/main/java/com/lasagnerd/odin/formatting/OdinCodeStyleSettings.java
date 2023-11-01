@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.formatter;
+package com.lasagnerd.odin.formatting;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;

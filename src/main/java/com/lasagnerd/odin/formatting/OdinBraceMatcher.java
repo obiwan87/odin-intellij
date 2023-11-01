@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.lang;
+package com.lasagnerd.odin.formatting;
 
 import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
