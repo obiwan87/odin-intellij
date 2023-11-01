@@ -48,6 +48,7 @@ public class OdinFormatterBlock extends AbstractBlock {
             IElementType elementType = subNode.getElementType();
             if (elementType == TokenType.WHITE_SPACE
                     || (elementType == OdinTypes.EOS && subNode.getText().trim().isEmpty())
+                    || (elementType == OdinTypes.SOS && subNode.getText().trim().isEmpty())
             ) {
                 continue;
             }
