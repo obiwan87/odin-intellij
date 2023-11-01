@@ -48,7 +48,11 @@ public class OdinFormatterBlock extends AbstractBlock {
         List<Block> blocks = new ArrayList<>();
         for (ASTNode subNode = node.getFirstChildNode(); subNode != null; subNode = subNode.getTreeNext()) {
             IElementType elementType = subNode.getElementType();
-            if ((elementType == TokenType.WHITE_SPACE || elementType == OdinTypes.EOS || elementType == OdinTypes.SOS)
+            if ((elementType == TokenType.WHITE_SPACE
+                    || elementType == OdinTypes.EOS
+                    || elementType == OdinTypes.SOS
+                    || elementType == OdinTypes.EOS_TOKEN
+            )
                     && subNode.getText().trim().isEmpty()) {
                 continue;
             }
