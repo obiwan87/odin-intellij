@@ -2,7 +2,7 @@
 
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <name>Odin Lang Support</name>
     <change-notes><![CDATA[
         <h1>Version 0.2.0</h1>
