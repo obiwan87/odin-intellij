@@ -12,7 +12,6 @@ import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.EnvironmentUtil;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable;
 import org.jetbrains.annotations.NotNull;

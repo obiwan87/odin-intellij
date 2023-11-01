@@ -5,18 +5,18 @@
     <version>0.1.0</version>
     <name>Odin Lang Support</name>
     <change-notes><![CDATA[
-        <h2>New Features</h2>
+        <h1>Version 0.2.0</h1>
+        <h2>What's New?</h2>
         <ul>
-            <li>Added simple code formatting and smart indentation</li>
-            <li>Added run configuration for <code>main</code> procedures</li>
-            <li>Added run line marker for <code>main</code> procedures</li>
-            <li>Added project SDK configuration</li>
+            <li>Enhanced formatting</li>
+            <li>Run configuration now support program arguments</li>
+            <li>Added code folding</li>
+            <li>Added support for commenting out code</li>
+            <li>Added support for automatic quote closing</li>
         </ul>
-
-        <h2>Coming with v0.2.0</h2>
+        <h2>Bugfixes</h2>
         <ul>
-            <li>Go To Symbol</li>
-            <li>Find Usages</li>
+            <li>Fixed a parsing bug regarding "when...do" statements and trailing commas in compound types</li>
         </ul>
         ]]>
     </change-notes>
@@ -56,8 +56,8 @@
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType" id="OdinRunConfigurationType"/>
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
         <runLineMarkerContributor language="Odin" implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
-<!--        <codeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinCodeStyleSettingsProvider"/>-->
-<!--        <langCodeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinLanguageCodeStyleProvider"/>-->
+        <!--        <codeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinCodeStyleSettingsProvider"/>-->
+        <!--        <langCodeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinLanguageCodeStyleProvider"/>-->
         <lang.quoteHandler language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinQuoteHandler"/>
         <lang.commenter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinCommenter"/>
         <lang.foldingBuilder language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFoldingBuilder"/>
