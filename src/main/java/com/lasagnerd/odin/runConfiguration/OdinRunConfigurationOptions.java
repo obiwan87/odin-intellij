@@ -5,6 +5,7 @@ import com.intellij.openapi.components.StoredProperty;
 
 public class OdinRunConfigurationOptions extends RunConfigurationOptions {
     private static final String outputPathDefault;
+
     static {
         boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
         if (isWindows) {
@@ -21,6 +22,27 @@ public class OdinRunConfigurationOptions extends RunConfigurationOptions {
 
     private final StoredProperty<String> outputPath =
             string(outputPathDefault).provideDelegate(this, "outputPath");
+
+    private final StoredProperty<String> workingDirectory =
+            string("$ProjectFileDir$").provideDelegate(this, "workingDirectory");
+
+    private final StoredProperty<String> programArguments = string("").provideDelegate(this, "programArguments");
+
+    public String getWorkingDirectory() {
+        return workingDirectory.getValue(this);
+    }
+
+    public void setWorkingDirectory(String workingDirectory) {
+        this.workingDirectory.setValue(this, workingDirectory);
+    }
+
+    public String getProgramArguments() {
+        return programArguments.getValue(this);
+    }
+
+    public void setProgramArguments(String programArguments) {
+        this.programArguments.setValue(this, programArguments);
+    }
 
     public String getCompilerOptions() {
         return compilerOptions.getValue(this);
