@@ -198,7 +198,8 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         [ \t]+                               { return WHITE_SPACE; }
         "//" [^\r\n]*                        { return LINE_COMMENT; }
         "/*"                                 { yybegin(BLOCK_COMMENT_STATE); newLineSeen=false; commentNestingDepth=1; previousState=NLSEMI_STATE; return BLOCK_COMMENT_START; }
-        [\r\n]+ | ';'                        { yybegin(YYINITIAL); return EOS_TOKEN; }
+        ';'                                  { yybegin(YYINITIAL); return EOS_TOKEN; }
+        [\r\n]+                              { yybegin(YYINITIAL); return EOS_TOKEN; }
         [^]                                  { yypushback(yylength()); yybegin(YYINITIAL); }
     }
 

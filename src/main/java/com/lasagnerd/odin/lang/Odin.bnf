@@ -549,9 +549,8 @@ private forExpression ::= AND? primary_expression
 private forStartStatement ::=   variableInitializationStatement | assignmentStatement | call_expression
 private forEndStatement ::=   assignmentStatement | call_expression
 
-ifStatement ::= [label] [tagHead] if condition statementBody (eos* elseIfBlock)* (eos* elseBlock)?
-
-statementBody ::= block|doStatement
+ifStatement ::= [label] [tagHead] if condition statementBody (eos elseIfBlock)* (eos elseBlock)?
+private statementBody ::= block|doStatement
 condition ::= <<enterMode "BLOCK">> [ifInit SEMICOLON] expression <<exitMode "BLOCK">>
 private switchCondition ::= [ifInit SEMICOLON] expression?
 private ifInit ::= assignmentStatement|variableInitializationStatement|variableDeclarationStatement
@@ -560,8 +559,8 @@ elseIf ::= else if
 elseBlock ::= else statementBody
 if ::= IF_TOKEN
 else ::= ELSE_TOKEN
-whenStatement ::= WHEN condition block (eos* elseWhenBlock)* (eos* elseBlock)?
-elseWhenBlock ::= else WHEN condition block
+whenStatement ::= WHEN condition statementBody (eos elseWhenBlock)* (eos elseBlock)?
+elseWhenBlock ::= else WHEN condition statementBody
 
 switchStatement ::= [label] [tagStatement_expression] switchHead switchBody
 switchHead ::= SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">>
