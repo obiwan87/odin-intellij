@@ -25,19 +25,19 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .after(OdinTypes.PACKAGE_CLAUSE)
                 .blankLines(1)
 
-                .between(OdinTypes.ELSE, OdinTypes.STATEMENT_BODY)
+                .between(OdinTypes.ELSE, OdinTypes.BLOCK)
                 .spacing(1, 1, 0, false, 0)
 
-                .withinPairInside(OdinTypes.CONDITION, OdinTypes.STATEMENT_BODY, OdinTypes.IF_STATEMENT)
+                .withinPairInside(OdinTypes.CONDITION, OdinTypes.BLOCK, OdinTypes.IF_STATEMENT)
                 .spacing(1, 1, 0, false, 0)
 
-                .withinPairInside(OdinTypes.CONDITION, OdinTypes.STATEMENT_BODY, OdinTypes.ELSE_IF_BLOCK)
+                .withinPairInside(OdinTypes.CONDITION, OdinTypes.BLOCK, OdinTypes.ELSE_IF_BLOCK)
                 .spacing(1, 1, 0, false, 0)
 
                 .withinPairInside(OdinTypes.SWITCH_HEAD, OdinTypes.SWITCH_BODY, OdinTypes.SWITCH_STATEMENT)
                 .spacing(1, 1, 0, false, 0)
 
-                .withinPairInside(OdinTypes.FOR_HEAD, OdinTypes.STATEMENT_BODY, OdinTypes.FOR_STATEMENT)
+                .withinPairInside(OdinTypes.FOR_HEAD, OdinTypes.BLOCK, OdinTypes.FOR_STATEMENT)
                 .spacing(1, 1, 0, false, 0)
 
                 .withinPair(OdinTypes.PROCEDURE_TYPE, OdinTypes.PROCEDURE_BODY)
@@ -46,10 +46,10 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .between(OdinTypes.ELSE, OdinTypes.IF)
                 .spacing(1, 1, 0, false, 0)
 
-                .withinPair(OdinTypes.STATEMENT_BODY, OdinTypes.ELSE_IF_BLOCK)
+                .between(OdinTypes.BLOCK, OdinTypes.ELSE_IF_BLOCK)
                 .spacing(1, 1, 0, false, 0)
 
-                .withinPair(OdinTypes.STATEMENT_BODY, OdinTypes.ELSE_BLOCK)
+                .between(OdinTypes.BLOCK, OdinTypes.ELSE_BLOCK)
                 .spacing(1, 1, 0, false, 0)
 
                 .between(OdinTypes.COLON, OdinTypes.EQ)
@@ -84,9 +84,13 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
 
                 .aroundInside(OdinTypes.EQ, OdinTypes.ENUM_BODY)
                 .spaces(1)
+
+                .afterInside(OdinTypes.LBRACE, OdinTypes.LITERAL_VALUE)
+                .spaces(1)
+
+                .beforeInside(OdinTypes.RBRACE, OdinTypes.LITERAL_VALUE)
+                .spaces(1)
                 ;
-
-
     }
 
     @Override

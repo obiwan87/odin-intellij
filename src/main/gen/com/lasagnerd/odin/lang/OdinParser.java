@@ -1036,7 +1036,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // else WHEN condition block
+  // else WHEN condition statementBody
   public static boolean elseWhenBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elseWhenBlock")) return false;
     if (!nextTokenIs(b, ELSE_TOKEN)) return false;
@@ -1045,7 +1045,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     r = else_$(b, l + 1);
     r = r && consumeToken(b, WHEN);
     r = r && condition(b, l + 1);
-    r = r && block(b, l + 1);
+    r = r && statementBody(b, l + 1);
     exit_section_(b, m, ELSE_WHEN_BLOCK, r);
     return r;
   }
@@ -2038,7 +2038,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // [label] [tagHead] if condition statementBody (eos* elseIfBlock)* (eos* elseBlock)?
+  // [label] [tagHead] if condition statementBody (eos elseIfBlock)* (eos elseBlock)?
   public static boolean ifStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ifStatement")) return false;
     boolean r;
@@ -2068,7 +2068,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // (eos* elseIfBlock)*
+  // (eos elseIfBlock)*
   private static boolean ifStatement_5(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ifStatement_5")) return false;
     while (true) {
@@ -2079,55 +2079,33 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // eos* elseIfBlock
+  // eos elseIfBlock
   private static boolean ifStatement_5_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ifStatement_5_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = ifStatement_5_0_0(b, l + 1);
+    r = eos(b, l + 1);
     r = r && elseIfBlock(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // eos*
-  private static boolean ifStatement_5_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ifStatement_5_0_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!eos(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "ifStatement_5_0_0", c)) break;
-    }
-    return true;
-  }
-
-  // (eos* elseBlock)?
+  // (eos elseBlock)?
   private static boolean ifStatement_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ifStatement_6")) return false;
     ifStatement_6_0(b, l + 1);
     return true;
   }
 
-  // eos* elseBlock
+  // eos elseBlock
   private static boolean ifStatement_6_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ifStatement_6_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = ifStatement_6_0_0(b, l + 1);
+    r = eos(b, l + 1);
     r = r && elseBlock(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // eos*
-  private static boolean ifStatement_6_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ifStatement_6_0_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!eos(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "ifStatement_6_0_0", c)) break;
-    }
-    return true;
   }
 
   /* ********************************************************** */
@@ -3370,13 +3348,11 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // block|doStatement
-  public static boolean statementBody(PsiBuilder b, int l) {
+  static boolean statementBody(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "statementBody")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, STATEMENT_BODY, "<statement body>");
     r = block(b, l + 1);
     if (!r) r = doStatement(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -4463,7 +4439,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // WHEN condition block (eos* elseWhenBlock)* (eos* elseBlock)?
+  // WHEN condition statementBody (eos elseWhenBlock)* (eos elseBlock)?
   public static boolean whenStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "whenStatement")) return false;
     if (!nextTokenIs(b, WHEN)) return false;
@@ -4471,14 +4447,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, WHEN);
     r = r && condition(b, l + 1);
-    r = r && block(b, l + 1);
+    r = r && statementBody(b, l + 1);
     r = r && whenStatement_3(b, l + 1);
     r = r && whenStatement_4(b, l + 1);
     exit_section_(b, m, WHEN_STATEMENT, r);
     return r;
   }
 
-  // (eos* elseWhenBlock)*
+  // (eos elseWhenBlock)*
   private static boolean whenStatement_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "whenStatement_3")) return false;
     while (true) {
@@ -4489,55 +4465,33 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // eos* elseWhenBlock
+  // eos elseWhenBlock
   private static boolean whenStatement_3_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "whenStatement_3_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = whenStatement_3_0_0(b, l + 1);
+    r = eos(b, l + 1);
     r = r && elseWhenBlock(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // eos*
-  private static boolean whenStatement_3_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "whenStatement_3_0_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!eos(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "whenStatement_3_0_0", c)) break;
-    }
-    return true;
-  }
-
-  // (eos* elseBlock)?
+  // (eos elseBlock)?
   private static boolean whenStatement_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "whenStatement_4")) return false;
     whenStatement_4_0(b, l + 1);
     return true;
   }
 
-  // eos* elseBlock
+  // eos elseBlock
   private static boolean whenStatement_4_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "whenStatement_4_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = whenStatement_4_0_0(b, l + 1);
+    r = eos(b, l + 1);
     r = r && elseBlock(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
-  }
-
-  // eos*
-  private static boolean whenStatement_4_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "whenStatement_4_0_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!eos(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "whenStatement_4_0_0", c)) break;
-    }
-    return true;
   }
 
   /* ********************************************************** */

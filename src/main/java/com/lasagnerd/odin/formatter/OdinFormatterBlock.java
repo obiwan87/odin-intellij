@@ -2,6 +2,7 @@ package com.lasagnerd.odin.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.tree.IElementType;
@@ -90,8 +91,25 @@ public class OdinFormatterBlock extends AbstractBlock {
 
     @Override
     public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+        if (endOfBlockIsNewLine(child1, child2)) return Spacing.createSpacing(0, 0, 0, false, 0);
         return spacingBuilder.getSpacing(this, child1, child2);
     }
+
+    private static boolean endOfBlockIsNewLine(@Nullable Block child1, @NotNull Block child2) {
+        if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
+            IElementType elementType2 = ASTBlock.getElementType(child2);
+            if (elementType2 == OdinTypes.BLOCK_END) {
+                int index = child1.getSubBlocks().size() - 1;
+                if (index < 0) return false;
+                Block lastBlockOfEnumBody = child1.getSubBlocks().get(index);
+                PsiElement psiElement = ASTBlock.getPsiElement(lastBlockOfEnumBody);
+                if (psiElement == null) return false;
+                return psiElement.getText() == null || psiElement.getText().isBlank();
+            }
+        }
+        return false;
+    }
+
 
     @Nullable
     @Override
