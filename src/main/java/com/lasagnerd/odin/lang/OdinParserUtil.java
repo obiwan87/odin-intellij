@@ -7,35 +7,34 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.coverage.gnu.trove.TObjectIntHashMap;
 
 public class OdinParserUtil extends GeneratedParserUtilBase {
 
     private static final Key<TObjectIntHashMap<String>> MODES_KEY = Key.create("MODES_KEY");
 
-//    public static boolean closingBracket(PsiBuilder builder, int level) {
-//        IElementType iElementType = builder.getTokenType();
-//        return iElementType == OdinTypes.RPAREN || iElementType == OdinTypes.RBRACE;
-//    }
-
-    public static boolean closingBracket(PsiBuilder builder, int level) {
-        int i = 0;
-        IElementType tokenType;
-        int currentOffset = builder.getCurrentOffset();
-        do {
-            i--;
-            tokenType = builder.rawLookup(i);
-        } while ((tokenType == TokenType.WHITE_SPACE || tokenType == OdinTypes.NEW_LINE) && currentOffset + i > 0);
+    public static boolean afterClosingBrace(PsiBuilder builder, int level) {
+        IElementType tokenType = lookBehindUntilNoWhitespace(builder);
 
         return tokenType == OdinTypes.RBRACE;
     }
 
-    public static boolean isAfterClosingBlock(PsiBuilder builder, int level) {
-        return closingBracket(builder, level);
+    public static boolean multilineBlockComment(PsiBuilder builder, int level) {
+        IElementType tokenType = lookBehindUntilNoWhitespace(builder);
+
+        return tokenType == OdinTypes.MULTILINE_BLOCK_COMMENT;
     }
 
+    public static boolean atClosingBrace(PsiBuilder builder, int level) {
+        IElementType tokenType = builder.getTokenType();
 
-    public static boolean multilineBlockComment(PsiBuilder builder, int level) {
+        return tokenType == OdinTypes.RBRACE;
+    }
+
+    @Nullable
+    private static IElementType lookBehindUntilNoWhitespace(PsiBuilder builder) {
+
         int i = 0;
         IElementType tokenType;
         int currentOffset = builder.getCurrentOffset();
@@ -43,8 +42,7 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
             i--;
             tokenType = builder.rawLookup(i);
         } while ((tokenType == TokenType.WHITE_SPACE || tokenType == OdinTypes.NEW_LINE) && currentOffset + i > 0);
-
-        return tokenType == OdinTypes.MULTILINE_BLOCK_COMMENT;
+        return tokenType;
     }
 
     public static boolean enterMode(PsiBuilder builder, int level, String mode) {

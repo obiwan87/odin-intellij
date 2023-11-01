@@ -191,7 +191,7 @@ foreignStatement ::= (attributeStatement eos)* FOREIGN IDENTIFIER? foreignBlock
 
 foreignBlock ::= blockStart foreignStatementList? blockEnd
 
-foreignStatementList ::= ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>>)? foreignBlockStatement eos)+
+foreignStatementList ::= (sos? foreignBlockStatement eos)+
 foreignBlockStatement ::= variableDeclarationStatement
                          |foreignProcedureDeclarationStatement
                          |whenStatement
@@ -212,7 +212,7 @@ enumDeclarationStatement ::= (attributeStatement eos*)* USING? IDENTIFIER double
 enumSpec ::= ENUM [IDENTIFIER (DOT IDENTIFIER)*] enumBlock
 enumBlock ::= blockStart [enumBody] blockEnd
 enumBody ::= enumAssignment (COMMA enumAssignment)* [EOS_TOKEN|COMMA]
-private enumAssignment ::= IDENTIFIER [EQ basic_literal]
+private enumAssignment ::= IDENTIFIER [EQ expression]
 // Union
 unionDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator DISTINCT? unionSpec
 unionSpec ::= UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> unionBlock
@@ -510,8 +510,9 @@ blockEnd ::= RBRACE
 
 // TODO introduce new lexer state that ignores EOS_TOKEN tokens
 
-eos ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<closingBracket>> | <<multilineBlockComment>>
-statementList ::= ((SEMICOLON | NEW_LINE | EOS_TOKEN | <<closingBracket>> | <<multilineBlockComment>>)? statement eos)+
+eos ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<multilineBlockComment>> | <<atClosingBrace>> | <<afterClosingBrace>>
+sos ::= SEMICOLON | NEW_LINE | EOS_TOKEN | <<afterClosingBrace>> | <<multilineBlockComment>>
+statementList ::= (sos? statement eos)+
 statement ::= assignmentStatement
                 | procedureDeclarationStatement
                 | variableInitializationStatement
@@ -549,7 +550,7 @@ private forExpression ::= AND? primary_expression
 private forStartStatement ::=   variableInitializationStatement | assignmentStatement | call_expression
 private forEndStatement ::=   assignmentStatement | call_expression
 
-ifStatement ::= [label] [tagHead] if condition statementBody (eos elseIfBlock)* (eos elseBlock)?
+ifStatement ::= [label] [tagHead] if condition statementBody (sos elseIfBlock)* [sos elseBlock]
 private statementBody ::= block|doStatement
 condition ::= <<enterMode "BLOCK">> [ifInit SEMICOLON] expression <<exitMode "BLOCK">>
 private switchCondition ::= [ifInit SEMICOLON] expression?
@@ -559,7 +560,7 @@ elseIf ::= else if
 elseBlock ::= else statementBody
 if ::= IF_TOKEN
 else ::= ELSE_TOKEN
-whenStatement ::= WHEN condition statementBody (eos elseWhenBlock)* (eos elseBlock)?
+whenStatement ::= WHEN condition statementBody (sos elseWhenBlock)* (sos elseBlock)?
 elseWhenBlock ::= else WHEN condition statementBody
 
 switchStatement ::= [label] [tagStatement_expression] switchHead switchBody
