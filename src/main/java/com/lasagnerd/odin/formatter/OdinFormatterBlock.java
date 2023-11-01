@@ -20,14 +20,16 @@ public class OdinFormatterBlock extends AbstractBlock {
             OdinTypes.STATEMENT_LIST,
             OdinTypes.STRUCT_BODY,
             OdinTypes.ENUM_BODY,
-            OdinTypes.UNION_BODY
+            OdinTypes.UNION_BODY,
+            OdinTypes.COMPOUND_LITERAL_VALUE_BODY
     );
 
     static List<IElementType> typesToSmartIndent = List.of(
             OdinTypes.BLOCK,
             OdinTypes.STRUCT_BLOCK,
             OdinTypes.CASE_BLOCK,
-            OdinTypes.ENUM_BLOCK
+            OdinTypes.ENUM_BLOCK,
+            OdinTypes.COMPOUND_LITERAL_VALUE
     );
 
     public OdinFormatterBlock(@NotNull ASTNode node,
@@ -46,10 +48,8 @@ public class OdinFormatterBlock extends AbstractBlock {
         List<Block> blocks = new ArrayList<>();
         for (ASTNode subNode = node.getFirstChildNode(); subNode != null; subNode = subNode.getTreeNext()) {
             IElementType elementType = subNode.getElementType();
-            if (elementType == TokenType.WHITE_SPACE
-                    || (elementType == OdinTypes.EOS && subNode.getText().trim().isEmpty())
-                    || (elementType == OdinTypes.SOS && subNode.getText().trim().isEmpty())
-            ) {
+            if ((elementType == TokenType.WHITE_SPACE || elementType == OdinTypes.EOS || elementType == OdinTypes.SOS)
+                    && subNode.getText().trim().isEmpty()) {
                 continue;
             }
 

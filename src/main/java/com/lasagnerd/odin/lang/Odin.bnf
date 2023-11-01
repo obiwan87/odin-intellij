@@ -255,6 +255,7 @@ type ::= mapType
          | typeWithParameters
 
 
+
 typeWithParameters ::= typeIdentifier [LPAREN type (COMMA type)* RPAREN]
 typeIdentifier ::= DOLLAR IDENTIFIER
                    | IDENTIFIER (DOT IDENTIFIER)*
@@ -384,7 +385,7 @@ expression ::= implicitSelector_expression
                | typeDefinition_expression
                | tagStatement_expression
 
-typeDefinitionValue_expression ::= type literalValue
+typeDefinitionValue_expression ::= type compoundLiteralValue
 primary_expression ::= [tagHead] primary
 primary ::= operand_primary | caret_primary | combined_primary
 combined_primary ::= primary ( DOT IDENTIFIER
@@ -454,37 +455,14 @@ basic_literal ::= nil_literal
                   | boolean_literal
                   | tripleDashLiteral_expression
 
-composite_literal ::= mapLiteral
-                      | matrixLiteral
-                      | bitsetLiteral
-                      | arrayLiteral
-                      | structLiteral
-                      | literalValue
+referenced_identifier ::= IDENTIFIER (DOT IDENTIFIER)*
+compound_types ::= arrayType | matrixType | bitSetType  | mapType | referenced_identifier
+compound_literal ::= compound_types compoundLiteralValue
 
+literal ::= basic_literal | compound_literal
+compoundLiteralValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [compoundLiteralValueBody]  RBRACE
+compoundLiteralValueBody ::= [expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]
 
-literal ::= basic_literal | composite_literal
-
-intLiteral ::= INTEGER_DEC_LITERAL
-              | INTEGER_HEX_LITERAL
-              | INTEGER_OCT_LITERAL
-              | INTEGER_BIN_LITERAL
-              | SQ_STRING_LITERAL
-              | DOT IDENTIFIER
-
-
-structLiteral ::= IDENTIFIER (DOT IDENTIFIER)* literalValue
-literalValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [[expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]] RBRACE
-arrayLiteral ::= [tagHead] LBRACKET [expression|QUESTION|DYNAMIC] RBRACKET typeDefinition_expression LBRACE [arrayIndexedList|arrayExpressionsList] RBRACE
-
-private arrayExpressionsList ::=expression (COMMA expression)* COMMA?
-private arrayIndexedList ::= arrayIndexedInitialization (COMMA arrayIndexedInitialization)* COMMA?
-private arrayIndexedInitialization ::= ((intLiteral (RANGE_INCLUSIVE|RANGE_EXCLUSIVE) intLiteral)|intLiteral) EQ expression
-
-matrixLiteral ::= MATRIX LBRACKET INTEGER_DEC_LITERAL COMMA INTEGER_DEC_LITERAL RBRACKET LBRACE expression (COMMA expression)* [EOS_TOKEN|COMMA] RBRACE
-mapLiteral ::= mapType LBRACE [mapInitAssignments] RBRACE
-bitsetLiteral ::= bitSetType literalValue
-mapInitAssignments ::= mapInitAssigment (COMMA mapInitAssigment)* [EOS_TOKEN|COMMA]
-mapInitAssigment ::= expression EQ expression
 tripleDashLiteral_expression ::= TRIPLE_DASH
 
 tagStatement_expression ::= tagHead [literal | (LPAREN expressionsList? RPAREN)]
