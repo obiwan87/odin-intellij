@@ -5,8 +5,7 @@
     <version>0.2.0</version>
     <name>Odin Lang Support</name>
     <change-notes><![CDATA[
-        <h1>Version 0.2.0</h1>
-        <h2>What's New?</h2>
+        <h2>Features</h2>
         <ul>
             <li>Enhanced formatting</li>
             <li>Run configuration now support program arguments</li>
