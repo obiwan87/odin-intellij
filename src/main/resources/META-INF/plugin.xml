@@ -60,6 +60,7 @@
 <!--        <langCodeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinLanguageCodeStyleProvider"/>-->
         <lang.quoteHandler language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinQuoteHandler"/>
         <lang.commenter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinCommenter"/>
+        <lang.foldingBuilder language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFoldingBuilder"/>
     </extensions>
 
 </idea-plugin>
