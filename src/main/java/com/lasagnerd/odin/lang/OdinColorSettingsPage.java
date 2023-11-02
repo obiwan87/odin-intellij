@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.lang;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;

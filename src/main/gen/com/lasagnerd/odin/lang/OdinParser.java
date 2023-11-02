@@ -4005,15 +4005,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (attributeStatement eos?)* IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
+  // (attributeStatement eos?)* identifierList COLON typeDefinition_expression
   public static boolean variableDeclarationStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "variableDeclarationStatement")) return false;
     if (!nextTokenIs(b, "<variable declaration statement>", AT, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, VARIABLE_DECLARATION_STATEMENT, "<variable declaration statement>");
     r = variableDeclarationStatement_0(b, l + 1);
-    r = r && consumeToken(b, IDENTIFIER);
-    r = r && variableDeclarationStatement_2(b, l + 1);
+    r = r && identifierList(b, l + 1);
     r = r && consumeToken(b, COLON);
     r = r && typeDefinition_expression(b, l + 1);
     exit_section_(b, l, m, r, false, null);
@@ -4047,27 +4046,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "variableDeclarationStatement_0_0_1")) return false;
     eos(b, l + 1);
     return true;
-  }
-
-  // (COMMA IDENTIFIER)*
-  private static boolean variableDeclarationStatement_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "variableDeclarationStatement_2")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!variableDeclarationStatement_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "variableDeclarationStatement_2", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA IDENTIFIER
-  private static boolean variableDeclarationStatement_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "variableDeclarationStatement_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, COMMA, IDENTIFIER);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */

@@ -163,6 +163,8 @@
   extends('.*_expression') = expression
   extends('.*[sS]tatement') = statement
   extends('.*_primary') = primary
+
+  psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
 }
 
 
@@ -303,7 +305,7 @@ assignmentOperator ::= EQ
                        | RSHIFT_EQ
                        | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement ::= (attributeStatement eos?)* IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression
+variableDeclarationStatement ::= (attributeStatement eos?)* identifierList COLON typeDefinition_expression
 
 // Parameters for procedures and assignments
 parameterList ::= parameter (COMMA parameter)* COMMA?
@@ -387,7 +389,9 @@ expression ::= implicitSelector_expression
 
 typeDefinitionValue_expression ::= type compoundLiteralValue
 primary_expression ::= [tagHead] primary
-primary ::= operand_primary | caret_primary | combined_primary
+primary ::= operand_primary | caret_primary | combined_primary {
+    methods=[getReference]
+}
 combined_primary ::= primary ( DOT IDENTIFIER
                               | ARROW IDENTIFIER
                               | index
@@ -415,7 +419,7 @@ transmute_expression ::= TRANSMUTE LPAREN expression RPAREN expression
 auto_cast_expression ::= AUTO_CAST expression
 nil_literal ::= NIL
 uninitialized_expression ::= TRIPLE_DASH
-identifier_expression ::= IDENTIFIER
+identifier_expression ::= IDENTIFIER {    mixin ='com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' }
 
 set_expression ::= LBRACE [expression (COMMA expression)* COMMA?] RBRACE
 
