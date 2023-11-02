@@ -1919,19 +1919,19 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER (COMMA IDENTIFIER)*
+  // identifier_expression (COMMA identifier_expression)*
   public static boolean identifierList(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "identifierList")) return false;
     if (!nextTokenIs(b, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
+    r = identifier_expression(b, l + 1);
     r = r && identifierList_1(b, l + 1);
     exit_section_(b, m, IDENTIFIER_LIST, r);
     return r;
   }
 
-  // (COMMA IDENTIFIER)*
+  // (COMMA identifier_expression)*
   private static boolean identifierList_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "identifierList_1")) return false;
     while (true) {
@@ -1942,12 +1942,13 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // COMMA IDENTIFIER
+  // COMMA identifier_expression
   private static boolean identifierList_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "identifierList_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, COMMA, IDENTIFIER);
+    r = consumeToken(b, COMMA);
+    r = r && identifier_expression(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

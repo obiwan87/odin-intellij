@@ -7,6 +7,7 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.NlsContexts;
+import com.lasagnerd.odin.OdinIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,9 +16,14 @@ import javax.swing.*;
 import java.util.Map;
 
 public class OdinColorSettingsPage implements ColorSettingsPage {
+
+    AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = new AttributesDescriptor[] {
+        new AttributesDescriptor("Built-in function", OdinSyntaxHighlighter.BUILTIN_FUNCTION)
+    };
+
     @Override
     public @Nullable Icon getIcon() {
-        return AllIcons.Linux.Linux;
+        return OdinIcons.OdinRunConfigurationIcon;
     }
 
     @Override
@@ -32,20 +38,31 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
         
         import "core:fmt"
         
+        foo :: struct {
+            bar: <builtin>int</builtin>
+            
+        }
+        
+     
         main :: proc() {
             fmt.println("Hi Mom!")
+            
+            my_array := <builtin>make</builtin>([dynamic]int)
+            my_value : <builtin>int</builtin> = 5
         }
         """;
     }
 
     @Override
     public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
-        return null;
+        return Map.of(
+                "builtin", OdinSyntaxHighlighter.BUILTIN_FUNCTION
+        );
     }
 
     @Override
     public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
-        return new AttributesDescriptor[0];
+        return ATTRIBUTES_DESCRIPTORS;
     }
 
     @Override

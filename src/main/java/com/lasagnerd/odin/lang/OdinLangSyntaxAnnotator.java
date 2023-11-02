@@ -94,6 +94,7 @@ public class OdinLangSyntaxAnnotator implements Annotator {
             "imag",
             "jmag",
             "kmag",
+            "make",
             "conj",
             "expand_values",
             "min",
@@ -111,9 +112,27 @@ public class OdinLangSyntaxAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
 
-        if (psiElement instanceof OdinCallExpression callExpression) {
-            highlightBuiltInIdentifiers(annotationHolder, callExpression);
+        if (psiElement instanceof OdinIdentifierExpression identifier) {
+            if (predefinedSymbols.contains(identifier.getText())) {
+                TextRange matchRange = identifier.getTextRange();
+                annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                        .range(matchRange)
+                        .textAttributes(OdinSyntaxHighlighter.BUILTIN_FUNCTION)
+                        .create();
+            }
+            else {
+                if(identifier.getParent() instanceof OdinIdentifierList list) {
+                    if(list.getParent() instanceof OdinConstantInitializationStatement) {
+                        annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                                .range(identifier.getTextRange())
+                                .textAttributes(DefaultLanguageHighlighterColors.CONSTANT)
+                                .create();
+                    }
+                }
+            }
         }
+
+
 
         highlightReservedTypes(annotationHolder, psiElement);
 
@@ -135,18 +154,6 @@ public class OdinLangSyntaxAnnotator implements Annotator {
                 .range(matchRange)
                 .textAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION)
                 .create();
-    }
-
-    private static void highlightBuiltInIdentifiers(@NotNull AnnotationHolder annotationHolder, OdinCallExpression callExpression) {
-        if (callExpression.getCaller().getExpression() instanceof OdinIdentifierExpression identifierExpression) {
-            if (predefinedSymbols.contains(identifierExpression.getText())) {
-                TextRange matchRange = identifierExpression.getTextRange();
-                annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                        .range(matchRange)
-                        .textAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION)
-                        .create();
-            }
-        }
     }
 
     private static void highlightReservedTypes(@NotNull AnnotationHolder annotationHolder, PsiElement psiElement) {

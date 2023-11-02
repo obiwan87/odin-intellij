@@ -3,18 +3,24 @@ package com.lasagnerd.odin.lang;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.ui.Colors;
+import com.intellij.ui.JBColor;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.List;
 
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
 public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
-
+    public static final TextAttributesKey BUILTIN_FUNCTION = createTextAttributesKey("ODIN_BUILTIN_FUNCTION", DefaultLanguageHighlighterColors.KEYWORD);;
 
     public static final TextAttributesKey BAD_CHARACTER =
             createTextAttributesKey("ODIN_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
@@ -25,6 +31,10 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
 
     public static final TextAttributesKey IDENTIFIER =
             createTextAttributesKey("ODIN_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER);
+
+
+
+
     private static final TextAttributesKey[] KEYWORD_KEYS = new TextAttributesKey[]{KEYWORD};
 
     private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];

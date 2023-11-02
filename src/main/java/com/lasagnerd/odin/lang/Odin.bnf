@@ -277,7 +277,7 @@ colonOpening ::= COLON
 
 variableInitializationStatement ::= symbolDefinitionHead EQ expressionsList
 
-identifierList ::= IDENTIFIER (COMMA IDENTIFIER)*
+identifierList ::= identifier_expression (COMMA identifier_expression)*
 
 assignmentStatement ::= [tagHead] leftHandExpressions assignmentOperator expressionsList
 
