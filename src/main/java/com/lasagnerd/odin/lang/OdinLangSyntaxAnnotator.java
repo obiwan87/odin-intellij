@@ -163,7 +163,7 @@ public class OdinLangSyntaxAnnotator implements Annotator {
         if (psiElement instanceof OdinTypeIdentifier typeIdentifier) {
             identifier = typeIdentifier;
         } else if (psiElement instanceof OdinIdentifierExpression identifierExpression) {
-            identifier = identifierExpression.getIdentifier();
+            identifier = identifierExpression.getIdentifierToken();
         }
 
         if (identifier != null) {

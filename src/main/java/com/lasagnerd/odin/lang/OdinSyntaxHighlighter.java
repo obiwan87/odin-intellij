@@ -108,7 +108,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.STRING};
         }
 
-        if (tokenType.equals(OdinTypes.IDENTIFIER)) {
+        if (tokenType.equals(OdinTypes.IDENTIFIER_TOKEN)) {
             return new TextAttributesKey[]{IDENTIFIER};
         }
 

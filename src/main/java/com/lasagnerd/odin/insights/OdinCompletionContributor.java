@@ -26,7 +26,7 @@ import java.util.Objects;
 
 public class OdinCompletionContributor extends CompletionContributor {
     public static final PsiElementPattern.@NotNull Capture<PsiElement> AT_IDENTIFIER = PlatformPatterns.psiElement()
-            .withElementType(OdinTypes.IDENTIFIER);
+            .withElementType(OdinTypes.IDENTIFIER_TOKEN);
 
     public static final PsiElementPattern.@NotNull Capture<PsiElement> REFERENCE = PlatformPatterns.psiElement(
     ).withAncestor(3, PlatformPatterns.psiElement(OdinDotReference.class));

@@ -18,7 +18,6 @@ public class OdinInsightUtils {
         PsiElement entrance = element;
         PsiElement lastValidBlock = element;
 
-        int i = 4 * 3 + 2;
         // Check all parent blocks
         while (entrance != null) {
             OdinBlock containingBlock = (OdinBlock) PsiTreeUtil.findFirstParent(entrance, true, parent -> parent instanceof OdinBlock);
@@ -113,13 +112,13 @@ public class OdinInsightUtils {
             identifierList = variableInitialization.getIdentifierList().getDeclaredIdentifierList();
         } else if (child instanceof OdinProcedureDeclarationStatement procedureDeclaration) {
             identifierList = List.of(procedureDeclaration.getDeclaredIdentifier());
-        } else if(child instanceof OdinConstantInitializationStatement constantInitializationStatement){
+        } else if (child instanceof OdinConstantInitializationStatement constantInitializationStatement) {
             identifierList = constantInitializationStatement.getIdentifierList().getDeclaredIdentifierList();
-        } else if(child instanceof OdinStructDeclarationStatement structDeclarationStatement){
+        } else if (child instanceof OdinStructDeclarationStatement structDeclarationStatement) {
             identifierList = List.of(structDeclarationStatement.getDeclaredIdentifier());
-        } else if(child instanceof OdinEnumDeclarationStatement enumDeclarationStatement){
+        } else if (child instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
             identifierList = List.of(enumDeclarationStatement.getDeclaredIdentifier());
-        } else if(child instanceof OdinUnionDeclarationStatement unionDeclarationStatement){
+        } else if (child instanceof OdinUnionDeclarationStatement unionDeclarationStatement) {
             identifierList = List.of(unionDeclarationStatement.getDeclaredIdentifier());
         } else {
             identifierList = Collections.emptyList();

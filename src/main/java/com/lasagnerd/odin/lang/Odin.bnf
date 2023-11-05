@@ -57,7 +57,7 @@
         DISTINCT='regexp:distinct'
         WHERE='regexp:where'
 
-        IDENTIFIER='regexp:[a-zA-Z_][a-zA-Z0-9_]*'
+        IDENTIFIER_TOKEN='regexp:[a-zA-Z_][a-zA-Z0-9_]*'
         DQ_STRING_LITERAL='regexp:"[^"]*"'
         SQ_STRING_LITERAL="regexp:'[^']+?'"
         RAW_STRING_LITERAL='regexp:`[^`]*`'
@@ -173,8 +173,8 @@ odinFile ::= fileScope
 fileScope ::= packageClause eos importDeclarationList fileScopeStatementList  <<eof>>
 importDeclarationList ::= (importDeclarationStatement eos)*
 fileScopeStatementList ::= (fileScopeStatement eos)*
-packageClause ::= PACKAGE IDENTIFIER
-importDeclarationStatement ::= IMPORT IDENTIFIER? DQ_STRING_LITERAL
+packageClause ::= PACKAGE IDENTIFIER_TOKEN
+importDeclarationStatement ::= IMPORT IDENTIFIER_TOKEN? DQ_STRING_LITERAL
 doubleColonOperator ::= COLON COLON
 
 fileScopeStatement ::= foreignImportDeclarationStatement
@@ -192,8 +192,8 @@ fileScopeStatement ::= foreignImportDeclarationStatement
                 | whenStatement
                 | tagStatement_expression
 
-foreignImportDeclarationStatement ::= (attributeStatement eos*)* FOREIGN IMPORT ( IDENTIFIER? DQ_STRING_LITERAL | IDENTIFIER? blockStart DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? blockEnd)
-foreignStatement ::= (attributeStatement eos)* FOREIGN IDENTIFIER? foreignBlock
+foreignImportDeclarationStatement ::= (attributeStatement eos*)* FOREIGN IMPORT ( IDENTIFIER_TOKEN? DQ_STRING_LITERAL | IDENTIFIER_TOKEN? blockStart DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? blockEnd)
+foreignStatement ::= (attributeStatement eos)* FOREIGN IDENTIFIER_TOKEN? foreignBlock
 
 foreignBlock ::= blockStart foreignStatementList? blockEnd
 
@@ -201,10 +201,10 @@ foreignStatementList ::= (sos? foreignBlockStatement eos)+
 foreignBlockStatement ::= variableDeclarationStatement
                          |foreignProcedureDeclarationStatement
                          |whenStatement
-foreignProcedureDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] TRIPLE_DASH
+foreignProcedureDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER_TOKEN doubleColonOperator PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] TRIPLE_DASH
 
 // Attributes
-attributeStatement ::=  AT IDENTIFIER
+attributeStatement ::=  AT IDENTIFIER_TOKEN
                        | AT arguments
 // Struct
 structDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? structSpec
@@ -215,10 +215,10 @@ fieldDeclarationStatement ::= USING? tagHead? declaredIdentifier (COMMA declared
 
 // Enum
 enumDeclarationStatement ::= (attributeStatement eos*)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumSpec
-enumSpec ::= ENUM [IDENTIFIER (DOT IDENTIFIER)*] enumBlock
+enumSpec ::= ENUM [IDENTIFIER_TOKEN (DOT IDENTIFIER_TOKEN)*] enumBlock
 enumBlock ::= blockStart [enumBody] blockEnd
 enumBody ::= enumAssignment (COMMA enumAssignment)* [EOS_TOKEN|COMMA]
-private enumAssignment ::= IDENTIFIER [EQ expression]
+private enumAssignment ::= IDENTIFIER_TOKEN [EQ expression]
 // Union
 unionDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? unionSpec
 unionSpec ::= UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> unionBlock
@@ -226,7 +226,7 @@ unionBlock ::= blockStart [unionBody] blockEnd
 unionBody ::= typeDefinition_expression (COMMA typeDefinition_expression)* [COMMA|EOS_TOKEN]
 
 // Bit Set
-bitsetDeclarationStatement ::= IDENTIFIER doubleColonOperator DISTINCT? bitSetType
+bitsetDeclarationStatement ::= IDENTIFIER_TOKEN doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
 procedureDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator procedureType procedureBody
@@ -243,7 +243,7 @@ private returnArgumentList ::= expression (COMMA expression)* COMMA?
 usingStatement ::= USING expression
 
 // Procedure overloading
-procedureOverloadStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator PROC LBRACE IDENTIFIER (COMMA IDENTIFIER)* COMMA? RBRACE
+procedureOverloadStatement ::= (attributeStatement eos*)* IDENTIFIER_TOKEN doubleColonOperator PROC LBRACE IDENTIFIER_TOKEN (COMMA IDENTIFIER_TOKEN)* COMMA? RBRACE
 
 // Variables and constants
 typeDefinition_expression   ::= DISTINCT? [tagStatement_expression] type [DIV typeDefinition_expression]
@@ -261,7 +261,7 @@ type ::= mapType
 
 
 concreteType ::= typeIdentifier [LPAREN type (COMMA type)* RPAREN]
-genericType ::= DOLLAR IDENTIFIER
+genericType ::= DOLLAR IDENTIFIER_TOKEN
 qualifiedNameType ::= identifier_expression (DOT identifier_expression)*
 typeIdentifier ::= genericType
                    | qualifiedNameType
@@ -284,7 +284,7 @@ colonOpening ::= COLON
 variableInitializationStatement ::= symbolDefinitionHead EQ expressionsList
 
 identifierList ::= declaredIdentifier (COMMA declaredIdentifier)*
-declaredIdentifier ::= IDENTIFIER { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' }
+declaredIdentifier ::= IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' }
 
 assignmentStatement ::= [tagHead] leftHandExpressions assignmentOperator expressionsList
 
@@ -322,15 +322,15 @@ parameter ::= tagStatement_expression? (
               )
 private parameterType ::= RANGE? typeDefinition_expression
 
-parameterDeclarationStatement ::= [USING|DOLLAR] tagStatement_expression? IDENTIFIER (COMMA DOLLAR? IDENTIFIER)* COLON parameterType parameterTypeSpecialization?
+parameterDeclarationStatement ::= [USING|DOLLAR] tagStatement_expression? IDENTIFIER_TOKEN (COMMA DOLLAR? IDENTIFIER_TOKEN)* COLON parameterType parameterTypeSpecialization?
 parameterTypeSpecialization ::= DIV expression
-private parameterInitialization ::= IDENTIFIER COLON typeDefinition_expression? EQ expression
-private variadicParameter ::= IDENTIFIER COLON RANGE expression
+private parameterInitialization ::= IDENTIFIER_TOKEN COLON typeDefinition_expression? EQ expression
+private variadicParameter ::= IDENTIFIER_TOKEN COLON RANGE expression
 
 
 // Function calls
 argumentList  ::= argument (COMMA argument)* COMMA?
-namedArgument ::= IDENTIFIER EQ expression { extends = argument}
+namedArgument ::= IDENTIFIER_TOKEN EQ expression { extends = argument}
 argument      ::= namedArgument
                   | unnamedArgument
 unnamedArgument ::= expression { extends = argument}
@@ -341,31 +341,31 @@ caller ::=  parenthesized_expression | identifier_expression
 
 fake binary_expression ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
 
-mul_expression ::= expression STAR expression                               {extends=binary_expression}
-div_expression ::= expression DIV expression                                {extends=binary_expression}
-mod_expression ::= expression MOD expression                                {extends=binary_expression}
-remainder_expression ::= expression REMAINDER expression                    {extends=binary_expression}
-add_expression ::= expression PLUS expression                               {extends=binary_expression}
-sub_expression ::= expression MINUS expression                              {extends=binary_expression}
-bitwise_and_expression ::= expression AND expression                        {extends=binary_expression}
-bitwise_or_expression ::= expression PIPE expression                        {extends=binary_expression}
-bitwise_xor_expression ::= expression TILDE expression                      {extends=binary_expression}
-bitwise_and_not_expression ::= expression ANDNOT expression                 {extends=binary_expression}
-and_expression ::= expression ANDAND expression                             {extends=binary_expression}
-or_expression ::= expression OROR expression                                {extends=binary_expression}
-or_else_expression ::= expression OR_ELSE expression                        {extends=binary_expression}
-in_expression ::= expression IN expression                                  {extends=binary_expression}
-not_in_expression ::= expression NOT_IN expression                          {extends=binary_expression}
-lt_expression ::= expression LT expression                                  {extends=binary_expression}
-gt_expression ::= expression GT expression                                  {extends=binary_expression}
-lte_expression ::= expression LTE expression                                {extends=binary_expression}
-gte_expression ::= expression GTE expression                                {extends=binary_expression}
-eqeq_expression ::= expression EQEQ expression                              {extends=binary_expression}
-neq_expression ::= expression NEQ expression                                {extends=binary_expression}
-lshift_expression ::= expression LSHIFT expression                          {extends=binary_expression}
-rshift_expression ::= expression RSHIFT expression                          {extends=binary_expression}
-range_inclusive_expression ::= expression RANGE_INCLUSIVE expression        {extends=binary_expression}
-range_exclusive_expression ::= expression RANGE_EXCLUSIVE expression        {extends=binary_expression}
+mul_expression ::= expression STAR expression                               {extends=binary_expression elementType=binary_expression}
+div_expression ::= expression DIV expression                                {extends=binary_expression elementType=binary_expression}
+mod_expression ::= expression MOD expression                                {extends=binary_expression elementType=binary_expression}
+remainder_expression ::= expression REMAINDER expression                    {extends=binary_expression elementType=binary_expression}
+add_expression ::= expression PLUS expression                               {extends=binary_expression elementType=binary_expression}
+sub_expression ::= expression MINUS expression                              {extends=binary_expression elementType=binary_expression}
+bitwise_and_expression ::= expression AND expression                        {extends=binary_expression elementType=binary_expression}
+bitwise_or_expression ::= expression PIPE expression                        {extends=binary_expression elementType=binary_expression}
+bitwise_xor_expression ::= expression TILDE expression                      {extends=binary_expression elementType=binary_expression}
+bitwise_and_not_expression ::= expression ANDNOT expression                 {extends=binary_expression elementType=binary_expression}
+and_expression ::= expression ANDAND expression                             {extends=binary_expression elementType=binary_expression}
+or_expression ::= expression OROR expression                                {extends=binary_expression elementType=binary_expression}
+or_else_expression ::= expression OR_ELSE expression                        {extends=binary_expression elementType=binary_expression}
+in_expression ::= expression IN expression                                  {extends=binary_expression elementType=binary_expression}
+not_in_expression ::= expression NOT_IN expression                          {extends=binary_expression elementType=binary_expression}
+lt_expression ::= expression LT expression                                  {extends=binary_expression elementType=binary_expression}
+gt_expression ::= expression GT expression                                  {extends=binary_expression elementType=binary_expression}
+lte_expression ::= expression LTE expression                                {extends=binary_expression elementType=binary_expression}
+gte_expression ::= expression GTE expression                                {extends=binary_expression elementType=binary_expression}
+eqeq_expression ::= expression EQEQ expression                              {extends=binary_expression elementType=binary_expression}
+neq_expression ::= expression NEQ expression                                {extends=binary_expression elementType=binary_expression}
+lshift_expression ::= expression LSHIFT expression                          {extends=binary_expression elementType=binary_expression}
+rshift_expression ::= expression RSHIFT expression                          {extends=binary_expression elementType=binary_expression}
+range_inclusive_expression ::= expression RANGE_INCLUSIVE expression        {extends=binary_expression elementType=binary_expression}
+range_exclusive_expression ::= expression RANGE_EXCLUSIVE expression        {extends=binary_expression elementType=binary_expression}
 
 private mul_group ::= mul_expression
             | div_expression
@@ -431,7 +431,6 @@ expression ::= postfix_group
                | typeDefinition_expression
                | tagStatement_expression
 
-
 typeDefinitionValue_expression ::= type compoundLiteralValue
 primary_expression ::= [tagHead] primary
 primary ::= operand_primary | caret_primary | combined_primary
@@ -461,7 +460,7 @@ transmute_expression ::= TRANSMUTE LPAREN expression RPAREN expression
 auto_cast_expression ::= AUTO_CAST expression
 nil_literal ::= NIL
 uninitialized_expression ::= TRIPLE_DASH
-identifier_expression ::= IDENTIFIER {
+identifier_expression ::= IDENTIFIER_TOKEN {
     methods=[getReference]
 }
 
@@ -487,8 +486,8 @@ unary_dot_expression ::= DOT expression
 
 or_return_expression ::= expression OR_RETURN
 
-or_break_expression ::= expression OR_BREAK [IDENTIFIER]
-or_continue_expression ::= expression OR_CONTINUE [IDENTIFIER]
+or_break_expression ::= expression OR_BREAK [IDENTIFIER_TOKEN]
+or_continue_expression ::= expression OR_CONTINUE [IDENTIFIER_TOKEN]
 
 
 string_literal  ::= DQ_STRING_LITERAL
@@ -524,16 +523,16 @@ compoundLiteralValueBody ::= [expression EQ] expression (COMMA [expression EQ] e
 tripleDashLiteral_expression ::= TRIPLE_DASH
 
 tagStatement_expression ::= tagHead [literal | (LPAREN expressionsList? RPAREN)]
-tagHead ::= HASH IDENTIFIER
+tagHead ::= HASH IDENTIFIER_TOKEN
 
 forStatement ::= label? tagStatement_expression? forHead statementBody
-label ::= IDENTIFIER COLON
+label ::= IDENTIFIER_TOKEN COLON
 
 forHead ::= FOR <<enterMode "BLOCK">> (forIn|forTraditional) <<exitMode "BLOCK">>
 doStatement ::= DO statement
 
-breakStatement ::= BREAK IDENTIFIER?
-continueStatement ::= CONTINUE IDENTIFIER?
+breakStatement ::= BREAK IDENTIFIER_TOKEN?
+continueStatement ::= CONTINUE IDENTIFIER_TOKEN?
 
 // Statements that are allowed in "blocks" like for loops, if statements, etc.
 // A block is a sequence of statements contained in braces.
@@ -608,7 +607,7 @@ caseBlock ::= COLON statementList?
 
 caseExpression ::= expression
                   | typeDefinition_expression
-                  | DOT IDENTIFIER
+                  | DOT IDENTIFIER_TOKEN
 
 deferStatement ::= DEFER deferrableStatement
 private deferrableStatement ::= assignmentStatement

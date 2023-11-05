@@ -1133,7 +1133,7 @@ public class OdinLexer implements FlexLexer {
           // fall through
           case 150: break;
           case 27:
-            { yybegin(NLSEMI_STATE); return IDENTIFIER;
+            { yybegin(NLSEMI_STATE); return IDENTIFIER_TOKEN;
             }
           // fall through
           case 151: break;

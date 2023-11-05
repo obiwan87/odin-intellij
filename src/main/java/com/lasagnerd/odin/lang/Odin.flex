@@ -100,7 +100,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         {LineComment}  { return LINE_COMMENT; }
         //        {BlockComment} { return BLOCK_COMMENT;}
 
-        {Identifier} { yybegin(NLSEMI_STATE); return IDENTIFIER; }
+        {Identifier} { yybegin(NLSEMI_STATE); return IDENTIFIER_TOKEN; }
         {WhiteSpace} { return WHITE_SPACE; }
         {NewLine}    { return NEW_LINE; }
 
