@@ -73,7 +73,7 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .after(OdinTypes.COLON_CLOSING)
                 .spaces(1)
 
-                .around(OdinTypes.BINARY_OPERATOR)
+                .around(OdinTypes.PLUS)
                 .spaces(1)
 
                 .after(OdinTypes.COMMA)

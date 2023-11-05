@@ -43,13 +43,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     create_token_set_(ARRAY_TYPE, BIT_SET_TYPE, CONCRETE_TYPE, GENERIC_TYPE,
       MAP_TYPE, MATRIX_TYPE, MULTI_POINTER_TYPE, POINTER_TYPE,
       PROCEDURE_TYPE, QUALIFIED_NAME_TYPE, RETURN_TYPE, TYPE),
-    create_token_set_(AUTO_CAST_EXPRESSION, BINARY_EXPRESSION, CALL_EXPRESSION, CAST_EXPRESSION,
-      EXPRESSION, IDENTIFIER_EXPRESSION, IMPLICIT_SELECTOR_EXPRESSION, MAYBE_EXPRESSION,
-      OR_BREAK_EXPRESSION, OR_CONTINUE_EXPRESSION, OR_RETURN_EXPRESSION, PARENTHESIZED_EXPRESSION,
-      PRIMARY_EXPRESSION, PROCEDURE_EXPRESSION, SET_EXPRESSION, TAG_STATEMENT_EXPRESSION,
-      TERNARY_COND_EXPRESSION, TERNARY_IF_EXPRESSION, TERNARY_WHEN_EXPRESSION, TRANSMUTE_EXPRESSION,
-      TRIPLE_DASH_LITERAL_EXPRESSION, TYPE_DEFINITION_EXPRESSION, TYPE_DEFINITION_VALUE_EXPRESSION, UNARY_EXPRESSION,
-      UNINITIALIZED_EXPRESSION),
     create_token_set_(ASSIGNMENT_STATEMENT, ATTRIBUTE_STATEMENT, BITSET_DECLARATION_STATEMENT, BLOCK_STATEMENT,
       BREAK_STATEMENT, CONSTANT_INITIALIZATION_STATEMENT, CONTINUE_STATEMENT, DEFER_STATEMENT,
       DO_STATEMENT, ENUM_DECLARATION_STATEMENT, EXPRESSION_STATEMENT, FALLTHROUGH_STATEMENT,
@@ -59,6 +52,19 @@ public class OdinParser implements PsiParser, LightPsiParser {
       RETURN_STATEMENT, STATEMENT, STRUCT_DECLARATION_STATEMENT, SWITCH_STATEMENT,
       UNION_DECLARATION_STATEMENT, USING_STATEMENT, VARIABLE_DECLARATION_STATEMENT, VARIABLE_INITIALIZATION_STATEMENT,
       WHEN_STATEMENT),
+    create_token_set_(ADD_EXPRESSION, AND_EXPRESSION, AUTO_CAST_EXPRESSION, BITWISE_AND_EXPRESSION,
+      BITWISE_AND_NOT_EXPRESSION, BITWISE_OR_EXPRESSION, BITWISE_XOR_EXPRESSION, CALL_EXPRESSION,
+      CAST_EXPRESSION, DIV_EXPRESSION, ELVIS_EXPRESSION, EQEQ_EXPRESSION,
+      EXPRESSION, GTE_EXPRESSION, GT_EXPRESSION, IDENTIFIER_EXPRESSION,
+      IN_EXPRESSION, LSHIFT_EXPRESSION, LTE_EXPRESSION, LT_EXPRESSION,
+      MAYBE_EXPRESSION, MOD_EXPRESSION, MUL_EXPRESSION, NEQ_EXPRESSION,
+      NOT_IN_EXPRESSION, OR_BREAK_EXPRESSION, OR_CONTINUE_EXPRESSION, OR_ELSE_EXPRESSION,
+      OR_EXPRESSION, OR_RETURN_EXPRESSION, PARENTHESIZED_EXPRESSION, PRIMARY_EXPRESSION,
+      RANGE_EXCLUSIVE_EXPRESSION, RANGE_INCLUSIVE_EXPRESSION, REMAINDER_EXPRESSION, RSHIFT_EXPRESSION,
+      SUB_EXPRESSION, TAG_STATEMENT_EXPRESSION, TERNARY_IF_EXPRESSION, TERNARY_WHEN_EXPRESSION,
+      TRANSMUTE_EXPRESSION, TRIPLE_DASH_LITERAL_EXPRESSION, TYPE_DEFINITION_EXPRESSION, TYPE_DEFINITION_VALUE_EXPRESSION,
+      UNARY_AND_EXPRESSION, UNARY_DOT_EXPRESSION, UNARY_MINUS_EXPRESSION, UNARY_NOT_EXPRESSION,
+      UNARY_PLUS_EXPRESSION, UNARY_RANGE_EXPRESSION, UNARY_TILDE_EXPRESSION, UNINITIALIZED_EXPRESSION),
   };
 
   /* ********************************************************** */
@@ -277,65 +283,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = numeric_literal(b, l + 1);
     if (!r) r = boolean_literal(b, l + 1);
     if (!r) r = tripleDashLiteral_expression(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // PLUS
-  //                    | MINUS
-  //                    | STAR
-  //                    | DIV
-  //                    | MOD
-  //                    | REMAINDER
-  //                    | PIPE
-  //                    | TILDE
-  //                    | ANDAND
-  //                    | ANDNOT
-  //                    | AND
-  //                    | OROR
-  //                    | LSHIFT
-  //                    | RSHIFT
-  //                    | EQEQ
-  //                    | NEQ
-  //                    | LT
-  //                    | GT
-  //                    | LTE
-  //                    | GTE
-  //                    | RANGE_INCLUSIVE
-  //                    | RANGE_EXCLUSIVE
-  //                    | OR_ELSE
-  //                    | IN
-  //                    | NOT_IN
-  public static boolean binaryOperator(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "binaryOperator")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, BINARY_OPERATOR, "<binary operator>");
-    r = consumeToken(b, PLUS);
-    if (!r) r = consumeToken(b, MINUS);
-    if (!r) r = consumeToken(b, STAR);
-    if (!r) r = consumeToken(b, DIV);
-    if (!r) r = consumeToken(b, MOD);
-    if (!r) r = consumeToken(b, REMAINDER);
-    if (!r) r = consumeToken(b, PIPE);
-    if (!r) r = consumeToken(b, TILDE);
-    if (!r) r = consumeToken(b, ANDAND);
-    if (!r) r = consumeToken(b, ANDNOT);
-    if (!r) r = consumeToken(b, AND);
-    if (!r) r = consumeToken(b, OROR);
-    if (!r) r = consumeToken(b, LSHIFT);
-    if (!r) r = consumeToken(b, RSHIFT);
-    if (!r) r = consumeToken(b, EQEQ);
-    if (!r) r = consumeToken(b, NEQ);
-    if (!r) r = consumeToken(b, LT);
-    if (!r) r = consumeToken(b, GT);
-    if (!r) r = consumeToken(b, LTE);
-    if (!r) r = consumeToken(b, GTE);
-    if (!r) r = consumeToken(b, RANGE_INCLUSIVE);
-    if (!r) r = consumeToken(b, RANGE_EXCLUSIVE);
-    if (!r) r = consumeToken(b, OR_ELSE);
-    if (!r) r = consumeToken(b, IN);
-    if (!r) r = consumeToken(b, NOT_IN);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -2090,6 +2037,18 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // IDENTIFIER
+  public static boolean identifier_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "identifier_expression")) return false;
+    if (!nextTokenIs(b, IDENTIFIER)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, IDENTIFIER);
+    exit_section_(b, m, IDENTIFIER_EXPRESSION, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // IF_TOKEN
   public static boolean if_$(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "if_$")) return false;
@@ -2320,13 +2279,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // basic_literal | compound_literal
+  // basic_literal | compound_literal | set_literal
   public static boolean literal(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LITERAL, "<literal>");
     r = basic_literal(b, l + 1);
     if (!r) r = compound_literal(b, l + 1);
+    if (!r) r = set_literal(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -3058,6 +3018,79 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [expression (COMMA expression)* COMMA?] RBRACE
+  public static boolean set_literal(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "set_literal")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, SET_LITERAL, "<set literal>");
+    r = set_literal_0(b, l + 1);
+    r = r && consumeToken(b, LBRACE);
+    r = r && set_literal_2(b, l + 1);
+    r = r && consumeToken(b, RBRACE);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // <<isModeOn "PAR">> | <<isModeOff "BLOCK">>
+  private static boolean set_literal_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "set_literal_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = isModeOn(b, l + 1, "PAR");
+    if (!r) r = isModeOff(b, l + 1, "BLOCK");
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // [expression (COMMA expression)* COMMA?]
+  private static boolean set_literal_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "set_literal_2")) return false;
+    set_literal_2_0(b, l + 1);
+    return true;
+  }
+
+  // expression (COMMA expression)* COMMA?
+  private static boolean set_literal_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "set_literal_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expression(b, l + 1, -1);
+    r = r && set_literal_2_0_1(b, l + 1);
+    r = r && set_literal_2_0_2(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (COMMA expression)*
+  private static boolean set_literal_2_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "set_literal_2_0_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!set_literal_2_0_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "set_literal_2_0_1", c)) break;
+    }
+    return true;
+  }
+
+  // COMMA expression
+  private static boolean set_literal_2_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "set_literal_2_0_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // COMMA?
+  private static boolean set_literal_2_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "set_literal_2_0_2")) return false;
+    consumeToken(b, COMMA);
+    return true;
+  }
+
+  /* ********************************************************** */
   // LBRACKET expression? COLON expression? RBRACKET
   public static boolean slice(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "slice")) return false;
@@ -3768,27 +3801,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PLUS      // Arithmetic identity
-  //                   | MINUS   // Arithmetic negation
-  //                   | NOT     // Boolean not
-  //                   | TILDE   // Bitwise not
-  //                   | AND     // Address of
-  //                   | RANGE
-  public static boolean unaryOperator(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unaryOperator")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, UNARY_OPERATOR, "<unary operator>");
-    r = consumeToken(b, PLUS);
-    if (!r) r = consumeToken(b, MINUS);
-    if (!r) r = consumeToken(b, NOT);
-    if (!r) r = consumeToken(b, TILDE);
-    if (!r) r = consumeToken(b, AND);
-    if (!r) r = consumeToken(b, RANGE);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
   // blockStart [unionBody] blockEnd
   public static boolean unionBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unionBlock")) return false;
@@ -4190,18 +4202,22 @@ public class OdinParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // Expression root: expression
   // Operator priority table:
-  // 0: PREFIX(implicitSelector_expression)
-  // 1: ATOM(primary_expression)
-  // 2: ATOM(identifier_expression)
-  // 3: BINARY(ternary_cond_expression) BINARY(ternary_if_expression) BINARY(ternary_when_expression)
-  // 4: ATOM(procedure_expression)
-  // 5: POSTFIX(maybe_expression)
-  // 6: PREFIX(unary_expression)
-  // 7: BINARY(binary_expression)
-  // 8: POSTFIX(or_return_expression)
-  // 9: POSTFIX(or_break_expression)
-  // 10: POSTFIX(or_continue_expression)
-  // 11: ATOM(set_expression)
+  // 0: POSTFIX(or_return_expression) POSTFIX(or_break_expression) POSTFIX(or_continue_expression)
+  // 1: BINARY(or_else_expression)
+  // 2: BINARY(elvis_expression) BINARY(ternary_if_expression) BINARY(ternary_when_expression)
+  // 3: BINARY(range_inclusive_expression) BINARY(range_exclusive_expression)
+  // 4: BINARY(or_expression)
+  // 5: BINARY(and_expression)
+  // 6: BINARY(lt_expression) BINARY(gt_expression) BINARY(lte_expression) BINARY(gte_expression)
+  //    BINARY(eqeq_expression) BINARY(neq_expression)
+  // 7: BINARY(add_expression) BINARY(sub_expression) BINARY(bitwise_or_expression) BINARY(bitwise_xor_expression)
+  //    BINARY(in_expression) BINARY(not_in_expression)
+  // 8: BINARY(mul_expression) BINARY(div_expression) BINARY(mod_expression) BINARY(remainder_expression)
+  //    BINARY(bitwise_and_expression) BINARY(lshift_expression) BINARY(rshift_expression) BINARY(bitwise_and_not_expression)
+  // 9: PREFIX(unary_plus_expression) PREFIX(unary_minus_expression) PREFIX(unary_tilde_expression) PREFIX(unary_and_expression)
+  //    PREFIX(unary_not_expression) PREFIX(unary_range_expression) PREFIX(unary_dot_expression)
+  // 10: POSTFIX(maybe_expression)
+  // 11: ATOM(primary_expression)
   // 12: ATOM(uninitialized_expression)
   // 13: ATOM(cast_expression)
   // 14: ATOM(transmute_expression)
@@ -4214,12 +4230,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
     addVariant(b, "<expression>");
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, "<expression>");
-    r = implicitSelector_expression(b, l + 1);
+    r = unary_plus_expression(b, l + 1);
+    if (!r) r = unary_minus_expression(b, l + 1);
+    if (!r) r = unary_tilde_expression(b, l + 1);
+    if (!r) r = unary_and_expression(b, l + 1);
+    if (!r) r = unary_not_expression(b, l + 1);
+    if (!r) r = unary_range_expression(b, l + 1);
+    if (!r) r = unary_dot_expression(b, l + 1);
     if (!r) r = primary_expression(b, l + 1);
-    if (!r) r = identifier_expression(b, l + 1);
-    if (!r) r = procedure_expression(b, l + 1);
-    if (!r) r = unary_expression(b, l + 1);
-    if (!r) r = set_expression(b, l + 1);
     if (!r) r = uninitialized_expression(b, l + 1);
     if (!r) r = cast_expression(b, l + 1);
     if (!r) r = transmute_expression(b, l + 1);
@@ -4238,40 +4256,136 @@ public class OdinParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 3 && consumeTokenSmart(b, QUESTION)) {
-        r = report_error_(b, expression(b, l, 3));
-        r = ternary_cond_expression_1(b, l + 1) && r;
-        exit_section_(b, l, m, TERNARY_COND_EXPRESSION, r, true, null);
-      }
-      else if (g < 3 && if_$(b, l + 1)) {
-        r = report_error_(b, expression(b, l, 3));
-        r = ternary_if_expression_1(b, l + 1) && r;
-        exit_section_(b, l, m, TERNARY_IF_EXPRESSION, r, true, null);
-      }
-      else if (g < 3 && consumeTokenSmart(b, WHEN)) {
-        r = report_error_(b, expression(b, l, 3));
-        r = ternary_when_expression_1(b, l + 1) && r;
-        exit_section_(b, l, m, TERNARY_WHEN_EXPRESSION, r, true, null);
-      }
-      else if (g < 5 && consumeTokenSmart(b, DOT_QUESTION)) {
-        r = true;
-        exit_section_(b, l, m, MAYBE_EXPRESSION, r, true, null);
-      }
-      else if (g < 7 && binaryOperator(b, l + 1)) {
-        r = expression(b, l, 7);
-        exit_section_(b, l, m, BINARY_EXPRESSION, r, true, null);
-      }
-      else if (g < 8 && consumeTokenSmart(b, OR_RETURN)) {
+      if (g < 0 && consumeTokenSmart(b, OR_RETURN)) {
         r = true;
         exit_section_(b, l, m, OR_RETURN_EXPRESSION, r, true, null);
       }
-      else if (g < 9 && or_break_expression_0(b, l + 1)) {
+      else if (g < 0 && or_break_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, OR_BREAK_EXPRESSION, r, true, null);
       }
-      else if (g < 10 && or_continue_expression_0(b, l + 1)) {
+      else if (g < 0 && or_continue_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, OR_CONTINUE_EXPRESSION, r, true, null);
+      }
+      else if (g < 1 && consumeTokenSmart(b, OR_ELSE)) {
+        r = expression(b, l, 1);
+        exit_section_(b, l, m, OR_ELSE_EXPRESSION, r, true, null);
+      }
+      else if (g < 2 && consumeTokenSmart(b, QUESTION)) {
+        r = report_error_(b, expression(b, l, 2));
+        r = elvis_expression_1(b, l + 1) && r;
+        exit_section_(b, l, m, ELVIS_EXPRESSION, r, true, null);
+      }
+      else if (g < 2 && if_$(b, l + 1)) {
+        r = report_error_(b, expression(b, l, 2));
+        r = ternary_if_expression_1(b, l + 1) && r;
+        exit_section_(b, l, m, TERNARY_IF_EXPRESSION, r, true, null);
+      }
+      else if (g < 2 && consumeTokenSmart(b, WHEN)) {
+        r = report_error_(b, expression(b, l, 2));
+        r = ternary_when_expression_1(b, l + 1) && r;
+        exit_section_(b, l, m, TERNARY_WHEN_EXPRESSION, r, true, null);
+      }
+      else if (g < 3 && consumeTokenSmart(b, RANGE_INCLUSIVE)) {
+        r = expression(b, l, 3);
+        exit_section_(b, l, m, RANGE_INCLUSIVE_EXPRESSION, r, true, null);
+      }
+      else if (g < 3 && consumeTokenSmart(b, RANGE_EXCLUSIVE)) {
+        r = expression(b, l, 3);
+        exit_section_(b, l, m, RANGE_EXCLUSIVE_EXPRESSION, r, true, null);
+      }
+      else if (g < 4 && consumeTokenSmart(b, OROR)) {
+        r = expression(b, l, 4);
+        exit_section_(b, l, m, OR_EXPRESSION, r, true, null);
+      }
+      else if (g < 5 && consumeTokenSmart(b, ANDAND)) {
+        r = expression(b, l, 5);
+        exit_section_(b, l, m, AND_EXPRESSION, r, true, null);
+      }
+      else if (g < 6 && consumeTokenSmart(b, LT)) {
+        r = expression(b, l, 6);
+        exit_section_(b, l, m, LT_EXPRESSION, r, true, null);
+      }
+      else if (g < 6 && consumeTokenSmart(b, GT)) {
+        r = expression(b, l, 6);
+        exit_section_(b, l, m, GT_EXPRESSION, r, true, null);
+      }
+      else if (g < 6 && consumeTokenSmart(b, LTE)) {
+        r = expression(b, l, 6);
+        exit_section_(b, l, m, LTE_EXPRESSION, r, true, null);
+      }
+      else if (g < 6 && consumeTokenSmart(b, GTE)) {
+        r = expression(b, l, 6);
+        exit_section_(b, l, m, GTE_EXPRESSION, r, true, null);
+      }
+      else if (g < 6 && consumeTokenSmart(b, EQEQ)) {
+        r = expression(b, l, 6);
+        exit_section_(b, l, m, EQEQ_EXPRESSION, r, true, null);
+      }
+      else if (g < 6 && consumeTokenSmart(b, NEQ)) {
+        r = expression(b, l, 6);
+        exit_section_(b, l, m, NEQ_EXPRESSION, r, true, null);
+      }
+      else if (g < 7 && consumeTokenSmart(b, PLUS)) {
+        r = expression(b, l, 7);
+        exit_section_(b, l, m, ADD_EXPRESSION, r, true, null);
+      }
+      else if (g < 7 && consumeTokenSmart(b, MINUS)) {
+        r = expression(b, l, 7);
+        exit_section_(b, l, m, SUB_EXPRESSION, r, true, null);
+      }
+      else if (g < 7 && consumeTokenSmart(b, PIPE)) {
+        r = expression(b, l, 7);
+        exit_section_(b, l, m, BITWISE_OR_EXPRESSION, r, true, null);
+      }
+      else if (g < 7 && consumeTokenSmart(b, TILDE)) {
+        r = expression(b, l, 7);
+        exit_section_(b, l, m, BITWISE_XOR_EXPRESSION, r, true, null);
+      }
+      else if (g < 7 && consumeTokenSmart(b, IN)) {
+        r = expression(b, l, 7);
+        exit_section_(b, l, m, IN_EXPRESSION, r, true, null);
+      }
+      else if (g < 7 && consumeTokenSmart(b, NOT_IN)) {
+        r = expression(b, l, 7);
+        exit_section_(b, l, m, NOT_IN_EXPRESSION, r, true, null);
+      }
+      else if (g < 8 && consumeTokenSmart(b, STAR)) {
+        r = expression(b, l, 8);
+        exit_section_(b, l, m, MUL_EXPRESSION, r, true, null);
+      }
+      else if (g < 8 && consumeTokenSmart(b, DIV)) {
+        r = expression(b, l, 8);
+        exit_section_(b, l, m, DIV_EXPRESSION, r, true, null);
+      }
+      else if (g < 8 && consumeTokenSmart(b, MOD)) {
+        r = expression(b, l, 8);
+        exit_section_(b, l, m, MOD_EXPRESSION, r, true, null);
+      }
+      else if (g < 8 && consumeTokenSmart(b, REMAINDER)) {
+        r = expression(b, l, 8);
+        exit_section_(b, l, m, REMAINDER_EXPRESSION, r, true, null);
+      }
+      else if (g < 8 && consumeTokenSmart(b, AND)) {
+        r = expression(b, l, 8);
+        exit_section_(b, l, m, BITWISE_AND_EXPRESSION, r, true, null);
+      }
+      else if (g < 8 && consumeTokenSmart(b, LSHIFT)) {
+        r = expression(b, l, 8);
+        exit_section_(b, l, m, LSHIFT_EXPRESSION, r, true, null);
+      }
+      else if (g < 8 && consumeTokenSmart(b, RSHIFT)) {
+        r = expression(b, l, 8);
+        exit_section_(b, l, m, RSHIFT_EXPRESSION, r, true, null);
+      }
+      else if (g < 8 && consumeTokenSmart(b, ANDNOT)) {
+        r = expression(b, l, 8);
+        exit_section_(b, l, m, BITWISE_AND_NOT_EXPRESSION, r, true, null);
+      }
+      else if (g < 10 && consumeTokenSmart(b, DOT_QUESTION)) {
+        r = true;
+        exit_section_(b, l, m, MAYBE_EXPRESSION, r, true, null);
       }
       else {
         exit_section_(b, l, m, null, false, false, null);
@@ -4279,103 +4393,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
       }
     }
     return r;
-  }
-
-  public static boolean implicitSelector_expression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "implicitSelector_expression")) return false;
-    if (!nextTokenIsSmart(b, DOT)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, null);
-    r = consumeTokenSmart(b, DOT);
-    p = r;
-    r = p && expression(b, l, 0);
-    exit_section_(b, l, m, IMPLICIT_SELECTOR_EXPRESSION, r, p, null);
-    return r || p;
-  }
-
-  // [tagHead] primary
-  public static boolean primary_expression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "primary_expression")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PRIMARY_EXPRESSION, "<primary expression>");
-    r = primary_expression_0(b, l + 1);
-    r = r && primary(b, l + 1, -1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // [tagHead]
-  private static boolean primary_expression_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "primary_expression_0")) return false;
-    tagHead(b, l + 1);
-    return true;
-  }
-
-  // IDENTIFIER
-  public static boolean identifier_expression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "identifier_expression")) return false;
-    if (!nextTokenIsSmart(b, IDENTIFIER)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, IDENTIFIER);
-    exit_section_(b, m, IDENTIFIER_EXPRESSION, r);
-    return r;
-  }
-
-  // COLON expression
-  private static boolean ternary_cond_expression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ternary_cond_expression_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COLON);
-    r = r && expression(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // else expression
-  private static boolean ternary_if_expression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ternary_if_expression_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = else_$(b, l + 1);
-    r = r && expression(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // else expression
-  private static boolean ternary_when_expression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ternary_when_expression_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = else_$(b, l + 1);
-    r = r && expression(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // procedureType procedureBody
-  public static boolean procedure_expression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "procedure_expression")) return false;
-    if (!nextTokenIsSmart(b, HASH, PROC)) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PROCEDURE_EXPRESSION, "<procedure expression>");
-    r = procedureType(b, l + 1);
-    r = r && procedureBody(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  public static boolean unary_expression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unary_expression")) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, null);
-    r = unaryOperator(b, l + 1);
-    p = r;
-    r = p && expression(b, l, 0);
-    exit_section_(b, l, m, UNARY_EXPRESSION, r, p, null);
-    return r || p;
   }
 
   // OR_BREAK [IDENTIFIER]
@@ -4414,64 +4431,138 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // LBRACE [expression (COMMA expression)* COMMA?] RBRACE
-  public static boolean set_expression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "set_expression")) return false;
-    if (!nextTokenIsSmart(b, LBRACE)) return false;
+  // COLON expression
+  private static boolean elvis_expression_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "elvis_expression_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, LBRACE);
-    r = r && set_expression_1(b, l + 1);
-    r = r && consumeToken(b, RBRACE);
-    exit_section_(b, m, SET_EXPRESSION, r);
-    return r;
-  }
-
-  // [expression (COMMA expression)* COMMA?]
-  private static boolean set_expression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "set_expression_1")) return false;
-    set_expression_1_0(b, l + 1);
-    return true;
-  }
-
-  // expression (COMMA expression)* COMMA?
-  private static boolean set_expression_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "set_expression_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = expression(b, l + 1, -1);
-    r = r && set_expression_1_0_1(b, l + 1);
-    r = r && set_expression_1_0_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA expression)*
-  private static boolean set_expression_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "set_expression_1_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!set_expression_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "set_expression_1_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA expression
-  private static boolean set_expression_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "set_expression_1_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, COMMA);
+    r = consumeToken(b, COLON);
     r = r && expression(b, l + 1, -1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // COMMA?
-  private static boolean set_expression_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "set_expression_1_0_2")) return false;
-    consumeTokenSmart(b, COMMA);
+  // else expression
+  private static boolean ternary_if_expression_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ternary_if_expression_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = else_$(b, l + 1);
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // else expression
+  private static boolean ternary_when_expression_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "ternary_when_expression_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = else_$(b, l + 1);
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  public static boolean unary_plus_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_plus_expression")) return false;
+    if (!nextTokenIsSmart(b, PLUS)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, PLUS);
+    p = r;
+    r = p && expression(b, l, 9);
+    exit_section_(b, l, m, UNARY_PLUS_EXPRESSION, r, p, null);
+    return r || p;
+  }
+
+  public static boolean unary_minus_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_minus_expression")) return false;
+    if (!nextTokenIsSmart(b, MINUS)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, MINUS);
+    p = r;
+    r = p && expression(b, l, 9);
+    exit_section_(b, l, m, UNARY_MINUS_EXPRESSION, r, p, null);
+    return r || p;
+  }
+
+  public static boolean unary_tilde_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_tilde_expression")) return false;
+    if (!nextTokenIsSmart(b, TILDE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, TILDE);
+    p = r;
+    r = p && expression(b, l, 9);
+    exit_section_(b, l, m, UNARY_TILDE_EXPRESSION, r, p, null);
+    return r || p;
+  }
+
+  public static boolean unary_and_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_and_expression")) return false;
+    if (!nextTokenIsSmart(b, AND)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, AND);
+    p = r;
+    r = p && expression(b, l, 9);
+    exit_section_(b, l, m, UNARY_AND_EXPRESSION, r, p, null);
+    return r || p;
+  }
+
+  public static boolean unary_not_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_not_expression")) return false;
+    if (!nextTokenIsSmart(b, NOT)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, NOT);
+    p = r;
+    r = p && expression(b, l, 9);
+    exit_section_(b, l, m, UNARY_NOT_EXPRESSION, r, p, null);
+    return r || p;
+  }
+
+  public static boolean unary_range_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_range_expression")) return false;
+    if (!nextTokenIsSmart(b, RANGE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, RANGE);
+    p = r;
+    r = p && expression(b, l, 9);
+    exit_section_(b, l, m, UNARY_RANGE_EXPRESSION, r, p, null);
+    return r || p;
+  }
+
+  public static boolean unary_dot_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unary_dot_expression")) return false;
+    if (!nextTokenIsSmart(b, DOT)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, DOT);
+    p = r;
+    r = p && expression(b, l, 9);
+    exit_section_(b, l, m, UNARY_DOT_EXPRESSION, r, p, null);
+    return r || p;
+  }
+
+  // [tagHead] primary
+  public static boolean primary_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "primary_expression")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, PRIMARY_EXPRESSION, "<primary expression>");
+    r = primary_expression_0(b, l + 1);
+    r = r && primary(b, l + 1, -1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // [tagHead]
+  private static boolean primary_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "primary_expression_0")) return false;
+    tagHead(b, l + 1);
     return true;
   }
 

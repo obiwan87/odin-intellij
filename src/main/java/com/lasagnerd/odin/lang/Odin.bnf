@@ -230,7 +230,6 @@ bitsetDeclarationStatement ::= IDENTIFIER doubleColonOperator DISTINCT? bitSetTy
 
 // Procedure
 procedureDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator procedureType procedureBody
-procedure_expression ::= procedureType procedureBody
 procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
 
 whereClause ::= WHERE expression (COMMA expression)*
@@ -340,58 +339,98 @@ call_expression ::= caller LPAREN argumentList? RPAREN
 
 caller ::=  parenthesized_expression | identifier_expression
 
+fake binary_expression ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
 
-binary_expression ::= expression binaryOperator expression
-binaryOperator ::= PLUS
-                   | MINUS
-                   | STAR
-                   | DIV
-                   | MOD
-                   | REMAINDER
-                   | PIPE
-                   | TILDE
-                   | ANDAND
-                   | ANDNOT
-                   | AND
-                   | OROR
-                   | LSHIFT
-                   | RSHIFT
-                   | EQEQ
-                   | NEQ
-                   | LT
-                   | GT
-                   | LTE
-                   | GTE
-                   | RANGE_INCLUSIVE
-                   | RANGE_EXCLUSIVE
-                   | OR_ELSE
-                   | IN
-                   | NOT_IN
+mul_expression ::= expression STAR expression                               {extends=binary_expression}
+div_expression ::= expression DIV expression                                {extends=binary_expression}
+mod_expression ::= expression MOD expression                                {extends=binary_expression}
+remainder_expression ::= expression REMAINDER expression                    {extends=binary_expression}
+add_expression ::= expression PLUS expression                               {extends=binary_expression}
+sub_expression ::= expression MINUS expression                              {extends=binary_expression}
+bitwise_and_expression ::= expression AND expression                        {extends=binary_expression}
+bitwise_or_expression ::= expression PIPE expression                        {extends=binary_expression}
+bitwise_xor_expression ::= expression TILDE expression                      {extends=binary_expression}
+bitwise_and_not_expression ::= expression ANDNOT expression                 {extends=binary_expression}
+and_expression ::= expression ANDAND expression                             {extends=binary_expression}
+or_expression ::= expression OROR expression                                {extends=binary_expression}
+or_else_expression ::= expression OR_ELSE expression                        {extends=binary_expression}
+in_expression ::= expression IN expression                                  {extends=binary_expression}
+not_in_expression ::= expression NOT_IN expression                          {extends=binary_expression}
+lt_expression ::= expression LT expression                                  {extends=binary_expression}
+gt_expression ::= expression GT expression                                  {extends=binary_expression}
+lte_expression ::= expression LTE expression                                {extends=binary_expression}
+gte_expression ::= expression GTE expression                                {extends=binary_expression}
+eqeq_expression ::= expression EQEQ expression                              {extends=binary_expression}
+neq_expression ::= expression NEQ expression                                {extends=binary_expression}
+lshift_expression ::= expression LSHIFT expression                          {extends=binary_expression}
+rshift_expression ::= expression RSHIFT expression                          {extends=binary_expression}
+range_inclusive_expression ::= expression RANGE_INCLUSIVE expression        {extends=binary_expression}
+range_exclusive_expression ::= expression RANGE_EXCLUSIVE expression        {extends=binary_expression}
+
+private mul_group ::= mul_expression
+            | div_expression
+            | mod_expression
+            | remainder_expression
+            | bitwise_and_expression
+            | lshift_expression
+            | rshift_expression
+            | bitwise_and_not_expression
+
+private add_group ::= add_expression
+            | sub_expression
+            | bitwise_or_expression
+            | bitwise_xor_expression
+            | in_expression
+            | not_in_expression
+
+private order_group ::= lt_expression
+                    | gt_expression
+                    | lte_expression
+                    | gte_expression
+                    | eqeq_expression
+                    | neq_expression
+
+private and_group ::= and_expression
+
+private or_group ::= or_expression
+
+private range_group ::= range_inclusive_expression
+                | range_exclusive_expression
+
+private ternary_group ::= elvis_expression
+                | ternary_if_expression
+                | ternary_when_expression
+
+private postfix_group ::= or_return_expression
+                          | or_break_expression
+                          | or_continue_expression
+
 
 parenthesized_expression ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
 
 // Does it make sense to have literal expressions in the chain?
 
 // All expressions
-expression ::= implicitSelector_expression
-               | primary_expression
-               | identifier_expression
-               | ternary_expression
-               | procedure_expression
+expression ::= postfix_group
+               | or_else_expression
+               | ternary_group
+               | range_group
+               | or_group
+               | and_group
+               | order_group
+               | add_group
+               | mul_group
+               | unary_group
                | maybe_expression
-               | unary_expression
-               | binary_expression
-               | or_return_expression
-               | or_break_expression
-               | or_continue_expression
-               | set_expression
                | uninitialized_expression
+               | primary_expression
                | cast_expression
                | transmute_expression
                | auto_cast_expression
                | typeDefinitionValue_expression
                | typeDefinition_expression
                | tagStatement_expression
+
 
 typeDefinitionValue_expression ::= type compoundLiteralValue
 primary_expression ::= [tagHead] primary
@@ -413,10 +452,7 @@ slice ::= LBRACKET expression? COLON expression? RBRACKET
 arguments ::= LPAREN argumentList? RPAREN
 typeAssertion ::= DOT LPAREN typeDefinition_expression RPAREN
 
-private ternary_expression ::= ternary_cond_expression
-                               | ternary_if_expression
-                               | ternary_when_expression
-ternary_cond_expression ::= expression QUESTION expression COLON expression
+elvis_expression ::= expression QUESTION expression COLON expression
 ternary_if_expression ::= expression if expression else expression
 ternary_when_expression ::= expression WHEN expression else expression
 
@@ -429,19 +465,28 @@ identifier_expression ::= IDENTIFIER {
     methods=[getReference]
 }
 
-set_expression ::= LBRACE [expression (COMMA expression)* COMMA?] RBRACE
-
-implicitSelector_expression ::= DOT expression
+set_literal ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) LBRACE [expression (COMMA expression)* COMMA?] RBRACE
 maybe_expression ::= expression DOT_QUESTION
 
-unaryOperator ::= PLUS      // Arithmetic identity
-                  | MINUS   // Arithmetic negation
-                  | NOT     // Boolean not
-                  | TILDE   // Bitwise not
-                  | AND     // Address of
-                  | RANGE
-unary_expression ::= unaryOperator primary_expression
+private unary_group ::= unary_plus_expression
+                | unary_minus_expression
+                | unary_tilde_expression
+                | unary_and_expression
+                | unary_not_expression
+                | unary_range_expression
+                | unary_dot_expression
+
+
+unary_plus_expression ::= PLUS expression
+unary_minus_expression ::= MINUS expression
+unary_tilde_expression ::= TILDE expression
+unary_and_expression ::= AND expression
+unary_not_expression ::= NOT expression
+unary_range_expression ::= RANGE expression
+unary_dot_expression ::= DOT expression
+
 or_return_expression ::= expression OR_RETURN
+
 or_break_expression ::= expression OR_BREAK [IDENTIFIER]
 or_continue_expression ::= expression OR_CONTINUE [IDENTIFIER]
 
@@ -470,7 +515,7 @@ basic_literal ::= nil_literal
 private compound_types ::= arrayType | matrixType | bitSetType  | mapType | qualifiedNameType
 compound_literal ::= compound_types compoundLiteralValue
 
-literal ::= basic_literal | compound_literal
+literal ::= basic_literal | compound_literal | set_literal
 compoundLiteralValue ::= (<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) compoundValueStart [compoundLiteralValueBody] compoundValueEnd
 compoundValueStart  ::= LBRACE
 compoundValueEnd  ::= RBRACE
