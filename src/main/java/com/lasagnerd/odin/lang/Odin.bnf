@@ -6,6 +6,7 @@
 
   psiClassPrefix="Odin"
   psiImplClassSuffix="Impl"
+
   psiPackage="com.lasagnerd.odin.lang.psi"
   psiImplPackage="com.lasagnerd.odin.lang.psi.impl"
 
@@ -211,7 +212,7 @@ structDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier dou
 structSpec ::= STRUCT [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> structBlock
 structBlock ::= blockStart [structBody] blockEnd
 structBody ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
-fieldDeclarationStatement ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition_expression [RAW_STRING_LITERAL]
+fieldDeclarationStatement ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition [RAW_STRING_LITERAL]
 
 // Enum
 enumDeclarationStatement ::= (attributeStatement eos*)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumSpec
@@ -223,21 +224,20 @@ private enumAssignment ::= IDENTIFIER_TOKEN [EQ expression]
 unionDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? unionSpec
 unionSpec ::= UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> unionBlock
 unionBlock ::= blockStart [unionBody] blockEnd
-unionBody ::= typeDefinition_expression (COMMA typeDefinition_expression)* [COMMA|EOS_TOKEN]
+unionBody ::= typeDefinition (COMMA typeDefinition)* [COMMA|EOS_TOKEN]
 
 // Bit Set
 bitsetDeclarationStatement ::= IDENTIFIER_TOKEN doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
 procedureDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator procedureType procedureBody
-procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
+procedureType    ::= tagStatement? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
 
 whereClause ::= WHERE expression (COMMA expression)*
 procedureBody ::= block|TRIPLE_DASH
+returnType          ::= NOT | LPAREN parameterList RPAREN | typeDefinition
 
-returnType          ::= NOT | LPAREN parameterList RPAREN | typeDefinition_expression
-
-returnStatement ::= [tagStatement_expression] RETURN returnArgumentList?
+returnStatement ::= [tagStatement] RETURN returnArgumentList?
 private returnArgumentList ::= expression (COMMA expression)* COMMA?
 
 usingStatement ::= USING expression
@@ -246,7 +246,8 @@ usingStatement ::= USING expression
 procedureOverloadStatement ::= (attributeStatement eos*)* IDENTIFIER_TOKEN doubleColonOperator PROC LBRACE IDENTIFIER_TOKEN (COMMA IDENTIFIER_TOKEN)* COMMA? RBRACE
 
 // Variables and constants
-typeDefinition_expression   ::= DISTINCT? [tagStatement_expression] type [DIV typeDefinition_expression]
+typeDefinition ::= DISTINCT? [tagStatement] type [DIV typeDefinition]
+typeDefinition_expression ::= typeDefinition
 type ::= mapType
          | matrixType
          | bitSetType
@@ -262,7 +263,7 @@ type ::= mapType
 
 concreteType ::= typeIdentifier [LPAREN type (COMMA type)* RPAREN]
 genericType ::= DOLLAR IDENTIFIER_TOKEN
-qualifiedNameType ::= identifier_expression (DOT identifier_expression)*
+qualifiedNameType ::= identifier (DOT identifier)*
 typeIdentifier ::= genericType
                    | qualifiedNameType
 
@@ -270,15 +271,15 @@ pointerType ::= CARET type
 multiPointerType ::= LBRACKET CARET RBRACKET type
 
 
-bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
-mapType          ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression
-matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
-arrayType        ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression
+bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinition] RBRACKET
+mapType          ::= MAP LBRACKET typeDefinition RBRACKET typeDefinition
+matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition
+arrayType        ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition
 
 constantInitializationStatement ::= symbolDefinitionHead colonClosing expression
 colonClosing ::= COLON
 
-private symbolDefinitionHead ::= (attributeStatement eos*)* [tagHead] identifierList colonOpening typeDefinition_expression?
+private symbolDefinitionHead ::= (attributeStatement eos*)* [tagHead] identifierList colonOpening typeDefinition?
 colonOpening ::= COLON
 
 variableInitializationStatement ::= symbolDefinitionHead EQ expressionsList
@@ -310,21 +311,21 @@ assignmentOperator ::= EQ
                        | RSHIFT_EQ
                        | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement ::= (attributeStatement eos?)* identifierList COLON typeDefinition_expression
+variableDeclarationStatement ::= (attributeStatement eos?)* identifierList COLON typeDefinition
 
 // Parameters for procedures and assignments
 parameterList ::= parameter (COMMA parameter)* COMMA?
-parameter ::= tagStatement_expression? (
+parameter ::= tagStatement? (
               variadicParameter
               | parameterInitialization
               | parameterDeclarationStatement
               | parameterType
               )
-private parameterType ::= RANGE? typeDefinition_expression
+private parameterType ::= RANGE? typeDefinition
 
-parameterDeclarationStatement ::= [USING|DOLLAR] tagStatement_expression? IDENTIFIER_TOKEN (COMMA DOLLAR? IDENTIFIER_TOKEN)* COLON parameterType parameterTypeSpecialization?
+parameterDeclarationStatement ::= [USING|DOLLAR] tagStatement? IDENTIFIER_TOKEN (COMMA DOLLAR? IDENTIFIER_TOKEN)* COLON parameterType parameterTypeSpecialization?
 parameterTypeSpecialization ::= DIV expression
-private parameterInitialization ::= IDENTIFIER_TOKEN COLON typeDefinition_expression? EQ expression
+private parameterInitialization ::= IDENTIFIER_TOKEN COLON typeDefinition? EQ expression
 private variadicParameter ::= IDENTIFIER_TOKEN COLON RANGE expression
 
 
@@ -334,10 +335,6 @@ namedArgument ::= IDENTIFIER_TOKEN EQ expression { extends = argument}
 argument      ::= namedArgument
                   | unnamedArgument
 unnamedArgument ::= expression { extends = argument}
-
-call_expression ::= caller LPAREN argumentList? RPAREN
-
-caller ::=  parenthesized_expression | identifier_expression
 
 fake binary_expression ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
 
@@ -423,15 +420,39 @@ expression ::= postfix_group
                | unary_group
                | maybe_expression
                | uninitialized_expression
-               | primary_expression
-               | cast_expression
+               | compound_literal_expression
+               | call_expression
+               | qualification_expression
+               | index_expression
+               | slice_expression
+               | dereference_expression
+
+               | procedure_expression
                | transmute_expression
                | auto_cast_expression
-               | typeDefinitionValue_expression
-               | typeDefinition_expression
-               | tagStatement_expression
+               | cast_expression
+               | typeAssertion_expression
+               | primary_group
 
-typeDefinitionValue_expression ::= type compoundLiteralValue
+
+fake ref_expression ::= expression? DOT identifier
+simple_ref_expression ::= identifier {extends=ref_expression elementType=ref_expression}
+qualification_expression ::= expression DOT identifier {extends=ref_expression}
+index_expression ::= expression index
+slice_expression ::= expression slice
+typeAssertion_expression ::= expression DOT LPAREN typeDefinition RPAREN
+procedure_expression ::= procedureType procedureBody
+dereference_expression ::= expression CARET
+identifier ::= IDENTIFIER_TOKEN
+
+call_expression ::= expression arguments
+
+private primary_group ::= simple_ref_expression | typeDefinition_expression | tagStatement_expression | literal_expression | parenthesized_expression
+
+literal_expression ::= basic_literal
+compound_literal_expression ::= compound_literal | set_literal
+
+
 primary_expression ::= [tagHead] primary
 primary ::= operand_primary | caret_primary | combined_primary
 private combined_primary ::= call_primary | reference_primary | index_primary | typeAssertion_primary | slice_primary
@@ -449,13 +470,13 @@ operand_primary ::=  literal | identifier_expression | parenthesized_expression
 index ::= LBRACKET expression [COMMA expression] RBRACKET
 slice ::= LBRACKET expression? COLON expression? RBRACKET
 arguments ::= LPAREN argumentList? RPAREN
-typeAssertion ::= DOT LPAREN typeDefinition_expression RPAREN
+typeAssertion ::= DOT LPAREN typeDefinition RPAREN
 
 elvis_expression ::= expression QUESTION expression COLON expression
 ternary_if_expression ::= expression if expression else expression
 ternary_when_expression ::= expression WHEN expression else expression
 
-cast_expression ::= CAST LPAREN typeDefinition_expression RPAREN expression
+cast_expression ::= CAST LPAREN typeDefinition RPAREN expression
 transmute_expression ::= TRANSMUTE LPAREN expression RPAREN expression
 auto_cast_expression ::= AUTO_CAST expression
 nil_literal ::= NIL
@@ -523,6 +544,7 @@ compoundLiteralValueBody ::= [expression EQ] expression (COMMA [expression EQ] e
 tripleDashLiteral_expression ::= TRIPLE_DASH
 
 tagStatement_expression ::= tagHead [literal | (LPAREN expressionsList? RPAREN)]
+tagStatement ::= tagHead [literal | (LPAREN expressionsList? RPAREN)]
 tagHead ::= HASH IDENTIFIER_TOKEN
 
 forStatement ::= label? tagStatement_expression? forHead statementBody
@@ -606,7 +628,6 @@ switchCase ::= CASE (caseExpression(COMMA caseExpression)*)? caseBlock
 caseBlock ::= COLON statementList?
 
 caseExpression ::= expression
-                  | typeDefinition_expression
                   | DOT IDENTIFIER_TOKEN
 
 deferStatement ::= DEFER deferrableStatement

@@ -118,9 +118,9 @@ public class OdinCompletionContributor extends CompletionContributor {
 
     private static void findCompletionsForStruct(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral) {
         if (compoundLiteral != null && compoundLiteral.getType() instanceof OdinQualifiedNameType type) {
-            List<OdinIdentifierExpression> identifierExpressionList = type.getIdentifierExpressionList();
+            List<OdinIdentifier> identifierExpressionList = type.getIdentifierList();
             if (identifierExpressionList.size() == 1) {
-                OdinIdentifierExpression identifier = identifierExpressionList.get(0);
+                var identifier = identifierExpressionList.get(0);
                 PsiElement reference = Objects.requireNonNull(identifier.getReference()).resolve();
 
                 if (reference != null && reference.getParent() instanceof OdinStructDeclarationStatement structDeclarationStatement) {
@@ -129,7 +129,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                     if (structBody != null) {
                         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
                         for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarationStatementList) {
-                            String typeOfField = fieldDeclaration.getTypeDefinitionExpression().getText();
+                            String typeOfField = fieldDeclaration.getTypeDefinition().getText();
                             for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifierList()) {
                                 LookupElementBuilder element = LookupElementBuilder.create((PsiNameIdentifierOwner) declaredIdentifier)
                                         .withIcon(ExpUiIcons.Nodes.Property)
