@@ -163,12 +163,16 @@
   extends('.*_expression') = expression
   extends('.*[sS]tatement') = statement
   extends('.*_primary') = primary
+  extends('.*Type') = type
 
   psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
 }
 
 
-odinFile ::= packageClause eos (importDeclarationStatement eos)* (fileScopeStatement eos)* <<eof>>
+odinFile ::= fileScope
+fileScope ::= packageClause eos importDeclarationList fileScopeStatementList  <<eof>>
+importDeclarationList ::= (importDeclarationStatement eos)*
+fileScopeStatementList ::= (fileScopeStatement eos)*
 packageClause ::= PACKAGE IDENTIFIER
 importDeclarationStatement ::= IMPORT IDENTIFIER? DQ_STRING_LITERAL
 doubleColonOperator ::= COLON COLON
@@ -203,20 +207,20 @@ foreignProcedureDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER d
 attributeStatement ::=  AT IDENTIFIER
                        | AT arguments
 // Struct
-structDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator DISTINCT? structSpec
+structDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? structSpec
 structSpec ::= STRUCT [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> structBlock
 structBlock ::= blockStart [structBody] blockEnd
 structBody ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
-fieldDeclarationStatement ::= USING? tagHead? IDENTIFIER (COMMA IDENTIFIER)* COLON typeDefinition_expression [RAW_STRING_LITERAL]
+fieldDeclarationStatement ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition_expression [RAW_STRING_LITERAL]
 
 // Enum
-enumDeclarationStatement ::= (attributeStatement eos*)* USING? IDENTIFIER doubleColonOperator DISTINCT? enumSpec
+enumDeclarationStatement ::= (attributeStatement eos*)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumSpec
 enumSpec ::= ENUM [IDENTIFIER (DOT IDENTIFIER)*] enumBlock
 enumBlock ::= blockStart [enumBody] blockEnd
 enumBody ::= enumAssignment (COMMA enumAssignment)* [EOS_TOKEN|COMMA]
 private enumAssignment ::= IDENTIFIER [EQ expression]
 // Union
-unionDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator DISTINCT? unionSpec
+unionDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? unionSpec
 unionSpec ::= UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">>[tagStatement_expression] <<exitMode "BLOCK">> unionBlock
 unionBlock ::= blockStart [unionBody] blockEnd
 unionBody ::= typeDefinition_expression (COMMA typeDefinition_expression)* [COMMA|EOS_TOKEN]
@@ -225,7 +229,7 @@ unionBody ::= typeDefinition_expression (COMMA typeDefinition_expression)* [COMM
 bitsetDeclarationStatement ::= IDENTIFIER doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
-procedureDeclarationStatement ::= (attributeStatement eos*)* IDENTIFIER doubleColonOperator procedureType procedureBody
+procedureDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator procedureType procedureBody
 procedure_expression ::= procedureType procedureBody
 procedureType    ::= tagStatement_expression? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
 
@@ -254,13 +258,14 @@ type ::= mapType
          | enumSpec
          | unionSpec
          | pointerType
-         | typeWithParameters
+         | concreteType
 
 
-
-typeWithParameters ::= typeIdentifier [LPAREN type (COMMA type)* RPAREN]
-typeIdentifier ::= DOLLAR IDENTIFIER
-                   | IDENTIFIER (DOT IDENTIFIER)*
+concreteType ::= typeIdentifier [LPAREN type (COMMA type)* RPAREN]
+genericType ::= DOLLAR IDENTIFIER
+qualifiedNameType ::= identifier_expression (DOT identifier_expression)*
+typeIdentifier ::= genericType
+                   | qualifiedNameType
 
 pointerType ::= CARET type
 multiPointerType ::= LBRACKET CARET RBRACKET type
@@ -279,7 +284,8 @@ colonOpening ::= COLON
 
 variableInitializationStatement ::= symbolDefinitionHead EQ expressionsList
 
-identifierList ::= identifier_expression (COMMA identifier_expression)*
+identifierList ::= declaredIdentifier (COMMA declaredIdentifier)*
+declaredIdentifier ::= IDENTIFIER { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' }
 
 assignmentStatement ::= [tagHead] leftHandExpressions assignmentOperator expressionsList
 
@@ -389,23 +395,23 @@ expression ::= implicitSelector_expression
 
 typeDefinitionValue_expression ::= type compoundLiteralValue
 primary_expression ::= [tagHead] primary
-primary ::= operand_primary | caret_primary | combined_primary {
-    methods=[getReference]
-}
-combined_primary ::= primary ( DOT IDENTIFIER
-                              | ARROW IDENTIFIER
-                              | index
-                              | typeAssertion
-                              | slice
-                              | arguments
-                              )
+primary ::= operand_primary | caret_primary | combined_primary
+private combined_primary ::= call_primary | reference_primary | index_primary | typeAssertion_primary | slice_primary
+
+call_primary ::= primary arguments
+reference_primary ::= primary dot_reference
+index_primary ::= primary index
+typeAssertion_primary ::= primary typeAssertion
+slice_primary ::= primary slice
+
+dot_reference ::=  DOT primary
 caret_primary ::= primary CARET
 operand_primary ::=  literal | identifier_expression | parenthesized_expression
 
-private index ::= LBRACKET expression [COMMA expression] RBRACKET
-private slice ::= LBRACKET expression? COLON expression? RBRACKET
-private arguments ::= LPAREN argumentList? RPAREN
-private typeAssertion ::= DOT LPAREN typeDefinition_expression RPAREN
+index ::= LBRACKET expression [COMMA expression] RBRACKET
+slice ::= LBRACKET expression? COLON expression? RBRACKET
+arguments ::= LPAREN argumentList? RPAREN
+typeAssertion ::= DOT LPAREN typeDefinition_expression RPAREN
 
 private ternary_expression ::= ternary_cond_expression
                                | ternary_if_expression
@@ -419,7 +425,9 @@ transmute_expression ::= TRANSMUTE LPAREN expression RPAREN expression
 auto_cast_expression ::= AUTO_CAST expression
 nil_literal ::= NIL
 uninitialized_expression ::= TRIPLE_DASH
-identifier_expression ::= IDENTIFIER {    mixin ='com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' }
+identifier_expression ::= IDENTIFIER {
+    methods=[getReference]
+}
 
 set_expression ::= LBRACE [expression (COMMA expression)* COMMA?] RBRACE
 
@@ -459,8 +467,7 @@ basic_literal ::= nil_literal
                   | boolean_literal
                   | tripleDashLiteral_expression
 
-referenced_identifier ::= IDENTIFIER (DOT IDENTIFIER)*
-compound_types ::= arrayType | matrixType | bitSetType  | mapType | referenced_identifier
+private compound_types ::= arrayType | matrixType | bitSetType  | mapType | qualifiedNameType
 compound_literal ::= compound_types compoundLiteralValue
 
 literal ::= basic_literal | compound_literal

@@ -5,12 +5,17 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class OdinLangSyntaxAnnotator implements Annotator {
 
@@ -119,20 +124,17 @@ public class OdinLangSyntaxAnnotator implements Annotator {
                         .range(matchRange)
                         .textAttributes(OdinSyntaxHighlighter.BUILTIN_FUNCTION)
                         .create();
-            }
-            else {
-                if(identifier.getParent() instanceof OdinIdentifierList list) {
-                    if(list.getParent() instanceof OdinConstantInitializationStatement) {
-                        annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                                .range(identifier.getTextRange())
-                                .textAttributes(DefaultLanguageHighlighterColors.CONSTANT)
-                                .create();
-                    }
-                }
+            } else if (identifier.getParent() instanceof OdinIdentifierList list
+                       && list.getParent() instanceof OdinConstantInitializationStatement) {
+                annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                        .range(identifier.getTextRange())
+                        .textAttributes(DefaultLanguageHighlighterColors.CONSTANT)
+                        .create();
+
+            } else if (!reservedTypes.contains(identifier.getText())) {
+
             }
         }
-
-
 
         highlightReservedTypes(annotationHolder, psiElement);
 
