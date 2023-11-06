@@ -5,6 +5,7 @@ import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,4 +81,50 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
         if (flags == null) builder_.putUserData(MODES_KEY, flags = new TObjectIntHashMap<>());
         return flags;
     }
+
+    public static boolean beforeOperator(PsiBuilder builder, int level) {
+        return OPERATORS.contains(builder.lookAhead(0));
+    }
+
+    public static boolean beforeComma(PsiBuilder builder, int level) {
+        return builder.getTokenType() == OdinTypes.COMMA;
+    }
+
+    public static final TokenSet OPERATORS = TokenSet.create(
+            OdinTypes.STAR,
+            OdinTypes.DIV,
+            OdinTypes.MOD,
+            OdinTypes.REMAINDER,
+            OdinTypes.PLUS,
+            OdinTypes.MINUS,
+            OdinTypes.AND,
+            OdinTypes.PIPE,
+            OdinTypes.TILDE,
+            OdinTypes.ANDNOT,
+            OdinTypes.ANDAND,
+            OdinTypes.OROR,
+            OdinTypes.IN,
+            OdinTypes.NOT_IN,
+            OdinTypes.LT,
+            OdinTypes.GT,
+            OdinTypes.LTE,
+            OdinTypes.GTE,
+            OdinTypes.EQEQ,
+            OdinTypes.NEQ,
+            OdinTypes.LSHIFT,
+            OdinTypes.RSHIFT,
+            OdinTypes.RANGE_INCLUSIVE,
+            OdinTypes.RANGE_EXCLUSIVE,
+            OdinTypes.NOT,
+            OdinTypes.RANGE,
+            OdinTypes.DOT,
+            OdinTypes.OR_ELSE,
+            OdinTypes.OR_BREAK,
+            OdinTypes.OR_CONTINUE,
+            OdinTypes.OR_RETURN,
+            OdinTypes.QUESTION,
+            OdinTypes.IF,
+            OdinTypes.WHEN,
+            OdinTypes.COMMA
+    );
 }

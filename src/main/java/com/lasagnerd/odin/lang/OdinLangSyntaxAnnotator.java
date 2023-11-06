@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
@@ -111,13 +112,15 @@ public class OdinLangSyntaxAnnotator implements Annotator {
             "raw_data"
     );
 
-    public static final String ALL_ESCAPE_SEQUENCES = "\\\\n|\\\\r|\\\\v|\\\\t|\\\\e|\\\\a|\\\\b|\\\\f|\\\\[0-7]{2}|\\\\x[0-9a-fA-F]{2}|\\\\u[0-9a-fA-F]{4}|\\\\U[0-9a-fA-F]{8}|\\\\\"|\\\\\\\\";
+    public static final String ALL_ESCAPE_SEQUENCES =
+            "\\\\n|\\\\r|\\\\v|\\\\t|\\\\e|\\\\a|\\\\b|\\\\f|\\\\[0-7]{2}|\\\\x[0-9a-fA-F]{2}|\\\\u[0-9a-fA-F]{4}|\\\\U[0-9a-fA-F]{8}|\\\\\"|\\\\\\\\";
+    public static final PsiElementPattern.Capture<PsiElement> IS_CALL_IDENTIFIER = PlatformPatterns.psiElement().withAncestor(2, PlatformPatterns.psiElement(OdinCallExpression.class));
     public static Pattern ESCAPE_SEQUENCES_PATTERN = Pattern.compile(ALL_ESCAPE_SEQUENCES);
 
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
 
-        if (psiElement instanceof OdinIdentifierExpression identifier) {
+        if (psiElement instanceof OdinIdentifier identifier && IS_CALL_IDENTIFIER.accepts(identifier)) {
             if (predefinedSymbols.contains(identifier.getText())) {
                 TextRange matchRange = identifier.getTextRange();
                 annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)

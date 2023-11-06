@@ -32,7 +32,7 @@ WhiteSpace=[ \t\f]+
 Identifier = ([:letter:]|_)([:letter:]|[0-9_])*
 
 LineComment = \/\/[^\r\n]*
-BlockCommentContent = ([^*\/\r\n]|\/[^*\r\n]|\*[^\/\r\n])
+BlockCommentContent = ([^*\/\r\n]|\/[^*\r\n])
 // Literals
 
 IntegerOctLiteral = 0o[0-7][0-7_]*
@@ -228,6 +228,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         \\U[0-9a-fA-F]{8}              { return DQ_STRING_LITERAL; }
         \\\"                           { return DQ_STRING_LITERAL; }
         \\                             { return DQ_STRING_LITERAL; }
+        \\\\                           { return DQ_STRING_LITERAL; }
         [\r\n]     { yybegin(YYINITIAL); return NEW_LINE;}
     }
 
@@ -250,6 +251,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         \\U[0-9a-fA-F]{8}              { return SQ_STRING_LITERAL; }
         \\\'                           { return SQ_STRING_LITERAL; }
         \\                             { return SQ_STRING_LITERAL; }
+        \\\\                           { return SQ_STRING_LITERAL; }
         // Emojis
         [\ud800-\udbff][\udc00-\udfff] { return SQ_STRING_LITERAL; }
         [\r\n]     { yybegin(YYINITIAL); return NEW_LINE;}
@@ -273,6 +275,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         }
 
         {BlockCommentContent}+                { return BLOCK_COMMENT; }
+        \*[^\/\r\n] / [^\/]                   { return BLOCK_COMMENT; }
         [\r\n]+                               { newLineSeen = true; return NEW_LINE; }
         [^]                                   { return BLOCK_COMMENT; }
     }
