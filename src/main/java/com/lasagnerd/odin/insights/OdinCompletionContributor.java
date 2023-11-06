@@ -105,13 +105,10 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 }
                             }
                         }
-
                     }
 
 
                 }
-
-
         );
 
     }

@@ -291,10 +291,7 @@ declaredIdentifier ::= IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.O
 
 assignmentStatement ::= [tagHead] leftHandExpressions assignmentOperator expressionsList
 
-leftHandExpressions ::= leftHandExpression (COMMA leftHandExpression)*
-leftHandExpression ::= primary_expression
-
-
+leftHandExpressions ::= expression (COMMA expression)*
 expressionsList ::= expression (COMMA expression)*
 
 assignmentOperator ::= EQ
@@ -455,25 +452,9 @@ private primary_group ::= simple_ref_expression | typeDefinition_expression | ta
 literal_expression ::= basic_literal
 compound_literal_expression ::= compound_literal | compound_literal_val
 
-
-primary_expression ::= [tagHead] primary
-primary ::= operand_primary | caret_primary | combined_primary
-private combined_primary ::= call_primary | reference_primary | index_primary | typeAssertion_primary | slice_primary
-
-call_primary ::= primary arguments
-reference_primary ::= primary dot_reference
-index_primary ::= primary index
-typeAssertion_primary ::= primary typeAssertion
-slice_primary ::= primary slice
-
-dot_reference ::=  DOT primary
-caret_primary ::= primary CARET
-operand_primary ::=  literal | identifier_expression | parenthesized_expression
-
 index ::= LBRACKET expression [COMMA expression] RBRACKET
 slice ::= LBRACKET expression? COLON expression? RBRACKET
 arguments ::= LPAREN argumentList? RPAREN
-typeAssertion ::= DOT LPAREN typeDefinition RPAREN
 
 elvis_expression        ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">>
 ternary_if_expression   ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
@@ -484,9 +465,6 @@ transmute_expression ::= TRANSMUTE LPAREN expression RPAREN expression
 auto_cast_expression ::= AUTO_CAST expression
 nil_literal ::= NIL
 uninitialized_expression ::= TRIPLE_DASH
-identifier_expression ::= IDENTIFIER_TOKEN {
-    methods=[getReference]
-}
 
 // TODO this is a duplicate of compoundLiteralValue but without the non-consuming <<>>-rules
 // --> fix this
@@ -607,8 +585,8 @@ expressionStatement ::= expression
 blockStatement ::= [(tagStatement eos*)|label] block
 
 private forTraditional ::= (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
-private forIn ::= forExpression (COMMA forExpression)* IN expression
-private forExpression ::= AND? primary_expression
+private forIn ::= forInExpression (COMMA forInExpression)* IN expression
+private forInExpression ::= AND? identifier
 private forStartStatement ::=   variableInitializationStatement | assignmentStatement | call_expression
 private forEndStatement ::=   assignmentStatement | call_expression
 
