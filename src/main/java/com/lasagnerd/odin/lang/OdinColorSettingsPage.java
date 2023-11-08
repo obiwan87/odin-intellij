@@ -23,7 +23,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
 
     @Override
     public @Nullable Icon getIcon() {
-        return OdinIcons.OdinRunConfigurationIcon;
+        return OdinIcons.OdinRunConfiguration;
     }
 
     @Override

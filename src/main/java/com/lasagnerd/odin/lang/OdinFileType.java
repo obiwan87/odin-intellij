@@ -32,6 +32,6 @@ public class OdinFileType extends LanguageFileType {
 
     @Override
     public Icon getIcon() {
-        return OdinIcons.OdinFileTypeIcon;
+        return OdinIcons.OdinFileType;
     }
 }

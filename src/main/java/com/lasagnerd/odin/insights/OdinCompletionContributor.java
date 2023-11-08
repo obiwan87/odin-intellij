@@ -33,7 +33,9 @@ public class OdinCompletionContributor extends CompletionContributor {
                 new CompletionProvider<>() {
 
                     @Override
-                    protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
+                    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                                  @NotNull ProcessingContext context,
+                                                  @NotNull CompletionResultSet result) {
                         System.out.println("hello from reference completion");
 
                         PsiElement position = parameters.getPosition().getParent();
@@ -104,34 +106,44 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     private static void findCompletionsForStruct(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral) {
-        if (compoundLiteral != null && compoundLiteral.getType() instanceof OdinConcreteType type) {
-            OdinType type1 = type.getTypeIdentifier().getType();
-            if (type1 instanceof OdinQualifiedNameType qualifiedNameType) {
-                var identifierExpressionList = qualifiedNameType.getIdentifierList();
-                if (identifierExpressionList.size() == 1) {
-                    var identifier = identifierExpressionList.get(0);
-                    PsiElement reference = Objects.requireNonNull(identifier.getReference()).resolve();
+        if (compoundLiteral == null || !(compoundLiteral.getType() instanceof OdinConcreteType type)) {
+            return;
+        }
+        OdinType type1 = type.getTypeIdentifier().getType();
+        if (!(type1 instanceof OdinQualifiedNameType qualifiedNameType)) {
+            return;
+        }
+        var identifierExpressionList = qualifiedNameType.getIdentifierList();
 
-                    if (reference != null && reference.getParent() instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-                        String structName = structDeclarationStatement.getDeclaredIdentifier().getText();
-                        OdinStructBody structBody = structDeclarationStatement.getStructType().getStructBlock().getStructBody();
-                        if (structBody != null) {
-                            List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
-                            for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarationStatementList) {
-                                String typeOfField = fieldDeclaration.getTypeDefinition().getText();
-                                for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifierList()) {
-                                    LookupElementBuilder element = LookupElementBuilder.create((PsiNameIdentifierOwner) declaredIdentifier)
-                                            .withIcon(ExpUiIcons.Nodes.Property)
-                                            .withBoldness(true)
-                                            .withTypeText(typeOfField)
-                                            .withTailText(" -> " + structName);
+        if (identifierExpressionList.size() != 1) {
+            return;
+        }
 
-                                    result.addElement(PrioritizedLookupElement.withPriority(element, 100));
-                                }
-                            }
-                        }
-                    }
-                }
+        var identifier = identifierExpressionList.get(0);
+        PsiElement reference = Objects.requireNonNull(identifier.getReference()).resolve();
+
+        if (reference == null || !(reference.getParent() instanceof OdinStructDeclarationStatement structDeclarationStatement)) {
+            return;
+        }
+
+        String structName = structDeclarationStatement.getDeclaredIdentifier().getText();
+        OdinStructBody structBody = structDeclarationStatement.getStructType().getStructBlock().getStructBody();
+        if (structBody == null) {
+            return;
+        }
+
+        List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
+
+        for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarationStatementList) {
+            String typeOfField = fieldDeclaration.getTypeDefinition().getText();
+            for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifierList()) {
+                LookupElementBuilder element = LookupElementBuilder.create((PsiNameIdentifierOwner) declaredIdentifier)
+                        .withIcon(ExpUiIcons.Nodes.Property)
+                        .withBoldness(true)
+                        .withTypeText(typeOfField)
+                        .withTailText(" -> " + structName);
+
+                result.addElement(PrioritizedLookupElement.withPriority(element, 100));
             }
         }
     }

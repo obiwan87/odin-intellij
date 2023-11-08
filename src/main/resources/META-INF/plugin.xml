@@ -62,6 +62,7 @@
         <lang.foldingBuilder language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFoldingBuilder"/>
         <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier" implementationClass="com.lasagnerd.odin.lang.OdinElementManipulators"/>
         <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.insights.OdinCompletionContributor"/>
+        <sdkType implementation="com.lasagnerd.odin.sdkConfig.OdinSdkType"/>
     </extensions>
 
 </idea-plugin>
