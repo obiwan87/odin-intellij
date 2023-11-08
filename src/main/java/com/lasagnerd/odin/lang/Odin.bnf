@@ -163,460 +163,470 @@
 
   extends('.*_expression') = expression
   extends('.*[sS]tatement') = statement
-  extends('.*_primary') = primary
   extends('.*Type') = type
 
   psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
 }
 
 
-odinFile ::= fileScope
-fileScope ::= packageClause eos importDeclarationList fileScopeStatementList  <<eof>>
-importDeclarationList ::= (importDeclarationStatement eos)*
-fileScopeStatementList ::= (fileScopeStatement eos)*
-packageClause ::= PACKAGE IDENTIFIER_TOKEN
-importDeclarationStatement ::= IMPORT IDENTIFIER_TOKEN? DQ_STRING_LITERAL
-doubleColonOperator ::= COLON COLON
+odinFile                             ::= fileScope
+fileScope                            ::= packageClause eos importDeclarationList fileScopeStatementList  <<eof>>
+importDeclarationList                ::= (importDeclarationStatement eos)*
+fileScopeStatementList               ::= (fileScopeStatement eos)*
+packageClause                        ::= PACKAGE IDENTIFIER_TOKEN
+importDeclarationStatement           ::= IMPORT IDENTIFIER_TOKEN? DQ_STRING_LITERAL
+doubleColonOperator                  ::= COLON COLON
 
-fileScopeStatement ::= foreignImportDeclarationStatement
-                | importDeclarationStatement
-                | enumDeclarationStatement
-                | unionDeclarationStatement
-                | structDeclarationStatement
-                | procedureDeclarationStatement
-                | constantInitializationStatement
-                | bitsetDeclarationStatement
-                | variableInitializationStatement
-                | variableDeclarationStatement
-                | procedureOverloadStatement
-                | foreignStatement
-                | whenStatement
-                | tagStatement_expression
+fileScopeStatement                   ::= foreignImportDeclarationStatement
+                                         | importDeclarationStatement
+                                         | enumDeclarationStatement
+                                         | unionDeclarationStatement
+                                         | structDeclarationStatement
+                                         | procedureDeclarationStatement
+                                         | constantInitializationStatement
+                                         | bitsetDeclarationStatement
+                                         | variableInitializationStatement
+                                         | variableDeclarationStatement
+                                         | procedureOverloadStatement
+                                         | foreignStatement
+                                         | whenStatement
+                                         | tagStatement_expression
 
 // @require foreign import entry "entry_unix_no_crt_amd64.asm"
-foreignImportDeclarationStatement ::= (attributeStatement EOS_TOKEN?)* FOREIGN IMPORT ( (IDENTIFIER_TOKEN? DQ_STRING_LITERAL) | (IDENTIFIER_TOKEN? blockStart DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? blockEnd))
-foreignStatement ::= (attributeStatement EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? foreignBlock
+foreignImportDeclarationStatement    ::= (attributeStatement EOS_TOKEN?)* FOREIGN IMPORT
+        ( (IDENTIFIER_TOKEN? DQ_STRING_LITERAL) | (IDENTIFIER_TOKEN? blockStart DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? blockEnd))
 
-foreignBlock ::= blockStart foreignStatementList? blockEnd
+foreignStatement                     ::= (attributeStatement EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? foreignBlock
 
-foreignStatementList ::= (sos? foreignBlockStatement eos)+
-foreignBlockStatement ::= variableDeclarationStatement
-                         |foreignProcedureDeclarationStatement
-                         |whenStatement
-foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* IDENTIFIER_TOKEN doubleColonOperator PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] TRIPLE_DASH
+foreignBlock                         ::= blockStart foreignStatementList? blockEnd
+
+foreignStatementList                 ::= (sos? foreignBlockStatement eos)+
+foreignBlockStatement                ::= variableDeclarationStatement
+                                         |foreignProcedureDeclarationStatement
+                                         |whenStatement
+foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* IDENTIFIER_TOKEN doubleColonOperator PROC string_literal? LPAREN [parameterList] RPAREN [ARROW returnType] TRIPLE_DASH
 
 // Attributes
-attributeStatement ::=  AT IDENTIFIER_TOKEN
-                       | AT arguments
+attributeStatement                   ::= AT IDENTIFIER_TOKEN
+                                         | AT arguments
 // Struct
-structDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? structSpec
-structSpec ::= STRUCT [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> structBlock
-structBlock ::= blockStart [structBody] blockEnd
-structBody ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
-fieldDeclarationStatement ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition [RAW_STRING_LITERAL]
+structDeclarationStatement           ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? structType
+structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> structBlock
+structBlock                          ::= blockStart [structBody] blockEnd
+structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
+fieldDeclarationStatement            ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition [RAW_STRING_LITERAL]
 
 // Enum
-enumDeclarationStatement ::= (attributeStatement eos*)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumSpec
-enumSpec ::= ENUM [IDENTIFIER_TOKEN (DOT IDENTIFIER_TOKEN)*] enumBlock
-enumBlock ::= blockStart [enumBody] blockEnd
-enumBody ::= enumAssignment (COMMA enumAssignment)* [EOS_TOKEN|COMMA]
-private enumAssignment ::= IDENTIFIER_TOKEN [EQ expression]
+enumDeclarationStatement             ::= (attributeStatement eos*)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
+enumType                             ::= ENUM [IDENTIFIER_TOKEN (DOT IDENTIFIER_TOKEN)*] enumBlock
+enumBlock                            ::= blockStart [enumBody] blockEnd
+enumBody                             ::= enumAssignment (COMMA enumAssignment)* [EOS_TOKEN|COMMA]
+private enumAssignment               ::= IDENTIFIER_TOKEN [EQ expression]
 // Union
-unionDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? unionSpec
-unionSpec ::= UNION [LPAREN parameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> unionBlock
-unionBlock ::= blockStart [unionBody] blockEnd
-unionBody ::= typeDefinition (COMMA typeDefinition)* [COMMA|EOS_TOKEN]
+unionDeclarationStatement            ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? unionType
+unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> unionBlock
+unionBlock                           ::= blockStart [unionBody] blockEnd
+unionBody                            ::= typeDefinition (COMMA typeDefinition)* [COMMA|EOS_TOKEN]
 
 // Bit Set
-bitsetDeclarationStatement ::= IDENTIFIER_TOKEN doubleColonOperator DISTINCT? bitSetType
+bitsetDeclarationStatement           ::= IDENTIFIER_TOKEN doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
-procedureDeclarationStatement ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator procedureType procedureBody
-procedureType    ::= tagStatement? PROC string_literal? LPAREN parameterList* RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
+procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody
+procedureType                        ::= tagStatement? PROC string_literal? LPAREN [parameterList] RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
 
-whereClause ::= WHERE expression (COMMA expression)*
-procedureBody ::= block| [tagStatement] TRIPLE_DASH
-returnType          ::= NOT | LPAREN parameterList RPAREN | typeDefinition
+whereClause                          ::= WHERE expression (COMMA expression)*
+procedureBody                        ::= block| [tagStatement] TRIPLE_DASH
+returnType                           ::= NOT | LPAREN parameterList RPAREN | typeDefinition
 
-returnStatement ::= [tagStatement] RETURN returnArgumentList?
-private returnArgumentList ::= expression (COMMA expression)* COMMA?
+returnStatement                      ::= [tagStatement] RETURN returnArgumentList?
+private returnArgumentList           ::= expression (COMMA expression)* COMMA?
 
-usingStatement ::= USING expression
+usingStatement                       ::= USING expression
 
 // Procedure overloading
-procedureOverloadStatement ::= (attributeStatement eos*)* IDENTIFIER_TOKEN doubleColonOperator PROC LBRACE IDENTIFIER_TOKEN (COMMA IDENTIFIER_TOKEN)* COMMA? RBRACE
+procedureOverloadStatement           ::= (attributeStatement eos*)* IDENTIFIER_TOKEN doubleColonOperator PROC LBRACE IDENTIFIER_TOKEN (COMMA IDENTIFIER_TOKEN)* COMMA? RBRACE
 
 // Variables and constants
-typeDefinition ::= DISTINCT? (([tagStatement] type) | parenthesized_expression ) [DIV typeDefinition]
-typeDefinition_expression ::= typeDefinition
-type ::= mapType
-         | matrixType
-         | bitSetType
-         | multiPointerType
-         | arrayType
-         | procedureType
-         | structSpec
-         | enumSpec
-         | unionSpec
-         | pointerType
-         | concreteType
+typeDefinition                       ::= DISTINCT? (([tagStatement] type) | parenthesized_expression ) [DIV typeDefinition]
+typeDefinition_expression            ::= typeDefinition
+type                                 ::= mapType
+                                         | matrixType
+                                         | bitSetType
+                                         | multiPointerType
+                                         | arrayType
+                                         | procedureType
+                                         | structType
+                                         | enumType
+                                         | unionType
+                                         | pointerType
+                                         | concreteType
 
 
-concreteType ::= typeIdentifier [LPAREN typeArgument (COMMA typeArgument)* RPAREN]
-typeArgument ::= type|basic_literal
-genericType ::= DOLLAR IDENTIFIER_TOKEN
-qualifiedNameType ::= identifier (DOT identifier)*
-typeIdentifier ::= genericType
-                   | qualifiedNameType
+concreteType                         ::= typeIdentifier [LPAREN typeArgument (COMMA typeArgument)* RPAREN]
+typeArgument                         ::= type|basic_literal
+genericType                          ::= DOLLAR identifier
+qualifiedNameType                    ::= identifier (DOT identifier)*
+typeIdentifier                       ::= genericType
+                                         | qualifiedNameType
 
-pointerType ::= CARET type
-multiPointerType ::= LBRACKET CARET RBRACKET type
+pointerType                          ::= CARET type
+multiPointerType                     ::= LBRACKET CARET RBRACKET type
 
 
-bitSetType       ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinition] RBRACKET
-mapType          ::= MAP LBRACKET typeDefinition RBRACKET typeDefinition
-matrixType       ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition
-arrayType        ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition
+bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinition] RBRACKET
+mapType                              ::= MAP LBRACKET typeDefinition RBRACKET typeDefinition
+matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition
+arrayType                            ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition
 
-constantInitializationStatement ::= symbolDefinitionHead colonClosing expressionsList
-colonClosing ::= COLON
+constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList
+colonClosing                         ::= COLON
 
-private symbolDefinitionHead ::= (attributeStatement eos*)* [tagHead] identifierList colonOpening typeDefinition?
-colonOpening ::= COLON
+private symbolDefinitionHead         ::= (attributeStatement eos*)* [tagHead] identifierList colonOpening typeDefinition?
+colonOpening                         ::= COLON
 
-variableInitializationStatement ::= symbolDefinitionHead EQ expressionsList
+variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList
 
-identifierList ::= declaredIdentifier (COMMA declaredIdentifier)*
-declaredIdentifier ::= IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' }
+identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
+declaredIdentifier                   ::= IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' }
 
-assignmentStatement ::= [tagHead] leftHandExpressions assignmentOperator expressionsList
+assignmentStatement                  ::= [tagHead] leftHandExpressions assignmentOperator expressionsList
 
-leftHandExpressions ::= expression (COMMA expression)*
-expressionsList ::= expression (COMMA expression)*
+leftHandExpressions                  ::= expression (COMMA expression)*
+expressionsList                      ::= expression (COMMA expression)*
 
-assignmentOperator ::= EQ
-                       | PLUS_EQ
-                       | MINUS_EQ
-                       | STAR_EQ
-                       | DIV_EQ
-                       | MOD_EQ
-                       | REMAINDER_EQ
-                       | AND_EQ
-                       | OR_EQ
-                       | XOR_EQ
-                       | ANDAND_EQ
-                       | OROR_EQ
-                       | LSHIFT_EQ
-                       | RSHIFT_EQ
-                       | BITWISE_AND_NOT_EQ
+assignmentOperator                   ::= EQ
+                                         | PLUS_EQ
+                                         | MINUS_EQ
+                                         | STAR_EQ
+                                         | DIV_EQ
+                                         | MOD_EQ
+                                         | REMAINDER_EQ
+                                         | AND_EQ
+                                         | OR_EQ
+                                         | XOR_EQ
+                                         | ANDAND_EQ
+                                         | OROR_EQ
+                                         | LSHIFT_EQ
+                                         | RSHIFT_EQ
+                                         | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement ::= (attributeStatement eos?)* identifierList COLON typeDefinition
+variableDeclarationStatement         ::= (attributeStatement eos?)* identifierList COLON typeDefinition
 
 // Parameters for procedures and assignments
-parameterList ::= parameter (COMMA parameter)* COMMA?
-parameter ::= tagStatement? (
+polymorphicParameterList             ::= polymorphicParameter (COMMA polymorphicParameter)* COMMA?
+polymorphicParameter                 ::= tagStatement? (
               variadicParameter
-              | parameterInitialization
-              | parameterDeclarationStatement
-              | parameterType
+                                         | parameterInitialization
+                                         | parameterDeclarationStatement
               )
-private parameterType ::= RANGE? typeDefinition
+private parameterType                ::= RANGE? typeDefinition
 
-parameterDeclarationStatement ::= [USING|DOLLAR] tagStatement? IDENTIFIER_TOKEN (COMMA DOLLAR? IDENTIFIER_TOKEN)* COLON parameterType parameterTypeSpecialization?
-parameterTypeSpecialization ::= DIV expression
-private parameterInitialization ::= IDENTIFIER_TOKEN COLON typeDefinition? EQ expression
-private variadicParameter ::= IDENTIFIER_TOKEN COLON RANGE expression
+parameterList                        ::= parameter (COMMA parameter)* COMMA?
+parameter                            ::= tagStatement? (
+              variadicParameter
+                                         | parameterInitialization
+                                         | parameterDeclarationStatement
+                                         | parameterType
+              )
+
+parameterDeclarationStatement        ::= [USING|DOLLAR] tagStatement? IDENTIFIER_TOKEN (COMMA DOLLAR? IDENTIFIER_TOKEN)* COLON parameterType parameterTypeSpecialization?
+parameterTypeSpecialization          ::= DIV expression
+private parameterInitialization      ::= IDENTIFIER_TOKEN COLON typeDefinition? EQ expression
+private variadicParameter            ::= IDENTIFIER_TOKEN COLON RANGE expression
 
 
 // Function calls
-argumentList  ::= argument (COMMA argument)* COMMA?
-namedArgument ::= IDENTIFIER_TOKEN EQ expression { extends = argument}
-argument      ::= namedArgument
-                  | unnamedArgument
-unnamedArgument ::= expression { extends = argument}
+argumentList                         ::= argument (COMMA argument)* COMMA?
+namedArgument                        ::= IDENTIFIER_TOKEN EQ expression { extends = argument}
+argument                             ::= namedArgument
+                                         | unnamedArgument
+unnamedArgument                      ::= expression { extends = argument}
 
-fake binary_expression ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
-
-
-mul_expression             ::= expression STAR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-div_expression             ::= expression DIV             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-mod_expression             ::= expression MOD             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-remainder_expression       ::= expression REMAINDER       <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-add_expression             ::= expression PLUS            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-sub_expression             ::= expression MINUS           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-bitwise_and_expression     ::= expression AND             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-bitwise_or_expression      ::= expression PIPE            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-bitwise_xor_expression     ::= expression TILDE           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-bitwise_and_not_expression ::= expression ANDNOT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-and_expression             ::= expression ANDAND          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-or_expression              ::= expression OROR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-or_else_expression         ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-in_expression              ::= expression IN              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-not_in_expression          ::= expression NOT_IN          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-lt_expression              ::= expression LT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-gt_expression              ::= expression GT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-lte_expression             ::= expression LTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-gte_expression             ::= expression GTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-eqeq_expression            ::= expression EQEQ            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-neq_expression             ::= expression NEQ             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-lshift_expression          ::= expression LSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-rshift_expression          ::= expression RSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-range_inclusive_expression ::= expression RANGE_INCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-range_exclusive_expression ::= expression RANGE_EXCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-
-private mul_group ::= mul_expression
-            | div_expression
-            | mod_expression
-            | remainder_expression
-            | bitwise_and_expression
-            | lshift_expression
-            | rshift_expression
-            | bitwise_and_not_expression
-
-private add_group ::= add_expression
-            | sub_expression
-            | bitwise_or_expression
-            | bitwise_xor_expression
-            | in_expression
-            | not_in_expression
-
-private order_group ::= lt_expression
-                    | gt_expression
-                    | lte_expression
-                    | gte_expression
-                    | eqeq_expression
-                    | neq_expression
-
-private and_group ::= and_expression
-
-private or_group ::= or_expression
-
-private range_group ::= range_inclusive_expression
-                | range_exclusive_expression
-
-private ternary_group ::= elvis_expression
-                | ternary_if_expression
-                | ternary_when_expression
-
-private postfix_group ::= or_return_expression
-                          | or_break_expression
-                          | or_continue_expression
+fake binary_expression               ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
 
 
-parenthesized_expression ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
+mul_expression                       ::= expression STAR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+div_expression                       ::= expression DIV             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+mod_expression                       ::= expression MOD             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+remainder_expression                 ::= expression REMAINDER       <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+add_expression                       ::= expression PLUS            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+sub_expression                       ::= expression MINUS           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+bitwise_and_expression               ::= expression AND             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+bitwise_or_expression                ::= expression PIPE            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+bitwise_xor_expression               ::= expression TILDE           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+bitwise_and_not_expression           ::= expression ANDNOT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+and_expression                       ::= expression ANDAND          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+or_expression                        ::= expression OROR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+or_else_expression                   ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+in_expression                        ::= expression IN              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+not_in_expression                    ::= expression NOT_IN          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+lt_expression                        ::= expression LT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+gt_expression                        ::= expression GT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+lte_expression                       ::= expression LTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+gte_expression                       ::= expression GTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+eqeq_expression                      ::= expression EQEQ            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+neq_expression                       ::= expression NEQ             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+lshift_expression                    ::= expression LSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+rshift_expression                    ::= expression RSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+range_inclusive_expression           ::= expression RANGE_INCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+range_exclusive_expression           ::= expression RANGE_EXCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+
+private mul_group                    ::= mul_expression
+                                         | div_expression
+                                         | mod_expression
+                                         | remainder_expression
+                                         | bitwise_and_expression
+                                         | lshift_expression
+                                         | rshift_expression
+                                         | bitwise_and_not_expression
+
+private add_group                    ::= add_expression
+                                         | sub_expression
+                                         | bitwise_or_expression
+                                         | bitwise_xor_expression
+                                         | in_expression
+                                         | not_in_expression
+
+private order_group                  ::= lt_expression
+                                         | gt_expression
+                                         | lte_expression
+                                         | gte_expression
+                                         | eqeq_expression
+                                         | neq_expression
+
+private and_group                    ::= and_expression
+
+private or_group                     ::= or_expression
+
+private range_group                  ::= range_inclusive_expression
+                                         | range_exclusive_expression
+
+private ternary_group                ::= elvis_expression
+                                         | ternary_if_expression
+                                         | ternary_when_expression
+
+private postfix_group                ::= or_return_expression
+                                         | or_break_expression
+                                         | or_continue_expression
+
+
+parenthesized_expression             ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
 
 // Does it make sense to have literal expressions in the chain?
 
 // All expressions
-expression ::= postfix_group
-               | or_else_expression
-               | ternary_group
-               | range_group
-               | or_group
-               | and_group
-               | order_group
-               | add_group
-               | mul_group
-               | unary_group
-               | maybe_expression
-               | uninitialized_expression
-               | compound_literal_expression
-               | call_expression
-               | qualification_expression
-               | index_expression
-               | slice_expression
-               | dereference_expression
+expression                           ::= postfix_group
+                                         | or_else_expression
+                                         | ternary_group
+                                         | range_group
+                                         | or_group
+                                         | and_group
+                                         | order_group
+                                         | add_group
+                                         | mul_group
+                                         | unary_group
+                                         | maybe_expression
+                                         | uninitialized_expression
+                                         | compound_literal_expression
+                                         | call_expression
+                                         | qualification_expression
+                                         | index_expression
+                                         | slice_expression
+                                         | dereference_expression
+                                         | procedure_expression
+                                         | transmute_expression
+                                         | auto_cast_expression
+                                         | cast_expression
+                                         | typeAssertion_expression
+                                         | primary_group
 
-               | procedure_expression
-               | transmute_expression
-               | auto_cast_expression
-               | cast_expression
-               | typeAssertion_expression
-               | primary_group
 
+fake ref_expression                  ::= expression? (DOT|ARROW) identifier
+simple_ref_expression                ::= identifier {extends=ref_expression elementType=ref_expression}
+qualification_expression             ::= expression (DOT|ARROW) identifier {extends=ref_expression elementType=ref_expression}
+index_expression                     ::= expression index
+slice_expression                     ::= expression slice
+typeAssertion_expression             ::= expression DOT LPAREN typeDefinition RPAREN
+procedure_expression                 ::= procedureType procedureBody
+dereference_expression               ::= expression CARET
+identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference]}
 
-fake ref_expression ::= expression? (DOT|ARROW) identifier
-simple_ref_expression ::= identifier {extends=ref_expression elementType=ref_expression}
-qualification_expression ::= expression (DOT|ARROW) identifier {extends=ref_expression}
-index_expression ::= expression index
-slice_expression ::= expression slice
-typeAssertion_expression ::= expression DOT LPAREN typeDefinition RPAREN
-procedure_expression ::= procedureType procedureBody
-dereference_expression ::= expression CARET
-identifier ::= IDENTIFIER_TOKEN
+call_expression                      ::= expression arguments
 
-call_expression ::= expression arguments
+private primary_group                ::= simple_ref_expression | typeDefinition_expression | tagStatement_expression | literal_expression | parenthesized_expression
 
-private primary_group ::= simple_ref_expression | typeDefinition_expression | tagStatement_expression | literal_expression | parenthesized_expression
+literal_expression                   ::= basic_literal
 
-literal_expression ::= basic_literal
-compound_literal_expression ::= compound_literal | compound_literal_val
+compound_literal_expression          ::= compound_literal_typed | compound_literal_untyped
+fake compound_value                  ::= {methods=[getCompoundValueBody]}
+fake compound_literal                ::= type? (compound_value_typed | compound_value_untyped)
+compound_literal_typed               ::= compoundType compound_value_typed {extends=compound_literal}
+compound_literal_untyped             ::= compound_value_untyped {extends=compound_literal}
 
-index ::= LBRACKET expression [COMMA expression] RBRACKET
-slice ::= LBRACKET expression? COLON expression? RBRACKET
-arguments ::= LPAREN argumentList? RPAREN
+index                                ::= LBRACKET expression [COMMA expression] RBRACKET
+slice                                ::= LBRACKET expression? COLON expression? RBRACKET
+arguments                            ::= LPAREN argumentList? RPAREN
 
-elvis_expression        ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">>
-ternary_if_expression   ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
-ternary_when_expression ::= expression WHEN     <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
+elvis_expression                     ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">>
+ternary_if_expression                ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
+ternary_when_expression              ::= expression WHEN     <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
 
-cast_expression ::= CAST LPAREN typeDefinition RPAREN expression
-transmute_expression ::= TRANSMUTE LPAREN expression RPAREN expression
-auto_cast_expression ::= AUTO_CAST expression
-nil_literal ::= NIL
-uninitialized_expression ::= TRIPLE_DASH
+cast_expression                      ::= CAST LPAREN typeDefinition RPAREN expression
+transmute_expression                 ::= TRANSMUTE LPAREN expression RPAREN expression
+auto_cast_expression                 ::= AUTO_CAST expression
+nil_literal                          ::= NIL
+uninitialized_expression             ::= TRIPLE_DASH
 
 // TODO this is a duplicate of compoundLiteralValue but without the non-consuming <<>>-rules
 // --> fix this
-compound_literal_val ::= ((<<isModeOn "OPERAND">> | <<isModeOn "PAR">> | <<isModeOff "BLOCK">>) compoundValueStart [compoundLiteralValueBody] compoundValueEnd)
-                         | (compoundValueStart [compoundLiteralValueBody] compoundValueEnd <<beforeOperator>>)
-maybe_expression ::= expression DOT_QUESTION
+compound_value_untyped               ::= ((<<isModeOn "OPERAND">> | <<isModeOn "PAR">> | <<isModeOff "BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
+                                         | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeOperator>>) {extends=compound_value elementType=compound_value}
+maybe_expression                     ::= expression DOT_QUESTION
 
-private unary_group ::= unary_plus_expression
-                | unary_minus_expression
-                | unary_tilde_expression
-                | unary_and_expression
-                | unary_not_expression
-                | unary_range_expression
-                | unary_dot_expression
-
-
-unary_plus_expression  ::= PLUS  <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_minus_expression ::= MINUS <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_tilde_expression ::= TILDE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_and_expression   ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_not_expression   ::= NOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_range_expression ::= RANGE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_dot_expression   ::= DOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-
-or_return_expression   ::= expression OR_RETURN
-or_break_expression ::= expression OR_BREAK [IDENTIFIER_TOKEN]
-or_continue_expression ::= expression OR_CONTINUE [IDENTIFIER_TOKEN]
+private unary_group                  ::= unary_plus_expression
+                                         | unary_minus_expression
+                                         | unary_tilde_expression
+                                         | unary_and_expression
+                                         | unary_not_expression
+                                         | unary_range_expression
+                                         | unary_dot_expression
 
 
-string_literal  ::= DQ_STRING_LITERAL
-                    | SQ_STRING_LITERAL
-                    | RAW_STRING_LITERAL
-numeric_literal ::= INTEGER_DEC_LITERAL
-                    | INTEGER_HEX_LITERAL
-                    | INTEGER_OCT_LITERAL
-                    | INTEGER_BIN_LITERAL
-                    | FLOAT_DEC_LITERAL
-                    | COMPLEX_INTEGER_DEC_LITERAL
-                    | COMPLEX_FLOAT_LITERAL
+unary_plus_expression                ::= PLUS  <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unary_minus_expression               ::= MINUS <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unary_tilde_expression               ::= TILDE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unary_and_expression                 ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unary_not_expression                 ::= NOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unary_range_expression               ::= RANGE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unary_dot_expression                 ::= DOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
 
-boolean_literal ::= TRUE
-                    | FALSE
+or_return_expression                 ::= expression OR_RETURN
+or_break_expression                  ::= expression OR_BREAK [IDENTIFIER_TOKEN]
+or_continue_expression               ::= expression OR_CONTINUE [IDENTIFIER_TOKEN]
 
 
-basic_literal ::= nil_literal
-                  | string_literal
-                  | numeric_literal
-                  | boolean_literal
-                  | tripleDashLiteral_expression
+string_literal                       ::= DQ_STRING_LITERAL
+                                         | SQ_STRING_LITERAL
+                                         | RAW_STRING_LITERAL
+numeric_literal                      ::= INTEGER_DEC_LITERAL
+                                         | INTEGER_HEX_LITERAL
+                                         | INTEGER_OCT_LITERAL
+                                         | INTEGER_BIN_LITERAL
+                                         | FLOAT_DEC_LITERAL
+                                         | COMPLEX_INTEGER_DEC_LITERAL
+                                         | COMPLEX_FLOAT_LITERAL
 
-private compound_types ::= arrayType | matrixType | bitSetType  | mapType | structSpec | concreteType | parenthesized_expression
-compound_literal ::= compound_types compoundLiteralValue
+boolean_literal                      ::= TRUE
+                                         | FALSE
 
-literal ::= basic_literal | compound_literal | compound_literal_val
-compoundLiteralValue ::= ((<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) compoundValueStart [compoundLiteralValueBody] compoundValueEnd)
-                         | (compoundValueStart [compoundLiteralValueBody] compoundValueEnd <<beforeComma>>)
-compoundValueStart  ::= LBRACE
-compoundValueEnd  ::= RBRACE
-compoundLiteralValueBody ::= [expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]
 
-tripleDashLiteral_expression ::= TRIPLE_DASH
+basic_literal                        ::= nil_literal
+                                         | string_literal
+                                         | numeric_literal
+                                         | boolean_literal
+                                         | tripleDashLiteral_expression
 
-tagStatement_expression ::= tagHead [basic_literal | (LPAREN expressionsList? RPAREN)]
-tagStatement ::= tagHead [basic_literal | (LPAREN expressionsList? RPAREN)]
-tagHead ::= HASH IDENTIFIER_TOKEN
+private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | concreteType | parExpressionType
+parExpressionType                    ::= parenthesized_expression
 
-forStatement ::= label? tagStatement? forHead statementBody
-label ::= IDENTIFIER_TOKEN COLON
 
-forHead ::= FOR <<enterMode "BLOCK">> (forIn|forTraditional) <<exitMode "BLOCK">>
-doStatement ::= DO statement
+compound_value_typed                 ::= ((<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
+                                         | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeComma>>) {extends=compound_value elementType=compound_value}
+compoundValueStart                   ::= LBRACE
+compoundValueEnd                     ::= RBRACE
+compoundValueBody                    ::= [expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]
 
-breakStatement ::= BREAK IDENTIFIER_TOKEN?
-continueStatement ::= CONTINUE IDENTIFIER_TOKEN?
+tripleDashLiteral_expression         ::= TRIPLE_DASH
+
+tagStatement_expression              ::= tagHead [basic_literal | (LPAREN expressionsList? RPAREN)]
+tagStatement                         ::= tagHead [basic_literal | (LPAREN expressionsList? RPAREN)]
+tagHead                              ::= HASH IDENTIFIER_TOKEN
+
+forStatement                         ::= label? tagStatement? forHead statementBody
+label                                ::= IDENTIFIER_TOKEN COLON
+
+forHead                              ::= FOR <<enterMode "BLOCK">> (forIn|forTraditional) <<exitMode "BLOCK">>
+doStatement                          ::= DO statement
+
+breakStatement                       ::= BREAK IDENTIFIER_TOKEN?
+continueStatement                    ::= CONTINUE IDENTIFIER_TOKEN?
 
 // Statements that are allowed in "blocks" like for loops, if statements, etc.
 // A block is a sequence of statements contained in braces.
-block ::= [eos] tagStatement* blockStart statementList? blockEnd
-blockStart ::= LBRACE
-blockEnd ::= RBRACE
+block                                ::= [eos] tagStatement* blockStart statementList? blockEnd
+blockStart                           ::= LBRACE
+blockEnd                             ::= RBRACE
 
 // In the current implementation, when entering a parenthesis, bracket or brace block, the parser will expect to find
 // a statement or an end of statement. The problem is that empty blocks are allowed, but will lead to a parsing error.
 
-// TODO introduce new lexer state that ignores EOS_TOKEN tokens
-
-eos ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<multilineBlockComment>> | <<atClosingBrace>> | <<afterClosingBrace>>
-sos ::= SEMICOLON | NEW_LINE | EOS_TOKEN | <<afterClosingBrace>> | <<multilineBlockComment>>
-statementList ::= (sos? statement eos)+
-statement ::= assignmentStatement
-                | procedureDeclarationStatement
-                | variableInitializationStatement
-                | structDeclarationStatement
-                | enumDeclarationStatement
-                | unionDeclarationStatement
-                | procedureOverloadStatement
-                | constantInitializationStatement
-                | variableDeclarationStatement
-                | bitsetDeclarationStatement
-                | blockStatement
-                | forStatement
-                | ifStatement
-                | whenStatement
-                | switchStatement
-                | deferStatement
-                | returnStatement
-                | breakStatement
-                | continueStatement
-                | usingStatement
-                | expressionStatement
-                | fallthroughStatement
-                | foreignImportDeclarationStatement
-                | foreignStatement
+eos                                  ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<multilineBlockComment>> | <<atClosingBrace>> | <<afterClosingBrace>>
+sos                                  ::= SEMICOLON | NEW_LINE | EOS_TOKEN | <<afterClosingBrace>> | <<multilineBlockComment>>
+statementList                        ::= (sos? statement eos)+
+statement                            ::= assignmentStatement
+                                         | procedureDeclarationStatement
+                                         | variableInitializationStatement
+                                         | structDeclarationStatement
+                                         | enumDeclarationStatement
+                                         | unionDeclarationStatement
+                                         | procedureOverloadStatement
+                                         | constantInitializationStatement
+                                         | variableDeclarationStatement
+                                         | bitsetDeclarationStatement
+                                         | blockStatement
+                                         | forStatement
+                                         | ifStatement
+                                         | whenStatement
+                                         | switchStatement
+                                         | deferStatement
+                                         | returnStatement
+                                         | breakStatement
+                                         | continueStatement
+                                         | usingStatement
+                                         | expressionStatement
+                                         | fallthroughStatement
+                                         | foreignImportDeclarationStatement
+                                         | foreignStatement
 
 
-fallthroughStatement ::= FALLTHROUGH
-expressionStatement ::= expression
-blockStatement ::= [(tagStatement eos*)|label] block
+fallthroughStatement                 ::= FALLTHROUGH
+expressionStatement                  ::= expression
+blockStatement                       ::= [(tagStatement eos*)|label] block
 
-private forTraditional ::= (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
-private forIn ::= forInExpression (COMMA forInExpression)* IN expression
-private forInExpression ::= AND? identifier
-private forStartStatement ::=   variableInitializationStatement | assignmentStatement | call_expression
-private forEndStatement ::=   assignmentStatement | call_expression
+private forTraditional               ::= (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
+private forIn                        ::= forInExpression (COMMA forInExpression)* IN expression
+private forInExpression              ::= AND? identifier
+private forStartStatement            ::= variableInitializationStatement | assignmentStatement | call_expression
+private forEndStatement              ::= assignmentStatement | call_expression
 
-ifStatement ::= [label] [tagHead] if condition statementBody (sos elseIfBlock)* [sos elseBlock]
-private statementBody ::= block|doStatement
-condition ::= <<enterMode "BLOCK">> [ifInit SEMICOLON] expression <<exitMode "BLOCK">>
-private switchCondition ::= [ifInit SEMICOLON] expression?
-private ifInit ::= assignmentStatement|variableInitializationStatement|variableDeclarationStatement
-elseIfBlock ::= elseIf condition statementBody
-elseIf ::= else if
-elseBlock ::= else statementBody
-if ::= IF_TOKEN
-else ::= ELSE_TOKEN
-whenStatement ::= WHEN condition statementBody (sos elseWhenBlock)* (sos elseBlock)?
-elseWhenBlock ::= else WHEN condition statementBody
+ifStatement                          ::= [label] [tagHead] if condition statementBody (sos elseIfBlock)* [sos elseBlock]
+private statementBody                ::= block|doStatement
+condition                            ::= <<enterMode "BLOCK">> [ifInit SEMICOLON] expression <<exitMode "BLOCK">>
+private switchCondition              ::= [ifInit SEMICOLON] expression?
+private ifInit                       ::= assignmentStatement|variableInitializationStatement|variableDeclarationStatement
+elseIfBlock                          ::= elseIf condition statementBody
+elseIf                               ::= else if
+elseBlock                            ::= else statementBody
+if                                   ::= IF_TOKEN
+else                                 ::= ELSE_TOKEN
+whenStatement                        ::= WHEN condition statementBody (sos elseWhenBlock)* (sos elseBlock)?
+elseWhenBlock                        ::= else WHEN condition statementBody
 
-switchStatement ::= [label] [tagStatement_expression] switchHead switchBody
-switchHead ::= SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">>
-switchBody ::= eos? blockStart switchCases blockEnd
-switchCases ::= switchCase*
-switchCase ::= CASE (caseExpression(COMMA caseExpression)*)? caseBlock
-caseBlock ::= COLON statementList?
+switchStatement                      ::= [label] [tagStatement_expression] switchHead switchBody
+switchHead                           ::= SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">>
+switchBody                           ::= eos? blockStart switchCases blockEnd
+switchCases                          ::= switchCase*
+switchCase                           ::= CASE (caseExpression(COMMA caseExpression)*)? caseBlock
+caseBlock                            ::= COLON statementList?
 
-caseExpression ::= expression
-                  | DOT IDENTIFIER_TOKEN
+caseExpression                       ::= expression
+                                         | DOT IDENTIFIER_TOKEN
 
-deferStatement ::= DEFER deferrableStatement
-private deferrableStatement ::= assignmentStatement
-                                | expression
-                                | ifStatement
-                                | forStatement
-                                | switchStatement
-                                | block
+deferStatement                       ::= DEFER deferrableStatement
+private deferrableStatement          ::= assignmentStatement
+                                         | expression
+                                         | ifStatement
+                                         | forStatement
+                                         | switchStatement
+                                         | block
