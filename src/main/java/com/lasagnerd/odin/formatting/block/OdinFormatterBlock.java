@@ -21,7 +21,7 @@ public class OdinFormatterBlock extends AbstractBlock {
             OdinTypes.STRUCT_BODY,
             OdinTypes.ENUM_BODY,
             OdinTypes.UNION_BODY,
-            OdinTypes.COMPOUND_LITERAL_VALUE_BODY
+            OdinTypes.COMPOUND_VALUE_BODY
     );
 
     static List<IElementType> typesToSmartIndent = List.of(
@@ -29,7 +29,7 @@ public class OdinFormatterBlock extends AbstractBlock {
             OdinTypes.STRUCT_BLOCK,
             OdinTypes.CASE_BLOCK,
             OdinTypes.ENUM_BLOCK,
-            OdinTypes.COMPOUND_LITERAL_VALUE
+            OdinTypes.COMPOUND_VALUE_BODY
     );
 
     public OdinFormatterBlock(@NotNull ASTNode node,

@@ -1,37 +1,33 @@
 package com.lasagnerd.odin.insights;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.icons.ExpUiIcons;
-import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.OdinIcons;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.mozilla.javascript.ast.VariableDeclaration;
-import org.mozilla.javascript.ast.VariableInitializer;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class OdinCompletionContributor extends CompletionContributor {
-    public static final PsiElementPattern.@NotNull Capture<PsiElement> AT_IDENTIFIER = PlatformPatterns.psiElement()
-            .withElementType(OdinTypes.IDENTIFIER_TOKEN);
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-    public static final PsiElementPattern.@NotNull Capture<PsiElement> REFERENCE = PlatformPatterns.psiElement(
-    ).withAncestor(3, PlatformPatterns.psiElement(OdinDotReference.class));
+public class OdinCompletionContributor extends CompletionContributor {
+
+    public static final PsiElementPattern.@NotNull Capture<PsiElement> REFERENCE = psiElement().withElementType(OdinTypes.IDENTIFIER_TOKEN).afterLeaf(".");
+
+    public static final @NotNull ElementPattern<PsiElement> AT_IDENTIFIER = psiElement().withElementType(OdinTypes.IDENTIFIER_TOKEN).andNot(REFERENCE);
+
 
     public OdinCompletionContributor() {
+
         extend(CompletionType.BASIC,
                 REFERENCE,
                 new CompletionProvider<>() {
@@ -40,32 +36,28 @@ public class OdinCompletionContributor extends CompletionContributor {
                     protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
                         System.out.println("hello from reference completion");
 
-                        PsiElement position = parameters.getPosition();
+                        PsiElement position = parameters.getPosition().getParent();
 
                         // This constitutes our scope
-                        OdinReferencePrimary reference = OdinInsightUtils.findFirstParentOfType(position, true, OdinReferencePrimary.class);
+                        OdinRefExpression reference = (OdinRefExpression) PsiTreeUtil.findSiblingBackward(position, OdinTypes.REF_EXPRESSION, false, null);
                         if (reference != null) {
-                            if (reference.getPrimary() instanceof OdinOperandPrimary operandPrimary) {
-                                if (operandPrimary.getExpression() instanceof OdinIdentifierExpression identifierExpression) {
-                                    OdinDeclaredIdentifier identifierReference = (OdinDeclaredIdentifier) Objects.requireNonNull(identifierExpression.getReference())
-                                            .resolve();
-                                    OdinVariableInitializationStatement initialization = OdinInsightUtils.findFirstParentOfType(identifierReference,
-                                            true,
-                                            OdinVariableInitializationStatement.class);
 
-                                    OdinExpression odinExpression = initialization.getExpressionsList().getExpressionList().get(0);
-                                    OdinCompoundLiteral compoundLiteral = PsiTreeUtil.findChildOfType(odinExpression, OdinCompoundLiteral.class);
+                            OdinDeclaredIdentifier identifierReference = (OdinDeclaredIdentifier) Objects.requireNonNull(reference.getIdentifier().getReference())
+                                    .resolve();
+                            OdinVariableInitializationStatement initialization = OdinInsightUtils.findFirstParentOfType(identifierReference,
+                                    true,
+                                    OdinVariableInitializationStatement.class);
 
-                                    findCompletionsForStruct(result, compoundLiteral);
-                                }
-                            }
+                            OdinExpression odinExpression = initialization.getExpressionsList().getExpressionList().get(0);
+                            OdinCompoundLiteral compoundLiteral = PsiTreeUtil.findChildOfType(odinExpression, OdinCompoundLiteral.class);
+
+                            findCompletionsForStruct(result, compoundLiteral);
                         }
                     }
                 }
         );
 
-        extend(CompletionType.BASIC,
-                AT_IDENTIFIER.andNot(REFERENCE),
+        extend(CompletionType.BASIC, AT_IDENTIFIER,
                 new CompletionProvider<>() {
                     @Override
                     protected void addCompletions(@NotNull CompletionParameters parameters,
@@ -75,7 +67,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         PsiElement parent = OdinInsightUtils.findFirstParentOfType(
                                 position,
                                 true,
-                                OdinPrimaryExpression.class);
+                                OdinRefExpression.class);
 
                         if (parent != null) {
                             // Struct construction
@@ -106,35 +98,36 @@ public class OdinCompletionContributor extends CompletionContributor {
                             }
                         }
                     }
-
-
                 }
         );
 
     }
 
     private static void findCompletionsForStruct(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral) {
-        if (compoundLiteral != null && compoundLiteral.getType() instanceof OdinQualifiedNameType type) {
-            List<OdinIdentifier> identifierExpressionList = type.getIdentifierList();
-            if (identifierExpressionList.size() == 1) {
-                var identifier = identifierExpressionList.get(0);
-                PsiElement reference = Objects.requireNonNull(identifier.getReference()).resolve();
+        if (compoundLiteral != null && compoundLiteral.getType() instanceof OdinConcreteType type) {
+            OdinType type1 = type.getTypeIdentifier().getType();
+            if (type1 instanceof OdinQualifiedNameType qualifiedNameType) {
+                var identifierExpressionList = qualifiedNameType.getIdentifierList();
+                if (identifierExpressionList.size() == 1) {
+                    var identifier = identifierExpressionList.get(0);
+                    PsiElement reference = Objects.requireNonNull(identifier.getReference()).resolve();
 
-                if (reference != null && reference.getParent() instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-                    String structName = structDeclarationStatement.getDeclaredIdentifier().getText();
-                    OdinStructBody structBody = structDeclarationStatement.getStructSpec().getStructBlock().getStructBody();
-                    if (structBody != null) {
-                        List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
-                        for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarationStatementList) {
-                            String typeOfField = fieldDeclaration.getTypeDefinition().getText();
-                            for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifierList()) {
-                                LookupElementBuilder element = LookupElementBuilder.create((PsiNameIdentifierOwner) declaredIdentifier)
-                                        .withIcon(ExpUiIcons.Nodes.Property)
-                                        .withBoldness(true)
-                                        .withTypeText(typeOfField)
-                                        .withTailText(" -> " + structName);
+                    if (reference != null && reference.getParent() instanceof OdinStructDeclarationStatement structDeclarationStatement) {
+                        String structName = structDeclarationStatement.getDeclaredIdentifier().getText();
+                        OdinStructBody structBody = structDeclarationStatement.getStructType().getStructBlock().getStructBody();
+                        if (structBody != null) {
+                            List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
+                            for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarationStatementList) {
+                                String typeOfField = fieldDeclaration.getTypeDefinition().getText();
+                                for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifierList()) {
+                                    LookupElementBuilder element = LookupElementBuilder.create((PsiNameIdentifierOwner) declaredIdentifier)
+                                            .withIcon(ExpUiIcons.Nodes.Property)
+                                            .withBoldness(true)
+                                            .withTypeText(typeOfField)
+                                            .withTailText(" -> " + structName);
 
-                                result.addElement(PrioritizedLookupElement.withPriority(element, 100));
+                                    result.addElement(PrioritizedLookupElement.withPriority(element, 100));
+                                }
                             }
                         }
                     }

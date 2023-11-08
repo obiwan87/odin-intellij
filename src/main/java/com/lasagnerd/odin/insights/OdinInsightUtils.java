@@ -21,7 +21,7 @@ public class OdinInsightUtils {
         // Check all parent blocks
         while (entrance != null) {
             OdinBlock containingBlock = (OdinBlock) PsiTreeUtil.findFirstParent(entrance, true, parent -> parent instanceof OdinBlock);
-            entrance = containingBlock;
+             entrance = containingBlock;
             if (containingBlock == null) {
                 break;
             }
