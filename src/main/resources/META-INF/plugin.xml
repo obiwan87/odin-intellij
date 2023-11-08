@@ -3,7 +3,7 @@
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
     <version>0.2.0</version>
-    <name>Odin Lang Support</name>
+    <name>Odin Support</name>
     <change-notes><![CDATA[
         <h2>Features</h2>
         <ul>
@@ -60,7 +60,7 @@
         <lang.quoteHandler language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinQuoteHandler"/>
         <lang.commenter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinCommenter"/>
         <lang.foldingBuilder language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFoldingBuilder"/>
-        <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifierExpression" implementationClass="com.lasagnerd.odin.lang.OdinElementManipulators"/>
+        <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier" implementationClass="com.lasagnerd.odin.lang.OdinElementManipulators"/>
         <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.insights.OdinCompletionContributor"/>
     </extensions>
 
