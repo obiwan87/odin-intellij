@@ -106,19 +106,11 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     private static void findCompletionsForStruct(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral) {
-        if (compoundLiteral == null || !(compoundLiteral.getType() instanceof OdinConcreteType type)) {
-            return;
-        }
-        OdinType type1 = type.getTypeIdentifier().getType();
-        if (!(type1 instanceof OdinQualifiedNameType qualifiedNameType)) {
-            return;
-        }
-        var identifierExpressionList = qualifiedNameType.getIdentifierList();
-
-        if (identifierExpressionList.size() != 1) {
+        if (compoundLiteral == null || !(compoundLiteral.getType() instanceof OdinConcreteType concreteType)) {
             return;
         }
 
+        var identifierExpressionList = concreteType.getIdentifierList();
         var identifier = identifierExpressionList.get(0);
         PsiElement reference = Objects.requireNonNull(identifier.getReference()).resolve();
 

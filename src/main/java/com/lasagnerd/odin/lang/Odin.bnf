@@ -163,7 +163,7 @@
 
   extends('.*_expression') = expression
   extends('.*[sS]tatement') = statement
-  extends('.*Type') = type
+  extends('.*Type$') = type
 
   psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
 }
@@ -261,14 +261,14 @@ type                                 ::= mapType
                                          | unionType
                                          | pointerType
                                          | concreteType
+                                         | genericType
 
 
-concreteType                         ::= typeIdentifier [LPAREN typeArgument (COMMA typeArgument)* RPAREN]
-typeArgument                         ::= type|basic_literal
 genericType                          ::= DOLLAR identifier
-qualifiedNameType                    ::= identifier (DOT identifier)*
-typeIdentifier                       ::= genericType
-                                         | qualifiedNameType
+concreteType                         ::= qualifiedNameTypeIdentifier [LPAREN typeArgument (COMMA typeArgument)* RPAREN]
+typeArgument                         ::= type|basic_literal
+
+private qualifiedNameTypeIdentifier          ::= identifier (DOT identifier)*
 
 pointerType                          ::= CARET type
 multiPointerType                     ::= LBRACKET CARET RBRACKET type
