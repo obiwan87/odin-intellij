@@ -2797,16 +2797,16 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (attributeStatement eos*)* IDENTIFIER_TOKEN doubleColonOperator PROC LBRACE IDENTIFIER_TOKEN (COMMA IDENTIFIER_TOKEN)* COMMA? RBRACE
+  // (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
   public static boolean procedureOverloadStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "procedureOverloadStatement")) return false;
-    if (!nextTokenIs(b, "<procedure overload statement>", AT, IDENTIFIER_TOKEN)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, PROCEDURE_OVERLOAD_STATEMENT, "<procedure overload statement>");
     r = procedureOverloadStatement_0(b, l + 1);
-    r = r && consumeToken(b, IDENTIFIER_TOKEN);
+    r = r && declaredIdentifier(b, l + 1);
     r = r && doubleColonOperator(b, l + 1);
-    r = r && consumeTokens(b, 0, PROC, LBRACE, IDENTIFIER_TOKEN);
+    r = r && consumeTokens(b, 0, PROC, LBRACE);
+    r = r && identifier(b, l + 1);
     r = r && procedureOverloadStatement_6(b, l + 1);
     r = r && procedureOverloadStatement_7(b, l + 1);
     r = r && consumeToken(b, RBRACE);
@@ -2814,7 +2814,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (attributeStatement eos*)*
+  // (attributeStatement eos?)*
   private static boolean procedureOverloadStatement_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "procedureOverloadStatement_0")) return false;
     while (true) {
@@ -2825,7 +2825,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // attributeStatement eos*
+  // attributeStatement eos?
   private static boolean procedureOverloadStatement_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "procedureOverloadStatement_0_0")) return false;
     boolean r;
@@ -2836,18 +2836,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // eos*
+  // eos?
   private static boolean procedureOverloadStatement_0_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "procedureOverloadStatement_0_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!eos(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "procedureOverloadStatement_0_0_1", c)) break;
-    }
+    eos(b, l + 1);
     return true;
   }
 
-  // (COMMA IDENTIFIER_TOKEN)*
+  // (COMMA identifier)*
   private static boolean procedureOverloadStatement_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "procedureOverloadStatement_6")) return false;
     while (true) {
@@ -2858,12 +2854,13 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // COMMA IDENTIFIER_TOKEN
+  // COMMA identifier
   private static boolean procedureOverloadStatement_6_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "procedureOverloadStatement_6_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, COMMA, IDENTIFIER_TOKEN);
+    r = consumeToken(b, COMMA);
+    r = r && identifier(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

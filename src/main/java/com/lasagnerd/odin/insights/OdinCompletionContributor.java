@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.insights;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.ExpUiIcons;
 import com.intellij.openapi.project.Project;
@@ -218,39 +219,81 @@ public class OdinCompletionContributor extends CompletionContributor {
     private static void addLookUpElements(@NotNull CompletionResultSet result, List<PsiElement> declarations) {
         for (PsiElement declaration : declarations) {
             if (declaration instanceof PsiNameIdentifierOwner declaredIdentifier) {
-                OdinInsightUtils.OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
+                OdinInsightUtils.OdinTypeType typeType = OdinInsightUtils.classify((OdinDeclaredIdentifier) declaredIdentifier);
                 Icon icon = switch (typeType) {
                     case STRUCT -> OdinIcons.Types.Struct;
                     case ENUM -> ExpUiIcons.Nodes.Enum;
                     case UNION -> OdinIcons.Types.Union;
-                    case PROCEDURE -> ExpUiIcons.Nodes.Function;
+                    case PROCEDURE, PROCEUDRE_OVERLOAD -> ExpUiIcons.Nodes.Function;
                     case VARIABLE -> ExpUiIcons.Nodes.Variable;
                     case CONSTANT -> ExpUiIcons.Nodes.Constant;
                     case UNKNOWN -> ExpUiIcons.FileTypes.Unknown;
                 };
 
-                LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier).withIcon(icon);
 
                 if (typeType == OdinInsightUtils.OdinTypeType.PROCEDURE) {
+                    LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier).withIcon(icon);
                     OdinProcedureDeclarationStatement firstParentOfType = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
-                    var params = firstParentOfType.getProcedureType().getParamEntries();
-                    String tailText = "(";
-                    if (params != null) {
-                        tailText += params.getText();
-                    }
-                    tailText += ")";
-                    element = element.withTailText(tailText);
-
-                    OdinReturnType returnType = firstParentOfType.getProcedureType().getReturnType();
-                    if (returnType != null) {
-                        element = element.withTypeText(returnType
-                                .getText());
-                    }
+                    element = procedureLookupElement(element, firstParentOfType).withInsertHandler(procedureInsertHandler());
+                    result.addElement(PrioritizedLookupElement.withPriority(element, 0));
                 }
 
-                result.addElement(PrioritizedLookupElement.withPriority(element, 0));
+                else if(typeType == OdinInsightUtils.OdinTypeType.PROCEUDRE_OVERLOAD) {
+                    OdinProcedureOverloadStatement procedureOverloadStatement = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureOverloadStatement.class);
+
+                    int i = 0;
+                    for (OdinIdentifier odinIdentifier : procedureOverloadStatement.getIdentifierList()) {
+                        var  resolvedReference = odinIdentifier.getReference();
+
+                        if(resolvedReference != null) {
+                            PsiElement resolved = resolvedReference.resolve();
+                            if(resolved instanceof OdinDeclaredIdentifier) {
+                                OdinProcedureDeclarationStatement declaringProcedure = OdinInsightUtils.getDeclaringProcedure((OdinDeclaredIdentifier) resolved);
+                                if(declaringProcedure != null) {
+                                    LookupElementBuilder element = LookupElementBuilder.create(resolved, declaredIdentifier.getText())
+                                            .withItemTextItalic(true)
+                                            .withIcon(icon)
+                                            .withInsertHandler(procedureInsertHandler());
+                                    element = procedureLookupElement(element, declaringProcedure);
+                                    result.addElement(PrioritizedLookupElement.withPriority(element, 0));
+                                }
+                            }
+                        }
+                        i++;
+                    }
+                } else {
+                    LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier).withIcon(icon);
+                    result.addElement(PrioritizedLookupElement.withPriority(element, 0));
+                }
             }
         }
+    }
+
+    @NotNull
+    private static InsertHandler<LookupElement> procedureInsertHandler() {
+        return (insertionContext, lookupElement) -> {
+            insertionContext.getDocument().insertString(insertionContext.getTailOffset(), "(");
+            insertionContext.getDocument().insertString(insertionContext.getTailOffset(), ")");
+            insertionContext.getEditor().getCaretModel().moveToOffset(insertionContext.getTailOffset() - 1);
+        };
+    }
+
+    @NotNull
+    private static LookupElementBuilder procedureLookupElement(LookupElementBuilder element, OdinProcedureDeclarationStatement declaringProcedure) {
+        var params = declaringProcedure.getProcedureType().getParamEntries();
+        String tailText = "(";
+        if (params != null) {
+            tailText += params.getText();
+        }
+        tailText += ")";
+        element = element.withTailText(tailText);
+
+        OdinReturnType returnType = declaringProcedure.getProcedureType().getReturnType();
+        if (returnType != null) {
+            element = element.withTypeText(returnType
+                    .getText());
+        }
+        return element;
     }
 
     private static void findCompletionsForStruct(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral) {

@@ -245,7 +245,7 @@ private returnArgumentList           ::= expression (COMMA expression)* COMMA?
 usingStatement                       ::= USING expression
 
 // Procedure overloading
-procedureOverloadStatement           ::= (attributeStatement eos*)* IDENTIFIER_TOKEN doubleColonOperator PROC LBRACE IDENTIFIER_TOKEN (COMMA IDENTIFIER_TOKEN)* COMMA? RBRACE
+procedureOverloadStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
 
 // Variables and constants
 typeDefinition                       ::= DISTINCT? (([tagStatement] type) | parenthesized_expression ) [DIV typeDefinition]

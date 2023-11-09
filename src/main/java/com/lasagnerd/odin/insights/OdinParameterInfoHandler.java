@@ -6,18 +6,16 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallExpression, OdinProcedureDeclarationStatement> {
 
-    // TODO handle variadic parameters?
-    // TODO handle overloads
     private static final String DELIMITER = ", ";
 
     @Override
@@ -47,17 +45,38 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
     }
 
     public static List<PsiElement> findMatchingDeclarations(String name, PsiElement element) {
-        return OdinInsightUtils.findDeclarations(
-                        element, psiElement -> {
-                            if (psiElement instanceof OdinDeclaredIdentifier identifier &&
-                                    identifier.getParent() instanceof OdinProcedureDeclarationStatement) {
-                                return identifier.getText().equals(name);
+        List<PsiElement> declarations = OdinInsightUtils.findDeclarations(
+                element, psiElement -> {
+                    if (psiElement instanceof OdinDeclaredIdentifier identifier)
+                        if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||
+                                identifier.getParent() instanceof OdinProcedureOverloadStatement
+                        ) {
+                            return identifier.getText().equals(name);
+                        }
+                    return false;
+                });
+
+        List<PsiElement> procedures = new ArrayList<>();
+        for (PsiElement declaration : declarations) {
+            if (declaration instanceof OdinDeclaredIdentifier) {
+                if (declaration.getParent() instanceof OdinProcedureDeclarationStatement proc) {
+                    procedures.add(proc);
+                }
+
+                if (declaration.getParent() instanceof OdinProcedureOverloadStatement overload) {
+                    for (OdinIdentifier odinIdentifier : overload.getIdentifierList()) {
+                        PsiReference identifierReference = odinIdentifier.getReference();
+                        if (identifierReference != null) {
+                            PsiElement resolve = identifierReference.resolve();
+                            if (resolve != null && resolve.getParent() instanceof OdinProcedureDeclarationStatement proc) {
+                                procedures.add(proc);
                             }
-                            return false;
-                        })
-                .stream()
-                .map(psiElement -> ((OdinProcedureDeclarationStatement) psiElement.getParent()))
-                .collect(Collectors.toList());
+                        }
+                    }
+                }
+            }
+        }
+        return procedures;
     }
 
     @Override

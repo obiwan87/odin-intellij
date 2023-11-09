@@ -130,6 +130,8 @@ public class OdinInsightUtils {
             identifierList = List.of(enumDeclarationStatement.getDeclaredIdentifier());
         } else if (child instanceof OdinUnionDeclarationStatement unionDeclarationStatement) {
             identifierList = List.of(unionDeclarationStatement.getDeclaredIdentifier());
+        } else if (child instanceof OdinProcedureOverloadStatement procedureOverloadStatement) {
+            identifierList = List.of(procedureOverloadStatement.getDeclaredIdentifier());
         } else {
             identifierList = Collections.emptyList();
         }
@@ -150,6 +152,10 @@ public class OdinInsightUtils {
         return element.getParent() instanceof OdinProcedureDeclarationStatement;
     }
 
+    public static boolean isProcedureOverloadDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinProcedureOverloadStatement;
+    }
+
     public static boolean isConstantDeclaration(PsiElement element) {
         return findFirstParentOfType(element, true, OdinConstantInitializationStatement.class) != null;
     }
@@ -166,7 +172,7 @@ public class OdinInsightUtils {
         return element.getParent() instanceof OdinUnionDeclarationStatement;
     }
 
-    public static OdinTypeType classify(PsiElement element) {
+    public static OdinTypeType classify(OdinDeclaredIdentifier element) {
         if (isStructDeclaration(element)) {
             return OdinTypeType.STRUCT;
         } else if (isEnumDeclaration(element)) {
@@ -179,17 +185,23 @@ public class OdinInsightUtils {
             return OdinTypeType.VARIABLE;
         } else if (isConstantDeclaration(element)) {
             return OdinTypeType.CONSTANT;
+        } else if(isProcedureOverloadDeclaration(element)) {
+            return OdinTypeType.PROCEUDRE_OVERLOAD;
         } else {
             return OdinTypeType.UNKNOWN;
         }
     }
 
+    public static OdinProcedureDeclarationStatement getDeclaringProcedure(OdinDeclaredIdentifier element) {
+        return element.getParent() instanceof OdinProcedureDeclarationStatement ? (OdinProcedureDeclarationStatement) element.getParent() : null;
+    }
 
     public enum OdinTypeType {
         STRUCT,
         ENUM,
         UNION,
         PROCEDURE,
+        PROCEUDRE_OVERLOAD,
         VARIABLE,
         CONSTANT,
         UNKNOWN
