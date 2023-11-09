@@ -170,15 +170,15 @@
 
 
 odinFile                             ::= fileScope
-fileScope                            ::= packageClause eos importDeclarationList fileScopeStatementList  <<eof>>
-importDeclarationList                ::= (importDeclarationStatement eos)*
+fileScope                            ::= packageClause eos importStatements fileScopeStatementList  <<eof>>
+private importStatements             ::= (importStatement eos)*
 fileScopeStatementList               ::= (fileScopeStatement eos)*
 packageClause                        ::= PACKAGE IDENTIFIER_TOKEN
-importDeclarationStatement           ::= IMPORT IDENTIFIER_TOKEN? DQ_STRING_LITERAL
+importStatement                      ::= IMPORT IDENTIFIER_TOKEN? DQ_STRING_LITERAL {methods=[alias="/IDENTIFIER_TOKEN" path="/DQ_STRING_LITERAL" ]}
 doubleColonOperator                  ::= COLON COLON
 
 fileScopeStatement                   ::= foreignImportDeclarationStatement
-                                         | importDeclarationStatement
+                                         | importStatement
                                          | enumDeclarationStatement
                                          | unionDeclarationStatement
                                          | structDeclarationStatement

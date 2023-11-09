@@ -57,7 +57,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
       DO_STATEMENT, ENUM_DECLARATION_STATEMENT, EXPRESSION_STATEMENT, FALLTHROUGH_STATEMENT,
       FIELD_DECLARATION_STATEMENT, FILE_SCOPE_STATEMENT, FOREIGN_BLOCK_STATEMENT, FOREIGN_IMPORT_DECLARATION_STATEMENT,
       FOREIGN_PROCEDURE_DECLARATION_STATEMENT, FOREIGN_STATEMENT, FOR_STATEMENT, IF_STATEMENT,
-      IMPORT_DECLARATION_STATEMENT, PARAMETER_DECLARATION_STATEMENT, PROCEDURE_DECLARATION_STATEMENT, PROCEDURE_OVERLOAD_STATEMENT,
+      IMPORT_STATEMENT, PARAMETER_DECLARATION_STATEMENT, PROCEDURE_DECLARATION_STATEMENT, PROCEDURE_OVERLOAD_STATEMENT,
       RETURN_STATEMENT, STATEMENT, STRUCT_DECLARATION_STATEMENT, SWITCH_STATEMENT,
       TAG_STATEMENT, UNION_DECLARATION_STATEMENT, USING_STATEMENT, VARIABLE_DECLARATION_STATEMENT,
       VARIABLE_INITIALIZATION_STATEMENT, WHEN_STATEMENT),
@@ -1435,7 +1435,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // packageClause eos importDeclarationList fileScopeStatementList  <<eof>>
+  // packageClause eos importStatements fileScopeStatementList  <<eof>>
   public static boolean fileScope(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fileScope")) return false;
     if (!nextTokenIs(b, PACKAGE)) return false;
@@ -1443,7 +1443,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = packageClause(b, l + 1);
     r = r && eos(b, l + 1);
-    r = r && importDeclarationList(b, l + 1);
+    r = r && importStatements(b, l + 1);
     r = r && fileScopeStatementList(b, l + 1);
     r = r && eof(b, l + 1);
     exit_section_(b, m, FILE_SCOPE, r);
@@ -1452,7 +1452,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // foreignImportDeclarationStatement
-  //                                          | importDeclarationStatement
+  //                                          | importStatement
   //                                          | enumDeclarationStatement
   //                                          | unionDeclarationStatement
   //                                          | structDeclarationStatement
@@ -1470,7 +1470,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, FILE_SCOPE_STATEMENT, "<file scope statement>");
     r = foreignImportDeclarationStatement(b, l + 1);
-    if (!r) r = importDeclarationStatement(b, l + 1);
+    if (!r) r = importStatement(b, l + 1);
     if (!r) r = enumDeclarationStatement(b, l + 1);
     if (!r) r = unionDeclarationStatement(b, l + 1);
     if (!r) r = structDeclarationStatement(b, l + 1);
@@ -2194,49 +2194,47 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (importDeclarationStatement eos)*
-  public static boolean importDeclarationList(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "importDeclarationList")) return false;
-    Marker m = enter_section_(b, l, _NONE_, IMPORT_DECLARATION_LIST, "<import declaration list>");
-    while (true) {
-      int c = current_position_(b);
-      if (!importDeclarationList_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "importDeclarationList", c)) break;
-    }
-    exit_section_(b, l, m, true, false, null);
-    return true;
-  }
-
-  // importDeclarationStatement eos
-  private static boolean importDeclarationList_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "importDeclarationList_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = importDeclarationStatement(b, l + 1);
-    r = r && eos(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // IMPORT IDENTIFIER_TOKEN? DQ_STRING_LITERAL
-  public static boolean importDeclarationStatement(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "importDeclarationStatement")) return false;
+  public static boolean importStatement(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importStatement")) return false;
     if (!nextTokenIs(b, IMPORT)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, IMPORT);
-    r = r && importDeclarationStatement_1(b, l + 1);
+    r = r && importStatement_1(b, l + 1);
     r = r && consumeToken(b, DQ_STRING_LITERAL);
-    exit_section_(b, m, IMPORT_DECLARATION_STATEMENT, r);
+    exit_section_(b, m, IMPORT_STATEMENT, r);
     return r;
   }
 
   // IDENTIFIER_TOKEN?
-  private static boolean importDeclarationStatement_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "importDeclarationStatement_1")) return false;
+  private static boolean importStatement_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importStatement_1")) return false;
     consumeToken(b, IDENTIFIER_TOKEN);
     return true;
+  }
+
+  /* ********************************************************** */
+  // (importStatement eos)*
+  static boolean importStatements(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importStatements")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!importStatements_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "importStatements", c)) break;
+    }
+    return true;
+  }
+
+  // importStatement eos
+  private static boolean importStatements_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "importStatements_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = importStatement(b, l + 1);
+    r = r && eos(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */

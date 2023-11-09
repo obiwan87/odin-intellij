@@ -21,7 +21,7 @@ public class OdinInsightUtils {
         // Check all parent blocks
         while (entrance != null) {
             OdinBlock containingBlock = (OdinBlock) PsiTreeUtil.findFirstParent(entrance, true, parent -> parent instanceof OdinBlock);
-             entrance = containingBlock;
+            entrance = containingBlock;
             if (containingBlock == null) {
                 break;
             }
@@ -79,16 +79,26 @@ public class OdinInsightUtils {
         }
 
         // Check file scope
-        OdinFileScope odinFileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(lastValidBlock, psi -> psi instanceof OdinFileScope);
+        OdinFileScope fileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(lastValidBlock, psi -> psi instanceof OdinFileScope);
+        List<PsiElement> fileScopeDeclarations = getFileScopeDeclarations(fileScope, matcher);
+
+        declarations.addAll(fileScopeDeclarations);
+
+        return declarations;
+    }
+
+    public static List<PsiElement> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
+        List<PsiElement> fileScopeDeclarations = new ArrayList<>();
         if (odinFileScope != null) {
             OdinFileScopeStatementList fileScopeStatementList = odinFileScope.getFileScopeStatementList();
 
             for (OdinStatement statement : fileScopeStatementList.getStatementList()) {
                 List<OdinDeclaredIdentifier> matchedIdentifiers = getMatchingDeclarations(matcher, statement);
-                declarations.addAll(matchedIdentifiers);
+                fileScopeDeclarations.addAll(matchedIdentifiers);
             }
         }
-        return declarations;
+
+        return fileScopeDeclarations;
     }
 
     private static List<OdinDeclaredIdentifier> getMatchingDeclarations(Predicate<PsiElement> matcher, OdinStatement statement) {

@@ -24,4 +24,8 @@ public class OdinFile extends PsiFileBase {
     public String toString() {
         return ODIN_FILE;
     }
+
+    public OdinFileScope getFileScope() {
+        return findChildByClass(OdinFileScope.class);
+    }
 }
