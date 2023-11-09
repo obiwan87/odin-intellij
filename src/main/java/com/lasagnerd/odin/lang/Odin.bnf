@@ -204,7 +204,7 @@ foreignStatementList                 ::= (sos? foreignBlockStatement eos)+
 foreignBlockStatement                ::= variableDeclarationStatement
                                          |foreignProcedureDeclarationStatement
                                          |whenStatement
-foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* IDENTIFIER_TOKEN doubleColonOperator PROC string_literal? LPAREN [parameterList] RPAREN [ARROW returnType] TRIPLE_DASH
+foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* IDENTIFIER_TOKEN doubleColonOperator PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnType] TRIPLE_DASH
 
 // Attributes
 attributeStatement                   ::= AT IDENTIFIER_TOKEN
@@ -233,11 +233,11 @@ bitsetDeclarationStatement           ::= IDENTIFIER_TOKEN doubleColonOperator DI
 
 // Procedure
 procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody
-procedureType                        ::= tagStatement? PROC string_literal? LPAREN [parameterList] RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
+procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
 
 whereClause                          ::= WHERE expression (COMMA expression)*
 procedureBody                        ::= block| [tagStatement] TRIPLE_DASH
-returnType                           ::= NOT | LPAREN parameterList RPAREN | typeDefinition
+returnType                           ::= NOT | LPAREN paramEntries RPAREN | typeDefinition
 
 returnStatement                      ::= [tagStatement] RETURN returnArgumentList?
 private returnArgumentList           ::= expression (COMMA expression)* COMMA?
@@ -288,7 +288,7 @@ colonOpening                         ::= COLON
 variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList
 
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
-declaredIdentifier                   ::= IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' }
+declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' }
 
 assignmentStatement                  ::= [tagHead] leftHandExpressions assignmentOperator expressionsList
 
@@ -316,25 +316,26 @@ variableDeclarationStatement         ::= (attributeStatement eos?)* identifierLi
 // Parameters for procedures and assignments
 polymorphicParameterList             ::= polymorphicParameter (COMMA polymorphicParameter)* COMMA?
 polymorphicParameter                 ::= tagStatement? (
-              variadicParameter
+                                         variadicParameter
                                          | parameterInitialization
                                          | parameterDeclarationStatement
-              )
-private parameterType                ::= RANGE? typeDefinition
+                                         )
 
-parameterList                        ::= parameter (COMMA parameter)* COMMA?
-parameter                            ::= tagStatement? (
-              variadicParameter
+paramEntries                        ::= paramEntry (COMMA paramEntry)* COMMA?
+paramEntry                            ::= tagStatement? (
+                                         variadicParameter
                                          | parameterInitialization
                                          | parameterDeclarationStatement
                                          | parameterType
-              )
+                                         )
+fake parameter ::= paramDeclaration+ typeDefinition? expression
 
-parameterDeclarationStatement        ::= [USING|DOLLAR] tagStatement? IDENTIFIER_TOKEN (COMMA DOLLAR? IDENTIFIER_TOKEN)* COLON parameterType parameterTypeSpecialization?
-parameterTypeSpecialization          ::= DIV expression
-private parameterInitialization      ::= IDENTIFIER_TOKEN COLON typeDefinition? EQ expression
-private variadicParameter            ::= IDENTIFIER_TOKEN COLON RANGE expression
+paramDeclaration ::=  [USING] tagStatement? declaredIdentifier
 
+parameterDeclarationStatement        ::= paramDeclaration (COMMA paramDeclaration)* COLON typeDefinition {extends=parameter}
+parameterInitialization              ::= paramDeclaration COLON [typeDefinition] EQ expression {extends=parameter}
+variadicParameter                    ::= paramDeclaration COLON RANGE typeDefinition {extends=parameter}
+parameterType                        ::= RANGE? typeDefinition {extends=parameter}
 
 // Function calls
 argumentList                         ::= argument (COMMA argument)* COMMA?

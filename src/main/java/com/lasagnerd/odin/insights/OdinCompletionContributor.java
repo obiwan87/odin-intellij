@@ -42,8 +42,6 @@ public class OdinCompletionContributor extends CompletionContributor {
                     protected void addCompletions(@NotNull CompletionParameters parameters,
                                                   @NotNull ProcessingContext context,
                                                   @NotNull CompletionResultSet result) {
-                        System.out.println("hello from reference completion");
-
                         Project project = parameters.getPosition().getProject();
                         PsiElement position = parameters.getPosition().getParent();
 
@@ -52,37 +50,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         OdinFileScope fileScope = odinFile.getFileScope();
 
                         // Load import map
-                        Map<String, ImportInfo> importMap = new HashMap<>();
-                        List<OdinImportStatement> importStatements
-                                = fileScope.getImportStatementList();
-
-                        for (OdinImportStatement importStatement : importStatements) {
-                            String name = importStatement.getAlias() != null
-                                    ? importStatement.getAlias().getText()
-                                    : null;
-
-                            String path = importStatement.getPath().getText();
-                            // Remove quotes
-                            path = path.substring(1, path.length() - 1);
-
-                            String[] parts = path.split(":");
-                            String library = null;
-                            if (parts.length > 1) {
-                                library = parts[0];
-                                path = parts[1];
-                            } else {
-                                path = parts[0];
-                            }
-
-                            if(name == null) {
-                                // Last path segment is the name
-                                String[] pathParts = path.split("/");
-                                name = pathParts[pathParts.length - 1];
-                            }
-
-                            ImportInfo importInfo = new ImportInfo(name, path, library);
-                            importMap.put(name, importInfo);
-                        }
+                        Map<String, ImportInfo> importMap = collectImportStatements(fileScope);
 
 
                         // This constitutes our scope
@@ -92,7 +60,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                             OdinDeclaredIdentifier identifierReference = (OdinDeclaredIdentifier) Objects.requireNonNull(reference.getIdentifier().getReference())
                                     .resolve();
 
-                            if(identifierReference != null) {
+                            if (identifierReference != null) {
                                 OdinVariableInitializationStatement initialization = OdinInsightUtils.findFirstParentOfType(identifierReference,
                                         true,
                                         OdinVariableInitializationStatement.class);
@@ -109,10 +77,17 @@ public class OdinCompletionContributor extends CompletionContributor {
                             if (importInfo != null) {
                                 Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
 
-                                Path sdkSourceDir = Path.of(projectSdk.getHomeDirectory().getPath(), "core");
+                                List<Path> dirs = new ArrayList<>();
+                                if (projectSdk != null) {
+                                    String library = Objects.requireNonNullElse(importInfo.library(), "");
+                                    if (!library.isBlank()) {
+                                        Path sdkSourceDir = Path.of(Objects.requireNonNull(projectSdk.getHomeDirectory()).getPath(), library);
+                                        dirs.add(sdkSourceDir);
+                                    }
+                                }
                                 Path currentDir = Path.of(originalFile.getVirtualFile().getPath()).getParent();
+                                dirs.add(currentDir);
 
-                                List<Path> dirs = List.of(currentDir, sdkSourceDir);
                                 for (Path dir : dirs) {
                                     var importedFiles = findImportFiles(dir, importInfo, project);
                                     for (OdinFile importedFile : importedFiles) {
@@ -121,7 +96,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                         addLookUpElements(result, fileScopeDeclarations);
                                     }
 
-                                    if(!importedFiles.isEmpty()) {
+                                    if (!importedFiles.isEmpty()) {
                                         break;
                                     }
                                 }
@@ -139,7 +114,6 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                   @NotNull CompletionResultSet result) {
                         PsiElement position = parameters.getPosition();
 
-                        PsiFile containingFile = position.getContainingFile();
 
                         PsiElement parent = OdinInsightUtils.findFirstParentOfType(
                                 position,
@@ -154,15 +128,72 @@ public class OdinCompletionContributor extends CompletionContributor {
                             findCompletionsForStruct(result, compoundLiteral);
 
                             // Declarations in scope
-                            List<PsiElement> declarations = OdinInsightUtils
-                                    .findDeclarations(position, e -> true);
+                        }
 
-                            addLookUpElements(result, declarations);
+                        List<PsiElement> declarations = OdinInsightUtils
+                                .findDeclarations(position, e -> true);
+
+                        addLookUpElements(result, declarations);
+
+
+                        OdinFile originalFile = (OdinFile) parameters.getOriginalFile();
+                        OdinFileScope fileScope = originalFile.getFileScope();
+                        if (fileScope == null) {
+                            return;
+                        }
+                        Map<String, ImportInfo> importInfo = collectImportStatements(fileScope);
+                        for (Map.Entry<String, ImportInfo> entry : importInfo.entrySet()) {
+                            String name = entry.getKey();
+                            ImportInfo info = entry.getValue();
+
+                            LookupElementBuilder element = LookupElementBuilder.create(name)
+                                    .withIcon(ExpUiIcons.Nodes.Package)
+                                    .withTypeText(info.path)
+                                    .withTailText(" -> " + info.library);
+
+                            result.addElement(PrioritizedLookupElement.withPriority(element, 100));
+
                         }
                     }
                 }
         );
 
+    }
+
+    @NotNull
+    private static Map<String, ImportInfo> collectImportStatements(OdinFileScope fileScope) {
+        Map<String, ImportInfo> importMap = new HashMap<>();
+        List<OdinImportStatement> importStatements
+                = fileScope.getImportStatementList();
+
+        for (OdinImportStatement importStatement : importStatements) {
+            String name = importStatement.getAlias() != null
+                    ? importStatement.getAlias().getText()
+                    : null;
+
+            String path = importStatement.getPath().getText();
+            // Remove quotes
+            path = path.substring(1, path.length() - 1);
+
+            String[] parts = path.split(":");
+            String library = null;
+            if (parts.length > 1) {
+                library = parts[0];
+                path = parts[1];
+            } else {
+                path = parts[0];
+            }
+
+            if (name == null) {
+                // Last path segment is the name
+                String[] pathParts = path.split("/");
+                name = pathParts[pathParts.length - 1];
+            }
+
+            ImportInfo importInfo = new ImportInfo(name, path, library);
+            importMap.put(name, importInfo);
+        }
+        return importMap;
     }
 
     private static List<OdinFile> findImportFiles(Path directory,
@@ -187,7 +218,8 @@ public class OdinCompletionContributor extends CompletionContributor {
     private static void addLookUpElements(@NotNull CompletionResultSet result, List<PsiElement> declarations) {
         for (PsiElement declaration : declarations) {
             if (declaration instanceof PsiNameIdentifierOwner declaredIdentifier) {
-                Icon icon = switch (OdinInsightUtils.classify(declaredIdentifier)) {
+                OdinInsightUtils.OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
+                Icon icon = switch (typeType) {
                     case STRUCT -> OdinIcons.Types.Struct;
                     case ENUM -> ExpUiIcons.Nodes.Enum;
                     case UNION -> OdinIcons.Types.Union;
@@ -198,6 +230,24 @@ public class OdinCompletionContributor extends CompletionContributor {
                 };
 
                 LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier).withIcon(icon);
+
+                if (typeType == OdinInsightUtils.OdinTypeType.PROCEDURE) {
+                    OdinProcedureDeclarationStatement firstParentOfType = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
+                    var params = firstParentOfType.getProcedureType().getParamEntries();
+                    String tailText = "(";
+                    if (params != null) {
+                        tailText += params.getText();
+                    }
+                    tailText += ")";
+                    element = element.withTailText(tailText);
+
+                    OdinReturnType returnType = firstParentOfType.getProcedureType().getReturnType();
+                    if (returnType != null) {
+                        element = element.withTypeText(returnType
+                                .getText());
+                    }
+                }
+
                 result.addElement(PrioritizedLookupElement.withPriority(element, 0));
             }
         }
