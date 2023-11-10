@@ -2,6 +2,7 @@ package com.lasagnerd.odin.formatting;
 
 import com.intellij.formatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.tree.TokenSet;
 import com.lasagnerd.odin.formatting.block.OdinFormatterBlock;
 import com.lasagnerd.odin.lang.OdinLanguage;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
@@ -90,8 +91,44 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
 
                 .beforeInside(OdinTypes.COMPOUND_VALUE_END, OdinTypes.COMPOUND_VALUE)
                 .spaces(1)
+
+                .aroundInside(BINARY_OPERATORS, OdinTypes.BINARY_EXPRESSION)
+                .spaces(1)
                 ;
     }
+
+    private static final  TokenSet BINARY_OPERATORS = TokenSet.create(
+            OdinTypes.AND,
+            OdinTypes.OROR,
+            OdinTypes.EQ,
+            OdinTypes.NEQ,
+            OdinTypes.LT,
+            OdinTypes.STAR,
+            OdinTypes.DIV,
+            OdinTypes.MOD,
+            OdinTypes.REMAINDER,
+            OdinTypes.PLUS,
+            OdinTypes.MINUS,
+            OdinTypes.AND,
+            OdinTypes.PIPE,
+            OdinTypes.TILDE,
+            OdinTypes.ANDNOT,
+            OdinTypes.ANDAND,
+            OdinTypes.OROR,
+            OdinTypes.OR_ELSE,
+            OdinTypes.IN,
+            OdinTypes.NOT_IN,
+            OdinTypes.LT,
+            OdinTypes.GT,
+            OdinTypes.LTE,
+            OdinTypes.GTE,
+            OdinTypes.EQEQ,
+            OdinTypes.NEQ,
+            OdinTypes.LSHIFT,
+            OdinTypes.RSHIFT,
+            OdinTypes.RANGE_INCLUSIVE,
+            OdinTypes.RANGE_EXCLUSIVE
+    );
 
     @Override
     public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
