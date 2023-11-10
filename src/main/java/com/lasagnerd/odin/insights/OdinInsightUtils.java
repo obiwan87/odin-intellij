@@ -2,14 +2,14 @@ package com.lasagnerd.odin.insights;
 
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
+import groovy.transform.Undefined;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class OdinInsightUtils {
@@ -36,24 +36,82 @@ public class OdinInsightUtils {
             }
         }
 
+        // File scope declarations
+        // procedures ... done
+        // variables ... done
+        // constants ... done
+        // structs ... done
+        // enums ... done
+        // unions ... done
+        // procedure overloads ... done
+        // type aliases ... done but recognized as constants
+        // TODO
+        // foreign import blocks
+        // foreign procedure
+        // when statements
+        //
+
         // Check file scope
         OdinFileScope odinFileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(lastValidBlock, psi -> psi instanceof OdinFileScope);
         if (odinFileScope != null) {
-            OdinFileScopeStatementList fileScopeStatementList = odinFileScope.getFileScopeStatementList();
-
-            for (OdinStatement odinStatement : fileScopeStatementList.getStatementList()) {
-                List<OdinDeclaredIdentifier> matchingDeclarations = getMatchingDeclarations(matcher, odinStatement);
-                if (!matchingDeclarations.isEmpty()) {
-                    return matchingDeclarations.get(0);
+            List<OdinDeclaredIdentifier> fileScopeDeclarations = getFileScopeDeclarations(odinFileScope);
+            for (OdinDeclaredIdentifier fileScopeDeclaration : fileScopeDeclarations) {
+                boolean isMatch = matcher.test(fileScopeDeclaration);
+                if (isMatch) {
+                    return fileScopeDeclaration;
                 }
             }
         }
         return null;
     }
 
+
+    public static List<OdinDeclaredIdentifier> getFileScopeDeclarations(OdinFileScope fileScope) {
+        // Find all blocks that are not in a procedure
+        List<OdinDeclaredIdentifier> declarations = new ArrayList<>();
+
+        Stack<PsiElement> statementStack = new Stack<>();
+
+        // do bfs
+        statementStack.addAll(fileScope.getFileScopeStatementList().getStatementList());
+        while(!statementStack.isEmpty()) {
+            PsiElement element = statementStack.pop();
+            if(element instanceof OdinDeclaration declaration) {
+                declarations.addAll(declaration.getDeclaredIdentifiers());
+            } else {
+                getStatements(element).forEach(statementStack::push);
+            }
+        }
+        return declarations;
+    }
+
+    public static List<OdinStatement> getStatements(PsiElement psiElement) {
+        if(psiElement instanceof OdinWhenStatement odinWhenStatement) {
+            if(odinWhenStatement.getBlock() != null) {
+                OdinStatementList statementList = odinWhenStatement.getBlock().getStatementList();
+                if(statementList != null) {
+                    return statementList.getStatementList();
+                }
+            }
+
+            if(odinWhenStatement.getDoStatement() != null) {
+                return List.of(odinWhenStatement.getDoStatement());
+            }
+        }
+
+        if(psiElement instanceof OdinForeignBlock foreignBlock) {
+            OdinForeignStatementList foreignStatementList = foreignBlock.getForeignStatementList();
+            if(foreignStatementList != null) {
+                return foreignStatementList.getStatementList();
+            }
+        }
+
+        return Collections.emptyList();
+    }
+
     @NotNull
-    public static List<PsiElement> findDeclarations(PsiElement element, Predicate<PsiElement> matcher) {
-        List<PsiElement> declarations = new ArrayList<>();
+    public static List<OdinDeclaredIdentifier> findDeclarations(PsiElement element, Predicate<PsiElement> matcher) {
+        List<OdinDeclaredIdentifier> declarations = new ArrayList<>();
         PsiElement entrance = element;
         PsiElement lastValidBlock = element;
 
@@ -80,25 +138,15 @@ public class OdinInsightUtils {
 
         // Check file scope
         OdinFileScope fileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(lastValidBlock, psi -> psi instanceof OdinFileScope);
-        List<PsiElement> fileScopeDeclarations = getFileScopeDeclarations(fileScope, matcher);
+        List<OdinDeclaredIdentifier> fileScopeDeclarations = getFileScopeDeclarations(fileScope);
 
-        declarations.addAll(fileScopeDeclarations);
+        declarations.addAll(fileScopeDeclarations.stream().filter(matcher).toList());
 
         return declarations;
     }
 
-    public static List<PsiElement> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
-        List<PsiElement> fileScopeDeclarations = new ArrayList<>();
-        if (odinFileScope != null) {
-            OdinFileScopeStatementList fileScopeStatementList = odinFileScope.getFileScopeStatementList();
-
-            for (OdinStatement statement : fileScopeStatementList.getStatementList()) {
-                List<OdinDeclaredIdentifier> matchedIdentifiers = getMatchingDeclarations(matcher, statement);
-                fileScopeDeclarations.addAll(matchedIdentifiers);
-            }
-        }
-
-        return fileScopeDeclarations;
+    public static List<OdinDeclaredIdentifier> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
+        return getFileScopeDeclarations(odinFileScope).stream().filter(matcher).toList();
     }
 
     private static List<OdinDeclaredIdentifier> getMatchingDeclarations(Predicate<PsiElement> matcher, OdinStatement statement) {
@@ -190,6 +238,10 @@ public class OdinInsightUtils {
         } else {
             return OdinTypeType.UNKNOWN;
         }
+    }
+
+    public static OdinTypeType classify(PsiElement psiElement) {
+        return null;
     }
 
     public static OdinProcedureDeclarationStatement getDeclaringProcedure(OdinDeclaredIdentifier element) {

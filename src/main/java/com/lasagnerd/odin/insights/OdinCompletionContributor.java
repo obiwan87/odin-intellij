@@ -11,7 +11,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.OdinIcons;
@@ -93,7 +96,12 @@ public class OdinCompletionContributor extends CompletionContributor {
                                     var importedFiles = findImportFiles(dir, importInfo, project);
                                     for (OdinFile importedFile : importedFiles) {
                                         OdinFileScope importedFileScope = importedFile.getFileScope();
-                                        List<PsiElement> fileScopeDeclarations = OdinInsightUtils.getFileScopeDeclarations(importedFileScope, e -> true);
+                                        if(importedFileScope == null) {
+                                            System.out.println("File scope is null for file %s" + importedFile.getVirtualFile().getPath());
+                                            continue;
+                                        }
+
+                                        List<OdinDeclaredIdentifier> fileScopeDeclarations = OdinInsightUtils.getFileScopeDeclarations(importedFileScope, e -> true);
                                         addLookUpElements(result, fileScopeDeclarations);
                                     }
 
@@ -131,7 +139,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                             // Declarations in scope
                         }
 
-                        List<PsiElement> declarations = OdinInsightUtils
+                        List<OdinDeclaredIdentifier> declarations = OdinInsightUtils
                                 .findDeclarations(position, e -> true);
 
                         addLookUpElements(result, declarations);
@@ -216,7 +224,7 @@ public class OdinCompletionContributor extends CompletionContributor {
         return files;
     }
 
-    private static void addLookUpElements(@NotNull CompletionResultSet result, List<PsiElement> declarations) {
+    private static void addLookUpElements(@NotNull CompletionResultSet result, List<OdinDeclaredIdentifier> declarations) {
         for (PsiElement declaration : declarations) {
             if (declaration instanceof PsiNameIdentifierOwner declaredIdentifier) {
                 OdinInsightUtils.OdinTypeType typeType = OdinInsightUtils.classify((OdinDeclaredIdentifier) declaredIdentifier);
@@ -236,20 +244,18 @@ public class OdinCompletionContributor extends CompletionContributor {
                     OdinProcedureDeclarationStatement firstParentOfType = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
                     element = procedureLookupElement(element, firstParentOfType).withInsertHandler(procedureInsertHandler());
                     result.addElement(PrioritizedLookupElement.withPriority(element, 0));
-                }
-
-                else if(typeType == OdinInsightUtils.OdinTypeType.PROCEUDRE_OVERLOAD) {
+                } else if (typeType == OdinInsightUtils.OdinTypeType.PROCEUDRE_OVERLOAD) {
                     OdinProcedureOverloadStatement procedureOverloadStatement = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureOverloadStatement.class);
 
                     int i = 0;
                     for (OdinIdentifier odinIdentifier : procedureOverloadStatement.getIdentifierList()) {
-                        var  resolvedReference = odinIdentifier.getReference();
+                        var resolvedReference = odinIdentifier.getReference();
 
-                        if(resolvedReference != null) {
+                        if (resolvedReference != null) {
                             PsiElement resolved = resolvedReference.resolve();
-                            if(resolved instanceof OdinDeclaredIdentifier) {
+                            if (resolved instanceof OdinDeclaredIdentifier) {
                                 OdinProcedureDeclarationStatement declaringProcedure = OdinInsightUtils.getDeclaringProcedure((OdinDeclaredIdentifier) resolved);
-                                if(declaringProcedure != null) {
+                                if (declaringProcedure != null) {
                                     LookupElementBuilder element = LookupElementBuilder.create(resolved, declaredIdentifier.getText())
                                             .withItemTextItalic(true)
                                             .withIcon(icon)

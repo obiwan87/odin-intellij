@@ -45,7 +45,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
     }
 
     public static List<PsiElement> findMatchingDeclarations(String name, PsiElement element) {
-        List<PsiElement> declarations = OdinInsightUtils.findDeclarations(
+        List<OdinDeclaredIdentifier> declarations = OdinInsightUtils.findDeclarations(
                 element, psiElement -> {
                     if (psiElement instanceof OdinDeclaredIdentifier identifier)
                         if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||

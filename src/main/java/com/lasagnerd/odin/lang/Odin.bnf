@@ -165,8 +165,12 @@
   extends('.*[sS]tatement') = statement
   extends('.*Type$') = type
 
+  methods('.*([iI]nitialization|[dD]eclaration).*') = [getDeclaredIdentifiers]
+  implements('.*([iI]nitialization|[dD]eclaration).*') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
+
   psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
 }
+
 
 
 odinFile                             ::= fileScope
@@ -177,7 +181,7 @@ packageClause                        ::= PACKAGE IDENTIFIER_TOKEN
 importStatement                      ::= IMPORT IDENTIFIER_TOKEN? DQ_STRING_LITERAL {methods=[alias="/IDENTIFIER_TOKEN" path="/DQ_STRING_LITERAL" ]}
 doubleColonOperator                  ::= COLON COLON
 
-fileScopeStatement                   ::= foreignImportDeclarationStatement
+fileScopeStatement                   ::= foreignImportStatement
                                          | importStatement
                                          | enumDeclarationStatement
                                          | unionDeclarationStatement
@@ -193,7 +197,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | tagStatement_expression
 
 // @require foreign import entry "entry_unix_no_crt_amd64.asm"
-foreignImportDeclarationStatement    ::= (attributeStatement EOS_TOKEN?)* FOREIGN IMPORT
+foreignImportStatement    ::= (attributeStatement EOS_TOKEN?)* FOREIGN IMPORT
         ( (IDENTIFIER_TOKEN? DQ_STRING_LITERAL) | (IDENTIFIER_TOKEN? blockStart DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? blockEnd))
 
 foreignStatement                     ::= (attributeStatement EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? foreignBlock
@@ -204,7 +208,7 @@ foreignStatementList                 ::= (sos? foreignBlockStatement eos)+
 foreignBlockStatement                ::= variableDeclarationStatement
                                          |foreignProcedureDeclarationStatement
                                          |whenStatement
-foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* IDENTIFIER_TOKEN doubleColonOperator PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnType] TRIPLE_DASH
+foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnType] TRIPLE_DASH
 
 // Attributes
 attributeStatement                   ::= AT IDENTIFIER_TOKEN
@@ -229,7 +233,7 @@ unionBlock                           ::= blockStart [unionBody] blockEnd
 unionBody                            ::= typeDefinition (COMMA typeDefinition)* [COMMA|EOS_TOKEN]
 
 // Bit Set
-bitsetDeclarationStatement           ::= IDENTIFIER_TOKEN doubleColonOperator DISTINCT? bitSetType
+bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
 procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody
@@ -587,7 +591,7 @@ statement                            ::= assignmentStatement
                                          | usingStatement
                                          | expressionStatement
                                          | fallthroughStatement
-                                         | foreignImportDeclarationStatement
+                                         | foreignImportStatement
                                          | foreignStatement
 
 

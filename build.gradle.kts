@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.8.22"
-    id("org.jetbrains.intellij") version "1.15.0"
+    id("org.jetbrains.intellij") version "1.16.0"
     id("io.freefair.lombok") version "6.4.0"
 }
 
@@ -20,6 +20,7 @@ intellij {
 
     plugins.set(listOf(/* Plugin Dependencies */))
 }
+
 
 sourceSets.main.get().java.srcDirs("src/main/gen")
 dependencies {
