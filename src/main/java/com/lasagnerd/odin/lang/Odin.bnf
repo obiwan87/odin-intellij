@@ -593,6 +593,7 @@ statement                            ::= assignmentStatement
                                          | fallthroughStatement
                                          | foreignImportStatement
                                          | foreignStatement
+                                         | importStatement
 
 
 fallthroughStatement                 ::= FALLTHROUGH
@@ -600,7 +601,7 @@ expressionStatement                  ::= expression
 blockStatement                       ::= [(tagStatement eos*)|label] block
 
 private forTraditional               ::= (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
-private forIn                        ::= forInExpression (COMMA forInExpression)* IN expression
+private forIn                        ::= [forInExpression (COMMA forInExpression)*] IN expression
 private forInExpression              ::= AND? identifier
 private forStartStatement            ::= variableInitializationStatement | assignmentStatement | call_expression
 private forEndStatement              ::= assignmentStatement | call_expression

@@ -208,14 +208,17 @@ public class OdinCompletionContributor extends CompletionContributor {
     private static List<OdinFile> findImportFiles(Path directory,
                                                   ImportInfo importInfo,
                                                   Project project) {
+
         Path importPath = directory.resolve(importInfo.path);
         List<OdinFile> files = new ArrayList<>();
         VirtualFile packageDirectory = VfsUtil.findFile(importPath, true);
         if (packageDirectory != null) {
             for (VirtualFile child : packageDirectory.getChildren()) {
                 if (child.getName().endsWith(".odin")) {
+
                     PsiFile psiFile = PsiManager.getInstance(project).findFile(child);
                     if (psiFile instanceof OdinFile odinFile) {
+
                         files.add(odinFile);
                     }
                 }
@@ -240,14 +243,12 @@ public class OdinCompletionContributor extends CompletionContributor {
 
 
                 if (typeType == OdinInsightUtils.OdinTypeType.PROCEDURE) {
-                    LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier).withIcon(icon);
+                    LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier.getText()).withIcon(icon);
                     OdinProcedureDeclarationStatement firstParentOfType = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
                     element = procedureLookupElement(element, firstParentOfType).withInsertHandler(procedureInsertHandler());
                     result.addElement(PrioritizedLookupElement.withPriority(element, 0));
                 } else if (typeType == OdinInsightUtils.OdinTypeType.PROCEUDRE_OVERLOAD) {
                     OdinProcedureOverloadStatement procedureOverloadStatement = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureOverloadStatement.class);
-
-                    int i = 0;
                     for (OdinIdentifier odinIdentifier : procedureOverloadStatement.getIdentifierList()) {
                         var resolvedReference = odinIdentifier.getReference();
 
@@ -265,7 +266,6 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 }
                             }
                         }
-                        i++;
                     }
                 } else {
                     LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier).withIcon(icon);
