@@ -5,15 +5,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.ExpUiIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
@@ -22,7 +16,6 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -32,9 +25,6 @@ public class OdinCompletionContributor extends CompletionContributor {
     public static final PsiElementPattern.@NotNull Capture<PsiElement> REFERENCE = psiElement().withElementType(OdinTypes.IDENTIFIER_TOKEN).afterLeaf(".");
 
     public static final @NotNull ElementPattern<PsiElement> AT_IDENTIFIER = psiElement().withElementType(OdinTypes.IDENTIFIER_TOKEN).andNot(REFERENCE);
-
-    record ImportInfo(String name, String path, String library) {
-    }
 
     public OdinCompletionContributor() {
 
@@ -50,12 +40,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                         PsiElement position = parameters.getPosition().getParent();
 
                         OdinFile odinFile = (OdinFile) position.getContainingFile();
-                        OdinFile originalFile = (OdinFile) parameters.getOriginalFile();
+                        OdinFile odinOriginalFile = (OdinFile) parameters.getOriginalFile();
                         OdinFileScope fileScope = odinFile.getFileScope();
-
-                        // Load import map
-                        Map<String, ImportInfo> importMap = collectImportStatements(fileScope);
-
 
                         // This constitutes our scope
                         OdinRefExpression reference = (OdinRefExpression) PsiTreeUtil.findSiblingBackward(position, OdinTypes.REF_EXPRESSION, false, null);
@@ -77,39 +63,13 @@ public class OdinCompletionContributor extends CompletionContributor {
 
                             // Check if reference is an import
                             String importName = reference.getIdentifier().getText();
-                            ImportInfo importInfo = importMap.get(importName);
-                            if (importInfo != null) {
-                                Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
 
-                                List<Path> dirs = new ArrayList<>();
-                                if (projectSdk != null) {
-                                    String library = Objects.requireNonNullElse(importInfo.library(), "");
-                                    if (!library.isBlank()) {
-                                        Path sdkSourceDir = Path.of(Objects.requireNonNull(projectSdk.getHomeDirectory()).getPath(), library);
-                                        dirs.add(sdkSourceDir);
-                                    }
-                                }
-                                Path currentDir = Path.of(originalFile.getVirtualFile().getPath()).getParent();
-                                dirs.add(currentDir);
+                            List<OdinDeclaredIdentifier> fileScopeDeclarations = OdinInsightUtils.findDeclarationsInImports(odinOriginalFile.getVirtualFile().getPath(),
+                                    fileScope,
+                                    importName,
+                                    project);
 
-                                for (Path dir : dirs) {
-                                    var importedFiles = findImportFiles(dir, importInfo, project);
-                                    for (OdinFile importedFile : importedFiles) {
-                                        OdinFileScope importedFileScope = importedFile.getFileScope();
-                                        if(importedFileScope == null) {
-                                            System.out.println("File scope is null for file %s" + importedFile.getVirtualFile().getPath());
-                                            continue;
-                                        }
-
-                                        List<OdinDeclaredIdentifier> fileScopeDeclarations = OdinInsightUtils.getFileScopeDeclarations(importedFileScope, e -> true);
-                                        addLookUpElements(result, fileScopeDeclarations);
-                                    }
-
-                                    if (!importedFiles.isEmpty()) {
-                                        break;
-                                    }
-                                }
-                            }
+                            addLookUpElements(result, fileScopeDeclarations);
                         }
                     }
                 }
@@ -135,13 +95,10 @@ public class OdinCompletionContributor extends CompletionContributor {
                                     = OdinInsightUtils.findFirstParentOfType(parent, true, OdinCompoundLiteral.class);
 
                             findCompletionsForStruct(result, compoundLiteral);
-
-                            // Declarations in scope
                         }
 
                         List<OdinDeclaredIdentifier> declarations = OdinInsightUtils
                                 .findDeclarations(position, e -> true);
-
                         addLookUpElements(result, declarations);
 
 
@@ -150,15 +107,15 @@ public class OdinCompletionContributor extends CompletionContributor {
                         if (fileScope == null) {
                             return;
                         }
-                        Map<String, ImportInfo> importInfo = collectImportStatements(fileScope);
+                        Map<String, ImportInfo> importInfo = OdinInsightUtils.collectImportStatements(fileScope);
                         for (Map.Entry<String, ImportInfo> entry : importInfo.entrySet()) {
                             String name = entry.getKey();
                             ImportInfo info = entry.getValue();
 
                             LookupElementBuilder element = LookupElementBuilder.create(name)
                                     .withIcon(ExpUiIcons.Nodes.Package)
-                                    .withTypeText(info.path)
-                                    .withTailText(" -> " + info.library);
+                                    .withTypeText(info.path())
+                                    .withTailText(" -> " + info.library());
 
                             result.addElement(PrioritizedLookupElement.withPriority(element, 100));
 
@@ -167,64 +124,6 @@ public class OdinCompletionContributor extends CompletionContributor {
                 }
         );
 
-    }
-
-    @NotNull
-    private static Map<String, ImportInfo> collectImportStatements(OdinFileScope fileScope) {
-        Map<String, ImportInfo> importMap = new HashMap<>();
-        List<OdinImportStatement> importStatements
-                = fileScope.getImportStatementList();
-
-        for (OdinImportStatement importStatement : importStatements) {
-            String name = importStatement.getAlias() != null
-                    ? importStatement.getAlias().getText()
-                    : null;
-
-            String path = importStatement.getPath().getText();
-            // Remove quotes
-            path = path.substring(1, path.length() - 1);
-
-            String[] parts = path.split(":");
-            String library = null;
-            if (parts.length > 1) {
-                library = parts[0];
-                path = parts[1];
-            } else {
-                path = parts[0];
-            }
-
-            if (name == null) {
-                // Last path segment is the name
-                String[] pathParts = path.split("/");
-                name = pathParts[pathParts.length - 1];
-            }
-
-            ImportInfo importInfo = new ImportInfo(name, path, library);
-            importMap.put(name, importInfo);
-        }
-        return importMap;
-    }
-
-    private static List<OdinFile> findImportFiles(Path directory,
-                                                  ImportInfo importInfo,
-                                                  Project project) {
-
-        Path importPath = directory.resolve(importInfo.path);
-        List<OdinFile> files = new ArrayList<>();
-        VirtualFile packageDirectory = VfsUtil.findFile(importPath, true);
-        if (packageDirectory != null) {
-            for (VirtualFile child : packageDirectory.getChildren()) {
-                if (child.getName().endsWith(".odin")) {
-
-                    PsiFile psiFile = PsiManager.getInstance(project).findFile(child);
-                    if (psiFile instanceof OdinFile odinFile) {
-
-                        files.add(odinFile);
-                    }
-                }
-            }
-        }
-        return files;
     }
 
     private static void addLookUpElements(@NotNull CompletionResultSet result, List<OdinDeclaredIdentifier> declarations) {

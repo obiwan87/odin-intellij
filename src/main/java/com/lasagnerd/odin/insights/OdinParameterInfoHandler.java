@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.lasagnerd.odin.insights.OdinInsightUtils.findDeclarationsInImports;
+
 public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallExpression, OdinProcedureDeclarationStatement> {
 
     private static final String DELIMITER = ", ";
@@ -44,9 +46,9 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
         return callExpression;
     }
 
-    public static List<PsiElement> findMatchingDeclarations(String name, PsiElement element) {
+    public static List<PsiElement> findMatchingDeclarations(String name, OdinCallExpression callExpression) {
         List<OdinDeclaredIdentifier> declarations = OdinInsightUtils.findDeclarations(
-                element, psiElement -> {
+                callExpression, psiElement -> {
                     if (psiElement instanceof OdinDeclaredIdentifier identifier)
                         if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||
                                 identifier.getParent() instanceof OdinProcedureOverloadStatement
@@ -55,6 +57,21 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
                         }
                     return false;
                 });
+
+        OdinExpression expression = callExpression.getExpression();
+        if (expression instanceof OdinRefExpression odinRefExpression) {
+            String refName = expression.getText();
+            String[] parts = refName.split("\\.");
+            if (parts.length > 1) {
+                String importName = parts[0];
+                OdinFile containingFile = (OdinFile) callExpression.getContainingFile();
+                List<OdinDeclaredIdentifier> allImportedDeclarations = findDeclarationsInImports(containingFile.getVirtualFile().getPath(),
+                        containingFile.getFileScope(),
+                        importName,
+                        callExpression.getProject());
+                declarations.addAll(allImportedDeclarations.stream().filter(decl -> decl.getText().equals(parts[1])).toList());
+            }
+        }
 
         List<PsiElement> procedures = new ArrayList<>();
         for (PsiElement declaration : declarations) {

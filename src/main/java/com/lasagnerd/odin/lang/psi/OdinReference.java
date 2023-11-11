@@ -7,8 +7,8 @@ import com.lasagnerd.odin.insights.OdinInsightUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class OdinReference extends PsiReferenceBase<PsiElement> {
-    public OdinReference(@NotNull PsiElement element) {
+public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
+    public OdinReference(@NotNull OdinIdentifier element) {
         super(element);
     }
 
@@ -20,7 +20,7 @@ public class OdinReference extends PsiReferenceBase<PsiElement> {
     @Override
     public @Nullable PsiElement resolve() {
         var element = getElement();
-        return OdinInsightUtils.findFirstDeclaration(element, psi -> psi.getText().equals(element.getText()));
+        return OdinInsightUtils.findFirstDeclaration(getElement(), psi -> psi.getText().equals(element.getText()));
     }
 
     @Override

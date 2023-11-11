@@ -62,6 +62,9 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .before(OdinTypes.COLON_OPENING)
                 .spaces(1)
 
+                .afterInside(OdinTypes.COLON, OdinTypes.FIELD_DECLARATION_STATEMENT)
+                .spaces(1)
+
                 .afterInside(OdinTypes.EQ, OdinTypes.VARIABLE_INITIALIZATION_STATEMENT)
                 .spaces(1)
 
