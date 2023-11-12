@@ -5,6 +5,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.ExpUiIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.PsiElement;
+import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinProcedureDeclarationStatement;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
     @Override
     public @Nullable Info getInfo(@NotNull PsiElement element) {
-        if (element.getNode().getElementType() != OdinTypes.IDENTIFIER_TOKEN) {
+        if (!(element instanceof OdinDeclaredIdentifier)) {
             return null;
         }
 

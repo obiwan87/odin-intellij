@@ -38,6 +38,8 @@ public class OdinLazyConfigurationProducer extends LazyRunConfigurationProducer<
             Project project = context.getProject();
             PsiDirectory containingDirectory = psiLocation.getContainingFile().getContainingDirectory();
 
+            if(containingDirectory == null) return false;
+
             OdinRunConfigurationOptions options = configuration.getOptions();
             String packagePath = containingDirectory.getVirtualFile().getPath();
             options.setProjectDirectoryPath(packagePath);
