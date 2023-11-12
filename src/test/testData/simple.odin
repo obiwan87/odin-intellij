@@ -1,5 +1,7 @@
 package main
+
 import "core:fmt"
-main :: proc() {
+
+main2 :: proc() {
     fmt.println("Hello, midgard!")
 }

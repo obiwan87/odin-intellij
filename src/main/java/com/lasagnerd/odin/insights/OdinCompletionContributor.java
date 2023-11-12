@@ -45,6 +45,8 @@ public class OdinCompletionContributor extends CompletionContributor {
 
                         // This constitutes our scope
                         OdinRefExpression reference = (OdinRefExpression) PsiTreeUtil.findSiblingBackward(position, OdinTypes.REF_EXPRESSION, false, null);
+                        List<OdinDeclaredIdentifier> odinDeclaredIdentifiers = OdinTypeInference.inferType(reference);
+
                         if (reference != null) {
 
                             OdinDeclaredIdentifier identifierReference = (OdinDeclaredIdentifier) Objects.requireNonNull(reference.getIdentifier().getReference())
@@ -98,7 +100,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         }
 
                         List<OdinDeclaredIdentifier> declarations = OdinInsightUtils
-                                .findDeclarations(position, e -> true);
+                                .findDeclarationWithinScope(position, e -> true);
                         addLookUpElements(result, declarations);
 
 
@@ -107,7 +109,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         if (fileScope == null) {
                             return;
                         }
-                        Map<String, ImportInfo> importInfo = OdinInsightUtils.collectImportStatements(fileScope);
+                        Map<String, ImportInfo> importInfo = OdinInsightUtils.getImportStatementsInfo(fileScope);
                         for (Map.Entry<String, ImportInfo> entry : importInfo.entrySet()) {
                             String name = entry.getKey();
                             ImportInfo info = entry.getValue();
@@ -129,24 +131,24 @@ public class OdinCompletionContributor extends CompletionContributor {
     private static void addLookUpElements(@NotNull CompletionResultSet result, List<OdinDeclaredIdentifier> declarations) {
         for (PsiElement declaration : declarations) {
             if (declaration instanceof PsiNameIdentifierOwner declaredIdentifier) {
-                OdinInsightUtils.OdinTypeType typeType = OdinInsightUtils.classify((OdinDeclaredIdentifier) declaredIdentifier);
+                OdinTypeType typeType = OdinInsightUtils.classify((OdinDeclaredIdentifier) declaredIdentifier);
                 Icon icon = switch (typeType) {
                     case STRUCT -> OdinIcons.Types.Struct;
                     case ENUM -> ExpUiIcons.Nodes.Enum;
                     case UNION -> OdinIcons.Types.Union;
-                    case PROCEDURE, PROCEUDRE_OVERLOAD -> ExpUiIcons.Nodes.Function;
+                    case PROCEDURE, PROCEDURE_OVERLOAD -> ExpUiIcons.Nodes.Function;
                     case VARIABLE -> ExpUiIcons.Nodes.Variable;
                     case CONSTANT -> ExpUiIcons.Nodes.Constant;
                     case UNKNOWN -> ExpUiIcons.FileTypes.Unknown;
                 };
 
 
-                if (typeType == OdinInsightUtils.OdinTypeType.PROCEDURE) {
+                if (typeType == OdinTypeType.PROCEDURE) {
                     LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier.getText()).withIcon(icon);
                     OdinProcedureDeclarationStatement firstParentOfType = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
                     element = procedureLookupElement(element, firstParentOfType).withInsertHandler(procedureInsertHandler());
                     result.addElement(PrioritizedLookupElement.withPriority(element, 0));
-                } else if (typeType == OdinInsightUtils.OdinTypeType.PROCEUDRE_OVERLOAD) {
+                } else if (typeType == OdinTypeType.PROCEDURE_OVERLOAD) {
                     OdinProcedureOverloadStatement procedureOverloadStatement = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureOverloadStatement.class);
                     for (OdinIdentifier odinIdentifier : procedureOverloadStatement.getIdentifierList()) {
                         var resolvedReference = odinIdentifier.getReference();

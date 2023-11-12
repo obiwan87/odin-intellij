@@ -23,7 +23,7 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .before(OdinTypes.BLOCK_END)
                 .lineBreakInCode()
 
-                .after(OdinTypes.PACKAGE_CLAUSE)
+                .after(OdinTypes.PACKAGE_DECLARATION)
                 .blankLines(1)
 
                 .between(OdinTypes.ELSE, OdinTypes.BLOCK)

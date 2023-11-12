@@ -47,7 +47,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
     }
 
     public static List<PsiElement> findMatchingDeclarations(String name, OdinCallExpression callExpression) {
-        List<OdinDeclaredIdentifier> declarations = OdinInsightUtils.findDeclarations(
+        List<OdinDeclaredIdentifier> declarations = OdinInsightUtils.findDeclarationWithinScope(
                 callExpression, psiElement -> {
                     if (psiElement instanceof OdinDeclaredIdentifier identifier)
                         if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||
@@ -59,7 +59,8 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
                 });
 
         OdinExpression expression = callExpression.getExpression();
-        if (expression instanceof OdinRefExpression odinRefExpression) {
+
+        if (expression instanceof OdinRefExpression) {
             String refName = expression.getText();
             String[] parts = refName.split("\\.");
             if (parts.length > 1) {
@@ -115,8 +116,9 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
 
     @Override
     public void updateParameterInfo(@NotNull OdinCallExpression odinCallExpression, @NotNull UpdateParameterInfoContext context) {
-        int startOfList = odinCallExpression.getArguments().getLparen().getTextOffset() + 1;
+        int startOfList = odinCallExpression.getLparen().getTextOffset() + 1;
         int offset = context.getOffset();
+
 
         if (startOfList >= offset) {
             context.setCurrentParameter(0);
@@ -140,16 +142,16 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
         if (paramEntries == null)
             return;
 
-        var parameterList = paramEntries.getParamEntryList();
+        var parameters = paramEntries.getParamEntryList();
         // Each entry can declare several parameters. In order to make navigation easier we flatten the list.
 
         List<String> params = new ArrayList<>();
         List<Integer> lengths = new ArrayList<>();
         int length = 0;
         lengths.add(length);
-        for (OdinParamEntry odinParamEntry : parameterList) {
-            OdinTypeDefinition typeDefinition = odinParamEntry.getParameter().getTypeDefinition();
-            for (OdinParamDeclaration odinParamDeclaration : odinParamEntry.getParameter().getParamDeclarationList()) {
+        for (OdinParamEntry odinParamEntry : parameters) {
+            OdinTypeDefinitionExpression typeDefinition = odinParamEntry.getParameterDeclaration().getTypeDefinition();
+            for (OdinParameter odinParamDeclaration : odinParamEntry.getParameterDeclaration().getParameterList()) {
                 String param = odinParamDeclaration.getDeclaredIdentifier().getText();
                 if (typeDefinition != null) {
                     param += ": " + typeDefinition.getText();
