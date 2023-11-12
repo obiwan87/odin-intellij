@@ -181,7 +181,7 @@ fileScope                            ::= packageDeclaration eos importStatements
 private importStatements             ::= (importDeclarationStatement eos)*
 private fileScopeStatementList       ::= (fileScopeStatement eos)*
 packageDeclaration                   ::= PACKAGE declaredIdentifier
-importDeclarationStatement           ::= IMPORT declaredIdentifier? DQ_STRING_LITERAL {methods=[alias="/declaredIdentifier" path="/DQ_STRING_LITERAL" ]}
+importDeclarationStatement           ::= IMPORT declaredIdentifier? DQ_STRING_LITERAL {methods=[alias="/declaredIdentifier" path="/DQ_STRING_LITERAL" getName setName getNameIdentifier getImportInfo] implements="com.intellij.psi.PsiNameIdentifierOwner"}
 doubleColonOperator                  ::= COLON COLON
 
 fileScopeStatement                   ::= foreignImportDeclarationStatement
@@ -293,7 +293,7 @@ colonOpening                         ::= COLON
 variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
 
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
-declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' }
+declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' }
 
 assignmentStatement                  ::= [tagHead] expressionsList assignmentOperator expressionsList
 expressionsList                      ::= expression (COMMA expression)*
@@ -374,7 +374,7 @@ expression                           ::= postfix_group
                                          | cast_expression
                                          | typeAssertion_expression
                                          | compound_literal_expression
-                                         | primary_group { methods=[getType]}
+                                         | primary_group
 
 
 fake binary_expression               ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}

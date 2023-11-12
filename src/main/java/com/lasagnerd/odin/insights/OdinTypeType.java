@@ -8,6 +8,7 @@ public enum OdinTypeType {
     PROCEDURE_OVERLOAD,
     VARIABLE,
     CONSTANT,
-    UNKNOWN
+    PACKAGE,
+    FIELD, UNKNOWN
 
 }

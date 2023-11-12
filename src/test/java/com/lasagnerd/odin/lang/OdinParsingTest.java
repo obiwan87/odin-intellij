@@ -51,10 +51,9 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
+import com.lasagnerd.odin.insights.OdinTypeResolver;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinRefExpression;
-import com.lasagnerd.odin.lang.psi.OdinTypeInference;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
@@ -67,7 +66,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 /**
- * @noinspection JUnitTestCaseWithNonTrivialConstructors, UnstableApiUsage, deprecation , unused
+ * @noinspection unused, UnstableApiUsage
  */
 public class OdinParsingTest extends UsefulTestCase {
     private PluginDescriptor pluginDescriptor;
@@ -278,14 +277,14 @@ public class OdinParsingTest extends UsefulTestCase {
         doTest(checkResult, false);
     }
 
-    protected void doTest(boolean checkResult, boolean ensureNoErrorElements) {
+    protected void doTest(boolean checkResult, @SuppressWarnings("SameParameterValue") boolean ensureNoErrorElements) {
         String name = getTestName();
         try {
             parseFile(name, loadFile(name + "." + myFileExt));
             if (checkResult) {
                 checkResult(name, myFile);
                 if (ensureNoErrorElements) {
-                    ParsingTestUtil.ensureNoErrorElements(myFile);
+                    ensureNoErrors(myFile);
                 }
             } else {
                 toParseTreeText(myFile, skipSpaces(), includeRanges());
@@ -548,6 +547,37 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(project));
     }
 
+    protected void loadAndCheck(String path) {
+        try {
+            // FileUtil.loadFile(new File(dir, packageName), CharsetToolkit.UTF8, true).trim();
+            OdinFile odinFile = load(path);
+            ensureNoErrors(odinFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    protected OdinFile load(String path) throws IOException {
+        String fileContent = FileUtil.loadFile(new File(path), CharsetToolkit.UTF8, true).trim();
+        return ((OdinFile) parseFile("my_file", fileContent));
+    }
+
+
+    protected void ensureNoErrors(PsiFile file) {
+        List<String> errors = new ArrayList<>();
+        file.accept(new PsiRecursiveElementVisitor() {
+            @Override
+            public void visitErrorElement(@NotNull PsiErrorElement element) {
+                errors.add(element.getTextOffset() + ": " + element.getErrorDescription());
+                super.visitErrorElement(element);
+            }
+        });
+        if (!errors.isEmpty()) {
+            fail("Found PsiElement errors at offsets:\n" + String.join("\n", errors));
+        }
+    }
+
     public void testSimpleFile() {
         String path = "src/test/testData/simple.odin";
         loadAndCheck(path);
@@ -564,25 +594,10 @@ public class OdinParsingTest extends UsefulTestCase {
         Objects.requireNonNull(refExpressions);
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
 
-        List<OdinDeclaredIdentifier> odinDeclaredIdentifiers = OdinTypeInference.inferType(odinRefExpression);
-        for (OdinDeclaredIdentifier odinDeclaredIdentifier : odinDeclaredIdentifiers) {
+        var odinDeclaredIdentifiers = OdinTypeResolver.resolveScope(odinRefExpression);
+        for (var odinDeclaredIdentifier : odinDeclaredIdentifiers.getNamedElements()) {
             System.out.println(odinDeclaredIdentifier.getText());
         }
-    }
-
-    private void loadAndCheck(String path) {
-        try {
-            // FileUtil.loadFile(new File(dir, packageName), CharsetToolkit.UTF8, true).trim();
-            OdinFile odinFile = load(path);
-            ParsingTestUtil.ensureNoErrorElements(odinFile);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private OdinFile load(String path) throws IOException {
-        String fileContent = FileUtil.loadFile(new File(path), CharsetToolkit.UTF8, true).trim();
-        return ((OdinFile) parseFile("my_file", fileContent));
     }
 
 }

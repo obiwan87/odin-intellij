@@ -9,6 +9,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.OdinIcons;
@@ -28,6 +29,7 @@ public class OdinCompletionContributor extends CompletionContributor {
 
     public OdinCompletionContributor() {
 
+        // REFERENCE completion
         extend(CompletionType.BASIC,
                 REFERENCE,
                 new CompletionProvider<>() {
@@ -45,31 +47,19 @@ public class OdinCompletionContributor extends CompletionContributor {
 
                         // This constitutes our scope
                         OdinRefExpression reference = (OdinRefExpression) PsiTreeUtil.findSiblingBackward(position, OdinTypes.REF_EXPRESSION, false, null);
-                        List<OdinDeclaredIdentifier> odinDeclaredIdentifiers = OdinTypeInference.inferType(reference);
+
 
                         if (reference != null) {
-
-                            OdinDeclaredIdentifier identifierReference = (OdinDeclaredIdentifier) Objects.requireNonNull(reference.getIdentifier().getReference())
-                                    .resolve();
-
-                            if (identifierReference != null) {
-                                OdinVariableInitializationStatement initialization = OdinInsightUtils.findFirstParentOfType(identifierReference,
-                                        true,
-                                        OdinVariableInitializationStatement.class);
-
-                                OdinExpression odinExpression = initialization.getExpressionsList().getExpressionList().get(0);
-                                OdinCompoundLiteral compoundLiteral = PsiTreeUtil.findChildOfType(odinExpression, OdinCompoundLiteral.class);
-
-                                findCompletionsForStruct(result, compoundLiteral);
-                            }
-
                             // Check if reference is an import
                             String importName = reference.getIdentifier().getText();
 
-                            List<OdinDeclaredIdentifier> fileScopeDeclarations = OdinInsightUtils.findDeclarationsInImports(odinOriginalFile.getVirtualFile().getPath(),
+                            List<PsiNamedElement> fileScopeDeclarations = OdinInsightUtils.findDeclarationsInImports(odinOriginalFile.getVirtualFile().getPath(),
                                     fileScope,
                                     importName,
                                     project);
+
+                            Scope odinDeclaredIdentifiers = OdinTypeResolver.resolveScope(reference);
+                            addLookUpElements(result, odinDeclaredIdentifiers.getNamedElements());
 
                             addLookUpElements(result, fileScopeDeclarations);
                         }
@@ -77,6 +67,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                 }
         );
 
+        // Basic Completion
         extend(CompletionType.BASIC, AT_IDENTIFIER,
                 new CompletionProvider<>() {
                     @Override
@@ -99,39 +90,20 @@ public class OdinCompletionContributor extends CompletionContributor {
                             findCompletionsForStruct(result, compoundLiteral);
                         }
 
-                        List<OdinDeclaredIdentifier> declarations = OdinInsightUtils
+                        Scope declarations = OdinInsightUtils
                                 .findDeclarationWithinScope(position, e -> true);
-                        addLookUpElements(result, declarations);
-
-
-                        OdinFile originalFile = (OdinFile) parameters.getOriginalFile();
-                        OdinFileScope fileScope = originalFile.getFileScope();
-                        if (fileScope == null) {
-                            return;
-                        }
-                        Map<String, ImportInfo> importInfo = OdinInsightUtils.getImportStatementsInfo(fileScope);
-                        for (Map.Entry<String, ImportInfo> entry : importInfo.entrySet()) {
-                            String name = entry.getKey();
-                            ImportInfo info = entry.getValue();
-
-                            LookupElementBuilder element = LookupElementBuilder.create(name)
-                                    .withIcon(ExpUiIcons.Nodes.Package)
-                                    .withTypeText(info.path())
-                                    .withTailText(" -> " + info.library());
-
-                            result.addElement(PrioritizedLookupElement.withPriority(element, 100));
-
-                        }
+                        addLookUpElements(result, declarations.getNamedElements());
                     }
                 }
         );
 
     }
 
-    private static void addLookUpElements(@NotNull CompletionResultSet result, List<OdinDeclaredIdentifier> declarations) {
-        for (PsiElement declaration : declarations) {
-            if (declaration instanceof PsiNameIdentifierOwner declaredIdentifier) {
-                OdinTypeType typeType = OdinInsightUtils.classify((OdinDeclaredIdentifier) declaredIdentifier);
+    private static void addLookUpElements(@NotNull CompletionResultSet result, Collection<PsiNamedElement> namedElements) {
+
+        for (var namedElement : namedElements) {
+            if (namedElement instanceof PsiNameIdentifierOwner declaredIdentifier) {
+                OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
                 Icon icon = switch (typeType) {
                     case STRUCT -> OdinIcons.Types.Struct;
                     case ENUM -> ExpUiIcons.Nodes.Enum;
@@ -139,6 +111,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                     case PROCEDURE, PROCEDURE_OVERLOAD -> ExpUiIcons.Nodes.Function;
                     case VARIABLE -> ExpUiIcons.Nodes.Variable;
                     case CONSTANT -> ExpUiIcons.Nodes.Constant;
+                    case PACKAGE -> ExpUiIcons.Nodes.Package;
+                    case FIELD -> ExpUiIcons.Nodes.Property;
                     case UNKNOWN -> ExpUiIcons.FileTypes.Unknown;
                 };
 
@@ -168,9 +142,24 @@ public class OdinCompletionContributor extends CompletionContributor {
                             }
                         }
                     }
+                } else if (typeType == OdinTypeType.PACKAGE) {
+                    OdinImportDeclarationStatement odinDeclaration = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, false, OdinImportDeclarationStatement.class);
+
+                    ImportInfo info = odinDeclaration.getImportInfo();
+
+                    LookupElementBuilder element = LookupElementBuilder.create(info.packageName())
+                            .withIcon(ExpUiIcons.Nodes.Package)
+                            .withTypeText(info.path());
+
+                    if(info.library() != null) {
+                        element = element.withTailText(" -> " + info.library());
+                    }
+
+                    result.addElement(PrioritizedLookupElement.withPriority(element, 100));
                 } else {
                     LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier).withIcon(icon);
                     result.addElement(PrioritizedLookupElement.withPriority(element, 0));
+
                 }
             }
         }
@@ -227,7 +216,7 @@ public class OdinCompletionContributor extends CompletionContributor {
         for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarationStatementList) {
             String typeOfField = fieldDeclaration.getTypeDefinition().getText();
             for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifierList()) {
-                LookupElementBuilder element = LookupElementBuilder.create((PsiNameIdentifierOwner) declaredIdentifier)
+                LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier)
                         .withIcon(ExpUiIcons.Nodes.Property)
                         .withBoldness(true)
                         .withTypeText(typeOfField)

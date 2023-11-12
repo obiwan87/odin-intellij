@@ -1,14 +1,16 @@
 package com.lasagnerd.odin.lang.psi;
 
-import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.insights.ImportInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OdinPsiUtil {
     public static PsiReference getReference(OdinIdentifier self) {
@@ -27,87 +29,94 @@ public class OdinPsiUtil {
         return PsiTreeUtil.getChildrenOfTypeAsList(self, OdinImportDeclarationStatement.class);
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinPackageDeclaration statement) {
+    // OdinDeclaration
+
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinPackageDeclaration statement) {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinUnionDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinUnionDeclarationStatement statement) {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinProcedureDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinProcedureDeclarationStatement statement) {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinVariableInitializationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinVariableInitializationStatement statement) {
         return statement.getIdentifierList().getDeclaredIdentifierList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinBitsetDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinBitsetDeclarationStatement statement) {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinParameterDeclaration statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinParameterDeclaration statement) {
         return statement.getDeclaredIdentifiers();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinForeignProcedureDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinForeignProcedureDeclarationStatement statement) {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinConstantInitializationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinConstantInitializationStatement statement) {
         return statement.getIdentifierList().getDeclaredIdentifierList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinVariableDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinVariableDeclarationStatement statement) {
         return statement.getIdentifierList().getDeclaredIdentifierList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinEnumDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinEnumDeclarationStatement statement) {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinFieldDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinFieldDeclarationStatement statement) {
         return statement.getDeclaredIdentifierList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinParameterDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinParameterDeclarationStatement statement) {
         return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinParameterInitialization statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinParameterInitialization statement) {
         return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinStructDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinStructDeclarationStatement statement) {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinForeignImportDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinForeignImportDeclarationStatement statement) {
         if (statement.getAlias() != null)
             return Collections.singletonList(statement.getAlias());
         return Collections.emptyList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinImportDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinImportDeclarationStatement statement) {
         if (statement.getAlias() != null)
             return Collections.singletonList(statement.getAlias());
         return Collections.emptyList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinEnumValueDeclaration declaration) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinEnumValueDeclaration declaration) {
         return Collections.singletonList(declaration.getDeclaredIdentifier());
     }
+
+    // OdinTypedDeclaration
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinConstantInitializationStatement statement) {
         return doGetTypeDefinitionExpression(statement.getExpression());
     }
+
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinVariableDeclarationStatement statement) {
         return doGetTypeDefinitionExpression(statement.getExpression());
     }
+
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDeclarationStatement statement) {
         return doGetTypeDefinitionExpression(statement.getExpression());
     }
+
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinVariableInitializationStatement statement) {
         return doGetTypeDefinitionExpression(statement.getExpression());
     }
@@ -125,7 +134,7 @@ public class OdinPsiUtil {
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterInitialization declaration) {
-        if(declaration.getExpressionList().size() > 1) {
+        if (declaration.getExpressionList().size() > 1) {
             return doGetTypeDefinitionExpression(declaration.getExpressionList().get(0));
         }
         return null;
@@ -136,17 +145,61 @@ public class OdinPsiUtil {
     }
 
 
+    // OdinImportDeclaration
+
+    public static String getName(OdinImportDeclarationStatement importStatement) {
+        return importStatement.getImportInfo().packageName();
+    }
+
+    public static PsiElement setName(OdinImportDeclarationStatement importStatement, @NotNull String name) {
+        return importStatement;
+    }
+
+    public static PsiElement getNameIdentifier(OdinImportDeclarationStatement importStatement) {
+        if (importStatement.getAlias() != null)
+            return importStatement.getAlias();
+        return importStatement.getPath();
+    }
+
+
     @Nullable
     private static OdinTypeDefinitionExpression doGetTypeDefinitionExpression(OdinExpression statement) {
-        if(statement instanceof OdinTypeDefinitionExpression typeDefinition) {
+        if (statement instanceof OdinTypeDefinitionExpression typeDefinition) {
             return typeDefinition;
         }
         return null;
     }
 
 
-    public static PsiElement getType(OdinExpression expression) {
+    public static PsiElement getType(OdinExpression ignore) {
         return null;
     }
 
+    @NotNull
+    public static ImportInfo getImportInfo(OdinImportDeclarationStatement importStatement) {
+        String name = importStatement.getAlias() != null
+                ? importStatement.getAlias().getText()
+                : null;
+
+        String path = importStatement.getPath().getText();
+        // Remove quotes
+        path = path.substring(1, path.length() - 1);
+
+        String[] parts = path.split(":");
+        String library = null;
+        if (parts.length > 1) {
+            library = parts[0];
+            path = parts[1];
+        } else {
+            path = parts[0];
+        }
+
+        if (name == null) {
+            // Last path segment is the packageName
+            String[] pathParts = path.split("/");
+            name = pathParts[pathParts.length - 1];
+        }
+
+        return new ImportInfo(name, path, library);
+    }
 }
