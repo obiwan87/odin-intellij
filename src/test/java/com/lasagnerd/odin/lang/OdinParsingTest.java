@@ -51,7 +51,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.lasagnerd.odin.insights.OdinTypeResolver;
+import com.lasagnerd.odin.insights.OdinReferenceResolver;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinRefExpression;
 import org.jetbrains.annotations.NotNull;
@@ -594,10 +594,24 @@ public class OdinParsingTest extends UsefulTestCase {
         Objects.requireNonNull(refExpressions);
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
 
-        var odinDeclaredIdentifiers = OdinTypeResolver.resolveScope(odinRefExpression);
+        var odinDeclaredIdentifiers = OdinReferenceResolver.getCompletions(odinFile, odinRefExpression);
         for (var odinDeclaredIdentifier : odinDeclaredIdentifiers.getNamedElements()) {
             System.out.println(odinDeclaredIdentifier.getText());
         }
+    }
+
+    public void testRefSolver() throws IOException {
+        OdinFile odinFile = load("src/test/testData/ref.odin");
+        Collection<OdinRefExpression> refExpressions = PsiTreeUtil.findChildrenOfType(odinFile, OdinRefExpression.class);
+
+        for (OdinRefExpression refExpression : refExpressions) {
+            List<PsiElement> rearranged = OdinReferenceSolver.rearrange(refExpression);
+            for (PsiElement psiElement : rearranged) {
+                System.out.println(psiElement.getText());
+            }
+            System.out.println("========");
+        }
+
     }
 
 }

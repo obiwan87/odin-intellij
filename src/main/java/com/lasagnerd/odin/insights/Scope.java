@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.insights;
 
 import com.intellij.psi.PsiNamedElement;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -10,8 +11,16 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 public class Scope {
+    @Getter
+    private String packagePath;
     public static final Scope EMPTY = new Scope();
     Map<String, PsiNamedElement> symbolTable = new HashMap<>();
+
+
+
+    public Scope() {
+
+    }
 
     @Nullable
     public PsiNamedElement findNamedElement(String name) {
@@ -37,6 +46,9 @@ public class Scope {
     }
 
     static Scope from(List<? extends PsiNamedElement> identifiers) {
+        if (identifiers.isEmpty())
+            return Scope.EMPTY;
+
         Scope scope = new Scope();
         for (var declaredIdentifier : identifiers) {
             scope.symbolTable.put(declaredIdentifier.getName(), declaredIdentifier);
@@ -44,7 +56,4 @@ public class Scope {
 
         return scope;
     }
-
-
-
 }

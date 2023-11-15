@@ -4,7 +4,6 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.ExpUiIcons;
-import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
@@ -38,30 +37,16 @@ public class OdinCompletionContributor extends CompletionContributor {
                     protected void addCompletions(@NotNull CompletionParameters parameters,
                                                   @NotNull ProcessingContext context,
                                                   @NotNull CompletionResultSet result) {
-                        Project project = parameters.getPosition().getProject();
                         PsiElement position = parameters.getPosition().getParent();
-
-                        OdinFile odinFile = (OdinFile) position.getContainingFile();
-                        OdinFile odinOriginalFile = (OdinFile) parameters.getOriginalFile();
-                        OdinFileScope fileScope = odinFile.getFileScope();
 
                         // This constitutes our scope
                         OdinRefExpression reference = (OdinRefExpression) PsiTreeUtil.findSiblingBackward(position, OdinTypes.REF_EXPRESSION, false, null);
 
-
                         if (reference != null) {
                             // Check if reference is an import
-                            String importName = reference.getIdentifier().getText();
 
-                            List<PsiNamedElement> fileScopeDeclarations = OdinInsightUtils.findDeclarationsInImports(odinOriginalFile.getVirtualFile().getPath(),
-                                    fileScope,
-                                    importName,
-                                    project);
-
-                            Scope odinDeclaredIdentifiers = OdinTypeResolver.resolveScope(reference);
+                            Scope odinDeclaredIdentifiers = OdinReferenceResolver.getCompletions(parameters.getOriginalFile(), reference);
                             addLookUpElements(result, odinDeclaredIdentifiers.getNamedElements());
-
-                            addLookUpElements(result, fileScopeDeclarations);
                         }
                     }
                 }
@@ -91,7 +76,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         }
 
                         Scope declarations = OdinInsightUtils
-                                .findDeclarationWithinScope(position, e -> true);
+                                .findScope(position, e -> true);
                         addLookUpElements(result, declarations.getNamedElements());
                     }
                 }
@@ -151,7 +136,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                             .withIcon(ExpUiIcons.Nodes.Package)
                             .withTypeText(info.path());
 
-                    if(info.library() != null) {
+                    if (info.library() != null) {
                         element = element.withTailText(" -> " + info.library());
                     }
 

@@ -6,7 +6,6 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
     }
 
     public static List<PsiElement> findMatchingDeclarations(String name, OdinCallExpression callExpression) {
-        Scope declarations = OdinInsightUtils.findDeclarationWithinScope(
+        Scope declarations = OdinInsightUtils.findScope(
                 callExpression, psiElement -> {
                     if (psiElement instanceof OdinDeclaredIdentifier identifier)
                         if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||
@@ -69,7 +68,8 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
             if (parts.length > 1) {
                 String importName = parts[0];
                 OdinFile containingFile = (OdinFile) callExpression.getContainingFile();
-                var allImportedDeclarations = findDeclarationsInImports(containingFile.getVirtualFile().getPath(),
+                var allImportedDeclarations = findDeclarationsInImports(
+                        containingFile.getVirtualFile().getPath(),
                         containingFile.getFileScope(),
                         importName,
                         callExpression.getProject());
