@@ -335,7 +335,7 @@ fake parameterDeclaration ::= parameter+ typeDefinition_expression? expression {
 
 parameter ::=  [USING] tagStatement? declaredIdentifier
 parameterDeclarationStatement        ::= parameter (COMMA parameter)* COLON typeDefinition_expression {extends=parameterDeclaration implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
-parameterInitialization              ::= parameter COLON [typeDefinition_expression] EQ expression {extends=parameterDeclaration methods=[typeDefinition="/expression[0]"] implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
+parameterInitialization              ::= parameter COLON [typeDefinition_expression] EQ expression {extends=parameterDeclaration methods=[typeDefinition="/expression[0]" getTypeDefinition] implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration"}
 
 variadicParameterDeclaration         ::= parameter COLON RANGE typeDefinition_expression {extends=parameterDeclaration methods=[getTypeDefinition]}
 unnamedParameter          ::= RANGE? typeDefinition_expression {extends=parameterDeclaration methods=[getTypeDefinition]}

@@ -75,13 +75,7 @@ public class OdinPsiUtil {
         return statement.getDeclaredIdentifierList();
     }
 
-    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinParameterDeclarationStatement statement) {
-        return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
-    }
 
-    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinParameterInitialization statement) {
-        return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
-    }
 
     public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinStructDeclarationStatement statement) {
         return Collections.singletonList(statement.getDeclaredIdentifier());
@@ -102,6 +96,17 @@ public class OdinPsiUtil {
     public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinEnumValueDeclaration declaration) {
         return Collections.singletonList(declaration.getDeclaredIdentifier());
     }
+
+
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinParameterDeclarationStatement statement) {
+        return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
+    }
+
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinParameterInitialization statement) {
+        return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
+    }
+
+
 
     // OdinTypedDeclaration
 
@@ -129,8 +134,12 @@ public class OdinPsiUtil {
         return doGetTypeDefinitionExpression(variadicParameterDeclaration.getExpression());
     }
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDeclaration ignored) {
-        throw new RuntimeException("This shouldn't be called! you have a bug somewhere!");
+    public static OdinTypeDefinitionExpression getTypeDefinition(OdinUnnamedParameter parameter) {
+        return doGetTypeDefinitionExpression(parameter.getExpression());
+    }
+
+    public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDeclaration parameterDeclaration) {
+        throw new RuntimeException("This shouldn't be called! you have a bug somewhere: " + parameterDeclaration.getClass().getSimpleName());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterInitialization declaration) {
@@ -139,11 +148,6 @@ public class OdinPsiUtil {
         }
         return null;
     }
-
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinUnnamedParameter parameter) {
-        return doGetTypeDefinitionExpression(parameter.getExpression());
-    }
-
 
     // OdinImportDeclaration
 
