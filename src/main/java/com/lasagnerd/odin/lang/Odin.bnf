@@ -273,7 +273,7 @@ type                                 ::= mapType
 
 genericType                          ::= DOLLAR identifier
 concreteType                         ::= qualifiedNameTypeIdentifier [LPAREN expression (COMMA expression)* RPAREN]
-private qualifiedNameTypeIdentifier  ::= identifier (DOT identifier)*
+private qualifiedNameTypeIdentifier  ::= identifier [DOT identifier]
 
 pointerType                          ::= CARET type
 multiPointerType                     ::= LBRACKET CARET RBRACKET type

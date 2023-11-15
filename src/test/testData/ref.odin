@@ -15,9 +15,12 @@ Enemy :: struct {
 }
 
 main :: proc () {
-    e : Enemy : Enemy {
+    e :: Enemy {
         0, 0, { 100, 200, 130}
     }
 
-    fmt.println(e.weapon.durability)
+    e.weapon.durability.blub
+
+    e.println().x.y.z
+
 }

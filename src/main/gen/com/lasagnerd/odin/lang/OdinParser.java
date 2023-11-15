@@ -2922,7 +2922,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // identifier (DOT identifier)*
+  // identifier [DOT identifier]
   static boolean qualifiedNameTypeIdentifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifiedNameTypeIdentifier")) return false;
     if (!nextTokenIs(b, IDENTIFIER_TOKEN)) return false;
@@ -2934,14 +2934,10 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (DOT identifier)*
+  // [DOT identifier]
   private static boolean qualifiedNameTypeIdentifier_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifiedNameTypeIdentifier_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!qualifiedNameTypeIdentifier_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "qualifiedNameTypeIdentifier_1", c)) break;
-    }
+    qualifiedNameTypeIdentifier_1_0(b, l + 1);
     return true;
   }
 
