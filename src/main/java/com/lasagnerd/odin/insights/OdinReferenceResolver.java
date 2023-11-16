@@ -7,15 +7,14 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 
-public class OdinReferenceResolver extends OdinVisitor {
-    final PsiFile originalFile;
+public class OdinReferenceResolver {
+    private OdinDeclaration declaration;
+    private OdinIdentifier identifier;
 
-    public OdinReferenceResolver(PsiFile originalFile, Scope scope) {
-        this.originalFile = originalFile;
-
+    public OdinReferenceResolver(Scope scope) {
         this.expressionScope = scope;
         this.contextScope = scope;
         this.completionScope = scope;
@@ -30,35 +29,57 @@ public class OdinReferenceResolver extends OdinVisitor {
     Scope completionScope;
 
 
-    @Override
-    public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
-        if (refExpression.getExpression() != null) {
-            refExpression.getExpression().accept(this);
+    public void resolve(@NotNull OdinRefExpression refExpression) {
+        if (refExpression.getExpression() instanceof OdinRefExpression child) {
+            resolve(child);
+        } else if(refExpression.getExpression() != null) {
+            OdinTypeExpression type = OdinTypeResolver.resolve(contextScope, refExpression.getExpression());
+            contextScope = OdinInsightUtils.findScope(type);
+            completionScope = createCompletionScopeForType(contextScope, type);
         }
 
         OdinIdentifier identifier = refExpression.getIdentifier();
         PsiNamedElement namedElement = completionScope.findNamedElement(identifier.getText());
 
         if (namedElement != null) {
-            createScopeFromIdentifier(namedElement);
+            goToDeclaration(namedElement);
 
             OdinReferenceResolver.printScope(identifier, completionScope);
         }
     }
 
-    @Override
-    public void visitCompoundLiteralExpression(@NotNull OdinCompoundLiteralExpression o) {
-        OdinCompoundLiteral compoundLiteral = o.getCompoundLiteral();
-        if (compoundLiteral.getType() != null) {
-            completionScope = createScopeForTypeDefinition(compoundLiteral.getType());
+    public void resolve(@NotNull OdinTypeRef typeRef) {
+        OdinIdentifier packageIdentifier;
+        OdinIdentifier typeIdentifier;
+
+        if(typeRef.getIdentifierList().size() == 2) {
+            packageIdentifier = typeRef.getIdentifierList().get(0);
+            typeIdentifier = typeRef.getIdentifierList().get(1);
+        } else {
+            packageIdentifier = null;
+            typeIdentifier = typeRef.getIdentifierList().get(0);
         }
+
+        if(packageIdentifier != null) {
+            PsiNamedElement namedElement = contextScope.findNamedElement(packageIdentifier.getText());
+            if(namedElement instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+                contextScope = Scope.from(OdinInsightUtils.getDeclarationsOfImportedPackage(contextScope, importDeclarationStatement));
+            }
+        }
+        PsiNamedElement namedElement = contextScope.findNamedElement(typeIdentifier.getText());
+
+        declaration = OdinInsightUtils.findFirstParentOfType(namedElement,
+                false,
+                OdinDeclaration.class);
+        identifier = typeIdentifier;
+        completionScope = Scope.EMPTY;
     }
 
-    private void createScopeFromIdentifier(PsiElement identifier) {
+    private void goToDeclaration(PsiElement identifier) {
         OdinDeclaration declaration = OdinInsightUtils.findFirstParentOfType(identifier,
                 false,
                 OdinDeclaration.class);
-
+        this.declaration = declaration;
         // The identifier passed here, is the one we found in our current scope
         // The next step is to infer its type.
         if (declaration instanceof OdinImportDeclarationStatement importStatement) {
@@ -68,54 +89,47 @@ public class OdinReferenceResolver extends OdinVisitor {
             return;
         }
 
-//        if (declaration instanceof OdinStructDeclarationStatement struct) {
-//            List<PsiNamedElement> declaredIdentifiers = new ArrayList<>();
-//            OdinStructBody structBody = struct.getStructType().getStructBlock().getStructBody();
-//            if (structBody != null) {
-//                for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : structBody.getFieldDeclarationStatementList()) {
-//                    declaredIdentifiers.addAll(odinFieldDeclarationStatement.getDeclaredIdentifiers());
-//                }
-//            }
-//            contextScope = OdinInsightUtils.findScope(declaration);
-//            completionScope = Scope.from(declaredIdentifiers);
-//            return;
-//        }
-
         // Get type from declaration or infer from value
-        OdinType type;
+        OdinTypeExpression type;
         if (declaration instanceof OdinTypedDeclaration typedDeclaration) {
             OdinTypeDefinitionExpression typeDefinition = typedDeclaration.getTypeDefinition();
-            type = typeDefinition.getMainType();
+            type = (OdinTypeExpression) typeDefinition.getMainType();
         } else {
             OdinExpression valueExpression = getValueExpression(identifier, declaration);
             // This should spit out a type
-            type = OdinTypeResolver.resolve(originalFile, valueExpression);
+            type = OdinTypeResolver.resolve(contextScope, valueExpression);
         }
 
         // now that we have type we have to follow it back to its atomic declaration
-        completionScope = createScopeForTypeDefinition(type);
         contextScope = OdinInsightUtils.findScope(type);
+        completionScope = createCompletionScopeForType(contextScope, type);
     }
 
-    private Scope createScopeForTypeDefinition(@Nullable OdinType type) {
-
+    private Scope createCompletionScopeForType(Scope scope, @Nullable OdinTypeExpression type) {
         // two cases
-        if (type instanceof OdinConcreteType concreteType) {
-            Scope scope = completionScope;
-            for (OdinIdentifier odinIdentifier : concreteType.getIdentifierList()) {
-                var declaredIdentifier = findDeclaredIdentifier(scope, odinIdentifier.getText());
-                if (declaredIdentifier != null) {
-                    createScopeFromIdentifier(declaredIdentifier);
-                }
-            }
+        if (type instanceof OdinTypeRef typeRef) {
 
+            OdinReferenceResolver referenceResolver = new OdinReferenceResolver(scope);
+            referenceResolver.resolve(typeRef);
+
+            OdinDeclaration typeDeclaration = referenceResolver.declaration;
+
+            // Follow the assignment chain until we find a concrete type, i.e. direct definition and not an alias
+            PsiElement typeDefinition = followAssignments(identifier, declaration);
+
+            // Type definition is one of the built-in types
             return scope;
         }
 
         return Scope.EMPTY;
     }
 
-    private OdinExpression getValueExpression(PsiElement identifier, OdinDeclaration declaration) {
+    // TODO generalize to any depth
+    private static PsiElement followAssignments(PsiElement identifier, OdinDeclaration declaration) {
+        return getValueExpression(identifier, declaration);
+    }
+
+    private static OdinExpression getValueExpression(PsiElement identifier, OdinDeclaration declaration) {
         if (!(identifier instanceof OdinDeclaredIdentifier declaredIdentifier))
             return null;
 
@@ -137,28 +151,25 @@ public class OdinReferenceResolver extends OdinVisitor {
             return init.getExpressionList().get(0);
         }
 
+        if(declaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
+            return structDeclarationStatement.getStructType();
+        }
+
         return null;
     }
-
-
-    public PsiNamedElement findDeclaredIdentifier(Scope scope, @NotNull String name) {
-        return scope.findNamedElement(name);
-    }
-
 
     public record RefResult(Scope completionScope, Scope contextScope, OdinDeclaration declaration) {
     }
 
-    static RefResult resolve(@NotNull PsiFile originalFile, OdinExpression expression) {
+    static RefResult resolve(@NotNull PsiFile originalFile, OdinRefExpression expression) {
         Scope initialScope = OdinInsightUtils.findScope(expression);
-        var resolver = new OdinReferenceResolver(originalFile, initialScope);
-        printScope(expression, initialScope);
-        expression.accept(resolver);
-        return null;
-    }
 
-    public static Scope getCompletions(PsiFile original, OdinExpression expression) {
-        return resolve(original, expression).completionScope;
+        var resolver = new OdinReferenceResolver(initialScope);
+        printScope(expression, initialScope);
+        resolver.resolve(expression);
+
+        RefResult refResult = new OdinReferenceResolver.RefResult(resolver.completionScope, resolver.contextScope, resolver.declaration);
+        return null;
     }
 
     public static void printScope(PsiElement psiElement, Scope scope) {

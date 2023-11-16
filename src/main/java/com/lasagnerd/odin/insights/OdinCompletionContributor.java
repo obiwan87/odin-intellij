@@ -21,12 +21,13 @@ import java.util.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class OdinCompletionContributor extends CompletionContributor {
-
+    public static final String A = "123";
     public static final PsiElementPattern.@NotNull Capture<PsiElement> REFERENCE = psiElement().withElementType(OdinTypes.IDENTIFIER_TOKEN).afterLeaf(".");
 
     public static final @NotNull ElementPattern<PsiElement> AT_IDENTIFIER = psiElement().withElementType(OdinTypes.IDENTIFIER_TOKEN).andNot(REFERENCE);
 
     public OdinCompletionContributor() {
+        A.equals("b");
 
         // REFERENCE completion
         extend(CompletionType.BASIC,
@@ -45,8 +46,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                         if (reference != null) {
                             // Check if reference is an import
 
-                            Scope odinDeclaredIdentifiers = OdinReferenceResolver.getCompletions(parameters.getOriginalFile(), reference);
-                            addLookUpElements(result, odinDeclaredIdentifiers.getNamedElements());
+//                            Scope odinDeclaredIdentifiers = OdinReferenceResolver.getCompletions(parameters.getOriginalFile(), reference);
+//                            addLookUpElements(result, odinDeclaredIdentifiers.getNamedElements());
                         }
                     }
                 }
@@ -169,7 +170,7 @@ public class OdinCompletionContributor extends CompletionContributor {
         tailText += ")";
         element = element.withTailText(tailText);
 
-        OdinReturnType returnType = declaringProcedure.getProcedureType().getReturnType();
+        OdinReturnArguments returnType = declaringProcedure.getProcedureType().getReturnArguments();
         if (returnType != null) {
             element = element.withTypeText(returnType
                     .getText());
@@ -178,11 +179,11 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     private static void findCompletionsForStruct(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral) {
-        if (compoundLiteral == null || !(compoundLiteral.getType() instanceof OdinConcreteType concreteType)) {
+        if (compoundLiteral == null || !(compoundLiteral.getTypeExpression() instanceof OdinTypeRef typeRef)) {
             return;
         }
 
-        var identifierExpressionList = concreteType.getIdentifierList();
+        var identifierExpressionList = typeRef.getIdentifierList();
         var identifier = identifierExpressionList.get(0);
         PsiElement reference = Objects.requireNonNull(identifier.getReference()).resolve();
 

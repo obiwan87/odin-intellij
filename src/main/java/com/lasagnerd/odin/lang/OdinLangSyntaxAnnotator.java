@@ -8,8 +8,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -163,8 +161,8 @@ public class OdinLangSyntaxAnnotator implements Annotator {
 
     private static void highlightReservedTypes(@NotNull AnnotationHolder annotationHolder, PsiElement psiElement) {
         PsiElement identifier = null;
-        if (psiElement instanceof OdinConcreteType concreteType) {
-            identifier = concreteType;
+        if (psiElement instanceof OdinTypeRef typeRef) {
+            identifier = typeRef;
         } else if (psiElement instanceof OdinRefExpression identifierExpression) {
             identifier = identifierExpression.getIdentifier();
         }

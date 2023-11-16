@@ -164,7 +164,7 @@
 
   extends('.*_expression') = expression
   extends('.*[sS]tatement') = statement
-  extends('.*Type$') = type
+  extends('.*Type$') = type_expression
 
   methods('.*([iI]nitialization|[dD]eclaration).*') = [getDeclaredIdentifiers]
   implements('.*([iI]nitialization|[dD]eclaration).*') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
@@ -211,7 +211,7 @@ foreignStatementList                 ::= (sos? foreignBlockStatement eos)+
 foreignBlockStatement                ::= variableDeclarationStatement
                                          |foreignProcedureDeclarationStatement
                                          |whenStatement
-foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnType] TRIPLE_DASH
+foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnArguments] TRIPLE_DASH
 
 // Attributes
 attributeStatement                   ::= AT IDENTIFIER_TOKEN
@@ -240,11 +240,11 @@ bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator 
 
 // Procedure
 procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody
-procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnType] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
+procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnArguments] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
 
 whereClause                          ::= WHERE expression (COMMA expression)*
 procedureBody                        ::= block| [tagStatement] TRIPLE_DASH
-returnType                           ::= NOT | LPAREN paramEntries RPAREN | typeDefinition_expression
+returnArguments                      ::= NOT | LPAREN paramEntries RPAREN | typeDefinition_expression
 
 returnStatement                      ::= [tagStatement] RETURN returnArgumentList?
 private returnArgumentList           ::= expression (COMMA expression)* COMMA?
@@ -256,8 +256,10 @@ procedureOverloadStatement           ::= (attributeStatement eos?)* declaredIden
 
 private typeDefinition ::= typeDefinition_expression
 // Variables and constants
-typeDefinition_expression            ::= DISTINCT? (([tagStatement] type) | parenthesized_expression ) [DIV type] {methods=[mainType="/type[0]" typeConstraint="/type[1]"]}
-type                                 ::= mapType
+typeDefinition_expression            ::= DISTINCT? [tagStatement] mainType [DIV type_expression] {methods=[mainType="/expression[0]" specialType="/expression[1]"]}
+private mainType ::= type_expression | parenthesized_expression
+
+type_expression                      ::= mapType
                                          | matrixType
                                          | bitSetType
                                          | multiPointerType
@@ -267,16 +269,17 @@ type                                 ::= mapType
                                          | enumType
                                          | unionType
                                          | pointerType
-                                         | concreteType
+                                         | typeRef
                                          | genericType
+                                         | constrainedType
 
-
+constrainedType                      ::= type_expression DIV type_expression
 genericType                          ::= DOLLAR identifier
-concreteType                         ::= qualifiedNameTypeIdentifier [LPAREN expression (COMMA expression)* RPAREN]
+typeRef                              ::= qualifiedNameTypeIdentifier [LPAREN expression (COMMA expression)* RPAREN] {extends=type_expression}
 private qualifiedNameTypeIdentifier  ::= identifier [DOT identifier]
 
-pointerType                          ::= CARET type
-multiPointerType                     ::= LBRACKET CARET RBRACKET type
+pointerType                          ::= CARET type_expression
+multiPointerType                     ::= LBRACKET CARET RBRACKET type_expression
 
 
 bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
@@ -465,7 +468,7 @@ literal_expression                   ::= basic_literal
 
 compound_literal_expression          ::= compound_literal_typed | compound_literal_untyped
 fake compound_value                  ::= {methods=[getCompoundValueBody]}
-fake compound_literal                ::= type? (compound_value_typed | compound_value_untyped)
+fake compound_literal                ::= type_expression? (compound_value_typed | compound_value_untyped)
 compound_literal_typed               ::= compoundType compound_value_typed {extends=compound_literal}
 compound_literal_untyped             ::= compound_value_untyped {extends=compound_literal}
 
@@ -532,7 +535,7 @@ basic_literal                        ::= nil_literal
                                          | boolean_literal
                                          | tripleDashLiteral_expression
 
-private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | concreteType | parExpressionType
+private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | typeRef | parExpressionType
 parExpressionType                    ::= parenthesized_expression
 
 
