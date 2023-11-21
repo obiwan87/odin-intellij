@@ -22,6 +22,7 @@ public class Scope {
 
     }
 
+
     @Nullable
     public PsiNamedElement findNamedElement(String name) {
         return symbolTable.get(name);
@@ -45,7 +46,7 @@ public class Scope {
         symbolTable.put(namedElement.getName(), namedElement);
     }
 
-    static Scope from(List<? extends PsiNamedElement> identifiers) {
+    static Scope from(Collection<? extends PsiNamedElement> identifiers) {
         if (identifiers.isEmpty())
             return Scope.EMPTY;
 
@@ -56,4 +57,28 @@ public class Scope {
 
         return scope;
     }
+
+    static Scope from(List< ? extends PsiNamedElement> identifiers, String packagePath) {
+        Scope scope = from(identifiers);
+        scope.packagePath = packagePath;
+
+        return scope;
+    }
+
+    public Scope with(List<? extends PsiNamedElement> identifiers) {
+        Scope scope = from(identifiers);
+        scope.packagePath = this.packagePath;
+
+        return scope;
+    }
+
+    public Scope with(String packagePath) {
+        Scope scope = new Scope();
+        scope.symbolTable = this.symbolTable;
+        scope.packagePath = packagePath;
+
+        return scope;
+    }
+
+
 }

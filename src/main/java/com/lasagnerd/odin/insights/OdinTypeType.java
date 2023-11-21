@@ -9,6 +9,8 @@ public enum OdinTypeType {
     VARIABLE,
     CONSTANT,
     PACKAGE,
-    FIELD, UNKNOWN
+    FIELD,
+    PARAMETER,
+    UNKNOWN
 
 }

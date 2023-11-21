@@ -211,7 +211,7 @@ foreignStatementList                 ::= (sos? foreignBlockStatement eos)+
 foreignBlockStatement                ::= variableDeclarationStatement
                                          |foreignProcedureDeclarationStatement
                                          |whenStatement
-foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnArguments] TRIPLE_DASH
+foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] TRIPLE_DASH
 
 // Attributes
 attributeStatement                   ::= AT IDENTIFIER_TOKEN
@@ -221,7 +221,7 @@ structDeclarationStatement           ::= (attributeStatement eos*)* declaredIden
 structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> structBlock
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
-fieldDeclarationStatement            ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition_expression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition] implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" }
+fieldDeclarationStatement            ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition_expression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ] implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" }
 
 // Enum
 enumDeclarationStatement             ::= (attributeStatement eos*)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
@@ -240,11 +240,11 @@ bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator 
 
 // Procedure
 procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody
-procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnArguments] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
+procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
 
 whereClause                          ::= WHERE expression (COMMA expression)*
 procedureBody                        ::= block| [tagStatement] TRIPLE_DASH
-returnArguments                      ::= NOT | LPAREN paramEntries RPAREN | typeDefinition_expression
+returnParameters                      ::= NOT | LPAREN paramEntries RPAREN | typeDefinition_expression
 
 returnStatement                      ::= [tagStatement] RETURN returnArgumentList?
 private returnArgumentList           ::= expression (COMMA expression)* COMMA?
@@ -254,10 +254,9 @@ usingStatement                       ::= USING expression
 // Procedure overloading
 procedureOverloadStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
 
-private typeDefinition ::= typeDefinition_expression
 // Variables and constants
 typeDefinition_expression            ::= DISTINCT? [tagStatement] mainType [DIV type_expression] {methods=[mainType="/expression[0]" specialType="/expression[1]"]}
-private mainType ::= type_expression | parenthesized_expression
+mainType                             ::= type_expression | parenthesized_expression
 
 type_expression                      ::= mapType
                                          | matrixType
@@ -330,9 +329,9 @@ polymorphicParameter                 ::= tagStatement? (
 paramEntries                        ::= paramEntry (COMMA paramEntry)* COMMA?
 paramEntry                            ::= tagStatement? (
                                          variadicParameterDeclaration
-                                         | parameterInitialization
-                                         | parameterDeclarationStatement
-                                         | unnamedParameter
+                                             | parameterInitialization
+                                             | parameterDeclarationStatement
+                                             | unnamedParameter
                                          )
 fake parameterDeclaration ::= parameter+ typeDefinition_expression? expression {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
 
@@ -455,7 +454,7 @@ simple_ref_expression                ::= identifier {extends=ref_expression elem
 qualification_expression             ::= expression (DOT|ARROW) identifier {extends=ref_expression elementType=ref_expression}
 index_expression                     ::= expression index
 slice_expression                     ::= expression slice
-typeAssertion_expression             ::= expression DOT LPAREN typeDefinition RPAREN {methods=[subject="/expression[0]" targetType="/expression[1]"]}
+typeAssertion_expression             ::= expression DOT LPAREN typeDefinition_expression RPAREN {methods=[subject="/expression[0]" targetType="/expression[1]"]}
 procedure_expression                 ::= procedureType procedureBody
 dereference_expression               ::= expression CARET
 identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference]}

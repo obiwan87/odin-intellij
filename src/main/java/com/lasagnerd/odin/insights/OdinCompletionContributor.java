@@ -44,10 +44,14 @@ public class OdinCompletionContributor extends CompletionContributor {
                         OdinRefExpression reference = (OdinRefExpression) PsiTreeUtil.findSiblingBackward(position, OdinTypes.REF_EXPRESSION, false, null);
 
                         if (reference != null) {
-                            // Check if reference is an import
+                            Scope scope = OdinInsightUtils.findScope(reference, e -> true).with(parameters
+                                    .getOriginalFile()
+                                    .getContainingDirectory()
+                                    .getVirtualFile()
+                                    .getPath());
 
-//                            Scope odinDeclaredIdentifiers = OdinReferenceResolver.getCompletions(parameters.getOriginalFile(), reference);
-//                            addLookUpElements(result, odinDeclaredIdentifiers.getNamedElements());
+                            Scope completionScope = OdinReferenceResolver.resolve(scope, reference);
+                            addLookUpElements(result, completionScope.getNamedElements());
                         }
                     }
                 }
@@ -99,6 +103,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                     case CONSTANT -> ExpUiIcons.Nodes.Constant;
                     case PACKAGE -> ExpUiIcons.Nodes.Package;
                     case FIELD -> ExpUiIcons.Nodes.Property;
+                    case PARAMETER -> ExpUiIcons.Nodes.Parameter;
                     case UNKNOWN -> ExpUiIcons.FileTypes.Unknown;
                 };
 
@@ -170,7 +175,7 @@ public class OdinCompletionContributor extends CompletionContributor {
         tailText += ")";
         element = element.withTailText(tailText);
 
-        OdinReturnArguments returnType = declaringProcedure.getProcedureType().getReturnArguments();
+        OdinReturnParameters returnType = declaringProcedure.getProcedureType().getReturnParameters();
         if (returnType != null) {
             element = element.withTypeText(returnType
                     .getText());

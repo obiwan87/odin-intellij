@@ -1,183 +1,194 @@
 package com.lasagnerd.odin.insights;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
-
+import java.util.stream.Collectors;
 
 public class OdinReferenceResolver {
-    private OdinDeclaration declaration;
-    private OdinIdentifier identifier;
+        public static Scope resolve(Scope scope, OdinExpression valueExpression) {
+            OdinTypedNode odinTypedNode = new OdinTypedNode(scope);
+            valueExpression.accept(odinTypedNode);
+            return OdinTypedNode.getCompletionScopeOfType(scope, odinTypedNode.typeIdentifier);
+        }
+}
 
-    public OdinReferenceResolver(Scope scope) {
-        this.expressionScope = scope;
-        this.contextScope = scope;
-        this.completionScope = scope;
+class OdinTypedNode extends OdinVisitor {
+
+    final Scope scope;
+
+    // This is not enough information. Some types, such as multi-value return types, are not declared identifiers
+    OdinDeclaredIdentifier typeIdentifier;
+
+    public OdinTypedNode(Scope scope) {
+        this.scope = scope;
     }
 
-    final Scope expressionScope;
-
-    // All that the currently referenced type has access to
-    Scope contextScope;
-
-    // All the identifiers that will be suggested as completions
-    Scope completionScope;
-
-
-    public void resolve(@NotNull OdinRefExpression refExpression) {
-        if (refExpression.getExpression() instanceof OdinRefExpression child) {
-            resolve(child);
-        } else if(refExpression.getExpression() != null) {
-            OdinTypeExpression type = OdinTypeResolver.resolve(contextScope, refExpression.getExpression());
-            contextScope = OdinInsightUtils.findScope(type);
-            completionScope = createCompletionScopeForType(contextScope, type);
-        }
-
-        OdinIdentifier identifier = refExpression.getIdentifier();
-        PsiNamedElement namedElement = completionScope.findNamedElement(identifier.getText());
-
-        if (namedElement != null) {
-            goToDeclaration(namedElement);
-
-            OdinReferenceResolver.printScope(identifier, completionScope);
-        }
-    }
-
-    public void resolve(@NotNull OdinTypeRef typeRef) {
-        OdinIdentifier packageIdentifier;
-        OdinIdentifier typeIdentifier;
-
-        if(typeRef.getIdentifierList().size() == 2) {
-            packageIdentifier = typeRef.getIdentifierList().get(0);
-            typeIdentifier = typeRef.getIdentifierList().get(1);
+    @Override
+    public void visitRefExpression(@NotNull OdinRefExpression o) {
+        Scope localScope;
+        if (o.getExpression() != null) {
+            // solve for expression first. This defines the scope
+            // extract scope
+            OdinTypedNode odinTypedNode = new OdinTypedNode(this.scope);
+            o.getExpression().accept(odinTypedNode);
+            localScope = getCompletionScopeOfType(this.scope, odinTypedNode.typeIdentifier);
         } else {
-            packageIdentifier = null;
-            typeIdentifier = typeRef.getIdentifierList().get(0);
+            localScope = this.scope;
         }
 
-        if(packageIdentifier != null) {
-            PsiNamedElement namedElement = contextScope.findNamedElement(packageIdentifier.getText());
-            if(namedElement instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                contextScope = Scope.from(OdinInsightUtils.getDeclarationsOfImportedPackage(contextScope, importDeclarationStatement));
+        // using current scope, find identifier declaration and extract type
+        PsiNamedElement namedElement = localScope.findNamedElement(o.getIdentifier().getText());
+        if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
+            OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinDeclaration.class);
+            typeIdentifier = getValueExpression(declaredIdentifier, odinDeclaration);
+        }
+    }
+
+    private OdinDeclaredIdentifier getValueExpression(OdinDeclaredIdentifier declaredIdentifier, OdinDeclaration odinDeclaration) {
+        if(odinDeclaration instanceof OdinVariableDeclarationStatement declarationStatement) {
+            OdinExpression mainType = declarationStatement.getTypeDefinition().getMainType();
+            return getDeclaredIdentifierOfTypeRef(mainType);
+        }
+
+        if(odinDeclaration instanceof OdinVariableInitializationStatement initializationStatement) {
+            if(initializationStatement.getTypeDefinition() != null) {
+                return getDeclaredIdentifierOfTypeRef(initializationStatement.getTypeDefinition().getMainType());
             }
-        }
-        PsiNamedElement namedElement = contextScope.findNamedElement(typeIdentifier.getText());
 
-        declaration = OdinInsightUtils.findFirstParentOfType(namedElement,
-                false,
-                OdinDeclaration.class);
-        identifier = typeIdentifier;
-        completionScope = Scope.EMPTY;
+            int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
+            OdinExpression odinExpression = initializationStatement.getExpressionsList().getExpressionList().get(index);
+            OdinTypedNode odinTypedNode = new OdinTypedNode(this.scope);
+            odinExpression.accept(odinTypedNode);
+            return odinTypedNode.typeIdentifier;
+        }
+
+        if(odinDeclaration instanceof OdinConstantInitializationStatement initializationStatement) {
+            if(initializationStatement.getTypeDefinition() != null) {
+                return getDeclaredIdentifierOfTypeRef(initializationStatement.getTypeDefinition().getMainType());
+            }
+            int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
+            OdinExpression odinExpression = initializationStatement.getExpressionsList().getExpressionList().get(index);
+            OdinTypedNode odinTypedNode = new OdinTypedNode(this.scope);
+            odinExpression.accept(odinTypedNode);
+            return odinTypedNode.typeIdentifier;
+        }
+
+        if(odinDeclaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
+            OdinExpression mainType;
+            if(fieldDeclarationStatement.getExpression() instanceof OdinTypeExpression expr) {
+                mainType = expr;
+            } else {
+
+                OdinTypeDefinitionExpression typeDefinition = fieldDeclarationStatement.getTypeDefinition();
+                mainType = typeDefinition.getMainType();
+            }
+
+            return getDeclaredIdentifierOfTypeRef(mainType);
+        }
+
+        if(odinDeclaration instanceof OdinParameterDeclaration parameterDeclaration) {
+
+        }
+
+        if(odinDeclaration instanceof OdinParameterInitialization parameterInitialization) {
+
+        }
+
+        return null;
     }
 
-    private void goToDeclaration(PsiElement identifier) {
-        OdinDeclaration declaration = OdinInsightUtils.findFirstParentOfType(identifier,
-                false,
-                OdinDeclaration.class);
-        this.declaration = declaration;
-        // The identifier passed here, is the one we found in our current scope
-        // The next step is to infer its type.
-        if (declaration instanceof OdinImportDeclarationStatement importStatement) {
-            List<PsiNamedElement> declarationsOfImportedPackage = OdinInsightUtils
-                    .getDeclarationsOfImportedPackage(contextScope, importStatement);
-            completionScope = contextScope = Scope.from(declarationsOfImportedPackage);
-            return;
+    @Override
+    public void visitCompoundLiteralExpression(@NotNull OdinCompoundLiteralExpression o) {
+        if(o.getCompoundLiteral() instanceof OdinCompoundLiteralTyped typed) {
+            typeIdentifier = getDeclaredIdentifierOfTypeRef(typed.getTypeExpression());
         }
-
-        // Get type from declaration or infer from value
-        OdinTypeExpression type;
-        if (declaration instanceof OdinTypedDeclaration typedDeclaration) {
-            OdinTypeDefinitionExpression typeDefinition = typedDeclaration.getTypeDefinition();
-            type = (OdinTypeExpression) typeDefinition.getMainType();
-        } else {
-            OdinExpression valueExpression = getValueExpression(identifier, declaration);
-            // This should spit out a type
-            type = OdinTypeResolver.resolve(contextScope, valueExpression);
-        }
-
-        // now that we have type we have to follow it back to its atomic declaration
-        contextScope = OdinInsightUtils.findScope(type);
-        completionScope = createCompletionScopeForType(contextScope, type);
     }
 
-    private Scope createCompletionScopeForType(Scope scope, @Nullable OdinTypeExpression type) {
-        // two cases
-        if (type instanceof OdinTypeRef typeRef) {
+    private OdinDeclaredIdentifier getDeclaredIdentifierOfTypeRef(@Nullable OdinExpression typeExpression) {
+        if(typeExpression instanceof OdinTypeRef) {
+            return (OdinDeclaredIdentifier) this.scope.findNamedElement(typeExpression.getText());
+        }
 
-            OdinReferenceResolver referenceResolver = new OdinReferenceResolver(scope);
-            referenceResolver.resolve(typeRef);
+        return null;
+    }
 
-            OdinDeclaration typeDeclaration = referenceResolver.declaration;
+    @Override
+    public void visitCallExpression(@NotNull OdinCallExpression o) {
+        // Get type of expression. If it is callable, retrieve the return type and set that as result
 
-            // Follow the assignment chain until we find a concrete type, i.e. direct definition and not an alias
-            PsiElement typeDefinition = followAssignments(identifier, declaration);
 
-            // Type definition is one of the built-in types
-            return scope;
+    }
+
+    @Override
+    public void visitIndexExpression(@NotNull OdinIndexExpression o) {
+        // get type of expression. IF it is indexable (array, matrix, bitset, map), retrieve the indexed type and set that as result
+
+
+    }
+
+    @Override
+    public void visitDereferenceExpression(@NotNull OdinDereferenceExpression o) {
+        // get type of expression. If it is a pointer type, retrieve the type without the pointer and set that as result
+        super.visitDereferenceExpression(o);
+    }
+
+    static Scope getCompletionScopeOfType(Scope scope, PsiElement identifier) {
+        if (!(identifier instanceof OdinDeclaredIdentifier))
+            return null;
+
+        OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(identifier,
+                false,
+                OdinDeclaration.class);
+
+        if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
+            return scope.with(getStructFields(structDeclarationStatement));
+        }
+
+        if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
+            return scope.with(getEnumFields(enumDeclarationStatement));
+        }
+
+        if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+            return OdinInsightUtils.getDeclarationsOfImportedPackage(scope, importDeclarationStatement);
         }
 
         return Scope.EMPTY;
     }
 
-    // TODO generalize to any depth
-    private static PsiElement followAssignments(PsiElement identifier, OdinDeclaration declaration) {
-        return getValueExpression(identifier, declaration);
+    @NotNull
+    private static List<PsiNamedElement> getEnumFields(OdinEnumDeclarationStatement enumDeclarationStatement) {
+        OdinEnumBody enumBody = enumDeclarationStatement.getEnumType()
+                .getEnumBlock()
+                .getEnumBody();
+
+        if (enumBody == null)
+            return Collections.emptyList();
+
+        return enumBody
+                .getEnumValueDeclarationList()
+                .stream()
+                .map(OdinEnumValueDeclaration::getDeclaredIdentifier)
+                .collect(Collectors.toList());
     }
 
-    private static OdinExpression getValueExpression(PsiElement identifier, OdinDeclaration declaration) {
-        if (!(identifier instanceof OdinDeclaredIdentifier declaredIdentifier))
-            return null;
+    private static List<PsiNamedElement> getStructFields(OdinStructDeclarationStatement structDeclarationStatement) {
+        OdinStructBody structBody = structDeclarationStatement
+                .getStructType()
+                .getStructBlock()
+                .getStructBody();
 
-        if (declaration instanceof OdinVariableInitializationStatement init) {
-            int index = init.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
-            if (index >= 0) {
-                return init.getExpressionsList().getExpressionList().get(index);
-            }
+        if (structBody == null) {
+            return Collections.emptyList();
         }
 
-        if (declaration instanceof OdinConstantInitializationStatement init) {
-            int index = init.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
-            if (index >= 0) {
-                return init.getExpressionsList().getExpressionList().get(index);
-            }
-        }
-
-        if (declaration instanceof OdinParameterInitialization init) {
-            return init.getExpressionList().get(0);
-        }
-
-        if(declaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-            return structDeclarationStatement.getStructType();
-        }
-
-        return null;
-    }
-
-    public record RefResult(Scope completionScope, Scope contextScope, OdinDeclaration declaration) {
-    }
-
-    static RefResult resolve(@NotNull PsiFile originalFile, OdinRefExpression expression) {
-        Scope initialScope = OdinInsightUtils.findScope(expression);
-
-        var resolver = new OdinReferenceResolver(initialScope);
-        printScope(expression, initialScope);
-        resolver.resolve(expression);
-
-        RefResult refResult = new OdinReferenceResolver.RefResult(resolver.completionScope, resolver.contextScope, resolver.declaration);
-        return null;
-    }
-
-    public static void printScope(PsiElement psiElement, Scope scope) {
-        System.out.printf("--------<%s>--------%n", psiElement.getText());
-        for (PsiNamedElement element : scope.getNamedElements()) {
-            System.out.println(element + ": " + element.getName());
-        }
-        System.out.printf("--------</%s>--------%n", psiElement.getText());
+        return structBody.getFieldDeclarationStatementList().stream()
+                .flatMap(x -> x.getDeclaredIdentifiers().stream())
+                .collect(Collectors.toList());
     }
 }
-

@@ -29,6 +29,14 @@ public class OdinInsightUtils {
         PsiElement entrance = identifier;
         PsiElement lastValidBlock = identifier;
 
+        // TODO Check initializations
+        //  in if-, for- and when-blocks
+        //  parameter lists (no closures)
+        //  return parameter lists (no closures)
+
+
+        boolean firstBlock = true;
+
         // Check all parent blocks
         while (entrance != null) {
             OdinBlock containingBlock = (OdinBlock) PsiTreeUtil.findFirstParent(entrance,
@@ -40,6 +48,10 @@ public class OdinInsightUtils {
                 break;
             }
 
+            if (firstBlock) {
+
+            }
+
             lastValidBlock = containingBlock;
 
             OdinStatementList statementList = containingBlock.getStatementList();
@@ -48,6 +60,8 @@ public class OdinInsightUtils {
                 var matchingDeclarations = getNamedElements(matcher, statement);
                 if (!matchingDeclarations.isEmpty()) return matchingDeclarations.get(0);
             }
+
+            firstBlock = false;
         }
 
         // Check file scope
@@ -74,13 +88,12 @@ public class OdinInsightUtils {
             if (parts.length > 1) {
                 String importName = parts[0];
                 VirtualFile virtualFile = identifier.getContainingFile().getViewProvider().getVirtualFile();
-                var declarations = findDeclarationsInImports(virtualFile.getPath(),
-                        odinFileScope,
-                        importName,
+                ImportInfo importInfo = getImportInfo(odinFileScope, importName);
+                var scope = getDeclarationsOfImportedPackage(importInfo, virtualFile.getPath(),
                         identifier.getProject());
 
                 String name = parts[1];
-                for (var declaration : declarations) {
+                for (var declaration : scope.getNamedElements()) {
                     String text = declaration.getText();
                     if (text.equals(name)) {
                         return declaration;
@@ -90,6 +103,11 @@ public class OdinInsightUtils {
         }
 
         return null;
+    }
+
+    private static ImportInfo getImportInfo(OdinFileScope odinFileScope, String importName) {
+        Map<String, ImportInfo> importStatementsInfo = getImportStatementsInfo(odinFileScope);
+        return importStatementsInfo.get(importName);
     }
 
     public static Scope getFileScopeDeclarations(OdinFileScope fileScope) {
@@ -138,7 +156,7 @@ public class OdinInsightUtils {
         return Collections.emptyList();
     }
 
-    static List<PsiNamedElement> getDeclarationsOfImportedPackage(OdinImportDeclarationStatement importStatement) {
+    static Scope getDeclarationsOfImportedPackage(OdinImportDeclarationStatement importStatement) {
         ImportInfo importInfo = importStatement.getImportInfo();
 
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
@@ -152,16 +170,16 @@ public class OdinInsightUtils {
         String path = virtualFile.getCanonicalPath();
         String name = importInfo.packageName();
         Project project = importStatement.getProject();
-        return findDeclarationsInImports(path, fileScope, name, project);
+        return getDeclarationsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
     }
 
-    static List<PsiNamedElement> getDeclarationsOfImportedPackage(Scope scope, OdinImportDeclarationStatement importStatement) {
+    static Scope getDeclarationsOfImportedPackage(Scope scope, OdinImportDeclarationStatement importStatement) {
         ImportInfo importInfo = importStatement.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         String path = scope.getPackagePath();
         String name = importInfo.packageName();
         Project project = importStatement.getProject();
-        return findDeclarationsInImports(path, fileScope, name, project);
+        return getDeclarationsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
     }
 
     public record QualifiedName(@NotNull String name, @NotNull OdinRefExpression rootRefExpression) {
@@ -194,6 +212,8 @@ public class OdinInsightUtils {
         PsiElement entrance = element;
         PsiElement lastValidBlock = element;
 
+        boolean firstBlock = true;
+
         // Check all parent blocks
         while (entrance != null) {
             OdinBlock containingBlock = (OdinBlock) PsiTreeUtil.findFirstParent(entrance, true, parent -> parent instanceof OdinBlock);
@@ -202,6 +222,45 @@ public class OdinInsightUtils {
             if (containingBlock == null) {
                 break;
             }
+
+            if (firstBlock) {
+                if (containingBlock.getParent() instanceof OdinProcedureBody procedureBody) {
+                    // We are within a procedure
+                    OdinProcedureType procedureType = null;
+                    for (PsiElement child : procedureBody.getParent().getChildren()) {
+                        if (child instanceof OdinProcedureType type) {
+                            procedureType = type;
+                            break;
+                        }
+                    }
+
+                    if (procedureType != null) {
+                        OdinParamEntries paramEntries = procedureType.getParamEntries();
+                        if (paramEntries != null) {
+                            for (OdinParamEntry odinParamEntry : paramEntries.getParamEntryList()) {
+                                odinParamEntry
+                                        .getParameterDeclaration()
+                                        .getParameterList().stream()
+                                        .map(OdinParameter::getDeclaredIdentifier)
+                                        .forEach(declarations::add);
+                            }
+                        }
+
+                        OdinReturnParameters returnParameters = procedureType.getReturnParameters();
+                        if(returnParameters != null) {
+                            OdinParamEntries returnParamEntries = returnParameters.getParamEntries();
+                            if(returnParamEntries != null) {
+                                for (OdinParamEntry odinParamEntry : returnParamEntries.getParamEntryList()) {
+                                    declarations.addAll(odinParamEntry
+                                            .getParameterDeclaration()
+                                            .getDeclaredIdentifiers());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            firstBlock = false;
 
             lastValidBlock = containingBlock;
 
@@ -272,6 +331,15 @@ public class OdinInsightUtils {
         return element.getParent() instanceof OdinUnionDeclarationStatement;
     }
 
+    private static boolean isFieldDeclaration(PsiNamedElement element) {
+        return element.getParent() instanceof OdinFieldDeclarationStatement;
+    }
+
+    private static boolean isPackageDeclaration(PsiNamedElement element) {
+        return element instanceof OdinImportDeclarationStatement
+                || element.getParent() instanceof OdinImportDeclarationStatement;
+    }
+
     public static OdinTypeType classify(PsiNamedElement element) {
         if (isStructDeclaration(element)) {
             return OdinTypeType.STRUCT;
@@ -291,18 +359,15 @@ public class OdinInsightUtils {
             return OdinTypeType.PACKAGE;
         } else if (isFieldDeclaration(element)) {
             return OdinTypeType.FIELD;
+        } else if (isParameterDeclaration(element)) {
+            return OdinTypeType.PARAMETER;
         } else {
             return OdinTypeType.UNKNOWN;
         }
     }
 
-    private static boolean isFieldDeclaration(PsiNamedElement element) {
-        return element.getParent() instanceof OdinFieldDeclarationStatement;
-    }
-
-    private static boolean isPackageDeclaration(PsiNamedElement element) {
-        return element instanceof OdinImportDeclarationStatement
-                || element.getParent() instanceof OdinImportDeclarationStatement;
+    public static boolean isParameterDeclaration(PsiElement element) {
+        return OdinInsightUtils.findFirstParentOfType(element, true, OdinDeclaration.class) instanceof OdinParameterDeclaration;
     }
 
     public static OdinProcedureDeclarationStatement getDeclaringProcedure(OdinDeclaredIdentifier element) {
@@ -313,12 +378,7 @@ public class OdinInsightUtils {
      * @return Returns the declarations from an import with specified name.
      * TODO This should return the target file as well
      */
-    public static List<PsiNamedElement> findDeclarationsInImports(String path,
-                                                                  OdinFileScope fileScope,
-                                                                  String importName,
-                                                                  Project project) {
-        Map<String, ImportInfo> importMap = getImportStatementsInfo(fileScope);
-        ImportInfo importInfo = importMap.get(importName);
+    public static Scope getDeclarationsOfImportedPackage(ImportInfo importInfo, String sourcePath, Project project) {
         List<PsiNamedElement> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
             Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
@@ -331,7 +391,7 @@ public class OdinInsightUtils {
                     dirs.add(sdkSourceDir);
                 }
             }
-            Path currentDir = Path.of(path).getParent();
+            Path currentDir = Path.of(sourcePath).getParent();
 
             dirs.add(currentDir);
 
@@ -343,8 +403,10 @@ public class OdinInsightUtils {
                 return !(e instanceof OdinImportDeclarationStatement);
             };
 
+
             for (Path dir : dirs) {
-                var importedFiles = getFilesInPackage(dir, importInfo, project);
+                Path packagePath = dir.resolve(importInfo.path());
+                var importedFiles = getFilesInPackage(project, packagePath);
                 for (OdinFile importedFile : importedFiles) {
                     OdinFileScope importedFileScope = importedFile.getFileScope();
                     if (importedFileScope == null) {
@@ -358,11 +420,11 @@ public class OdinInsightUtils {
                 }
 
                 if (!importedFiles.isEmpty()) {
-                    break;
+                    return Scope.from(packageDeclarations, packagePath.toString());
                 }
             }
         }
-        return packageDeclarations;
+        return Scope.EMPTY;
     }
 
     @NotNull
@@ -379,11 +441,7 @@ public class OdinInsightUtils {
     }
 
 
-    public static List<OdinFile> getFilesInPackage(Path directory,
-                                                   ImportInfo importInfo,
-                                                   Project project) {
-
-        Path importPath = directory.resolve(importInfo.path());
+    public static List<OdinFile> getFilesInPackage(Project project, Path importPath) {
         List<OdinFile> files = new ArrayList<>();
         VirtualFile packageDirectory = VfsUtil.findFile(importPath, true);
         if (packageDirectory != null) {

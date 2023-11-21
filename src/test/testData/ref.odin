@@ -19,8 +19,5 @@ main :: proc () {
         0, 0, { 100, 200, 130}
     }
 
-    e.weapon.durability.blub
-
-    e.println().x.y.z
-
+    e.weapon.strength
 }

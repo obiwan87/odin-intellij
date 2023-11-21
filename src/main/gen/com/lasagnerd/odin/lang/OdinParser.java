@@ -52,15 +52,16 @@ public class OdinParser implements PsiParser, LightPsiParser {
     create_token_set_(ARRAY_TYPE, AUTO_CAST_EXPRESSION, BINARY_EXPRESSION, BIT_SET_TYPE,
       CALL_EXPRESSION, CAST_EXPRESSION, COMPOUND_LITERAL_EXPRESSION, CONSTRAINED_TYPE,
       DEREFERENCE_EXPRESSION, ELVIS_EXPRESSION, ENUM_TYPE, EXPRESSION,
-      GENERIC_TYPE, INDEX_EXPRESSION, LITERAL_EXPRESSION, MAP_TYPE,
-      MATRIX_TYPE, MAYBE_EXPRESSION, MULTI_POINTER_TYPE, OR_BREAK_EXPRESSION,
-      OR_CONTINUE_EXPRESSION, OR_RETURN_EXPRESSION, PARENTHESIZED_EXPRESSION, PAR_EXPRESSION_TYPE,
-      POINTER_TYPE, PROCEDURE_EXPRESSION, PROCEDURE_TYPE, REF_EXPRESSION,
-      SLICE_EXPRESSION, STRUCT_TYPE, TAG_STATEMENT_EXPRESSION, TERNARY_IF_EXPRESSION,
-      TERNARY_WHEN_EXPRESSION, TRANSMUTE_EXPRESSION, TRIPLE_DASH_LITERAL_EXPRESSION, TYPE_ASSERTION_EXPRESSION,
-      TYPE_DEFINITION_EXPRESSION, TYPE_EXPRESSION, TYPE_REF, UNARY_AND_EXPRESSION,
-      UNARY_DOT_EXPRESSION, UNARY_MINUS_EXPRESSION, UNARY_NOT_EXPRESSION, UNARY_PLUS_EXPRESSION,
-      UNARY_RANGE_EXPRESSION, UNARY_TILDE_EXPRESSION, UNINITIALIZED_EXPRESSION, UNION_TYPE),
+      GENERIC_TYPE, INDEX_EXPRESSION, LITERAL_EXPRESSION, MAIN_TYPE,
+      MAP_TYPE, MATRIX_TYPE, MAYBE_EXPRESSION, MULTI_POINTER_TYPE,
+      OR_BREAK_EXPRESSION, OR_CONTINUE_EXPRESSION, OR_RETURN_EXPRESSION, PARENTHESIZED_EXPRESSION,
+      PAR_EXPRESSION_TYPE, POINTER_TYPE, PROCEDURE_EXPRESSION, PROCEDURE_TYPE,
+      REF_EXPRESSION, SLICE_EXPRESSION, STRUCT_TYPE, TAG_STATEMENT_EXPRESSION,
+      TERNARY_IF_EXPRESSION, TERNARY_WHEN_EXPRESSION, TRANSMUTE_EXPRESSION, TRIPLE_DASH_LITERAL_EXPRESSION,
+      TYPE_ASSERTION_EXPRESSION, TYPE_DEFINITION_EXPRESSION, TYPE_EXPRESSION, TYPE_REF,
+      UNARY_AND_EXPRESSION, UNARY_DOT_EXPRESSION, UNARY_MINUS_EXPRESSION, UNARY_NOT_EXPRESSION,
+      UNARY_PLUS_EXPRESSION, UNARY_RANGE_EXPRESSION, UNARY_TILDE_EXPRESSION, UNINITIALIZED_EXPRESSION,
+      UNION_TYPE),
   };
 
   /* ********************************************************** */
@@ -1700,7 +1701,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnArguments] TRIPLE_DASH
+  // (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] TRIPLE_DASH
   public static boolean foreignProcedureDeclarationStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement")) return false;
     boolean r;
@@ -1762,20 +1763,20 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // [ARROW returnArguments]
+  // [ARROW returnParameters]
   private static boolean foreignProcedureDeclarationStatement_8(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement_8")) return false;
     foreignProcedureDeclarationStatement_8_0(b, l + 1);
     return true;
   }
 
-  // ARROW returnArguments
+  // ARROW returnParameters
   private static boolean foreignProcedureDeclarationStatement_8_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement_8_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, ARROW);
-    r = r && returnArguments(b, l + 1);
+    r = r && returnParameters(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2098,11 +2099,13 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // type_expression | parenthesized_expression
-  static boolean mainType(PsiBuilder b, int l) {
+  public static boolean mainType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mainType")) return false;
     boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, MAIN_TYPE, "<main type>");
     r = type_expression(b, l + 1, -1);
     if (!r) r = parenthesized_expression(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -2652,20 +2655,20 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // NOT | LPAREN paramEntries RPAREN | typeDefinition_expression
-  public static boolean returnArguments(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "returnArguments")) return false;
+  public static boolean returnParameters(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "returnParameters")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, RETURN_ARGUMENTS, "<return arguments>");
+    Marker m = enter_section_(b, l, _NONE_, RETURN_PARAMETERS, "<return parameters>");
     r = consumeToken(b, NOT);
-    if (!r) r = returnArguments_1(b, l + 1);
+    if (!r) r = returnParameters_1(b, l + 1);
     if (!r) r = typeDefinition_expression(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   // LPAREN paramEntries RPAREN
-  private static boolean returnArguments_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "returnArguments_1")) return false;
+  private static boolean returnParameters_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "returnParameters_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, LPAREN);
@@ -3315,12 +3318,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // typeDefinition_expression
-  static boolean typeDefinition(PsiBuilder b, int l) {
-    return typeDefinition_expression(b, l + 1);
-  }
-
-  /* ********************************************************** */
   // blockStart [unionBody] blockEnd
   public static boolean unionBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unionBlock")) return false;
@@ -3679,7 +3676,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // 18: ATOM(transmute_expression)
   // 19: PREFIX(auto_cast_expression)
   // 20: ATOM(cast_expression)
-  // 21: POSTFIX(typeAssertion_expression)
+  // 21: BINARY(typeAssertion_expression)
   // 22: ATOM(compound_literal_expression)
   // 23: ATOM(simple_ref_expression) ATOM(typeDefinition_expression) ATOM(tagStatement_expression) ATOM(literal_expression)
   //    PREFIX(parenthesized_expression)
@@ -3896,8 +3893,9 @@ public class OdinParser implements PsiParser, LightPsiParser {
         r = true;
         exit_section_(b, l, m, PROCEDURE_EXPRESSION, r, true, null);
       }
-      else if (g < 21 && typeAssertion_expression_0(b, l + 1)) {
-        r = true;
+      else if (g < 21 && parseTokensSmart(b, 0, DOT, LPAREN)) {
+        r = report_error_(b, expression(b, l, 22));
+        r = consumeToken(b, RPAREN) && r;
         exit_section_(b, l, m, TYPE_ASSERTION_EXPRESSION, r, true, null);
       }
       else {
@@ -4527,18 +4525,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // DOT LPAREN typeDefinition RPAREN
-  private static boolean typeAssertion_expression_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeAssertion_expression_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokensSmart(b, 0, DOT, LPAREN);
-    r = r && typeDefinition(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
   // compound_literal_typed | compound_literal_untyped
   public static boolean compound_literal_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compound_literal_expression")) return false;
@@ -4869,7 +4855,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnArguments] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
+  // tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
   public static boolean procedureType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "procedureType")) return false;
     if (!nextTokenIsSmart(b, HASH, PROC)) return false;
@@ -4910,20 +4896,20 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // [ARROW returnArguments]
+  // [ARROW returnParameters]
   private static boolean procedureType_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "procedureType_6")) return false;
     procedureType_6_0(b, l + 1);
     return true;
   }
 
-  // ARROW returnArguments
+  // ARROW returnParameters
   private static boolean procedureType_6_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "procedureType_6_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, ARROW);
-    r = r && returnArguments(b, l + 1);
+    r = r && returnParameters(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

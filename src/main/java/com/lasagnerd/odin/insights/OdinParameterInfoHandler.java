@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.lasagnerd.odin.insights.OdinInsightUtils.findDeclarationsInImports;
+import static com.lasagnerd.odin.insights.OdinInsightUtils.getDeclarationsOfImportedPackage;
 
 public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallExpression, OdinProcedureDeclarationStatement> {
 
@@ -68,12 +68,13 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
             if (parts.length > 1) {
                 String importName = parts[0];
                 OdinFile containingFile = (OdinFile) callExpression.getContainingFile();
-                var allImportedDeclarations = findDeclarationsInImports(
-                        containingFile.getVirtualFile().getPath(),
-                        containingFile.getFileScope(),
-                        importName,
+                var allImportedDeclarations = getDeclarationsOfImportedPackage(
+                        OdinInsightUtils.getImportStatementsInfo(containingFile.getFileScope()).get(importName), containingFile.getVirtualFile().getPath(),
                         callExpression.getProject());
-                declarations.addAll(allImportedDeclarations.stream().filter(decl -> decl.getText().equals(parts[1])).toList());
+                declarations.addAll(allImportedDeclarations.getNamedElements()
+                        .stream()
+                        .filter(decl -> decl.getText().equals(parts[1]))
+                        .toList());
             }
         }
 
