@@ -16,18 +16,18 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class OdinCompletionContributor extends CompletionContributor {
-    public static final String A = "123";
     public static final PsiElementPattern.@NotNull Capture<PsiElement> REFERENCE = psiElement().withElementType(OdinTypes.IDENTIFIER_TOKEN).afterLeaf(".");
 
     public static final @NotNull ElementPattern<PsiElement> AT_IDENTIFIER = psiElement().withElementType(OdinTypes.IDENTIFIER_TOKEN).andNot(REFERENCE);
 
     public OdinCompletionContributor() {
-        A.equals("b");
 
         // REFERENCE completion
         extend(CompletionType.BASIC,
@@ -38,20 +38,24 @@ public class OdinCompletionContributor extends CompletionContributor {
                     protected void addCompletions(@NotNull CompletionParameters parameters,
                                                   @NotNull ProcessingContext context,
                                                   @NotNull CompletionResultSet result) {
-                        PsiElement position = parameters.getPosition().getParent();
+
+                        // Walk up tree until no more ref expressions are found
+                        PsiElement position = parameters.getPosition();
+                        PsiElement parent = PsiTreeUtil.findFirstParent(position, e -> e instanceof OdinRefExpression);
 
                         // This constitutes our scope
-                        OdinRefExpression reference = (OdinRefExpression) PsiTreeUtil.findSiblingBackward(position, OdinTypes.REF_EXPRESSION, false, null);
 
-                        if (reference != null) {
+                        if (parent instanceof OdinRefExpression reference) {
                             Scope scope = OdinInsightUtils.findScope(reference, e -> true).with(parameters
                                     .getOriginalFile()
                                     .getContainingDirectory()
                                     .getVirtualFile()
                                     .getPath());
 
-                            Scope completionScope = OdinReferenceResolver.resolve(scope, reference);
-                            addLookUpElements(result, completionScope.getNamedElements());
+                            if (reference.getExpression() != null) {
+                                Scope completionScope = OdinReferenceResolver.resolve(scope, reference.getExpression());
+                                addLookUpElements(result, completionScope.getNamedElements());
+                            }
                         }
                     }
                 }
@@ -109,7 +113,10 @@ public class OdinCompletionContributor extends CompletionContributor {
 
 
                 if (typeType == OdinTypeType.PROCEDURE) {
-                    LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier.getText()).withIcon(icon);
+                    LookupElementBuilder element = LookupElementBuilder
+                            .create(declaredIdentifier.getText())
+                            .withIcon(icon);
+
                     OdinProcedureDeclarationStatement firstParentOfType = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
                     element = procedureLookupElement(element, firstParentOfType).withInsertHandler(procedureInsertHandler());
                     result.addElement(PrioritizedLookupElement.withPriority(element, 0));

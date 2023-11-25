@@ -35,9 +35,6 @@ public class OdinInsightUtils {
         //  return parameter lists (no closures)
         //  completion should be also offered in if/for/when etc. -> check for all possible scopes
 
-
-        boolean firstBlock = true;
-
         // Check all parent blocks
         while (entrance != null) {
             OdinBlock containingBlock = (OdinBlock) PsiTreeUtil.findFirstParent(entrance,
@@ -57,8 +54,6 @@ public class OdinInsightUtils {
                 var matchingDeclarations = getNamedElements(matcher, statement);
                 if (!matchingDeclarations.isEmpty()) return matchingDeclarations.get(0);
             }
-
-            firstBlock = false;
         }
 
         // Check file scope

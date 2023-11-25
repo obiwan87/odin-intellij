@@ -610,6 +610,7 @@ private forEndStatement              ::= assignmentStatement | call_expression
 
 ifStatement                          ::= [label] [tagHead] if condition statementBody (sos elseIfBlock)* [sos elseBlock]
 private statementBody                ::= block|doStatement
+// TODO initStatement is not valid for when statements
 condition                            ::= <<enterMode "BLOCK">> [initStatement SEMICOLON] expression <<exitMode "BLOCK">>
 private switchCondition              ::= [initStatement SEMICOLON] expression?
 initStatement                        ::= assignmentStatement|variableInitializationStatement|variableDeclarationStatement
