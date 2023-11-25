@@ -33,6 +33,7 @@ public class OdinInsightUtils {
         //  in if-, for- and when-blocks
         //  parameter lists (no closures)
         //  return parameter lists (no closures)
+        //  completion should be also offered in if/for/when etc. -> check for all possible scopes
 
 
         boolean firstBlock = true;
@@ -46,10 +47,6 @@ public class OdinInsightUtils {
             entrance = containingBlock;
             if (containingBlock == null) {
                 break;
-            }
-
-            if (firstBlock) {
-
             }
 
             lastValidBlock = containingBlock;
@@ -212,7 +209,7 @@ public class OdinInsightUtils {
         PsiElement entrance = element;
         PsiElement lastValidBlock = element;
 
-        boolean firstBlock = true;
+        boolean procedureNotVisited = true;
 
         // Check all parent blocks
         while (entrance != null) {
@@ -223,7 +220,8 @@ public class OdinInsightUtils {
                 break;
             }
 
-            if (firstBlock) {
+            if (procedureNotVisited) {
+                // Bring the parameters into scope
                 if (containingBlock.getParent() instanceof OdinProcedureBody procedureBody) {
                     // We are within a procedure
                     OdinProcedureType procedureType = null;
@@ -258,9 +256,26 @@ public class OdinInsightUtils {
                             }
                         }
                     }
+                    procedureNotVisited = false;
                 }
+
             }
-            firstBlock = false;
+
+            // Bring if/when/for statement declarations into scope
+            if(containingBlock.getParent() instanceof OdinIfStatement ifStatement) {
+                OdinStatement statement = ifStatement.getCondition().getStatement();
+                declarations.addAll(getNamedElements(matcher, statement));
+            }
+
+            if(containingBlock.getParent() instanceof OdinWhenStatement whenStatement) {
+                OdinStatement statement = whenStatement.getCondition().getStatement();
+                declarations.addAll(getNamedElements(matcher, statement));
+            }
+
+            if(containingBlock.getParent() instanceof OdinForStatement ifStatement) {
+                OdinStatement statement = ifStatement.getForHead().getStatement();
+                declarations.addAll(getNamedElements(matcher, statement));
+            }
 
             lastValidBlock = containingBlock;
 

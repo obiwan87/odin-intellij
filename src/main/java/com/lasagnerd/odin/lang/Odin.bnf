@@ -610,9 +610,9 @@ private forEndStatement              ::= assignmentStatement | call_expression
 
 ifStatement                          ::= [label] [tagHead] if condition statementBody (sos elseIfBlock)* [sos elseBlock]
 private statementBody                ::= block|doStatement
-condition                            ::= <<enterMode "BLOCK">> [ifInit SEMICOLON] expression <<exitMode "BLOCK">>
-private switchCondition              ::= [ifInit SEMICOLON] expression?
-private ifInit                       ::= assignmentStatement|variableInitializationStatement|variableDeclarationStatement
+condition                            ::= <<enterMode "BLOCK">> [initStatement SEMICOLON] expression <<exitMode "BLOCK">>
+private switchCondition              ::= [initStatement SEMICOLON] expression?
+initStatement                        ::= assignmentStatement|variableInitializationStatement|variableDeclarationStatement
 elseIfBlock                          ::= elseIf condition statementBody
 elseIf                               ::= else if
 elseBlock                            ::= else statementBody

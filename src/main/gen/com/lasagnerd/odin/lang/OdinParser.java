@@ -45,10 +45,10 @@ public class OdinParser implements PsiParser, LightPsiParser {
       DO_STATEMENT, ENUM_DECLARATION_STATEMENT, EXPRESSION_STATEMENT, FALLTHROUGH_STATEMENT,
       FIELD_DECLARATION_STATEMENT, FILE_SCOPE_STATEMENT, FOREIGN_BLOCK_STATEMENT, FOREIGN_IMPORT_DECLARATION_STATEMENT,
       FOREIGN_PROCEDURE_DECLARATION_STATEMENT, FOREIGN_STATEMENT, FOR_STATEMENT, IF_STATEMENT,
-      IMPORT_DECLARATION_STATEMENT, PROCEDURE_DECLARATION_STATEMENT, PROCEDURE_OVERLOAD_STATEMENT, RETURN_STATEMENT,
-      STATEMENT, STRUCT_DECLARATION_STATEMENT, SWITCH_STATEMENT, TAG_STATEMENT,
-      UNION_DECLARATION_STATEMENT, USING_STATEMENT, VARIABLE_DECLARATION_STATEMENT, VARIABLE_INITIALIZATION_STATEMENT,
-      WHEN_STATEMENT),
+      IMPORT_DECLARATION_STATEMENT, INIT_STATEMENT, PROCEDURE_DECLARATION_STATEMENT, PROCEDURE_OVERLOAD_STATEMENT,
+      RETURN_STATEMENT, STATEMENT, STRUCT_DECLARATION_STATEMENT, SWITCH_STATEMENT,
+      TAG_STATEMENT, UNION_DECLARATION_STATEMENT, USING_STATEMENT, VARIABLE_DECLARATION_STATEMENT,
+      VARIABLE_INITIALIZATION_STATEMENT, WHEN_STATEMENT),
     create_token_set_(ARRAY_TYPE, AUTO_CAST_EXPRESSION, BINARY_EXPRESSION, BIT_SET_TYPE,
       CALL_EXPRESSION, CAST_EXPRESSION, COMPOUND_LITERAL_EXPRESSION, CONSTRAINED_TYPE,
       DEREFERENCE_EXPRESSION, ELVIS_EXPRESSION, ENUM_TYPE, EXPRESSION,
@@ -741,7 +741,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<enterMode "BLOCK">> [ifInit SEMICOLON] expression <<exitMode "BLOCK">>
+  // <<enterMode "BLOCK">> [initStatement SEMICOLON] expression <<exitMode "BLOCK">>
   public static boolean condition(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "condition")) return false;
     boolean r;
@@ -754,19 +754,19 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [ifInit SEMICOLON]
+  // [initStatement SEMICOLON]
   private static boolean condition_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "condition_1")) return false;
     condition_1_0(b, l + 1);
     return true;
   }
 
-  // ifInit SEMICOLON
+  // initStatement SEMICOLON
   private static boolean condition_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "condition_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = ifInit(b, l + 1);
+    r = initStatement(b, l + 1);
     r = r && consumeToken(b, SEMICOLON);
     exit_section_(b, m, null, r);
     return r;
@@ -1927,17 +1927,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // assignmentStatement|variableInitializationStatement|variableDeclarationStatement
-  static boolean ifInit(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ifInit")) return false;
-    boolean r;
-    r = assignmentStatement(b, l + 1);
-    if (!r) r = variableInitializationStatement(b, l + 1);
-    if (!r) r = variableDeclarationStatement(b, l + 1);
-    return r;
-  }
-
-  /* ********************************************************** */
   // [label] [tagHead] if condition statementBody (sos elseIfBlock)* [sos elseBlock]
   public static boolean ifStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ifStatement")) return false;
@@ -2082,6 +2071,19 @@ public class OdinParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, COMMA);
     r = r && expression(b, l + 1, -1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // assignmentStatement|variableInitializationStatement|variableDeclarationStatement
+  public static boolean initStatement(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "initStatement")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, INIT_STATEMENT, "<init statement>");
+    r = assignmentStatement(b, l + 1);
+    if (!r) r = variableInitializationStatement(b, l + 1);
+    if (!r) r = variableDeclarationStatement(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -2233,9 +2235,9 @@ public class OdinParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // tagStatement? (
   //                                          variadicParameterDeclaration
-  //                                          | parameterInitialization
-  //                                          | parameterDeclarationStatement
-  //                                          | unnamedParameter
+  //                                              | parameterInitialization
+  //                                              | parameterDeclarationStatement
+  //                                              | unnamedParameter
   //                                          )
   public static boolean paramEntry(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "paramEntry")) return false;
@@ -2255,9 +2257,9 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   // variadicParameterDeclaration
-  //                                          | parameterInitialization
-  //                                          | parameterDeclarationStatement
-  //                                          | unnamedParameter
+  //                                              | parameterInitialization
+  //                                              | parameterDeclarationStatement
+  //                                              | unnamedParameter
   private static boolean paramEntry_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "paramEntry_1")) return false;
     boolean r;
@@ -3087,7 +3089,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // [ifInit SEMICOLON] expression?
+  // [initStatement SEMICOLON] expression?
   static boolean switchCondition(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switchCondition")) return false;
     boolean r;
@@ -3098,19 +3100,19 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [ifInit SEMICOLON]
+  // [initStatement SEMICOLON]
   private static boolean switchCondition_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switchCondition_0")) return false;
     switchCondition_0_0(b, l + 1);
     return true;
   }
 
-  // ifInit SEMICOLON
+  // initStatement SEMICOLON
   private static boolean switchCondition_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switchCondition_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = ifInit(b, l + 1);
+    r = initStatement(b, l + 1);
     r = r && consumeToken(b, SEMICOLON);
     exit_section_(b, m, null, r);
     return r;
