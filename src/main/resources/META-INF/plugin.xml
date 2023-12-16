@@ -2,20 +2,18 @@
 
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
     <name>Odin Support</name>
     <change-notes><![CDATA[
         <h2>Features</h2>
         <ul>
-            <li>Enhanced formatting</li>
-            <li>Run configuration now support program arguments</li>
-            <li>Added code folding</li>
-            <li>Added support for commenting out code</li>
-            <li>Added support for automatic quote closing</li>
+            <li>Support for IntelliJ 2023.3</li>
+            <li>Add simple code completion</li>
+            <li>Add support for <code>or_break</code> and <code>or_continue</code>
         </ul>
         <h2>Bugfixes</h2>
         <ul>
-            <li>Fixed a parsing bug regarding "when...do" statements and trailing commas in compound types</li>
+            <li>Fix NPE when creation Run Configurations</li>
         </ul>
         ]]>
     </change-notes>
@@ -28,6 +26,7 @@
     <ul>
     <li>Syntax highlighting
     <li>Simple syntax error highlighting
+    <li>Simple code completion
     </ul>
   ]]></description>
 
