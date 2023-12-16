@@ -217,21 +217,21 @@ foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* declaredIden
 attributeStatement                   ::= AT IDENTIFIER_TOKEN
                                          | AT arguments
 // Struct
-structDeclarationStatement           ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? structType
-structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> structBlock
+structDeclarationStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? structType
+structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> structBlock
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
 fieldDeclarationStatement            ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition_expression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ] implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" }
 
 // Enum
-enumDeclarationStatement             ::= (attributeStatement eos*)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
+enumDeclarationStatement             ::= (attributeStatement eos?)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
 enumType                             ::= ENUM [IDENTIFIER_TOKEN (DOT IDENTIFIER_TOKEN)*] enumBlock
 enumBlock                            ::= blockStart [enumBody] blockEnd
 enumBody                             ::= enumValueDeclaration (COMMA enumValueDeclaration)* [EOS_TOKEN|COMMA]
 enumValueDeclaration                       ::= declaredIdentifier [EQ expression]
 // Union
-unionDeclarationStatement            ::= (attributeStatement eos*)* declaredIdentifier doubleColonOperator DISTINCT? unionType
-unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos* whereClause eos*]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> unionBlock
+unionDeclarationStatement            ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? unionType
+unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> unionBlock
 unionBlock                           ::= blockStart [unionBody] blockEnd
 unionBody                            ::= typeDefinition_expression (COMMA typeDefinition_expression)* [COMMA|EOS_TOKEN]
 
@@ -240,7 +240,7 @@ bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator 
 
 // Procedure
 procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody
-procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterMode "BLOCK">> [eos* whereClause eos*] <<exitMode "BLOCK">>
+procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterMode "BLOCK">> [eos? whereClause eos?] <<exitMode "BLOCK">>
 
 whereClause                          ::= WHERE expression (COMMA expression)*
 procedureBody                        ::= block| [tagStatement] TRIPLE_DASH
@@ -255,8 +255,8 @@ usingStatement                       ::= USING expression
 procedureOverloadStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
 
 // Variables and constants
-typeDefinition_expression            ::= DISTINCT? [tagStatement] mainType [DIV type_expression] {methods=[mainType="/expression[0]" specialType="/expression[1]"]}
-mainType                             ::= type_expression | parenthesized_expression
+typeDefinition_expression            ::= DISTINCT? [tagStatement] main [DIV type_expression] {methods=[mainType="/expression[0]" specialType="/expression[1]"]}
+main                                 ::= type_expression | parenthesized_expression
 
 type_expression                      ::= mapType
                                          | matrixType
@@ -289,7 +289,7 @@ arrayType                            ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|ex
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
 
-private symbolDefinitionHead         ::= (attributeStatement eos*)* [tagHead] identifierList colonOpening typeDefinition_expression?
+private symbolDefinitionHead         ::= (attributeStatement eos?)* [tagHead] identifierList colonOpening typeDefinition_expression?
 colonOpening                         ::= COLON
 
 variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
@@ -600,7 +600,7 @@ statement                            ::= assignmentStatement
 
 fallthroughStatement                 ::= FALLTHROUGH
 expressionStatement                  ::= expression
-blockStatement                       ::= [(tagStatement eos*)|label] block
+blockStatement                       ::= [(tagStatement eos?)|label] block
 
 private forTraditional               ::= (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
 private forIn                        ::= [forInExpression (COMMA forInExpression)*] IN expression

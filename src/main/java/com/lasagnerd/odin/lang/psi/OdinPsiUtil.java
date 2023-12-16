@@ -111,31 +111,31 @@ public class OdinPsiUtil {
     // OdinTypedDeclaration
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinConstantInitializationStatement statement) {
-        return doGetTypeDefinitionExpression(statement.getExpression());
+        return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinVariableDeclarationStatement statement) {
-        return doGetTypeDefinitionExpression(statement.getExpression());
+        return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDeclarationStatement statement) {
-        return doGetTypeDefinitionExpression(statement.getExpression());
+        return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinVariableInitializationStatement statement) {
-        return doGetTypeDefinitionExpression(statement.getExpression());
+        return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinFieldDeclarationStatement statement) {
-        return doGetTypeDefinitionExpression(statement.getExpression());
+        return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinVariadicParameterDeclaration variadicParameterDeclaration) {
-        return doGetTypeDefinitionExpression(variadicParameterDeclaration.getExpression());
+        return doGetTypeDefinitionExpression(variadicParameterDeclaration.getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinUnnamedParameter parameter) {
-        return doGetTypeDefinitionExpression(parameter.getExpression());
+        return doGetTypeDefinitionExpression(parameter.getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDeclaration parameterDeclaration) {

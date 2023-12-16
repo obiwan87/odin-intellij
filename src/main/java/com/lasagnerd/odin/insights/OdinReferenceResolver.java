@@ -106,13 +106,13 @@ class OdinTypedNode extends OdinVisitor {
 
     private static OdinDeclaredIdentifier findTypeIdentifier(Scope parentScope, OdinDeclaredIdentifier declaredIdentifier, OdinDeclaration odinDeclaration) {
         if (odinDeclaration instanceof OdinVariableDeclarationStatement declarationStatement) {
-            OdinExpression mainType = declarationStatement.getTypeDefinition().getMainType();
+            var mainType = declarationStatement.getTypeDefinition().getMain().getExpression();
             return getDeclaredIdentifierOfTypeRef(parentScope, mainType);
         }
 
         if (odinDeclaration instanceof OdinVariableInitializationStatement initializationStatement) {
             if (initializationStatement.getTypeDefinition() != null) {
-                return getDeclaredIdentifierOfTypeRef(parentScope, initializationStatement.getTypeDefinition().getMainType());
+                return getDeclaredIdentifierOfTypeRef(parentScope, initializationStatement.getTypeDefinition().getMain().getExpression());
             }
 
             int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
@@ -124,7 +124,8 @@ class OdinTypedNode extends OdinVisitor {
 
         if (odinDeclaration instanceof OdinConstantInitializationStatement initializationStatement) {
             if (initializationStatement.getTypeDefinition() != null) {
-                return getDeclaredIdentifierOfTypeRef(parentScope, initializationStatement.getTypeDefinition().getMainType());
+                OdinExpression mainType = initializationStatement.getTypeDefinition().getMain().getExpression();
+                return getDeclaredIdentifierOfTypeRef(parentScope, mainType);
             }
             int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
             OdinExpression odinExpression = initializationStatement.getExpressionsList().getExpressionList().get(index);
@@ -135,12 +136,12 @@ class OdinTypedNode extends OdinVisitor {
 
         if (odinDeclaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
             OdinExpression mainType;
-            if (fieldDeclarationStatement.getExpression() instanceof OdinTypeExpression expr) {
+            if (fieldDeclarationStatement.getTypeDefinition() instanceof OdinTypeExpression expr) {
                 mainType = expr;
             } else {
 
                 OdinTypeDefinitionExpression typeDefinition = fieldDeclarationStatement.getTypeDefinition();
-                mainType = typeDefinition.getMainType();
+                mainType = typeDefinition.getMain().getExpression();
             }
 
             return getDeclaredIdentifierOfTypeRef(parentScope, mainType);
@@ -185,38 +186,48 @@ class OdinTypedNode extends OdinVisitor {
         expression.accept(odinTypedNode);
         OdinDeclaredIdentifier caller = odinTypedNode.typeIdentifier;
         OdinDeclaration callerDeclaration = OdinInsightUtils.getDeclaration(caller);
+
+        OdinExpression type = null;
         if (callerDeclaration instanceof OdinProcedureDeclarationStatement procedure) {
-            OdinReturnParameters returnParameters = procedure.getProcedureType().getReturnParameters();
-            if (returnParameters != null) {
-                OdinExpression type;
+            type = getReturnType(procedure);
+        }
 
-                OdinExpression returnExpression = returnParameters.getExpression();
-                OdinParamEntries paramEntries = returnParameters.getParamEntries();
-                if (paramEntries != null) {
-                    if (paramEntries.getParamEntryList().size() == 1) {
-                        OdinTypeDefinitionExpression typeDefinition1 = paramEntries.getParamEntryList().get(0).getParameterDeclaration().getTypeDefinition();
-                        type = typeDefinition1.getMainType();
-                    } else {
-                        type = null;
-                    }
-                } else if (returnExpression instanceof OdinTypeRef typRef) {
-                    type = typRef;
-                } else {
-                    type = null;
+        if (type instanceof OdinTypeRef typeRef) {
+            this.typeIdentifier = getDeclaredIdentifierOfTypeRef(odinTypedNode.scope, typeRef);
+        }
+    }
+
+    @Nullable
+    private static OdinExpression getReturnType(OdinProcedureDeclarationStatement procedure) {
+        OdinExpression type = null;
+        OdinReturnParameters returnParameters = procedure.getProcedureType().getReturnParameters();
+        if (returnParameters != null) {
+
+
+            OdinExpression returnExpression = returnParameters.getTypeDefinitionExpression();
+            OdinParamEntries paramEntries = returnParameters.getParamEntries();
+            if (paramEntries != null) {
+                if (paramEntries.getParamEntryList().size() == 1) {
+                    OdinTypeDefinitionExpression typeDefinition1 = paramEntries.getParamEntryList().get(0).getParameterDeclaration().getTypeDefinition();
+                    type = typeDefinition1.getMain().getExpression();
                 }
 
-                if (type instanceof OdinTypeRef typeRef) {
-                    this.typeIdentifier = getDeclaredIdentifierOfTypeRef(odinTypedNode.scope, typeRef);
-                }
+            } else if (returnExpression instanceof OdinTypeRef typRef) {
+                type = typRef;
             }
         }
+        return type;
     }
 
     @Override
     public void visitIndexExpression(@NotNull OdinIndexExpression o) {
         // get type of expression. IF it is indexable (array, matrix, bitset, map), retrieve the indexed type and set that as result
+        OdinExpression expression = o.getExpression();
+        OdinTypedNode odinTypedNode = new OdinTypedNode(this.scope);
+        expression.accept(odinTypedNode);
+        OdinDeclaredIdentifier indexedType = odinTypedNode.typeIdentifier;
 
-
+        System.out.println(indexedType.getText());
     }
 
     @Override
