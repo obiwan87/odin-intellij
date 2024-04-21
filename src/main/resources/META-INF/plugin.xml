@@ -11,8 +11,9 @@
         </ul>
         <h2>Bugfixes</h2>
         <ul>
-            <li>Fix NPE in completion contributor</li>
-            <li>Fix NPE in configuration producer</li>
+            <li>NPE fixed in completion contributor</li>
+            <li>NPE fixed in configuration producer</li>
+            <li>Completion now shows for unaliased imports as well</li>
         </ul>
         ]]>
     </change-notes>
