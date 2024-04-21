@@ -55,10 +55,10 @@ public class OdinParser implements PsiParser, LightPsiParser {
       GENERIC_TYPE, INDEX_EXPRESSION, LITERAL_EXPRESSION, MAP_TYPE,
       MATRIX_TYPE, MAYBE_EXPRESSION, MULTI_POINTER_TYPE, OR_BREAK_EXPRESSION,
       OR_CONTINUE_EXPRESSION, OR_RETURN_EXPRESSION, PARENTHESIZED_EXPRESSION, PAR_EXPRESSION_TYPE,
-      POINTER_TYPE, PROCEDURE_EXPRESSION, PROCEDURE_TYPE, REF_EXPRESSION,
-      SLICE_EXPRESSION, STRUCT_TYPE, TAG_STATEMENT_EXPRESSION, TERNARY_IF_EXPRESSION,
-      TERNARY_WHEN_EXPRESSION, TRANSMUTE_EXPRESSION, TRIPLE_DASH_LITERAL_EXPRESSION, TYPE_ASSERTION_EXPRESSION,
-      TYPE_DEFINITION_EXPRESSION, TYPE_EXPRESSION, TYPE_REF, UNARY_AND_EXPRESSION,
+      POINTER_TYPE, PROCEDURE_EXPRESSION, PROCEDURE_TYPE, QUALIFIED_TYPE,
+      REF_EXPRESSION, SLICE_EXPRESSION, STRUCT_TYPE, TAG_STATEMENT_EXPRESSION,
+      TERNARY_IF_EXPRESSION, TERNARY_WHEN_EXPRESSION, TRANSMUTE_EXPRESSION, TRIPLE_DASH_LITERAL_EXPRESSION,
+      TYPE_ASSERTION_EXPRESSION, TYPE_DEFINITION_EXPRESSION, TYPE_EXPRESSION, UNARY_AND_EXPRESSION,
       UNARY_DOT_EXPRESSION, UNARY_MINUS_EXPRESSION, UNARY_NOT_EXPRESSION, UNARY_PLUS_EXPRESSION,
       UNARY_RANGE_EXPRESSION, UNARY_TILDE_EXPRESSION, UNINITIALIZED_EXPRESSION, UNION_TYPE),
   };
@@ -456,7 +456,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // arrayType | matrixType | bitSetType  | mapType | structType | typeRef | parExpressionType
+  // arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | parExpressionType
   static boolean compoundType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compoundType")) return false;
     boolean r;
@@ -465,7 +465,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = bitSetType(b, l + 1);
     if (!r) r = mapType(b, l + 1);
     if (!r) r = structType(b, l + 1);
-    if (!r) r = typeRef(b, l + 1);
+    if (!r) r = qualifiedType(b, l + 1);
     if (!r) r = parExpressionType(b, l + 1);
     return r;
   }
@@ -3632,7 +3632,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // Expression root: expression
   // Operator priority table:
-  // 0: POSTFIX(or_return_expression) POSTFIX(or_break_expression) POSTFIX(or_continue_expression)
+  // 0: POSTFIX(or_return_expression) POSTFIX(or_break_expression) POSTFIX(or_continue_expression) BINARY(typeAssertion_expression)
   // 1: BINARY(or_else_expression)
   // 2: BINARY(elvis_expression) BINARY(ternary_if_expression) BINARY(ternary_when_expression)
   // 3: BINARY(range_inclusive_expression) BINARY(range_exclusive_expression)
@@ -3657,9 +3657,8 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // 18: ATOM(transmute_expression)
   // 19: PREFIX(auto_cast_expression)
   // 20: ATOM(cast_expression)
-  // 21: BINARY(typeAssertion_expression)
-  // 22: ATOM(compound_literal_expression)
-  // 23: ATOM(simple_ref_expression) ATOM(typeDefinition_expression) ATOM(tagStatement_expression) ATOM(literal_expression)
+  // 21: ATOM(compound_literal_expression)
+  // 22: ATOM(simple_ref_expression) ATOM(typeDefinition_expression) ATOM(tagStatement_expression) ATOM(literal_expression)
   //    PREFIX(parenthesized_expression)
   public static boolean expression(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expression")) return false;
@@ -3705,6 +3704,11 @@ public class OdinParser implements PsiParser, LightPsiParser {
       else if (g < 0 && or_continue_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, OR_CONTINUE_EXPRESSION, r, true, null);
+      }
+      else if (g < 0 && parseTokensSmart(b, 0, DOT, LPAREN)) {
+        r = report_error_(b, expression(b, l, 0));
+        r = consumeToken(b, RPAREN) && r;
+        exit_section_(b, l, m, TYPE_ASSERTION_EXPRESSION, r, true, null);
       }
       else if (g < 1 && or_else_expression_0(b, l + 1)) {
         r = report_error_(b, expression(b, l, 1));
@@ -3873,11 +3877,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
       else if (g < 17 && leftMarkerIs(b, PROCEDURE_TYPE) && procedureBody(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, PROCEDURE_EXPRESSION, r, true, null);
-      }
-      else if (g < 21 && parseTokensSmart(b, 0, DOT, LPAREN)) {
-        r = report_error_(b, expression(b, l, 22));
-        r = consumeToken(b, RPAREN) && r;
-        exit_section_(b, l, m, TYPE_ASSERTION_EXPRESSION, r, true, null);
       }
       else {
         exit_section_(b, l, m, null, false, false, null);
@@ -4680,7 +4679,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // 7: ATOM(enumType)
   // 8: ATOM(unionType)
   // 9: PREFIX(pointerType)
-  // 10: ATOM(typeRef)
+  // 10: ATOM(qualifiedType)
   // 11: ATOM(genericType)
   // 12: BINARY(constrainedType)
   public static boolean type_expression(PsiBuilder b, int l, int g) {
@@ -4698,7 +4697,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = enumType(b, l + 1);
     if (!r) r = unionType(b, l + 1);
     if (!r) r = pointerType(b, l + 1);
-    if (!r) r = typeRef(b, l + 1);
+    if (!r) r = qualifiedType(b, l + 1);
     if (!r) r = genericType(b, l + 1);
     p = r;
     r = r && type_expression_0(b, l + 1, g);
@@ -5153,51 +5152,51 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   // qualifiedNameTypeIdentifier [LPAREN expression (COMMA expression)* RPAREN]
-  public static boolean typeRef(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeRef")) return false;
+  public static boolean qualifiedType(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qualifiedType")) return false;
     if (!nextTokenIsSmart(b, IDENTIFIER_TOKEN)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = qualifiedNameTypeIdentifier(b, l + 1);
-    r = r && typeRef_1(b, l + 1);
-    exit_section_(b, m, TYPE_REF, r);
+    r = r && qualifiedType_1(b, l + 1);
+    exit_section_(b, m, QUALIFIED_TYPE, r);
     return r;
   }
 
   // [LPAREN expression (COMMA expression)* RPAREN]
-  private static boolean typeRef_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeRef_1")) return false;
-    typeRef_1_0(b, l + 1);
+  private static boolean qualifiedType_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qualifiedType_1")) return false;
+    qualifiedType_1_0(b, l + 1);
     return true;
   }
 
   // LPAREN expression (COMMA expression)* RPAREN
-  private static boolean typeRef_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeRef_1_0")) return false;
+  private static boolean qualifiedType_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qualifiedType_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, LPAREN);
     r = r && expression(b, l + 1, -1);
-    r = r && typeRef_1_0_2(b, l + 1);
+    r = r && qualifiedType_1_0_2(b, l + 1);
     r = r && consumeToken(b, RPAREN);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // (COMMA expression)*
-  private static boolean typeRef_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeRef_1_0_2")) return false;
+  private static boolean qualifiedType_1_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qualifiedType_1_0_2")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!typeRef_1_0_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "typeRef_1_0_2", c)) break;
+      if (!qualifiedType_1_0_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "qualifiedType_1_0_2", c)) break;
     }
     return true;
   }
 
   // COMMA expression
-  private static boolean typeRef_1_0_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "typeRef_1_0_2_0")) return false;
+  private static boolean qualifiedType_1_0_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qualifiedType_1_0_2_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, COMMA);

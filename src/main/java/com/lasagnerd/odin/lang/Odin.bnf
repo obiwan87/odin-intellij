@@ -268,13 +268,13 @@ type_expression                      ::= mapType
                                          | enumType
                                          | unionType
                                          | pointerType
-                                         | typeRef
+                                         | qualifiedType
                                          | genericType
                                          | constrainedType
 
-constrainedType                      ::= type_expression DIV type_expression
+constrainedType                      ::= type_expression DIV type_expression {pin=1}
 genericType                          ::= DOLLAR identifier
-typeRef                              ::= qualifiedNameTypeIdentifier [LPAREN expression (COMMA expression)* RPAREN] {extends=type_expression}
+qualifiedType                        ::= qualifiedNameTypeIdentifier [LPAREN expression (COMMA expression)* RPAREN] {extends=type_expression}
 private qualifiedNameTypeIdentifier  ::= identifier [DOT identifier]
 
 pointerType                          ::= CARET type_expression
@@ -374,9 +374,9 @@ expression                           ::= postfix_group
                                          | transmute_expression
                                          | auto_cast_expression
                                          | cast_expression
-                                         | typeAssertion_expression
                                          | compound_literal_expression
                                          | primary_group
+
 
 
 fake binary_expression               ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
@@ -445,6 +445,7 @@ private ternary_group                ::= elvis_expression
 private postfix_group                ::= or_return_expression
                                          | or_break_expression
                                          | or_continue_expression
+                                         | typeAssertion_expression
 
 
 parenthesized_expression             ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
@@ -454,7 +455,7 @@ simple_ref_expression                ::= identifier {extends=ref_expression elem
 qualification_expression             ::= expression (DOT|ARROW) identifier {extends=ref_expression elementType=ref_expression}
 index_expression                     ::= expression index
 slice_expression                     ::= expression slice
-typeAssertion_expression             ::= expression DOT LPAREN typeDefinition_expression RPAREN {methods=[subject="/expression[0]" targetType="/expression[1]"]}
+typeAssertion_expression             ::= expression DOT LPAREN type_expression RPAREN {methods=[subject="/expression[0]" targetType="/expression[1]"]}
 procedure_expression                 ::= procedureType procedureBody
 dereference_expression               ::= expression CARET
 identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference]}
@@ -534,7 +535,7 @@ basic_literal                        ::= nil_literal
                                          | boolean_literal
                                          | tripleDashLiteral_expression
 
-private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | typeRef | parExpressionType
+private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | parExpressionType
 parExpressionType                    ::= parenthesized_expression
 
 
