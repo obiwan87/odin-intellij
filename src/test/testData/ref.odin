@@ -18,6 +18,5 @@ main :: proc () {
     e :: Enemy {
         0, 0, { 100, 200, 130}
     }
-
     e.weapon.strength
 }

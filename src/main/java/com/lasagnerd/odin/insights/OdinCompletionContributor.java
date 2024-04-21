@@ -193,7 +193,7 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     private static void findCompletionsForStruct(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral) {
-        if (compoundLiteral == null || !(compoundLiteral.getTypeExpression() instanceof OdinTypeRef typeRef)) {
+        if (compoundLiteral == null || !(compoundLiteral.getTypeExpression() instanceof OdinQualifiedType typeRef)) {
             return;
         }
 

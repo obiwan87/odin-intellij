@@ -175,7 +175,7 @@ class OdinTypedNode extends OdinVisitor {
 
     // TODO: there might be an import statement that we have to solve first
     private static OdinDeclaredIdentifier getDeclaredIdentifierOfTypeRef(Scope parentScope, @Nullable OdinExpression typeExpression) {
-        if (typeExpression instanceof OdinTypeRef) {
+        if (typeExpression instanceof OdinQualifiedType) {
             return (OdinDeclaredIdentifier) parentScope.findNamedElement(typeExpression.getText());
         }
 
@@ -196,7 +196,7 @@ class OdinTypedNode extends OdinVisitor {
             type = getReturnType(procedure);
         }
 
-        if (type instanceof OdinTypeRef typeRef) {
+        if (type instanceof OdinQualifiedType typeRef) {
             this.typeIdentifier = getDeclaredIdentifierOfTypeRef(odinTypedNode.scope, typeRef);
         }
     }
@@ -216,7 +216,7 @@ class OdinTypedNode extends OdinVisitor {
                     type = typeDefinition1.getMain().getExpression();
                 }
 
-            } else if (returnExpression instanceof OdinTypeRef typRef) {
+            } else if (returnExpression instanceof OdinQualifiedType typRef) {
                 type = typRef;
             }
         }
@@ -230,8 +230,6 @@ class OdinTypedNode extends OdinVisitor {
         OdinTypedNode odinTypedNode = new OdinTypedNode(this.scope);
         expression.accept(odinTypedNode);
         OdinDeclaredIdentifier indexedType = odinTypedNode.typeIdentifier;
-
-        System.out.println(indexedType.getText());
     }
 
     @Override

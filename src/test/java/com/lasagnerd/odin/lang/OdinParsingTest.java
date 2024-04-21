@@ -51,6 +51,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinReferenceResolver;
+import com.lasagnerd.odin.insights.Scope;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinRefExpression;
 import org.jetbrains.annotations.NotNull;
@@ -593,7 +594,8 @@ public class OdinParsingTest extends UsefulTestCase {
         Objects.requireNonNull(refExpressions);
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
 
-        OdinReferenceResolver.resolve(OdinInsightUtils.findScope(odinRefExpression), odinRefExpression);
+        Scope scope = OdinInsightUtils.findScope(odinRefExpression);
+        OdinReferenceResolver.resolve(scope, odinRefExpression);
 
     }
 

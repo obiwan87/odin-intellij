@@ -161,7 +161,7 @@ public class OdinLangSyntaxAnnotator implements Annotator {
 
     private static void highlightReservedTypes(@NotNull AnnotationHolder annotationHolder, PsiElement psiElement) {
         PsiElement identifier = null;
-        if (psiElement instanceof OdinTypeRef typeRef) {
+        if (psiElement instanceof OdinQualifiedType typeRef) {
             identifier = typeRef;
         } else if (psiElement instanceof OdinRefExpression identifierExpression) {
             identifier = identifierExpression.getIdentifier();
