@@ -2,18 +2,17 @@
 
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
     <name>Odin Support</name>
     <change-notes><![CDATA[
         <h2>Features</h2>
         <ul>
-            <li>Support for IntelliJ 2023.3</li>
-            <li>Add simple code completion</li>
-            <li>Add support for <code>or_break</code> and <code>or_continue</code>
+            <li>Support for IntelliJ 2024.1</li>
         </ul>
         <h2>Bugfixes</h2>
         <ul>
-            <li>Fix NPE when creation Run Configurations</li>
+            <li>Fix NPE in completion contributor</li>
+            <li>Fix NPE in configuration producer</li>
         </ul>
         ]]>
     </change-notes>
