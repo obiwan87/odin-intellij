@@ -54,7 +54,9 @@ public class OdinCompletionContributor extends CompletionContributor {
 
                             if (reference.getExpression() != null) {
                                 Scope completionScope = OdinReferenceResolver.resolve(scope, reference.getExpression());
-                                addLookUpElements(result, completionScope.getNamedElements());
+                                if(completionScope != null) {
+                                    addLookUpElements(result, completionScope.getNamedElements());
+                                }
                             }
                         }
                     }
