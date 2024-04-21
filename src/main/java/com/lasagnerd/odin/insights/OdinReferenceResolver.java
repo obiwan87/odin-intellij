@@ -93,8 +93,12 @@ class OdinTypedNode extends OdinVisitor {
 
         // using current scope, find identifier declaration and extract type
         PsiNamedElement namedElement = localScope.findNamedElement(o.getIdentifier().getText());
-        if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
+        if (namedElement instanceof OdinImportDeclarationStatement) {
+            isImport = true;
+            importDeclarationStatement = (OdinImportDeclarationStatement) namedElement;
+        } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
             OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinDeclaration.class);
+
             if (odinDeclaration instanceof OdinImportDeclarationStatement) {
                 isImport = true;
                 importDeclarationStatement = (OdinImportDeclarationStatement) odinDeclaration;

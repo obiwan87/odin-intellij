@@ -39,8 +39,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTracker;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValuesManager;
@@ -544,7 +542,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
         registerExtensionPoint(app.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
         project.registerService(DumbService.class, new MockDumbService(project));
-        getApplication().registerService(EditorWindowTracker.class, new EditorWindowTrackerImpl());
+//        getApplication().registerService(EditorWindow.class, new EditorWindowTrackerImpl());
         project.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(project));
     }
 
