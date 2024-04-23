@@ -197,8 +197,11 @@ public class OdinCompletionContributor extends CompletionContributor {
             return;
         }
 
-        var identifierExpressionList = typeRef.getIdentifierList();
-        var identifier = identifierExpressionList.get(0);
+        var structTypeExpression = (OdinQualifiedType) typeRef.getTypeExpression();
+        if(structTypeExpression == null) {
+            return;
+        }
+        var identifier = structTypeExpression.getIdentifier();
         PsiElement reference = Objects.requireNonNull(identifier.getReference()).resolve();
 
         if (reference == null || !(reference.getParent() instanceof OdinStructDeclarationStatement structDeclarationStatement)) {

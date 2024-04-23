@@ -208,18 +208,51 @@ public class OdinPsiUtil {
     }
 
     public static OdinIdentifier getPackageIdentifier(OdinQualifiedType qualifiedType) {
-        if(qualifiedType.getIdentifierList().size() > 1) {
-            return qualifiedType.getIdentifierList().get(0);
+        if(qualifiedType.getTypeExpression() != null) {
+            return qualifiedType.getIdentifier();
         }
 
         return null;
     }
 
     public static OdinIdentifier getTypeIdentifier(OdinQualifiedType qualifiedType) {
-        if(qualifiedType.getIdentifierList().size() > 1) {
-            return qualifiedType.getIdentifierList().get(1);
+        OdinTypeExpression typeExpression = qualifiedType.getTypeExpression();
+        if(typeExpression == null) {
+            return qualifiedType.getIdentifier();
         }
 
-        return qualifiedType.getIdentifierList().get(0);
+        if(typeExpression instanceof OdinQualifiedType qualifiedTypeExpression) {
+            return qualifiedTypeExpression.getTypeIdentifier();
+        }
+        return null;
+    }
+
+    public static OdinTypeExpression getTypeDefinition(OdinArrayType arrayType) {
+        OdinTypeDefinitionExpression typeDefinitionExpression = null;
+        if(arrayType.getExpressionList().size() > 1) {
+            OdinExpression odinExpression = arrayType.getExpressionList().get(1);
+            if(odinExpression instanceof OdinTypeDefinitionExpression) {
+                typeDefinitionExpression = (OdinTypeDefinitionExpression) odinExpression;
+            }
+        }
+        if(!arrayType.getExpressionList().isEmpty()) {
+            OdinExpression odinExpression = arrayType.getExpressionList().get(0);
+            if(odinExpression instanceof OdinTypeDefinitionExpression) {
+                typeDefinitionExpression = (OdinTypeDefinitionExpression) odinExpression;
+            }
+        }
+
+        if(typeDefinitionExpression != null && typeDefinitionExpression.getMain().getExpression() instanceof OdinTypeExpression typeExpression)
+            return typeExpression;
+
+        return null;
+    }
+
+    public static OdinTypeExpression getKeyType(OdinMapType mapType) {
+        return (OdinTypeExpression) mapType.getTypeDefinitionExpressionList().get(0).getMain().getExpression();
+    }
+
+    public static OdinTypeExpression getValueType(OdinMapType mapType) {
+        return (OdinTypeExpression) mapType.getTypeDefinitionExpressionList().get(1).getMain().getExpression();
     }
 }

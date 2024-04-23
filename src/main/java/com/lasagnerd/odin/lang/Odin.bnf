@@ -269,20 +269,23 @@ type_expression                      ::= mapType
                                          | unionType
                                          | pointerType
                                          | qualifiedType
+//                                         | simpleType
                                          | genericType
                                          | constrainedType
 
+//simpleType                           ::= identifier [LPAREN expressionsList RPAREN]
 constrainedType                      ::= type_expression DIV type_expression {pin=1}
 genericType                          ::= DOLLAR identifier
-qualifiedType                        ::= qualifiedNameTypeIdentifier [LPAREN expression (COMMA expression)* RPAREN] {extends=type_expression methods=[getPackageIdentifier getTypeIdentifier]}
-private qualifiedNameTypeIdentifier  ::= identifier [DOT identifier]
+qualifiedType                        ::= qualifiedNameTypeIdentifier [LPAREN expressionsList RPAREN] {extends=type_expression methods=[getPackageIdentifier getTypeIdentifier]}
+private qualifiedNameTypeIdentifier  ::= identifier [DOT type_expression]
+
 
 pointerType                          ::= CARET type_expression
 multiPointerType                     ::= LBRACKET CARET RBRACKET type_expression
 
 
 bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
-mapType                              ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression
+mapType                              ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression {methods=[getKeyType getValueType]}
 matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
 arrayType                            ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression {methods=[getTypeDefinition]}
 
@@ -450,9 +453,13 @@ private postfix_group                ::= or_return_expression
 
 parenthesized_expression             ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
 
+// should we define the arrow operator on its own?
 fake ref_expression                  ::= expression? (DOT|ARROW) identifier
 simple_ref_expression                ::= identifier {extends=ref_expression elementType=ref_expression}
 qualification_expression             ::= expression (DOT|ARROW) identifier {extends=ref_expression elementType=ref_expression}
+
+
+
 index_expression                     ::= expression index
 slice_expression                     ::= expression slice
 typeAssertion_expression             ::= expression DOT LPAREN type_expression RPAREN {methods=[subject="/expression[0]" targetType="/expression[1]"]}

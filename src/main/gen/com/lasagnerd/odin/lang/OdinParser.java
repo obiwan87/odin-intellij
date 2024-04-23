@@ -2574,7 +2574,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // identifier [DOT identifier]
+  // identifier [DOT type_expression]
   static boolean qualifiedNameTypeIdentifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifiedNameTypeIdentifier")) return false;
     if (!nextTokenIs(b, IDENTIFIER_TOKEN)) return false;
@@ -2586,20 +2586,20 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [DOT identifier]
+  // [DOT type_expression]
   private static boolean qualifiedNameTypeIdentifier_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifiedNameTypeIdentifier_1")) return false;
     qualifiedNameTypeIdentifier_1_0(b, l + 1);
     return true;
   }
 
-  // DOT identifier
+  // DOT type_expression
   private static boolean qualifiedNameTypeIdentifier_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifiedNameTypeIdentifier_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, DOT);
-    r = r && identifier(b, l + 1);
+    r = r && type_expression(b, l + 1, -1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -5151,7 +5151,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // qualifiedNameTypeIdentifier [LPAREN expression (COMMA expression)* RPAREN]
+  // qualifiedNameTypeIdentifier [LPAREN expressionsList RPAREN]
   public static boolean qualifiedType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifiedType")) return false;
     if (!nextTokenIsSmart(b, IDENTIFIER_TOKEN)) return false;
@@ -5163,44 +5163,21 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [LPAREN expression (COMMA expression)* RPAREN]
+  // [LPAREN expressionsList RPAREN]
   private static boolean qualifiedType_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifiedType_1")) return false;
     qualifiedType_1_0(b, l + 1);
     return true;
   }
 
-  // LPAREN expression (COMMA expression)* RPAREN
+  // LPAREN expressionsList RPAREN
   private static boolean qualifiedType_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifiedType_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, LPAREN);
-    r = r && expression(b, l + 1, -1);
-    r = r && qualifiedType_1_0_2(b, l + 1);
+    r = r && expressionsList(b, l + 1);
     r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA expression)*
-  private static boolean qualifiedType_1_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qualifiedType_1_0_2")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!qualifiedType_1_0_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "qualifiedType_1_0_2", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA expression
-  private static boolean qualifiedType_1_0_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qualifiedType_1_0_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, COMMA);
-    r = r && expression(b, l + 1, -1);
     exit_section_(b, m, null, r);
     return r;
   }
