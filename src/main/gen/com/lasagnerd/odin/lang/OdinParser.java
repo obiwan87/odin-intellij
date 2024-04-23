@@ -3658,8 +3658,8 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // 19: PREFIX(auto_cast_expression)
   // 20: ATOM(cast_expression)
   // 21: ATOM(compound_literal_expression)
-  // 22: ATOM(simple_ref_expression) ATOM(typeDefinition_expression) ATOM(tagStatement_expression) ATOM(literal_expression)
-  //    PREFIX(parenthesized_expression)
+  // 22: ATOM(simple_ref_expression) PREFIX(parenthesized_expression) ATOM(typeDefinition_expression) ATOM(tagStatement_expression)
+  //    ATOM(literal_expression)
   public static boolean expression(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expression")) return false;
     addVariant(b, "<expression>");
@@ -3678,10 +3678,10 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = cast_expression(b, l + 1);
     if (!r) r = compound_literal_expression(b, l + 1);
     if (!r) r = simple_ref_expression(b, l + 1);
+    if (!r) r = parenthesized_expression(b, l + 1);
     if (!r) r = typeDefinition_expression(b, l + 1);
     if (!r) r = tagStatement_expression(b, l + 1);
     if (!r) r = literal_expression(b, l + 1);
-    if (!r) r = parenthesized_expression(b, l + 1);
     p = r;
     r = r && expression_0(b, l + 1, g);
     exit_section_(b, l, m, null, r, p, null);
@@ -4527,6 +4527,41 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  public static boolean parenthesized_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parenthesized_expression")) return false;
+    if (!nextTokenIsSmart(b, LPAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = parenthesized_expression_0(b, l + 1);
+    p = r;
+    r = p && expression(b, l, -1);
+    r = p && report_error_(b, parenthesized_expression_1(b, l + 1)) && r;
+    exit_section_(b, l, m, PARENTHESIZED_EXPRESSION, r, p, null);
+    return r || p;
+  }
+
+  // LPAREN <<enterMode "PAR">>
+  private static boolean parenthesized_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parenthesized_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, LPAREN);
+    r = r && enterMode(b, l + 1, "PAR");
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // <<exitMode "PAR">> RPAREN
+  private static boolean parenthesized_expression_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "parenthesized_expression_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = exitMode(b, l + 1, "PAR");
+    r = r && consumeToken(b, RPAREN);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // DISTINCT? [tagStatement] main [DIV type_expression]
   public static boolean typeDefinition_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "typeDefinition_expression")) return false;
@@ -4628,41 +4663,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, LITERAL_EXPRESSION, "<literal expression>");
     r = basic_literal(b, l + 1);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  public static boolean parenthesized_expression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "parenthesized_expression")) return false;
-    if (!nextTokenIsSmart(b, LPAREN)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, null);
-    r = parenthesized_expression_0(b, l + 1);
-    p = r;
-    r = p && expression(b, l, -1);
-    r = p && report_error_(b, parenthesized_expression_1(b, l + 1)) && r;
-    exit_section_(b, l, m, PARENTHESIZED_EXPRESSION, r, p, null);
-    return r || p;
-  }
-
-  // LPAREN <<enterMode "PAR">>
-  private static boolean parenthesized_expression_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "parenthesized_expression_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, LPAREN);
-    r = r && enterMode(b, l + 1, "PAR");
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // <<exitMode "PAR">> RPAREN
-  private static boolean parenthesized_expression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "parenthesized_expression_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = exitMode(b, l + 1, "PAR");
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
     return r;
   }
 

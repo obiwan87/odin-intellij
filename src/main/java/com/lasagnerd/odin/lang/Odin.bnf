@@ -469,7 +469,7 @@ identifier                           ::= IDENTIFIER_TOKEN { methods = [getRefere
 
 call_expression                      ::= expression arguments
 
-private primary_group                ::= simple_ref_expression | typeDefinition_expression | tagStatement_expression | literal_expression | parenthesized_expression
+private primary_group                ::= simple_ref_expression | parenthesized_expression| typeDefinition_expression | tagStatement_expression | literal_expression
 
 literal_expression                   ::= basic_literal
 
