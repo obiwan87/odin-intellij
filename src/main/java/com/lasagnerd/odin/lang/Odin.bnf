@@ -218,7 +218,7 @@ attributeStatement                   ::= AT IDENTIFIER_TOKEN
                                          | AT arguments
 // Struct
 structDeclarationStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? structType
-structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> structBlock
+structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> tagStatement* <<exitNoBlockMode>> structBlock
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
 fieldDeclarationStatement            ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition_expression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ] implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" }
@@ -231,7 +231,7 @@ enumBody                             ::= enumValueDeclaration (COMMA enumValueDe
 enumValueDeclaration                       ::= declaredIdentifier [EQ expression]
 // Union
 unionDeclarationStatement            ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? unionType
-unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterMode "BLOCK">> tagStatement* <<exitMode "BLOCK">> unionBlock
+unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> tagStatement* <<exitNoBlockMode>> unionBlock
 unionBlock                           ::= blockStart [unionBody] blockEnd
 unionBody                            ::= typeDefinition_expression (COMMA typeDefinition_expression)* [COMMA|EOS_TOKEN]
 
@@ -240,10 +240,10 @@ bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator 
 
 // Procedure
 procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody
-procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterMode "BLOCK">> [eos? whereClause eos?] <<exitMode "BLOCK">>
+procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
 
 whereClause                          ::= WHERE expression (COMMA expression)*
-procedureBody                        ::= block| [tagStatement] TRIPLE_DASH
+procedureBody                        ::=  [tagStatement] (block| TRIPLE_DASH)
 returnParameters                      ::= NOT | LPAREN paramEntries RPAREN | typeDefinition_expression
 
 returnStatement                      ::= [tagStatement] RETURN returnArgumentList?
@@ -463,7 +463,8 @@ qualification_expression             ::= expression (DOT|ARROW) identifier {exte
 index_expression                     ::= expression index
 slice_expression                     ::= expression slice
 typeAssertion_expression             ::= expression DOT LPAREN type_expression RPAREN {methods=[subject="/expression[0]" targetType="/expression[1]"]}
-procedure_expression                 ::= procedureType procedureBody
+procedure_expression                 ::= procedure_expression_type procedureBody
+procedure_expression_type            ::= procedureType
 dereference_expression               ::= expression CARET
 identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference]}
 
@@ -481,7 +482,7 @@ compound_literal_untyped             ::= compound_value_untyped {extends=compoun
 
 index                                ::= LBRACKET expression [COMMA expression] RBRACKET
 slice                                ::= LBRACKET expression? COLON expression? RBRACKET
-private arguments                            ::= LPAREN argumentList? RPAREN
+private arguments                    ::= LPAREN <<enterMode "PAR">>  argumentList? <<exitMode "PAR">> RPAREN
 
 elvis_expression                     ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">>
 ternary_if_expression                ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
@@ -495,7 +496,7 @@ uninitialized_expression             ::= TRIPLE_DASH
 
 // TODO this is a duplicate of compoundLiteralValue but without the non-consuming <<>>-rules
 // --> fix this
-compound_value_untyped               ::= ((<<isModeOn "OPERAND">> | <<isModeOn "PAR">> | <<isModeOff "BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
+compound_value_untyped               ::= ((<<isModeOn "OPERAND">> | <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
                                          | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeOperator>>) {extends=compound_value elementType=compound_value}
 maybe_expression                     ::= expression DOT_QUESTION
 
@@ -546,7 +547,7 @@ private compoundType                 ::= arrayType | matrixType | bitSetType  | 
 parExpressionType                    ::= parenthesized_expression
 
 
-compound_value_typed                 ::= ((<<isModeOn "PAR">> | <<isModeOff "BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
+compound_value_typed                 ::= ((<<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
                                          | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeComma>>) {extends=compound_value elementType=compound_value}
 compoundValueStart                   ::= LBRACE
 compoundValueEnd                     ::= RBRACE
@@ -561,7 +562,7 @@ tagHead                              ::= HASH IDENTIFIER_TOKEN
 forStatement                         ::= label? tagStatement? forHead statementBody
 label                                ::= IDENTIFIER_TOKEN COLON
 
-forHead                              ::= FOR <<enterMode "BLOCK">> (forIn|forTraditional) <<exitMode "BLOCK">>
+forHead                              ::= FOR <<enterNoBlockMode>> (forIn|forTraditional) <<exitNoBlockMode>>
 doStatement                          ::= DO statement
 
 breakStatement                       ::= BREAK IDENTIFIER_TOKEN?
@@ -619,7 +620,7 @@ private forEndStatement              ::= assignmentStatement | call_expression
 ifStatement                          ::= [label] [tagHead] if condition statementBody (sos elseIfBlock)* [sos elseBlock]
 private statementBody                ::= block|doStatement
 // TODO initStatement is not valid for when statements
-condition                            ::= <<enterMode "BLOCK">> [initStatement SEMICOLON] expression <<exitMode "BLOCK">>
+condition                            ::= <<enterNoBlockMode>> [initStatement SEMICOLON] expression <<exitNoBlockMode>>
 private switchCondition              ::= [initStatement SEMICOLON] expression?
 initStatement                        ::= assignmentStatement|variableInitializationStatement|variableDeclarationStatement
 elseIfBlock                          ::= elseIf condition statementBody
@@ -631,7 +632,7 @@ whenStatement                        ::= WHEN condition statementBody (sos elseW
 elseWhenBlock                        ::= else WHEN condition statementBody
 
 switchStatement                      ::= [label] [tagStatement_expression] switchHead switchBody
-switchHead                           ::= SWITCH IN? <<enterMode "BLOCK">> switchCondition? <<exitMode "BLOCK">>
+switchHead                           ::= SWITCH IN? <<enterNoBlockMode>> switchCondition? <<exitNoBlockMode>>
 switchBody                           ::= eos? blockStart switchCases blockEnd
 switchCases                          ::= switchCase*
 switchCase                           ::= CASE (expression (COMMA expression)*)? caseBlock

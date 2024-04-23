@@ -11,9 +11,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.coverage.gnu.trove.TObjectIntHashMap;
 
+import java.util.Stack;
+
 public class OdinParserUtil extends GeneratedParserUtilBase {
 
     private static final Key<TObjectIntHashMap<String>> MODES_KEY = Key.create("MODES_KEY");
+    private static final Key<Stack<TObjectIntHashMap<String>>> MODES_STACK_KEY = Key.create("MODES_STACK_KEY");
 
     public static boolean afterClosingBrace(PsiBuilder builder, int level) {
         IElementType tokenType = lookBehindUntilNoWhitespace(builder);
@@ -44,6 +47,43 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
             tokenType = builder.rawLookup(i);
         } while ((tokenType == TokenType.WHITE_SPACE || tokenType == OdinTypes.NEW_LINE) && currentOffset + i > 0);
         return tokenType;
+    }
+
+    public static boolean enterNoBlockMode(PsiBuilder builder, int level) {
+        // Save all current flags on a stack
+        TObjectIntHashMap<String> flags = getParsingModes(builder);
+        TObjectIntHashMap<String> flagsCopy = new TObjectIntHashMap<>(flags);
+        Stack<TObjectIntHashMap<String>> stack = builder.getUserData(MODES_STACK_KEY);
+
+        if (stack == null) {
+            stack = new Stack<>();
+            builder.putUserData(MODES_STACK_KEY, stack);
+        }
+
+        stack.push(flagsCopy);
+        // Clear all flags
+        flags.clear();
+
+        flags.put("NO_BLOCK", flags.get("NO_BLOCK") + 1);
+        return true;
+
+    }
+
+    public static boolean exitNoBlockMode(PsiBuilder builder, int level) {
+        // Restore all flags from the stack
+        TObjectIntHashMap<String> flags = getParsingModes(builder);
+        Stack<TObjectIntHashMap<String>> stack = builder.getUserData(MODES_STACK_KEY);
+        if(stack == null || stack.isEmpty()) {
+            return true;
+        }
+
+        TObjectIntHashMap<String> flagsCopy = stack.pop();
+        flags.clear();
+        flagsCopy.forEachEntry((key, value) -> {
+            flags.put(key, value);
+            return true;
+        });
+        return true;
     }
 
     public static boolean enterMode(PsiBuilder builder, int level, String mode) {
