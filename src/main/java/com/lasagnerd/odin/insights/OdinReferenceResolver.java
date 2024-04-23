@@ -3,6 +3,7 @@ package com.lasagnerd.odin.insights;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.lang.psi.*;
+import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,37 +12,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class OdinReferenceResolver {
-
-    public enum OdinNativeType {
-        STRUCT,
-        ENUM,
-        F32,
-        F64,
-        I8,
-        I16,
-        I32,
-        I64,
-        U8,
-        U16,
-        U32,
-        U64,
-        STRING,
-        BOOL,
-        NIL,
-        PROCEDURE,
-        PROCEDURE_OVERLOAD,
-        UNION,
-    }
-
-    public static class OdinTypeSpec {
-        // null for anonymous types
-        OdinDeclaredIdentifier declaredIdentifier;
-
-        OdinTypeExpression odinTypeExpression;
-
-
-    }
-
     public static Scope resolve(Scope scope, OdinExpression valueExpression) {
 
         OdinTypedNode odinTypedNode = new OdinTypedNode(scope);
@@ -79,20 +49,20 @@ class OdinTypedNode extends OdinVisitor {
     }
 
     @Override
-    public void visitRefExpression(@NotNull OdinRefExpression o) {
+    public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
         Scope localScope;
-        if (o.getExpression() != null) {
+        if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
             // extract scope
             OdinTypedNode odinTypedNode = new OdinTypedNode(this.scope);
-            o.getExpression().accept(odinTypedNode);
+            refExpression.getExpression().accept(odinTypedNode);
             localScope = getCompletionScopeOfType(this.scope, odinTypedNode.typeIdentifier);
         } else {
             localScope = this.scope;
         }
 
         // using current scope, find identifier declaration and extract type
-        PsiNamedElement namedElement = localScope.findNamedElement(o.getIdentifier().getText());
+        PsiNamedElement namedElement = localScope.findNamedElement(refExpression.getIdentifier().getText());
         if (namedElement instanceof OdinImportDeclarationStatement) {
             isImport = true;
             importDeclarationStatement = (OdinImportDeclarationStatement) namedElement;
@@ -173,12 +143,17 @@ class OdinTypedNode extends OdinVisitor {
         }
     }
 
-    // TODO: there might be an import statement that we have to solve first
     private static OdinDeclaredIdentifier getDeclaredIdentifierOfTypeRef(Scope parentScope, @Nullable OdinExpression typeExpression) {
-        if (typeExpression instanceof OdinQualifiedType) {
-            return (OdinDeclaredIdentifier) parentScope.findNamedElement(typeExpression.getText());
+        if (typeExpression instanceof OdinQualifiedType odinQualifiedType) {
+            if (odinQualifiedType.getPackageIdentifier() != null) {
+                Scope packageScope = parentScope.getScopeOfImport(odinQualifiedType.getPackageIdentifier().getIdentifierToken().getText());
+                return (OdinDeclaredIdentifier) packageScope.findNamedElement(odinQualifiedType.getTypeIdentifier().getIdentifierToken().getText());
+            } else {
+                return (OdinDeclaredIdentifier) parentScope.findNamedElement(((OdinQualifiedType) typeExpression).getTypeIdentifier()
+                        .getIdentifierToken()
+                        .getText());
+            }
         }
-
         return null;
     }
 
@@ -291,4 +266,10 @@ class OdinTypedNode extends OdinVisitor {
                 .flatMap(x -> x.getDeclaredIdentifiers().stream())
                 .collect(Collectors.toList());
     }
+}
+
+@Data
+class OdinTypeReference {
+    OdinDeclaredIdentifier declaredIdentifier;
+
 }

@@ -6,10 +6,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +19,13 @@ import java.util.function.Predicate;
 public class OdinInsightUtils {
     public static OdinDeclaration getDeclaration(PsiNamedElement declaredIdentifier) {
         return findFirstParentOfType(declaredIdentifier, false, OdinDeclaration.class);
+    }
+
+    @NotNull
+    public static String getFileName(@NotNull PsiElement psiElement) {
+        VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
+        return Objects.requireNonNullElseGet(virtualFile,
+                () -> psiElement.getContainingFile().getViewProvider().getVirtualFile()).getName();
     }
 
     @Nullable
@@ -165,14 +169,15 @@ public class OdinInsightUtils {
         return getDeclarationsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
     }
 
-    static Scope getDeclarationsOfImportedPackage(Scope scope, OdinImportDeclarationStatement importStatement) {
+    public static Scope getDeclarationsOfImportedPackage(Scope scope, OdinImportDeclarationStatement importStatement) {
         ImportInfo importInfo = importStatement.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
-        String path = scope.getPackagePath();
+        String path = Path.of(scope.getPackagePath(), OdinInsightUtils.getFileName(importStatement)).toString();
         String name = importInfo.packageName();
         Project project = importStatement.getProject();
         return getDeclarationsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
     }
+
 
     public record QualifiedName(@NotNull String name, @NotNull OdinRefExpression rootRefExpression) {
 
@@ -388,7 +393,14 @@ public class OdinInsightUtils {
      * @return Returns the declarations from an import with specified name.
      * TODO This should return the target file as well
      */
-    public static Scope getDeclarationsOfImportedPackage(ImportInfo importInfo, String sourcePath, Project project) {
+    /**
+     *
+     * @param importInfo The import to be imported
+     * @param sourceFilePath Path of the file from where the import should be resolved
+     * @param project Project
+     * @return
+     */
+    public static Scope getDeclarationsOfImportedPackage(ImportInfo importInfo, String sourceFilePath, Project project) {
         List<PsiNamedElement> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
             Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
@@ -401,7 +413,8 @@ public class OdinInsightUtils {
                     dirs.add(sdkSourceDir);
                 }
             }
-            Path currentDir = Path.of(sourcePath).getParent();
+            Path sourcePath = Path.of(sourceFilePath);
+            Path currentDir = sourcePath.getParent();
 
             dirs.add(currentDir);
 

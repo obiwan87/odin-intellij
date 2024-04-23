@@ -206,4 +206,20 @@ public class OdinPsiUtil {
 
         return new ImportInfo(name, path, library);
     }
+
+    public static OdinIdentifier getPackageIdentifier(OdinQualifiedType qualifiedType) {
+        if(qualifiedType.getIdentifierList().size() > 1) {
+            return qualifiedType.getIdentifierList().get(0);
+        }
+
+        return null;
+    }
+
+    public static OdinIdentifier getTypeIdentifier(OdinQualifiedType qualifiedType) {
+        if(qualifiedType.getIdentifierList().size() > 1) {
+            return qualifiedType.getIdentifierList().get(1);
+        }
+
+        return qualifiedType.getIdentifierList().get(0);
+    }
 }

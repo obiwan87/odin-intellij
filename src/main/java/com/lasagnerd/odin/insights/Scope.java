@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.insights;
 
 import com.intellij.psi.PsiNamedElement;
+import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,8 +16,6 @@ public class Scope {
     private String packagePath;
     public static final Scope EMPTY = new Scope();
     Map<String, PsiNamedElement> symbolTable = new HashMap<>();
-
-
 
     public Scope() {
 
@@ -80,5 +79,19 @@ public class Scope {
         return scope;
     }
 
+    /**
+     * Creates a new scope for a given package identifier defined within this scope.
+     *
+     * @param packageIdentifier The identifier that is used to reference the package
+     * @return A new scope with all the declared symbols of the referenced package
+     */
+
+    public Scope getScopeOfImport(String packageIdentifier) {
+        PsiNamedElement psiNamedElement = symbolTable.get(packageIdentifier);
+        if(psiNamedElement instanceof  OdinImportDeclarationStatement importDeclarationStatement) {
+            return OdinInsightUtils.getDeclarationsOfImportedPackage(this, importDeclarationStatement);
+        }
+        throw new RuntimeException("namedElement " + packageIdentifier + " is not of type importDeclarationStatement.");
+    }
 
 }

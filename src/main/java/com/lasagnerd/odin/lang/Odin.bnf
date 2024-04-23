@@ -274,7 +274,7 @@ type_expression                      ::= mapType
 
 constrainedType                      ::= type_expression DIV type_expression {pin=1}
 genericType                          ::= DOLLAR identifier
-qualifiedType                        ::= qualifiedNameTypeIdentifier [LPAREN expression (COMMA expression)* RPAREN] {extends=type_expression}
+qualifiedType                        ::= qualifiedNameTypeIdentifier [LPAREN expression (COMMA expression)* RPAREN] {extends=type_expression methods=[getPackageIdentifier getTypeIdentifier]}
 private qualifiedNameTypeIdentifier  ::= identifier [DOT identifier]
 
 pointerType                          ::= CARET type_expression
@@ -284,7 +284,7 @@ multiPointerType                     ::= LBRACKET CARET RBRACKET type_expression
 bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
 mapType                              ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression
 matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
-arrayType                            ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression
+arrayType                            ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression {methods=[getTypeDefinition]}
 
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
