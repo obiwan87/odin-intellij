@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Objects;
 
 import static com.lasagnerd.odin.insights.ExpressionTypeInference.getEnumFields;
@@ -22,7 +23,7 @@ class TypeExpressionResolver extends OdinVisitor {
         return typeExpressionResolver.type;
     }
 
-    OdinDeclaredIdentifier declaredIdentifier;
+
     Scope scope;
     private final Scope initialScope;
     TsOdinType type;
@@ -98,6 +99,23 @@ class TypeExpressionResolver extends OdinVisitor {
         this.type = pointerType;
     }
 
+    @Override
+    public void visitProcedureType(@NotNull OdinProcedureType odinProcedureType) {
+        TsOdinProcedureType procedureType = new TsOdinProcedureType();
+        TypeExpressionResolver typeExpressionResolver = new TypeExpressionResolver(scope);
+        OdinReturnParameters returnParameters = odinProcedureType.getReturnParameters();
+        if(returnParameters != null) {
+            OdinTypeDefinitionExpression typeDefinitionExpression = returnParameters.getTypeDefinitionExpression();
+            if(typeDefinitionExpression != null) {
+                OdinTypeExpression typeExpression = (OdinTypeExpression) typeDefinitionExpression.getMainTypeExpression();
+                typeExpression.accept(typeExpressionResolver);
+                procedureType.setReturnTypes(List.of(typeExpressionResolver.type));
+            }
+        }
+        // TODO arguments
+        this.type = procedureType;
+    }
+
     /**
      * Creates a type from a given identifier
      * @param scope the scope in which the type is defined
@@ -112,7 +130,7 @@ class TypeExpressionResolver extends OdinVisitor {
      * We can then create a new type object and return it.
      *
      */
-    static TsOdinType createType(Scope scope, PsiNamedElement identifier) {
+    private TsOdinType createType(Scope scope, PsiNamedElement identifier) {
         if (!(identifier instanceof OdinDeclaredIdentifier declaredIdentifier) ) {
             return null;
         }

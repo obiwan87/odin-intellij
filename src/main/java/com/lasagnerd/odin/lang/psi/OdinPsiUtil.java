@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class OdinPsiUtil {
     public static PsiReference getReference(OdinIdentifier self) {
@@ -76,7 +75,6 @@ public class OdinPsiUtil {
     }
 
 
-
     public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinStructDeclarationStatement statement) {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
@@ -105,7 +103,6 @@ public class OdinPsiUtil {
     public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinParameterInitialization statement) {
         return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
     }
-
 
 
     // OdinTypedDeclaration
@@ -208,7 +205,7 @@ public class OdinPsiUtil {
     }
 
     public static OdinIdentifier getPackageIdentifier(OdinQualifiedType qualifiedType) {
-        if(qualifiedType.getTypeExpression() != null) {
+        if (qualifiedType.getTypeExpression() != null) {
             return qualifiedType.getIdentifier();
         }
 
@@ -217,11 +214,11 @@ public class OdinPsiUtil {
 
     public static OdinIdentifier getTypeIdentifier(OdinQualifiedType qualifiedType) {
         OdinTypeExpression typeExpression = qualifiedType.getTypeExpression();
-        if(typeExpression == null) {
+        if (typeExpression == null) {
             return qualifiedType.getIdentifier();
         }
 
-        if(typeExpression instanceof OdinQualifiedType qualifiedTypeExpression) {
+        if (typeExpression instanceof OdinQualifiedType qualifiedTypeExpression) {
             return qualifiedTypeExpression.getTypeIdentifier();
         }
         return null;
@@ -229,30 +226,40 @@ public class OdinPsiUtil {
 
     public static OdinTypeExpression getTypeDefinition(OdinArrayType arrayType) {
         OdinTypeDefinitionExpression typeDefinitionExpression = null;
-        if(arrayType.getExpressionList().size() > 1) {
+        if (arrayType.getExpressionList().size() > 1) {
             OdinExpression odinExpression = arrayType.getExpressionList().get(1);
-            if(odinExpression instanceof OdinTypeDefinitionExpression) {
+            if (odinExpression instanceof OdinTypeDefinitionExpression) {
                 typeDefinitionExpression = (OdinTypeDefinitionExpression) odinExpression;
             }
         }
-        if(!arrayType.getExpressionList().isEmpty()) {
+        if (!arrayType.getExpressionList().isEmpty()) {
             OdinExpression odinExpression = arrayType.getExpressionList().get(0);
-            if(odinExpression instanceof OdinTypeDefinitionExpression) {
+            if (odinExpression instanceof OdinTypeDefinitionExpression) {
                 typeDefinitionExpression = (OdinTypeDefinitionExpression) odinExpression;
             }
         }
 
-        if(typeDefinitionExpression != null && typeDefinitionExpression.getMain().getExpression() instanceof OdinTypeExpression typeExpression)
-            return typeExpression;
+        if (typeDefinitionExpression != null)
+            return typeDefinitionExpression.getMainTypeExpression();
 
         return null;
     }
 
     public static OdinTypeExpression getKeyType(OdinMapType mapType) {
-        return (OdinTypeExpression) mapType.getTypeDefinitionExpressionList().get(0).getMain().getExpression();
+        return mapType.getTypeDefinitionExpressionList().get(0).getMainTypeExpression();
     }
 
     public static OdinTypeExpression getValueType(OdinMapType mapType) {
-        return (OdinTypeExpression) mapType.getTypeDefinitionExpressionList().get(1).getMain().getExpression();
+        return mapType.getTypeDefinitionExpressionList().get(1).getMainTypeExpression();
+    }
+
+    public static OdinTypeExpression getMainTypeExpression(OdinTypeDefinitionExpression typeDefinitionExpression) {
+        OdinMain main = typeDefinitionExpression.getMain();
+        OdinExpression expression = main.getExpression();
+        if (expression instanceof OdinTypeExpression odinTypeExpression) {
+            return odinTypeExpression;
+        }
+
+        return null;
     }
 }

@@ -255,7 +255,7 @@ usingStatement                       ::= USING expression
 procedureOverloadStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
 
 // Variables and constants
-typeDefinition_expression            ::= DISTINCT? [tagStatement] main [DIV type_expression] {methods=[mainType="/expression[0]" specialType="/expression[1]"]}
+typeDefinition_expression            ::= DISTINCT? [tagStatement] main [DIV type_expression] {methods=[getMainTypeExpression specialTypeExpression="/expression[1]"]}
 main                                 ::= type_expression | parenthesized_expression
 
 type_expression                      ::= mapType
