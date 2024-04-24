@@ -73,16 +73,14 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
         // Restore all flags from the stack
         TObjectIntHashMap<String> flags = getParsingModes(builder);
         Stack<TObjectIntHashMap<String>> stack = builder.getUserData(MODES_STACK_KEY);
-        if(stack == null || stack.isEmpty()) {
-            return true;
+        if(stack != null && !stack.isEmpty()) {
+            TObjectIntHashMap<String> flagsCopy = stack.pop();
+            flags.clear();
+            flagsCopy.forEachEntry((key, value) -> {
+                flags.put(key, value);
+                return true;
+            });
         }
-
-        TObjectIntHashMap<String> flagsCopy = stack.pop();
-        flags.clear();
-        flagsCopy.forEachEntry((key, value) -> {
-            flags.put(key, value);
-            return true;
-        });
         return true;
     }
 
