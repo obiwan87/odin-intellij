@@ -41,6 +41,10 @@ public class Scope {
         }
     }
 
+    public void addSymbols(Scope scope) {
+        symbolTable.putAll(scope.symbolTable);
+    }
+
     public void add(PsiNamedElement namedElement) {
         symbolTable.put(namedElement.getName(), namedElement);
     }
@@ -57,7 +61,7 @@ public class Scope {
         return scope;
     }
 
-    static Scope from(List< ? extends PsiNamedElement> identifiers, String packagePath) {
+    static Scope from(List<? extends PsiNamedElement> identifiers, String packagePath) {
         Scope scope = from(identifiers);
         scope.packagePath = packagePath;
 
@@ -88,7 +92,7 @@ public class Scope {
 
     public Scope getScopeOfImport(String packageIdentifier) {
         PsiNamedElement psiNamedElement = symbolTable.get(packageIdentifier);
-        if(psiNamedElement instanceof  OdinImportDeclarationStatement importDeclarationStatement) {
+        if (psiNamedElement instanceof OdinImportDeclarationStatement importDeclarationStatement) {
             return OdinInsightUtils.getDeclarationsOfImportedPackage(this, importDeclarationStatement);
         }
         throw new RuntimeException("namedElement " + packageIdentifier + " is not of type importDeclarationStatement.");

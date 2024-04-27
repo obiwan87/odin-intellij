@@ -8,11 +8,4 @@ import lombok.EqualsAndHashCode;
 @Data
 public class TsOdinPointerType extends TsOdinType {
     private TsOdinType dereferencedType;
-
-    public Scope getScope() {
-        if(dereferencedType == null)
-            return null;
-
-        return dereferencedType.getScope();
-    }
 }

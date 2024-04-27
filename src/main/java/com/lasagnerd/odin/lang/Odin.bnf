@@ -269,13 +269,11 @@ type_expression                      ::= mapType
                                          | unionType
                                          | pointerType
                                          | qualifiedType
-//                                         | simpleType
-                                         | genericType
+                                         | polymorphicType
                                          | constrainedType
 
-//simpleType                           ::= identifier [LPAREN expressionsList RPAREN]
 constrainedType                      ::= type_expression DIV type_expression {pin=1}
-genericType                          ::= DOLLAR identifier
+polymorphicType                      ::= DOLLAR identifier
 qualifiedType                        ::= qualifiedNameTypeIdentifier [LPAREN expressionsList RPAREN] {extends=type_expression methods=[getPackageIdentifier getTypeIdentifier]}
 private qualifiedNameTypeIdentifier  ::= identifier [DOT type_expression]
 
@@ -488,7 +486,7 @@ elvis_expression                     ::= expression QUESTION <<enterMode "OPERAN
 ternary_if_expression                ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
 ternary_when_expression              ::= expression WHEN     <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
 
-cast_expression                      ::= CAST LPAREN typeDefinition_expression RPAREN expression
+cast_expression                      ::= CAST LPAREN typeDefinition_expression RPAREN expression {methods=[typeDefinitionExpression="/expression[0]"]}
 transmute_expression                 ::= TRANSMUTE LPAREN expression RPAREN expression
 auto_cast_expression                 ::= AUTO_CAST expression
 nil_literal                          ::= NIL

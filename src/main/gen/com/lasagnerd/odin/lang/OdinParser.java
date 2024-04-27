@@ -52,10 +52,10 @@ public class OdinParser implements PsiParser, LightPsiParser {
     create_token_set_(ARRAY_TYPE, AUTO_CAST_EXPRESSION, BINARY_EXPRESSION, BIT_SET_TYPE,
       CALL_EXPRESSION, CAST_EXPRESSION, COMPOUND_LITERAL_EXPRESSION, CONSTRAINED_TYPE,
       DEREFERENCE_EXPRESSION, ELVIS_EXPRESSION, ENUM_TYPE, EXPRESSION,
-      GENERIC_TYPE, INDEX_EXPRESSION, LITERAL_EXPRESSION, MAP_TYPE,
-      MATRIX_TYPE, MAYBE_EXPRESSION, MULTI_POINTER_TYPE, OR_BREAK_EXPRESSION,
-      OR_CONTINUE_EXPRESSION, OR_RETURN_EXPRESSION, PARENTHESIZED_EXPRESSION, PAR_EXPRESSION_TYPE,
-      POINTER_TYPE, PROCEDURE_EXPRESSION, PROCEDURE_TYPE, QUALIFIED_TYPE,
+      INDEX_EXPRESSION, LITERAL_EXPRESSION, MAP_TYPE, MATRIX_TYPE,
+      MAYBE_EXPRESSION, MULTI_POINTER_TYPE, OR_BREAK_EXPRESSION, OR_CONTINUE_EXPRESSION,
+      OR_RETURN_EXPRESSION, PARENTHESIZED_EXPRESSION, PAR_EXPRESSION_TYPE, POINTER_TYPE,
+      POLYMORPHIC_TYPE, PROCEDURE_EXPRESSION, PROCEDURE_TYPE, QUALIFIED_TYPE,
       REF_EXPRESSION, SLICE_EXPRESSION, STRUCT_TYPE, TAG_STATEMENT_EXPRESSION,
       TERNARY_IF_EXPRESSION, TERNARY_WHEN_EXPRESSION, TRANSMUTE_EXPRESSION, TRIPLE_DASH_LITERAL_EXPRESSION,
       TYPE_ASSERTION_EXPRESSION, TYPE_DEFINITION_EXPRESSION, TYPE_EXPRESSION, UNARY_AND_EXPRESSION,
@@ -4701,7 +4701,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // 8: ATOM(unionType)
   // 9: PREFIX(pointerType)
   // 10: ATOM(qualifiedType)
-  // 11: ATOM(genericType)
+  // 11: ATOM(polymorphicType)
   // 12: BINARY(constrainedType)
   public static boolean type_expression(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "type_expression")) return false;
@@ -4719,7 +4719,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = unionType(b, l + 1);
     if (!r) r = pointerType(b, l + 1);
     if (!r) r = qualifiedType(b, l + 1);
-    if (!r) r = genericType(b, l + 1);
+    if (!r) r = polymorphicType(b, l + 1);
     p = r;
     r = r && type_expression_0(b, l + 1, g);
     exit_section_(b, l, m, null, r, p, null);
@@ -5204,14 +5204,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   // DOLLAR identifier
-  public static boolean genericType(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "genericType")) return false;
+  public static boolean polymorphicType(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "polymorphicType")) return false;
     if (!nextTokenIsSmart(b, DOLLAR)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, DOLLAR);
     r = r && identifier(b, l + 1);
-    exit_section_(b, m, GENERIC_TYPE, r);
+    exit_section_(b, m, POLYMORPHIC_TYPE, r);
     return r;
   }
 

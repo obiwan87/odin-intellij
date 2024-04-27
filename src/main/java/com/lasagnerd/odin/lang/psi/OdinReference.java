@@ -19,8 +19,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public @Nullable PsiElement resolve() {
-        var element = getElement();
-        return OdinInsightUtils.findFirstDeclaration(getElement(), psi -> psi.getText().equals(element.getText()));
+        return OdinInsightUtils.findFirstDeclaration2(getElement());
     }
 
     @Override

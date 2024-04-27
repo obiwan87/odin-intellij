@@ -7,11 +7,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import static com.lasagnerd.odin.insights.ExpressionTypeInference.getEnumFields;
-import static com.lasagnerd.odin.insights.ExpressionTypeInference.getStructFields;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -107,9 +105,13 @@ class TypeExpressionResolver extends OdinVisitor {
         if(returnParameters != null) {
             OdinTypeDefinitionExpression typeDefinitionExpression = returnParameters.getTypeDefinitionExpression();
             if(typeDefinitionExpression != null) {
-                OdinTypeExpression typeExpression = (OdinTypeExpression) typeDefinitionExpression.getMainTypeExpression();
+                OdinTypeExpression typeExpression = typeDefinitionExpression.getMainTypeExpression();
                 typeExpression.accept(typeExpressionResolver);
-                procedureType.setReturnTypes(List.of(typeExpressionResolver.type));
+                if(typeExpressionResolver.type != null) {
+                    procedureType.setReturnTypes(List.of(typeExpressionResolver.type));
+                } else {
+                    procedureType.setReturnTypes(Collections.emptyList());
+                }
             }
         }
         // TODO arguments
@@ -130,10 +132,9 @@ class TypeExpressionResolver extends OdinVisitor {
      * We can then create a new type object and return it.
      *
      */
+
+    // TODO setting the scope here doesn't feel right, as the scope might not be completely defined for polymorphic types
     private TsOdinType createType(Scope scope, PsiNamedElement identifier) {
-        if (!(identifier instanceof OdinDeclaredIdentifier declaredIdentifier) ) {
-            return null;
-        }
 
         OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(identifier,
                 false,
@@ -141,21 +142,21 @@ class TypeExpressionResolver extends OdinVisitor {
 
         if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
             TsOdinStructType structType = new TsOdinStructType();
-            structType.setDeclaration(declaredIdentifier);
-
-            var structScope = scope.with(getStructFields(structDeclarationStatement));
-            structType.setScope(structScope);
+            structType.setDeclaration(structDeclarationStatement);
+            structType.setParentScope(scope);
             return structType;
         }
 
         if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
             TsOdinEnumType enumType = new TsOdinEnumType();
-            enumType.setDeclaration(declaredIdentifier);
-            enumType.setScope(scope.with(getEnumFields(enumDeclarationStatement)));
+            enumType.setDeclaration(enumDeclarationStatement);
+            enumType.setParentScope(scope);
             return enumType;
         }
 
-        // TODO add types
+        if(odinDeclaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
+            // Todo Add logic for alias
+        }
 
         return TsOdinType.UNKNOWN;
     }

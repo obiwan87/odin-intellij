@@ -9,12 +9,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.lang.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class OdinInsightUtils {
     public static OdinDeclaration getDeclaration(PsiNamedElement declaredIdentifier) {
@@ -26,6 +28,15 @@ public class OdinInsightUtils {
         VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
         return Objects.requireNonNullElseGet(virtualFile,
                 () -> psiElement.getContainingFile().getViewProvider().getVirtualFile()).getName();
+    }
+
+    public static String getPackagePath(PsiElement psiElement) {
+        OdinFile containingFile = (OdinFile) psiElement.getContainingFile();
+        if (containingFile == null)
+            return null;
+        @NotNull PsiFile virtualFile = containingFile.getOriginalFile();
+        return virtualFile.getContainingDirectory().getVirtualFile().getPath();
+
     }
 
     @Nullable
@@ -97,6 +108,41 @@ public class OdinInsightUtils {
                 }
             }
         }
+
+        return null;
+    }
+
+    public static PsiElement findFirstDeclaration2(OdinIdentifier identifier) {
+        Scope parentScope = findScope(identifier).with(getPackagePath(identifier));
+        OdinRefExpression refExpression = findFirstParentOfType(identifier, true, OdinRefExpression.class);
+        Scope scope = Scope.EMPTY;
+        if (refExpression != null) {
+            if (refExpression.getExpression() instanceof OdinRefExpression parentRefExpression) {
+                scope = OdinReferenceResolver.resolve(parentScope, parentRefExpression);
+            } else {
+                scope = parentScope;
+            }
+        } else {
+
+            OdinTypeDefinitionExpression typeDefinitionExpression = findFirstParentOfType(identifier, true, OdinTypeDefinitionExpression.class);
+            if (typeDefinitionExpression == null)
+                return null;
+
+            OdinTypeExpression mainTypeExpression = typeDefinitionExpression.getMainTypeExpression();
+            if (mainTypeExpression instanceof OdinQualifiedType qualifiedType) {
+                if (qualifiedType.getPackageIdentifier() != null && qualifiedType.getPackageIdentifier()
+                        .getIdentifierToken()
+                        .getText()
+                        .equals(identifier.getIdentifierToken().getText())) {
+                    scope = parentScope;
+                } else {
+                    TsOdinType type = TypeExpressionResolver.resolveType(parentScope, qualifiedType);
+                    scope = type.getParentScope();
+                }
+            }
+        }
+        if (scope != null)
+            return scope.findNamedElement(identifier.getIdentifierToken().getText());
 
         return null;
     }
@@ -178,6 +224,79 @@ public class OdinInsightUtils {
         return getDeclarationsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
     }
 
+    /**
+     * Returns the symbols provided by an expression of type `type` when it is referenced with "." or "->".
+     *
+     * @param type The type of the expression
+     * @return The scope
+     */
+    public static Scope getScopeProvidedByTypeExpression(TsOdinType type) {
+        Scope parentScope = type.getParentScope();
+        Scope scope = new Scope();
+        OdinDeclaration odinDeclaration = type.getDeclaration();
+        if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
+            List<PsiNamedElement> structFields = getStructFields(structDeclarationStatement);
+            for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : getStructFieldsDeclarationStatements(structDeclarationStatement).stream()
+                    .filter(f -> f.getUsing() != null)
+                    .toList()) {
+                if (odinFieldDeclarationStatement.getDeclaredIdentifiers().isEmpty())
+                    continue;
+
+                TsOdinType usedType = TypeExpressionResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinition().getMainTypeExpression());
+                Scope subScope = getScopeProvidedByTypeExpression(usedType);
+                scope.addSymbols(subScope);
+            }
+
+            scope.addAll(structFields);
+            return scope;
+        }
+
+        if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
+            return scope.with(getEnumFields(enumDeclarationStatement));
+        }
+
+        return Scope.EMPTY;
+    }
+
+    @NotNull
+    public static List<PsiNamedElement> getEnumFields(OdinEnumDeclarationStatement enumDeclarationStatement) {
+        OdinEnumBody enumBody = enumDeclarationStatement.getEnumType()
+                .getEnumBlock()
+                .getEnumBody();
+
+        if (enumBody == null)
+            return Collections.emptyList();
+
+        return enumBody
+                .getEnumValueDeclarationList()
+                .stream()
+                .map(OdinEnumValueDeclaration::getDeclaredIdentifier)
+                .collect(Collectors.toList());
+    }
+
+    public static List<PsiNamedElement> getStructFields(OdinStructDeclarationStatement structDeclarationStatement) {
+        List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structDeclarationStatement);
+
+        return fieldDeclarationStatementList.stream()
+                .flatMap(x -> x.getDeclaredIdentifiers().stream())
+                .collect(Collectors.toList());
+    }
+
+    public static @NotNull List<OdinFieldDeclarationStatement> getStructFieldsDeclarationStatements(OdinStructDeclarationStatement structDeclarationStatement) {
+        OdinStructBody structBody = structDeclarationStatement
+                .getStructType()
+                .getStructBlock()
+                .getStructBody();
+
+        List<OdinFieldDeclarationStatement> fieldDeclarationStatementList;
+        if (structBody == null) {
+            fieldDeclarationStatementList = Collections.emptyList();
+        } else {
+            fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
+        }
+        return fieldDeclarationStatementList;
+    }
+
 
     public record QualifiedName(@NotNull String name, @NotNull OdinRefExpression rootRefExpression) {
 
@@ -245,9 +364,9 @@ public class OdinInsightUtils {
                         }
 
                         OdinReturnParameters returnParameters = procedureType.getReturnParameters();
-                        if(returnParameters != null) {
+                        if (returnParameters != null) {
                             OdinParamEntries returnParamEntries = returnParameters.getParamEntries();
-                            if(returnParamEntries != null) {
+                            if (returnParamEntries != null) {
                                 for (OdinParamEntry odinParamEntry : returnParamEntries.getParamEntryList()) {
                                     declarations.addAll(odinParamEntry
                                             .getParameterDeclaration()
@@ -262,17 +381,17 @@ public class OdinInsightUtils {
             }
 
             // Bring if/when/for statement declarations into scope
-            if(containingBlock.getParent() instanceof OdinIfStatement ifStatement) {
+            if (containingBlock.getParent() instanceof OdinIfStatement ifStatement) {
                 OdinStatement statement = ifStatement.getCondition().getStatement();
                 declarations.addAll(getNamedElements(matcher, statement));
             }
 
-            if(containingBlock.getParent() instanceof OdinWhenStatement whenStatement) {
+            if (containingBlock.getParent() instanceof OdinWhenStatement whenStatement) {
                 OdinStatement statement = whenStatement.getCondition().getStatement();
                 declarations.addAll(getNamedElements(matcher, statement));
             }
 
-            if(containingBlock.getParent() instanceof OdinForStatement ifStatement) {
+            if (containingBlock.getParent() instanceof OdinForStatement ifStatement) {
                 OdinStatement statement = ifStatement.getForHead().getStatement();
                 declarations.addAll(getNamedElements(matcher, statement));
             }
@@ -394,10 +513,9 @@ public class OdinInsightUtils {
      * TODO This should return the target file as well
      */
     /**
-     *
-     * @param importInfo The import to be imported
+     * @param importInfo     The import to be imported
      * @param sourceFilePath Path of the file from where the import should be resolved
-     * @param project Project
+     * @param project        Project
      * @return
      */
     public static Scope getDeclarationsOfImportedPackage(ImportInfo importInfo, String sourceFilePath, Project project) {

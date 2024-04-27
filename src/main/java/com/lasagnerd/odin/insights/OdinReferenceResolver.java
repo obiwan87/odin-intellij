@@ -2,18 +2,20 @@ package com.lasagnerd.odin.insights;
 
 import com.lasagnerd.odin.lang.psi.*;
 
+import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
+
 public class OdinReferenceResolver {
     public static Scope resolve(Scope scope, OdinExpression valueExpression) {
 
         ExpressionTypeInference expressionTypeInference = new ExpressionTypeInference(scope);
         valueExpression.accept(expressionTypeInference);
         if (expressionTypeInference.isImport) {
-            return OdinInsightUtils.getDeclarationsOfImportedPackage(scope, expressionTypeInference.importDeclarationStatement);
+            return getDeclarationsOfImportedPackage(scope, expressionTypeInference.importDeclarationStatement);
         }
         if(expressionTypeInference.type != null) {
-            return expressionTypeInference.type.getScope();
+            return getScopeProvidedByTypeExpression(expressionTypeInference.type);
         }
-        return ExpressionTypeInference.getCompletionScopeOfType(scope, expressionTypeInference.typeIdentifier);
+        return Scope.EMPTY;
     }
 
 }
