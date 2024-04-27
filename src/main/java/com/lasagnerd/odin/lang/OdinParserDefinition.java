@@ -19,6 +19,8 @@ public class OdinParserDefinition implements ParserDefinition {
     public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE, OdinTypes.NEW_LINE);
 
     public static final IFileElementType FILE = new IFileElementType(OdinLanguage.INSTANCE);
+    public static final @NotNull TokenSet COMMENT_TOKENS = TokenSet.create(OdinTypes.LINE_COMMENT, OdinTypes.BLOCK_COMMENT, OdinTypes.MULTILINE_BLOCK_COMMENT);
+    public static final @NotNull TokenSet STRING_LITERAL_ELEMENTS = TokenSet.create(OdinTypes.DQ_STRING_LITERAL, OdinTypes.RAW_STRING_LITERAL);
 
     @Override
     public @NotNull Lexer createLexer(Project project) {
@@ -37,12 +39,12 @@ public class OdinParserDefinition implements ParserDefinition {
 
     @Override
     public @NotNull TokenSet getCommentTokens() {
-        return TokenSet.create(OdinTypes.LINE_COMMENT, OdinTypes.BLOCK_COMMENT, OdinTypes.MULTILINE_BLOCK_COMMENT);
+        return COMMENT_TOKENS;
     }
 
     @Override
     public @NotNull TokenSet getStringLiteralElements() {
-        return TokenSet.create(OdinTypes.DQ_STRING_LITERAL, OdinTypes.RAW_STRING_LITERAL);
+        return STRING_LITERAL_ELEMENTS;
     }
 
     @Override

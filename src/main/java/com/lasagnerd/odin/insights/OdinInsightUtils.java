@@ -117,30 +117,34 @@ public class OdinInsightUtils {
         OdinRefExpression refExpression = findFirstParentOfType(identifier, true, OdinRefExpression.class);
         Scope scope = Scope.EMPTY;
         if (refExpression != null) {
-            if (refExpression.getExpression() instanceof OdinRefExpression parentRefExpression) {
-                scope = OdinReferenceResolver.resolve(parentScope, parentRefExpression);
+            if (refExpression.getExpression() != null) {
+                scope = OdinReferenceResolver.resolve(parentScope, refExpression.getExpression());
             } else {
                 scope = parentScope;
             }
         } else {
 
             OdinTypeDefinitionExpression typeDefinitionExpression = findFirstParentOfType(identifier, true, OdinTypeDefinitionExpression.class);
-            if (typeDefinitionExpression == null)
-                return null;
-
-            OdinTypeExpression mainTypeExpression = typeDefinitionExpression.getMainTypeExpression();
-            if (mainTypeExpression instanceof OdinQualifiedType qualifiedType) {
-                if (qualifiedType.getPackageIdentifier() != null && qualifiedType.getPackageIdentifier()
-                        .getIdentifierToken()
-                        .getText()
-                        .equals(identifier.getIdentifierToken().getText())) {
-                    scope = parentScope;
-                } else {
-                    TsOdinType type = TypeExpressionResolver.resolveType(parentScope, qualifiedType);
-                    scope = type.getParentScope();
+            if (typeDefinitionExpression != null) {
+                OdinTypeExpression mainTypeExpression = typeDefinitionExpression.getMainTypeExpression();
+                if (mainTypeExpression instanceof OdinQualifiedType qualifiedType) {
+                    if (qualifiedType.getPackageIdentifier() != null && qualifiedType.getPackageIdentifier()
+                            .getIdentifierToken()
+                            .getText()
+                            .equals(identifier.getIdentifierToken().getText())) {
+                        scope = parentScope;
+                    } else {
+                        TsOdinType type = TypeExpressionResolver.resolveType(parentScope, qualifiedType);
+                        scope = type.getParentScope();
+                    }
                 }
             }
         }
+
+        if (scope == Scope.EMPTY || scope == null) {
+            scope = parentScope;
+        }
+
         if (scope != null)
             return scope.findNamedElement(identifier.getIdentifierToken().getText());
 
