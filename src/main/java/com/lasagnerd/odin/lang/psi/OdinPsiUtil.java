@@ -262,4 +262,11 @@ public class OdinPsiUtil {
 
         return null;
     }
+
+    public static List<OdinStatement> getStatements(OdinBlock odinBlock) {
+        if(odinBlock.getStatementList() != null) {
+            return odinBlock.getStatementList().getStatementList();
+        }
+        return Collections.emptyList();
+    }
 }

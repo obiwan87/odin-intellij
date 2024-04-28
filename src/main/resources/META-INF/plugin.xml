@@ -67,6 +67,7 @@
         <lang.findUsagesProvider
                 language="Odin"
                 implementationClass="com.lasagnerd.odin.insights.OdinFindUsagesProvider"/>
+        <!-- TODO        <usageTypeProvider implementation="com.lasagnerd.odin.insights.OdinUsageTypeProvider"/>-->
     </extensions>
 
 </idea-plugin>

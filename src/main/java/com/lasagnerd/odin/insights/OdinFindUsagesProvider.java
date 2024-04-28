@@ -41,7 +41,7 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
         OdinDeclaredIdentifier declaredIdentifier = OdinInsightUtils.findFirstParentOfType(psiElement, false, OdinDeclaredIdentifier.class);
 
         OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
-        return typeType != null ? typeType.toString() : "UNKNOWN";
+        return typeType != null ? typeType.getHumanReadableName() : OdinTypeType.UNKNOWN.getHumanReadableName();
     }
 
     @Override

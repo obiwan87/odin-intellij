@@ -568,7 +568,7 @@ continueStatement                    ::= CONTINUE IDENTIFIER_TOKEN?
 
 // Statements that are allowed in "blocks" like for loops, if statements, etc.
 // A block is a sequence of statements contained in braces.
-block                                ::= [eos] tagStatement* blockStart statementList? blockEnd
+block                                ::= [eos] tagStatement* blockStart statementList? blockEnd {methods=[getStatements]}
 blockStart                           ::= LBRACE
 blockEnd                             ::= RBRACE
 

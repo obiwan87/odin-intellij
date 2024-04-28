@@ -36,8 +36,14 @@ public class Scope {
     }
 
     public void addAll(Collection<? extends PsiNamedElement> namedElements) {
+        addAll(namedElements, true);
+    }
+
+    public void addAll(Collection<? extends PsiNamedElement> namedElements, boolean override) {
         for (PsiNamedElement namedElement : namedElements) {
-            symbolTable.put(namedElement.getName(), namedElement);
+            if(!symbolTable.containsKey(namedElement.getName()) || !override) {
+                symbolTable.put(namedElement.getName(), namedElement);
+            }
         }
     }
 
@@ -46,7 +52,16 @@ public class Scope {
     }
 
     public void add(PsiNamedElement namedElement) {
-        symbolTable.put(namedElement.getName(), namedElement);
+        add(namedElement, true);
+    }
+
+    public void add(PsiNamedElement namedElement, boolean override) {
+        if(!override)
+            symbolTable.put(namedElement.getName(), namedElement);
+        else if(!symbolTable.containsKey(namedElement.getName())) {
+            symbolTable.put(namedElement.getName(), namedElement);
+        }
+
     }
 
     static Scope from(Collection<? extends PsiNamedElement> identifiers) {
