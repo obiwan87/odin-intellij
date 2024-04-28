@@ -3,6 +3,7 @@ package com.lasagnerd.odin.insights;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
 import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -13,6 +14,7 @@ import java.util.function.Predicate;
 
 public class Scope {
     @Getter
+    @Setter
     private String packagePath;
     public static final Scope EMPTY = new Scope();
     Map<String, PsiNamedElement> symbolTable = new HashMap<>();
@@ -20,7 +22,6 @@ public class Scope {
     public Scope() {
 
     }
-
 
     @Nullable
     public PsiNamedElement findNamedElement(String name) {

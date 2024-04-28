@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.lang.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -40,6 +41,10 @@ public class OdinInsightUtils {
 
     public static PsiElement findFirstDeclaration(OdinIdentifier identifier) {
         Scope parentScope = findScope(identifier).with(getPackagePath(identifier));
+        return findFirstDeclaration(parentScope, identifier);
+    }
+
+    private static @Nullable PsiNamedElement findFirstDeclaration(Scope parentScope, OdinIdentifier identifier) {
         OdinRefExpression refExpression = findFirstParentOfType(identifier, true, OdinRefExpression.class);
         Scope scope = Scope.EMPTY;
         if (refExpression != null) {
@@ -222,144 +227,19 @@ public class OdinInsightUtils {
         return fieldDeclarationStatementList;
     }
 
-    public static Scope findScope(PsiElement element) {
-        return findScope(element, e -> true);
-    }
-
     public static Scope findScope(PsiElement element, Predicate<PsiElement> matcher) {
-        // Find current block,
-        //  1. add all statements before that psi element
-        //  2. if the block has a declaration area, bring those into scope as well -> here there can be using statements as well
-        //  3. if there are any using statements bring them into scope as well
-        //  4. if the containing block is in a procedure, stop: Procedures are not closures in Odin
-
-        // Recursively: Now our out-of-scope element is the parent block. Repeat
-        // Exception: When no more parent blocks are available, then find the file scope and add ALL declarations to the scope
-        // Keep shadowing in mind... a higher scope can not override symbols from lower scopes
-
-        // When we are in a compound literal (e.g. struct instantiation) the fields of the type are also brought into scope
-
-        Scope scope = new Scope();
-
-        // TODO Add fields from struct type
-
-        doFindScope(scope, element, matcher);
-
-        OdinFileScope fileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(element, psi -> psi instanceof OdinFileScope);
-        if (fileScope != null) {
-            Scope fileScopeDeclarations = getFileScopeDeclarations(fileScope);
-            scope.addAll(fileScopeDeclarations.getFiltered(matcher), false);
-        }
-
-        return scope;
+        return OdinScopeResolver.resolveScope(element, matcher);
     }
 
-    public static void doFindScope(Scope scope, PsiElement entrance, Predicate<PsiElement> matcher) {
-        OdinBlock containingBlock = (OdinBlock) PsiTreeUtil.findFirstParent(entrance, true, parent -> parent instanceof OdinBlock);
-        if (containingBlock != null) {
-            OdinStatement containingStatement = findFirstParentOfType(entrance, false, OdinStatement.class);
-            OdinStatement lastValidStatement;
-            if (PsiTreeUtil.isAncestor(containingBlock, containingStatement, true)) {
-                // This means the containing statement is inside the containing block
-                lastValidStatement = containingStatement;
-            } else {
-                lastValidStatement = null;
-            }
-
-            boolean afterStatement = false;
-            for (OdinStatement statement : containingBlock.getStatements()) {
-                if (!afterStatement) {
-                    if (statement instanceof OdinDeclaration declaration) {
-                        scope.addAll(declaration.getDeclaredIdentifiers(), false);
-                    }
-                } else {
-                    // Here we only add stuff that is not a variable initialization or declaration
-                    // Background: Constants and type definitions are available in the entire block, no matter where they
-                    // were declared.
-                    if (statement instanceof OdinVariableDeclarationStatement)
-                        continue;
-                    if (statement instanceof OdinVariableInitializationStatement) {
-                        continue;
-                    }
-                    if (statement instanceof OdinDeclaration declaration) {
-                        List<? extends PsiNamedElement> declaredIdentifiers = declaration.getDeclaredIdentifiers()
-                                .stream().filter(matcher).toList();
-                        scope.addAll(declaredIdentifiers, false);
-                    }
-                }
-                if (statement == lastValidStatement) {
-                    afterStatement = true;
-                }
-            }
-            // If we are inside a procedure body we also add (return) parameters
-            // We don't further look for scope, because a procedure is not a closure in Odin
-            if (containingBlock.getParent() instanceof OdinProcedureBody procedureBody) {
-                OdinProcedureExpression procedureExpression = findFirstParentOfType(procedureBody, true, OdinProcedureExpression.class);
-                OdinProcedureType procedureType = null;
-                if (procedureExpression != null) {
-                    procedureType = procedureExpression.getProcedureExpressionType().getProcedureType();
-                }
-
-                if (procedureType == null) {
-                    OdinProcedureDeclarationStatement procedureDeclarationStatement = findFirstParentOfType(procedureBody, true, OdinProcedureDeclarationStatement.class);
-                    procedureType = procedureDeclarationStatement.getProcedureType();
-                }
-
-                OdinParamEntries paramEntries = procedureType.getParamEntries();
-                if (paramEntries != null) {
-                    for (OdinParamEntry odinParamEntry : paramEntries.getParamEntryList()) {
-                        odinParamEntry
-                                .getParameterDeclaration()
-                                .getParameterList().stream()
-                                .map(OdinParameter::getDeclaredIdentifier)
-                                .filter(matcher)
-                                .forEach(identifier -> scope.add(identifier, false));
-                    }
-                }
-
-                OdinReturnParameters returnParameters = procedureType.getReturnParameters();
-                if (returnParameters != null) {
-                    OdinParamEntries returnParamEntries = returnParameters.getParamEntries();
-                    if (returnParamEntries != null) {
-                        for (OdinParamEntry odinParamEntry : returnParamEntries.getParamEntryList()) {
-                            scope.addAll(odinParamEntry
-                                    .getParameterDeclaration()
-                                    .getDeclaredIdentifiers().stream()
-                                    .filter(matcher)
-                                    .toList(), false);
-                        }
-                    }
-                }
-                return;
-            }
-
-            // Add declarations of block (e.g. parameters, return parameters, if-block declarations, etc)
-            if (containingBlock.getParent() instanceof OdinIfStatement ifStatement) {
-                OdinStatement statement = ifStatement.getCondition().getStatement();
-
-                scope.addAll(getNamedElements(matcher, statement));
-            }
-
-            if (containingBlock.getParent() instanceof OdinWhenStatement whenStatement) {
-                OdinStatement statement = whenStatement.getCondition().getStatement();
-                scope.addAll(getNamedElements(matcher, statement));
-            }
-
-            if (containingBlock.getParent() instanceof OdinForStatement ifStatement) {
-                OdinStatement statement = ifStatement.getForHead().getStatement();
-                scope.addAll(getNamedElements(matcher, statement));
-            }
-
-
-            doFindScope(scope, containingBlock, matcher);
-        }
+    public static Scope findScope(PsiElement element) {
+        return OdinScopeResolver.resolveScope(element);
     }
 
     private static Collection<PsiNamedElement> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
         return getFileScopeDeclarations(odinFileScope).getFiltered(matcher);
     }
 
-    private static List<? extends PsiNamedElement> getNamedElements(Predicate<PsiElement> matcher, OdinStatement statement) {
+    public static List<? extends PsiNamedElement> getNamedElements(Predicate<PsiElement> matcher, OdinStatement statement) {
         List<? extends PsiNamedElement> odinDeclaredIdentifiers = new ArrayList<>();
         if (statement instanceof OdinDeclaration declaration) {
             return declaration.getDeclaredIdentifiers().stream().filter(matcher).toList();

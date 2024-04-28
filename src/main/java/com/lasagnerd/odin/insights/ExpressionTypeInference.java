@@ -3,6 +3,7 @@ package com.lasagnerd.odin.insights;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.lang.typeSystem.*;
+import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,16 @@ class ExpressionTypeInference extends OdinVisitor {
 
     public ExpressionTypeInference(Scope scope) {
         this.scope = scope;
+    }
+
+    static TypeInferenceResult inferType(Scope scope, OdinExpression expression) {
+        ExpressionTypeInference expressionTypeInference = new ExpressionTypeInference(scope);
+        expression.accept(expressionTypeInference);
+        TypeInferenceResult typeInferenceResult = new TypeInferenceResult();
+        typeInferenceResult.setImportDeclarationStatement(expressionTypeInference.importDeclarationStatement);
+        typeInferenceResult.setType(expressionTypeInference.type);
+        typeInferenceResult.setImport(expressionTypeInference.isImport);
+        return typeInferenceResult;
     }
 
     @Override
@@ -239,4 +250,11 @@ class ExpressionTypeInference extends OdinVisitor {
     }
 
 
+}
+
+@Data
+class TypeInferenceResult {
+    boolean isImport;
+    OdinImportDeclarationStatement importDeclarationStatement;
+    TsOdinType type;
 }
