@@ -13,12 +13,12 @@ import java.util.Objects;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-class TypeExpressionResolver extends OdinVisitor {
+class OdinTypeExpressionResolver extends OdinVisitor {
 
     public static TsOdinType resolveType(Scope scope, OdinTypeExpression typeExpression) {
-        TypeExpressionResolver typeExpressionResolver = new TypeExpressionResolver(scope);
-        typeExpression.accept(typeExpressionResolver);
-        return typeExpressionResolver.type;
+        OdinTypeExpressionResolver odinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
+        typeExpression.accept(odinTypeExpressionResolver);
+        return odinTypeExpressionResolver.type;
     }
 
 
@@ -26,7 +26,7 @@ class TypeExpressionResolver extends OdinVisitor {
     private final Scope initialScope;
     TsOdinType type;
 
-    public TypeExpressionResolver(Scope scope) {
+    public OdinTypeExpressionResolver(Scope scope) {
         this.initialScope = scope;
         this.scope = scope;
     }
@@ -37,11 +37,11 @@ class TypeExpressionResolver extends OdinVisitor {
 
         if (qualifiedType.getPackageIdentifier() != null) {
             Scope packageScope = scope.getScopeOfImport(qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
-            TypeExpressionResolver typeExpressionResolver = new TypeExpressionResolver(packageScope);
+            OdinTypeExpressionResolver odinTypeExpressionResolver = new OdinTypeExpressionResolver(packageScope);
             OdinTypeExpression typeExpression = qualifiedType.getTypeExpression();
             if(typeExpression != null) {
-                typeExpression.accept(typeExpressionResolver);
-                this.type = typeExpressionResolver.type;
+                typeExpression.accept(odinTypeExpressionResolver);
+                this.type = odinTypeExpressionResolver.type;
             }
             return;
         }
@@ -60,9 +60,9 @@ class TypeExpressionResolver extends OdinVisitor {
     @Override
     public void visitArrayType(@NotNull OdinArrayType o) {
         TsOdinArrayType arrayType = new TsOdinArrayType();
-        TypeExpressionResolver typeExpressionResolver = new TypeExpressionResolver(scope);
-        o.getTypeDefinition().accept(typeExpressionResolver);
-        TsOdinType elementType = typeExpressionResolver.type;
+        OdinTypeExpressionResolver odinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
+        o.getTypeDefinition().accept(odinTypeExpressionResolver);
+        TsOdinType elementType = odinTypeExpressionResolver.type;
         arrayType.setElementType(elementType);
         this.type = arrayType;
     }
@@ -70,14 +70,14 @@ class TypeExpressionResolver extends OdinVisitor {
     @Override
     public void visitMapType(@NotNull OdinMapType o) {
         TsOdinMapType mapType = new TsOdinMapType();
-        TypeExpressionResolver keyTypeExpressionResolver = new TypeExpressionResolver(scope);
-        o.getKeyType().accept(keyTypeExpressionResolver);
-        TsOdinType keyType = keyTypeExpressionResolver.type;
+        OdinTypeExpressionResolver keyOdinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
+        o.getKeyType().accept(keyOdinTypeExpressionResolver);
+        TsOdinType keyType = keyOdinTypeExpressionResolver.type;
         mapType.setKeyType(keyType);
 
-        TypeExpressionResolver valueTypeExpressionResolver = new TypeExpressionResolver(scope);
-        o.getValueType().accept(valueTypeExpressionResolver);
-        TsOdinType valueType = valueTypeExpressionResolver.type;
+        OdinTypeExpressionResolver valueOdinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
+        o.getValueType().accept(valueOdinTypeExpressionResolver);
+        TsOdinType valueType = valueOdinTypeExpressionResolver.type;
         mapType.setValueType(valueType);
         this.type = mapType;
     }
@@ -85,13 +85,13 @@ class TypeExpressionResolver extends OdinVisitor {
     @Override
     public void visitPointerType(@NotNull OdinPointerType odinPointerType) {
         TsOdinPointerType pointerType = new TsOdinPointerType();
-        TypeExpressionResolver typeExpressionResolver = new TypeExpressionResolver(scope);
+        OdinTypeExpressionResolver odinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
         OdinTypeExpression typeExpression = odinPointerType.getTypeExpression();
 
         Objects.requireNonNull(typeExpression)
-                .accept(typeExpressionResolver);
+                .accept(odinTypeExpressionResolver);
 
-        TsOdinType elementType = typeExpressionResolver.type;
+        TsOdinType elementType = odinTypeExpressionResolver.type;
         pointerType.setDereferencedType(elementType);
 
         this.type = pointerType;
@@ -100,15 +100,15 @@ class TypeExpressionResolver extends OdinVisitor {
     @Override
     public void visitProcedureType(@NotNull OdinProcedureType odinProcedureType) {
         TsOdinProcedureType procedureType = new TsOdinProcedureType();
-        TypeExpressionResolver typeExpressionResolver = new TypeExpressionResolver(scope);
+        OdinTypeExpressionResolver odinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
         OdinReturnParameters returnParameters = odinProcedureType.getReturnParameters();
         if(returnParameters != null) {
             OdinTypeDefinitionExpression typeDefinitionExpression = returnParameters.getTypeDefinitionExpression();
             if(typeDefinitionExpression != null) {
                 OdinTypeExpression typeExpression = typeDefinitionExpression.getMainTypeExpression();
-                typeExpression.accept(typeExpressionResolver);
-                if(typeExpressionResolver.type != null) {
-                    procedureType.setReturnTypes(List.of(typeExpressionResolver.type));
+                typeExpression.accept(odinTypeExpressionResolver);
+                if(odinTypeExpressionResolver.type != null) {
+                    procedureType.setReturnTypes(List.of(odinTypeExpressionResolver.type));
                 } else {
                     procedureType.setReturnTypes(Collections.emptyList());
                 }

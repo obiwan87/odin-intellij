@@ -7,13 +7,13 @@ import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
 public class OdinReferenceResolver {
     public static Scope resolve(Scope scope, OdinExpression valueExpression) {
 
-        ExpressionTypeInference expressionTypeInference = new ExpressionTypeInference(scope);
-        valueExpression.accept(expressionTypeInference);
-        if (expressionTypeInference.isImport) {
-            return getDeclarationsOfImportedPackage(scope, expressionTypeInference.importDeclarationStatement);
+        OdinExpressionTypeResolver odinExpressionTypeResolver = new OdinExpressionTypeResolver(scope);
+        valueExpression.accept(odinExpressionTypeResolver);
+        if (odinExpressionTypeResolver.isImport) {
+            return getDeclarationsOfImportedPackage(scope, odinExpressionTypeResolver.importDeclarationStatement);
         }
-        if(expressionTypeInference.type != null) {
-            return getScopeProvidedByType(expressionTypeInference.type);
+        if(odinExpressionTypeResolver.type != null) {
+            return getScopeProvidedByType(odinExpressionTypeResolver.type);
         }
         return Scope.EMPTY;
     }

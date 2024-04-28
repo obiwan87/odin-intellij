@@ -66,7 +66,7 @@ public class OdinInsightUtils {
                             .equals(identifier.getIdentifierToken().getText())) {
                         scope = parentScope;
                     } else {
-                        TsOdinType type = TypeExpressionResolver.resolveType(parentScope, qualifiedType);
+                        TsOdinType type = OdinTypeExpressionResolver.resolveType(parentScope, qualifiedType);
                         scope = type.getParentScope();
                     }
                 }
@@ -177,7 +177,7 @@ public class OdinInsightUtils {
                 if (odinFieldDeclarationStatement.getDeclaredIdentifiers().isEmpty())
                     continue;
 
-                TsOdinType usedType = TypeExpressionResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinition().getMainTypeExpression());
+                TsOdinType usedType = OdinTypeExpressionResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinition().getMainTypeExpression());
                 Scope subScope = getScopeProvidedByType(usedType);
                 scope.addSymbols(subScope);
             }

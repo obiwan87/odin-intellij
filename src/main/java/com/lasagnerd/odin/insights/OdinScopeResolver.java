@@ -70,7 +70,7 @@ public class OdinScopeResolver {
                 }
 
                 if (statement instanceof OdinUsingStatement usingStatement) {
-                    TypeInferenceResult typeInferenceResult = ExpressionTypeInference.inferType(scope, usingStatement.getExpression());
+                    TypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(scope, usingStatement.getExpression());
                     if (typeInferenceResult.type != null) {
                         Scope usingScope = getScopeProvidedByType(typeInferenceResult.getType());
                         scope.addAll(usingScope.getNamedElements(), true);
@@ -87,7 +87,7 @@ public class OdinScopeResolver {
                         OdinTypeDefinitionExpression typeDefinitionExpression = variableInitializationStatement.getTypeDefinitionExpression();
                         if (typeDefinitionExpression != null) {
                             OdinTypeExpression mainTypeExpression = typeDefinitionExpression.getMainTypeExpression();
-                            TsOdinType tsOdinType = TypeExpressionResolver.resolveType(scope, mainTypeExpression);
+                            TsOdinType tsOdinType = OdinTypeExpressionResolver.resolveType(scope, mainTypeExpression);
                             if (tsOdinType != null) {
                                 Scope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
                                 scope.addAll(scopeProvidedByType.getNamedElements());
@@ -96,7 +96,7 @@ public class OdinScopeResolver {
                             List<OdinExpression> expressionList = variableInitializationStatement.getExpressionsList().getExpressionList();
                             if (!expressionList.isEmpty()) {
                                 OdinExpression odinExpression = expressionList.get(0);
-                                TypeInferenceResult typeInferenceResult = ExpressionTypeInference.inferType(scope, odinExpression);
+                                TypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(scope, odinExpression);
                                 TsOdinType type = typeInferenceResult.getType();
                                 if (type != null) {
                                     Scope scopeProvidedByType = getScopeProvidedByType(type);
@@ -110,7 +110,7 @@ public class OdinScopeResolver {
                 if (statement instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
                     if (variableDeclarationStatement.getUsing() != null) {
                         OdinTypeExpression mainTypeExpression = variableDeclarationStatement.getTypeDefinition().getMainTypeExpression();
-                        TsOdinType type = TypeExpressionResolver.resolveType(scope, mainTypeExpression);
+                        TsOdinType type = OdinTypeExpressionResolver.resolveType(scope, mainTypeExpression);
                         if (type != null) {
                             Scope scopeProvidedByType = getScopeProvidedByType(type);
                             scope.addAll(scopeProvidedByType.getNamedElements());
@@ -209,7 +209,7 @@ public class OdinScopeResolver {
                         if (odinParameter.getUsing() != null) {
                             if (typeDefinition != null) {
                                 OdinTypeExpression mainTypeExpression = typeDefinition.getMainTypeExpression();
-                                TsOdinType tsOdinType = TypeExpressionResolver.resolveType(parentScope, mainTypeExpression);
+                                TsOdinType tsOdinType = OdinTypeExpressionResolver.resolveType(parentScope, mainTypeExpression);
                                 Scope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
                                 if (scopeProvidedByType != null) {
                                     scope.addAll(scopeProvidedByType.getNamedElements());
@@ -218,7 +218,7 @@ public class OdinScopeResolver {
                                 List<OdinExpression> expressionList = odinParamEntry.getParameterDeclaration().getExpressionList();
                                 if (!expressionList.isEmpty()) {
                                     OdinExpression odinExpression = expressionList.get(0);
-                                    TypeInferenceResult typeInferenceResult = ExpressionTypeInference.inferType(parentScope, odinExpression);
+                                    TypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(parentScope, odinExpression);
                                     if (typeInferenceResult.getType() != null) {
                                         Scope scopeProvidedByType = getScopeProvidedByType(typeInferenceResult.getType());
                                         if (scopeProvidedByType != null) {
