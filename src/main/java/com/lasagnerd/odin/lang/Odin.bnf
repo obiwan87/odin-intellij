@@ -290,7 +290,7 @@ arrayType                            ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|ex
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
 
-private symbolDefinitionHead         ::= (attributeStatement eos?)* [tagHead] identifierList colonOpening typeDefinition_expression?
+private symbolDefinitionHead         ::= (attributeStatement eos?)* [tagHead] [USING] identifierList colonOpening typeDefinition_expression?
 colonOpening                         ::= COLON
 
 variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
@@ -317,7 +317,7 @@ assignmentOperator                   ::= EQ
                                          | RSHIFT_EQ
                                          | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement         ::= (attributeStatement eos?)* identifierList COLON typeDefinition_expression {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
+variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] identifierList COLON typeDefinition_expression {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
 
 // Parameters for procedures and assignments
 polymorphicParameterList             ::= polymorphicParameter (COMMA polymorphicParameter)* COMMA?

@@ -13,7 +13,7 @@ public class OdinReferenceResolver {
             return getDeclarationsOfImportedPackage(scope, expressionTypeInference.importDeclarationStatement);
         }
         if(expressionTypeInference.type != null) {
-            return getScopeProvidedByTypeExpression(expressionTypeInference.type);
+            return getScopeProvidedByType(expressionTypeInference.type);
         }
         return Scope.EMPTY;
     }

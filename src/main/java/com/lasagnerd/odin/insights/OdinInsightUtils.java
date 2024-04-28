@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.lang.typeSystem.TsOdinPointerType;
 import com.lasagnerd.odin.lang.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,10 +161,14 @@ public class OdinInsightUtils {
      * @param type The type of the expression
      * @return The scope
      */
-    public static Scope getScopeProvidedByTypeExpression(TsOdinType type) {
+    public static Scope getScopeProvidedByType(TsOdinType type) {
         Scope parentScope = type.getParentScope();
         Scope scope = new Scope();
+        if(type instanceof TsOdinPointerType pointerType) {
+            type = pointerType.getDereferencedType();
+        }
         OdinDeclaration odinDeclaration = type.getDeclaration();
+
         if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
             List<PsiNamedElement> structFields = getStructFields(structDeclarationStatement);
             for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : getStructFieldsDeclarationStatements(structDeclarationStatement).stream()
@@ -173,7 +178,7 @@ public class OdinInsightUtils {
                     continue;
 
                 TsOdinType usedType = TypeExpressionResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinition().getMainTypeExpression());
-                Scope subScope = getScopeProvidedByTypeExpression(usedType);
+                Scope subScope = getScopeProvidedByType(usedType);
                 scope.addSymbols(subScope);
             }
 

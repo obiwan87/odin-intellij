@@ -39,7 +39,7 @@ class ExpressionTypeInference extends OdinVisitor {
             ExpressionTypeInference expressionTypeInference = new ExpressionTypeInference(this.scope);
             refExpression.getExpression().accept(expressionTypeInference);
 
-            localScope = OdinInsightUtils.getScopeProvidedByTypeExpression(expressionTypeInference.type);
+            localScope = OdinInsightUtils.getScopeProvidedByType(expressionTypeInference.type);
         } else {
             localScope = this.scope;
         }

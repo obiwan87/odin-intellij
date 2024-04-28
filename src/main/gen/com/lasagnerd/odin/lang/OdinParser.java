@@ -3183,16 +3183,17 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (attributeStatement eos?)* [tagHead] identifierList colonOpening typeDefinition_expression?
+  // (attributeStatement eos?)* [tagHead] [USING] identifierList colonOpening typeDefinition_expression?
   static boolean symbolDefinitionHead(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "symbolDefinitionHead")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = symbolDefinitionHead_0(b, l + 1);
     r = r && symbolDefinitionHead_1(b, l + 1);
+    r = r && symbolDefinitionHead_2(b, l + 1);
     r = r && identifierList(b, l + 1);
     r = r && colonOpening(b, l + 1);
-    r = r && symbolDefinitionHead_4(b, l + 1);
+    r = r && symbolDefinitionHead_5(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -3233,9 +3234,16 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
+  // [USING]
+  private static boolean symbolDefinitionHead_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "symbolDefinitionHead_2")) return false;
+    consumeToken(b, USING);
+    return true;
+  }
+
   // typeDefinition_expression?
-  private static boolean symbolDefinitionHead_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "symbolDefinitionHead_4")) return false;
+  private static boolean symbolDefinitionHead_5(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "symbolDefinitionHead_5")) return false;
     typeDefinition_expression(b, l + 1);
     return true;
   }
@@ -3481,12 +3489,13 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (attributeStatement eos?)* identifierList COLON typeDefinition_expression
+  // (attributeStatement eos?)* [USING] identifierList COLON typeDefinition_expression
   public static boolean variableDeclarationStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "variableDeclarationStatement")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, VARIABLE_DECLARATION_STATEMENT, "<variable declaration statement>");
     r = variableDeclarationStatement_0(b, l + 1);
+    r = r && variableDeclarationStatement_1(b, l + 1);
     r = r && identifierList(b, l + 1);
     r = r && consumeToken(b, COLON);
     r = r && typeDefinition_expression(b, l + 1);
@@ -3520,6 +3529,13 @@ public class OdinParser implements PsiParser, LightPsiParser {
   private static boolean variableDeclarationStatement_0_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "variableDeclarationStatement_0_0_1")) return false;
     eos(b, l + 1);
+    return true;
+  }
+
+  // [USING]
+  private static boolean variableDeclarationStatement_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "variableDeclarationStatement_1")) return false;
+    consumeToken(b, USING);
     return true;
   }
 
