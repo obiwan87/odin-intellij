@@ -6,7 +6,10 @@ import com.intellij.icons.ExpUiIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.impl.OdinStatementImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,5 +45,17 @@ public class OdinIdentifierOwner extends ASTWrapperPsiElement
 
     public void accept(@NotNull OdinVisitor visitor) {
 
+    }
+
+    @Override
+    public @NotNull SearchScope getUseScope() {
+        PsiElement scopeBlock = OdinInsightUtils.findFirstParentOfType(this, true, OdinScopeBlock.class);
+        if (scopeBlock != null) {
+            if(scopeBlock instanceof OdinIfBlock || scopeBlock instanceof OdinElseBlock || scopeBlock instanceof OdinElseIfBlock) {
+                return new LocalSearchScope(OdinInsightUtils.findFirstParentOfType(scopeBlock, true, OdinConditionalStatement.class));
+            }
+            return new LocalSearchScope(scopeBlock);
+        }
+        return super.getUseScope();
     }
 }
