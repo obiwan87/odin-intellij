@@ -58,7 +58,7 @@ public class OdinScopeResolver {
 
         for (int i = scopeNodes.size() - 1; i >= 0; i--) {
             ScopeNode scopeNode = scopeNodes.get(i);
-            PsiElement containingBlock = scopeNode.getContainingBlock();
+            OdinScopeBlock containingBlock = scopeNode.getScopeBlock();
             Scope declarationsOfContainingBlock = getDeclarationsOfContainingBlock(scope, containingBlock);
             scope.addAll(declarationsOfContainingBlock.getNamedElements());
 
@@ -109,7 +109,7 @@ public class OdinScopeResolver {
 
                 if (statement instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
                     if (variableDeclarationStatement.getUsing() != null) {
-                        OdinTypeExpression mainTypeExpression = variableDeclarationStatement.getTypeDefinition().getMainTypeExpression();
+                        OdinTypeExpression mainTypeExpression = variableDeclarationStatement.getTypeDefinitionExpression().getMainTypeExpression();
                         TsOdinType type = OdinTypeExpressionResolver.resolveType(scope, mainTypeExpression);
                         if (type != null) {
                             Scope scopeProvidedByType = getScopeProvidedByType(type);
@@ -125,9 +125,10 @@ public class OdinScopeResolver {
 
     private void findDeclaringBlocks(PsiElement entrance) {
         ScopeNode scopeNode = new ScopeNode();
-        OdinBlock containingBlock = (OdinBlock) PsiTreeUtil.findFirstParent(entrance, true, parent -> parent instanceof OdinBlock);
+        OdinScopeBlock containingBlock = OdinInsightUtils.findFirstParentOfType(entrance, true, OdinScopeBlock.class);
+
         if (containingBlock != null) {
-            scopeNode.setContainingBlock(containingBlock);
+            scopeNode.setScopeBlock(containingBlock);
             OdinStatement containingStatement = findFirstParentOfType(entrance, false, OdinStatement.class);
             OdinStatement lastValidStatement;
             if (PsiTreeUtil.isAncestor(containingBlock, containingStatement, true)) {
@@ -137,12 +138,13 @@ public class OdinScopeResolver {
                 lastValidStatement = null;
             }
 
-            boolean blockIsInsideProcedure = containingBlock.getParent() instanceof OdinProcedureBody;
+            boolean blockIsInsideProcedure = containingBlock instanceof OdinProcedureExpression
+                    || containingBlock instanceof OdinProcedureDeclarationStatement;
             // If we are inside a procedure body we also add (return) parameters
             // We don't further look for scope, because a procedure is not a closure in Odin
 
             boolean afterStatement = false;
-            for (OdinStatement statement : containingBlock.getStatements()) {
+            for (OdinStatement statement : containingBlock.getBlockStatements()) {
                 if (!afterStatement) {
                     if (statement instanceof OdinDeclaration) {
                         scopeNode.addStatement(statement);
@@ -177,102 +179,33 @@ public class OdinScopeResolver {
         }
     }
 
-    public Scope getDeclarationsOfContainingBlock(Scope parentScope, PsiElement containingBlock) {
+    public Scope getDeclarationsOfContainingBlock(Scope parentScope, OdinScopeBlock containingBlock) {
         Scope scope = new Scope();
-        if (containingBlock.getParent() instanceof OdinProcedureBody procedureBody) {
-
-            OdinProcedureExpression procedureExpression = findFirstParentOfType(procedureBody, true, OdinProcedureExpression.class);
-            OdinProcedureType procedureType = null;
-            if (procedureExpression != null) {
-                procedureType = procedureExpression.getProcedureExpressionType().getProcedureType();
-            }
-
-            if (procedureType == null) {
-                OdinProcedureDeclarationStatement procedureDeclarationStatement = findFirstParentOfType(procedureBody, true, OdinProcedureDeclarationStatement.class);
-                procedureType = procedureDeclarationStatement.getProcedureType();
-            }
-
-            OdinParamEntries paramEntries = procedureType.getParamEntries();
-            if (paramEntries != null) {
-                for (OdinParamEntry odinParamEntry : paramEntries.getParamEntryList()) {
-                    OdinTypeDefinitionExpression typeDefinition = odinParamEntry.getParameterDeclaration().getTypeDefinition();
-                    List<OdinParameter> parameters = odinParamEntry
-                            .getParameterDeclaration()
-                            .getParameterList();
-
-                    parameters.stream()
-                            .map(OdinParameter::getDeclaredIdentifier)
-                            .filter(matcher)
-                            .forEach(identifier -> scope.add(identifier, false));
-
-                    for (OdinParameter odinParameter : odinParamEntry.getParameterDeclaration().getParameterList()) {
-                        if (odinParameter.getUsing() != null) {
-                            if (typeDefinition != null) {
-                                OdinTypeExpression mainTypeExpression = typeDefinition.getMainTypeExpression();
-                                TsOdinType tsOdinType = OdinTypeExpressionResolver.resolveType(parentScope, mainTypeExpression);
-                                Scope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
-                                if (scopeProvidedByType != null) {
-                                    scope.addAll(scopeProvidedByType.getNamedElements());
-                                }
-                            } else {
-                                List<OdinExpression> expressionList = odinParamEntry.getParameterDeclaration().getExpressionList();
-                                if (!expressionList.isEmpty()) {
-                                    OdinExpression odinExpression = expressionList.get(0);
-                                    TypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(parentScope, odinExpression);
-                                    if (typeInferenceResult.getType() != null) {
-                                        Scope scopeProvidedByType = getScopeProvidedByType(typeInferenceResult.getType());
-                                        if (scopeProvidedByType != null) {
-                                            scope.addAll(scopeProvidedByType.getNamedElements());
-                                        }
-                                    }
-                                }
-                            }
+        scope.setPackagePath(parentScope.getPackagePath());
+        for (OdinDeclarationSpec declarationsSpec : containingBlock.getDeclarationsSpecs()) {
+            scope.add(declarationsSpec.getDeclaredIdentifier());
+            if(declarationsSpec.isHasUsing()) {
+                if(declarationsSpec.getTypeDefinitionExpression() != null) {
+                    TsOdinType tsOdinType = OdinTypeExpressionResolver.resolveType(parentScope, declarationsSpec.getTypeDefinitionExpression().getMainTypeExpression());
+                    scope.addAll(getScopeProvidedByType(tsOdinType).getNamedElements());
+                } else {
+                    if(declarationsSpec.getValueExpression() != null) {
+                        TypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(parentScope, declarationsSpec.getValueExpression());
+                        TsOdinType type = typeInferenceResult.getType();
+                        if(type != null) {
+                            scope.addAll(getScopeProvidedByType(type).getNamedElements());
                         }
                     }
                 }
             }
-
-            OdinReturnParameters returnParameters = procedureType.getReturnParameters();
-            if (returnParameters != null) {
-                OdinParamEntries returnParamEntries = returnParameters.getParamEntries();
-                if (returnParamEntries != null) {
-                    for (OdinParamEntry odinParamEntry : returnParamEntries.getParamEntryList()) {
-
-
-                        scope.addAll(odinParamEntry
-                                .getParameterDeclaration()
-                                .getDeclaredIdentifiers().stream()
-                                .filter(matcher)
-                                .toList(), false);
-
-
-                    }
-                }
-            }
         }
-
-        if (containingBlock.getParent() instanceof OdinIfStatement ifStatement) {
-            OdinStatement statement = ifStatement.getCondition().getStatement();
-            scope.addAll(getNamedElements(matcher, statement));
-        }
-
-        if (containingBlock.getParent() instanceof OdinWhenStatement whenStatement) {
-            OdinStatement statement = whenStatement.getCondition().getStatement();
-            scope.addAll(getNamedElements(matcher, statement));
-        }
-
-        if (containingBlock.getParent() instanceof OdinForStatement ifStatement) {
-            OdinStatement statement = ifStatement.getForHead().getStatement();
-            scope.addAll(getNamedElements(matcher, statement));
-        }
-
         return scope;
     }
 
     @Data
     static class ScopeNode {
         OdinStatement endOfScopeStatement;
-        PsiElement containingBlock;
+        OdinScopeBlock scopeBlock;
         List<OdinStatement> statements = new ArrayList<>();
 
         public void addStatement(OdinStatement statement) {

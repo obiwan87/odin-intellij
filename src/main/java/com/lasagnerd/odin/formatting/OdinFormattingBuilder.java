@@ -29,17 +29,18 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .between(OdinTypes.ELSE, OdinTypes.BLOCK)
                 .spacing(1, 1, 0, false, 0)
 
-                .withinPairInside(OdinTypes.CONDITION, OdinTypes.BLOCK, OdinTypes.IF_STATEMENT)
+                .withinPairInside(OdinTypes.CONDITION, OdinTypes.BLOCK, OdinTypes.CONDITIONAL_STATEMENT)
                 .spacing(1, 1, 0, false, 0)
 
                 .withinPairInside(OdinTypes.CONDITION, OdinTypes.BLOCK, OdinTypes.ELSE_IF_BLOCK)
                 .spacing(1, 1, 0, false, 0)
 
-                .withinPairInside(OdinTypes.SWITCH_HEAD, OdinTypes.SWITCH_BODY, OdinTypes.SWITCH_STATEMENT)
+                .withinPairInside(OdinTypes.SWITCH, OdinTypes.SWITCH_BODY, OdinTypes.SWITCH_STATEMENT)
                 .spacing(1, 1, 0, false, 0)
 
-                .withinPairInside(OdinTypes.FOR_HEAD, OdinTypes.BLOCK, OdinTypes.FOR_STATEMENT)
-                .spacing(1, 1, 0, false, 0)
+                // TODO re-visit formatting
+//                .withinPairInside(OdinTypes.FOR_HEAD, OdinTypes.BLOCK, OdinTypes.FOR_STATEMENT)
+//                .spacing(1, 1, 0, false, 0)
 
                 .withinPair(OdinTypes.PROCEDURE_TYPE, OdinTypes.PROCEDURE_BODY)
                 .spacing(1, 1, 0, false, 0)

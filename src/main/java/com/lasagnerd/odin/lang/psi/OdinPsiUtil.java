@@ -5,9 +5,12 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.ImportInfo;
+import com.lasagnerd.odin.insights.OdinDeclarationSpecifier;
+import com.lasagnerd.odin.insights.OdinDeclarationSpec;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -96,7 +99,7 @@ public class OdinPsiUtil {
     }
 
 
-    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinParameterDeclarationStatement statement) {
+    public static List<? extends PsiNamedElement> getDeclaredIdentifiers(OdinParameterDecl statement) {
         return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
     }
 
@@ -115,8 +118,8 @@ public class OdinPsiUtil {
         return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
     }
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDeclarationStatement statement) {
-        return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
+    public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDecl statement) {
+        return doGetTypeDefinitionExpression(statement.getTypeDefinitionContainer().getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinVariableInitializationStatement statement) {
@@ -128,11 +131,11 @@ public class OdinPsiUtil {
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinVariadicParameterDeclaration variadicParameterDeclaration) {
-        return doGetTypeDefinitionExpression(variadicParameterDeclaration.getTypeDefinitionExpression());
+        return doGetTypeDefinitionExpression(variadicParameterDeclaration.getTypeDefinitionContainer().getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinUnnamedParameter parameter) {
-        return doGetTypeDefinitionExpression(parameter.getTypeDefinitionExpression());
+        return doGetTypeDefinitionExpression(parameter.getTypeDefinitionContainer().getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDeclaration parameterDeclaration) {
@@ -140,8 +143,9 @@ public class OdinPsiUtil {
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterInitialization declaration) {
-        if (declaration.getExpressionList().size() > 1) {
-            return doGetTypeDefinitionExpression(declaration.getExpressionList().get(0));
+        OdinTypeDefinitionContainer typeDefinitionContainer = declaration.getTypeDefinitionContainer();
+        if (typeDefinitionContainer != null) {
+            return typeDefinitionContainer.getTypeDefinitionExpression();
         }
         return null;
     }
@@ -264,9 +268,170 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinStatement> getStatements(OdinBlock odinBlock) {
-        if(odinBlock.getStatementList() != null) {
+        if (odinBlock.getStatementList() != null) {
             return odinBlock.getStatementList().getStatementList();
         }
         return Collections.emptyList();
     }
+
+    // Scope Blocks
+
+    public static List<OdinStatement> getBlockStatements(OdinProcedureDeclarationStatement procedureDeclarationStatement) {
+        OdinBlock block = procedureDeclarationStatement.getProcedureBody().getBlock();
+        if (block != null) {
+            return block.getStatements();
+        }
+        return Collections.emptyList();
+    }
+
+    public static List<OdinStatement> getBlockStatements(OdinProcedureExpression procedureExpression) {
+        OdinBlock block = procedureExpression.getProcedureBody().getBlock();
+        if (block != null) {
+            return block.getStatements();
+        }
+        return Collections.emptyList();
+    }
+
+    public static List<OdinStatement> doGetBlockStatements(OdinStatementBody statementBody) {
+        if (statementBody.getBlock() != null) {
+            return statementBody.getBlock().getStatements();
+        }
+
+        if (statementBody.getDoStatement() != null) {
+            return Collections.singletonList(statementBody.getDoStatement().getStatement());
+        }
+        return Collections.emptyList();
+    }
+
+    public static List<OdinStatement> getBlockStatements(OdinIfBlock ifBlock) {
+        return doGetBlockStatements(ifBlock.getStatementBody());
+    }
+
+    public static List<OdinStatement> getBlockStatements(OdinElseIfBlock elseIfBlock) {
+        return doGetBlockStatements(elseIfBlock.getStatementBody());
+    }
+
+    public static List<OdinStatement> getBlockStatements(OdinElseBlock elseBlock) {
+        return doGetBlockStatements(elseBlock.getStatementBody());
+    }
+
+    public static List<OdinStatement> getBlockStatements(OdinBlockStatement blockStatement) {
+        return blockStatement.getBlock().getStatements();
+    }
+
+    public static List<OdinStatement> getBlockStatements(OdinForBlock forBlock) {
+        return doGetBlockStatements(forBlock.getStatementBody());
+    }
+
+    public static List<OdinStatement> getBlockStatements(OdinForInBlock forInBlock) {
+        return doGetBlockStatements(forInBlock.getStatementBody());
+    }
+
+    // Declaration specs
+
+
+    // Procedures
+
+    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinProcedureDeclarationStatement procedureDeclarationStatement) {
+        OdinProcedureType procedureType = procedureDeclarationStatement.getProcedureType();
+        return doGetProcedureTypeDeclarationSpecs(procedureType);
+    }
+
+    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinProcedureExpression procedureExpression) {
+        OdinProcedureType procedureType = procedureExpression.getProcedureExpressionType().getProcedureType();
+        return doGetProcedureTypeDeclarationSpecs(procedureType);
+    }
+
+    private static @NotNull List<OdinDeclarationSpec> doGetProcedureTypeDeclarationSpecs(OdinProcedureType procedureType) {
+        List<OdinDeclarationSpec> declarations = new ArrayList<>();
+        {
+            OdinParamEntries paramEntries = procedureType.getParamEntries();
+            if (paramEntries != null) {
+                for (OdinParamEntry odinParamEntry : paramEntries.getParamEntryList()) {
+                    declarations.addAll(OdinDeclarationSpecifier.getDeclarationSpec(odinParamEntry.getParameterDeclaration()));
+                }
+            }
+        }
+
+        OdinReturnParameters returnParameters = procedureType.getReturnParameters();
+        {
+            if (returnParameters != null) {
+                OdinParamEntries paramEntries = returnParameters.getParamEntries();
+                if (paramEntries != null) {
+                    for (OdinParamEntry odinParamEntry : paramEntries.getParamEntryList()) {
+                        declarations.addAll(OdinDeclarationSpecifier.getDeclarationSpec(odinParamEntry.getParameterDeclaration()));
+                    }
+                }
+            }
+        }
+        return declarations;
+    }
+
+    // Simple Block
+    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinBlockStatement ignored) {
+        return Collections.emptyList();
+    }
+
+    // Control flow blocks
+
+    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinIfBlock ifBlock) {
+        OdinControlFlowInit controlFlowInit = ifBlock.getControlFlowInit();
+        if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
+            return OdinDeclarationSpecifier.getDeclarationSpec(odinDeclaration);
+        }
+        return Collections.emptyList();
+    }
+
+    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinElseIfBlock elseIfBlock) {
+        List<OdinDeclarationSpec> specs = new ArrayList<>();
+        OdinControlFlowInit controlFlowInit = elseIfBlock.getControlFlowInit();
+        if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
+            specs.addAll(OdinDeclarationSpecifier.getDeclarationSpec(odinDeclaration));
+        }
+        addSpecsOfPreviousBlocks(elseIfBlock, specs);
+
+        return specs;
+    }
+
+    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinElseBlock elseBlock) {
+        List<OdinDeclarationSpec> specs = new ArrayList<>();
+        addSpecsOfPreviousBlocks(elseBlock, specs);
+        return specs;
+    }
+
+    private static void addSpecsOfPreviousBlocks(PsiElement conditionalBlock, List<OdinDeclarationSpec> specs) {
+        PsiElement prevSibling;
+        PsiElement current = conditionalBlock;
+        while ((prevSibling = current.getPrevSibling()) != null) {
+            if (prevSibling instanceof OdinElseIfBlock elseIfBlocSibling) {
+                specs.addAll(elseIfBlocSibling.getDeclarationsSpecs());
+                break;
+            }
+
+            if (prevSibling instanceof OdinIfBlock ifBlock) {
+                specs.addAll(ifBlock.getDeclarationsSpecs());
+                break;
+            }
+            current = prevSibling;
+        }
+    }
+
+    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinForBlock forBlock) {
+        OdinControlFlowInit controlFlowInit = forBlock.getControlFlowInit();
+        if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
+            return OdinDeclarationSpecifier.getDeclarationSpec(odinDeclaration);
+        }
+        return Collections.emptyList();
+    }
+
+    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinForInBlock forInStatement) {
+        List<OdinDeclarationSpec> specs = new ArrayList<>();
+        for (OdinForInExpression odinForInExpression : forInStatement.getForInExpressionList()) {
+            OdinDeclarationSpec spec = new OdinDeclarationSpec();
+            spec.setDeclaredIdentifier(odinForInExpression.getDeclaredIdentifier());
+            specs.add(spec);
+        }
+        return specs;
+    }
+
 }

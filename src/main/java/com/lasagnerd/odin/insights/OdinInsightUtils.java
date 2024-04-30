@@ -107,15 +107,15 @@ public class OdinInsightUtils {
 
     private static List<OdinStatement> getStatements(PsiElement psiElement) {
         if (psiElement instanceof OdinWhenStatement odinWhenStatement) {
-            if (odinWhenStatement.getBlock() != null) {
-                OdinStatementList statementList = odinWhenStatement.getBlock().getStatementList();
+            if (odinWhenStatement.getStatementBody().getBlock() != null) {
+                OdinStatementList statementList = odinWhenStatement.getStatementBody().getBlock().getStatementList();
                 if (statementList != null) {
                     return statementList.getStatementList();
                 }
             }
 
-            if (odinWhenStatement.getDoStatement() != null) {
-                return List.of(odinWhenStatement.getDoStatement());
+            if (odinWhenStatement.getStatementBody().getDoStatement() != null) {
+                return List.of(odinWhenStatement.getStatementBody().getDoStatement());
             }
         }
 
@@ -177,7 +177,7 @@ public class OdinInsightUtils {
                 if (odinFieldDeclarationStatement.getDeclaredIdentifiers().isEmpty())
                     continue;
 
-                TsOdinType usedType = OdinTypeExpressionResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinition().getMainTypeExpression());
+                TsOdinType usedType = OdinTypeExpressionResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinitionExpression().getMainTypeExpression());
                 Scope subScope = getScopeProvidedByType(usedType);
                 scope.addSymbols(subScope);
             }

@@ -221,7 +221,7 @@ structDeclarationStatement           ::= (attributeStatement eos?)* declaredIden
 structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> tagStatement* <<exitNoBlockMode>> structBlock
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
-fieldDeclarationStatement            ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition_expression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ] implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" }
+fieldDeclarationStatement            ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition_expression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
 
 // Enum
 enumDeclarationStatement             ::= (attributeStatement eos?)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
@@ -239,12 +239,12 @@ unionBody                            ::= typeDefinition_expression (COMMA typeDe
 bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
-procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody
+procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
 procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
 
 whereClause                          ::= WHERE expression (COMMA expression)*
-procedureBody                        ::=  [tagStatement] (block| TRIPLE_DASH)
-returnParameters                      ::= NOT | LPAREN paramEntries RPAREN | typeDefinition_expression
+procedureBody                        ::= [tagStatement] (block| TRIPLE_DASH)
+returnParameters                     ::= NOT | LPAREN paramEntries RPAREN | typeDefinition_expression
 
 returnStatement                      ::= [tagStatement] RETURN returnArgumentList?
 private returnArgumentList           ::= expression (COMMA expression)* COMMA?
@@ -287,13 +287,13 @@ mapType                              ::= MAP LBRACKET typeDefinition_expression 
 matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
 arrayType                            ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression {methods=[getTypeDefinition]}
 
-constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
+constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList { methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
 
 private symbolDefinitionHead         ::= (attributeStatement eos?)* [tagHead] [USING] identifierList colonOpening typeDefinition_expression?
 colonOpening                         ::= COLON
 
-variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
+variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition]}
 
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' }
@@ -317,31 +317,32 @@ assignmentOperator                   ::= EQ
                                          | RSHIFT_EQ
                                          | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] identifierList COLON typeDefinition_expression {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
+variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] identifierList COLON typeDefinition_expression { methods=[getTypeDefinition]}
 
 // Parameters for procedures and assignments
 polymorphicParameterList             ::= polymorphicParameter (COMMA polymorphicParameter)* COMMA?
 polymorphicParameter                 ::= tagStatement? (
                                          variadicParameterDeclaration
                                          | parameterInitialization
-                                         | parameterDeclarationStatement
+                                         | parameterDecl
                                          )
 
 paramEntries                        ::= paramEntry (COMMA paramEntry)* COMMA?
 paramEntry                            ::= tagStatement? (
                                          variadicParameterDeclaration
                                              | parameterInitialization
-                                             | parameterDeclarationStatement
+                                             | parameterDecl
                                              | unnamedParameter
                                          )
-fake parameterDeclaration ::= parameter+ typeDefinition_expression? expression {implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
+fake parameterDeclaration ::= parameter+ typeDefinitionContainer? expression { methods=[getTypeDefinition]}
+typeDefinitionContainer ::= typeDefinition_expression
 
 parameter ::=  [USING] tagStatement? declaredIdentifier
-parameterDeclarationStatement        ::= parameter (COMMA parameter)* COLON typeDefinition_expression {extends=parameterDeclaration implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration" methods=[getTypeDefinition]}
-parameterInitialization              ::= parameter COLON [typeDefinition_expression] EQ expression {extends=parameterDeclaration methods=[typeDefinition="/expression[0]" getTypeDefinition] implements="com.lasagnerd.odin.lang.psi.OdinTypedDeclaration"}
+parameterDecl                        ::= parameter (COMMA parameter)* COLON typeDefinitionContainer {extends=parameterDeclaration  methods=[getTypeDefinition]}
+parameterInitialization              ::= parameter COLON [typeDefinitionContainer] EQ expression {extends=parameterDeclaration methods=[getTypeDefinition] }
 
-variadicParameterDeclaration         ::= parameter COLON RANGE typeDefinition_expression {extends=parameterDeclaration methods=[getTypeDefinition]}
-unnamedParameter          ::= RANGE? typeDefinition_expression {extends=parameterDeclaration methods=[getTypeDefinition]}
+variadicParameterDeclaration         ::= parameter COLON RANGE typeDefinitionContainer {extends=parameterDeclaration methods=[getTypeDefinition]}
+unnamedParameter                     ::= RANGE? typeDefinitionContainer {extends=parameterDeclaration methods=[getTypeDefinition]}
 
 // Function calls
 argumentList                         ::= argument (COMMA argument)* COMMA?
@@ -364,6 +365,7 @@ expression                           ::= postfix_group
                                          | add_group
                                          | mul_group
                                          | unary_group
+                                         | implicit_selector_expression
                                          | maybe_expression
                                          | uninitialized_expression
                                          | call_expression
@@ -395,7 +397,7 @@ bitwise_xor_expression               ::= expression TILDE           <<enterMode 
 bitwise_and_not_expression           ::= expression ANDNOT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
 and_expression                       ::= expression ANDAND          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
 or_expression                        ::= expression OROR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-or_else_expression                   ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+or_else_expression                   ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression }
 in_expression                        ::= expression IN              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
 not_in_expression                    ::= expression NOT_IN          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
 lt_expression                        ::= expression LT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
@@ -457,11 +459,11 @@ simple_ref_expression                ::= identifier {extends=ref_expression elem
 qualification_expression             ::= expression (DOT|ARROW) identifier {extends=ref_expression elementType=ref_expression}
 
 
-
+implicit_selector_expression         ::= DOT identifier
 index_expression                     ::= expression index
 slice_expression                     ::= expression slice
 typeAssertion_expression             ::= expression DOT LPAREN type_expression RPAREN {methods=[subject="/expression[0]" targetType="/expression[1]"]}
-procedure_expression                 ::= procedure_expression_type procedureBody
+procedure_expression                 ::= procedure_expression_type procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
 procedure_expression_type            ::= procedureType
 dereference_expression               ::= expression CARET
 identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference]}
@@ -504,7 +506,7 @@ private unary_group                  ::= unary_plus_expression
                                          | unary_and_expression
                                          | unary_not_expression
                                          | unary_range_expression
-                                         | unary_dot_expression
+
 
 
 unary_plus_expression                ::= PLUS  <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
@@ -513,7 +515,7 @@ unary_tilde_expression               ::= TILDE <<enterMode "OPERAND">> expressio
 unary_and_expression                 ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
 unary_not_expression                 ::= NOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
 unary_range_expression               ::= RANGE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_dot_expression                 ::= DOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+
 
 or_return_expression                 ::= expression OR_RETURN
 or_break_expression                  ::= expression OR_BREAK [IDENTIFIER_TOKEN]
@@ -523,6 +525,7 @@ or_continue_expression               ::= expression OR_CONTINUE [IDENTIFIER_TOKE
 string_literal                       ::= DQ_STRING_LITERAL
                                          | SQ_STRING_LITERAL
                                          | RAW_STRING_LITERAL
+
 numeric_literal                      ::= INTEGER_DEC_LITERAL
                                          | INTEGER_HEX_LITERAL
                                          | INTEGER_OCT_LITERAL
@@ -533,7 +536,6 @@ numeric_literal                      ::= INTEGER_DEC_LITERAL
 
 boolean_literal                      ::= TRUE
                                          | FALSE
-
 
 basic_literal                        ::= nil_literal
                                          | string_literal
@@ -557,11 +559,7 @@ tagStatement_expression              ::= tagHead [basic_literal | (LPAREN expres
 tagStatement                         ::= tagHead [basic_literal | (LPAREN expressionsList? RPAREN)]
 tagHead                              ::= HASH IDENTIFIER_TOKEN
 
-forStatement                         ::= label? tagStatement? forHead statementBody
-label                                ::= IDENTIFIER_TOKEN COLON
 
-forHead                              ::= FOR <<enterNoBlockMode>> (forIn|forTraditional) <<exitNoBlockMode>>
-doStatement                          ::= DO statement
 
 breakStatement                       ::= BREAK IDENTIFIER_TOKEN?
 continueStatement                    ::= CONTINUE IDENTIFIER_TOKEN?
@@ -589,8 +587,9 @@ statement                            ::= assignmentStatement
                                          | variableDeclarationStatement
                                          | bitsetDeclarationStatement
                                          | blockStatement
+                                         | forInStatement
                                          | forStatement
-                                         | ifStatement
+                                         | conditionalStatement
                                          | whenStatement
                                          | switchStatement
                                          | deferStatement
@@ -607,39 +606,64 @@ statement                            ::= assignmentStatement
 
 fallthroughStatement                 ::= FALLTHROUGH
 expressionStatement                  ::= expression
-blockStatement                       ::= [(tagStatement eos?)|label] block
 
-private forTraditional               ::= (forStartStatement? SEMICOLON)? expression? (SEMICOLON forEndStatement?)?
-private forIn                        ::= [forInExpression (COMMA forInExpression)*] IN expression
-private forInExpression              ::= AND? identifier
-private forStartStatement            ::= variableInitializationStatement | assignmentStatement | call_expression
-private forEndStatement              ::= assignmentStatement | call_expression
-
-ifStatement                          ::= [label] [tagHead] if condition statementBody (sos elseIfBlock)* [sos elseBlock]
-private statementBody                ::= block|doStatement
-// TODO initStatement is not valid for when statements
-condition                            ::= <<enterNoBlockMode>> [initStatement SEMICOLON] expression <<exitNoBlockMode>>
-private switchCondition              ::= [initStatement SEMICOLON] expression?
-initStatement                        ::= assignmentStatement|variableInitializationStatement|variableDeclarationStatement
-elseIfBlock                          ::= elseIf condition statementBody
-elseIf                               ::= else if
-elseBlock                            ::= else statementBody
-if                                   ::= IF_TOKEN
-else                                 ::= ELSE_TOKEN
-whenStatement                        ::= WHEN condition statementBody (sos elseWhenBlock)* (sos elseBlock)?
-elseWhenBlock                        ::= else WHEN condition statementBody
-
-switchStatement                      ::= [label] [tagStatement_expression] switchHead switchBody
-switchHead                           ::= SWITCH IN? <<enterNoBlockMode>> switchCondition? <<exitNoBlockMode>>
-switchBody                           ::= eos? blockStart switchCases blockEnd
-switchCases                          ::= switchCase*
-switchCase                           ::= CASE (expression (COMMA expression)*)? caseBlock
-caseBlock                            ::= COLON statementList?
+label                                ::= IDENTIFIER_TOKEN COLON
+blockStatement                       ::= [(tagStatement eos?)|label] block {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
 
 deferStatement                       ::= DEFER deferrableStatement
 private deferrableStatement          ::= assignmentStatement
                                          | expression
-                                         | ifStatement
+                                         | conditionalStatement
                                          | forStatement
                                          | switchStatement
                                          | block
+
+// Control Flows
+
+// Shared rules among all control flow statements
+controlFlowInit                      ::= assignmentStatement
+                                         | variableInitializationStatement
+                                         | variableDeclarationStatement
+                                         | call_expression
+
+condition                            ::= expression
+doStatement                          ::= DO statement
+statementBody                ::= block|doStatement
+
+// For
+forStatement                         ::= label? tagStatement? forBlock
+private forHead                      ::= <<enterNoBlockMode>> [[[controlFlowInit] SEMICOLON] condition [SEMICOLON [forUpdate]]] <<exitNoBlockMode>>
+forBlock                             ::= FOR forHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+forUpdate                            ::= assignmentStatement | call_expression
+
+// For-In
+forInStatement                       ::= label? tagStatement? forInBlock
+forInBlock                           ::= FOR <<enterNoBlockMode>> [forInExpression (COMMA forInExpression)*] IN expression <<exitNoBlockMode>> statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+forInExpression                      ::= AND? declaredIdentifier
+
+// Conditional statement (=if-elseif-else)
+private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit] SEMICOLON] condition <<exitNoBlockMode>>
+
+conditionalStatement                 ::= [label] [tagHead] ifBlock (sos elseIfBlock)* [sos elseBlock]
+
+ifBlock                              ::= if conditionalHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+elseIfBlock                          ::= elseIf conditionalHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+elseIf                               ::= else if
+elseBlock                            ::= else statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+if                                   ::= IF_TOKEN
+else                                 ::= ELSE_TOKEN
+
+// Switch
+switchStatement                      ::= [label] [tagStatement_expression] SWITCH IN? switchHead switchBody
+private switchHead                   ::= <<enterNoBlockMode>> [[controlFlowInit SEMICOLON] [expression]] <<exitNoBlockMode>>
+switchBody                           ::= eos? blockStart switchCases blockEnd
+switchCases                          ::= switchCase*
+switchCase                           ::= CASE [expression (COMMA expression)*] caseBlock
+caseBlock                            ::= COLON statementList?
+
+// When statement (compile time, which means it does not support an init block)
+whenStatement                        ::= WHEN <<enterNoBlockMode>> condition <<enterNoBlockMode>> statementBody (sos elseWhenBlock)* (sos elseBlock)?
+elseWhenBlock                        ::= else WHEN <<enterNoBlockMode>>  condition <<enterNoBlockMode>> statementBody
+
+
+
