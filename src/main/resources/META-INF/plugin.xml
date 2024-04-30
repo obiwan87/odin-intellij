@@ -51,6 +51,7 @@
                 id="com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable"
                 displayName="Odin"/>
         <projectService serviceImplementation="com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory" />
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType" id="OdinRunConfigurationType"/>
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
         <runLineMarkerContributor language="Odin" implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
@@ -59,8 +60,8 @@
         <lang.quoteHandler language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinQuoteHandler"/>
         <lang.commenter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinCommenter"/>
         <lang.foldingBuilder language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFoldingBuilder"/>
-        <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier"
-                                 implementationClass="com.lasagnerd.odin.lang.OdinElementManipulators"/>
+        <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier" implementationClass="com.lasagnerd.odin.lang.OdinElementManipulators"/>
+
         <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.insights.OdinCompletionContributor"/>
         <sdkType implementation="com.lasagnerd.odin.sdkConfig.OdinSdkType"/>
         <codeInsight.parameterInfo language="Odin" implementationClass="com.lasagnerd.odin.insights.OdinParameterInfoHandler"/>
@@ -68,6 +69,7 @@
                 language="Odin"
                 implementationClass="com.lasagnerd.odin.insights.OdinFindUsagesProvider"/>
         <!-- TODO        <usageTypeProvider implementation="com.lasagnerd.odin.insights.OdinUsageTypeProvider"/>-->
+        <lang.refactoringSupport language="Odin" implementationClass="com.lasagnerd.odin.refactor.OdinRefactorSupport"/>
     </extensions>
 
 </idea-plugin>

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@Setter
 @Getter
 @State(
         name = "com.lasagnerd.odin.settings.OdinSdkConfigPersistentState",
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 public class OdinSdkConfigPersistentState implements PersistentStateComponent<OdinSdkConfigPersistentState> {
 
 
-    @Setter
     public String sdkPath = "";
 
     public static OdinSdkConfigPersistentState getInstance(Project project) {
