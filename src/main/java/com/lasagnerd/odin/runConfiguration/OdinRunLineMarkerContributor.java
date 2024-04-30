@@ -14,11 +14,15 @@ import org.jetbrains.annotations.Nullable;
 public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
     @Override
     public @Nullable Info getInfo(@NotNull PsiElement element) {
-        if (!(element instanceof OdinDeclaredIdentifier)) {
+        if(element.getNode().getElementType() != OdinTypes.IDENTIFIER_TOKEN) {
             return null;
         }
 
-        if (!(element.getParent() instanceof OdinProcedureDeclarationStatement)) {
+        if (!(element.getParent() instanceof OdinDeclaredIdentifier)) {
+            return null;
+        }
+
+        if (!(element.getParent().getParent() instanceof OdinProcedureDeclarationStatement)) {
             return null;
         }
 
