@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.lang.typeSystem;
+package com.lasagnerd.odin.insights.typeSystem;
 
 import com.lasagnerd.odin.lang.psi.OdinTypeExpression;
 import lombok.Data;

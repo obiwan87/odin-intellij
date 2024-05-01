@@ -1,8 +1,10 @@
-package com.lasagnerd.odin.insights;
+package com.lasagnerd.odin.insights.typeInference;
 
 import com.intellij.psi.PsiNamedElement;
+import com.lasagnerd.odin.insights.OdinInsightUtils;
+import com.lasagnerd.odin.insights.OdinScope;
+import com.lasagnerd.odin.insights.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.lang.typeSystem.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +18,7 @@ import static com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator.RESERVED_TYPES;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-class OdinTypeExpressionResolver extends OdinVisitor {
+public class OdinTypeExpressionResolver extends OdinVisitor {
 
     @Nullable
     public static TsOdinType resolveType(OdinScope scope, OdinTypeExpression typeExpression) {
@@ -210,7 +212,7 @@ class OdinTypeExpressionResolver extends OdinVisitor {
                 }
 
                 OdinExpression odinExpression = expressionList.get(index);
-                TypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(scope, odinExpression);
+                OdinTypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(scope, odinExpression);
                 if (typeInferenceResult.getType() instanceof TsOdinMetaType metaType) {
                     metaType.getTypeExpression().accept(this);
                     odinDeclaration = metaType.getDeclaration();

@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.lang.typeSystem;
+package com.lasagnerd.odin.insights.typeSystem;
 
 public enum TsOdinTypeType {
     STRUCT,

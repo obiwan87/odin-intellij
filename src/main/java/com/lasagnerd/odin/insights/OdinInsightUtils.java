@@ -8,9 +8,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.insights.typeInference.OdinTypeExpressionResolver;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.lang.typeSystem.TsOdinPointerType;
-import com.lasagnerd.odin.lang.typeSystem.TsOdinType;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinPointerType;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

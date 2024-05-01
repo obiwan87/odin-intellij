@@ -1,13 +1,13 @@
-package com.lasagnerd.odin.insights;
+package com.lasagnerd.odin.insights.typeInference;
 
 import com.intellij.psi.PsiNamedElement;
+import com.lasagnerd.odin.insights.OdinInsightUtils;
+import com.lasagnerd.odin.insights.OdinScope;
+import com.lasagnerd.odin.insights.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.lang.typeSystem.*;
-import lombok.Data;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-class OdinExpressionTypeResolver extends OdinVisitor {
+public class OdinExpressionTypeResolver extends OdinVisitor {
 
     final OdinScope scope;
 
@@ -20,10 +20,10 @@ class OdinExpressionTypeResolver extends OdinVisitor {
         this.scope = scope;
     }
 
-    static TypeInferenceResult inferType(OdinScope scope, OdinExpression expression) {
+    public static OdinTypeInferenceResult inferType(OdinScope scope, OdinExpression expression) {
         OdinExpressionTypeResolver odinExpressionTypeResolver = new OdinExpressionTypeResolver(scope);
         expression.accept(odinExpressionTypeResolver);
-        TypeInferenceResult typeInferenceResult = new TypeInferenceResult();
+        OdinTypeInferenceResult typeInferenceResult = new OdinTypeInferenceResult();
         typeInferenceResult.setImportDeclarationStatement(odinExpressionTypeResolver.importDeclarationStatement);
         typeInferenceResult.setType(odinExpressionTypeResolver.type);
         typeInferenceResult.setImport(odinExpressionTypeResolver.isImport);
@@ -249,10 +249,3 @@ class OdinExpressionTypeResolver extends OdinVisitor {
     }
 }
 
-@Data
-class TypeInferenceResult {
-    boolean isImport;
-    OdinImportDeclarationStatement importDeclarationStatement;
-    @Nullable
-    TsOdinType type;
-}

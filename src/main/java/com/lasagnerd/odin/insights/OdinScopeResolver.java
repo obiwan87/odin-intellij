@@ -3,8 +3,11 @@ package com.lasagnerd.odin.insights;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.insights.typeInference.OdinExpressionTypeResolver;
+import com.lasagnerd.odin.insights.typeInference.OdinTypeExpressionResolver;
+import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.lang.typeSystem.TsOdinType;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -70,13 +73,13 @@ public class OdinScopeResolver {
                 }
 
                 if (statement instanceof OdinUsingStatement usingStatement) {
-                    TypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(scope, usingStatement.getExpression());
-                    if (typeInferenceResult.type != null) {
+                    OdinTypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(scope, usingStatement.getExpression());
+                    if (typeInferenceResult.getType() != null) {
                         OdinScope usingScope = getScopeProvidedByType(typeInferenceResult.getType());
                         scope.addAll(usingScope.getNamedElements(), true);
                     }
 
-                    if (typeInferenceResult.isImport) {
+                    if (typeInferenceResult.isImport()) {
                         OdinScope declarationsOfImportedPackage = getDeclarationsOfImportedPackage(typeInferenceResult.getImportDeclarationStatement());
                         scope.addAll(declarationsOfImportedPackage.getNamedElements());
                     }
@@ -96,7 +99,7 @@ public class OdinScopeResolver {
                             List<OdinExpression> expressionList = variableInitializationStatement.getExpressionsList().getExpressionList();
                             if (!expressionList.isEmpty()) {
                                 OdinExpression odinExpression = expressionList.get(0);
-                                TypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(scope, odinExpression);
+                                OdinTypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(scope, odinExpression);
                                 TsOdinType type = typeInferenceResult.getType();
                                 if (type != null) {
                                     OdinScope scopeProvidedByType = getScopeProvidedByType(type);
@@ -192,7 +195,7 @@ public class OdinScopeResolver {
                     }
                 } else {
                     if(declarationsSpec.getValueExpression() != null) {
-                        TypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(parentScope, declarationsSpec.getValueExpression());
+                        OdinTypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(parentScope, declarationsSpec.getValueExpression());
                         TsOdinType type = typeInferenceResult.getType();
                         if(type != null) {
                             scope.addAll(getScopeProvidedByType(type).getNamedElements());
