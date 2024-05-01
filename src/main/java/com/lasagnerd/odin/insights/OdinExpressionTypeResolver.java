@@ -9,18 +9,18 @@ import org.jetbrains.annotations.Nullable;
 
 class OdinExpressionTypeResolver extends OdinVisitor {
 
-    final Scope scope;
+    final OdinScope scope;
 
     TsOdinType type;
     OdinImportDeclarationStatement importDeclarationStatement;
 
     boolean isImport;
 
-    public OdinExpressionTypeResolver(Scope scope) {
+    public OdinExpressionTypeResolver(OdinScope scope) {
         this.scope = scope;
     }
 
-    static TypeInferenceResult inferType(Scope scope, OdinExpression expression) {
+    static TypeInferenceResult inferType(OdinScope scope, OdinExpression expression) {
         OdinExpressionTypeResolver odinExpressionTypeResolver = new OdinExpressionTypeResolver(scope);
         expression.accept(odinExpressionTypeResolver);
         TypeInferenceResult typeInferenceResult = new TypeInferenceResult();
@@ -32,7 +32,7 @@ class OdinExpressionTypeResolver extends OdinVisitor {
 
     @Override
     public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
-        Scope localScope;
+        OdinScope localScope;
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
             // extract scope
@@ -80,8 +80,9 @@ class OdinExpressionTypeResolver extends OdinVisitor {
 
         // TODO test this 
         TsOdinType tsOdinType = odinExpressionTypeResolver.type;
-        if (tsOdinType instanceof TsOdinProcedureType procedureType) {
-            if (!procedureType.getReturnTypes().isEmpty()) {
+        if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType && tsOdinMetaType.getMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
+            TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeExpressionResolver.resolveType(scope, tsOdinMetaType.getTypeExpression());
+            if (procedureType != null && !procedureType.getReturnTypes().isEmpty()) {
                 this.type = procedureType.getReturnTypes().get(0);
             }
         }
@@ -135,7 +136,10 @@ class OdinExpressionTypeResolver extends OdinVisitor {
     public void visitProcedureExpression(@NotNull OdinProcedureExpression o) {
         // get type of expression. If it is a procedure, retrieve the return type and set that as result
         var procedureType = o.getProcedureExpressionType().getProcedureType();
-        this.type = OdinTypeExpressionResolver.resolveType(this.scope, procedureType);
+        TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.PROCEDURE);
+        tsOdinMetaType.setTypeExpression(procedureType);
+
+        this.type = tsOdinMetaType;
     }
 
     @Override
@@ -149,7 +153,7 @@ class OdinExpressionTypeResolver extends OdinVisitor {
 
     }
 
-    private TsOdinType resolveTypeOfDeclaration(Scope parentScope, OdinDeclaredIdentifier declaredIdentifier, OdinDeclaration odinDeclaration) {
+    public static TsOdinType resolveTypeOfDeclaration(OdinScope parentScope, OdinDeclaredIdentifier declaredIdentifier, OdinDeclaration odinDeclaration) {
         if (odinDeclaration instanceof OdinVariableDeclarationStatement declarationStatement) {
             var mainType = declarationStatement.getTypeDefinitionExpression().getMainTypeExpression();
             //return getDeclaredIdentifierQualifiedType(parentScope, mainType);
@@ -197,7 +201,7 @@ class OdinExpressionTypeResolver extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinParameterDecl parameterDeclaration) {
-            return OdinTypeExpressionResolver.resolveType(scope, parameterDeclaration.getTypeDefinition().getMainTypeExpression());
+            return OdinTypeExpressionResolver.resolveType(parentScope, parameterDeclaration.getTypeDefinition().getMainTypeExpression());
         }
 
         if (odinDeclaration instanceof OdinParameterInitialization parameterInitialization) {
@@ -213,32 +217,42 @@ class OdinExpressionTypeResolver extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinProcedureDeclarationStatement procedure) {
-            return OdinTypeExpressionResolver.resolveType(parentScope, procedure.getProcedureType());
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.PROCEDURE);
+            tsOdinMetaType.setDeclaration(procedure);
+            tsOdinMetaType.setTypeExpression(procedure.getProcedureType());
+            return tsOdinMetaType;
         }
+
+        if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.STRUCT);
+            tsOdinMetaType.setDeclaration(structDeclarationStatement);
+            tsOdinMetaType.setTypeExpression(structDeclarationStatement.getStructType());
+            return tsOdinMetaType;
+        }
+
+        if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.ENUM);
+            tsOdinMetaType.setDeclaration(enumDeclarationStatement);
+            tsOdinMetaType.setTypeExpression(enumDeclarationStatement.getEnumType());
+            return tsOdinMetaType;
+        }
+
+        if (odinDeclaration instanceof OdinUnionDeclarationStatement unionDeclarationStatement) {
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.UNION);
+            tsOdinMetaType.setDeclaration(unionDeclarationStatement);
+            tsOdinMetaType.setTypeExpression(unionDeclarationStatement.getUnionType());
+            return tsOdinMetaType;
+        }
+
 
         return TsOdinType.UNKNOWN;
     }
-
-    private static OdinDeclaredIdentifier getDeclaredIdentifierQualifiedType(Scope parentScope, @Nullable OdinExpression typeExpression) {
-        if (typeExpression instanceof OdinQualifiedType odinQualifiedType) {
-            if (odinQualifiedType.getPackageIdentifier() != null) {
-                Scope packageScope = parentScope.getScopeOfImport(odinQualifiedType.getPackageIdentifier().getIdentifierToken().getText());
-                return (OdinDeclaredIdentifier) packageScope.findNamedElement(odinQualifiedType.getTypeIdentifier().getIdentifierToken().getText());
-            } else {
-                return (OdinDeclaredIdentifier) parentScope.findNamedElement(odinQualifiedType.getTypeIdentifier()
-                        .getIdentifierToken()
-                        .getText());
-            }
-        }
-        return null;
-    }
-
-
 }
 
 @Data
 class TypeInferenceResult {
     boolean isImport;
     OdinImportDeclarationStatement importDeclarationStatement;
+    @Nullable
     TsOdinType type;
 }

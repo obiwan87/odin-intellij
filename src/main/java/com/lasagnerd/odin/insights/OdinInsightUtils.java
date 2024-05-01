@@ -41,13 +41,13 @@ public class OdinInsightUtils {
     }
 
     public static PsiElement findFirstDeclaration(OdinIdentifier identifier) {
-        Scope parentScope = findScope(identifier).with(getPackagePath(identifier));
+        OdinScope parentScope = findScope(identifier).with(getPackagePath(identifier));
         return findFirstDeclaration(parentScope, identifier);
     }
 
-    private static @Nullable PsiNamedElement findFirstDeclaration(Scope parentScope, OdinIdentifier identifier) {
+    private static @Nullable PsiNamedElement findFirstDeclaration(OdinScope parentScope, OdinIdentifier identifier) {
         OdinRefExpression refExpression = findFirstParentOfType(identifier, true, OdinRefExpression.class);
-        Scope scope = Scope.EMPTY;
+        OdinScope scope = OdinScope.EMPTY;
         if (refExpression != null) {
             if (refExpression.getExpression() != null) {
                 scope = OdinReferenceResolver.resolve(parentScope, refExpression.getExpression());
@@ -67,13 +67,15 @@ public class OdinInsightUtils {
                         scope = parentScope;
                     } else {
                         TsOdinType type = OdinTypeExpressionResolver.resolveType(parentScope, qualifiedType);
-                        scope = type.getParentScope();
+                        if (type != null) {
+                            scope = type.getParentScope();
+                        }
                     }
                 }
             }
         }
 
-        if (scope == Scope.EMPTY || scope == null) {
+        if (scope == OdinScope.EMPTY || scope == null) {
             scope = parentScope;
         }
 
@@ -83,7 +85,7 @@ public class OdinInsightUtils {
         return null;
     }
 
-    public static Scope getFileScopeDeclarations(OdinFileScope fileScope) {
+    public static OdinScope getFileScopeDeclarations(OdinFileScope fileScope) {
         // Find all blocks that are not in a procedure
         List<PsiNamedElement> declarations = new ArrayList<>();
 
@@ -102,7 +104,7 @@ public class OdinInsightUtils {
                 getStatements(element).forEach(statementStack::push);
             }
         }
-        return Scope.from(declarations);
+        return OdinScope.from(declarations);
     }
 
     private static List<OdinStatement> getStatements(PsiElement psiElement) {
@@ -129,7 +131,7 @@ public class OdinInsightUtils {
         return Collections.emptyList();
     }
 
-    static Scope getDeclarationsOfImportedPackage(OdinImportDeclarationStatement importStatement) {
+    static OdinScope getDeclarationsOfImportedPackage(OdinImportDeclarationStatement importStatement) {
         ImportInfo importInfo = importStatement.getImportInfo();
 
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
@@ -146,7 +148,7 @@ public class OdinInsightUtils {
         return getDeclarationsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
     }
 
-    public static Scope getDeclarationsOfImportedPackage(Scope scope, OdinImportDeclarationStatement importStatement) {
+    public static OdinScope getDeclarationsOfImportedPackage(OdinScope scope, OdinImportDeclarationStatement importStatement) {
         ImportInfo importInfo = importStatement.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         String path = Path.of(scope.getPackagePath(), OdinInsightUtils.getFileName(importStatement)).toString();
@@ -161,10 +163,10 @@ public class OdinInsightUtils {
      * @param type The type of the expression
      * @return The scope
      */
-    public static Scope getScopeProvidedByType(TsOdinType type) {
-        Scope parentScope = type.getParentScope();
-        Scope scope = new Scope();
-        if(type instanceof TsOdinPointerType pointerType) {
+    public static OdinScope getScopeProvidedByType(TsOdinType type) {
+        OdinScope parentScope = type.getParentScope();
+        OdinScope scope = new OdinScope();
+        if (type instanceof TsOdinPointerType pointerType) {
             type = pointerType.getDereferencedType();
         }
         OdinDeclaration odinDeclaration = type.getDeclaration();
@@ -178,8 +180,10 @@ public class OdinInsightUtils {
                     continue;
 
                 TsOdinType usedType = OdinTypeExpressionResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinitionExpression().getMainTypeExpression());
-                Scope subScope = getScopeProvidedByType(usedType);
-                scope.addSymbols(subScope);
+                if (usedType != null) {
+                    OdinScope subScope = getScopeProvidedByType(usedType);
+                    scope.addSymbols(subScope);
+                }
             }
 
             scope.addAll(structFields);
@@ -190,12 +194,18 @@ public class OdinInsightUtils {
             return scope.with(getEnumFields(enumDeclarationStatement));
         }
 
-        return Scope.EMPTY;
+        return OdinScope.EMPTY;
     }
 
     @NotNull
     public static List<PsiNamedElement> getEnumFields(OdinEnumDeclarationStatement enumDeclarationStatement) {
-        OdinEnumBody enumBody = enumDeclarationStatement.getEnumType()
+        OdinEnumType enumType = enumDeclarationStatement.getEnumType();
+
+        return getEnumFields(enumType);
+    }
+
+    private static @NotNull List<PsiNamedElement> getEnumFields(OdinEnumType enumType) {
+        OdinEnumBody enumBody = enumType
                 .getEnumBlock()
                 .getEnumBody();
 
@@ -232,11 +242,11 @@ public class OdinInsightUtils {
         return fieldDeclarationStatementList;
     }
 
-    public static Scope findScope(PsiElement element, Predicate<PsiElement> matcher) {
+    public static OdinScope findScope(PsiElement element, Predicate<PsiElement> matcher) {
         return OdinScopeResolver.resolveScope(element, matcher);
     }
 
-    public static Scope findScope(PsiElement element) {
+    public static OdinScope findScope(PsiElement element) {
         return OdinScopeResolver.resolveScope(element);
     }
 
@@ -335,7 +345,7 @@ public class OdinInsightUtils {
      * @param project        Project
      * @return Scope
      */
-    public static Scope getDeclarationsOfImportedPackage(ImportInfo importInfo, String sourceFilePath, Project project) {
+    public static OdinScope getDeclarationsOfImportedPackage(ImportInfo importInfo, String sourceFilePath, Project project) {
         List<PsiNamedElement> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
             Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
@@ -378,11 +388,11 @@ public class OdinInsightUtils {
                 }
 
                 if (!importedFiles.isEmpty()) {
-                    return Scope.from(packageDeclarations, packagePath.toString());
+                    return OdinScope.from(packageDeclarations, packagePath.toString());
                 }
             }
         }
-        return Scope.EMPTY;
+        return OdinScope.EMPTY;
     }
 
     @NotNull

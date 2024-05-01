@@ -12,14 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-public class Scope {
+public class OdinScope {
     @Getter
     @Setter
     private String packagePath;
-    public static final Scope EMPTY = new Scope();
+    public static final OdinScope EMPTY = new OdinScope();
     Map<String, PsiNamedElement> symbolTable = new HashMap<>();
 
-    public Scope() {
+    public OdinScope() {
 
     }
 
@@ -48,7 +48,7 @@ public class Scope {
         }
     }
 
-    public void addSymbols(Scope scope) {
+    public void addSymbols(OdinScope scope) {
         symbolTable.putAll(scope.symbolTable);
     }
 
@@ -65,11 +65,11 @@ public class Scope {
 
     }
 
-    static Scope from(Collection<? extends PsiNamedElement> identifiers) {
+    static OdinScope from(Collection<? extends PsiNamedElement> identifiers) {
         if (identifiers.isEmpty())
-            return Scope.EMPTY;
+            return OdinScope.EMPTY;
 
-        Scope scope = new Scope();
+        OdinScope scope = new OdinScope();
         for (var declaredIdentifier : identifiers) {
             scope.symbolTable.put(declaredIdentifier.getName(), declaredIdentifier);
         }
@@ -77,22 +77,22 @@ public class Scope {
         return scope;
     }
 
-    static Scope from(List<? extends PsiNamedElement> identifiers, String packagePath) {
-        Scope scope = from(identifiers);
+    static OdinScope from(List<? extends PsiNamedElement> identifiers, String packagePath) {
+        OdinScope scope = from(identifiers);
         scope.packagePath = packagePath;
 
         return scope;
     }
 
-    public Scope with(List<? extends PsiNamedElement> identifiers) {
-        Scope scope = from(identifiers);
+    public OdinScope with(List<? extends PsiNamedElement> identifiers) {
+        OdinScope scope = from(identifiers);
         scope.packagePath = this.packagePath;
 
         return scope;
     }
 
-    public Scope with(String packagePath) {
-        Scope scope = new Scope();
+    public OdinScope with(String packagePath) {
+        OdinScope scope = new OdinScope();
         scope.symbolTable = this.symbolTable;
         scope.packagePath = packagePath;
 
@@ -106,7 +106,7 @@ public class Scope {
      * @return A new scope with all the declared symbols of the referenced package
      */
 
-    public Scope getScopeOfImport(String packageIdentifier) {
+    public OdinScope getScopeOfImport(String packageIdentifier) {
         PsiNamedElement psiNamedElement = symbolTable.get(packageIdentifier);
         if (psiNamedElement instanceof OdinImportDeclarationStatement importDeclarationStatement) {
             return OdinInsightUtils.getDeclarationsOfImportedPackage(this, importDeclarationStatement);

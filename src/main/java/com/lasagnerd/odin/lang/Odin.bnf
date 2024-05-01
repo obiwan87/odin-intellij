@@ -243,7 +243,9 @@ procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIden
 procedureType                        ::= tagStatement? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
 
 whereClause                          ::= WHERE expression (COMMA expression)*
-procedureBody                        ::= [tagStatement] (block| TRIPLE_DASH)
+procedureBody                        ::=  tripleDashBlock
+                                          | block
+private tripleDashBlock              ::= [tagStatement] TRIPLE_DASH {pin=2}
 returnParameters                     ::= NOT | LPAREN paramEntries RPAREN | typeDefinition_expression
 
 returnStatement                      ::= [tagStatement] RETURN returnArgumentList?
@@ -320,7 +322,7 @@ assignmentOperator                   ::= EQ
 variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] identifierList COLON typeDefinition_expression { methods=[getTypeDefinition]}
 
 // Parameters for procedures and assignments
-polymorphicParameterList             ::= polymorphicParameter (COMMA polymorphicParameter)* COMMA?
+private polymorphicParameterList             ::= polymorphicParameter (COMMA polymorphicParameter)* COMMA?
 polymorphicParameter                 ::= tagStatement? (
                                          variadicParameterDeclaration
                                          | parameterInitialization
@@ -541,7 +543,7 @@ basic_literal                        ::= nil_literal
                                          | string_literal
                                          | numeric_literal
                                          | boolean_literal
-                                         | tripleDashLiteral_expression
+//                                         | tripleDashLiteral_expression
 
 private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | parExpressionType
 parExpressionType                    ::= parenthesized_expression
@@ -646,7 +648,10 @@ private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit]
 
 conditionalStatement                 ::= [label] [tagHead] ifBlock (sos elseIfBlock)* [sos elseBlock]
 
-ifBlock                              ::= if conditionalHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+ifBlock                              ::= if conditionalHead statementBody {
+                                                implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"
+                                                methods = [ getBlockStatements getDeclarationsSpecs ]
+                                            }
 elseIfBlock                          ::= elseIf conditionalHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
 elseIf                               ::= else if
 elseBlock                            ::= else statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
@@ -662,8 +667,8 @@ switchCase                           ::= CASE [expression (COMMA expression)*] c
 caseBlock                            ::= COLON statementList?
 
 // When statement (compile time, which means it does not support an init block)
-whenStatement                        ::= WHEN <<enterNoBlockMode>> condition <<enterNoBlockMode>> statementBody (sos elseWhenBlock)* (sos elseBlock)?
-elseWhenBlock                        ::= else WHEN <<enterNoBlockMode>>  condition <<enterNoBlockMode>> statementBody
+whenStatement                        ::= [label] [tagHead] WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody (sos elseWhenBlock)* [sos elseBlock]
+elseWhenBlock                        ::= else WHEN <<enterNoBlockMode>>  condition <<exitNoBlockMode>> statementBody
 
 
 

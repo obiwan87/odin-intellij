@@ -18,7 +18,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class OdinLangSyntaxAnnotator implements Annotator {
 
-    private static final List<String> reservedTypes = List.of(
+    public static final List<String> RESERVED_TYPES = List.of(
             "bool",
             "b8",
             "b16",
@@ -132,7 +132,7 @@ public class OdinLangSyntaxAnnotator implements Annotator {
                         .textAttributes(DefaultLanguageHighlighterColors.CONSTANT)
                         .create();
 
-            } else if (!reservedTypes.contains(identifier.getText())) {
+            } else if (!RESERVED_TYPES.contains(identifier.getText())) {
 
             }
         }
@@ -168,7 +168,7 @@ public class OdinLangSyntaxAnnotator implements Annotator {
         }
 
         if (identifier != null) {
-            if (reservedTypes.contains(identifier.getText())) {
+            if (RESERVED_TYPES.contains(identifier.getText())) {
                 TextRange matchRange = identifier.getTextRange();
                 annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                         .range(matchRange)

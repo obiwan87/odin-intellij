@@ -13,4 +13,5 @@ public class OdinDeclarationSpec {
 
     boolean hasUsing;
     boolean isVariadic;
+    boolean isGeneric;
 }

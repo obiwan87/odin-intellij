@@ -69,7 +69,7 @@
                 language="Odin"
                 implementationClass="com.lasagnerd.odin.insights.OdinFindUsagesProvider"/>
         <!-- TODO        <usageTypeProvider implementation="com.lasagnerd.odin.insights.OdinUsageTypeProvider"/>-->
-        <lang.refactoringSupport language="Odin" implementationClass="com.lasagnerd.odin.refactor.OdinRefactorSupport"/>
+        <lang.refactoringSupport language="Odin" implementationClass="com.lasagnerd.odin.refactor.OdinRefactoringSupport"/>
     </extensions>
 
 </idea-plugin>

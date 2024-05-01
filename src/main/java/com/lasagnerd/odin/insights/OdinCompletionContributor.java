@@ -46,14 +46,14 @@ public class OdinCompletionContributor extends CompletionContributor {
                         // This constitutes our scope
 
                         if (parent instanceof OdinRefExpression reference) {
-                            Scope scope = OdinInsightUtils.findScope(reference, e -> true).with(parameters
+                            OdinScope scope = OdinInsightUtils.findScope(reference, e -> true).with(parameters
                                     .getOriginalFile()
                                     .getContainingDirectory()
                                     .getVirtualFile()
                                     .getPath());
 
                             if (reference.getExpression() != null) {
-                                Scope completionScope = OdinReferenceResolver.resolve(scope, reference.getExpression());
+                                OdinScope completionScope = OdinReferenceResolver.resolve(scope, reference.getExpression());
                                 if(completionScope != null) {
                                     addLookUpElements(result, completionScope.getNamedElements());
                                 }
@@ -86,7 +86,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                             findCompletionsForStruct(result, compoundLiteral);
                         }
 
-                        Scope declarations = OdinInsightUtils
+                        OdinScope declarations = OdinInsightUtils
                                 .findScope(position, e -> true);
                         addLookUpElements(result, declarations.getNamedElements());
                     }

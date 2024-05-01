@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.lang.typeSystem;
 
-import com.lasagnerd.odin.insights.Scope;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

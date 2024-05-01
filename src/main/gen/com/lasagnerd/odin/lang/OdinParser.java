@@ -232,7 +232,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
   //                                          | string_literal
   //                                          | numeric_literal
   //                                          | boolean_literal
-  //                                          | tripleDashLiteral_expression
   public static boolean basic_literal(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "basic_literal")) return false;
     boolean r;
@@ -241,7 +240,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = string_literal(b, l + 1);
     if (!r) r = numeric_literal(b, l + 1);
     if (!r) r = boolean_literal(b, l + 1);
-    if (!r) r = tripleDashLiteral_expression(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -1037,7 +1035,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // else WHEN <<enterNoBlockMode>>  condition <<enterNoBlockMode>> statementBody
+  // else WHEN <<enterNoBlockMode>>  condition <<exitNoBlockMode>> statementBody
   public static boolean elseWhenBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elseWhenBlock")) return false;
     if (!nextTokenIs(b, ELSE_TOKEN)) return false;
@@ -1047,7 +1045,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     r = r && consumeToken(b, WHEN);
     r = r && enterNoBlockMode(b, l + 1);
     r = r && condition(b, l + 1);
-    r = r && enterNoBlockMode(b, l + 1);
+    r = r && exitNoBlockMode(b, l + 1);
     r = r && statementBody(b, l + 1);
     exit_section_(b, m, ELSE_WHEN_BLOCK, r);
     return r;
@@ -2445,14 +2443,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // polymorphicParameter (COMMA polymorphicParameter)* COMMA?
-  public static boolean polymorphicParameterList(PsiBuilder b, int l) {
+  static boolean polymorphicParameterList(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "polymorphicParameterList")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, POLYMORPHIC_PARAMETER_LIST, "<polymorphic parameter list>");
+    Marker m = enter_section_(b);
     r = polymorphicParameter(b, l + 1);
     r = r && polymorphicParameterList_1(b, l + 1);
     r = r && polymorphicParameterList_2(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2486,30 +2484,15 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // [tagStatement] (block| TRIPLE_DASH)
+  // tripleDashBlock
+  //                                           | block
   public static boolean procedureBody(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "procedureBody")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, PROCEDURE_BODY, "<procedure body>");
-    r = procedureBody_0(b, l + 1);
-    r = r && procedureBody_1(b, l + 1);
+    r = tripleDashBlock(b, l + 1);
+    if (!r) r = block(b, l + 1);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // [tagStatement]
-  private static boolean procedureBody_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "procedureBody_0")) return false;
-    tagStatement(b, l + 1);
-    return true;
-  }
-
-  // block| TRIPLE_DASH
-  private static boolean procedureBody_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "procedureBody_1")) return false;
-    boolean r;
-    r = block(b, l + 1);
-    if (!r) r = consumeToken(b, TRIPLE_DASH);
     return r;
   }
 
@@ -3373,6 +3356,26 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // [tagStatement] TRIPLE_DASH
+  static boolean tripleDashBlock(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tripleDashBlock")) return false;
+    if (!nextTokenIs(b, "", HASH, TRIPLE_DASH)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = tripleDashBlock_0(b, l + 1);
+    r = r && consumeToken(b, TRIPLE_DASH);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // [tagStatement]
+  private static boolean tripleDashBlock_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "tripleDashBlock_0")) return false;
+    tagStatement(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
   // TRIPLE_DASH
   public static boolean tripleDashLiteral_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "tripleDashLiteral_expression")) return false;
@@ -3639,37 +3642,52 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // WHEN <<enterNoBlockMode>> condition <<enterNoBlockMode>> statementBody (sos elseWhenBlock)* (sos elseBlock)?
+  // [label] [tagHead] WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody (sos elseWhenBlock)* [sos elseBlock]
   public static boolean whenStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "whenStatement")) return false;
-    if (!nextTokenIs(b, WHEN)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, WHEN);
+    Marker m = enter_section_(b, l, _NONE_, WHEN_STATEMENT, "<when statement>");
+    r = whenStatement_0(b, l + 1);
+    r = r && whenStatement_1(b, l + 1);
+    r = r && consumeToken(b, WHEN);
     r = r && enterNoBlockMode(b, l + 1);
     r = r && condition(b, l + 1);
-    r = r && enterNoBlockMode(b, l + 1);
+    r = r && exitNoBlockMode(b, l + 1);
     r = r && statementBody(b, l + 1);
-    r = r && whenStatement_5(b, l + 1);
-    r = r && whenStatement_6(b, l + 1);
-    exit_section_(b, m, WHEN_STATEMENT, r);
+    r = r && whenStatement_7(b, l + 1);
+    r = r && whenStatement_8(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
+  // [label]
+  private static boolean whenStatement_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whenStatement_0")) return false;
+    label(b, l + 1);
+    return true;
+  }
+
+  // [tagHead]
+  private static boolean whenStatement_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whenStatement_1")) return false;
+    tagHead(b, l + 1);
+    return true;
+  }
+
   // (sos elseWhenBlock)*
-  private static boolean whenStatement_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "whenStatement_5")) return false;
+  private static boolean whenStatement_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whenStatement_7")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!whenStatement_5_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "whenStatement_5", c)) break;
+      if (!whenStatement_7_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "whenStatement_7", c)) break;
     }
     return true;
   }
 
   // sos elseWhenBlock
-  private static boolean whenStatement_5_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "whenStatement_5_0")) return false;
+  private static boolean whenStatement_7_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whenStatement_7_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = sos(b, l + 1);
@@ -3678,16 +3696,16 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (sos elseBlock)?
-  private static boolean whenStatement_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "whenStatement_6")) return false;
-    whenStatement_6_0(b, l + 1);
+  // [sos elseBlock]
+  private static boolean whenStatement_8(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whenStatement_8")) return false;
+    whenStatement_8_0(b, l + 1);
     return true;
   }
 
   // sos elseBlock
-  private static boolean whenStatement_6_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "whenStatement_6_0")) return false;
+  private static boolean whenStatement_8_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "whenStatement_8_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = sos(b, l + 1);

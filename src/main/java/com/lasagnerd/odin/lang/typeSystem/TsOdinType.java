@@ -1,6 +1,6 @@
 package com.lasagnerd.odin.lang.typeSystem;
 
-import com.lasagnerd.odin.insights.Scope;
+import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import lombok.Data;
 
@@ -8,7 +8,7 @@ import lombok.Data;
 public abstract class TsOdinType {
     String name;
     OdinDeclaration declaration;
-    Scope parentScope;
+    OdinScope parentScope;
 
     public static final TsOdinType UNKNOWN = new TsOdinType() {
         @Override

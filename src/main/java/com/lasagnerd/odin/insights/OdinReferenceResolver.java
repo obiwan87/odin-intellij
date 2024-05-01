@@ -5,17 +5,16 @@ import com.lasagnerd.odin.lang.psi.*;
 import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
 
 public class OdinReferenceResolver {
-    public static Scope resolve(Scope scope, OdinExpression valueExpression) {
+    public static OdinScope resolve(OdinScope scope, OdinExpression valueExpression) {
 
-        OdinExpressionTypeResolver odinExpressionTypeResolver = new OdinExpressionTypeResolver(scope);
-        valueExpression.accept(odinExpressionTypeResolver);
-        if (odinExpressionTypeResolver.isImport) {
-            return getDeclarationsOfImportedPackage(scope, odinExpressionTypeResolver.importDeclarationStatement);
+        TypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(scope, valueExpression);
+        if (typeInferenceResult.isImport) {
+            return getDeclarationsOfImportedPackage(scope, typeInferenceResult.importDeclarationStatement);
         }
-        if(odinExpressionTypeResolver.type != null) {
-            return getScopeProvidedByType(odinExpressionTypeResolver.type);
+        if(typeInferenceResult.type != null) {
+            return getScopeProvidedByType(typeInferenceResult.type);
         }
-        return Scope.EMPTY;
+        return OdinScope.EMPTY;
     }
 
 }
