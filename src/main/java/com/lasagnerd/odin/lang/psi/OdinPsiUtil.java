@@ -4,7 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.insights.ImportInfo;
+import com.lasagnerd.odin.insights.OdinImportInfo;
 import com.lasagnerd.odin.insights.OdinDeclarationSpecifier;
 import com.lasagnerd.odin.insights.OdinDeclarationSpec;
 import org.jetbrains.annotations.NotNull;
@@ -181,7 +181,7 @@ public class OdinPsiUtil {
     }
 
     @NotNull
-    public static ImportInfo getImportInfo(OdinImportDeclarationStatement importStatement) {
+    public static OdinImportInfo getImportInfo(OdinImportDeclarationStatement importStatement) {
         String name = importStatement.getAlias() != null
                 ? importStatement.getAlias().getText()
                 : null;
@@ -205,7 +205,7 @@ public class OdinPsiUtil {
             name = pathParts[pathParts.length - 1];
         }
 
-        return new ImportInfo(name, path, library);
+        return new OdinImportInfo(name, path, library);
     }
 
     public static OdinIdentifier getPackageIdentifier(OdinQualifiedType qualifiedType) {

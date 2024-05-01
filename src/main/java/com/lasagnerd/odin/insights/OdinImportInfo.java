@@ -12,5 +12,5 @@ package com.lasagnerd.odin.insights;
  * import "../other" -> library=null, package=other, path=../
  *
  */
-public record ImportInfo(String packageName, String path, String library) {
+public record OdinImportInfo(String packageName, String path, String library) {
 }

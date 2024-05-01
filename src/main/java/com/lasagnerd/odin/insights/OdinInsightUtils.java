@@ -133,7 +133,7 @@ public class OdinInsightUtils {
     }
 
     static OdinScope getDeclarationsOfImportedPackage(OdinImportDeclarationStatement importStatement) {
-        ImportInfo importInfo = importStatement.getImportInfo();
+        OdinImportInfo importInfo = importStatement.getImportInfo();
 
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         PsiFile containingFile = importStatement.getContainingFile();
@@ -150,7 +150,7 @@ public class OdinInsightUtils {
     }
 
     public static OdinScope getDeclarationsOfImportedPackage(OdinScope scope, OdinImportDeclarationStatement importStatement) {
-        ImportInfo importInfo = importStatement.getImportInfo();
+        OdinImportInfo importInfo = importStatement.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         String path = Path.of(scope.getPackagePath(), OdinInsightUtils.getFileName(importStatement)).toString();
         String name = importInfo.packageName();
@@ -346,7 +346,7 @@ public class OdinInsightUtils {
      * @param project        Project
      * @return Scope
      */
-    public static OdinScope getDeclarationsOfImportedPackage(ImportInfo importInfo, String sourceFilePath, Project project) {
+    public static OdinScope getDeclarationsOfImportedPackage(OdinImportInfo importInfo, String sourceFilePath, Project project) {
         List<PsiNamedElement> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
             Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
@@ -397,13 +397,13 @@ public class OdinInsightUtils {
     }
 
     @NotNull
-    public static Map<String, ImportInfo> getImportStatementsInfo(OdinFileScope fileScope) {
-        Map<String, ImportInfo> importMap = new HashMap<>();
+    public static Map<String, OdinImportInfo> getImportStatementsInfo(OdinFileScope fileScope) {
+        Map<String, OdinImportInfo> importMap = new HashMap<>();
         List<OdinImportDeclarationStatement> importStatements
                 = fileScope.getImportStatements();
 
         for (OdinImportDeclarationStatement importStatement : importStatements) {
-            ImportInfo importInfo = importStatement.getImportInfo();
+            OdinImportInfo importInfo = importStatement.getImportInfo();
             importMap.put(importInfo.packageName(), importInfo);
         }
         return importMap;

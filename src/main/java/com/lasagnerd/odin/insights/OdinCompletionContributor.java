@@ -145,7 +145,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                 } else if (typeType == OdinTypeType.PACKAGE) {
                     OdinImportDeclarationStatement odinDeclaration = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, false, OdinImportDeclarationStatement.class);
 
-                    ImportInfo info = odinDeclaration.getImportInfo();
+                    OdinImportInfo info = odinDeclaration.getImportInfo();
 
                     LookupElementBuilder element = LookupElementBuilder.create(info.packageName())
                             .withIcon(ExpUiIcons.Nodes.Package)
