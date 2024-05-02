@@ -40,10 +40,11 @@ public class OdinParser implements PsiParser, LightPsiParser {
     create_token_set_(COMPOUND_LITERAL_TYPED, COMPOUND_LITERAL_UNTYPED),
     create_token_set_(ARGUMENT, NAMED_ARGUMENT, UNNAMED_ARGUMENT),
     create_token_set_(PARAMETER_DECL, PARAMETER_INITIALIZATION, UNNAMED_PARAMETER, VARIADIC_PARAMETER_DECLARATION),
-    create_token_set_(ARRAY_TYPE, BIT_SET_TYPE, CONSTRAINED_TYPE, ENUM_TYPE,
-      MAP_TYPE, MATRIX_TYPE, MULTI_POINTER_TYPE, PAR_EXPRESSION_TYPE,
-      POINTER_TYPE, POLYMORPHIC_TYPE, PROCEDURE_TYPE, QUALIFIED_TYPE,
-      STRUCT_TYPE, TYPE, UNION_TYPE),
+    create_token_set_(ARRAY_TYPE, BIT_SET_TYPE, CALL_TYPE, CONSTRAINED_TYPE,
+      ENUM_TYPE, MAP_TYPE, MATRIX_TYPE, MULTI_POINTER_TYPE,
+      PAR_EXPRESSION_TYPE, POINTER_TYPE, POLYMORPHIC_TYPE, PROCEDURE_TYPE,
+      QUALIFIED_TYPE, SIMPLE_REF_TYPE, STRUCT_TYPE, TYPE,
+      UNION_TYPE),
     create_token_set_(AUTO_CAST_EXPRESSION, BINARY_EXPRESSION, CALL_EXPRESSION, CAST_EXPRESSION,
       COMPOUND_LITERAL_EXPRESSION, DEREFERENCE_EXPRESSION, DIRECTIVE_EXPRESSION, ELVIS_EXPRESSION,
       EXPRESSION, IMPLICIT_SELECTOR_EXPRESSION, INDEX_EXPRESSION, LITERAL_EXPRESSION,
@@ -488,7 +489,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | parExpressionType
+  // arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | primaryTypeGroup | parExpressionType
   static boolean compoundType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compoundType")) return false;
     boolean r;
@@ -498,6 +499,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = mapType(b, l + 1);
     if (!r) r = structType(b, l + 1);
     if (!r) r = qualifiedType(b, l + 1);
+    if (!r) r = type(b, l + 1, 13);
     if (!r) r = parExpressionType(b, l + 1);
     return r;
   }
@@ -2692,37 +2694,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // identifier [DOT type]
-  static boolean qualifiedNameTypeIdentifier(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qualifiedNameTypeIdentifier")) return false;
-    if (!nextTokenIs(b, IDENTIFIER_TOKEN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = identifier(b, l + 1);
-    r = r && qualifiedNameTypeIdentifier_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // [DOT type]
-  private static boolean qualifiedNameTypeIdentifier_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qualifiedNameTypeIdentifier_1")) return false;
-    qualifiedNameTypeIdentifier_1_0(b, l + 1);
-    return true;
-  }
-
-  // DOT type
-  private static boolean qualifiedNameTypeIdentifier_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qualifiedNameTypeIdentifier_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, DOT);
-    r = r && type(b, l + 1, -1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // expression (COMMA expression)* COMMA?
   static boolean returnArgumentList(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "returnArgumentList")) return false;
@@ -4753,10 +4724,11 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // 7: ATOM(enumType)
   // 8: ATOM(unionType)
   // 9: PREFIX(pointerType)
-  // 10: ATOM(qualifiedType)
-  // 11: ATOM(polymorphicType)
-  // 12: BINARY(constrainedType)
-  // 13: ATOM(parExpressionType)
+  // 10: ATOM(polymorphicType)
+  // 11: BINARY(constrainedType)
+  // 12: ATOM(parExpressionType)
+  // 13: PREFIX(qualifiedType)
+  // 14: ATOM(callType) ATOM(simpleRefType)
   public static boolean type(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "type")) return false;
     addVariant(b, "<type>");
@@ -4772,9 +4744,11 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = enumType(b, l + 1);
     if (!r) r = unionType(b, l + 1);
     if (!r) r = pointerType(b, l + 1);
-    if (!r) r = qualifiedType(b, l + 1);
     if (!r) r = polymorphicType(b, l + 1);
     if (!r) r = parExpressionType(b, l + 1);
+    if (!r) r = qualifiedType(b, l + 1);
+    if (!r) r = callType(b, l + 1);
+    if (!r) r = simpleRefType(b, l + 1);
     p = r;
     r = r && type_0(b, l + 1, g);
     exit_section_(b, l, m, null, r, p, null);
@@ -4786,8 +4760,8 @@ public class OdinParser implements PsiParser, LightPsiParser {
     boolean r = true;
     while (true) {
       Marker m = enter_section_(b, l, _LEFT_, null);
-      if (g < 12 && consumeTokenSmart(b, DIV)) {
-        r = type(b, l, 12);
+      if (g < 11 && consumeTokenSmart(b, DIV)) {
+        r = type(b, l, 11);
         exit_section_(b, l, m, CONSTRAINED_TYPE, r, true, null);
       }
       else {
@@ -5227,37 +5201,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // qualifiedNameTypeIdentifier [LPAREN expressionsList RPAREN]
-  public static boolean qualifiedType(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qualifiedType")) return false;
-    if (!nextTokenIsSmart(b, IDENTIFIER_TOKEN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = qualifiedNameTypeIdentifier(b, l + 1);
-    r = r && qualifiedType_1(b, l + 1);
-    exit_section_(b, m, QUALIFIED_TYPE, r);
-    return r;
-  }
-
-  // [LPAREN expressionsList RPAREN]
-  private static boolean qualifiedType_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qualifiedType_1")) return false;
-    qualifiedType_1_0(b, l + 1);
-    return true;
-  }
-
-  // LPAREN expressionsList RPAREN
-  private static boolean qualifiedType_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qualifiedType_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, LPAREN);
-    r = r && expressionsList(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
   // DOLLAR identifier
   public static boolean polymorphicType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "polymorphicType")) return false;
@@ -5278,6 +5221,54 @@ public class OdinParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = parenthesizedExpression(b, l + 1);
     exit_section_(b, m, PAR_EXPRESSION_TYPE, r);
+    return r;
+  }
+
+  public static boolean qualifiedType(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qualifiedType")) return false;
+    if (!nextTokenIsSmart(b, IDENTIFIER_TOKEN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = qualifiedType_0(b, l + 1);
+    p = r;
+    r = p && type(b, l, 13);
+    exit_section_(b, l, m, QUALIFIED_TYPE, r, p, null);
+    return r || p;
+  }
+
+  // identifier DOT
+  private static boolean qualifiedType_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qualifiedType_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = identifier(b, l + 1);
+    r = r && consumeToken(b, DOT);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // identifier LPAREN argumentList RPAREN
+  public static boolean callType(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "callType")) return false;
+    if (!nextTokenIsSmart(b, IDENTIFIER_TOKEN)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = identifier(b, l + 1);
+    r = r && consumeToken(b, LPAREN);
+    r = r && argumentList(b, l + 1);
+    r = r && consumeToken(b, RPAREN);
+    exit_section_(b, m, CALL_TYPE, r);
+    return r;
+  }
+
+  // identifier
+  public static boolean simpleRefType(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "simpleRefType")) return false;
+    if (!nextTokenIsSmart(b, IDENTIFIER_TOKEN)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = identifier(b, l + 1);
+    exit_section_(b, m, SIMPLE_REF_TYPE, r);
     return r;
   }
 

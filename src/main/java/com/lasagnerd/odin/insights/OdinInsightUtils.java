@@ -59,8 +59,8 @@ public class OdinInsightUtils {
 
             OdinTypeDefinitionExpression typeDefinitionExpression = findFirstParentOfType(identifier, true, OdinTypeDefinitionExpression.class);
             if (typeDefinitionExpression != null) {
-                OdinType mainTypeExpression = typeDefinitionExpression.getType();
-                if (mainTypeExpression instanceof OdinQualifiedType qualifiedType) {
+                OdinType odinType = typeDefinitionExpression.getType();
+                if (odinType instanceof OdinQualifiedType qualifiedType) {
                     if (qualifiedType.getPackageIdentifier() != null && qualifiedType.getPackageIdentifier()
                             .getIdentifierToken()
                             .getText()
@@ -71,6 +71,11 @@ public class OdinInsightUtils {
                         if (type != null) {
                             scope = type.getParentScope();
                         }
+                    }
+                } else {
+                    TsOdinType type = OdinTypeResolver.resolveType(parentScope, odinType);
+                    if (type != null) {
+                        scope = type.getParentScope();
                     }
                 }
             }

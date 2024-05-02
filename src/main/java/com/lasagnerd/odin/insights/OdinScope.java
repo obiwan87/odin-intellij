@@ -111,7 +111,7 @@ public class OdinScope {
         if (psiNamedElement instanceof OdinImportDeclarationStatement importDeclarationStatement) {
             return OdinInsightUtils.getDeclarationsOfImportedPackage(this, importDeclarationStatement);
         }
-        throw new RuntimeException("namedElement " + packageIdentifier + " is not of type importDeclarationStatement.");
+        return OdinScope.EMPTY;
     }
 
 }

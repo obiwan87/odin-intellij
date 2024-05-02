@@ -208,22 +208,19 @@ public class OdinPsiUtil {
     }
 
     public static OdinIdentifier getPackageIdentifier(OdinQualifiedType qualifiedType) {
-        if (qualifiedType.getType() != null) {
-            return qualifiedType.getIdentifier();
-        }
-
-        return null;
+        return qualifiedType.getIdentifier();
     }
 
     public static OdinIdentifier getTypeIdentifier(OdinQualifiedType qualifiedType) {
         OdinType typeExpression = qualifiedType.getType();
-        if (typeExpression == null) {
-            return qualifiedType.getIdentifier();
+        if (typeExpression instanceof OdinSimpleRefType refType) {
+            return refType.getIdentifier();
         }
 
-        if (typeExpression instanceof OdinQualifiedType qualifiedTypeExpression) {
-            return qualifiedTypeExpression.getTypeIdentifier();
+        if(typeExpression instanceof OdinCallType callType) {
+            return callType.getIdentifier();
         }
+
         return null;
     }
 

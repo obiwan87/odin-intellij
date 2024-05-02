@@ -192,7 +192,9 @@ public class OdinCompletionContributor extends CompletionContributor {
         return element;
     }
 
+    // TODO Doesn't work anymore
     private static void findCompletionsForStruct(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral) {
+        // Use type resolver
         if (compoundLiteral == null || !(compoundLiteral.getType() instanceof OdinQualifiedType typeRef)) {
             return;
         }

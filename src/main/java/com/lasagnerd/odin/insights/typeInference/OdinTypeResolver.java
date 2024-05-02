@@ -48,12 +48,31 @@ public class OdinTypeResolver extends OdinVisitor {
             OdinScope packageScope = scope.getScopeOfImport(qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
             OdinTypeResolver odinTypeExpressionResolver = new OdinTypeResolver(packageScope);
             OdinType typeExpression = qualifiedType.getType();
-            typeExpression.accept(odinTypeExpressionResolver);
+            if (typeExpression != null) {
+                typeExpression.accept(odinTypeExpressionResolver);
+            }
             this.type = odinTypeExpressionResolver.type;
             return;
         }
 
         OdinIdentifier typeIdentifier = qualifiedType.getTypeIdentifier();
+        resolveIdentifier(typeIdentifier);
+    }
+
+    @Override
+    public void visitSimpleRefType(@NotNull OdinSimpleRefType o) {
+        OdinIdentifier identifier = o.getIdentifier();
+        resolveIdentifier(identifier);
+    }
+
+    @Override
+    public void visitCallType(@NotNull OdinCallType o) {
+        OdinIdentifier identifier = o.getIdentifier();
+        resolveIdentifier(identifier);
+    }
+
+    private void resolveIdentifier(OdinIdentifier typeIdentifier) {
+        PsiNamedElement declaration;
         String identifierText = typeIdentifier.getText();
         if (RESERVED_TYPES.contains(identifierText)) {
             type = new TsOdinBuiltInType();

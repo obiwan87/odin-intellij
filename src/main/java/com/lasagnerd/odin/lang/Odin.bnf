@@ -271,15 +271,18 @@ type                                 ::= mapType
                                          | enumType
                                          | unionType
                                          | pointerType
-                                         | qualifiedType
                                          | polymorphicType
                                          | constrainedType
                                          | parExpressionType
+                                         | qualifiedType
+                                         | primaryTypeGroup
 
+callType                             ::= identifier LPAREN argumentList RPAREN
 constrainedType                      ::= type DIV type {pin=2}
 polymorphicType                      ::= DOLLAR identifier
-qualifiedType                        ::= qualifiedNameTypeIdentifier [LPAREN expressionsList RPAREN] {extends=type methods=[getPackageIdentifier getTypeIdentifier]}
-private qualifiedNameTypeIdentifier  ::= identifier [DOT type]
+simpleRefType                        ::= identifier
+qualifiedType                        ::= identifier DOT primaryTypeGroup {methods=[getPackageIdentifier getTypeIdentifier]}
+private primaryTypeGroup             ::= callType | simpleRefType
 
 
 pointerType                          ::= CARET type
@@ -547,7 +550,7 @@ basicLiteral                        ::= nilLiteral
                                          | booleanLiteral
 //                                         | tripleDashLiteralExpression
 
-private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | parExpressionType
+private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | primaryTypeGroup | parExpressionType
 parExpressionType                    ::= parenthesizedExpression
 
 
