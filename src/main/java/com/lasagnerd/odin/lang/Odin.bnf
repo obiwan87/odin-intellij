@@ -162,9 +162,9 @@
         SQ_STRING_END='SQ_STRING_END'
   ]
 
-  extends('.*_expression') = expression
-  extends('.*[sS]tatement') = statement
-  extends('.*Type$') = type_expression
+  extends('.*Expression$') = expression
+  extends('.*[sS]tatement$') = statement
+  extends('.*Type$') = type
 
   methods('.*([iI]nitialization|[dD]eclaration).*') = [getDeclaredIdentifiers]
   implements('.*([iI]nitialization|[dD]eclaration).*') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
@@ -199,7 +199,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | whenStatement
                                          | directiveStatement
 
-// @require foreign import entry "entry_unix_no_crt_amd64.asm"
+// @require foreign import entry "entryUnixNoCrtAmd64.asm"
 foreignImportDeclarationStatement    ::= (attributeStatement EOS_TOKEN?)* FOREIGN IMPORT
         ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
 
@@ -211,7 +211,7 @@ foreignStatementList                 ::= (sos? foreignBlockStatement eos)+
 foreignBlockStatement                ::= variableDeclarationStatement
                                          |foreignProcedureDeclarationStatement
                                          |whenStatement
-foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] TRIPLE_DASH
+foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] TRIPLE_DASH
 
 // Attributes
 attributeStatement                   ::= AT IDENTIFIER_TOKEN
@@ -221,7 +221,7 @@ structDeclarationStatement           ::= (attributeStatement eos?)* declaredIden
 structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> structBlock
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
-fieldDeclarationStatement            ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinition_expression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
+fieldDeclarationStatement            ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinitionExpression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
 
 // Enum
 enumDeclarationStatement             ::= (attributeStatement eos?)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
@@ -233,20 +233,20 @@ enumValueDeclaration                       ::= declaredIdentifier [EQ expression
 unionDeclarationStatement            ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? unionType
 unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> unionBlock
 unionBlock                           ::= blockStart [unionBody] blockEnd
-unionBody                            ::= typeDefinition_expression (COMMA typeDefinition_expression)* [COMMA|EOS_TOKEN]
+unionBody                            ::= typeDefinitionExpression (COMMA typeDefinitionExpression)* [COMMA|EOS_TOKEN]
 
 // Bit Set
 bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
 procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
-procedureType                        ::= directive? PROC string_literal? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
+procedureType                        ::= directive? PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
 
 whereClause                          ::= WHERE expression (COMMA expression)*
 procedureBody                        ::=  tripleDashBlock
                                           | block
 private tripleDashBlock              ::= [directive] TRIPLE_DASH {pin=2}
-returnParameters                     ::= NOT | LPAREN paramEntries RPAREN | typeDefinition_expression
+returnParameters                     ::= NOT | LPAREN paramEntries RPAREN | typeDefinitionExpression
 
 returnStatement                      ::= [directive] RETURN returnArgumentList?
 private returnArgumentList           ::= expression (COMMA expression)* COMMA?
@@ -260,11 +260,11 @@ procedureOverloadStatement           ::= (attributeStatement eos?)* declaredIden
 // TYPES
 
 // Variables and constants
-typeDefinition_expression            ::= DISTINCT? [directive] main {methods=[getMainTypeExpression]}
-main                                 ::= type_expression | parenthesized_expression
+typeDefinitionExpression             ::= DISTINCT? [directive] main {methods=[getMainTypeExpression]}
+main                                 ::= type
 
 
-type_expression                      ::= mapType
+type                                 ::= mapType
                                          | matrixType
                                          | bitSetType
                                          | multiPointerType
@@ -277,26 +277,27 @@ type_expression                      ::= mapType
                                          | qualifiedType
                                          | polymorphicType
                                          | constrainedType
+                                         | parExpressionType
 
-constrainedType                      ::= type_expression DIV type_expression {pin=1}
+constrainedType                      ::= type DIV type {pin=1}
 polymorphicType                      ::= DOLLAR identifier
-qualifiedType                        ::= qualifiedNameTypeIdentifier [LPAREN expressionsList RPAREN] {extends=type_expression methods=[getPackageIdentifier getTypeIdentifier]}
-private qualifiedNameTypeIdentifier  ::= identifier [DOT type_expression]
+qualifiedType                        ::= qualifiedNameTypeIdentifier [LPAREN expressionsList RPAREN] {extends=type methods=[getPackageIdentifier getTypeIdentifier]}
+private qualifiedNameTypeIdentifier  ::= identifier [DOT type]
 
 
-pointerType                          ::= CARET type_expression
-multiPointerType                     ::= LBRACKET CARET RBRACKET type_expression
+pointerType                          ::= CARET type
+multiPointerType                     ::= LBRACKET CARET RBRACKET type
 
 
-bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinition_expression] RBRACKET
-mapType                              ::= MAP LBRACKET typeDefinition_expression RBRACKET typeDefinition_expression {methods=[getKeyType getValueType]}
-matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinition_expression
-arrayType                            ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinition_expression {methods=[getTypeDefinition]}
+bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinitionExpression] RBRACKET
+mapType                              ::= MAP LBRACKET typeDefinitionExpression RBRACKET typeDefinitionExpression {methods=[getKeyType getValueType]}
+matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinitionExpression
+arrayType                            ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinitionExpression {methods=[getTypeDefinition]}
 
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList { methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
 
-private symbolDefinitionHead         ::= (attributeStatement eos?)* [tagHead] [USING] identifierList colonOpening typeDefinition_expression?
+private symbolDefinitionHead         ::= (attributeStatement eos?)* [tagHead] [USING] identifierList colonOpening typeDefinitionExpression?
 colonOpening                         ::= COLON
 
 variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition]}
@@ -323,17 +324,17 @@ assignmentOperator                   ::= EQ
                                          | RSHIFT_EQ
                                          | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] identifierList COLON typeDefinition_expression { methods=[getTypeDefinition]}
+variableDeclarationStatement          ::= (attributeStatement eos?)* [USING] identifierList COLON typeDefinitionExpression { methods=[getTypeDefinition]}
 
 // Parameters for procedures and assignments
-private polymorphicParameterList             ::= polymorphicParameter (COMMA polymorphicParameter)* COMMA?
-polymorphicParameter                 ::= directive? (
+private polymorphicParameterList      ::= polymorphicParameter (COMMA polymorphicParameter)* COMMA?
+polymorphicParameter                  ::= directive? (
                                          variadicParameterDeclaration
                                          | parameterInitialization
                                          | parameterDecl
                                          )
 
-paramEntries                        ::= paramEntry (COMMA paramEntry)* COMMA?
+paramEntries                          ::= paramEntry (COMMA paramEntry)* COMMA?
 paramEntry                            ::= directive? (
                                          variadicParameterDeclaration
                                              | parameterInitialization
@@ -341,7 +342,7 @@ paramEntry                            ::= directive? (
                                              | unnamedParameter
                                          )
 fake parameterDeclaration ::= parameter+ typeDefinitionContainer? expression { methods=[getTypeDefinition]}
-typeDefinitionContainer ::= typeDefinition_expression
+typeDefinitionContainer ::= typeDefinitionExpression
 
 parameter ::=  [USING] directive? declaredIdentifier
 parameterDecl                        ::= parameter (COMMA parameter)* COLON typeDefinitionContainer {extends=parameterDeclaration  methods=[getTypeDefinition]}
@@ -361,178 +362,178 @@ unnamedArgument                      ::= expression { extends = argument}
 // Does it make sense to have literal expressions in the chain?
 
 // All expressions
-expression                           ::= postfix_group
-                                         | or_else_expression
-                                         | ternary_group
-                                         | range_group
-                                         | or_group
-                                         | and_group
-                                         | order_group
-                                         | add_group
-                                         | mul_group
-                                         | unary_group
-                                         | implicit_selector_expression
-                                         | maybe_expression
-                                         | uninitialized_expression
-                                         | call_expression
-                                         | qualification_expression
-                                         | index_expression
-                                         | slice_expression
-                                         | dereference_expression
-                                         | procedure_expression
-                                         | transmute_expression
-                                         | auto_cast_expression
-                                         | cast_expression
-                                         | compound_literal_expression
-                                         | primary_group
+expression                           ::= postfixGroup
+                                         | orElseExpression
+                                         | ternaryGroup
+                                         | rangeGroup
+                                         | orGroup
+                                         | andGroup
+                                         | orderGroup
+                                         | addGroup
+                                         | mulGroup
+                                         | unaryGroup
+                                         | implicitSelectorExpression
+                                         | maybeExpression
+                                         | uninitializedExpression
+                                         | callExpression
+                                         | qualificationExpression
+                                         | indexExpression
+                                         | sliceExpression
+                                         | dereferenceExpression
+                                         | procedureExpression
+                                         | transmuteExpression
+                                         | autoCastExpression
+                                         | castExpression
+                                         | compoundLiteralExpression
+                                         | primaryGroup
 
 
 
-fake binary_expression               ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
+fake binaryExpression               ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
 
 
-mul_expression                       ::= expression STAR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-div_expression                       ::= expression DIV             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-mod_expression                       ::= expression MOD             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-remainder_expression                 ::= expression REMAINDER       <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-add_expression                       ::= expression PLUS            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-sub_expression                       ::= expression MINUS           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-bitwise_and_expression               ::= expression AND             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-bitwise_or_expression                ::= expression PIPE            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-bitwise_xor_expression               ::= expression TILDE           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-bitwise_and_not_expression           ::= expression ANDNOT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-and_expression                       ::= expression ANDAND          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-or_expression                        ::= expression OROR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-or_else_expression                   ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression }
-in_expression                        ::= expression IN              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-not_in_expression                    ::= expression NOT_IN          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-lt_expression                        ::= expression LT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-gt_expression                        ::= expression GT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-lte_expression                       ::= expression LTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-gte_expression                       ::= expression GTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-eqeq_expression                      ::= expression EQEQ            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-neq_expression                       ::= expression NEQ             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-lshift_expression                    ::= expression LSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-rshift_expression                    ::= expression RSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-range_inclusive_expression           ::= expression RANGE_INCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
-range_exclusive_expression           ::= expression RANGE_EXCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binary_expression elementType=binary_expression}
+mulExpression                       ::= expression STAR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+divExpression                       ::= expression DIV             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+modExpression                       ::= expression MOD             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+remainderExpression                 ::= expression REMAINDER       <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+addExpression                       ::= expression PLUS            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+subExpression                       ::= expression MINUS           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+bitwiseAndExpression                ::= expression AND             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+bitwiseOrExpression                 ::= expression PIPE            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+bitwiseXorExpression                ::= expression TILDE           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+bitwiseAndNotExpression             ::= expression ANDNOT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+andExpression                       ::= expression ANDAND          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+orExpression                        ::= expression OROR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+orElseExpression                    ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression }
+inExpression                        ::= expression IN              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+notInExpression                     ::= expression NOT_IN          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+ltExpression                        ::= expression LT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+gtExpression                        ::= expression GT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+lteExpression                       ::= expression LTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+gteExpression                       ::= expression GTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+eqeqExpression                      ::= expression EQEQ            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+neqExpression                       ::= expression NEQ             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+lshiftExpression                    ::= expression LSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+rshiftExpression                    ::= expression RSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+rangeInclusiveExpression           ::= expression RANGE_INCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+rangeExclusiveExpression           ::= expression RANGE_EXCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 
-private mul_group                    ::= mul_expression
-                                         | div_expression
-                                         | mod_expression
-                                         | remainder_expression
-                                         | bitwise_and_expression
-                                         | lshift_expression
-                                         | rshift_expression
-                                         | bitwise_and_not_expression
+private mulGroup                    ::= mulExpression
+                                         | divExpression
+                                         | modExpression
+                                         | remainderExpression
+                                         | bitwiseAndExpression
+                                         | lshiftExpression
+                                         | rshiftExpression
+                                         | bitwiseAndNotExpression
 
-private add_group                    ::= add_expression
-                                         | sub_expression
-                                         | bitwise_or_expression
-                                         | bitwise_xor_expression
-                                         | in_expression
-                                         | not_in_expression
+private addGroup                    ::= addExpression
+                                         | subExpression
+                                         | bitwiseOrExpression
+                                         | bitwiseXorExpression
+                                         | inExpression
+                                         | notInExpression
 
-private order_group                  ::= lt_expression
-                                         | gt_expression
-                                         | lte_expression
-                                         | gte_expression
-                                         | eqeq_expression
-                                         | neq_expression
+private orderGroup                  ::= ltExpression
+                                         | gtExpression
+                                         | lteExpression
+                                         | gteExpression
+                                         | eqeqExpression
+                                         | neqExpression
 
-private and_group                    ::= and_expression
+private andGroup                    ::= andExpression
 
-private or_group                     ::= or_expression
+private orGroup                     ::= orExpression
 
-private range_group                  ::= range_inclusive_expression
-                                         | range_exclusive_expression
+private rangeGroup                  ::= rangeInclusiveExpression
+                                         | rangeExclusiveExpression
 
-private ternary_group                ::= elvis_expression
-                                         | ternary_if_expression
-                                         | ternary_when_expression
+private ternaryGroup                ::= elvisExpression
+                                         | ternaryIfExpression
+                                         | ternaryWhenExpression
 
-private postfix_group                ::= or_return_expression
-                                         | or_break_expression
-                                         | or_continue_expression
-                                         | typeAssertion_expression
+private postfixGroup                ::= orReturnExpression
+                                         | orBreakExpression
+                                         | orContinueExpression
+                                         | typeAssertionExpression
 
 
-parenthesized_expression             ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
+parenthesizedExpression             ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
 
 // should we define the arrow operator on its own?
-fake ref_expression                  ::= expression? (DOT|ARROW) identifier
-simple_ref_expression                ::= identifier {extends=ref_expression elementType=ref_expression}
-qualification_expression             ::= expression (DOT|ARROW) identifier {extends=ref_expression elementType=ref_expression}
+fake refExpression                  ::= expression? (DOT|ARROW) identifier
+simpleRefExpression                ::= identifier {extends=refExpression elementType=refExpression}
+qualificationExpression             ::= expression (DOT|ARROW) identifier {extends=refExpression elementType=refExpression}
 
 
-implicit_selector_expression         ::= DOT identifier
-index_expression                     ::= expression index
-slice_expression                     ::= expression slice
-typeAssertion_expression             ::= expression DOT LPAREN type_expression RPAREN {methods=[subject="/expression[0]" targetType="/expression[1]"]}
-procedure_expression                 ::= procedure_expression_type procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
-procedure_expression_type            ::= procedureType
-dereference_expression               ::= expression CARET
-identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference]}
+implicitSelectorExpression         ::= DOT identifier
+indexExpression                     ::= expression index
+sliceExpression                     ::= expression slice
+typeAssertionExpression             ::= expression DOT LPAREN type RPAREN {methods=[subject="/expression[0]" targetType="/expression[1]"]}
+procedureExpression                 ::= procedureTypeContainer procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+procedureTypeContainer              ::= procedureType
+dereferenceExpression               ::= expression CARET
+identifier                          ::= IDENTIFIER_TOKEN { methods = [getReference]}
 
-call_expression                      ::= expression arguments
+callExpression                      ::= expression arguments
 
-private primary_group                ::= simple_ref_expression | parenthesized_expression | typeDefinition_expression | directive_expression | literal_expression
+private primaryGroup                ::= simpleRefExpression | parenthesizedExpression | typeDefinitionExpression | directiveExpression | literalExpression
 
-literal_expression                   ::= basic_literal
+literalExpression                   ::= basicLiteral
 
-compound_literal_expression          ::= compound_literal_typed | compound_literal_untyped
-fake compound_value                  ::= {methods=[getCompoundValueBody]}
-fake compound_literal                ::= type_expression? (compound_value_typed | compound_value_untyped)
-compound_literal_typed               ::= compoundType compound_value_typed {extends=compound_literal}
-compound_literal_untyped             ::= compound_value_untyped {extends=compound_literal}
+compoundLiteralExpression          ::= compoundLiteralTyped | compoundLiteralUntyped
+fake compoundValue                  ::= {methods=[getCompoundValueBody]}
+fake compoundLiteral                ::= type? (compoundValueTyped | compoundValueUntyped)
+compoundLiteralTyped               ::= compoundType compoundValueTyped {extends=compoundLiteral}
+compoundLiteralUntyped             ::= compoundValueUntyped {extends=compoundLiteral}
 
 index                                ::= LBRACKET expression [COMMA expression] RBRACKET
 slice                                ::= LBRACKET expression? COLON expression? RBRACKET
 private arguments                    ::= LPAREN <<enterMode "PAR">>  argumentList? <<exitMode "PAR">> RPAREN
 
-elvis_expression                     ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">>
-ternary_if_expression                ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
-ternary_when_expression              ::= expression WHEN     <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
+elvisExpression                     ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">>
+ternaryIfExpression                ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
+ternaryWhenExpression              ::= expression WHEN     <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
 
-cast_expression                      ::= CAST LPAREN typeDefinition_expression RPAREN expression {methods=[typeDefinitionExpression="/expression[0]"]}
-transmute_expression                 ::= TRANSMUTE LPAREN expression RPAREN expression
-auto_cast_expression                 ::= AUTO_CAST expression
-nil_literal                          ::= NIL
-uninitialized_expression             ::= TRIPLE_DASH
+castExpression                      ::= CAST LPAREN typeDefinitionExpression RPAREN expression {methods=[typeDefinitionExpression="/expression[0]"]}
+transmuteExpression                 ::= TRANSMUTE LPAREN expression RPAREN expression
+autoCastExpression                 ::= AUTO_CAST expression
+nilLiteral                          ::= NIL
+uninitializedExpression             ::= TRIPLE_DASH
 
 // TODO this is a duplicate of compoundLiteralValue but without the non-consuming <<>>-rules
 // --> fix this
-compound_value_untyped               ::= ((<<isModeOn "OPERAND">> | <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
-                                         | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeOperator>>) {extends=compound_value elementType=compound_value}
-maybe_expression                     ::= expression DOT_QUESTION
+compoundValueUntyped               ::= ((<<isModeOn "OPERAND">> | <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
+                                         | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeOperator>>) {extends=compoundValue elementType=compoundValue}
+maybeExpression                     ::= expression DOT_QUESTION
 
-private unary_group                  ::= unary_plus_expression
-                                         | unary_minus_expression
-                                         | unary_tilde_expression
-                                         | unary_and_expression
-                                         | unary_not_expression
-                                         | unary_range_expression
-
-
-
-unary_plus_expression                ::= PLUS  <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_minus_expression               ::= MINUS <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_tilde_expression               ::= TILDE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_and_expression                 ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_not_expression                 ::= NOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unary_range_expression               ::= RANGE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+private unaryGroup                  ::= unaryPlusExpression
+                                         | unaryMinusExpression
+                                         | unaryTildeExpression
+                                         | unaryAndExpression
+                                         | unaryNotExpression
+                                         | unaryRangeExpression
 
 
-or_return_expression                 ::= expression OR_RETURN
-or_break_expression                  ::= expression OR_BREAK [IDENTIFIER_TOKEN]
-or_continue_expression               ::= expression OR_CONTINUE [IDENTIFIER_TOKEN]
+
+unaryPlusExpression                ::= PLUS  <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unaryMinusExpression               ::= MINUS <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unaryTildeExpression               ::= TILDE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unaryAndExpression                 ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unaryNotExpression                 ::= NOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unaryRangeExpression               ::= RANGE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
 
 
-string_literal                       ::= DQ_STRING_LITERAL
+orReturnExpression                 ::= expression OR_RETURN
+orBreakExpression                  ::= expression OR_BREAK [IDENTIFIER_TOKEN]
+orContinueExpression               ::= expression OR_CONTINUE [IDENTIFIER_TOKEN]
+
+
+stringLiteral                       ::= DQ_STRING_LITERAL
                                          | SQ_STRING_LITERAL
                                          | RAW_STRING_LITERAL
 
-numeric_literal                      ::= INTEGER_DEC_LITERAL
+numericLiteral                      ::= INTEGER_DEC_LITERAL
                                          | INTEGER_HEX_LITERAL
                                          | INTEGER_OCT_LITERAL
                                          | INTEGER_BIN_LITERAL
@@ -540,27 +541,27 @@ numeric_literal                      ::= INTEGER_DEC_LITERAL
                                          | COMPLEX_INTEGER_DEC_LITERAL
                                          | COMPLEX_FLOAT_LITERAL
 
-boolean_literal                      ::= TRUE
+booleanLiteral                      ::= TRUE
                                          | FALSE
 
-basic_literal                        ::= nil_literal
-                                         | string_literal
-                                         | numeric_literal
-                                         | boolean_literal
-//                                         | tripleDashLiteral_expression
+basicLiteral                        ::= nilLiteral
+                                         | stringLiteral
+                                         | numericLiteral
+                                         | booleanLiteral
+//                                         | tripleDashLiteralExpression
 
 private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | parExpressionType
-parExpressionType                    ::= parenthesized_expression
+parExpressionType                    ::= parenthesizedExpression
 
 
-compound_value_typed                 ::= ((<<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
-                                         | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeComma>>) {extends=compound_value elementType=compound_value}
+compoundValueTyped                 ::= ((<<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
+                                         | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeComma>>) {extends=compoundValue elementType=compoundValue}
 compoundValueStart                   ::= LBRACE
 compoundValueEnd                     ::= RBRACE
 compoundValueBody                    ::= [expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]
 
-directive_expression              ::= directive
-directive                         ::= tagHead [basic_literal | (LPAREN expressionsList? RPAREN)]
+directiveExpression              ::= directive
+directive                         ::= tagHead [basicLiteral | (LPAREN expressionsList? RPAREN)]
 tagHead                              ::= HASH IDENTIFIER_TOKEN
 
 
@@ -609,12 +610,12 @@ statement                            ::= assignmentStatement
 
 
 fallthroughStatement                 ::= FALLTHROUGH
-expressionStatement                  ::= or_return_expression
-                                         | or_break_expression
-                                         | or_continue_expression
-                                         | call_expression
-                                         | qualification_expression
-                                         | primary_group
+expressionStatement                  ::= orReturnExpression
+                                         | orBreakExpression
+                                         | orContinueExpression
+                                         | callExpression
+                                         | qualificationExpression
+                                         | primaryGroup
 
 label                                ::= IDENTIFIER_TOKEN COLON
 blockStatement                       ::= [(directive eos?)|label] block {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
@@ -633,7 +634,7 @@ private deferrableStatement          ::= assignmentStatement
 controlFlowInit                      ::= assignmentStatement
                                          | variableInitializationStatement
                                          | variableDeclarationStatement
-                                         | call_expression
+                                         | callExpression
 
 condition                            ::= expression
 doStatement                          ::= DO statement
@@ -643,12 +644,12 @@ statementBody                ::= block|doStatement
 forStatement                         ::= label? directive? forBlock
 private forHead                      ::= <<enterNoBlockMode>> [[[controlFlowInit] SEMICOLON] condition? [SEMICOLON [forUpdate]]] <<exitNoBlockMode>>
 forBlock                             ::= FOR forHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
-forUpdate                            ::= assignmentStatement | call_expression
+forUpdate                            ::= assignmentStatement | callExpression
 
 // For-In
 forInStatement                       ::= label? directive? forInBlock
-forInBlock                           ::= FOR <<enterNoBlockMode>> [forInExpression (COMMA forInExpression)*] IN expression <<exitNoBlockMode>> statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
-forInExpression                      ::= AND? declaredIdentifier
+forInBlock                           ::= FOR <<enterNoBlockMode>> [forInParameter (COMMA forInParameter)*] IN expression <<exitNoBlockMode>> statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+forInParameter                       ::= AND? declaredIdentifier
 
 // Conditional statement (=if-elseif-else)
 private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit] SEMICOLON] condition <<exitNoBlockMode>>

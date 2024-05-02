@@ -214,7 +214,7 @@ public class OdinPsiUtil {
     }
 
     public static OdinIdentifier getTypeIdentifier(OdinQualifiedType qualifiedType) {
-        OdinTypeExpression typeExpression = qualifiedType.getTypeExpression();
+        OdinType typeExpression = qualifiedType.getType();
         if (typeExpression == null) {
             return qualifiedType.getIdentifier();
         }
@@ -225,7 +225,7 @@ public class OdinPsiUtil {
         return null;
     }
 
-    public static OdinTypeExpression getTypeDefinition(OdinArrayType arrayType) {
+    public static OdinType getTypeDefinition(OdinArrayType arrayType) {
         OdinTypeDefinitionExpression typeDefinitionExpression = null;
         if (arrayType.getExpressionList().size() > 1) {
             OdinExpression odinExpression = arrayType.getExpressionList().get(1);
@@ -246,17 +246,17 @@ public class OdinPsiUtil {
         return null;
     }
 
-    public static OdinTypeExpression getKeyType(OdinMapType mapType) {
+    public static OdinType getKeyType(OdinMapType mapType) {
         return mapType.getTypeDefinitionExpressionList().get(0).getMainTypeExpression();
     }
 
-    public static OdinTypeExpression getValueType(OdinMapType mapType) {
+    public static OdinType getValueType(OdinMapType mapType) {
         return mapType.getTypeDefinitionExpressionList().get(1).getMainTypeExpression();
     }
 
-    public static OdinTypeExpression getMainTypeExpression(OdinTypeDefinitionExpression typeDefinitionExpression) {
+    public static OdinType getMainTypeExpression(OdinTypeDefinitionExpression typeDefinitionExpression) {
         OdinMain main = typeDefinitionExpression.getMain();
-        return (OdinTypeExpression) main.getExpression();
+        return (OdinType) main.getType();
 
     }
 
@@ -331,7 +331,7 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinProcedureExpression procedureExpression) {
-        OdinProcedureType procedureType = procedureExpression.getProcedureExpressionType().getProcedureType();
+        OdinProcedureType procedureType = procedureExpression.getProcedureTypeContainer().getProcedureType();
         return doGetProcedureTypeDeclarationSpecs(procedureType);
     }
 
@@ -419,9 +419,9 @@ public class OdinPsiUtil {
 
     public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinForInBlock forInStatement) {
         List<OdinDeclarationSpec> specs = new ArrayList<>();
-        for (OdinForInExpression odinForInExpression : forInStatement.getForInExpressionList()) {
+        for (var forInParameter : forInStatement.getForInParameterList()) {
             OdinDeclarationSpec spec = new OdinDeclarationSpec();
-            spec.setDeclaredIdentifier(odinForInExpression.getDeclaredIdentifier());
+            spec.setDeclaredIdentifier(forInParameter.getDeclaredIdentifier());
             specs.add(spec);
         }
         return specs;

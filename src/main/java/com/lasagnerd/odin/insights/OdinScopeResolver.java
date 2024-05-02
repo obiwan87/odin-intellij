@@ -89,7 +89,7 @@ public class OdinScopeResolver {
                     if (variableInitializationStatement.getUsing() != null) {
                         OdinTypeDefinitionExpression typeDefinitionExpression = variableInitializationStatement.getTypeDefinitionExpression();
                         if (typeDefinitionExpression != null) {
-                            OdinTypeExpression mainTypeExpression = typeDefinitionExpression.getMainTypeExpression();
+                            OdinType mainTypeExpression = typeDefinitionExpression.getMainTypeExpression();
                             TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, mainTypeExpression);
                             if (tsOdinType != null) {
                                 OdinScope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
@@ -112,7 +112,7 @@ public class OdinScopeResolver {
 
                 if (statement instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
                     if (variableDeclarationStatement.getUsing() != null) {
-                        OdinTypeExpression mainTypeExpression = variableDeclarationStatement.getTypeDefinitionExpression().getMainTypeExpression();
+                        OdinType mainTypeExpression = variableDeclarationStatement.getTypeDefinitionExpression().getMainTypeExpression();
                         TsOdinType type = OdinTypeResolver.resolveType(scope, mainTypeExpression);
                         if (type != null) {
                             OdinScope scopeProvidedByType = getScopeProvidedByType(type);

@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.insights.typeSystem;
 
+import com.lasagnerd.odin.lang.psi.OdinType;
 import com.lasagnerd.odin.lang.psi.OdinTypeExpression;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,5 +19,5 @@ public class TsOdinMetaType extends TsOdinType {
     }
 
     private final MetaType metaType;
-    public OdinTypeExpression typeExpression;
+    public OdinType typeExpression;
 }
