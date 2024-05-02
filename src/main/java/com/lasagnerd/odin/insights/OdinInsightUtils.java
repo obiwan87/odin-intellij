@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.insights.typeInference.OdinTypeExpressionResolver;
+import com.lasagnerd.odin.insights.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinPointerType;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
@@ -47,42 +47,43 @@ public class OdinInsightUtils {
     }
 
     private static @Nullable PsiNamedElement findFirstDeclaration(OdinScope parentScope, OdinIdentifier identifier) {
-        OdinRefExpression refExpression = findFirstParentOfType(identifier, true, OdinRefExpression.class);
-        OdinScope scope = OdinScope.EMPTY;
-        if (refExpression != null) {
-            if (refExpression.getExpression() != null) {
-                scope = OdinReferenceResolver.resolve(parentScope, refExpression.getExpression());
-            } else {
-                scope = parentScope;
-            }
-        } else {
-
-            OdinTypeDefinitionExpression typeDefinitionExpression = findFirstParentOfType(identifier, true, OdinTypeDefinitionExpression.class);
-            if (typeDefinitionExpression != null) {
-                OdinTypeExpression mainTypeExpression = typeDefinitionExpression.getMainTypeExpression();
-                if (mainTypeExpression instanceof OdinQualifiedType qualifiedType) {
-                    if (qualifiedType.getPackageIdentifier() != null && qualifiedType.getPackageIdentifier()
-                            .getIdentifierToken()
-                            .getText()
-                            .equals(identifier.getIdentifierToken().getText())) {
-                        scope = parentScope;
-                    } else {
-                        TsOdinType type = OdinTypeExpressionResolver.resolveType(parentScope, qualifiedType);
-                        if (type != null) {
-                            scope = type.getParentScope();
-                        }
-                    }
-                }
-            }
-        }
-
-        if (scope == OdinScope.EMPTY || scope == null) {
-            scope = parentScope;
-        }
-
-        if (scope != null)
-            return scope.findNamedElement(identifier.getIdentifierToken().getText());
-
+//        OdinRefExpression refExpression = findFirstParentOfType(identifier, true, OdinRefExpression.class);
+//        OdinScope scope = OdinScope.EMPTY;
+//        if (refExpression != null) {
+//            if (refExpression.getExpression() != null) {
+//                scope = OdinReferenceResolver.resolve(parentScope, refExpression.getExpression());
+//            } else {
+//                scope = parentScope;
+//            }
+//        } else {
+//
+//            OdinTypeDefinitionExpression typeDefinitionExpression = findFirstParentOfType(identifier, true, OdinTypeDefinitionExpression.class);
+//            if (typeDefinitionExpression != null) {
+//                OdinTypeExpression mainTypeExpression = typeDefinitionExpression.getMainTypeExpression();
+//                if (mainTypeExpression instanceof OdinQualifiedType qualifiedType) {
+//                    if (qualifiedType.getPackageIdentifier() != null && qualifiedType.getPackageIdentifier()
+//                            .getIdentifierToken()
+//                            .getText()
+//                            .equals(identifier.getIdentifierToken().getText())) {
+//                        scope = parentScope;
+//                    } else {
+//                        TsOdinType type = OdinTypeResolver.resolveType(parentScope, qualifiedType);
+//                        if (type != null) {
+//                            scope = type.getParentScope();
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        if (scope == OdinScope.EMPTY || scope == null) {
+//            scope = parentScope;
+//        }
+//
+//        if (scope != null)
+//            return scope.findNamedElement(identifier.getIdentifierToken().getText());
+//
+//        return null;
         return null;
     }
 
@@ -180,7 +181,7 @@ public class OdinInsightUtils {
                 if (odinFieldDeclarationStatement.getDeclaredIdentifiers().isEmpty())
                     continue;
 
-                TsOdinType usedType = OdinTypeExpressionResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinitionExpression().getMainTypeExpression());
+                TsOdinType usedType = OdinTypeResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinitionExpression().getMainTypeExpression());
                 if (usedType != null) {
                     OdinScope subScope = getScopeProvidedByType(usedType);
                     scope.addSymbols(subScope);

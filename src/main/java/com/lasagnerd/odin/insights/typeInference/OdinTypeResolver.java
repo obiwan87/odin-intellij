@@ -1,6 +1,8 @@
 package com.lasagnerd.odin.insights.typeInference;
 
 import com.intellij.psi.PsiNamedElement;
+import com.lasagnerd.odin.insights.OdinDeclarationSpec;
+import com.lasagnerd.odin.insights.OdinDeclarationSpecifier;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.insights.typeSystem.*;
@@ -14,15 +16,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.lasagnerd.odin.insights.typeInference.OdinExpressionInferenceEngine.inferType;
 import static com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator.RESERVED_TYPES;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class OdinTypeExpressionResolver extends OdinVisitor {
+public class OdinTypeResolver extends OdinVisitor {
 
     @Nullable
     public static TsOdinType resolveType(OdinScope scope, OdinTypeExpression typeExpression) {
-        OdinTypeExpressionResolver odinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
+        OdinTypeResolver odinTypeExpressionResolver = new OdinTypeResolver(scope);
         typeExpression.accept(odinTypeExpressionResolver);
         return odinTypeExpressionResolver.type;
     }
@@ -32,7 +35,7 @@ public class OdinTypeExpressionResolver extends OdinVisitor {
     private final OdinScope initialScope;
     TsOdinType type;
 
-    public OdinTypeExpressionResolver(OdinScope scope) {
+    public OdinTypeResolver(OdinScope scope) {
         this.initialScope = scope;
         this.scope = scope;
     }
@@ -43,26 +46,24 @@ public class OdinTypeExpressionResolver extends OdinVisitor {
 
         if (qualifiedType.getPackageIdentifier() != null) {
             OdinScope packageScope = scope.getScopeOfImport(qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
-            OdinTypeExpressionResolver odinTypeExpressionResolver = new OdinTypeExpressionResolver(packageScope);
+            OdinTypeResolver odinTypeExpressionResolver = new OdinTypeResolver(packageScope);
             OdinTypeExpression typeExpression = qualifiedType.getTypeExpression();
-            if (typeExpression != null) {
-                typeExpression.accept(odinTypeExpressionResolver);
-                this.type = odinTypeExpressionResolver.type;
-            }
+            typeExpression.accept(odinTypeExpressionResolver);
+            this.type = odinTypeExpressionResolver.type;
             return;
         }
 
         OdinIdentifier typeIdentifier = qualifiedType.getTypeIdentifier();
         String identifierText = typeIdentifier.getText();
         if (RESERVED_TYPES.contains(identifierText)) {
-            type = new TsBuiltInType();
+            type = new TsOdinBuiltInType();
             type.setName(identifierText);
         } else {
             declaration = scope.findNamedElement(typeIdentifier.getIdentifierToken().getText());
-            if (declaration == null) {
+            if (!(declaration instanceof OdinDeclaredIdentifier declaredIdentifier)) {
                 return;
             }
-            type = createType(scope, declaration);
+            type = resolveTypeFromDeclaredIdentifier(scope, declaredIdentifier);
         }
     }
 
@@ -73,7 +74,7 @@ public class OdinTypeExpressionResolver extends OdinVisitor {
     @Override
     public void visitArrayType(@NotNull OdinArrayType o) {
         TsOdinArrayType arrayType = new TsOdinArrayType();
-        OdinTypeExpressionResolver odinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
+        OdinTypeResolver odinTypeExpressionResolver = new OdinTypeResolver(scope);
         o.getTypeDefinition().accept(odinTypeExpressionResolver);
         TsOdinType elementType = odinTypeExpressionResolver.type;
         arrayType.setElementType(elementType);
@@ -83,12 +84,12 @@ public class OdinTypeExpressionResolver extends OdinVisitor {
     @Override
     public void visitMapType(@NotNull OdinMapType o) {
         TsOdinMapType mapType = new TsOdinMapType();
-        OdinTypeExpressionResolver keyOdinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
+        OdinTypeResolver keyOdinTypeExpressionResolver = new OdinTypeResolver(scope);
         o.getKeyType().accept(keyOdinTypeExpressionResolver);
         TsOdinType keyType = keyOdinTypeExpressionResolver.type;
         mapType.setKeyType(keyType);
 
-        OdinTypeExpressionResolver valueOdinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
+        OdinTypeResolver valueOdinTypeExpressionResolver = new OdinTypeResolver(scope);
         o.getValueType().accept(valueOdinTypeExpressionResolver);
         TsOdinType valueType = valueOdinTypeExpressionResolver.type;
         mapType.setValueType(valueType);
@@ -98,7 +99,7 @@ public class OdinTypeExpressionResolver extends OdinVisitor {
     @Override
     public void visitPointerType(@NotNull OdinPointerType odinPointerType) {
         TsOdinPointerType pointerType = new TsOdinPointerType();
-        OdinTypeExpressionResolver odinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
+        OdinTypeResolver odinTypeExpressionResolver = new OdinTypeResolver(scope);
         OdinTypeExpression typeExpression = odinPointerType.getTypeExpression();
 
         Objects.requireNonNull(typeExpression)
@@ -113,15 +114,7 @@ public class OdinTypeExpressionResolver extends OdinVisitor {
     @Override
     public void visitProcedureType(@NotNull OdinProcedureType odinProcedureType) {
         TsOdinProcedureType procedureType = new TsOdinProcedureType();
-        OdinTypeExpressionResolver odinTypeExpressionResolver = new OdinTypeExpressionResolver(scope);
-
-
-        OdinParamEntries paramEntries = odinProcedureType.getParamEntries();
-        if (paramEntries != null) {
-            for (OdinParamEntry odinParamEntry : paramEntries.getParamEntryList()) {
-
-            }
-        }
+        OdinTypeResolver odinTypeExpressionResolver = new OdinTypeResolver(scope);
 
         OdinReturnParameters returnParameters = odinProcedureType.getReturnParameters();
         if (returnParameters != null) {
@@ -149,9 +142,22 @@ public class OdinTypeExpressionResolver extends OdinVisitor {
 
         var odinPolymorphicParameters = o.getPolymorphicParameterList();
         for (OdinPolymorphicParameter odinPolymorphicParameter : odinPolymorphicParameters) {
-            List<OdinParameter> parameters = odinPolymorphicParameter.getParameterDeclaration().getParameterList();
-        }
+            List<OdinDeclarationSpec> declarationSpecs = OdinDeclarationSpecifier.getDeclarationSpecs(odinPolymorphicParameter.getParameterDeclaration());
+            for (OdinDeclarationSpec declarationSpec : declarationSpecs) {
+                if (!declarationSpec.isPolymorphic())
+                    continue;
+                TsOdinPolyParameter polyParameter = new TsOdinPolyParameter();
+                polyParameter.setDeclaredIdentifier(declarationSpec.getDeclaredIdentifier());
 
+                if (declarationSpec.getTypeDefinitionExpression() != null) {
+                    TsOdinType tsOdinType = resolveType(scope, declarationSpec.getTypeDefinitionExpression().getMainTypeExpression());
+                    polyParameter.setOdinType(tsOdinType);
+                }
+
+                structType.getPolyParameters().add(polyParameter);
+            }
+
+        }
         // TODO set generic parameters
     }
 
@@ -163,23 +169,18 @@ public class OdinTypeExpressionResolver extends OdinVisitor {
 
     }
 
-    /**
-     * Creates a type from a given identifier
-     *
-     * @param scope      the scope in which the type is defined
-     * @param identifier the identifier
-     * @return the type
-     * @see OdinDeclaredIdentifier
-     * @see OdinScope
-     * @see TsOdinType
-     * <p>
-     * When we finally find the identifier of a type, we can deduce from its declaration what type it is.
-     * We can then create a new type object and return it.
-     */
+    @Override
+    public void visitPolymorphicType(@NotNull OdinPolymorphicType o) {
+        TsOdinPolymorphicType tsOdinPolymorphicType = new TsOdinPolymorphicType();
+        tsOdinPolymorphicType.setParentScope(scope);
+    }
 
-    // TODO setting the scope here doesn't feel right, as the scope might not be completely defined for polymorphic types
-    private TsOdinType createType(OdinScope scope, PsiNamedElement identifier) {
+    @Override
+    public void visitConstrainedType(@NotNull OdinConstrainedType o) {
+        super.visitConstrainedType(o);
+    }
 
+    private TsOdinType resolveTypeFromDeclaredIdentifier(OdinScope scope, OdinDeclaredIdentifier identifier) {
         OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(identifier,
                 false,
                 OdinDeclaration.class);
@@ -212,7 +213,7 @@ public class OdinTypeExpressionResolver extends OdinVisitor {
                 }
 
                 OdinExpression odinExpression = expressionList.get(index);
-                OdinTypeInferenceResult typeInferenceResult = OdinExpressionTypeResolver.inferType(scope, odinExpression);
+                OdinTypeInferenceResult typeInferenceResult = inferType(scope, odinExpression);
                 if (typeInferenceResult.getType() instanceof TsOdinMetaType metaType) {
                     metaType.getTypeExpression().accept(this);
                     odinDeclaration = metaType.getDeclaration();

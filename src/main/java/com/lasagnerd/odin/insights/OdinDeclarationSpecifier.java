@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.insights;
 
-import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +14,7 @@ public class OdinDeclarationSpecifier extends OdinVisitor {
 
     }
 
-    public static List<OdinDeclarationSpec> getDeclarationSpec(OdinDeclaration odinDeclaration) {
+    public static List<OdinDeclarationSpec> getDeclarationSpecs(OdinDeclaration odinDeclaration) {
         OdinDeclarationSpecifier odinDeclarationSpecifier = new OdinDeclarationSpecifier();
         odinDeclaration.accept(odinDeclarationSpecifier);
         return odinDeclarationSpecifier.declarationSpecs;
@@ -33,7 +32,7 @@ public class OdinDeclarationSpecifier extends OdinVisitor {
 
         valueExpression = o.getExpression();
 
-        for (PsiNamedElement declaredIdentifier : o.getDeclaredIdentifiers()) {
+        for (var declaredIdentifier : o.getDeclaredIdentifiers()) {
             OdinDeclarationSpec odinDeclarationSpec = new OdinDeclarationSpec();
             odinDeclarationSpec.setDeclaredIdentifier(declaredIdentifier);
             odinDeclarationSpec.setValueExpression(valueExpression);
@@ -73,7 +72,7 @@ public class OdinDeclarationSpecifier extends OdinVisitor {
     public void visitVariableDeclarationStatement(@NotNull OdinVariableDeclarationStatement o) {
         boolean hasUsing = o.getUsing() != null;
 
-        for (PsiNamedElement declaredIdentifier : o.getDeclaredIdentifiers()) {
+        for (var declaredIdentifier : o.getDeclaredIdentifiers()) {
             OdinDeclarationSpec odinDeclarationSpec = new OdinDeclarationSpec();
             odinDeclarationSpec.setTypeDefinitionExpression(o.getTypeDefinitionExpression());
             odinDeclarationSpec.setHasUsing(hasUsing);

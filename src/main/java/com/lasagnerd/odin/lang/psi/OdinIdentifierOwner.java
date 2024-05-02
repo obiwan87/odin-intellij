@@ -16,8 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class OdinIdentifierOwner extends ASTWrapperPsiElement
-        implements PsiNameIdentifierOwner {
+public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implements OdinDeclaredIdentifier, PsiNameIdentifierOwner {
     public OdinIdentifierOwner(@NotNull ASTNode node) {
         super(node);
     }
@@ -40,7 +39,7 @@ public class OdinIdentifierOwner extends ASTWrapperPsiElement
 
     @Override
     public String getName() {
-        return super.getText();
+        return getIdentifierToken().getText();
     }
 
     public void accept(@NotNull OdinVisitor visitor) {

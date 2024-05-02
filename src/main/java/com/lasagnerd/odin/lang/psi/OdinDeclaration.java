@@ -7,5 +7,5 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface OdinDeclaration extends PsiElement {
-    List<? extends PsiNamedElement> getDeclaredIdentifiers();
+    List<OdinDeclaredIdentifier> getDeclaredIdentifiers();
 }
