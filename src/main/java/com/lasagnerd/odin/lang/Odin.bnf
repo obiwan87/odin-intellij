@@ -260,10 +260,7 @@ procedureOverloadStatement           ::= (attributeStatement eos?)* declaredIden
 // TYPES
 
 // Variables and constants
-typeDefinitionExpression             ::= DISTINCT? [directive] main {methods=[getMainTypeExpression]}
-main                                 ::= type
-
-
+typeDefinitionExpression             ::= DISTINCT? [directive] type
 type                                 ::= mapType
                                          | matrixType
                                          | bitSetType
@@ -279,7 +276,7 @@ type                                 ::= mapType
                                          | constrainedType
                                          | parExpressionType
 
-constrainedType                      ::= type DIV type {pin=1}
+constrainedType                      ::= type DIV type {pin=2}
 polymorphicType                      ::= DOLLAR identifier
 qualifiedType                        ::= qualifiedNameTypeIdentifier [LPAREN expressionsList RPAREN] {extends=type methods=[getPackageIdentifier getTypeIdentifier]}
 private qualifiedNameTypeIdentifier  ::= identifier [DOT type]

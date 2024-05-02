@@ -120,7 +120,7 @@ public class OdinTypeResolver extends OdinVisitor {
         if (returnParameters != null) {
             OdinTypeDefinitionExpression typeDefinitionExpression = returnParameters.getTypeDefinitionExpression();
             if (typeDefinitionExpression != null) {
-                OdinType typeExpression = typeDefinitionExpression.getMainTypeExpression();
+                OdinType typeExpression = typeDefinitionExpression.getType();
                 typeExpression.accept(odinTypeExpressionResolver);
                 if (odinTypeExpressionResolver.type != null) {
                     // TODO add support for multiple return values
@@ -150,7 +150,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 polyParameter.setDeclaredIdentifier(declarationSpec.getDeclaredIdentifier());
 
                 if (declarationSpec.getTypeDefinitionExpression() != null) {
-                    TsOdinType tsOdinType = resolveType(scope, declarationSpec.getTypeDefinitionExpression().getMain().getType());
+                    TsOdinType tsOdinType = resolveType(scope, declarationSpec.getTypeDefinitionExpression().getType());
                     polyParameter.setOdinType(tsOdinType);
                 }
 

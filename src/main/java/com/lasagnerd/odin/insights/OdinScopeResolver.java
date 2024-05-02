@@ -89,7 +89,7 @@ public class OdinScopeResolver {
                     if (variableInitializationStatement.getUsing() != null) {
                         OdinTypeDefinitionExpression typeDefinitionExpression = variableInitializationStatement.getTypeDefinitionExpression();
                         if (typeDefinitionExpression != null) {
-                            OdinType mainTypeExpression = typeDefinitionExpression.getMainTypeExpression();
+                            OdinType mainTypeExpression = typeDefinitionExpression.getType();
                             TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, mainTypeExpression);
                             if (tsOdinType != null) {
                                 OdinScope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
@@ -112,7 +112,7 @@ public class OdinScopeResolver {
 
                 if (statement instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
                     if (variableDeclarationStatement.getUsing() != null) {
-                        OdinType mainTypeExpression = variableDeclarationStatement.getTypeDefinitionExpression().getMainTypeExpression();
+                        OdinType mainTypeExpression = variableDeclarationStatement.getTypeDefinitionExpression().getType();
                         TsOdinType type = OdinTypeResolver.resolveType(scope, mainTypeExpression);
                         if (type != null) {
                             OdinScope scopeProvidedByType = getScopeProvidedByType(type);
@@ -189,7 +189,7 @@ public class OdinScopeResolver {
             scope.add(declarationsSpec.getDeclaredIdentifier());
             if(declarationsSpec.isHasUsing()) {
                 if(declarationsSpec.getTypeDefinitionExpression() != null) {
-                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, declarationsSpec.getTypeDefinitionExpression().getMainTypeExpression());
+                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, declarationsSpec.getTypeDefinitionExpression().getType());
                     if (tsOdinType != null) {
                         scope.addAll(getScopeProvidedByType(tsOdinType).getNamedElements());
                     }

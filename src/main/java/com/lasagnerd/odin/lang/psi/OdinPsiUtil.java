@@ -208,9 +208,11 @@ public class OdinPsiUtil {
     }
 
     public static OdinIdentifier getPackageIdentifier(OdinQualifiedType qualifiedType) {
-        qualifiedType.getIdentifier();
-        return qualifiedType.getIdentifier();
+        if (qualifiedType.getType() != null) {
+            return qualifiedType.getIdentifier();
+        }
 
+        return null;
     }
 
     public static OdinIdentifier getTypeIdentifier(OdinQualifiedType qualifiedType) {
@@ -241,23 +243,17 @@ public class OdinPsiUtil {
         }
 
         if (typeDefinitionExpression != null)
-            return typeDefinitionExpression.getMainTypeExpression();
+            return typeDefinitionExpression.getType();
 
         return null;
     }
 
     public static OdinType getKeyType(OdinMapType mapType) {
-        return mapType.getTypeDefinitionExpressionList().get(0).getMainTypeExpression();
+        return mapType.getTypeDefinitionExpressionList().get(0).getType();
     }
 
     public static OdinType getValueType(OdinMapType mapType) {
-        return mapType.getTypeDefinitionExpressionList().get(1).getMainTypeExpression();
-    }
-
-    public static OdinType getMainTypeExpression(OdinTypeDefinitionExpression typeDefinitionExpression) {
-        OdinMain main = typeDefinitionExpression.getMain();
-        return (OdinType) main.getType();
-
+        return mapType.getTypeDefinitionExpressionList().get(1).getType();
     }
 
     public static List<OdinStatement> getStatements(OdinBlock odinBlock) {

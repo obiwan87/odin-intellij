@@ -2238,17 +2238,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type
-  public static boolean main(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "main")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, MAIN, "<main>");
-    r = type(b, l + 1, -1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
   // IDENTIFIER_TOKEN EQ expression
   public static boolean namedArgument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "namedArgument")) return false;
@@ -4704,14 +4693,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // DISTINCT? [directive] main
+  // DISTINCT? [directive] type
   public static boolean typeDefinitionExpression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "typeDefinitionExpression")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, TYPE_DEFINITION_EXPRESSION, "<type definition expression>");
     r = typeDefinitionExpression_0(b, l + 1);
     r = r && typeDefinitionExpression_1(b, l + 1);
-    r = r && main(b, l + 1);
+    r = r && type(b, l + 1, -1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
