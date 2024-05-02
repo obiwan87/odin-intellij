@@ -197,7 +197,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | procedureOverloadStatement
                                          | foreignStatement
                                          | whenStatement
-                                         | directive_expression
+                                         | directiveStatement
 
 // @require foreign import entry "entry_unix_no_crt_amd64.asm"
 foreignImportDeclarationStatement    ::= (attributeStatement EOS_TOKEN?)* FOREIGN IMPORT
@@ -252,6 +252,7 @@ returnStatement                      ::= [directive] RETURN returnArgumentList?
 private returnArgumentList           ::= expression (COMMA expression)* COMMA?
 
 usingStatement                       ::= USING expression
+directiveStatement                   ::= directive
 
 // Procedure overloading
 procedureOverloadStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
@@ -558,7 +559,7 @@ compoundValueStart                   ::= LBRACE
 compoundValueEnd                     ::= RBRACE
 compoundValueBody                    ::= [expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]
 
-directive_expression              ::= tagHead [basic_literal | (LPAREN expressionsList? RPAREN)]
+directive_expression              ::= directive
 directive                         ::= tagHead [basic_literal | (LPAREN expressionsList? RPAREN)]
 tagHead                              ::= HASH IDENTIFIER_TOKEN
 

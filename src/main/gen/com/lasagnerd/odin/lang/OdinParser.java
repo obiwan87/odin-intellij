@@ -42,13 +42,13 @@ public class OdinParser implements PsiParser, LightPsiParser {
     create_token_set_(PARAMETER_DECL, PARAMETER_INITIALIZATION, UNNAMED_PARAMETER, VARIADIC_PARAMETER_DECLARATION),
     create_token_set_(ASSIGNMENT_STATEMENT, ATTRIBUTE_STATEMENT, BITSET_DECLARATION_STATEMENT, BLOCK_STATEMENT,
       BREAK_STATEMENT, CONDITIONAL_STATEMENT, CONSTANT_INITIALIZATION_STATEMENT, CONTINUE_STATEMENT,
-      DEFER_STATEMENT, DO_STATEMENT, ENUM_DECLARATION_STATEMENT, EXPRESSION_STATEMENT,
-      FALLTHROUGH_STATEMENT, FIELD_DECLARATION_STATEMENT, FILE_SCOPE_STATEMENT, FOREIGN_BLOCK_STATEMENT,
-      FOREIGN_IMPORT_DECLARATION_STATEMENT, FOREIGN_PROCEDURE_DECLARATION_STATEMENT, FOREIGN_STATEMENT, FOR_IN_STATEMENT,
-      FOR_STATEMENT, IMPORT_DECLARATION_STATEMENT, PROCEDURE_DECLARATION_STATEMENT, PROCEDURE_OVERLOAD_STATEMENT,
-      RETURN_STATEMENT, STATEMENT, STRUCT_DECLARATION_STATEMENT, SWITCH_STATEMENT,
-      UNION_DECLARATION_STATEMENT, USING_STATEMENT, VARIABLE_DECLARATION_STATEMENT, VARIABLE_INITIALIZATION_STATEMENT,
-      WHEN_STATEMENT),
+      DEFER_STATEMENT, DIRECTIVE_STATEMENT, DO_STATEMENT, ENUM_DECLARATION_STATEMENT,
+      EXPRESSION_STATEMENT, FALLTHROUGH_STATEMENT, FIELD_DECLARATION_STATEMENT, FILE_SCOPE_STATEMENT,
+      FOREIGN_BLOCK_STATEMENT, FOREIGN_IMPORT_DECLARATION_STATEMENT, FOREIGN_PROCEDURE_DECLARATION_STATEMENT, FOREIGN_STATEMENT,
+      FOR_IN_STATEMENT, FOR_STATEMENT, IMPORT_DECLARATION_STATEMENT, PROCEDURE_DECLARATION_STATEMENT,
+      PROCEDURE_OVERLOAD_STATEMENT, RETURN_STATEMENT, STATEMENT, STRUCT_DECLARATION_STATEMENT,
+      SWITCH_STATEMENT, UNION_DECLARATION_STATEMENT, USING_STATEMENT, VARIABLE_DECLARATION_STATEMENT,
+      VARIABLE_INITIALIZATION_STATEMENT, WHEN_STATEMENT),
     create_token_set_(ARRAY_TYPE, AUTO_CAST_EXPRESSION, BINARY_EXPRESSION, BIT_SET_TYPE,
       CALL_EXPRESSION, CAST_EXPRESSION, COMPOUND_LITERAL_EXPRESSION, CONSTRAINED_TYPE,
       DEREFERENCE_EXPRESSION, DIRECTIVE_EXPRESSION, ELVIS_EXPRESSION, ENUM_TYPE,
@@ -1015,6 +1015,18 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // directive
+  public static boolean directiveStatement(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "directiveStatement")) return false;
+    if (!nextTokenIs(b, HASH)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = directive(b, l + 1);
+    exit_section_(b, m, DIRECTIVE_STATEMENT, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // DO statement
   public static boolean doStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "doStatement")) return false;
@@ -1444,7 +1456,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   //                                          | procedureOverloadStatement
   //                                          | foreignStatement
   //                                          | whenStatement
-  //                                          | directive_expression
+  //                                          | directiveStatement
   public static boolean fileScopeStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "fileScopeStatement")) return false;
     boolean r;
@@ -1462,7 +1474,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = procedureOverloadStatement(b, l + 1);
     if (!r) r = foreignStatement(b, l + 1);
     if (!r) r = whenStatement(b, l + 1);
-    if (!r) r = directive_expression(b, l + 1);
+    if (!r) r = directiveStatement(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -4719,53 +4731,15 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // tagHead [basic_literal | (LPAREN expressionsList? RPAREN)]
+  // directive
   public static boolean directive_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "directive_expression")) return false;
     if (!nextTokenIsSmart(b, HASH)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = tagHead(b, l + 1);
-    r = r && directive_expression_1(b, l + 1);
+    r = directive(b, l + 1);
     exit_section_(b, m, DIRECTIVE_EXPRESSION, r);
     return r;
-  }
-
-  // [basic_literal | (LPAREN expressionsList? RPAREN)]
-  private static boolean directive_expression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "directive_expression_1")) return false;
-    directive_expression_1_0(b, l + 1);
-    return true;
-  }
-
-  // basic_literal | (LPAREN expressionsList? RPAREN)
-  private static boolean directive_expression_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "directive_expression_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = basic_literal(b, l + 1);
-    if (!r) r = directive_expression_1_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // LPAREN expressionsList? RPAREN
-  private static boolean directive_expression_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "directive_expression_1_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, LPAREN);
-    r = r && directive_expression_1_0_1_1(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // expressionsList?
-  private static boolean directive_expression_1_0_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "directive_expression_1_0_1_1")) return false;
-    expressionsList(b, l + 1);
-    return true;
   }
 
   // basic_literal
