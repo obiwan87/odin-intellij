@@ -489,7 +489,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | primaryTypeGroup | parExpressionType
+  // arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | callType | simpleRefType | parExpressionType
   static boolean compoundType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compoundType")) return false;
     boolean r;
@@ -499,7 +499,8 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = mapType(b, l + 1);
     if (!r) r = structType(b, l + 1);
     if (!r) r = qualifiedType(b, l + 1);
-    if (!r) r = type(b, l + 1, 13);
+    if (!r) r = callType(b, l + 1);
+    if (!r) r = simpleRefType(b, l + 1);
     if (!r) r = parExpressionType(b, l + 1);
     return r;
   }
@@ -4727,8 +4728,9 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // 10: ATOM(polymorphicType)
   // 11: BINARY(constrainedType)
   // 12: ATOM(parExpressionType)
-  // 13: PREFIX(qualifiedType)
-  // 14: ATOM(callType) ATOM(simpleRefType)
+  // 13: ATOM(qualifiedType)
+  // 14: ATOM(callType)
+  // 15: ATOM(simpleRefType)
   public static boolean type(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "type")) return false;
     addVariant(b, "<type>");
@@ -5224,26 +5226,25 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  // identifier DOT (callType | simpleRefType)
   public static boolean qualifiedType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "qualifiedType")) return false;
     if (!nextTokenIsSmart(b, IDENTIFIER_TOKEN)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_, null);
-    r = qualifiedType_0(b, l + 1);
-    p = r;
-    r = p && type(b, l, 13);
-    exit_section_(b, l, m, QUALIFIED_TYPE, r, p, null);
-    return r || p;
-  }
-
-  // identifier DOT
-  private static boolean qualifiedType_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "qualifiedType_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = identifier(b, l + 1);
     r = r && consumeToken(b, DOT);
-    exit_section_(b, m, null, r);
+    r = r && qualifiedType_2(b, l + 1);
+    exit_section_(b, m, QUALIFIED_TYPE, r);
+    return r;
+  }
+
+  // callType | simpleRefType
+  private static boolean qualifiedType_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "qualifiedType_2")) return false;
+    boolean r;
+    r = callType(b, l + 1);
+    if (!r) r = simpleRefType(b, l + 1);
     return r;
   }
 

@@ -275,14 +275,14 @@ type                                 ::= mapType
                                          | constrainedType
                                          | parExpressionType
                                          | qualifiedType
-                                         | primaryTypeGroup
+                                         | callType
+                                         | simpleRefType
 
 callType                             ::= identifier LPAREN argumentList RPAREN
 constrainedType                      ::= type DIV type {pin=2}
 polymorphicType                      ::= DOLLAR identifier
 simpleRefType                        ::= identifier
-qualifiedType                        ::= identifier DOT primaryTypeGroup {methods=[getPackageIdentifier getTypeIdentifier]}
-private primaryTypeGroup             ::= callType | simpleRefType
+qualifiedType                        ::= identifier DOT (callType | simpleRefType) {methods=[getPackageIdentifier getTypeIdentifier]}
 
 
 pointerType                          ::= CARET type
@@ -550,7 +550,7 @@ basicLiteral                        ::= nilLiteral
                                          | booleanLiteral
 //                                         | tripleDashLiteralExpression
 
-private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | primaryTypeGroup | parExpressionType
+private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | callType | simpleRefType | parExpressionType
 parExpressionType                    ::= parenthesizedExpression
 
 
