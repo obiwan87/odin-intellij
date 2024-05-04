@@ -53,14 +53,12 @@ public class OdinTypeInstantiator {
         OdinProcedureType psiType = genericType.type();
         OdinReturnParameters returnParameters = psiType.getReturnParameters();
         if (returnParameters != null) {
-            OdinParamEntries paramEntries = returnParameters.getParamEntries();
-            if (paramEntries != null) {
-                for (OdinParamEntry odinParamEntry : paramEntries.getParamEntryList()) {
-                    OdinType type = odinParamEntry.getParameterDeclaration().getTypeDefinition().getType();
-                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, type);
-                    for (OdinParameter ignored : odinParamEntry.getParameterDeclaration().getParameterList()) {
-                        instantiatedType.getReturnTypes().add(tsOdinType);
-                    }
+            var paramEntries = returnParameters.getParamEntryList();
+            for (OdinParamEntry odinParamEntry : paramEntries) {
+                OdinType type = odinParamEntry.getParameterDeclaration().getTypeDefinition().getType();
+                TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, type);
+                for (OdinParameter ignored : odinParamEntry.getParameterDeclaration().getParameterList()) {
+                    instantiatedType.getReturnTypes().add(tsOdinType);
                 }
             }
 
@@ -115,14 +113,16 @@ public class OdinTypeInstantiator {
                 if (argumentType instanceof TsOdinMetaType metaType && polyParameter.getType().isTypeId()) {
                     TsOdinType resolvedMetaType = OdinTypeResolver.resolveMetaType(currentScope, metaType);
                     if (resolvedMetaType != null) {
+
                         newScope.addType(polyParameter.getValueName(), resolvedMetaType);
+
                     }
                 }
 
                 // TODO else, add value of parameter to scope
 
                 if (polyParameter.getType() instanceof OdinPolymorphicType polymorphicType) {
-                    String parameterName = polymorphicType.getIdentifier().getIdentifierToken().getText();
+                    String parameterName = polymorphicType.getDeclaredIdentifier().getIdentifierToken().getText();
                     if (argumentType != null) {
                         newScope.addType(parameterName, argumentType);
                     }

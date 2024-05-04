@@ -151,33 +151,32 @@ public class OdinTypeResolver extends OdinVisitor {
         procedureType.setParentScope(scope);
         OdinScope newScope = new OdinScope();
         newScope.addSymbols(scope);
-        OdinParamEntries paramEntries = odinProcedureType.getParamEntries();
-        if (paramEntries != null) {
-            int k = 0;
-            for (OdinParamEntry odinParamEntry : paramEntries.getParamEntryList()) {
-                List<OdinDeclarationSpec> declarationSpecs = OdinDeclarationSpecifier.getDeclarationSpecs(odinParamEntry.getParameterDeclaration());
-                for (OdinDeclarationSpec declarationSpec : declarationSpecs) {
-                    if(!declarationSpec.isPolymorphic()) {
-                        k++;
-                        continue;
-                    }
-
-                    var polyParameter = mapParameterToPolyParameter(declarationSpec, k);
+        var paramEntries = odinProcedureType.getParamEntryList();
+        int k = 0;
+        for (OdinParamEntry odinParamEntry : paramEntries) {
+            List<OdinDeclarationSpec> declarationSpecs = OdinDeclarationSpecifier.getDeclarationSpecs(odinParamEntry.getParameterDeclaration());
+            for (OdinDeclarationSpec declarationSpec : declarationSpecs) {
+                if(!declarationSpec.isPolymorphic()) {
                     k++;
+                    continue;
+                }
 
-                    procedureType.getPolyParameters().add(polyParameter);
+                var polyParameter = mapParameterToPolyParameter(declarationSpec, k);
+                k++;
 
-                    TsOdinType tsOdinType = resolveType(newScope, declarationSpec.getTypeDefinitionExpression().getType());
-                    if(tsOdinType != null && tsOdinType.isTypeId()) {
-                        TsOdinPolymorphicType polymorphicType = new TsOdinPolymorphicType();
-                        polymorphicType.setName(polymorphicType.getName());
-                        polymorphicType.setDeclaredIdentifier(polyParameter.getValueDeclaredIdentifier());
-                        newScope.addType(polyParameter.getValueName(), polymorphicType);
-                    }
+                procedureType.getPolyParameters().add(polyParameter);
 
-                    if(declarationSpec.isTypePolymorphic()) {
-                        newScope.addType(polyParameter.getType().getName(), polyParameter.getType());
-                    }
+                TsOdinType tsOdinType = resolveType(newScope, declarationSpec.getTypeDefinitionExpression().getType());
+                if(tsOdinType != null && tsOdinType.isTypeId()) {
+                    TsOdinPolymorphicType polymorphicType = new TsOdinPolymorphicType();
+                    polymorphicType.setName(polymorphicType.getName());
+                    polymorphicType.setDeclaredIdentifier(polyParameter.getValueDeclaredIdentifier());
+                    newScope.addType(polyParameter.getValueName(), polymorphicType);
+                }
+
+                if(declarationSpec.isTypePolymorphic()) {
+                    newScope.addType(polyParameter.getType().getName(), polyParameter.getType());
+                    newScope.add(((OdinPolymorphicType)polyParameter.getType()).getDeclaredIdentifier());
                 }
             }
         }
@@ -208,11 +207,11 @@ public class OdinTypeResolver extends OdinVisitor {
 
         this.type = structType;
 
-        var odinPolymorphicParameters = o.getPolymorphicParameterList();
+        var paramEntryList = o.getParamEntryList();
         int k = 0;
-        for (OdinPolymorphicParameter odinPolymorphicParameter : odinPolymorphicParameters) {
+        for (var paramEntry : paramEntryList) {
             List<TsOdinPolyParameter> polyParameters = structType.getPolyParameters();
-            OdinParameterDeclaration parameterDeclaration = odinPolymorphicParameter.getParameterDeclaration();
+            OdinParameterDeclaration parameterDeclaration = paramEntry.getParameterDeclaration();
             List<OdinDeclarationSpec> declarationSpecs = OdinDeclarationSpecifier.getDeclarationSpecs(parameterDeclaration);
 
             for (OdinDeclarationSpec declarationSpec : declarationSpecs) {
@@ -233,8 +232,8 @@ public class OdinTypeResolver extends OdinVisitor {
 
     private @NotNull TsOdinPolyParameter mapParameterToPolyParameter(OdinDeclarationSpec declarationSpec, int k) {
         TsOdinPolyParameter polyParameter = new TsOdinPolyParameter();
-        polyParameter.setValueDeclaredIdentifier(declarationSpec.getDeclaredIdentifier());
-        polyParameter.setValueName(declarationSpec.getDeclaredIdentifier().getName());
+        polyParameter.setValueDeclaredIdentifier(declarationSpec.getValueDeclaredIdentifier());
+        polyParameter.setValueName(declarationSpec.getValueDeclaredIdentifier().getName());
         polyParameter.setValuePolymorphic(declarationSpec.isValuePolymorphic());
         polyParameter.setIndex(k);
         if (declarationSpec.getTypeDefinitionExpression() != null) {
@@ -256,7 +255,7 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitPolymorphicType(@NotNull OdinPolymorphicType o) {
         TsOdinPolymorphicType tsOdinPolymorphicType = new TsOdinPolymorphicType();
         tsOdinPolymorphicType.setParentScope(scope);
-        tsOdinPolymorphicType.setName(o.getIdentifier().getIdentifierToken().getText());
+        tsOdinPolymorphicType.setName(o.getDeclaredIdentifier().getIdentifierToken().getText());
         this.type = tsOdinPolymorphicType;
     }
 

@@ -186,7 +186,7 @@ public class OdinScopeResolver {
         OdinScope scope = new OdinScope();
         scope.setPackagePath(parentScope.getPackagePath());
         for (OdinDeclarationSpec declarationsSpec : containingBlock.getDeclarationsSpecs()) {
-            scope.add(declarationsSpec.getDeclaredIdentifier());
+            scope.add(declarationsSpec.getValueDeclaredIdentifier());
             if(declarationsSpec.isHasUsing()) {
                 if(declarationsSpec.getTypeDefinitionExpression() != null) {
                     TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, declarationsSpec.getTypeDefinitionExpression().getType());

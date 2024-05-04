@@ -178,13 +178,13 @@ public class OdinCompletionContributor extends CompletionContributor {
 
     @NotNull
     private static LookupElementBuilder procedureLookupElement(LookupElementBuilder element, OdinProcedureDeclarationStatement declaringProcedure) {
-        var params = declaringProcedure.getProcedureType().getParamEntries();
-        String tailText = "(";
-        if (params != null) {
-            tailText += params.getText();
+        var params = declaringProcedure.getProcedureType().getParamEntryList();
+        StringBuilder tailText = new StringBuilder("(");
+        for (OdinParamEntry param : params) {
+            tailText.append(param.getText());
         }
-        tailText += ")";
-        element = element.withTailText(tailText);
+        tailText.append(")");
+        element = element.withTailText(tailText.toString());
 
         OdinReturnParameters returnType = declaringProcedure.getProcedureType().getReturnParameters();
         if (returnType != null) {

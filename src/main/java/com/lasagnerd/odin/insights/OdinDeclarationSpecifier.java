@@ -34,7 +34,7 @@ public class OdinDeclarationSpecifier extends OdinVisitor {
 
         for (var declaredIdentifier : o.getDeclaredIdentifiers()) {
             OdinDeclarationSpec odinDeclarationSpec = new OdinDeclarationSpec();
-            odinDeclarationSpec.setDeclaredIdentifier(declaredIdentifier);
+            odinDeclarationSpec.setValueDeclaredIdentifier(declaredIdentifier);
             odinDeclarationSpec.setValueExpression(valueExpression);
             odinDeclarationSpec.setTypeDefinitionExpression(typeDefinitionExpression);
             odinDeclarationSpec.setHasUsing(using);
@@ -50,7 +50,7 @@ public class OdinDeclarationSpecifier extends OdinVisitor {
             OdinDeclarationSpec spec = new OdinDeclarationSpec();
             OdinDeclaredIdentifier declaredIdentifier = odinParameter.getDeclaredIdentifier();
             boolean hasUsing = odinParameter.getUsing() != null;
-            spec.setDeclaredIdentifier(declaredIdentifier);
+            spec.setValueDeclaredIdentifier(declaredIdentifier);
             spec.setHasUsing(hasUsing);
             spec.setTypeDefinitionExpression(typeDefinition);
             declarationSpecs.add(spec);
@@ -60,7 +60,7 @@ public class OdinDeclarationSpecifier extends OdinVisitor {
     @Override
     public void visitVariadicParameterDeclaration(@NotNull OdinVariadicParameterDeclaration o) {
         OdinDeclarationSpec odinDeclarationSpec = new OdinDeclarationSpec();
-        odinDeclarationSpec.setDeclaredIdentifier(o.getParameter().getDeclaredIdentifier());
+        odinDeclarationSpec.setValueDeclaredIdentifier(o.getParameter().getDeclaredIdentifier());
         odinDeclarationSpec.setTypeDefinitionExpression(o.getTypeDefinitionContainer().getTypeDefinitionExpression());
         odinDeclarationSpec.setVariadic(true);
         odinDeclarationSpec.setHasUsing(false);
@@ -76,7 +76,7 @@ public class OdinDeclarationSpecifier extends OdinVisitor {
             OdinDeclarationSpec odinDeclarationSpec = new OdinDeclarationSpec();
             odinDeclarationSpec.setTypeDefinitionExpression(o.getTypeDefinitionExpression());
             odinDeclarationSpec.setHasUsing(hasUsing);
-            odinDeclarationSpec.setDeclaredIdentifier(declaredIdentifier);
+            odinDeclarationSpec.setValueDeclaredIdentifier(declaredIdentifier);
             declarationSpecs.add(odinDeclarationSpec);
         }
     }
@@ -92,7 +92,7 @@ public class OdinDeclarationSpecifier extends OdinVisitor {
                 OdinExpression odinExpression = expressionsList.getExpressionList().get(i);
                 odinDeclarationSpec.setValueExpression(odinExpression);
             }
-            odinDeclarationSpec.setDeclaredIdentifier(o.getDeclaredIdentifiers().get(i));
+            odinDeclarationSpec.setValueDeclaredIdentifier(o.getDeclaredIdentifiers().get(i));
             odinDeclarationSpec.setHasUsing(hasUsing);
             odinDeclarationSpec.setTypeDefinitionExpression(typeDefinition);
 

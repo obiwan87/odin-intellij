@@ -14,7 +14,14 @@ public abstract class TsOdinType {
     String name;
     OdinDeclaration declaration;
     OdinDeclaredIdentifier declaredIdentifier;
+    // TODO remove this, as this should not be needed
     OdinScope parentScope;
+
+    /**
+     * Holds types introduced by the type itself, i.e. polymorphic
+     */
+    OdinScope polymorphicScope = new OdinScope();
+
     public OdinType type;
 
     public static final TsOdinType UNKNOWN = new TsOdinType() {

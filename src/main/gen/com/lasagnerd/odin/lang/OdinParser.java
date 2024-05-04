@@ -2309,14 +2309,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // paramEntry (COMMA paramEntry)* COMMA?
-  public static boolean paramEntries(PsiBuilder b, int l) {
+  static boolean paramEntries(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "paramEntries")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PARAM_ENTRIES, "<param entries>");
+    Marker m = enter_section_(b);
     r = paramEntry(b, l + 1);
     r = r && paramEntries_1(b, l + 1);
     r = r && paramEntries_2(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2473,80 +2473,9 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // directive? (
-  //                                          variadicParameterDeclaration
-  //                                          | parameterInitialization
-  //                                          | parameterDecl
-  //                                          )
-  public static boolean polymorphicParameter(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "polymorphicParameter")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, POLYMORPHIC_PARAMETER, "<polymorphic parameter>");
-    r = polymorphicParameter_0(b, l + 1);
-    r = r && polymorphicParameter_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // directive?
-  private static boolean polymorphicParameter_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "polymorphicParameter_0")) return false;
-    directive(b, l + 1);
-    return true;
-  }
-
-  // variadicParameterDeclaration
-  //                                          | parameterInitialization
-  //                                          | parameterDecl
-  private static boolean polymorphicParameter_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "polymorphicParameter_1")) return false;
-    boolean r;
-    r = variadicParameterDeclaration(b, l + 1);
-    if (!r) r = parameterInitialization(b, l + 1);
-    if (!r) r = parameterDecl(b, l + 1);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // polymorphicParameter (COMMA polymorphicParameter)* COMMA?
+  // paramEntries
   static boolean polymorphicParameterList(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "polymorphicParameterList")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = polymorphicParameter(b, l + 1);
-    r = r && polymorphicParameterList_1(b, l + 1);
-    r = r && polymorphicParameterList_2(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA polymorphicParameter)*
-  private static boolean polymorphicParameterList_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "polymorphicParameterList_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!polymorphicParameterList_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "polymorphicParameterList_1", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA polymorphicParameter
-  private static boolean polymorphicParameterList_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "polymorphicParameterList_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && polymorphicParameter(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // COMMA?
-  private static boolean polymorphicParameterList_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "polymorphicParameterList_2")) return false;
-    consumeToken(b, COMMA);
-    return true;
+    return paramEntries(b, l + 1);
   }
 
   /* ********************************************************** */
@@ -5203,14 +5132,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // DOLLAR identifier
+  // DOLLAR declaredIdentifier
   public static boolean polymorphicType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "polymorphicType")) return false;
     if (!nextTokenIsSmart(b, DOLLAR)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, DOLLAR);
-    r = r && identifier(b, l + 1);
+    r = r && declaredIdentifier(b, l + 1);
     exit_section_(b, m, POLYMORPHIC_TYPE, r);
     return r;
   }

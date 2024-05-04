@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.insights;
 
-import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinPolymorphicType;
@@ -9,7 +8,7 @@ import lombok.Data;
 
 @Data
 public class OdinDeclarationSpec {
-    OdinDeclaredIdentifier declaredIdentifier;
+    OdinDeclaredIdentifier valueDeclaredIdentifier;
     OdinExpression valueExpression;
     OdinTypeDefinitionExpression typeDefinitionExpression;
 
@@ -17,11 +16,11 @@ public class OdinDeclarationSpec {
     boolean isVariadic;
 
     public boolean isPolymorphic() {
-        return declaredIdentifier.getDollar() != null || getTypeDefinitionExpression().getType() instanceof OdinPolymorphicType;
+        return valueDeclaredIdentifier.getDollar() != null || getTypeDefinitionExpression().getType() instanceof OdinPolymorphicType;
     }
 
     public boolean isValuePolymorphic() {
-        return declaredIdentifier.getDollar() != null;
+        return valueDeclaredIdentifier.getDollar() != null;
     }
 
     public boolean isTypePolymorphic() {

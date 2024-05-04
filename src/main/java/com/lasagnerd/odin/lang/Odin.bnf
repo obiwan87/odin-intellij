@@ -280,7 +280,7 @@ type                                 ::= mapType
 
 callType                             ::= identifier arguments
 constrainedType                      ::= type DIV type {pin=2}
-polymorphicType                      ::= DOLLAR identifier
+polymorphicType                      ::= DOLLAR declaredIdentifier
 simpleRefType                        ::= identifier
 qualifiedType                        ::= identifier DOT (callType | simpleRefType) {methods=[getPackageIdentifier getTypeIdentifier]}
 
@@ -327,14 +327,9 @@ assignmentOperator                   ::= EQ
 variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] identifierList COLON typeDefinitionExpression { methods=[getTypeDefinition]}
 
 // Parameters for procedures and assignments
-private polymorphicParameterList     ::= polymorphicParameter (COMMA polymorphicParameter)* COMMA?
-polymorphicParameter                 ::= directive? (
-                                         variadicParameterDeclaration
-                                         | parameterInitialization
-                                         | parameterDecl
-                                         )
+private polymorphicParameterList     ::= paramEntries
 
-paramEntries                         ::= paramEntry (COMMA paramEntry)* COMMA?
+private paramEntries                         ::= paramEntry (COMMA paramEntry)* COMMA?
 paramEntry                           ::= directive? (
                                          variadicParameterDeclaration
                                              | parameterInitialization

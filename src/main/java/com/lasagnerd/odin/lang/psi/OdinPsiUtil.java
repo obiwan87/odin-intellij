@@ -217,7 +217,7 @@ public class OdinPsiUtil {
             return refType.getIdentifier();
         }
 
-        if(typeExpression instanceof OdinCallType callType) {
+        if (typeExpression instanceof OdinCallType callType) {
             return callType.getIdentifier();
         }
 
@@ -331,22 +331,18 @@ public class OdinPsiUtil {
     private static @NotNull List<OdinDeclarationSpec> doGetProcedureTypeDeclarationSpecs(OdinProcedureType procedureType) {
         List<OdinDeclarationSpec> declarations = new ArrayList<>();
         {
-            OdinParamEntries paramEntries = procedureType.getParamEntries();
-            if (paramEntries != null) {
-                for (OdinParamEntry odinParamEntry : paramEntries.getParamEntryList()) {
-                    declarations.addAll(OdinDeclarationSpecifier.getDeclarationSpecs(odinParamEntry.getParameterDeclaration()));
-                }
+
+            for (OdinParamEntry odinParamEntry : procedureType.getParamEntryList()) {
+                declarations.addAll(OdinDeclarationSpecifier.getDeclarationSpecs(odinParamEntry.getParameterDeclaration()));
             }
         }
 
         OdinReturnParameters returnParameters = procedureType.getReturnParameters();
         {
             if (returnParameters != null) {
-                OdinParamEntries paramEntries = returnParameters.getParamEntries();
-                if (paramEntries != null) {
-                    for (OdinParamEntry odinParamEntry : paramEntries.getParamEntryList()) {
-                        declarations.addAll(OdinDeclarationSpecifier.getDeclarationSpecs(odinParamEntry.getParameterDeclaration()));
-                    }
+                var paramEntries = procedureType.getParamEntryList();
+                for (OdinParamEntry odinParamEntry : paramEntries) {
+                    declarations.addAll(OdinDeclarationSpecifier.getDeclarationSpecs(odinParamEntry.getParameterDeclaration()));
                 }
             }
         }
@@ -414,7 +410,7 @@ public class OdinPsiUtil {
         List<OdinDeclarationSpec> specs = new ArrayList<>();
         for (var forInParameter : forInStatement.getForInParameterList()) {
             OdinDeclarationSpec spec = new OdinDeclarationSpec();
-            spec.setDeclaredIdentifier(forInParameter.getDeclaredIdentifier());
+            spec.setValueDeclaredIdentifier(forInParameter.getDeclaredIdentifier());
             specs.add(spec);
         }
         return specs;

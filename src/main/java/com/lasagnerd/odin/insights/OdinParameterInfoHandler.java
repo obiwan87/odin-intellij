@@ -142,11 +142,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
     public void updateUI(OdinProcedureDeclarationStatement p, @NotNull ParameterInfoUIContext context) {
 
         System.out.println("Parameter index in Update UI: " + context.getCurrentParameterIndex());
-        OdinParamEntries paramEntries = p.getProcedureType().getParamEntries();
-        if (paramEntries == null)
-            return;
-
-        var parameters = paramEntries.getParamEntryList();
+        var parameters = p.getProcedureType().getParamEntryList();
         // Each entry can declare several parameters. In order to make navigation easier we flatten the list.
 
         List<String> params = new ArrayList<>();
