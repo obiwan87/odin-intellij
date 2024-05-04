@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.insights;
 
 import com.intellij.psi.PsiNamedElement;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,14 +19,26 @@ public class OdinScope {
     private String packagePath;
     public static final OdinScope EMPTY = new OdinScope();
     Map<String, PsiNamedElement> symbolTable = new HashMap<>();
+    /**
+     * keeps track of the types
+     */
+    Map<String, TsOdinType> typeTable = new HashMap<>();
 
     public OdinScope() {
 
     }
 
     @Nullable
-    public PsiNamedElement findNamedElement(String name) {
+    public PsiNamedElement getNamedElement(String name) {
         return symbolTable.get(name);
+    }
+
+    public TsOdinType getType(String polymorphicParameter) {
+        return typeTable.get(polymorphicParameter);
+    }
+
+    public void addType(String polymorphicParameter, TsOdinType type) {
+        typeTable.put(polymorphicParameter, type);
     }
 
     public Collection<PsiNamedElement> getNamedElements() {
@@ -50,6 +63,7 @@ public class OdinScope {
 
     public void addSymbols(OdinScope scope) {
         symbolTable.putAll(scope.symbolTable);
+        typeTable.putAll(scope.typeTable);
     }
 
     public void add(PsiNamedElement namedElement) {

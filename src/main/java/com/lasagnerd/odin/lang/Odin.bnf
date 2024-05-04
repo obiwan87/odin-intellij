@@ -278,7 +278,7 @@ type                                 ::= mapType
                                          | callType
                                          | simpleRefType
 
-callType                             ::= identifier LPAREN argumentList RPAREN
+callType                             ::= identifier arguments
 constrainedType                      ::= type DIV type {pin=2}
 polymorphicType                      ::= DOLLAR identifier
 simpleRefType                        ::= identifier
@@ -352,7 +352,7 @@ variadicParameterDeclaration         ::= parameter COLON RANGE typeDefinitionCon
 unnamedParameter                     ::= RANGE? typeDefinitionContainer {extends=parameterDeclaration methods=[getTypeDefinition]}
 
 // Function calls
-argumentList                         ::= argument (COMMA argument)* COMMA?
+private argumentList                 ::= argument (COMMA argument)* COMMA?
 namedArgument                        ::= IDENTIFIER_TOKEN EQ expression { extends = argument}
 argument                             ::= namedArgument
                                          | unnamedArgument
@@ -489,7 +489,7 @@ compoundLiteralUntyped               ::= compoundValueUntyped {extends=compoundL
 
 index                                ::= LBRACKET expression [COMMA expression] RBRACKET
 slice                                ::= LBRACKET expression? COLON expression? RBRACKET
-private arguments                    ::= LPAREN <<enterMode "PAR">>  argumentList? <<exitMode "PAR">> RPAREN
+private arguments                    ::= LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> RPAREN
 
 elvisExpression                      ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">>
 ternaryIfExpression                  ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>

@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-
 public class OdinLangSyntaxAnnotator implements Annotator {
 
     public static final List<String> RESERVED_TYPES = List.of(
@@ -132,8 +130,6 @@ public class OdinLangSyntaxAnnotator implements Annotator {
                         .textAttributes(DefaultLanguageHighlighterColors.CONSTANT)
                         .create();
 
-            } else if (!RESERVED_TYPES.contains(identifier.getText())) {
-
             }
         }
 
@@ -165,6 +161,8 @@ public class OdinLangSyntaxAnnotator implements Annotator {
             identifier = typeRef;
         } else if (psiElement instanceof OdinRefExpression identifierExpression) {
             identifier = identifierExpression.getIdentifier();
+        } else if (psiElement instanceof OdinSimpleRefType simpleRefType) {
+            identifier = simpleRefType.getIdentifier();
         }
 
         if (identifier != null) {

@@ -53,6 +53,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                     .getPath());
 
                             if (reference.getExpression() != null) {
+                                // TODO at some point we should return the type of each symbol
                                 OdinScope completionScope = OdinReferenceResolver.resolve(scope, reference.getExpression());
                                 if(completionScope != null) {
                                     addLookUpElements(result, completionScope.getNamedElements());
@@ -83,7 +84,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                             OdinCompoundLiteral compoundLiteral
                                     = OdinInsightUtils.findFirstParentOfType(parent, true, OdinCompoundLiteral.class);
 
-                            findCompletionsForStruct(result, compoundLiteral);
+                            // TODO replace with working version
+//                            findCompletionsForStruct(result, compoundLiteral);
                         }
 
                         OdinScope declarations = OdinInsightUtils
@@ -200,9 +202,6 @@ public class OdinCompletionContributor extends CompletionContributor {
         }
 
         var structTypeExpression = (OdinQualifiedType) typeRef.getType();
-        if(structTypeExpression == null) {
-            return;
-        }
         var identifier = structTypeExpression.getIdentifier();
         PsiElement reference = Objects.requireNonNull(identifier.getReference()).resolve();
 

@@ -5,7 +5,11 @@ import lombok.Data;
 
 @Data
 public class TsOdinPolyParameter {
-    String name;
-    TsOdinType odinType;
-    OdinDeclaredIdentifier declaredIdentifier;
+    String valueName;
+    OdinDeclaredIdentifier valueDeclaredIdentifier;
+    boolean isValuePolymorphic;
+
+    TsOdinType type;
+
+    int index;
 }

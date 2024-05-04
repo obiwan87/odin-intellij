@@ -86,7 +86,7 @@ public class OdinInsightUtils {
         }
 
         if (scope != null)
-            return scope.findNamedElement(identifier.getIdentifierToken().getText());
+            return scope.getNamedElement(identifier.getIdentifierToken().getText());
 
         return null;
     }
@@ -234,8 +234,13 @@ public class OdinInsightUtils {
     }
 
     public static @NotNull List<OdinFieldDeclarationStatement> getStructFieldsDeclarationStatements(OdinStructDeclarationStatement structDeclarationStatement) {
-        OdinStructBody structBody = structDeclarationStatement
-                .getStructType()
+        OdinStructType structType = structDeclarationStatement
+                .getStructType();
+        return getStructFieldsDeclarationStatements(structType);
+    }
+
+    public static @NotNull List<OdinFieldDeclarationStatement> getStructFieldsDeclarationStatements(OdinStructType structType) {
+        OdinStructBody structBody = structType
                 .getStructBlock()
                 .getStructBody();
 

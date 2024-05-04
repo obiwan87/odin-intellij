@@ -80,14 +80,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // argument (COMMA argument)* COMMA?
-  public static boolean argumentList(PsiBuilder b, int l) {
+  static boolean argumentList(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argumentList")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, ARGUMENT_LIST, "<argument list>");
+    Marker m = enter_section_(b);
     r = argument(b, l + 1);
     r = r && argumentList_1(b, l + 1);
     r = r && argumentList_2(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -121,7 +121,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LPAREN <<enterMode "PAR">>  argumentList? <<exitMode "PAR">> RPAREN
+  // LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> RPAREN
   static boolean arguments(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "arguments")) return false;
     if (!nextTokenIs(b, LPAREN)) return false;
@@ -5248,16 +5248,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // identifier LPAREN argumentList RPAREN
+  // identifier arguments
   public static boolean callType(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "callType")) return false;
     if (!nextTokenIsSmart(b, IDENTIFIER_TOKEN)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = identifier(b, l + 1);
-    r = r && consumeToken(b, LPAREN);
-    r = r && argumentList(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
+    r = r && arguments(b, l + 1);
     exit_section_(b, m, CALL_TYPE, r);
     return r;
   }
