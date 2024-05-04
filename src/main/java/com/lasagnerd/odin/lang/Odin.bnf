@@ -280,7 +280,7 @@ type                                 ::= mapType
 
 callType                             ::= identifier arguments
 constrainedType                      ::= type DIV type {pin=2}
-polymorphicType                      ::= DOLLAR declaredIdentifier
+polymorphicType                      ::= DOLLAR declaredIdentifier {implements="com.lasagnerd.odin.lang.psi.OdinDeclaration" methods=[getDeclaredIdentifiers]}
 simpleRefType                        ::= identifier
 qualifiedType                        ::= identifier DOT (callType | simpleRefType) {methods=[getPackageIdentifier getTypeIdentifier]}
 

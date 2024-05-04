@@ -15,6 +15,7 @@ public class TsOdinMetaType extends TsOdinType {
         STRUCT,
         UNION,
         ENUM,
+        POLYMORPHIC_PARAMETER,
         BUILTIN
     }
 

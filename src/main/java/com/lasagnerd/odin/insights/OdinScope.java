@@ -18,15 +18,19 @@ public class OdinScope {
     @Setter
     private String packagePath;
     public static final OdinScope EMPTY = new OdinScope();
+    @Getter
     Map<String, PsiNamedElement> symbolTable = new HashMap<>();
+
     /**
      * keeps track of the types
      */
+    @Getter
     Map<String, TsOdinType> typeTable = new HashMap<>();
 
     public OdinScope() {
 
     }
+
 
     @Nullable
     public PsiNamedElement getNamedElement(String name) {
@@ -61,8 +65,12 @@ public class OdinScope {
         }
     }
 
-    public void addSymbols(OdinScope scope) {
+    public void putAll(OdinScope scope) {
         symbolTable.putAll(scope.symbolTable);
+        typeTable.putAll(scope.typeTable);
+    }
+
+    public void addTypes(OdinScope scope) {
         typeTable.putAll(scope.typeTable);
     }
 

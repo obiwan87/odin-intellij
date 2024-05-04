@@ -26,4 +26,13 @@ public class OdinDeclarationSpec {
     public boolean isTypePolymorphic() {
         return getTypeDefinitionExpression().getType() instanceof OdinPolymorphicType;
     }
+
+    // TODO fix this, this should in its own declaration spec
+    public OdinDeclaredIdentifier getPolymorphicTypeDeclaredIdentifier() {
+        if(typeDefinitionExpression.getType() instanceof OdinPolymorphicType polymorphicType) {
+            return polymorphicType.getDeclaredIdentifier();
+        }
+        return null;
+    }
+
 }

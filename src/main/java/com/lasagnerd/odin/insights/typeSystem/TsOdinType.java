@@ -6,6 +6,11 @@ import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinType;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Data
 public abstract class TsOdinType {
     /**
@@ -14,13 +19,15 @@ public abstract class TsOdinType {
     String name;
     OdinDeclaration declaration;
     OdinDeclaredIdentifier declaredIdentifier;
-    // TODO remove this, as this should not be needed
-    OdinScope parentScope;
+    List<TsOdinParameter> parameters = new ArrayList<>();
 
     /**
-     * Holds types introduced by the type itself, i.e. polymorphic
+     * These are only valid within the type itself and are not passed on to the top level scopes
      */
-    OdinScope polymorphicScope = new OdinScope();
+    OdinScope localScope = new OdinScope();
+
+    Map<String, TsOdinType> resolvedPolymorphicParameters = new HashMap<>();
+    Map<String, TsOdinType> unresolvedPolymorphicParameters = new HashMap<>();
 
     public OdinType type;
 
@@ -41,6 +48,19 @@ public abstract class TsOdinType {
 
     public boolean isTypeId() {
         return this instanceof TsOdinBuiltInType builtInType && builtInType.getName().equals("typeid");
+    }
+
+    public boolean isSameTypeAs(TsOdinType other) {
+        if(other == null)
+            return false;
+        if(getClass().equals(other.getClass())) {
+            return other.getDeclaredIdentifier() == this.declaredIdentifier;
+        }
+        return false;
+    }
+
+    public boolean isPolymorphic() {
+        return this instanceof TsOdinPolymorphicType;
     }
 }
 

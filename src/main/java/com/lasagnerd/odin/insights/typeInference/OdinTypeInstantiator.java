@@ -6,26 +6,30 @@ import com.lasagnerd.odin.insights.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine.inferType;
 
 public class OdinTypeInstantiator {
 
-    public static @NotNull TsOdinStructType instantiateStruct(OdinScope scope, @NotNull List<OdinArgument> arguments, TsOdinStructType structType) {
-        List<TsOdinPolyParameter> polyParameters = structType.getPolyParameters();
-        if(polyParameters.isEmpty())
-            return structType;
-        OdinScope newScope = resolveArguments(scope, arguments, polyParameters);
+    public static @NotNull TsOdinStructType instantiateStruct(OdinScope scope, @NotNull List<OdinArgument> arguments, TsOdinStructType baseType) {
+        List<TsOdinParameter> parameters = baseType.getParameters();
+        if (parameters.isEmpty())
+            return baseType;
 
         TsOdinStructType instantiatedType = new TsOdinStructType();
-        instantiatedType.setType(structType.getType());
-        instantiatedType.setName(structType.getName());
-        instantiatedType.setDeclaration(structType.getDeclaration());
-        instantiatedType.setDeclaredIdentifier(structType.getDeclaredIdentifier());
-        instantiatedType.getFields().putAll(structType.getFields());
+        OdinScope newScope = resolveArguments(scope, baseType, instantiatedType, arguments);
+        instantiatedType.setLocalScope(newScope);
+        instantiatedType.setType(baseType.getType());
+        instantiatedType.setName(baseType.getName());
+        instantiatedType.setDeclaration(baseType.getDeclaration());
+        instantiatedType.setDeclaredIdentifier(baseType.getDeclaredIdentifier());
+        instantiatedType.getFields().putAll(baseType.getFields());
+        instantiatedType.setParameters(baseType.getParameters());
 
-        OdinStructType type = structType.type();
+        OdinStructType type = baseType.type();
         List<OdinFieldDeclarationStatement> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(type);
         for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarations) {
             OdinTypeDefinitionExpression typeDefinition = fieldDeclaration.getTypeDefinition();
@@ -38,19 +42,19 @@ public class OdinTypeInstantiator {
         return instantiatedType;
     }
 
-    public static @NotNull TsOdinProcedureType instantiateProcedure(@NotNull OdinScope scope, List<OdinArgument> arguments, TsOdinProcedureType genericType) {
-        List<TsOdinPolyParameter> polyParameters = genericType.getPolyParameters();
-        if(polyParameters.isEmpty())
-            return genericType;
+    public static @NotNull TsOdinProcedureType instantiateProcedure(@NotNull OdinScope scope, List<OdinArgument> arguments, TsOdinProcedureType baseType) {
+        List<TsOdinParameter> polyParameters = baseType.getParameters();
+        if (polyParameters.isEmpty())
+            return baseType;
 
-        OdinScope newScope = resolveArguments(scope, arguments, polyParameters);
         TsOdinProcedureType instantiatedType = new TsOdinProcedureType();
-        instantiatedType.setType(genericType.getType());
-        instantiatedType.setName(genericType.getName());
-        instantiatedType.setDeclaration(genericType.getDeclaration());
-        instantiatedType.setDeclaredIdentifier(genericType.getDeclaredIdentifier());
+        OdinScope newScope = resolveArguments(scope, baseType, instantiatedType, arguments);
+        instantiatedType.setType(baseType.getType());
+        instantiatedType.setName(baseType.getName());
+        instantiatedType.setDeclaration(baseType.getDeclaration());
+        instantiatedType.setDeclaredIdentifier(baseType.getDeclaredIdentifier());
 
-        OdinProcedureType psiType = genericType.type();
+        OdinProcedureType psiType = baseType.type();
         OdinReturnParameters returnParameters = psiType.getReturnParameters();
         if (returnParameters != null) {
             var paramEntries = returnParameters.getParamEntryList();
@@ -63,72 +67,125 @@ public class OdinTypeInstantiator {
             }
 
             OdinTypeDefinitionExpression typeDefinitionExpression = psiType.getReturnParameters().getTypeDefinitionExpression();
-            if(typeDefinitionExpression != null) {
-               OdinType returnType = typeDefinitionExpression.getType();
-               TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, returnType);
-               if(tsOdinType != null) {
-                   instantiatedType.getReturnTypes().add(tsOdinType);
-               }
+            if (typeDefinitionExpression != null) {
+                OdinType returnType = typeDefinitionExpression.getType();
+                TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, returnType);
+                if (tsOdinType != null) {
+                    instantiatedType.getReturnTypes().add(tsOdinType);
+                }
             }
         }
-
 
 
         return instantiatedType;
     }
 
-    private static @NotNull OdinScope resolveArguments(OdinScope currentScope, List<OdinArgument> arguments, List<TsOdinPolyParameter> polyParameters) {
+    private static @NotNull OdinScope resolveArguments(
+            OdinScope scope,
+            TsOdinType baseType,
+            TsOdinType instantiatedType,
+            List<OdinArgument> arguments
+    ) {
         OdinScope newScope = new OdinScope();
-        newScope.addSymbols(currentScope);
+        newScope.putAll(scope);
         if (!arguments.isEmpty()) {
             for (int i = 0; i < arguments.size(); i++) {
                 final int currentIndex = i;
                 OdinArgument odinArgument = arguments.get(i);
 
                 OdinExpression argumentExpression = null;
-                TsOdinPolyParameter polyParameter = null;
+                TsOdinParameter tsOdinParameter = null;
 
                 if (odinArgument instanceof OdinUnnamedArgument argument) {
                     argumentExpression = argument.getExpression();
-                    polyParameter = polyParameters.stream()
+                    tsOdinParameter = baseType.getParameters().stream()
                             .filter(p -> p.getIndex() == currentIndex)
                             .findFirst().orElse(null);
                 }
 
-                if(odinArgument instanceof OdinNamedArgument argument) {
-                    polyParameter = polyParameters.stream()
+                if (odinArgument instanceof OdinNamedArgument argument) {
+                    tsOdinParameter = baseType.getParameters().stream()
                             .filter(p -> argument.getIdentifierToken().getText().equals(p.getValueName()))
                             .findFirst().orElse(null);
                     argumentExpression = argument.getExpression();
                 }
 
-                if(argumentExpression == null || polyParameter == null)
-                    continue;;
+                if (argumentExpression == null || tsOdinParameter == null)
+                    continue;
 
-                OdinTypeInferenceResult odinTypeInferenceResult = inferType(currentScope, argumentExpression);
+                OdinTypeInferenceResult odinTypeInferenceResult = inferType(newScope, argumentExpression);
                 TsOdinType argumentType = odinTypeInferenceResult.getType();
+                if (argumentType == null) {
+                    System.out.println("Could not resolve argument type");
+                    continue;
+                }
 
                 // This is only valid if poly parameter type is built-in type typeid
+                TsOdinType parameterType = tsOdinParameter.getType();
+                if (parameterType == null) {
+                    System.out.println("Could not resolve parameter type");
+                    continue;
+                }
 
-                if (argumentType instanceof TsOdinMetaType metaType && polyParameter.getType().isTypeId()) {
-                    TsOdinType resolvedMetaType = OdinTypeResolver.resolveMetaType(currentScope, metaType);
-                    if (resolvedMetaType != null) {
+                if (tsOdinParameter.isValuePolymorphic()) {
+                    if (argumentType instanceof TsOdinMetaType metaType && parameterType.isTypeId()) {
+                        TsOdinType resolvedMetaType = OdinTypeResolver.resolveMetaType(newScope, metaType);
+                        if (resolvedMetaType != null) {
+                            instantiatedType.getUnresolvedPolymorphicParameters().putAll(resolvedMetaType.getUnresolvedPolymorphicParameters());
+                            instantiatedType.getResolvedPolymorphicParameters().put(tsOdinParameter.getValueName(), resolvedMetaType);
+                            newScope.addType(tsOdinParameter.getValueName(), resolvedMetaType);
+                        }
+                    }
 
-                        newScope.addType(polyParameter.getValueName(), resolvedMetaType);
-
+                    if (argumentExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+                        if (typeDefinitionExpression.getType() instanceof OdinPolymorphicType polymorphicType) {
+                            TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, polymorphicType);
+                            if (tsOdinType != null) {
+                                OdinDeclaredIdentifier declaredIdentifier = polymorphicType.getDeclaredIdentifier();
+                                tsOdinType.setDeclaration(polymorphicType);
+                                tsOdinType.setDeclaredIdentifier(declaredIdentifier);
+                                instantiatedType.getUnresolvedPolymorphicParameters().put(declaredIdentifier.getName(), tsOdinType);
+                                instantiatedType.getResolvedPolymorphicParameters().put(tsOdinParameter.getValueName(), tsOdinType);
+                                newScope.addType(tsOdinParameter.getValueName(), tsOdinType);
+                            }
+                        }
                     }
                 }
 
-                // TODO else, add value of parameter to scope
+                // argument List(A) {} -> List(A)
+                // parameterType List($T) -> add entry T->A (how to get there)
 
-                if (polyParameter.getType() instanceof OdinPolymorphicType polymorphicType) {
-                    String parameterName = polymorphicType.getDeclaredIdentifier().getIdentifierToken().getText();
-                    if (argumentType != null) {
-                        newScope.addType(parameterName, argumentType);
-                    }
+                // This is the part where it all falls apart: it is wrong to ask whether the parameter is polymorphic
+                // What we have to do here try to solve whatever is in polymorphic scope... those are the newly introduced
+                // polymorphic parameters.
+                // The information I need: which parameter of the base type has been mapped and to what type has it been mapped
+                // e.g.
+                // List(Point): $Item -> Point
+                // List($T)   : $Item  -> $T
+                // I need to know that T is still unsolved in List($T)
+
+                Map<String, TsOdinType> resolvedTypes = new HashMap<>();
+                findResolvedTypes(parameterType, argumentType, resolvedTypes);
+                instantiatedType.getResolvedPolymorphicParameters().putAll(resolvedTypes);
+                for (Map.Entry<String, TsOdinType> entry : resolvedTypes.entrySet()) {
+                    newScope.addType(entry.getKey(), entry.getValue());
                 }
+
             }
         }
         return newScope;
     }
+
+    private static void findResolvedTypes(@NotNull TsOdinType parameterType, @NotNull TsOdinType argumentType, @NotNull Map<String, TsOdinType> resolvedTypes) {
+        if (parameterType.isPolymorphic() && !argumentType.isPolymorphic()) {
+            resolvedTypes.put(parameterType.getName(), argumentType);
+        } else {
+            for (Map.Entry<String, TsOdinType> entry : parameterType.getResolvedPolymorphicParameters().entrySet()) {
+                TsOdinType nextArgumentType = argumentType.getResolvedPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinType.UNKNOWN);
+                TsOdinType nextParameterType = entry.getValue();
+                findResolvedTypes(nextParameterType, nextArgumentType, resolvedTypes);
+            }
+        }
+    }
+
 }

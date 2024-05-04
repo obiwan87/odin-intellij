@@ -10,5 +10,4 @@ import java.util.List;
 @Data
 public class TsOdinProcedureType extends TsOdinType {
     List<TsOdinType> returnTypes = new ArrayList<>();
-    List<TsOdinPolyParameter> polyParameters = new ArrayList<>();
 }

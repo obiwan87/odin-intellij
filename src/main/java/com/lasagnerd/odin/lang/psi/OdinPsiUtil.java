@@ -52,6 +52,10 @@ public class OdinPsiUtil {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinPolymorphicType polymorphicType) {
+        return Collections.singletonList(polymorphicType.getDeclaredIdentifier());
+    }
+
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinParameterDeclaration statement) {
         return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
     }

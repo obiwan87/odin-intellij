@@ -37,8 +37,11 @@ public class OdinInsightUtils {
         if (containingFile == null)
             return null;
         @NotNull PsiFile virtualFile = containingFile.getOriginalFile();
-        return virtualFile.getContainingDirectory().getVirtualFile().getPath();
-
+        PsiDirectory containingDirectory = virtualFile.getContainingDirectory();
+        if (containingDirectory != null) {
+            return containingDirectory.getVirtualFile().getPath();
+        }
+        return null;
     }
 
     public static PsiElement findFirstDeclaration(OdinIdentifier identifier) {
@@ -69,13 +72,13 @@ public class OdinInsightUtils {
                     } else {
                         TsOdinType type = OdinTypeResolver.resolveType(parentScope, qualifiedType);
                         if (type != null) {
-                            scope = type.getParentScope();
+                            scope = type.getLocalScope();
                         }
                     }
                 } else {
                     TsOdinType type = OdinTypeResolver.resolveType(parentScope, odinType);
                     if (type != null) {
-                        scope = type.getParentScope();
+                        scope = type.getLocalScope();
                     }
                 }
             }
@@ -170,7 +173,7 @@ public class OdinInsightUtils {
      * @return The scope
      */
     public static OdinScope getScopeProvidedByType(TsOdinType type) {
-        OdinScope parentScope = type.getParentScope();
+        OdinScope parentScope = type.getLocalScope();
         OdinScope scope = new OdinScope();
         if (type instanceof TsOdinPointerType pointerType) {
             type = pointerType.getDereferencedType();
@@ -188,7 +191,7 @@ public class OdinInsightUtils {
                 TsOdinType usedType = OdinTypeResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinitionExpression().getType());
                 if (usedType != null) {
                     OdinScope subScope = getScopeProvidedByType(usedType);
-                    scope.addSymbols(subScope);
+                    scope.putAll(subScope);
                 }
             }
 

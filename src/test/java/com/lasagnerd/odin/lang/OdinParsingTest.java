@@ -52,8 +52,9 @@ import com.intellij.util.messages.MessageBus;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinReferenceResolver;
 import com.lasagnerd.odin.insights.OdinScope;
-import com.lasagnerd.odin.lang.psi.OdinFile;
-import com.lasagnerd.odin.lang.psi.OdinRefExpression;
+import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
+import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
@@ -599,10 +600,27 @@ public class OdinParsingTest extends UsefulTestCase {
 
     }
 
+    public void testPolymorphicTypes() throws IOException {
+        OdinFile odinFile = load("src/test/testData/ref.odin");
+        Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(), OdinProcedureDeclarationStatement.class);
+        OdinProcedureDeclarationStatement testTypeInference = procedureDeclarationStatements.stream().filter(p -> p.getDeclaredIdentifier().getName().equals("testTypeInference"))
+                .findFirst().orElseThrow();
+        OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) testTypeInference.getBlockStatements().stream().filter(s -> s instanceof OdinExpressionStatement)
+                .findFirst().orElseThrow();
+
+        OdinExpression expression = odinExpressionStatement.getExpression();
+        OdinScope scope = OdinInsightUtils.findScope(expression);
+        OdinTypeInferenceResult odinTypeInferenceResult = OdinInferenceEngine.inferType(scope, expression);
+
+        assertNotNull(odinTypeInferenceResult.getType());
+        assertEquals(odinTypeInferenceResult.getType().getName(), "Point");
+    }
+
     public void testRefSolver() throws IOException {
         OdinFile odinFile = load("src/test/testData/ref.odin");
         Collection<OdinRefExpression> refExpressions = PsiTreeUtil.findChildrenOfType(odinFile, OdinRefExpression.class);
-
     }
+
+
 
 }
