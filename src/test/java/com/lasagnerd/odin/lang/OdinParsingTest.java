@@ -603,24 +603,48 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testPolymorphicTypes() throws IOException {
         OdinFile odinFile = load("src/test/testData/ref.odin");
         Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(), OdinProcedureDeclarationStatement.class);
-        OdinProcedureDeclarationStatement testTypeInference = procedureDeclarationStatements.stream().filter(p -> p.getDeclaredIdentifier().getName().equals("testTypeInference"))
+
+        {
+            OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(procedureDeclarationStatements, "testTypeInference");
+
+            assertNotNull(odinTypeInferenceResult.getType());
+            assertEquals(odinTypeInferenceResult.getType().getName(), "Point");
+        }
+    }
+
+    public void testPolymorphicTypesWithMultipleParams() throws IOException {
+        OdinFile odinFile = load("src/test/testData/ref.odin");
+        Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(), OdinProcedureDeclarationStatement.class);
+        OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(procedureDeclarationStatements, "testTypeInference2");
+
+        assertNotNull(odinTypeInferenceResult.getType());
+        assertEquals(odinTypeInferenceResult.getType().getName(), "Point");
+    }
+
+    public void testPolymorphicTypesWithMultipleAndNestedParams() throws IOException {
+        OdinFile odinFile = load("src/test/testData/ref.odin");
+        Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(), OdinProcedureDeclarationStatement.class);
+        OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(procedureDeclarationStatements, "testTypeInference3");
+
+        assertNotNull(odinTypeInferenceResult.getType());
+        assertEquals(odinTypeInferenceResult.getType().getName(), "Point");
+    }
+
+    private static @NotNull OdinTypeInferenceResult inferTypeOfFirstExpressionInProcedure(Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements, String procedureName) {
+        OdinProcedureDeclarationStatement testTypeInference = procedureDeclarationStatements.stream().filter(p -> p.getDeclaredIdentifier().getName().equals(procedureName))
                 .findFirst().orElseThrow();
         OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) testTypeInference.getBlockStatements().stream().filter(s -> s instanceof OdinExpressionStatement)
                 .findFirst().orElseThrow();
 
         OdinExpression expression = odinExpressionStatement.getExpression();
         OdinScope scope = OdinInsightUtils.findScope(expression);
-        OdinTypeInferenceResult odinTypeInferenceResult = OdinInferenceEngine.inferType(scope, expression);
-
-        assertNotNull(odinTypeInferenceResult.getType());
-        assertEquals(odinTypeInferenceResult.getType().getName(), "Point");
+        return OdinInferenceEngine.inferType(scope, expression);
     }
 
     public void testRefSolver() throws IOException {
         OdinFile odinFile = load("src/test/testData/ref.odin");
         Collection<OdinRefExpression> refExpressions = PsiTreeUtil.findChildrenOfType(odinFile, OdinRefExpression.class);
     }
-
 
 
 }

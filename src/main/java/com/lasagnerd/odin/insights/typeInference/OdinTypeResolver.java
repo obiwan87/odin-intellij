@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.insights.typeInference;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.insights.OdinDeclarationSpec;
 import com.lasagnerd.odin.insights.OdinDeclarationSpecifier;
@@ -184,6 +185,7 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     private static OdinScope populateParameters(List<OdinParamEntry> paramEntries, TsOdinType baseType, OdinScope currentScope) {
+        System.out.println("Populating parameters of type: " + baseType.getClass().getSimpleName() + ": " + baseType.getType().getText());
         List<TsOdinParameter> typeParameters = baseType.getParameters();
         OdinScope newScope = new OdinScope();
         newScope.putAll(currentScope);
@@ -193,11 +195,15 @@ public class OdinTypeResolver extends OdinVisitor {
 
             List<OdinDeclarationSpec> declarationSpecs = OdinDeclarationSpecifier.getDeclarationSpecs(parameterDeclaration);
             for (OdinDeclarationSpec declarationSpec : declarationSpecs) {
+                System.out.println("Parameter: " + declarationSpec.getValueDeclaredIdentifier().getName());
                 TsOdinParameter tsOdinParameter = mapSpecToParameter(newScope, declarationSpec, k);
                 k++;
 
                 TsOdinType tsOdinType = tsOdinParameter.getType();
                 if(tsOdinType != null) {
+                    OdinType psiType = tsOdinType.getType();
+                    String typeName = psiType != null? psiType.getText() : "<undefined>";
+                    System.out.println("   has type of " + typeName);
                     Map<String, TsOdinType> unresolvedPolymorphicParameters = tsOdinType.getUnresolvedPolymorphicParameters();
                     baseType.getUnresolvedPolymorphicParameters().putAll(unresolvedPolymorphicParameters);
                     for (Map.Entry<String, TsOdinType> entry : unresolvedPolymorphicParameters.entrySet()) {
@@ -241,6 +247,7 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinParameter.setValuePolymorphic(declarationSpec.isValuePolymorphic());
         tsOdinParameter.setIndex(parameterIndex);
         if (declarationSpec.getTypeDefinitionExpression() != null) {
+
             TsOdinType tsOdinType = resolveType(scope, declarationSpec.getTypeDefinitionExpression().getType());
             tsOdinParameter.setType(tsOdinType);
         }

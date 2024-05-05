@@ -16,7 +16,7 @@ Enemy :: struct {
 
 main :: proc () {
     e :: Enemy {
-        0, 0, { 100, 200, 130}
+        0, 0, { 100, 200, 130 }
     }
     e.weapon.strength
 }
@@ -27,12 +27,36 @@ Point :: struct {
 List :: struct($Item: typeid) {
     items: []Item
 }
+
+Dict :: struct($Key: typeid, $Value: typeid) {
+    entries: map[Key]Value
+}
+
 get_at :: proc(list: List($T), index: i32) -> T {
     return list.items[index]
 }
 
+get_key :: proc(dict: Dict($Key, $Value), key: Key) -> Value {
+    return dict.entries[key]
+}
+
+get_multi_dict_entry :: proc(dict: Dict($K, List($V)), key: K, index: i32) -> V {
+    return dict.entries[key].items[index];
+}
+
+
 testTypeInference :: proc() {
-    points := List(Point) {}
+    points := List(Point) { }
     get_at(points, 1)
 
+}
+
+testTypeInference2 :: proc() {
+    dict := Dict(i32, Point) { entries = { 1 = Point{ a, b } } }
+    get_key(dict, 1)
+}
+
+testTypeInference3 :: proc() {
+    dict := Dict(i32, List(Point)) { entries = { 1 = Point{ a, b } } }
+    get_multi_dict_entry(dict, 0, 0)
 }

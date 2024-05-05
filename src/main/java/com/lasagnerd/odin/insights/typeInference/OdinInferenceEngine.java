@@ -109,8 +109,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
             }
         }
-
-
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.insights.typeInference;
 
+import com.intellij.psi.PsiElement;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.insights.typeSystem.*;
@@ -9,12 +10,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine.inferType;
 
 public class OdinTypeInstantiator {
 
     public static @NotNull TsOdinStructType instantiateStruct(OdinScope scope, @NotNull List<OdinArgument> arguments, TsOdinStructType baseType) {
+        System.out.println("Instantiating base type: " + baseType.getType().getText());
+
+        System.out.println("Arguments: "+ arguments.stream().map(PsiElement::getText).collect(Collectors.joining("; ")));
         List<TsOdinParameter> parameters = baseType.getParameters();
         if (parameters.isEmpty())
             return baseType;
@@ -119,6 +124,7 @@ public class OdinTypeInstantiator {
                     System.out.println("Could not resolve argument type");
                     continue;
                 }
+                instantiatedType.getUnresolvedPolymorphicParameters().putAll(argumentType.getUnresolvedPolymorphicParameters());
 
                 // This is only valid if poly parameter type is built-in type typeid
                 TsOdinType parameterType = tsOdinParameter.getType();
@@ -128,6 +134,9 @@ public class OdinTypeInstantiator {
                 }
 
                 if (tsOdinParameter.isValuePolymorphic()) {
+                    // There are three cases (unfortunately... I'll try to simplify)
+                    // Case 1: the argumentExpression is a ref expression that resolves to a meta type. In that case just resolve
+                    // to the type itself
                     if (argumentType instanceof TsOdinMetaType metaType && parameterType.isTypeId()) {
                         TsOdinType resolvedMetaType = OdinTypeResolver.resolveMetaType(newScope, metaType);
                         if (resolvedMetaType != null) {
@@ -137,7 +146,9 @@ public class OdinTypeInstantiator {
                         }
                     }
 
-                    if (argumentExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+                    // Case 2: The argumentExpression is a polymorphic type. In that case we know its type already and
+                    // introduce a new unresolved polymorphic type and map the parameter to that
+                    else if (argumentExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
                         if (typeDefinitionExpression.getType() instanceof OdinPolymorphicType polymorphicType) {
                             TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, polymorphicType);
                             if (tsOdinType != null) {
@@ -149,6 +160,11 @@ public class OdinTypeInstantiator {
                                 newScope.addType(tsOdinParameter.getValueName(), tsOdinType);
                             }
                         }
+                    }
+                    // Case 3: The argument has been resolved to a proper type. Just add the mapping
+                    else {
+                        instantiatedType.getResolvedPolymorphicParameters().put(tsOdinParameter.getValueName(), argumentType);
+                        newScope.addType(tsOdinParameter.getValueName(), argumentType);
                     }
                 }
 
@@ -186,6 +202,34 @@ public class OdinTypeInstantiator {
                 findResolvedTypes(nextParameterType, nextArgumentType, resolvedTypes);
             }
         }
+    }
+
+    private static TsOdinType resolveType(OdinExpression argumentExpression, TsOdinParameter parameter, OdinScope newScope) {
+        TsOdinType parameterType = parameter.getType();
+        OdinTypeInferenceResult odinTypeInferenceResult = inferType(newScope, argumentExpression);
+        TsOdinType argumentType = odinTypeInferenceResult.getType();
+        if (argumentType instanceof TsOdinMetaType metaType && parameterType.isTypeId()) {
+            TsOdinType resolvedMetaType = OdinTypeResolver.resolveMetaType(newScope, metaType);
+            if (resolvedMetaType != null) {
+                return resolvedMetaType;
+            }
+        }
+
+        // Case 2: The argumentExpression is a polymorphic type. In that case we know its type already and
+        // introduce a new unresolved polymorphic type and map the parameter to that
+        else if (argumentExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+            if (typeDefinitionExpression.getType() instanceof OdinPolymorphicType polymorphicType) {
+                TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, polymorphicType);
+                if (tsOdinType != null) {
+                    OdinDeclaredIdentifier declaredIdentifier = polymorphicType.getDeclaredIdentifier();
+                    tsOdinType.setDeclaration(polymorphicType);
+                    tsOdinType.setDeclaredIdentifier(declaredIdentifier);
+                    return tsOdinType;
+                }
+            }
+        }
+        // Case 3: The argument has been resolved to a proper type. Just add the mapping
+        return argumentType;
     }
 
 }
