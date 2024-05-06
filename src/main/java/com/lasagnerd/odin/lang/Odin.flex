@@ -35,8 +35,7 @@ LineComment = \/\/[^\r\n]*
 BlockCommentContent = ([^*\/\r\n]|\/[^*\r\n])
 // Literals
 
-IntegerOctLiteral = 0o[0-7][0-7_]*
-
+IntegerOctLiteral = 0o[0-7_]+
 IntegerDecLiteral = [0-9][0-9_]*
 ComplexIntegerDecLiteral = {IntegerDecLiteral}[ijk]
 
