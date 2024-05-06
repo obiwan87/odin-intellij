@@ -45,6 +45,15 @@ public class OdinParser implements PsiParser, LightPsiParser {
       PAR_EXPRESSION_TYPE, POINTER_TYPE, POLYMORPHIC_TYPE, PROCEDURE_TYPE,
       QUALIFIED_TYPE, SIMPLE_REF_TYPE, STRUCT_TYPE, TYPE,
       UNION_TYPE),
+    create_token_set_(ASSIGNMENT_STATEMENT, ATTRIBUTE_STATEMENT, BITSET_DECLARATION_STATEMENT, BLOCK_STATEMENT,
+      BREAK_STATEMENT, CONDITIONAL_STATEMENT, CONSTANT_INITIALIZATION_STATEMENT, CONTINUE_STATEMENT,
+      DEFER_STATEMENT, DIRECTIVE_STATEMENT, DO_STATEMENT, ENUM_DECLARATION_STATEMENT,
+      EXPRESSION_STATEMENT, FALLTHROUGH_STATEMENT, FIELD_DECLARATION_STATEMENT, FILE_SCOPE_STATEMENT,
+      FOREIGN_BLOCK_STATEMENT, FOREIGN_IMPORT_DECLARATION_STATEMENT, FOREIGN_STATEMENT, FOR_IN_STATEMENT,
+      FOR_STATEMENT, IMPORT_DECLARATION_STATEMENT, PROCEDURE_DECLARATION_STATEMENT, PROCEDURE_OVERLOAD_STATEMENT,
+      RETURN_STATEMENT, STATEMENT, STRUCT_DECLARATION_STATEMENT, SWITCH_STATEMENT,
+      UNION_DECLARATION_STATEMENT, USING_STATEMENT, VARIABLE_DECLARATION_STATEMENT, VARIABLE_INITIALIZATION_STATEMENT,
+      WHEN_STATEMENT),
     create_token_set_(AUTO_CAST_EXPRESSION, BINARY_EXPRESSION, CALL_EXPRESSION, CAST_EXPRESSION,
       COMPOUND_LITERAL_EXPRESSION, DEREFERENCE_EXPRESSION, DIRECTIVE_EXPRESSION, ELVIS_EXPRESSION,
       EXPRESSION, IMPLICIT_SELECTOR_EXPRESSION, INDEX_EXPRESSION, LITERAL_EXPRESSION,
@@ -54,15 +63,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
       TYPE_ASSERTION_EXPRESSION, TYPE_DEFINITION_EXPRESSION, UNARY_AND_EXPRESSION, UNARY_MINUS_EXPRESSION,
       UNARY_NOT_EXPRESSION, UNARY_PLUS_EXPRESSION, UNARY_RANGE_EXPRESSION, UNARY_TILDE_EXPRESSION,
       UNINITIALIZED_EXPRESSION),
-    create_token_set_(ASSIGNMENT_STATEMENT, ATTRIBUTE_STATEMENT, BITSET_DECLARATION_STATEMENT, BLOCK_STATEMENT,
-      BREAK_STATEMENT, CONDITIONAL_STATEMENT, CONSTANT_INITIALIZATION_STATEMENT, CONTINUE_STATEMENT,
-      DEFER_STATEMENT, DIRECTIVE_STATEMENT, DO_STATEMENT, ENUM_DECLARATION_STATEMENT,
-      EXPRESSION_STATEMENT, FALLTHROUGH_STATEMENT, FIELD_DECLARATION_STATEMENT, FILE_SCOPE_STATEMENT,
-      FOREIGN_BLOCK_STATEMENT, FOREIGN_IMPORT_DECLARATION_STATEMENT, FOREIGN_PROCEDURE_DECLARATION_STATEMENT, FOREIGN_STATEMENT,
-      FOR_IN_STATEMENT, FOR_STATEMENT, IMPORT_DECLARATION_STATEMENT, PROCEDURE_DECLARATION_STATEMENT,
-      PROCEDURE_OVERLOAD_STATEMENT, RETURN_STATEMENT, STATEMENT, STRUCT_DECLARATION_STATEMENT,
-      SWITCH_STATEMENT, UNION_DECLARATION_STATEMENT, USING_STATEMENT, VARIABLE_DECLARATION_STATEMENT,
-      VARIABLE_INITIALIZATION_STATEMENT, WHEN_STATEMENT),
   };
 
   /* ********************************************************** */
@@ -1775,14 +1775,14 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // variableDeclarationStatement
-  //                                          |foreignProcedureDeclarationStatement
+  //                                          |procedureDeclarationStatement
   //                                          |whenStatement
   public static boolean foreignBlockStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "foreignBlockStatement")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _COLLAPSE_, FOREIGN_BLOCK_STATEMENT, "<foreign block statement>");
     r = variableDeclarationStatement(b, l + 1);
-    if (!r) r = foreignProcedureDeclarationStatement(b, l + 1);
+    if (!r) r = procedureDeclarationStatement(b, l + 1);
     if (!r) r = whenStatement(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -1909,87 +1909,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "foreignImportDeclarationStatement_3_1_4")) return false;
     consumeToken(b, COMMA);
     return true;
-  }
-
-  /* ********************************************************** */
-  // (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] TRIPLE_DASH
-  public static boolean foreignProcedureDeclarationStatement(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, FOREIGN_PROCEDURE_DECLARATION_STATEMENT, "<foreign procedure declaration statement>");
-    r = foreignProcedureDeclarationStatement_0(b, l + 1);
-    r = r && declaredIdentifier(b, l + 1);
-    r = r && doubleColonOperator(b, l + 1);
-    r = r && consumeToken(b, PROC);
-    r = r && foreignProcedureDeclarationStatement_4(b, l + 1);
-    r = r && consumeToken(b, LPAREN);
-    r = r && foreignProcedureDeclarationStatement_6(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    r = r && foreignProcedureDeclarationStatement_8(b, l + 1);
-    r = r && consumeToken(b, TRIPLE_DASH);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // (attributeStatement eos?)*
-  private static boolean foreignProcedureDeclarationStatement_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement_0")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!foreignProcedureDeclarationStatement_0_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "foreignProcedureDeclarationStatement_0", c)) break;
-    }
-    return true;
-  }
-
-  // attributeStatement eos?
-  private static boolean foreignProcedureDeclarationStatement_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement_0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = attributeStatement(b, l + 1);
-    r = r && foreignProcedureDeclarationStatement_0_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // eos?
-  private static boolean foreignProcedureDeclarationStatement_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement_0_0_1")) return false;
-    eos(b, l + 1);
-    return true;
-  }
-
-  // stringLiteral?
-  private static boolean foreignProcedureDeclarationStatement_4(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement_4")) return false;
-    stringLiteral(b, l + 1);
-    return true;
-  }
-
-  // [paramEntries]
-  private static boolean foreignProcedureDeclarationStatement_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement_6")) return false;
-    paramEntries(b, l + 1);
-    return true;
-  }
-
-  // [ARROW returnParameters]
-  private static boolean foreignProcedureDeclarationStatement_8(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement_8")) return false;
-    foreignProcedureDeclarationStatement_8_0(b, l + 1);
-    return true;
-  }
-
-  // ARROW returnParameters
-  private static boolean foreignProcedureDeclarationStatement_8_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "foreignProcedureDeclarationStatement_8_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, ARROW);
-    r = r && returnParameters(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */

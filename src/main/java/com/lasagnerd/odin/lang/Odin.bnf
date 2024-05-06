@@ -209,9 +209,8 @@ foreignBlock                         ::= blockStart foreignStatementList? blockE
 
 foreignStatementList                 ::= (sos? foreignBlockStatement eos)+
 foreignBlockStatement                ::= variableDeclarationStatement
-                                         |foreignProcedureDeclarationStatement
+                                         |procedureDeclarationStatement
                                          |whenStatement
-foreignProcedureDeclarationStatement ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] TRIPLE_DASH
 
 // Attributes
 attributeStatement                   ::= AT IDENTIFIER_TOKEN

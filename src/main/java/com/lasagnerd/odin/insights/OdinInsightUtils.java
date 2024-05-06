@@ -105,7 +105,7 @@ public class OdinInsightUtils {
             if (element instanceof OdinImportDeclarationStatement importDeclarationStatement) {
                 var alias = importDeclarationStatement.getAlias();
                 declarations.add(Objects.requireNonNullElse(alias, importDeclarationStatement));
-            } else if (element instanceof OdinDeclaration declaration) {
+            }  else if (element instanceof OdinDeclaration declaration) {
                 declarations.addAll(declaration.getDeclaredIdentifiers());
             } else {
                 getStatements(element).forEach(statementStack::push);
@@ -128,7 +128,8 @@ public class OdinInsightUtils {
             }
         }
 
-        if (psiElement instanceof OdinForeignBlock foreignBlock) {
+        if (psiElement instanceof OdinForeignStatement foreignStatement) {
+            OdinForeignBlock foreignBlock = foreignStatement.getForeignBlock();
             OdinForeignStatementList foreignStatementList = foreignBlock.getForeignStatementList();
             if (foreignStatementList != null) {
                 return foreignStatementList.getStatementList();
