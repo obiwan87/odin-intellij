@@ -660,7 +660,7 @@ if                                   ::= IF_TOKEN
 else                                 ::= ELSE_TOKEN
 
 // Switch
-switchStatement                      ::= [label] [directive] SWITCH IN? switchHead switchBody
+switchStatement                      ::= [directive] [label]  SWITCH IN? switchHead switchBody
 private switchHead                   ::= <<enterNoBlockMode>> [[controlFlowInit SEMICOLON] [expression]] <<exitNoBlockMode>>
 switchBody                           ::= eos? blockStart switchCases blockEnd
 switchCases                          ::= switchCase*

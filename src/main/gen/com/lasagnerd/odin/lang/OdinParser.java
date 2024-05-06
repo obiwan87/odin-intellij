@@ -3074,7 +3074,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // [label] [directive] SWITCH IN? switchHead switchBody
+  // [directive] [label]  SWITCH IN? switchHead switchBody
   public static boolean switchStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switchStatement")) return false;
     boolean r;
@@ -3089,17 +3089,17 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // [label]
+  // [directive]
   private static boolean switchStatement_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switchStatement_0")) return false;
-    label(b, l + 1);
+    directive(b, l + 1);
     return true;
   }
 
-  // [directive]
+  // [label]
   private static boolean switchStatement_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "switchStatement_1")) return false;
-    directive(b, l + 1);
+    label(b, l + 1);
     return true;
   }
 
