@@ -366,12 +366,21 @@ public class OdinInsightUtils {
             Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
 
             List<Path> dirs = new ArrayList<>();
-            if (projectSdk != null) {
-                String library = Objects.requireNonNullElse(importInfo.library(), "");
-                if (!library.isBlank()) {
-                    Path sdkSourceDir = Path.of(Objects.requireNonNull(projectSdk.getHomeDirectory()).getPath(), library);
-                    dirs.add(sdkSourceDir);
+            String library = Objects.requireNonNullElse(importInfo.library(), "");
+            Path sdkSourceDir = null;
+            if (!library.isBlank()) {
+                if (projectSdk != null) {
+                    sdkSourceDir = Path.of(Objects.requireNonNull(projectSdk.getHomeDirectory()).getPath(), library);
+                } else {
+                    OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
+                    if (sdkConfig.getSdkPath() != null) {
+                        sdkSourceDir = Path.of(sdkConfig.getSdkPath(), importInfo.library());
+                        dirs.add(sdkSourceDir);
+                    }
                 }
+            }
+            if (sdkSourceDir != null) {
+                dirs.add(sdkSourceDir);
             }
             Path sourcePath = Path.of(sourceFilePath);
             Path currentDir = sourcePath.getParent();
