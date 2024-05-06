@@ -304,7 +304,7 @@ public class OdinInsightUtils {
     }
 
     public static boolean isProcedureOverloadDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinProcedureOverloadStatement;
+        return element.getParent() instanceof OdinProcedureOverloadDeclarationStatement;
     }
 
     public static boolean isConstantDeclaration(PsiElement element) {

@@ -124,7 +124,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                     element = procedureLookupElement(element, firstParentOfType).withInsertHandler(procedureInsertHandler());
                     result.addElement(PrioritizedLookupElement.withPriority(element, 0));
                 } else if (typeType == OdinTypeType.PROCEDURE_OVERLOAD) {
-                    OdinProcedureOverloadStatement procedureOverloadStatement = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureOverloadStatement.class);
+                    OdinProcedureOverloadDeclarationStatement procedureOverloadStatement = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureOverloadDeclarationStatement.class);
                     for (OdinIdentifier odinIdentifier : procedureOverloadStatement.getIdentifierList()) {
                         var resolvedReference = odinIdentifier.getReference();
 

@@ -111,6 +111,9 @@ public class OdinPsiUtil {
         return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
     }
 
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinProcedureOverloadDeclarationStatement statement) {
+        return Collections.singletonList(statement.getDeclaredIdentifier());
+    }
 
     // OdinTypedDeclaration
 

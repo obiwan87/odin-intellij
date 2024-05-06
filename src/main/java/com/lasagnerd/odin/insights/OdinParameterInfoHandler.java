@@ -51,7 +51,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
                 callExpression, psiElement -> {
                     if (psiElement instanceof OdinDeclaredIdentifier identifier)
                         if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||
-                                identifier.getParent() instanceof OdinProcedureOverloadStatement
+                                identifier.getParent() instanceof OdinProcedureOverloadDeclarationStatement
                         ) {
                             return identifier.getText().equals(name);
                         }
@@ -85,7 +85,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
                     procedures.add(proc);
                 }
 
-                if (declaration.getParent() instanceof OdinProcedureOverloadStatement overload) {
+                if (declaration.getParent() instanceof OdinProcedureOverloadDeclarationStatement overload) {
                     for (OdinIdentifier odinIdentifier : overload.getIdentifierList()) {
                         PsiReference identifierReference = odinIdentifier.getReference();
                         if (identifierReference != null) {

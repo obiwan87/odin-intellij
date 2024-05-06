@@ -50,7 +50,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
       DEFER_STATEMENT, DIRECTIVE_STATEMENT, DO_STATEMENT, ENUM_DECLARATION_STATEMENT,
       EXPRESSION_STATEMENT, FALLTHROUGH_STATEMENT, FIELD_DECLARATION_STATEMENT, FILE_SCOPE_STATEMENT,
       FOREIGN_BLOCK_STATEMENT, FOREIGN_IMPORT_DECLARATION_STATEMENT, FOREIGN_STATEMENT, FOR_IN_STATEMENT,
-      FOR_STATEMENT, IMPORT_DECLARATION_STATEMENT, PROCEDURE_DECLARATION_STATEMENT, PROCEDURE_OVERLOAD_STATEMENT,
+      FOR_STATEMENT, IMPORT_DECLARATION_STATEMENT, PROCEDURE_DECLARATION_STATEMENT, PROCEDURE_OVERLOAD_DECLARATION_STATEMENT,
       RETURN_STATEMENT, STATEMENT, STRUCT_DECLARATION_STATEMENT, SWITCH_STATEMENT,
       UNION_DECLARATION_STATEMENT, USING_STATEMENT, VARIABLE_DECLARATION_STATEMENT, VARIABLE_INITIALIZATION_STATEMENT,
       WHEN_STATEMENT),
@@ -1457,7 +1457,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   //                                          | bitsetDeclarationStatement
   //                                          | variableInitializationStatement
   //                                          | variableDeclarationStatement
-  //                                          | procedureOverloadStatement
+  //                                          | procedureOverloadDeclarationStatement
   //                                          | foreignStatement
   //                                          | whenStatement
   //                                          | directiveStatement
@@ -1475,7 +1475,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = bitsetDeclarationStatement(b, l + 1);
     if (!r) r = variableInitializationStatement(b, l + 1);
     if (!r) r = variableDeclarationStatement(b, l + 1);
-    if (!r) r = procedureOverloadStatement(b, l + 1);
+    if (!r) r = procedureOverloadDeclarationStatement(b, l + 1);
     if (!r) r = foreignStatement(b, l + 1);
     if (!r) r = whenStatement(b, l + 1);
     if (!r) r = directiveStatement(b, l + 1);
@@ -2456,65 +2456,65 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
-  public static boolean procedureOverloadStatement(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "procedureOverloadStatement")) return false;
+  public static boolean procedureOverloadDeclarationStatement(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "procedureOverloadDeclarationStatement")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, PROCEDURE_OVERLOAD_STATEMENT, "<procedure overload statement>");
-    r = procedureOverloadStatement_0(b, l + 1);
+    Marker m = enter_section_(b, l, _COLLAPSE_, PROCEDURE_OVERLOAD_DECLARATION_STATEMENT, "<procedure overload declaration statement>");
+    r = procedureOverloadDeclarationStatement_0(b, l + 1);
     r = r && declaredIdentifier(b, l + 1);
     r = r && doubleColonOperator(b, l + 1);
     r = r && consumeTokens(b, 0, PROC, LBRACE);
     r = r && identifier(b, l + 1);
-    r = r && procedureOverloadStatement_6(b, l + 1);
-    r = r && procedureOverloadStatement_7(b, l + 1);
+    r = r && procedureOverloadDeclarationStatement_6(b, l + 1);
+    r = r && procedureOverloadDeclarationStatement_7(b, l + 1);
     r = r && consumeToken(b, RBRACE);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
   // (attributeStatement eos?)*
-  private static boolean procedureOverloadStatement_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "procedureOverloadStatement_0")) return false;
+  private static boolean procedureOverloadDeclarationStatement_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "procedureOverloadDeclarationStatement_0")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!procedureOverloadStatement_0_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "procedureOverloadStatement_0", c)) break;
+      if (!procedureOverloadDeclarationStatement_0_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "procedureOverloadDeclarationStatement_0", c)) break;
     }
     return true;
   }
 
   // attributeStatement eos?
-  private static boolean procedureOverloadStatement_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "procedureOverloadStatement_0_0")) return false;
+  private static boolean procedureOverloadDeclarationStatement_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "procedureOverloadDeclarationStatement_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = attributeStatement(b, l + 1);
-    r = r && procedureOverloadStatement_0_0_1(b, l + 1);
+    r = r && procedureOverloadDeclarationStatement_0_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
   // eos?
-  private static boolean procedureOverloadStatement_0_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "procedureOverloadStatement_0_0_1")) return false;
+  private static boolean procedureOverloadDeclarationStatement_0_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "procedureOverloadDeclarationStatement_0_0_1")) return false;
     eos(b, l + 1);
     return true;
   }
 
   // (COMMA identifier)*
-  private static boolean procedureOverloadStatement_6(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "procedureOverloadStatement_6")) return false;
+  private static boolean procedureOverloadDeclarationStatement_6(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "procedureOverloadDeclarationStatement_6")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!procedureOverloadStatement_6_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "procedureOverloadStatement_6", c)) break;
+      if (!procedureOverloadDeclarationStatement_6_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "procedureOverloadDeclarationStatement_6", c)) break;
     }
     return true;
   }
 
   // COMMA identifier
-  private static boolean procedureOverloadStatement_6_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "procedureOverloadStatement_6_0")) return false;
+  private static boolean procedureOverloadDeclarationStatement_6_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "procedureOverloadDeclarationStatement_6_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, COMMA);
@@ -2524,8 +2524,8 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   // COMMA?
-  private static boolean procedureOverloadStatement_7(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "procedureOverloadStatement_7")) return false;
+  private static boolean procedureOverloadDeclarationStatement_7(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "procedureOverloadDeclarationStatement_7")) return false;
     consumeToken(b, COMMA);
     return true;
   }
@@ -2689,7 +2689,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
   //                                          | structDeclarationStatement
   //                                          | enumDeclarationStatement
   //                                          | unionDeclarationStatement
-  //                                          | procedureOverloadStatement
+  //                                          | procedureOverloadDeclarationStatement
   //                                          | constantInitializationStatement
   //                                          | variableDeclarationStatement
   //                                          | bitsetDeclarationStatement
@@ -2719,7 +2719,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = structDeclarationStatement(b, l + 1);
     if (!r) r = enumDeclarationStatement(b, l + 1);
     if (!r) r = unionDeclarationStatement(b, l + 1);
-    if (!r) r = procedureOverloadStatement(b, l + 1);
+    if (!r) r = procedureOverloadDeclarationStatement(b, l + 1);
     if (!r) r = constantInitializationStatement(b, l + 1);
     if (!r) r = variableDeclarationStatement(b, l + 1);
     if (!r) r = bitsetDeclarationStatement(b, l + 1);

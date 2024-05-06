@@ -194,7 +194,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | bitsetDeclarationStatement
                                          | variableInitializationStatement
                                          | variableDeclarationStatement
-                                         | procedureOverloadStatement
+                                         | procedureOverloadDeclarationStatement
                                          | foreignStatement
                                          | whenStatement
                                          | directiveStatement
@@ -254,7 +254,7 @@ usingStatement                       ::= USING expression
 directiveStatement                   ::= directive
 
 // Procedure overloading
-procedureOverloadStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
+procedureOverloadDeclarationStatement ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
 
 // TYPES
 
@@ -580,7 +580,7 @@ statement                            ::= assignmentStatement
                                          | structDeclarationStatement
                                          | enumDeclarationStatement
                                          | unionDeclarationStatement
-                                         | procedureOverloadStatement
+                                         | procedureOverloadDeclarationStatement
                                          | constantInitializationStatement
                                          | variableDeclarationStatement
                                          | bitsetDeclarationStatement
