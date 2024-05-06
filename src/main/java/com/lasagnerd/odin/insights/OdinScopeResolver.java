@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.insights;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -9,8 +10,11 @@ import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import lombok.Data;
+import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 import java.util.function.Predicate;
@@ -57,8 +61,16 @@ public class OdinScopeResolver {
             scope.addAll(fileScopeDeclarations.getFiltered(matcher), false);
         }
 
-        // Here we can resolve all using nodes
+        List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(element.getProject(), packagePath, getFileName(element));
+        for (OdinFile odinFile : otherFilesInPackage) {
+            if(odinFile == null || odinFile.getFileScope() == null) {
+                continue;
+            }
+            Collection<PsiNamedElement> fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), PACKAGE_VISIBLE_ELEMENTS_MATCHER);
+            scope.addAll(fileScopeDeclarations);
+        }
 
+        // Here we can resolve all using nodes
         for (int i = scopeNodes.size() - 1; i >= 0; i--) {
             ScopeNode scopeNode = scopeNodes.get(i);
             OdinScopeBlock containingBlock = scopeNode.getScopeBlock();
@@ -120,6 +132,18 @@ public class OdinScopeResolver {
         }
         scope.setPackagePath(packagePath);
         return scope;
+    }
+
+    /**
+     * Gets the files in the indicated package but excludes the file fileName
+     *
+     * @param project The current project
+     * @param packagePath The packagePath
+     * @param fileName    The file to exclude
+     * @return Other files in package
+     */
+    private static @NotNull List<OdinFile> getOtherFilesInPackage(@NotNull Project project, String packagePath, String fileName) {
+        return getFilesInPackage(project, Path.of(packagePath), virtualFile -> !virtualFile.getName().equals(fileName));
     }
 
     private void findDeclaringBlocks(PsiElement entrance) {

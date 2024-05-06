@@ -22,6 +22,17 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class OdinInsightUtils {
+
+    public static final Predicate<PsiElement> PUBLIC_ELEMENTS_MATCHER = e -> {
+        if (e instanceof OdinDeclaredIdentifier declaredIdentifier) {
+            OdinDeclaration declaration = OdinInsightUtils.getDeclaration(declaredIdentifier);
+            return !(declaration instanceof OdinImportDeclarationStatement);
+        }
+        return !(e instanceof OdinImportDeclarationStatement);
+    };
+
+    public static final Predicate<PsiElement> PACKAGE_VISIBLE_ELEMENTS_MATCHER = PUBLIC_ELEMENTS_MATCHER;
+
     public static OdinDeclaration getDeclaration(PsiNamedElement declaredIdentifier) {
         return findFirstParentOfType(declaredIdentifier, false, OdinDeclaration.class);
     }
@@ -92,7 +103,7 @@ public class OdinInsightUtils {
         return null;
     }
 
-    public static OdinScope getFileScopeDeclarations(OdinFileScope fileScope) {
+    public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
         // Find all blocks that are not in a procedure
         List<PsiNamedElement> declarations = new ArrayList<>();
 
@@ -266,7 +277,7 @@ public class OdinInsightUtils {
         return OdinScopeResolver.resolveScope(element);
     }
 
-    private static Collection<PsiNamedElement> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
+    public static Collection<PsiNamedElement> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
         return getFileScopeDeclarations(odinFileScope).getFiltered(matcher);
     }
 
@@ -388,14 +399,6 @@ public class OdinInsightUtils {
 
             dirs.add(currentDir);
 
-            Predicate<PsiElement> publicElementsMatcher = e -> {
-                if (e instanceof OdinDeclaredIdentifier declaredIdentifier) {
-                    OdinDeclaration declaration = OdinInsightUtils.getDeclaration(declaredIdentifier);
-                    return !(declaration instanceof OdinImportDeclarationStatement);
-                }
-                return !(e instanceof OdinImportDeclarationStatement);
-            };
-
 
             for (Path dir : dirs) {
                 Path packagePath = dir.resolve(importInfo.path());
@@ -407,7 +410,7 @@ public class OdinInsightUtils {
                         continue;
                     }
 
-                    Collection<PsiNamedElement> fileScopeDeclarations = getFileScopeDeclarations(importedFileScope, publicElementsMatcher);
+                    Collection<PsiNamedElement> fileScopeDeclarations = getFileScopeDeclarations(importedFileScope, PUBLIC_ELEMENTS_MATCHER);
                     packageDeclarations.addAll(fileScopeDeclarations);
                 }
 
@@ -434,14 +437,18 @@ public class OdinInsightUtils {
 
 
     public static List<OdinFile> getFilesInPackage(Project project, Path importPath) {
+        Predicate<VirtualFile> matcher = child -> child.getName().endsWith(".odin");
+        return getFilesInPackage(project, importPath, matcher);
+    }
+
+    static @NotNull List<OdinFile> getFilesInPackage(Project project, Path importPath, Predicate<VirtualFile> matcher) {
         List<OdinFile> files = new ArrayList<>();
         VirtualFile packageDirectory = VfsUtil.findFile(importPath, true);
         if (packageDirectory != null) {
             for (VirtualFile child : packageDirectory.getChildren()) {
-                if (child.getName().endsWith(".odin")) {
+                if (matcher.test(child)) {
                     PsiFile psiFile = PsiManager.getInstance(project).findFile(child);
                     if (psiFile instanceof OdinFile odinFile) {
-
                         files.add(odinFile);
                     }
                 }
@@ -449,5 +456,4 @@ public class OdinInsightUtils {
         }
         return files;
     }
-
 }

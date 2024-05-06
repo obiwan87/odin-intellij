@@ -8,7 +8,7 @@ import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
 
 public class OdinReferenceResolver {
     public static OdinScope resolve(OdinScope scope, OdinExpression valueExpression) {
-
+        // Add filter for referenceable elements
         OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(scope, valueExpression);
         if (typeInferenceResult.isImport()) {
             return getDeclarationsOfImportedPackage(scope, typeInferenceResult.getImportDeclarationStatement());
