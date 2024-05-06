@@ -407,7 +407,6 @@ public class OdinInsightUtils {
                     }
 
                     Collection<PsiNamedElement> fileScopeDeclarations = getFileScopeDeclarations(importedFileScope, publicElementsMatcher);
-
                     packageDeclarations.addAll(fileScopeDeclarations);
                 }
 

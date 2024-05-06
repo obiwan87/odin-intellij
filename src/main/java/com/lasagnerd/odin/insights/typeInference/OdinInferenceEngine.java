@@ -31,6 +31,17 @@ public class OdinInferenceEngine extends OdinVisitor {
         return typeInferenceResult;
     }
 
+    public static TsOdinType doInferType(OdinScope scope, @NotNull OdinExpression expression) {
+        OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(scope);
+        expression.accept(odinExpressionTypeResolver);
+
+        TsOdinType type = odinExpressionTypeResolver.type;
+        if(type == null) {
+            return TsOdinType.UNKNOWN;
+        }
+        return type;
+    }
+
     @Override
     public void visitTypeDefinitionExpression(@NotNull OdinTypeDefinitionExpression o) {
         TsOdinBuiltInType tsOdinBuiltInType = new TsOdinBuiltInType();
@@ -44,13 +55,11 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
             // extract scope
-            OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(this.scope);
-            refExpression.getExpression().accept(odinExpressionTypeResolver);
+
+            TsOdinType tsOdinType = doInferType(scope, refExpression.getExpression());
+            localScope = OdinInsightUtils.getScopeProvidedByType(tsOdinType);
 
             // The resolved polymorphic types must be taken over from type scope
-            localScope = OdinInsightUtils.getScopeProvidedByType(odinExpressionTypeResolver.type);
-            // Don't like this because type table is not perfect, i.e. all underlying types must be erased
-            // when going up scope
             this.scope.addTypes(localScope);
         } else {
             localScope = this.scope;
@@ -91,18 +100,14 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitCallExpression(@NotNull OdinCallExpression o) {
         // Get type of expression. If it is callable, retrieve the return type and set that as result
-        OdinExpression expression = o.getExpression();
-        OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(this.scope);
-        expression.accept(odinExpressionTypeResolver);
-
-        TsOdinType tsOdinType = odinExpressionTypeResolver.type;
+        TsOdinType tsOdinType = doInferType(scope, o.getExpression());
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             if (tsOdinMetaType.getMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
                 TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
                 if (procedureType != null && !procedureType.getReturnTypes().isEmpty()) {
-                    TsOdinProcedureType instantiateProcedureType = OdinTypeInstantiator
+                    TsOdinProcedureType instantiatedType = OdinTypeInstantiator
                             .instantiateProcedure(scope, o.getArgumentList(), procedureType);
-                    this.type = instantiateProcedureType.getReturnTypes().get(0);
+                    this.type = instantiatedType.getReturnTypes().get(0);
                 }
             }
 
@@ -119,11 +124,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitIndexExpression(@NotNull OdinIndexExpression o) {
         // get type of expression. IF it is indexable (array, matrix, bitset, map), retrieve the indexed type and set that as result
         OdinExpression expression = o.getExpression();
-        OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(this.scope);
-        expression.accept(odinExpressionTypeResolver);
-
-
-        TsOdinType tsOdinType = odinExpressionTypeResolver.type;
+        TsOdinType tsOdinType = doInferType(scope, expression);
 
         if (tsOdinType instanceof TsOdinPointerType pointerType) {
             tsOdinType = pointerType.getDereferencedType();
@@ -142,9 +143,8 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitDereferenceExpression(@NotNull OdinDereferenceExpression o) {
         // get type of expression. If it is a pointer, retrieve the dereferenced type and set that as result
         OdinExpression expression = o.getExpression();
-        OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(this.scope);
-        expression.accept(odinExpressionTypeResolver);
-        if (odinExpressionTypeResolver.type instanceof TsOdinPointerType pointerType) {
+        TsOdinType tsOdinType = doInferType(scope, expression);
+        if (tsOdinType instanceof TsOdinPointerType pointerType) {
             this.type = pointerType.getDereferencedType();
         }
     }
@@ -152,10 +152,8 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitParenthesizedExpression(@NotNull OdinParenthesizedExpression o) {
         OdinExpression expression = o.getExpression();
-        OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(this.scope);
         if (expression != null) {
-            expression.accept(odinExpressionTypeResolver);
-            this.type = odinExpressionTypeResolver.type;
+            this.type = doInferType(scope, expression);
         }
     }
 
@@ -197,9 +195,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
             OdinExpression odinExpression = initializationStatement.getExpressionsList().getExpressionList().get(index);
-            OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(parentScope);
-            odinExpression.accept(odinExpressionTypeResolver);
-            return odinExpressionTypeResolver.type;
+            return doInferType(parentScope, odinExpression);
         }
 
         if (odinDeclaration instanceof OdinConstantInitializationStatement initializationStatement) {
@@ -209,22 +205,20 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
             int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
             OdinExpression odinExpression = initializationStatement.getExpressionsList().getExpressionList().get(index);
-            OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(parentScope);
-            odinExpression.accept(odinExpressionTypeResolver);
-            return odinExpressionTypeResolver.type;
+            return doInferType(parentScope, odinExpression);
         }
 
         if (odinDeclaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
-            OdinType mainType;
+            OdinType type;
             if (fieldDeclarationStatement.getTypeDefinitionExpression() instanceof OdinType expr) {
-                mainType = expr;
+                type = expr;
             } else {
 
                 OdinTypeDefinitionExpression typeDefinition = fieldDeclarationStatement.getTypeDefinitionExpression();
-                mainType = typeDefinition.getType();
+                type = typeDefinition.getType();
             }
 
-            return OdinTypeResolver.resolveType(parentScope, mainType);
+            return OdinTypeResolver.resolveType(parentScope, type);
         }
 
         if (odinDeclaration instanceof OdinParameterDecl parameterDeclaration) {
@@ -238,9 +232,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             OdinExpression odinExpression = parameterInitialization.getExpression();
-            OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(parentScope);
-            odinExpression.accept(odinExpressionTypeResolver);
-            return odinExpressionTypeResolver.type;
+            return doInferType(parentScope, odinExpression);
         }
 
         // Meta types
