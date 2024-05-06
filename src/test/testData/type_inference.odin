@@ -70,5 +70,14 @@ testTypeInference4:: proc() {
 testTypeInference5:: proc() {
     dict := Dict(i32, List(Point)) { entries = { 1 = Point{ a, b } } }
     get_key(dict, 1).items[0]
+}
 
+get_entry :: proc(dict: Dict($Key, $Value)) -> (Key, Value) {
+
+}
+
+testTypeInference6 :: proc() {
+    dict := Dict(i32, Point) {}
+    key, value := get_entry(dict)
+    point := value
 }

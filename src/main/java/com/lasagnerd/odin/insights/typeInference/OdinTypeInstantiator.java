@@ -60,33 +60,17 @@ public class OdinTypeInstantiator {
             return baseType;
 
         TsOdinProcedureType instantiatedType = new TsOdinProcedureType();
-        OdinScope newScope = instantiatedType.getScope();
-
         instantiatedType.getScope().putAll(baseType.getScope());
-        resolveArguments(outerScope, baseType, instantiatedType, arguments);
         instantiatedType.setType(baseType.getType());
         instantiatedType.setName(baseType.getName());
         instantiatedType.setDeclaration(baseType.getDeclaration());
         instantiatedType.setDeclaredIdentifier(baseType.getDeclaredIdentifier());
+        instantiatedType.setReturnParameters(baseType.getReturnParameters());
+        resolveArguments(outerScope, baseType, instantiatedType, arguments);
 
-        OdinProcedureType psiType = baseType.type();
-        OdinReturnParameters returnParameters = psiType.getReturnParameters();
-        if (returnParameters != null) {
-            var paramEntries = returnParameters.getParamEntryList();
-            for (OdinParamEntry odinParamEntry : paramEntries) {
-                OdinType type = odinParamEntry.getParameterDeclaration().getTypeDefinition().getType();
-                TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, type);
-                for (OdinParameter ignored : odinParamEntry.getParameterDeclaration().getParameterList()) {
-                    instantiatedType.getReturnTypes().add(tsOdinType);
-                }
-            }
-
-            OdinTypeDefinitionExpression typeDefinitionExpression = psiType.getReturnParameters().getTypeDefinitionExpression();
-            if (typeDefinitionExpression != null) {
-                OdinType returnType = typeDefinitionExpression.getType();
-                TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, returnType);
-                instantiatedType.getReturnTypes().add(tsOdinType);
-            }
+        for (TsOdinParameter tsOdinReturnType : baseType.getReturnParameters()) {
+            TsOdinType tsOdinType = OdinTypeResolver.resolveType(instantiatedType.getScope(), tsOdinReturnType.getTypeDefinitionExpression().getType());
+            instantiatedType.getReturnTypes().add(tsOdinType);
         }
 
 

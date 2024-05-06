@@ -1,0 +1,18 @@
+package com.lasagnerd.odin.insights.typeSystem;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.List;
+
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class TsOdinTuple extends TsOdinType {
+    private final List<TsOdinType> types;
+    public TsOdinType get(int index) {
+        if(index < types.size()) {
+            return types.get(index);
+        }
+        return TsOdinType.UNKNOWN;
+    }
+}

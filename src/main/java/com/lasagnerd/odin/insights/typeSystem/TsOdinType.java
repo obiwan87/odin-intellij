@@ -22,22 +22,6 @@ public abstract class TsOdinType {
     List<TsOdinParameter> parameters = new ArrayList<>();
 
     /**
-     * These are only valid within the type itself and are not passed on to the top level scopes
-     * <p>
-     * Why we need this:
-     * <p>
-     * List := struct($Item: typeid) {
-     *     items: []Item
-     * }
-     * <p>
-     * The declared identifier "Item" that points to the polymorphic parameter is known only in List and in List
-     * only.
-     * <p>
-     */
-    @Getter(AccessLevel.NONE)
-    OdinScope localScope = new OdinScope();
-
-    /**
      * Maintains the scope visible from where the type is declared.
      * <p>
      * Example:
@@ -70,6 +54,17 @@ public abstract class TsOdinType {
         @Override
         public String getName() {
             return "UNKNOWN";
+        }
+    };
+    public static final TsOdinType VOID = new TsOdinType() {
+        @Override
+        public String getName() {
+            return "VOID";
+        }
+
+        @Override
+        public String getLabel() {
+            return "VOID";
         }
     };
 

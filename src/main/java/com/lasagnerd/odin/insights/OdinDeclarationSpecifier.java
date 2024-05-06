@@ -57,17 +57,6 @@ public class OdinDeclarationSpecifier extends OdinVisitor {
     }
 
     @Override
-    public void visitVariadicParameterDeclaration(@NotNull OdinVariadicParameterDeclaration o) {
-        OdinDeclarationSpec odinDeclarationSpec = new OdinDeclarationSpec();
-        odinDeclarationSpec.setValueDeclaredIdentifier(o.getParameter().getDeclaredIdentifier());
-        odinDeclarationSpec.setTypeDefinitionExpression(o.getTypeDefinitionContainer().getTypeDefinitionExpression());
-        odinDeclarationSpec.setVariadic(true);
-        odinDeclarationSpec.setHasUsing(false);
-
-        declarationSpecs.add(odinDeclarationSpec);
-    }
-
-    @Override
     public void visitVariableDeclarationStatement(@NotNull OdinVariableDeclarationStatement o) {
         boolean hasUsing = o.getUsing() != null;
 

@@ -8,6 +8,9 @@ import com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class OdinInferenceEngine extends OdinVisitor {
 
     final OdinScope scope;
@@ -40,6 +43,11 @@ public class OdinInferenceEngine extends OdinVisitor {
             return TsOdinType.UNKNOWN;
         }
         return type;
+    }
+
+    public static TsOdinType doInferType(OdinExpression odinExpression) {
+        OdinScope scope = OdinInsightUtils.findScope(odinExpression);
+        return doInferType(scope, odinExpression);
     }
 
     @Override
@@ -107,7 +115,13 @@ public class OdinInferenceEngine extends OdinVisitor {
                 if (procedureType != null && !procedureType.getReturnTypes().isEmpty()) {
                     TsOdinProcedureType instantiatedType = OdinTypeInstantiator
                             .instantiateProcedure(scope, o.getArgumentList(), procedureType);
-                    this.type = instantiatedType.getReturnTypes().get(0);
+                    if(instantiatedType.getReturnTypes().size() == 1) {
+                        this.type = instantiatedType.getReturnTypes().get(0);
+                    } else if(instantiatedType.getReturnTypes().size() > 1) {
+                        this.type = new TsOdinTuple(instantiatedType.getReturnTypes());
+                    } else {
+                        this.type = TsOdinType.VOID;
+                    }
                 }
             }
 
@@ -194,8 +208,22 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
-            OdinExpression odinExpression = initializationStatement.getExpressionsList().getExpressionList().get(index);
-            return doInferType(parentScope, odinExpression);
+            List<OdinExpression> expressionList = initializationStatement.getExpressionsList().getExpressionList();
+
+            List<TsOdinType> tsOdinTypes = new ArrayList<>();
+            for (OdinExpression odinExpression : expressionList) {
+                TsOdinType tsOdinType = doInferType(parentScope, odinExpression);
+                if(tsOdinType instanceof TsOdinTuple tuple) {
+                    tsOdinTypes.addAll(tuple.getTypes());
+                } else {
+                    tsOdinTypes.add(tsOdinType);
+                }
+            }
+
+            if(tsOdinTypes.size() > index) {
+                return tsOdinTypes.get(index);
+            }
+            return TsOdinType.UNKNOWN;
         }
 
         if (odinDeclaration instanceof OdinConstantInitializationStatement initializationStatement) {

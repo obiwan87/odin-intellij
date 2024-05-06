@@ -57,6 +57,7 @@ import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinArrayType;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinStructType;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
@@ -621,7 +622,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference2");
 
         assertNotNull(odinTypeInferenceResult.getType());
-        assertEquals(odinTypeInferenceResult.getType().getName(), "Point");
+        assertEquals("Point", odinTypeInferenceResult.getType().getName());
     }
 
     public void testPolymorphicTypesWithMultipleAndNestedParams() throws IOException {
@@ -629,7 +630,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference3");
 
         assertNotNull(odinTypeInferenceResult.getType());
-        assertEquals(odinTypeInferenceResult.getType().getName(), "Point");
+        assertEquals("Point", odinTypeInferenceResult.getType().getName());
     }
 
     public void testPolymorphicTypesWithPolymorphicReturnType() throws IOException {
@@ -680,6 +681,16 @@ public class OdinParsingTest extends UsefulTestCase {
         return OdinInferenceEngine.inferType(scope, expression);
     }
 
+    public void testPolymorphicTypesWithMultipleReturnTypes() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        var pointVariable = findFirstVariableDeclarationStatement(odinFile, "testTypeInference6", "point");
+        assertNotEmpty(pointVariable.getExpressionsList().getExpressionList());
+        OdinExpression odinExpression = pointVariable.getExpressionsList().getExpressionList().get(0);
+        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(odinExpression);
+        assertInstanceOf(tsOdinType, TsOdinStructType.class);
+        assertEquals("Point", tsOdinType.getName());
+    }
+
     private static @NotNull OdinProcedureDeclarationStatement findFirstProcedure(OdinFile odinFile, String procedureName) {
         Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
                 OdinProcedureDeclarationStatement.class);
@@ -687,6 +698,19 @@ public class OdinParsingTest extends UsefulTestCase {
         return procedureDeclarationStatements.stream()
                 .filter(p -> Objects.equals(p.getDeclaredIdentifier().getName(), procedureName))
                 .findFirst().orElseThrow();
+    }
+
+    private static @NotNull OdinVariableInitializationStatement findFirstVariableDeclarationStatement(OdinFile odinFile, String procedureName, String variableName) {
+        OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, procedureName);
+        assertNotNull(procedure);
+        List<OdinStatement> statements = procedure.getBlockStatements();
+        OdinVariableInitializationStatement variable = (OdinVariableInitializationStatement) statements.stream()
+                .filter(s -> s instanceof OdinVariableInitializationStatement)
+                .filter(v -> ((OdinVariableInitializationStatement) v).getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
+                .findFirst().orElse(null);
+        assertNotNull(variable);
+
+        return variable;
     }
 
     public void testRefSolver() throws IOException {

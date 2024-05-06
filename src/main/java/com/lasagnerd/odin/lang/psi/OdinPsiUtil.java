@@ -61,10 +61,6 @@ public class OdinPsiUtil {
         return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinForeignProcedureDeclarationStatement statement) {
-        return Collections.singletonList(statement.getDeclaredIdentifier());
-    }
-
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinConstantInitializationStatement statement) {
         return statement.getIdentifierList().getDeclaredIdentifierList();
     }
@@ -135,10 +131,6 @@ public class OdinPsiUtil {
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinFieldDeclarationStatement statement) {
         return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
-    }
-
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinVariadicParameterDeclaration variadicParameterDeclaration) {
-        return doGetTypeDefinitionExpression(variadicParameterDeclaration.getTypeDefinitionContainer().getTypeDefinitionExpression());
     }
 
     public static OdinTypeDefinitionExpression getTypeDefinition(OdinUnnamedParameter parameter) {

@@ -38,13 +38,13 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(COMPOUND_LITERAL_TYPED, COMPOUND_LITERAL_UNTYPED),
+    create_token_set_(PARAMETER_DECL, PARAMETER_INITIALIZATION, UNNAMED_PARAMETER),
     create_token_set_(ARGUMENT, NAMED_ARGUMENT, UNNAMED_ARGUMENT),
-    create_token_set_(PARAMETER_DECL, PARAMETER_INITIALIZATION, UNNAMED_PARAMETER, VARIADIC_PARAMETER_DECLARATION),
     create_token_set_(ARRAY_TYPE, BIT_SET_TYPE, CALL_TYPE, CONSTRAINED_TYPE,
       ENUM_TYPE, MAP_TYPE, MATRIX_TYPE, MULTI_POINTER_TYPE,
       PAR_EXPRESSION_TYPE, POINTER_TYPE, POLYMORPHIC_TYPE, PROCEDURE_TYPE,
       QUALIFIED_TYPE, SIMPLE_REF_TYPE, STRUCT_TYPE, TYPE,
-      UNION_TYPE),
+      UNION_TYPE, VARIADIC_TYPE),
     create_token_set_(ASSIGNMENT_STATEMENT, ATTRIBUTE_STATEMENT, BITSET_DECLARATION_STATEMENT, BLOCK_STATEMENT,
       BREAK_STATEMENT, CONDITIONAL_STATEMENT, CONSTANT_INITIALIZATION_STATEMENT, CONTINUE_STATEMENT,
       DEFER_STATEMENT, DIRECTIVE_STATEMENT, DO_STATEMENT, ENUM_DECLARATION_STATEMENT,
@@ -2270,8 +2270,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // directive? (
-  //                                          variadicParameterDeclaration
-  //                                              | parameterInitialization
+  //                                              parameterInitialization
   //                                              | parameterDecl
   //                                              | unnamedParameter
   //                                          )
@@ -2292,15 +2291,13 @@ public class OdinParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // variadicParameterDeclaration
-  //                                              | parameterInitialization
+  // parameterInitialization
   //                                              | parameterDecl
   //                                              | unnamedParameter
   private static boolean paramEntry_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "paramEntry_1")) return false;
     boolean r;
-    r = variadicParameterDeclaration(b, l + 1);
-    if (!r) r = parameterInitialization(b, l + 1);
+    r = parameterInitialization(b, l + 1);
     if (!r) r = parameterDecl(b, l + 1);
     if (!r) r = unnamedParameter(b, l + 1);
     return r;
@@ -3450,19 +3447,6 @@ public class OdinParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // parameter COLON RANGE typeDefinitionContainer
-  public static boolean variadicParameterDeclaration(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "variadicParameterDeclaration")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NONE_, VARIADIC_PARAMETER_DECLARATION, "<variadic parameter declaration>");
-    r = parameter(b, l + 1);
-    r = r && consumeTokens(b, 0, COLON, RANGE);
-    r = r && typeDefinitionContainer(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
   // [label] [tagHead] WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody (sos elseWhenBlock)* [sos elseBlock]
   public static boolean whenStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "whenStatement")) return false;
@@ -4578,7 +4562,8 @@ public class OdinParser implements PsiParser, LightPsiParser {
   // 12: ATOM(parExpressionType)
   // 13: ATOM(qualifiedType)
   // 14: ATOM(callType)
-  // 15: ATOM(simpleRefType)
+  // 15: PREFIX(variadicType)
+  // 16: ATOM(simpleRefType)
   public static boolean type(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "type")) return false;
     addVariant(b, "<type>");
@@ -4598,6 +4583,7 @@ public class OdinParser implements PsiParser, LightPsiParser {
     if (!r) r = parExpressionType(b, l + 1);
     if (!r) r = qualifiedType(b, l + 1);
     if (!r) r = callType(b, l + 1);
+    if (!r) r = variadicType(b, l + 1);
     if (!r) r = simpleRefType(b, l + 1);
     p = r;
     r = r && type_0(b, l + 1, g);
@@ -5106,6 +5092,18 @@ public class OdinParser implements PsiParser, LightPsiParser {
     r = r && arguments(b, l + 1);
     exit_section_(b, m, CALL_TYPE, r);
     return r;
+  }
+
+  public static boolean variadicType(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "variadicType")) return false;
+    if (!nextTokenIsSmart(b, RANGE)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, null);
+    r = consumeTokenSmart(b, RANGE);
+    p = r;
+    r = p && type(b, l, 15);
+    exit_section_(b, l, m, VARIADIC_TYPE, r, p, null);
+    return r || p;
   }
 
   // identifier
