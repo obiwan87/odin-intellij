@@ -269,24 +269,12 @@ public class OdinInsightUtils {
         return OdinScopeResolver.resolveScope(element, matcher);
     }
 
-    public static OdinScope findPackageScope(PsiElement element) {
-        return null;
-    }
-
     public static OdinScope findScope(PsiElement element) {
         return OdinScopeResolver.resolveScope(element);
     }
 
     public static Collection<PsiNamedElement> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
         return getFileScopeDeclarations(odinFileScope).getFiltered(matcher);
-    }
-
-    public static List<? extends PsiNamedElement> getNamedElements(Predicate<PsiElement> matcher, OdinStatement statement) {
-        List<? extends PsiNamedElement> odinDeclaredIdentifiers = new ArrayList<>();
-        if (statement instanceof OdinDeclaration declaration) {
-            return declaration.getDeclaredIdentifiers().stream().filter(matcher).toList();
-        }
-        return odinDeclaredIdentifiers;
     }
 
     public static <T> T findFirstParentOfType(PsiElement element, boolean strict, Class<T> type) {

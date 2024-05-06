@@ -145,19 +145,26 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitProcedureType(@NotNull OdinProcedureType procedureType) {
         TsOdinProcedureType tsOdinProcedureType = new TsOdinProcedureType();
         tsOdinProcedureType.setType(procedureType);
+        tsOdinProcedureType.getScope().putAll(scope);
 
         List<OdinParamEntry> paramEntries = procedureType.getParamEntryList();
-        OdinScope localScope = populateParameters(paramEntries, tsOdinProcedureType, scope);
+        OdinScope localScope = populateParameters(paramEntries, tsOdinProcedureType.getParameters(), tsOdinProcedureType.getScope());
         tsOdinProcedureType.setScope(localScope);
 
         OdinReturnParameters returnParameters = procedureType.getReturnParameters();
         if (returnParameters != null) {
+            // Single return value
             OdinTypeDefinitionExpression typeDefinitionExpression = returnParameters.getTypeDefinitionExpression();
             if (typeDefinitionExpression != null) {
                 OdinType typeExpression = typeDefinitionExpression.getType();
                 TsOdinType tsOdinType = resolveType(localScope, typeExpression);
                 // TODO add support for multiple return values
                 tsOdinProcedureType.setReturnTypes(List.of(tsOdinType));
+            } else {
+                List<OdinParamEntry> paramEntryList = returnParameters.getParamEntryList();
+                for (OdinParamEntry paramEntry : paramEntryList) {
+
+                }
             }
         }
 
@@ -168,10 +175,10 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitStructType(@NotNull OdinStructType structType) {
         TsOdinStructType tsOdinStructType = new TsOdinStructType();
         tsOdinStructType.setType(structType);
-        this.type = tsOdinStructType;
+        tsOdinStructType.getScope().putAll(scope);
         List<OdinParamEntry> paramEntries = structType.getParamEntryList();
 
-        OdinScope localScope = populateParameters(paramEntries, tsOdinStructType, scope);
+        OdinScope localScope = populateParameters(paramEntries, tsOdinStructType.getParameters(), tsOdinStructType.getScope());
         tsOdinStructType.setScope(localScope);
 
         for (OdinFieldDeclarationStatement field : OdinInsightUtils.getStructFieldsDeclarationStatements(structType)) {
@@ -181,14 +188,10 @@ public class OdinTypeResolver extends OdinVisitor {
             }
         }
 
-
+        this.type = tsOdinStructType;
     }
 
-    private static OdinScope populateParameters(List<OdinParamEntry> paramEntries, TsOdinType baseType, OdinScope currentScope) {
-        System.out.println("Populating parameters of type: " + baseType.getClass().getSimpleName() + ": " + baseType.getType().getText());
-        List<TsOdinParameter> typeParameters = baseType.getParameters();
-        OdinScope localScope = new OdinScope();
-        localScope.putAll(currentScope);
+    private static OdinScope populateParameters(List<OdinParamEntry> paramEntries, List<TsOdinParameter> typeParameters, OdinScope localScope) {
         int k = 0;
         for (var paramEntry : paramEntries) {
             OdinParameterDeclaration parameterDeclaration = paramEntry.getParameterDeclaration();

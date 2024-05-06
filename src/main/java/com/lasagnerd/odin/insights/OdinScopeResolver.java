@@ -61,13 +61,15 @@ public class OdinScopeResolver {
             scope.addAll(fileScopeDeclarations.getFiltered(matcher), false);
         }
 
-        List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(element.getProject(), packagePath, getFileName(element));
-        for (OdinFile odinFile : otherFilesInPackage) {
-            if(odinFile == null || odinFile.getFileScope() == null) {
-                continue;
+        if(packagePath != null) {
+            List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(element.getProject(), packagePath, getFileName(element));
+            for (OdinFile odinFile : otherFilesInPackage) {
+                if (odinFile == null || odinFile.getFileScope() == null) {
+                    continue;
+                }
+                Collection<PsiNamedElement> fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), PACKAGE_VISIBLE_ELEMENTS_MATCHER);
+                scope.addAll(fileScopeDeclarations);
             }
-            Collection<PsiNamedElement> fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), PACKAGE_VISIBLE_ELEMENTS_MATCHER);
-            scope.addAll(fileScopeDeclarations);
         }
 
         // Here we can resolve all using nodes
@@ -142,7 +144,7 @@ public class OdinScopeResolver {
      * @param fileName    The file to exclude
      * @return Other files in package
      */
-    private static @NotNull List<OdinFile> getOtherFilesInPackage(@NotNull Project project, String packagePath, String fileName) {
+    private static @NotNull List<OdinFile> getOtherFilesInPackage(@NotNull Project project, @NotNull String packagePath, String fileName) {
         return getFilesInPackage(project, Path.of(packagePath), virtualFile -> !virtualFile.getName().equals(fileName));
     }
 
