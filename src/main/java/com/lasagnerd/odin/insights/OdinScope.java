@@ -13,18 +13,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+@Getter
 public class OdinScope {
-    @Getter
     @Setter
     private String packagePath;
     public static final OdinScope EMPTY = new OdinScope();
-    @Getter
     Map<String, PsiNamedElement> symbolTable = new HashMap<>();
 
     /**
      * keeps track of the types
      */
-    @Getter
     Map<String, TsOdinType> typeTable = new HashMap<>();
 
     public OdinScope() {

@@ -27,6 +27,7 @@ public class OdinTypeInstantiator {
 
         TsOdinStructType instantiatedType = new TsOdinStructType();
         OdinScope newScope = resolveArguments(scope, baseType, instantiatedType, arguments);
+
         instantiatedType.setLocalScope(newScope);
         instantiatedType.setType(baseType.getType());
         instantiatedType.setName(baseType.getName());
@@ -76,9 +77,7 @@ public class OdinTypeInstantiator {
             if (typeDefinitionExpression != null) {
                 OdinType returnType = typeDefinitionExpression.getType();
                 TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, returnType);
-                if (tsOdinType != null) {
-                    instantiatedType.getReturnTypes().add(tsOdinType);
-                }
+                instantiatedType.getReturnTypes().add(tsOdinType);
             }
         }
 
@@ -132,19 +131,14 @@ public class OdinTypeInstantiator {
                     continue;
                 }
 
-                instantiatedType.getUnresolvedPolymorphicParameters().putAll(argumentType.getUnresolvedPolymorphicParameters());
                 if (tsOdinParameter.isValuePolymorphic()) {
                     instantiatedType.getResolvedPolymorphicParameters().put(tsOdinParameter.getValueName(), argumentType);
                     newScope.addType(tsOdinParameter.getValueName(), argumentType);
-                    if(argumentType.isPolymorphic()) {
-                        instantiatedType.getUnresolvedPolymorphicParameters().put(argumentType.getDeclaredIdentifier().getName(), argumentType);
-                    }
                 }
 
-                // The following method findResolvedTypes maps $T -> Point in the example below
+                // The method findResolvedTypes maps $T -> Point in the example below
                 // List(Point): $Item -> Point
                 // List($T)   : $Item  -> $T
-                // I need to know that T is still unsolved in List($T)
                 Map<String, TsOdinType> resolvedTypes = new HashMap<>();
                 findResolvedTypes(parameterType, argumentType, resolvedTypes);
                 instantiatedType.getResolvedPolymorphicParameters().putAll(resolvedTypes);
@@ -182,18 +176,20 @@ public class OdinTypeInstantiator {
         // introduce a new unresolved polymorphic type and map the parameter to that
         else if (argumentExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
             if (typeDefinitionExpression.getType() instanceof OdinPolymorphicType polymorphicType) {
-                TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, polymorphicType);
-                if (tsOdinType != null) {
-                    OdinDeclaredIdentifier declaredIdentifier = polymorphicType.getDeclaredIdentifier();
-                    tsOdinType.setDeclaration(polymorphicType);
-                    tsOdinType.setDeclaredIdentifier(declaredIdentifier);
-                    return tsOdinType;
-                }
+                return createPolymorphicType(newScope, polymorphicType);
             }
             return TsOdinType.UNKNOWN;
         }
         // Case 3: The argument has been resolved to a proper type. Just add the mapping
         return Objects.requireNonNullElse(argumentType, TsOdinType.UNKNOWN);
+    }
+
+    private static @NotNull TsOdinType createPolymorphicType(OdinScope newScope, OdinPolymorphicType polymorphicType) {
+        TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, polymorphicType);
+        OdinDeclaredIdentifier declaredIdentifier = polymorphicType.getDeclaredIdentifier();
+        tsOdinType.setDeclaration(polymorphicType);
+        tsOdinType.setDeclaredIdentifier(declaredIdentifier);
+        return tsOdinType;
     }
 
 }

@@ -72,8 +72,6 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                   @NotNull ProcessingContext context,
                                                   @NotNull CompletionResultSet result) {
                         PsiElement position = parameters.getPosition();
-
-
                         PsiElement parent = OdinInsightUtils.findFirstParentOfType(
                                 position,
                                 true,

@@ -49,9 +49,8 @@ public class OdinDeclarationSpecifier extends OdinVisitor {
         for (OdinParameter odinParameter : o.getParameterList()) {
             OdinDeclarationSpec spec = new OdinDeclarationSpec();
             OdinDeclaredIdentifier declaredIdentifier = odinParameter.getDeclaredIdentifier();
-            boolean hasUsing = odinParameter.getUsing() != null;
             spec.setValueDeclaredIdentifier(declaredIdentifier);
-            spec.setHasUsing(hasUsing);
+            spec.setHasUsing(odinParameter.getUsing() != null);
             spec.setTypeDefinitionExpression(typeDefinition);
             declarationSpecs.add(spec);
         }

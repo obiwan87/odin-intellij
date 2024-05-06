@@ -47,7 +47,11 @@ public class OdinInferenceEngine extends OdinVisitor {
             OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(this.scope);
             refExpression.getExpression().accept(odinExpressionTypeResolver);
 
+            // The resolved polymorphic types must be taken over from type scope
             localScope = OdinInsightUtils.getScopeProvidedByType(odinExpressionTypeResolver.type);
+            // Don't like this because type table is not perfect, i.e. all underlying types must be erased
+            // when going up scope
+            this.scope.addTypes(localScope);
         } else {
             localScope = this.scope;
         }
@@ -94,7 +98,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         TsOdinType tsOdinType = odinExpressionTypeResolver.type;
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             if (tsOdinMetaType.getMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
-                TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveType(scope, tsOdinMetaType.getType());
+                TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
                 if (procedureType != null && !procedureType.getReturnTypes().isEmpty()) {
                     TsOdinProcedureType instantiateProcedureType = OdinTypeInstantiator
                             .instantiateProcedure(scope, o.getArgumentList(), procedureType);
@@ -103,7 +107,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             if(tsOdinMetaType.getMetaType() == TsOdinMetaType.MetaType.STRUCT) {
-                TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveType(scope, tsOdinMetaType.getType());
+                TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
                 if (structType != null) {
                     this.type = OdinTypeInstantiator.instantiateStruct(scope, o.getArgumentList(), structType);
                 }

@@ -14,25 +14,4 @@ public class OdinDeclarationSpec {
 
     boolean hasUsing;
     boolean isVariadic;
-
-    public boolean isPolymorphic() {
-        return valueDeclaredIdentifier.getDollar() != null || getTypeDefinitionExpression().getType() instanceof OdinPolymorphicType;
-    }
-
-    public boolean isValuePolymorphic() {
-        return valueDeclaredIdentifier.getDollar() != null;
-    }
-
-    public boolean isTypePolymorphic() {
-        return getTypeDefinitionExpression().getType() instanceof OdinPolymorphicType;
-    }
-
-    // TODO fix this, this should in its own declaration spec
-    public OdinDeclaredIdentifier getPolymorphicTypeDeclaredIdentifier() {
-        if(typeDefinitionExpression.getType() instanceof OdinPolymorphicType polymorphicType) {
-            return polymorphicType.getDeclaredIdentifier();
-        }
-        return null;
-    }
-
 }

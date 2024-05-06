@@ -543,7 +543,6 @@ basicLiteral                         ::= nilLiteral
                                          | stringLiteral
                                          | numericLiteral
                                          | booleanLiteral
-//                                         | tripleDashLiteralExpression
 
 private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | callType | simpleRefType | parExpressionType
 parExpressionType                    ::= parenthesizedExpression
@@ -606,11 +605,11 @@ statement                            ::= assignmentStatement
 
 fallthroughStatement                 ::= FALLTHROUGH
 expressionStatement                  ::= orReturnExpression
-                                         | orBreakExpression
-                                         | orContinueExpression
-                                         | callExpression
-                                         | qualificationExpression
-                                         | primaryGroup
+                                          | orBreakExpression
+                                          | orContinueExpression
+                                          | callExpression
+                                          | qualificationExpression
+                                          | primaryGroup
 
 label                                ::= IDENTIFIER_TOKEN COLON
 blockStatement                       ::= [(directive eos?)|label] block {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }

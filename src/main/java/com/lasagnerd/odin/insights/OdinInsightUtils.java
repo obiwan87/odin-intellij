@@ -71,15 +71,11 @@ public class OdinInsightUtils {
                         scope = parentScope;
                     } else {
                         TsOdinType type = OdinTypeResolver.resolveType(parentScope, qualifiedType);
-                        if (type != null) {
-                            scope = type.getLocalScope();
-                        }
+                        scope = type.getLocalScope();
                     }
                 } else {
                     TsOdinType type = OdinTypeResolver.resolveType(parentScope, odinType);
-                    if (type != null) {
-                        scope = type.getLocalScope();
-                    }
+                    scope = type.getLocalScope();
                 }
             }
         }
@@ -189,13 +185,12 @@ public class OdinInsightUtils {
                     continue;
 
                 TsOdinType usedType = OdinTypeResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinitionExpression().getType());
-                if (usedType != null) {
-                    OdinScope subScope = getScopeProvidedByType(usedType);
-                    scope.putAll(subScope);
-                }
+                OdinScope subScope = getScopeProvidedByType(usedType);
+                scope.putAll(subScope);
             }
 
             scope.addAll(structFields);
+            scope.addTypes(parentScope);
             return scope;
         }
 
@@ -258,6 +253,10 @@ public class OdinInsightUtils {
 
     public static OdinScope findScope(PsiElement element, Predicate<PsiElement> matcher) {
         return OdinScopeResolver.resolveScope(element, matcher);
+    }
+
+    public static OdinScope findPackageScope(PsiElement element) {
+        return null;
     }
 
     public static OdinScope findScope(PsiElement element) {

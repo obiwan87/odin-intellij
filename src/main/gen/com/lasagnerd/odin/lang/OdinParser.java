@@ -1305,11 +1305,11 @@ public class OdinParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // orReturnExpression
-  //                                          | orBreakExpression
-  //                                          | orContinueExpression
-  //                                          | callExpression
-  //                                          | qualificationExpression
-  //                                          | primaryGroup
+  //                                           | orBreakExpression
+  //                                           | orContinueExpression
+  //                                           | callExpression
+  //                                           | qualificationExpression
+  //                                           | primaryGroup
   public static boolean expressionStatement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "expressionStatement")) return false;
     boolean r;

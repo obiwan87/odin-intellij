@@ -54,6 +54,8 @@ import com.lasagnerd.odin.insights.OdinReferenceResolver;
 import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinArrayType;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
@@ -605,7 +607,7 @@ public class OdinParsingTest extends UsefulTestCase {
         Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(), OdinProcedureDeclarationStatement.class);
 
         {
-            OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(procedureDeclarationStatements, "testTypeInference");
+            OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference");
 
             assertNotNull(odinTypeInferenceResult.getType());
             assertEquals(odinTypeInferenceResult.getType().getName(), "Point");
@@ -614,8 +616,8 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testPolymorphicTypesWithMultipleParams() throws IOException {
         OdinFile odinFile = load("src/test/testData/ref.odin");
-        Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(), OdinProcedureDeclarationStatement.class);
-        OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(procedureDeclarationStatements, "testTypeInference2");
+
+        OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference2");
 
         assertNotNull(odinTypeInferenceResult.getType());
         assertEquals(odinTypeInferenceResult.getType().getName(), "Point");
@@ -623,14 +625,38 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testPolymorphicTypesWithMultipleAndNestedParams() throws IOException {
         OdinFile odinFile = load("src/test/testData/ref.odin");
-        Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(), OdinProcedureDeclarationStatement.class);
-        OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(procedureDeclarationStatements, "testTypeInference3");
+        OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference3");
 
         assertNotNull(odinTypeInferenceResult.getType());
         assertEquals(odinTypeInferenceResult.getType().getName(), "Point");
     }
 
-    private static @NotNull OdinTypeInferenceResult inferTypeOfFirstExpressionInProcedure(Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements, String procedureName) {
+    public void testPolymorphicTypesWithPolymorphicReturnType() throws IOException {
+        OdinFile odinFile = load("src/test/testData/ref.odin");
+        OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference4");
+
+        assertNotNull(odinTypeInferenceResult.getType());
+        assertInstanceOf(odinTypeInferenceResult.getType(), TsOdinStructType.class);
+
+        TsOdinStructType structType = (TsOdinStructType)odinTypeInferenceResult.getType();
+        assertNotEmpty(structType.getFields().values());
+        assertTrue(structType.getFields().containsKey("items"));
+        assertInstanceOf(structType.getFields().get("items"), TsOdinArrayType.class);
+        TsOdinArrayType fieldType = (TsOdinArrayType) structType.getFields().get("items");
+        assertInstanceOf(fieldType.getElementType(), TsOdinStructType.class);
+        TsOdinStructType elementType = (TsOdinStructType) fieldType.getElementType();
+        assertEquals("Point", elementType.getName());
+    }
+
+    public void testPolymorphicTypesWithPolymorphicReturn_typeReferenceOnStructField() throws IOException {
+        OdinFile odinFile = load("src/test/testData/ref.odin");
+        OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference5");
+        System.out.println(odinTypeInferenceResult);
+    }
+
+    private static @NotNull OdinTypeInferenceResult inferTypeOfFirstExpressionInProcedure(OdinFile odinFile, String procedureName) {
+        Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
+                OdinProcedureDeclarationStatement.class);
         OdinProcedureDeclarationStatement testTypeInference = procedureDeclarationStatements.stream().filter(p -> p.getDeclaredIdentifier().getName().equals(procedureName))
                 .findFirst().orElseThrow();
         OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) testTypeInference.getBlockStatements().stream().filter(s -> s instanceof OdinExpressionStatement)
