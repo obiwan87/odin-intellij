@@ -9,9 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeResolver;
-import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinPointerType;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
+import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,11 +72,11 @@ public class OdinInsightUtils {
                         scope = parentScope;
                     } else {
                         TsOdinType type = OdinTypeResolver.resolveType(parentScope, qualifiedType);
-                        scope = type.getLocalScope();
+                        scope = type.getScope();
                     }
                 } else {
                     TsOdinType type = OdinTypeResolver.resolveType(parentScope, odinType);
-                    scope = type.getLocalScope();
+                    scope = type.getScope();
                 }
             }
         }
@@ -84,8 +85,9 @@ public class OdinInsightUtils {
             scope = parentScope;
         }
 
-        if (scope != null)
+        if (scope != null) {
             return scope.getNamedElement(identifier.getIdentifierToken().getText());
+        }
 
         return null;
     }
@@ -169,7 +171,7 @@ public class OdinInsightUtils {
      * @return The scope
      */
     public static OdinScope getScopeProvidedByType(TsOdinType type) {
-        OdinScope parentScope = type.getLocalScope();
+        OdinScope typeScope = type.getScope();
         OdinScope scope = new OdinScope();
         if (type instanceof TsOdinPointerType pointerType) {
             type = pointerType.getDereferencedType();
@@ -184,13 +186,13 @@ public class OdinInsightUtils {
                 if (odinFieldDeclarationStatement.getDeclaredIdentifiers().isEmpty())
                     continue;
 
-                TsOdinType usedType = OdinTypeResolver.resolveType(parentScope, odinFieldDeclarationStatement.getTypeDefinitionExpression().getType());
+                TsOdinType usedType = OdinTypeResolver.resolveType(typeScope, odinFieldDeclarationStatement.getTypeDefinitionExpression().getType());
                 OdinScope subScope = getScopeProvidedByType(usedType);
                 scope.putAll(subScope);
             }
 
             scope.addAll(structFields);
-            scope.addTypes(parentScope);
+            scope.addTypes(typeScope);
             return scope;
         }
 

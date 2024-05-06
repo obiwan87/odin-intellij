@@ -17,18 +17,21 @@ import static com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine.infe
 
 public class OdinTypeInstantiator {
 
-    public static @NotNull TsOdinStructType instantiateStruct(OdinScope scope, @NotNull List<OdinArgument> arguments, TsOdinStructType baseType) {
-        System.out.println("Instantiating base type: " + baseType.getType().getText());
+    public static @NotNull TsOdinStructType instantiateStruct(OdinScope outerScope,
+                                                              @NotNull List<OdinArgument> arguments,
+                                                              TsOdinStructType baseType) {
 
+        System.out.println("Instantiating base type: " + baseType.getType().getText());
         System.out.println("Arguments: "+ arguments.stream().map(PsiElement::getText).collect(Collectors.joining("; ")));
         List<TsOdinParameter> parameters = baseType.getParameters();
         if (parameters.isEmpty())
             return baseType;
 
         TsOdinStructType instantiatedType = new TsOdinStructType();
-        OdinScope newScope = resolveArguments(scope, baseType, instantiatedType, arguments);
+        instantiatedType.getScope().putAll(baseType.getScope());
 
-        instantiatedType.setLocalScope(newScope);
+        OdinScope newScope = instantiatedType.getScope();
+        resolveArguments(outerScope, baseType, instantiatedType, arguments);
         instantiatedType.setType(baseType.getType());
         instantiatedType.setName(baseType.getName());
         instantiatedType.setDeclaration(baseType.getDeclaration());
@@ -49,13 +52,18 @@ public class OdinTypeInstantiator {
         return instantiatedType;
     }
 
-    public static @NotNull TsOdinProcedureType instantiateProcedure(@NotNull OdinScope scope, List<OdinArgument> arguments, TsOdinProcedureType baseType) {
+    public static @NotNull TsOdinProcedureType instantiateProcedure(@NotNull OdinScope outerScope,
+                                                                    List<OdinArgument> arguments,
+                                                                    TsOdinProcedureType baseType) {
         List<TsOdinParameter> polyParameters = baseType.getParameters();
         if (polyParameters.isEmpty())
             return baseType;
 
         TsOdinProcedureType instantiatedType = new TsOdinProcedureType();
-        OdinScope newScope = resolveArguments(scope, baseType, instantiatedType, arguments);
+        OdinScope newScope = instantiatedType.getScope();
+
+        instantiatedType.getScope().putAll(baseType.getScope());
+        resolveArguments(outerScope, baseType, instantiatedType, arguments);
         instantiatedType.setType(baseType.getType());
         instantiatedType.setName(baseType.getName());
         instantiatedType.setDeclaration(baseType.getDeclaration());
@@ -85,14 +93,14 @@ public class OdinTypeInstantiator {
         return instantiatedType;
     }
 
-    private static @NotNull OdinScope resolveArguments(
-            OdinScope scope,
+    private static void resolveArguments(
+            OdinScope outerScope,
             TsOdinType baseType,
             TsOdinType instantiatedType,
             List<OdinArgument> arguments
     ) {
-        OdinScope newScope = new OdinScope();
-        newScope.putAll(scope);
+        OdinScope instantiationScope = instantiatedType.getScope();
+
         if (!arguments.isEmpty()) {
             for (int i = 0; i < arguments.size(); i++) {
                 final int currentIndex = i;
@@ -118,7 +126,7 @@ public class OdinTypeInstantiator {
                 if (argumentExpression == null || tsOdinParameter == null)
                     continue;
 
-                TsOdinType argumentType = resolveArgumentType(argumentExpression, tsOdinParameter, newScope);
+                TsOdinType argumentType = resolveArgumentType(argumentExpression, tsOdinParameter, outerScope);
                 if (argumentType.isUnknown()) {
                     System.out.println("Could not resolve argument type");
                     continue;
@@ -133,7 +141,7 @@ public class OdinTypeInstantiator {
 
                 if (tsOdinParameter.isValuePolymorphic()) {
                     instantiatedType.getResolvedPolymorphicParameters().put(tsOdinParameter.getValueName(), argumentType);
-                    newScope.addType(tsOdinParameter.getValueName(), argumentType);
+                    instantiationScope.addType(tsOdinParameter.getValueName(), argumentType);
                 }
 
                 // The method findResolvedTypes maps $T -> Point in the example below
@@ -143,11 +151,10 @@ public class OdinTypeInstantiator {
                 findResolvedTypes(parameterType, argumentType, resolvedTypes);
                 instantiatedType.getResolvedPolymorphicParameters().putAll(resolvedTypes);
                 for (Map.Entry<String, TsOdinType> entry : resolvedTypes.entrySet()) {
-                    newScope.addType(entry.getKey(), entry.getValue());
+                    instantiationScope.addType(entry.getKey(), entry.getValue());
                 }
             }
         }
-        return newScope;
     }
 
     private static void findResolvedTypes(@NotNull TsOdinType parameterType, @NotNull TsOdinType argumentType, @NotNull Map<String, TsOdinType> resolvedTypes) {

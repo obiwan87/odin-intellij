@@ -4,7 +4,9 @@ import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinType;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,8 +33,8 @@ public abstract class TsOdinType {
      * The declared identifier "Item" that points to the polymorphic parameter is known only in List and in List
      * only.
      * <p>
-     * TODO: this is now used as a container for both local and global symbols. Change it! This will eventually lead to bugs.
      */
+    @Getter(AccessLevel.NONE)
     OdinScope localScope = new OdinScope();
 
     /**
@@ -51,8 +53,9 @@ public abstract class TsOdinType {
      * <p>
      * If we are in A and want to resolve the type of s.x, we need the parent scope of B, which would tell use about the existence
      * of C.
+     * TODO: this is now used as a container for both local and global symbols. Change it! This will eventually lead to bugs.
      */
-    OdinScope globalScope = new OdinScope();
+    OdinScope scope = new OdinScope();
 
     Map<String, TsOdinType> resolvedPolymorphicParameters = new HashMap<>();
 

@@ -24,6 +24,7 @@ main :: proc () {
 Point :: struct {
     x, y: i32
 }
+
 List :: struct($Item: typeid) {
     items: []Item
 }
@@ -69,4 +70,5 @@ testTypeInference4:: proc() {
 testTypeInference5:: proc() {
     dict := Dict(i32, List(Point)) { entries = { 1 = Point{ a, b } } }
     get_key(dict, 1).items[0]
+
 }

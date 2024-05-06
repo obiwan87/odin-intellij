@@ -28,7 +28,7 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
 
     @Override
     public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
-        return OdinInsightUtils.findFirstParentOfType(psiElement, true, OdinDeclaration.class) != null;
+        return OdinInsightUtils.findFirstParentOfType(psiElement, false, OdinDeclaration.class) != null;
     }
 
     @Override

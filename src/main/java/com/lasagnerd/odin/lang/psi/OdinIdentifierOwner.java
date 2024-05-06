@@ -48,13 +48,6 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
 
     @Override
     public @NotNull SearchScope getUseScope() {
-        PsiElement scopeBlock = OdinInsightUtils.findFirstParentOfType(this, true, OdinScopeBlock.class);
-        if (scopeBlock != null) {
-            if(scopeBlock instanceof OdinIfBlock || scopeBlock instanceof OdinElseBlock || scopeBlock instanceof OdinElseIfBlock) {
-                return new LocalSearchScope(OdinInsightUtils.findFirstParentOfType(scopeBlock, true, OdinConditionalStatement.class));
-            }
-            return new LocalSearchScope(scopeBlock);
-        }
         return super.getUseScope();
     }
 }

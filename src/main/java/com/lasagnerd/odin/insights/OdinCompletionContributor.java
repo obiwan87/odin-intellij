@@ -19,6 +19,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -178,9 +179,8 @@ public class OdinCompletionContributor extends CompletionContributor {
     private static LookupElementBuilder procedureLookupElement(LookupElementBuilder element, OdinProcedureDeclarationStatement declaringProcedure) {
         var params = declaringProcedure.getProcedureType().getParamEntryList();
         StringBuilder tailText = new StringBuilder("(");
-        for (OdinParamEntry param : params) {
-            tailText.append(param.getText());
-        }
+        String paramList = params.stream().map(PsiElement::getText).collect(Collectors.joining(", "));
+        tailText.append(paramList);
         tailText.append(")");
         element = element.withTailText(tailText.toString());
 

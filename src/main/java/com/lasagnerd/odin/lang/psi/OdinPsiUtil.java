@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -339,6 +340,14 @@ public class OdinPsiUtil {
             for (OdinParamEntry odinParamEntry : procedureType.getParamEntryList()) {
                 declarations.addAll(OdinDeclarationSpecifier.getDeclarationSpecs(odinParamEntry.getParameterDeclaration()));
             }
+        }
+
+        Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(procedureType, OdinPolymorphicType.class);
+        for (OdinPolymorphicType polymorphicType : polymorphicTypes) {
+            OdinDeclarationSpec odinDeclarationSpec = new OdinDeclarationSpec();
+            odinDeclarationSpec.setValueDeclaredIdentifier(polymorphicType.getDeclaredIdentifier());
+            odinDeclarationSpec.setHasUsing(false);
+            declarations.add(odinDeclarationSpec);
         }
 
         OdinReturnParameters returnParameters = procedureType.getReturnParameters();

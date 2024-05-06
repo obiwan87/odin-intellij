@@ -52,6 +52,7 @@ import com.intellij.util.messages.MessageBus;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinReferenceResolver;
 import com.lasagnerd.odin.insights.OdinScope;
+import com.lasagnerd.odin.insights.OdinScopeResolver;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinArrayType;
@@ -592,7 +593,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testTypeInference() throws IOException {
-        OdinFile odinFile = load("src/test/testData/ref.odin");
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
         var refExpressions = PsiTreeUtil.findChildrenOfType(odinFile, OdinRefExpression.class);
         Objects.requireNonNull(refExpressions);
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
@@ -603,7 +604,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPolymorphicTypes() throws IOException {
-        OdinFile odinFile = load("src/test/testData/ref.odin");
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
         Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(), OdinProcedureDeclarationStatement.class);
 
         {
@@ -615,7 +616,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPolymorphicTypesWithMultipleParams() throws IOException {
-        OdinFile odinFile = load("src/test/testData/ref.odin");
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
 
         OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference2");
 
@@ -624,7 +625,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPolymorphicTypesWithMultipleAndNestedParams() throws IOException {
-        OdinFile odinFile = load("src/test/testData/ref.odin");
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
         OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference3");
 
         assertNotNull(odinTypeInferenceResult.getType());
@@ -632,7 +633,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPolymorphicTypesWithPolymorphicReturnType() throws IOException {
-        OdinFile odinFile = load("src/test/testData/ref.odin");
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
         OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference4");
 
         assertNotNull(odinTypeInferenceResult.getType());
@@ -649,16 +650,28 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPolymorphicTypesWithPolymorphicReturn_typeReferenceOnStructField() throws IOException {
-        OdinFile odinFile = load("src/test/testData/ref.odin");
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
         OdinTypeInferenceResult odinTypeInferenceResult = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference5");
         System.out.println(odinTypeInferenceResult);
     }
 
+    public void testDeclaredIdentifiersInProcedureBlock() throws IOException {
+        OdinFile odinFile = load("src/test/testData/scope_resolution.odin");
+        @NotNull OdinProcedureDeclarationStatement procToSearchFrom = findFirstProcedure(odinFile, "proc_to_search_from");
+        OdinCallExpression callExpression = PsiTreeUtil.findChildOfType(procToSearchFrom, OdinCallExpression.class);
+        assertNotNull(callExpression);
+        OdinRefExpression expression = (OdinRefExpression) callExpression.getExpression();
+
+        PsiReference reference = expression.getIdentifier().getReference();
+        assertNotNull(reference);
+        PsiElement resolvedReference = reference.resolve();
+        assertInstanceOf(resolvedReference, OdinDeclaredIdentifier.class);
+        OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) resolvedReference;
+        assertEquals("proc_to_find", declaredIdentifier.getIdentifierToken().getText());
+
+    }
     private static @NotNull OdinTypeInferenceResult inferTypeOfFirstExpressionInProcedure(OdinFile odinFile, String procedureName) {
-        Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
-                OdinProcedureDeclarationStatement.class);
-        OdinProcedureDeclarationStatement testTypeInference = procedureDeclarationStatements.stream().filter(p -> p.getDeclaredIdentifier().getName().equals(procedureName))
-                .findFirst().orElseThrow();
+        OdinProcedureDeclarationStatement testTypeInference = findFirstProcedure(odinFile, procedureName);
         OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) testTypeInference.getBlockStatements().stream().filter(s -> s instanceof OdinExpressionStatement)
                 .findFirst().orElseThrow();
 
@@ -667,9 +680,19 @@ public class OdinParsingTest extends UsefulTestCase {
         return OdinInferenceEngine.inferType(scope, expression);
     }
 
+    private static @NotNull OdinProcedureDeclarationStatement findFirstProcedure(OdinFile odinFile, String procedureName) {
+        Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
+                OdinProcedureDeclarationStatement.class);
+
+        return procedureDeclarationStatements.stream()
+                .filter(p -> Objects.equals(p.getDeclaredIdentifier().getName(), procedureName))
+                .findFirst().orElseThrow();
+    }
+
     public void testRefSolver() throws IOException {
-        OdinFile odinFile = load("src/test/testData/ref.odin");
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
         Collection<OdinRefExpression> refExpressions = PsiTreeUtil.findChildrenOfType(odinFile, OdinRefExpression.class);
+
     }
 
 
