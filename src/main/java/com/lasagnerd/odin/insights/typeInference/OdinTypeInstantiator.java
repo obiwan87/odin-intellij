@@ -73,7 +73,6 @@ public class OdinTypeInstantiator {
             instantiatedType.getReturnTypes().add(tsOdinType);
         }
 
-
         return instantiatedType;
     }
 

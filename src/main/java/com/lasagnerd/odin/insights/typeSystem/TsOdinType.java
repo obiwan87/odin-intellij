@@ -46,6 +46,9 @@ public abstract class TsOdinType {
     public OdinType type;
 
     public static final TsOdinType UNKNOWN = new TsOdinType() {
+        {
+            this.scope = OdinScope.EMPTY;
+        }
         @Override
         public String getLabel() {
             return "UNKNOWN";
@@ -57,6 +60,10 @@ public abstract class TsOdinType {
         }
     };
     public static final TsOdinType VOID = new TsOdinType() {
+        {
+            this.scope = OdinScope.EMPTY;
+        }
+
         @Override
         public String getName() {
             return "VOID";
