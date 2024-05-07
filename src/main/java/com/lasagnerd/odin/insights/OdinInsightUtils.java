@@ -1,8 +1,6 @@
 package com.lasagnerd.odin.insights;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -116,7 +114,7 @@ public class OdinInsightUtils {
             if (element instanceof OdinImportDeclarationStatement importDeclarationStatement) {
                 var alias = importDeclarationStatement.getAlias();
                 declarations.add(Objects.requireNonNullElse(alias, importDeclarationStatement));
-            }  else if (element instanceof OdinDeclaration declaration) {
+            } else if (element instanceof OdinDeclaration declaration) {
                 declarations.addAll(declaration.getDeclaredIdentifiers());
             } else {
                 getStatements(element).forEach(statementStack::push);
@@ -363,20 +361,16 @@ public class OdinInsightUtils {
     public static OdinScope getDeclarationsOfImportedPackage(OdinImportInfo importInfo, String sourceFilePath, Project project) {
         List<PsiNamedElement> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
-            Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+
 
             List<Path> dirs = new ArrayList<>();
             String library = Objects.requireNonNullElse(importInfo.library(), "");
             Path sdkSourceDir = null;
             if (!library.isBlank()) {
-                if (projectSdk != null) {
-                    sdkSourceDir = Path.of(Objects.requireNonNull(projectSdk.getHomeDirectory()).getPath(), library);
-                } else {
-                    OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
-                    if (sdkConfig.getSdkPath() != null) {
-                        sdkSourceDir = Path.of(sdkConfig.getSdkPath(), importInfo.library());
-                        dirs.add(sdkSourceDir);
-                    }
+                OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
+                if (sdkConfig.getSdkPath() != null) {
+                    sdkSourceDir = Path.of(sdkConfig.getSdkPath(), importInfo.library());
+                    dirs.add(sdkSourceDir);
                 }
             }
             if (sdkSourceDir != null) {
