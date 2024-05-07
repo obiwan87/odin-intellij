@@ -71,8 +71,11 @@ public class OdinTypeResolver extends OdinVisitor {
         resolveIdentifier(identifier);
 
         if (this.type instanceof TsOdinStructType structType) {
-            OdinScope localScope = structType.getScope();
             this.type = OdinTypeInstantiator.instantiateStruct(scope, o.getArgumentList(), structType);
+        }
+
+        if(this.type instanceof TsOdinUnionType unionType) {
+            this.type = OdinTypeInstantiator.instantiateUnion(scope, o.getArgumentList(), unionType);
         }
     }
 
@@ -97,7 +100,26 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     @Override
-    public void visitUnionType(@NotNull OdinUnionType o) {
+    public void visitUnionType(@NotNull OdinUnionType unionType) {
+        TsOdinUnionType tsOdinUnionType = new TsOdinUnionType();
+        tsOdinUnionType.setType(unionType);
+        tsOdinUnionType.getScope().putAll(scope);
+        List<TsOdinParameter> parameters = createParameters(unionType.getParamEntryList(), tsOdinUnionType.getScope());
+        tsOdinUnionType.setParameters(parameters);
+
+        OdinUnionBody unionBody = unionType.getUnionBlock().getUnionBody();
+        if (unionBody != null) {
+            List<OdinTypeDefinitionExpression> typeDefinitionExpressions = unionBody.getTypeDefinitionExpressionList();
+            for (OdinTypeDefinitionExpression typeDefinitionExpression : typeDefinitionExpressions) {
+                TsOdinType tsOdinType = resolveType(tsOdinUnionType.getScope(), typeDefinitionExpression.getType());
+
+                TsOdinUnionField tsOdinUnionField = new TsOdinUnionField();
+                tsOdinUnionField.setTypeDefinitionExpression(typeDefinitionExpression);
+                tsOdinUnionField.setType(tsOdinType);
+                tsOdinUnionType.getFields().add(tsOdinUnionField);
+            }
+        }
+        this.type = tsOdinUnionType;
     }
 
     @Override
@@ -106,6 +128,7 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinArrayType.setType(arrayType);
         TsOdinType elementType = resolveType(scope, arrayType.getTypeDefinition());
         tsOdinArrayType.setElementType(elementType);
+
         this.type = tsOdinArrayType;
     }
 

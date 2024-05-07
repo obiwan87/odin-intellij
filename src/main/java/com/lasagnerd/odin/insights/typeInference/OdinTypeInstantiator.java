@@ -7,10 +7,7 @@ import com.lasagnerd.odin.insights.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine.inferType;
@@ -20,9 +17,6 @@ public class OdinTypeInstantiator {
     public static @NotNull TsOdinStructType instantiateStruct(OdinScope outerScope,
                                                               @NotNull List<OdinArgument> arguments,
                                                               TsOdinStructType baseType) {
-
-        System.out.println("Instantiating base type: " + baseType.getType().getText());
-        System.out.println("Arguments: "+ arguments.stream().map(PsiElement::getText).collect(Collectors.joining("; ")));
         List<TsOdinParameter> parameters = baseType.getParameters();
         if (parameters.isEmpty())
             return baseType;
@@ -55,8 +49,8 @@ public class OdinTypeInstantiator {
     public static @NotNull TsOdinProcedureType instantiateProcedure(@NotNull OdinScope outerScope,
                                                                     List<OdinArgument> arguments,
                                                                     TsOdinProcedureType baseType) {
-        List<TsOdinParameter> polyParameters = baseType.getParameters();
-        if (polyParameters.isEmpty())
+        List<TsOdinParameter> parameters = baseType.getParameters();
+        if (parameters.isEmpty())
             return baseType;
 
         TsOdinProcedureType instantiatedType = new TsOdinProcedureType();
@@ -71,6 +65,31 @@ public class OdinTypeInstantiator {
         for (TsOdinParameter tsOdinReturnType : baseType.getReturnParameters()) {
             TsOdinType tsOdinType = OdinTypeResolver.resolveType(instantiatedType.getScope(), tsOdinReturnType.getTypeDefinitionExpression().getType());
             instantiatedType.getReturnTypes().add(tsOdinType);
+        }
+
+        return instantiatedType;
+    }
+
+    public static TsOdinType instantiateUnion(OdinScope outerScope, List<OdinArgument> arguments, TsOdinUnionType baseType) {
+        List<TsOdinParameter> parameters = baseType.getParameters();
+        if (parameters.isEmpty())
+            return baseType;
+
+        TsOdinUnionType instantiatedType = new TsOdinUnionType();
+        instantiatedType.getScope().putAll(baseType.getScope());
+        instantiatedType.setType(baseType.getType());
+        instantiatedType.setName(baseType.getName());
+        instantiatedType.setDeclaration(baseType.getDeclaration());
+        instantiatedType.setDeclaredIdentifier(baseType.getDeclaredIdentifier());
+        resolveArguments(outerScope, baseType, instantiatedType, arguments);
+
+
+        for (TsOdinUnionField baseField : baseType.getFields()) {
+            TsOdinType instantiatedFieldType = OdinTypeResolver.resolveType(instantiatedType.getScope(), baseField.getTypeDefinitionExpression().getType());
+            TsOdinUnionField instantiatedField = new TsOdinUnionField();
+            instantiatedField.setTypeDefinitionExpression(baseField.getTypeDefinitionExpression());
+            instantiatedField.setType(instantiatedFieldType);
+            instantiatedType.getFields().add(instantiatedField);
         }
 
         return instantiatedType;
@@ -181,5 +200,6 @@ public class OdinTypeInstantiator {
         tsOdinType.setDeclaredIdentifier(declaredIdentifier);
         return tsOdinType;
     }
+
 
 }

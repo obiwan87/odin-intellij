@@ -14,13 +14,6 @@ Enemy :: struct {
     weapon: Weapon,
 }
 
-main :: proc () {
-    e :: Enemy {
-        0, 0, { 100, 200, 130 }
-    }
-    e.weapon.strength
-}
-
 Point :: struct {
     x, y: i32
 }
@@ -33,6 +26,20 @@ Dict :: struct($Key: typeid, $Value: typeid) {
     entries: map[Key]Value
 }
 
+Line :: struct {
+    points: []Point
+}
+
+Shape :: union {
+    Point,
+    Line
+}
+
+PolyShape :: union($T1: typeid, $T2: typeid ) {
+    T1,
+    T2
+}
+
 get_at :: proc(list: List($T), index: i32) -> T {
     return list.items[index]
 }
@@ -43,6 +50,25 @@ get_key :: proc(dict: Dict($K, $V), key: K) -> V {
 
 get_multi_dict_entry :: proc(dict: Dict($K, List($V)), key: K, index: i32) -> V {
     return dict.entries[key].items[index];
+}
+
+get_entry :: proc(dict: Dict($Key, $Value)) -> (Key, Value) {
+
+}
+
+get_shape :: proc() -> Shape {
+    return Line {}
+}
+
+get_as_first_polyshape :: proc(poly_shape: PolyShape($T1, $T2)) -> T1 {
+    return poly_shape.(T1)
+}
+
+main :: proc () {
+    e :: Enemy {
+        0, 0, { 100, 200, 130 }
+    }
+    e.weapon.strength
 }
 
 
@@ -72,12 +98,17 @@ testTypeInference5:: proc() {
     get_key(dict, 1).items[0]
 }
 
-get_entry :: proc(dict: Dict($Key, $Value)) -> (Key, Value) {
-
-}
-
 testTypeInference6 :: proc() {
     dict := Dict(i32, Point) {}
     key, value := get_entry(dict)
     point := value
+}
+
+testTypeInference7 :: proc() {
+    shape := get_shape()
+}
+
+testTypeInference8 :: proc() {
+    poly_shape : PolyShape(Line, Point) = Line {}
+    first_shape := get_as_first_polyshape(poly_shape)
 }

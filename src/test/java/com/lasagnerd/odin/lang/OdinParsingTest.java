@@ -58,6 +58,7 @@ import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinArrayType;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinUnionType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
@@ -689,6 +690,24 @@ public class OdinParsingTest extends UsefulTestCase {
         TsOdinType tsOdinType = OdinInferenceEngine.doInferType(odinExpression);
         assertInstanceOf(tsOdinType, TsOdinStructType.class);
         assertEquals("Point", tsOdinType.getName());
+    }
+
+    public void testUnionType() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        var shapeVariable = findFirstVariableDeclarationStatement(odinFile, "testTypeInference7", "shape");
+        OdinExpression odinExpression = shapeVariable.getExpressionsList().getExpressionList().get(0);
+        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(odinExpression);
+        assertInstanceOf(tsOdinType, TsOdinUnionType.class);
+        assertEquals("Shape", tsOdinType.getName());
+    }
+
+    public void testPolyUnionType()throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        var shapeVariable = findFirstVariableDeclarationStatement(odinFile, "testTypeInference8", "first_shape");
+        OdinExpression odinExpression = shapeVariable.getExpressionsList().getExpressionList().get(0);
+        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(odinExpression);
+        assertInstanceOf(tsOdinType, TsOdinStructType.class);
+        assertEquals("Line", tsOdinType.getName());
     }
 
     private static @NotNull OdinProcedureDeclarationStatement findFirstProcedure(OdinFile odinFile, String procedureName) {
