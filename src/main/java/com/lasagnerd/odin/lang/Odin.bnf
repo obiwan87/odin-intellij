@@ -178,13 +178,22 @@
 
 
 
+
 odinFile                             ::= fileScope
+
+// UTILS
+
+// General recovery rules
+private eos_recover ::= !eos
+
 fileScope                            ::= packageDeclaration eos importStatements fileScopeStatementList <<eof>> {
     methods=[getImportStatements]
 }
 private importStatements             ::= (importDeclarationStatement eos)*
 private fileScopeStatementList       ::= (fileScopeStatement eos)*
-packageDeclaration                   ::= PACKAGE declaredIdentifier
+packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=0 recoverWhile=eos_recover}
+
+
 importDeclarationStatement           ::= IMPORT declaredIdentifier? DQ_STRING_LITERAL {methods=[alias="/declaredIdentifier" path="/DQ_STRING_LITERAL" getName setName getNameIdentifier getImportInfo] implements="com.intellij.psi.PsiNameIdentifierOwner"}
 doubleColonOperator                  ::= COLON COLON
 
@@ -459,9 +468,10 @@ private postfixGroup                 ::= orReturnExpression
 parenthesizedExpression              ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
 
 // should we define the arrow operator on its own?
-fake refExpression                   ::= expression? (DOT|ARROW) identifier
+fake refExpression                   ::= expression? refOperator identifier
 simpleRefExpression                  ::= identifier {extends=refExpression elementType=refExpression}
-qualificationExpression              ::= expression (DOT|ARROW) identifier {extends=refExpression elementType=refExpression}
+qualificationExpression              ::= expression refOperator identifier {extends=refExpression elementType=refExpression pin(".*")=refOperator recoverWhile=eos_recover}
+private refOperator ::= (DOT|ARROW)
 
 
 implicitSelectorExpression           ::= DOT identifier
@@ -607,8 +617,9 @@ statement                            ::= assignmentStatement
                                          | foreignImportDeclarationStatement
                                          | foreignStatement
                                          | importDeclarationStatement
+                                         | semicolonStatement
 
-
+semicolonStatement                   ::= SEMICOLON
 fallthroughStatement                 ::= FALLTHROUGH
 expressionStatement                  ::= orReturnExpression
                                           | orBreakExpression
