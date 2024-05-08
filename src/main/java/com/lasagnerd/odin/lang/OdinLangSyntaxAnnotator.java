@@ -8,6 +8,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,30 +118,30 @@ public class OdinLangSyntaxAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
 
-        if (psiElement instanceof OdinIdentifier identifier && IS_CALL_IDENTIFIER.accepts(identifier)) {
-            if (predefinedSymbols.contains(identifier.getText())) {
-                TextRange matchRange = identifier.getTextRange();
+
+        IElementType elementType = PsiUtilCore.getElementType(psiElement);
+        if (elementType == OdinTypes.IDENTIFIER_TOKEN) {
+
+            highlightReservedTypes(annotationHolder, psiElement);
+
+            if (predefinedSymbols.contains(psiElement.getText())) {
+                TextRange matchRange = psiElement.getTextRange();
                 annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
                         .range(matchRange)
                         .textAttributes(OdinSyntaxHighlighter.BUILTIN_FUNCTION)
                         .create();
-            } else if (identifier.getParent() instanceof OdinIdentifierList list
-                       && list.getParent() instanceof OdinConstantInitializationStatement) {
+            } else if (psiElement.getParent() instanceof OdinIdentifierList list
+                    && list.getParent() instanceof OdinConstantInitializationStatement) {
                 annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                        .range(identifier.getTextRange())
+                        .range(psiElement.getTextRange())
                         .textAttributes(DefaultLanguageHighlighterColors.CONSTANT)
                         .create();
 
             }
         }
 
-        highlightReservedTypes(annotationHolder, psiElement);
 
-
-        if (psiElement instanceof OdinStringLiteral stringLiteral) {
-            highlightEscapeSequences(stringLiteral, annotationHolder);
-        }
-
+        highlightEscapeSequences(psiElement, annotationHolder);
 
         if (psiElement instanceof OdinTagHead tagHead) {
             highlightTagHead(tagHead, annotationHolder);
@@ -155,16 +157,7 @@ public class OdinLangSyntaxAnnotator implements Annotator {
                 .create();
     }
 
-    private static void highlightReservedTypes(@NotNull AnnotationHolder annotationHolder, PsiElement psiElement) {
-        PsiElement identifier = null;
-        if (psiElement instanceof OdinQualifiedType typeRef) {
-            identifier = typeRef;
-        } else if (psiElement instanceof OdinRefExpression identifierExpression) {
-            identifier = identifierExpression.getIdentifier();
-        } else if (psiElement instanceof OdinSimpleRefType simpleRefType) {
-            identifier = simpleRefType.getIdentifier();
-        }
-
+    private static void highlightReservedTypes(@NotNull AnnotationHolder annotationHolder, PsiElement identifier) {
         if (identifier != null) {
             if (RESERVED_TYPES.contains(identifier.getText())) {
                 TextRange matchRange = identifier.getTextRange();
@@ -176,23 +169,19 @@ public class OdinLangSyntaxAnnotator implements Annotator {
         }
     }
 
-    private static void highlightEscapeSequences(OdinStringLiteral stringLiteral, @NotNull AnnotationHolder annotationHolder) {
-        PsiElement stringElement;
-        if (stringLiteral.getDqStringLiteral() != null) {
-            stringElement = stringLiteral.getDqStringLiteral();
-        } else if (stringLiteral.getSqStringLiteral() != null) {
-            stringElement = stringLiteral.getSqStringLiteral();
-        } else {
+    private static void highlightEscapeSequences(PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
+        IElementType elementType = PsiUtilCore.getElementType(psiElement);
+        if (!OdinParserDefinition.STRING_LITERAL_ELEMENTS.contains(elementType)) {
             return;
         }
 
-        var text = stringElement.getText();
+        var text = psiElement.getText();
         // Find all indexes of escape sequences using regex
 
         var matcher = ESCAPE_SEQUENCES_PATTERN.matcher(text);
         while (matcher.find()) {
             var matchRange = TextRange.from(
-                    stringElement.getTextRange().getStartOffset() + matcher.start(),
+                    psiElement.getTextRange().getStartOffset() + matcher.start(),
                     matcher.end() - matcher.start()
             );
             annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)

@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 
 public class OdinAnnotator implements Annotator {
 
-    private static final Pattern ENTIRE_SQ_IS_ESCAPE_SEQ = Pattern.compile("^(" + OdinLangSyntaxAnnotator.ALL_ESCAPE_SEQUENCES + ")$");
     public static final Pattern BLOCK_COMMENT_DELIMITERS = Pattern.compile("/\\*|\\*/");
 
     @Override
@@ -46,37 +45,5 @@ public class OdinAnnotator implements Annotator {
                 }
             }
         }
-
-//        if (element instanceof OdinStringLiteral stringLiteral) {
-//            String text = stringLiteral.getText();
-//            if (stringLiteral.getDqStringLiteral() != null) {
-//                if (!text.endsWith("\"") || text.endsWith("\\\"")) {
-//                    holder.newAnnotation(HighlightSeverity.ERROR, "Unclosed string literal")
-//                            .highlightType(ProblemHighlightType.GENERIC_ERROR)
-//                            .range(element.getTextRange())
-//                            .create();
-//                }
-//            }
-//
-//            if (stringLiteral.getSqStringLiteral() != null) {
-//                if (!text.endsWith("'") || text.endsWith("\\'")) {
-//                    holder.newAnnotation(HighlightSeverity.ERROR, "Unclosed rune literal")
-//                            .highlightType(ProblemHighlightType.GENERIC_ERROR)
-//                            .range(element.getTextRange())
-//                            .create();
-//                } else {
-//                    if (text.length() > 2) {
-//                        String textInsideRune = text.substring(1, text.length() - 1);
-//                        Matcher matcher = ENTIRE_SQ_IS_ESCAPE_SEQ.matcher(textInsideRune);
-//                        if (!matcher.find() && textInsideRune.codePointCount(0, textInsideRune.length()) > 1) {
-//                            holder.newAnnotation(HighlightSeverity.ERROR, "Illegal rune literal")
-//                                    .highlightType(ProblemHighlightType.GENERIC_ERROR)
-//                                    .range(element.getTextRange())
-//                                    .create();
-//                        }
-//                    }
-//                }
-//            }
-//        }
     }
 }
