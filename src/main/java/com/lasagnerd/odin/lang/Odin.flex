@@ -18,6 +18,19 @@ import static com.lasagnerd.odin.lang.psi.OdinTypes.*;
   public OdinLexer() {
     this((java.io.Reader)null);
   }
+
+  public IElementType determineFloatType() {
+      char lastChar = yycharat(zzCurrentPos);
+      if(lastChar == 'j' || lastChar == 'k') {
+          return QUAT_FLOAT_LITERAL;
+      }
+
+      if(lastChar == 'i') {
+          return COMPLEX_FLOAT_LITERAL;
+      }
+
+      return FLOAT_DEC_LITERAL;
+  }
 %}
 
 %public
@@ -37,7 +50,8 @@ BlockCommentContent = ([^*\/\r\n]|\/[^*\r\n])
 
 IntegerOctLiteral = 0o[0-7_]+
 IntegerDecLiteral = [0-9][0-9_]*
-ComplexIntegerDecLiteral = {IntegerDecLiteral}[ijk]
+ComplexIntegerDecLiteral = {IntegerDecLiteral}[i]
+QuatIntegerDecLiteral = {IntegerDecLiteral}[jk]
 
 IntegerHexLiteral = 0[xh][0-9a-fA-F_][0-9a-fA-F_]*
 IntegerBinLiteral = 0b[01_][01_]*
@@ -110,16 +124,17 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 
         {IntegerDecLiteral} { yybegin(NLSEMI_STATE); return INTEGER_DEC_LITERAL; }
 
-        {IntegerDecLiteral}? "." {IntegerDecLiteral} {ExponentPart}? [ijk]? {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+        {IntegerDecLiteral}? "." {IntegerDecLiteral} {ExponentPart}? [ijk]? {yybegin(NLSEMI_STATE); return determineFloatType(); }
         {IntegerDecLiteral} "." / [^.] {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
         {IntegerDecLiteral} "." [0-9]+ { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
-        {IntegerDecLiteral}{ExponentPart}[ijk]? {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+        {IntegerDecLiteral}{ExponentPart}[ijk]? {yybegin(NLSEMI_STATE); return determineFloatType(); }
 
         {IntegerOctLiteral} { yybegin(NLSEMI_STATE); return INTEGER_OCT_LITERAL; }
         {IntegerHexLiteral} { yybegin(NLSEMI_STATE); return INTEGER_HEX_LITERAL; }
         {IntegerBinLiteral} { yybegin(NLSEMI_STATE); return INTEGER_BIN_LITERAL; }
 
-        {ZeroFloatLiteral}  { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
+        {ZeroFloatLiteral}  { yybegin(NLSEMI_STATE); return determineFloatType(); }
+        {QuatIntegerDecLiteral} { yybegin(NLSEMI_STATE); return QUAT_INTEGER_DEC_LITERAL; }
         {ComplexIntegerDecLiteral} { yybegin(NLSEMI_STATE); return COMPLEX_INTEGER_DEC_LITERAL; }
 
         ":"         { return COLON; }

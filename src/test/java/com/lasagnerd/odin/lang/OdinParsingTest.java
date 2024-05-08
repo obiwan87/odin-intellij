@@ -642,7 +642,7 @@ public class OdinParsingTest extends UsefulTestCase {
         assertNotNull(odinTypeInferenceResult.getType());
         assertInstanceOf(odinTypeInferenceResult.getType(), TsOdinStructType.class);
 
-        TsOdinStructType structType = (TsOdinStructType)odinTypeInferenceResult.getType();
+        TsOdinStructType structType = (TsOdinStructType) odinTypeInferenceResult.getType();
         assertNotEmpty(structType.getFields().values());
         assertTrue(structType.getFields().containsKey("items"));
         assertInstanceOf(structType.getFields().get("items"), TsOdinArrayType.class);
@@ -673,6 +673,7 @@ public class OdinParsingTest extends UsefulTestCase {
         assertEquals("proc_to_find", declaredIdentifier.getIdentifierToken().getText());
 
     }
+
     private static @NotNull OdinTypeInferenceResult inferTypeOfFirstExpressionInProcedure(OdinFile odinFile, String procedureName) {
         OdinProcedureDeclarationStatement testTypeInference = findFirstProcedure(odinFile, procedureName);
         OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) testTypeInference.getBlockStatements().stream().filter(s -> s instanceof OdinExpressionStatement)
@@ -700,7 +701,7 @@ public class OdinParsingTest extends UsefulTestCase {
         assertEquals("Shape", tsOdinType.getName());
     }
 
-    public void testPolyUnionType()throws IOException {
+    public void testPolyUnionType() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         String procedureName = "testTypeInference8";
         String variableName = "first_shape";
@@ -764,6 +765,45 @@ public class OdinParsingTest extends UsefulTestCase {
 
     }
 
+    public void testTernaryConditionals() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference15", "point_1");
+            TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Point", structType.getName());
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference15", "point_2");
+            TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Point", structType.getName());
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference15", "point_3");
+            TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Point", structType.getName());
+        }
+
+
+    }
+
+    public void testLiteralExpressions() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+
+        TsOdinType complexNumber1 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "complex_number1");
+        assertEquals("complex128", complexNumber1.getName());
+        TsOdinType complexNumber2 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "complex_number2");
+        assertEquals("complex128", complexNumber2.getName());
+        TsOdinType quaternion1 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "quaternion1");
+        assertEquals("quaternion256", quaternion1.getName());
+        TsOdinType quaternion2 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "quaternion2");
+        assertEquals("quaternion256", quaternion2.getName());
+        TsOdinType quaternion3 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "quaternion3");
+        assertEquals("quaternion256", quaternion3.getName());
+        TsOdinType r = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "r");
+        assertEquals("rune", r.getName());
+        TsOdinType s = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "s");
+        assertEquals("string", s.getName());
+    }
 
     private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         var shapeVariable = findFirstVariableDeclarationStatement(odinFile, procedureName,
@@ -771,7 +811,6 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinExpression odinExpression = shapeVariable.getExpressionsList().getExpressionList().get(0);
         return OdinInferenceEngine.doInferType(odinExpression);
     }
-
 
     private static @NotNull OdinProcedureDeclarationStatement findFirstProcedure(OdinFile odinFile, String procedureName) {
         Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),

@@ -75,6 +75,10 @@ public abstract class TsOdinType {
         }
     };
 
+    public static boolean areEqual(TsOdinType tsOdinTrueType, TsOdinType tsOdinFalseType) {
+        return true;
+    }
+
     public boolean isUnknown() {
         return UNKNOWN == this;
     }

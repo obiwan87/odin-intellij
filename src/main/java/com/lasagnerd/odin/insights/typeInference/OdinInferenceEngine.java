@@ -7,6 +7,7 @@ import com.lasagnerd.odin.insights.typeSystem.*;
 import com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,9 +74,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitTypeDefinitionExpression(@NotNull OdinTypeDefinitionExpression o) {
-        TsOdinBuiltInType tsOdinBuiltInType = new TsOdinBuiltInType();
-        tsOdinBuiltInType.setName("typeid");
-        this.type = tsOdinBuiltInType;
+        this.type = TsOdinBuiltInType.TYPE_ID;
     }
 
     @Override
@@ -174,7 +173,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitSliceExpression(@NotNull OdinSliceExpression o) {
         OdinExpression expression = o.getExpression();
         TsOdinType tsOdinType = doInferType(scope, expression);
-        if(tsOdinType instanceof TsOdinArrayType) {
+        if (tsOdinType instanceof TsOdinArrayType) {
             this.type = tsOdinType;
         }
     }
@@ -240,7 +239,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitOrElseExpression(@NotNull OdinOrElseExpression o) {
         if (!o.getExpressionList().isEmpty()) {
             TsOdinType tsOdinType = doInferType(scope, createOptionalOkTuple(expectedType), 2, o.getExpressionList().get(0));
-            if(isOptionalOkTuple(tsOdinType)) {
+            if (isOptionalOkTuple(tsOdinType)) {
                 this.type = ((TsOdinTuple) tsOdinType).getTypes().get(0);
             }
         }
@@ -255,6 +254,85 @@ public class OdinInferenceEngine extends OdinVisitor {
             this.type = tsOdinType;
         }
     }
+
+    @Override
+    public void visitElvisExpression(@NotNull OdinElvisExpression o) {
+        if (o.getExpressionList().size() == 3) {
+            OdinExpression trueBranchExpression = o.getExpressionList().get(1);
+            OdinExpression falseBranchExpression = o.getExpressionList().get(2);
+
+            this.type = evaluateConditionalBranchesType(trueBranchExpression, falseBranchExpression);
+        }
+    }
+
+    @Override
+    public void visitTernaryIfExpression(@NotNull OdinTernaryIfExpression o) {
+        if (o.getExpressionList().size() == 3) {
+            OdinExpression trueBranchExpression = o.getExpressionList().get(0);
+            OdinExpression falseBranchExpression = o.getExpressionList().get(2);
+
+            this.type = evaluateConditionalBranchesType(trueBranchExpression, falseBranchExpression);
+        }
+    }
+
+    @Override
+    public void visitTernaryWhenExpression(@NotNull OdinTernaryWhenExpression o) {
+        if (o.getExpressionList().size() == 3) {
+            OdinExpression trueBranchExpression = o.getExpressionList().get(0);
+            OdinExpression falseBranchExpression = o.getExpressionList().get(2);
+
+            this.type = evaluateConditionalBranchesType(trueBranchExpression, falseBranchExpression);
+        }
+    }
+
+    private @Nullable TsOdinType evaluateConditionalBranchesType(OdinExpression trueBranchExpression, OdinExpression falseBranchExpression) {
+        TsOdinType tsOdinTrueType = doInferType(scope, trueBranchExpression);
+        TsOdinType tsOdinFalseType = doInferType(scope, falseBranchExpression);
+
+        if (TsOdinType.areEqual(tsOdinTrueType, tsOdinFalseType)) {
+            return tsOdinTrueType;
+        }
+        return TsOdinType.UNKNOWN;
+    }
+
+    @Override
+    public void visitLiteralExpression(@NotNull OdinLiteralExpression o) {
+        o.getBasicLiteral().accept(this);
+    }
+
+    @Override
+    public void visitBooleanLiteral(@NotNull OdinBooleanLiteral o) {
+        this.type = TsOdinBuiltInType.BOOLEAN;
+    }
+
+    @Override
+    public void visitNumericLiteral(@NotNull OdinNumericLiteral o) {
+        if (o.getFloatDecLiteral() != null) {
+            this.type = TsOdinBuiltInType.F64;
+        } else if (o.getIntegerBinLiteral() != null
+                || o.getIntegerHexLiteral() != null
+                || o.getIntegerOctLiteral() != null
+                || o.getIntegerDecLiteral() != null) {
+            this.type = TsOdinBuiltInType.INT;
+        } else if (o.getComplexFloatLiteral() != null || o.getComplexIntegerDecLiteral() != null) {
+            this.type = TsOdinBuiltInType.COMPLEX128;
+        } else if (o.getQuatFloatLiteral() != null || o.getQuatIntegerDecLiteral() != null) {
+            this.type = TsOdinBuiltInType.QUATERNION256;
+        }
+        super.visitNumericLiteral(o);
+    }
+
+    @Override
+    public void visitStringLiteral(@NotNull OdinStringLiteral o) {
+        if(o.getSqStringLiteral() != null) {
+            this.type = TsOdinBuiltInType.RUNE;
+        }
+
+        if(o.getDqStringLiteral() != null || o.getRawStringLiteral() != null) {
+            this.type = TsOdinBuiltInType.STRING;
+        }
+    }
+
 
     private static @NotNull TsOdinTuple createOptionalOkTuple(TsOdinType tsOdinType) {
         return new TsOdinTuple(List.of(tsOdinType, TsOdinBuiltInType.BOOLEAN));
@@ -282,7 +360,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (tsOdinType instanceof TsOdinUnionType tsOdinUnionType) {
             if (tsOdinUnionType.getVariants().size() == 1) {
                 this.type = createOptionalOkTuple(tsOdinUnionType.getVariants().get(0).getType());
-            } else if(tsOdinUnionType.getVariants().size() > 1 && !expectedUnionType.isUnknown()) {
+            } else if (tsOdinUnionType.getVariants().size() > 1 && !expectedUnionType.isUnknown()) {
                 // Check if expectedType is in union variants
                 this.type = createOptionalOkTuple(expectedUnionType);
             }
@@ -291,8 +369,8 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     public static TsOdinType resolveTypeOfDeclaration(OdinScope parentScope,
-                                                      OdinDeclaredIdentifier declaredIdentifier,
-                                                      OdinDeclaration odinDeclaration) {
+                                                              OdinDeclaredIdentifier declaredIdentifier,
+                                                              OdinDeclaration odinDeclaration) {
         if (odinDeclaration instanceof OdinVariableDeclarationStatement declarationStatement) {
             var mainType = declarationStatement.getTypeDefinitionExpression().getType();
             //return getDeclaredIdentifierQualifiedType(parentScope, mainType);

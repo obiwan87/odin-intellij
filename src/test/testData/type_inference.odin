@@ -150,11 +150,29 @@ testTypeInference12 :: proc() {
 }
 
 testTypeInference13 :: proc() {
-    point := Point {}
+    point := Point { }
     point_ptr := &point
 }
 
 testTypeInference14 :: proc() {
-    points := []Point { Point {}, Point {}}
+    points := []Point { Point { }, Point { } }
     point_slice := points[0:2]
+}
+
+testTypeInference15 :: proc() {
+    point_1 := Point{ 0, 0 } if true else Point{ 1, 1 }
+    point_2 := true? Point{ 0, 0 } : Point{ 1, 1 }
+    point_3 := Point{ 0, 0 } when true else Point{ 1, 1 }
+}
+
+
+testTypeInference16 :: proc() {
+    complex_number1 := 1i
+    complex_number2 := 1.0i
+    quaternion1 := 1j
+    quaternion2 := 1k
+    quaternion3 := 1.0k
+
+    r := '\n'
+    s := "string"
 }

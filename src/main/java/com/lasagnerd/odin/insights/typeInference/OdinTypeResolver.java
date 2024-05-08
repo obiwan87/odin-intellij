@@ -83,8 +83,8 @@ public class OdinTypeResolver extends OdinVisitor {
         PsiNamedElement declaration;
         String identifierText = typeIdentifier.getText();
         if (RESERVED_TYPES.contains(identifierText)) {
-            type = new TsOdinBuiltInType();
-            type.setName(identifierText);
+            type = (TsOdinBuiltInType) TsOdinBuiltInType.getBuiltInType(identifierText);
+
         } else {
             TsOdinType scopeType = scope.getType(typeIdentifier.getIdentifierToken().getText());
             if (scopeType != null) {
@@ -403,9 +403,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
     public static TsOdinType resolveMetaType(OdinScope scope, TsOdinMetaType metaType) {
         if (metaType.getMetaType() == TsOdinMetaType.MetaType.BUILTIN) {
-            TsOdinBuiltInType tsOdinBuiltInType = new TsOdinBuiltInType();
-            tsOdinBuiltInType.setName(metaType.getName());
-            return tsOdinBuiltInType;
+            return TsOdinBuiltInType.getBuiltInType(metaType.getName());
         } else if (metaType.getType() != null) {
             TsOdinType tsOdinType = resolveType(scope, metaType.getType());
             tsOdinType.setDeclaration(metaType.getDeclaration());
