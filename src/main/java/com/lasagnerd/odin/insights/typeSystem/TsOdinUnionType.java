@@ -9,5 +9,5 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class TsOdinUnionType extends TsOdinType {
-    List<TsOdinUnionField> fields = new ArrayList<>();
+    List<TsOdinUnionVariant> variants = new ArrayList<>();
 }

@@ -20,8 +20,21 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     boolean isImport;
 
+
+    private final TsOdinType expectedType;
+    private final int lhsValuesCount;
+
+
     public OdinInferenceEngine(OdinScope scope) {
         this.scope = scope;
+        this.lhsValuesCount = 1;
+        this.expectedType = TsOdinType.UNKNOWN;
+    }
+
+    public OdinInferenceEngine(OdinScope scope, @NotNull TsOdinType expectedType, int lhsValuesCount) {
+        this.scope = scope;
+        this.expectedType = expectedType;
+        this.lhsValuesCount = lhsValuesCount;
     }
 
     public static OdinTypeInferenceResult inferType(OdinScope scope, OdinExpression expression) {
@@ -35,14 +48,22 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     public static TsOdinType doInferType(OdinScope scope, @NotNull OdinExpression expression) {
-        OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(scope);
+        return doInferType(scope, TsOdinType.UNKNOWN, 1, expression);
+    }
+
+    public static TsOdinType doInferType(OdinScope scope, TsOdinType expectedType, int lhsValuesCount, @NotNull OdinExpression expression) {
+        OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(scope, expectedType, lhsValuesCount);
         expression.accept(odinExpressionTypeResolver);
 
         TsOdinType type = odinExpressionTypeResolver.type;
-        if(type == null) {
+        if (type == null) {
             return TsOdinType.UNKNOWN;
         }
         return type;
+    }
+
+    public static TsOdinType doInferType(OdinScope scope, int lhsValuesCount, @NotNull OdinExpression expression) {
+        return doInferType(scope, TsOdinType.UNKNOWN, lhsValuesCount, expression);
     }
 
     public static TsOdinType doInferType(OdinExpression odinExpression) {
@@ -115,9 +136,9 @@ public class OdinInferenceEngine extends OdinVisitor {
                 if (procedureType != null && !procedureType.getReturnTypes().isEmpty()) {
                     TsOdinProcedureType instantiatedType = OdinTypeInstantiator
                             .instantiateProcedure(scope, o.getArgumentList(), procedureType);
-                    if(instantiatedType.getReturnTypes().size() == 1) {
+                    if (instantiatedType.getReturnTypes().size() == 1) {
                         this.type = instantiatedType.getReturnTypes().get(0);
-                    } else if(instantiatedType.getReturnTypes().size() > 1) {
+                    } else if (instantiatedType.getReturnTypes().size() > 1) {
                         this.type = new TsOdinTuple(instantiatedType.getReturnTypes());
                     } else {
                         this.type = TsOdinType.VOID;
@@ -125,7 +146,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
             }
 
-            if(tsOdinMetaType.getMetaType() == TsOdinMetaType.MetaType.STRUCT) {
+            if (tsOdinMetaType.getMetaType() == TsOdinMetaType.MetaType.STRUCT) {
                 TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
                 if (structType != null) {
                     this.type = OdinTypeInstantiator.instantiateStruct(scope, o.getArgumentList(), structType);
@@ -140,10 +161,6 @@ public class OdinInferenceEngine extends OdinVisitor {
         OdinExpression expression = o.getExpression();
         TsOdinType tsOdinType = doInferType(scope, expression);
 
-        if (tsOdinType instanceof TsOdinPointerType pointerType) {
-            tsOdinType = pointerType.getDereferencedType();
-        }
-
         if (tsOdinType instanceof TsOdinArrayType arrayType) {
             this.type = arrayType.getElementType();
         }
@@ -154,12 +171,29 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     @Override
+    public void visitSliceExpression(@NotNull OdinSliceExpression o) {
+        super.visitSliceExpression(o);
+    }
+
+    @Override
     public void visitDereferenceExpression(@NotNull OdinDereferenceExpression o) {
         // get type of expression. If it is a pointer, retrieve the dereferenced type and set that as result
         OdinExpression expression = o.getExpression();
         TsOdinType tsOdinType = doInferType(scope, expression);
         if (tsOdinType instanceof TsOdinPointerType pointerType) {
             this.type = pointerType.getDereferencedType();
+        }
+    }
+
+    @Override
+    public void visitUnaryAndExpression(@NotNull OdinUnaryAndExpression o) {
+        OdinExpression expression = o.getExpression();
+        if (expression != null) {
+            TsOdinType referencedType = doInferType(scope, expression);
+            // TODO check if reference type is actually referenceable (E.g. meta type and typeid aren't)
+            TsOdinPointerType tsOdinPointerType = new TsOdinPointerType();
+            tsOdinPointerType.setDereferencedType(referencedType);
+            this.type = tsOdinPointerType;
         }
     }
 
@@ -188,7 +222,67 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     @Override
+    public void visitAutoCastExpression(@NotNull OdinAutoCastExpression o) {
+        this.type = this.expectedType;
+    }
+
+    @Override
+    public void visitTransmuteExpression(@NotNull OdinTransmuteExpression o) {
+        OdinTypeDefinitionExpression typeDefinitionExpression = (OdinTypeDefinitionExpression) o.getTypeDefinitionExpression();
+        this.type = OdinTypeResolver.resolveType(scope, typeDefinitionExpression.getType());
+    }
+
+    @Override
     public void visitOrElseExpression(@NotNull OdinOrElseExpression o) {
+        if (!o.getExpressionList().isEmpty()) {
+            TsOdinType tsOdinType = doInferType(scope, createOptionalOkTuple(expectedType), 2, o.getExpressionList().get(0));
+            if(isOptionalOkTuple(tsOdinType)) {
+                this.type = ((TsOdinTuple) tsOdinType).getTypes().get(0);
+            }
+        }
+    }
+
+    @Override
+    public void visitTypeAssertionExpression(@NotNull OdinTypeAssertionExpression o) {
+        TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, o.getType());
+        if (this.lhsValuesCount == 2) {
+            this.type = createOptionalOkTuple(tsOdinType);
+        } else {
+            this.type = tsOdinType;
+        }
+    }
+
+    private static @NotNull TsOdinTuple createOptionalOkTuple(TsOdinType tsOdinType) {
+        return new TsOdinTuple(List.of(tsOdinType, TsOdinBuiltInType.BOOLEAN));
+    }
+
+    private static boolean isOptionalOkTuple(TsOdinType tsOdinType) {
+        if (tsOdinType instanceof TsOdinTuple tsOdinTuple) {
+            return tsOdinTuple.getTypes().size() == 2
+                    && (tsOdinTuple.getTypes().get(1) == TsOdinBuiltInType.BOOLEAN || tsOdinTuple.getTypes().get(1).isNillable());
+        }
+        return false;
+    }
+
+    @Override
+    public void visitMaybeExpression(@NotNull OdinMaybeExpression o) {
+        TsOdinType expectedUnionType = TsOdinType.UNKNOWN;
+        if (isOptionalOkTuple(expectedType)) {
+
+            TsOdinTuple tuple = (TsOdinTuple) expectedType;
+            expectedUnionType = tuple.get(0);
+        }
+
+        OdinExpression expression = o.getExpression();
+        TsOdinType tsOdinType = doInferType(scope, expression);
+        if (tsOdinType instanceof TsOdinUnionType tsOdinUnionType) {
+            if (tsOdinUnionType.getVariants().size() == 1) {
+                this.type = createOptionalOkTuple(tsOdinUnionType.getVariants().get(0).getType());
+            } else if(tsOdinUnionType.getVariants().size() > 1 && !expectedUnionType.isUnknown()) {
+                // Check if expectedType is in union variants
+                this.type = createOptionalOkTuple(expectedUnionType);
+            }
+        }
 
     }
 
@@ -209,18 +303,19 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
             List<OdinExpression> expressionList = initializationStatement.getExpressionsList().getExpressionList();
+            int lhsValuesCount = initializationStatement.getIdentifierList().getDeclaredIdentifierList().size();
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
             for (OdinExpression odinExpression : expressionList) {
-                TsOdinType tsOdinType = doInferType(parentScope, odinExpression);
-                if(tsOdinType instanceof TsOdinTuple tuple) {
+                TsOdinType tsOdinType = doInferType(parentScope, lhsValuesCount, odinExpression);
+                if (tsOdinType instanceof TsOdinTuple tuple) {
                     tsOdinTypes.addAll(tuple.getTypes());
                 } else {
                     tsOdinTypes.add(tsOdinType);
                 }
             }
 
-            if(tsOdinTypes.size() > index) {
+            if (tsOdinTypes.size() > index) {
                 return tsOdinTypes.get(index);
             }
             return TsOdinType.UNKNOWN;
@@ -232,8 +327,22 @@ public class OdinInferenceEngine extends OdinVisitor {
                 return OdinTypeResolver.resolveType(parentScope, mainType);
             }
             int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
-            OdinExpression odinExpression = initializationStatement.getExpressionsList().getExpressionList().get(index);
-            return doInferType(parentScope, odinExpression);
+            List<OdinExpression> expressionList = initializationStatement.getExpressionsList().getExpressionList();
+
+            List<TsOdinType> tsOdinTypes = new ArrayList<>();
+            for (OdinExpression odinExpression : expressionList) {
+                TsOdinType tsOdinType = doInferType(parentScope, odinExpression);
+                if (tsOdinType instanceof TsOdinTuple tuple) {
+                    tsOdinTypes.addAll(tuple.getTypes());
+                } else {
+                    tsOdinTypes.add(tsOdinType);
+                }
+            }
+
+            if (tsOdinTypes.size() > index) {
+                return tsOdinTypes.get(index);
+            }
+            return TsOdinType.UNKNOWN;
         }
 
         if (odinDeclaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
@@ -300,8 +409,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             return tsOdinMetaType;
         }
 
-
-        if(odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
+        if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
             TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.POLYMORPHIC_PARAMETER);
             tsOdinMetaType.setDeclaration(polymorphicType);
             tsOdinMetaType.setType(polymorphicType);
@@ -310,7 +418,31 @@ public class OdinInferenceEngine extends OdinVisitor {
             return tsOdinMetaType;
         }
 
-
         return TsOdinType.UNKNOWN;
     }
+
+    // v.?
+    // union(T) -> (T, bool)
+
+    // v.? and target of v=T_k known
+    // union(T1, T2, T3, ... , T_k, ..., Tn) -> (T_k, bool)
+
+    // v.(T)
+    // if not two values (1, or >2) expected
+    // union(T0, ..., T, .., Tn) -> T
+
+    // if two values expected
+    // union(T0, ..., T, .., Tn) -> (T, bool)
+
+    // cast(T)x, transmute(T)x
+    // type(x) -> T
+
+    // x : T := auto_cast y, and for known T
+    // T -> type(y)
+
+    // x or_else y
+    // ((T, Union(bool)), T) -> T
+
+    // caller() or_return
+    // (T1, ..., Tn) -> (T1, ..., Tn-1)
 }

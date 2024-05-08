@@ -4,7 +4,7 @@ import com.lasagnerd.odin.lang.psi.OdinTypeDefinitionExpression;
 import lombok.Data;
 
 @Data
-public class TsOdinUnionField {
+public class TsOdinUnionVariant {
     TsOdinType type;
     OdinTypeDefinitionExpression typeDefinitionExpression;
 }

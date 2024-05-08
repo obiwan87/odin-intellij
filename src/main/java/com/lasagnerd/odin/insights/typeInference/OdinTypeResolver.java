@@ -113,10 +113,10 @@ public class OdinTypeResolver extends OdinVisitor {
             for (OdinTypeDefinitionExpression typeDefinitionExpression : typeDefinitionExpressions) {
                 TsOdinType tsOdinType = resolveType(tsOdinUnionType.getScope(), typeDefinitionExpression.getType());
 
-                TsOdinUnionField tsOdinUnionField = new TsOdinUnionField();
-                tsOdinUnionField.setTypeDefinitionExpression(typeDefinitionExpression);
-                tsOdinUnionField.setType(tsOdinType);
-                tsOdinUnionType.getFields().add(tsOdinUnionField);
+                TsOdinUnionVariant tsOdinUnionVariant = new TsOdinUnionVariant();
+                tsOdinUnionVariant.setTypeDefinitionExpression(typeDefinitionExpression);
+                tsOdinUnionVariant.setType(tsOdinType);
+                tsOdinUnionType.getVariants().add(tsOdinUnionVariant);
             }
         }
         this.type = tsOdinUnionType;

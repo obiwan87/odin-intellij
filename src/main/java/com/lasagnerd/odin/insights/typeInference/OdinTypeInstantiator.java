@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.insights.typeInference;
 
-import com.intellij.psi.PsiElement;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.insights.typeSystem.*;
@@ -8,7 +7,6 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine.inferType;
 
@@ -84,12 +82,12 @@ public class OdinTypeInstantiator {
         resolveArguments(outerScope, baseType, instantiatedType, arguments);
 
 
-        for (TsOdinUnionField baseField : baseType.getFields()) {
+        for (TsOdinUnionVariant baseField : baseType.getVariants()) {
             TsOdinType instantiatedFieldType = OdinTypeResolver.resolveType(instantiatedType.getScope(), baseField.getTypeDefinitionExpression().getType());
-            TsOdinUnionField instantiatedField = new TsOdinUnionField();
+            TsOdinUnionVariant instantiatedField = new TsOdinUnionVariant();
             instantiatedField.setTypeDefinitionExpression(baseField.getTypeDefinitionExpression());
             instantiatedField.setType(instantiatedFieldType);
-            instantiatedType.getFields().add(instantiatedField);
+            instantiatedType.getVariants().add(instantiatedField);
         }
 
         return instantiatedType;

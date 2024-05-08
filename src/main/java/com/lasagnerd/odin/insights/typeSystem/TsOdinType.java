@@ -100,5 +100,10 @@ public abstract class TsOdinType {
 
         return "<undefined>";
     }
+
+    public boolean isNillable() {
+        // TODO continue list
+        return this instanceof TsOdinUnionType || this instanceof TsOdinEnumType ;
+    }
 }
 

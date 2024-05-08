@@ -55,10 +55,7 @@ import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.insights.OdinScopeResolver;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
-import com.lasagnerd.odin.insights.typeSystem.TsOdinArrayType;
-import com.lasagnerd.odin.insights.typeSystem.TsOdinStructType;
-import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
-import com.lasagnerd.odin.insights.typeSystem.TsOdinUnionType;
+import com.lasagnerd.odin.insights.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
@@ -584,6 +581,10 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    //-----------------------------------------------------
+    // TESTS
+    //-----------------------------------------------------
+
     public void testSimpleFile() {
         String path = "src/test/testData/simple.odin";
         loadAndCheck(path);
@@ -694,21 +695,74 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testUnionType() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
-        var shapeVariable = findFirstVariableDeclarationStatement(odinFile, "testTypeInference7", "shape");
-        OdinExpression odinExpression = shapeVariable.getExpressionsList().getExpressionList().get(0);
-        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(odinExpression);
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference7", "shape");
         assertInstanceOf(tsOdinType, TsOdinUnionType.class);
         assertEquals("Shape", tsOdinType.getName());
     }
 
     public void testPolyUnionType()throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
-        var shapeVariable = findFirstVariableDeclarationStatement(odinFile, "testTypeInference8", "first_shape");
-        OdinExpression odinExpression = shapeVariable.getExpressionsList().getExpressionList().get(0);
-        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(odinExpression);
+        String procedureName = "testTypeInference8";
+        String variableName = "first_shape";
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, procedureName, variableName);
         assertInstanceOf(tsOdinType, TsOdinStructType.class);
         assertEquals("Line", tsOdinType.getName());
     }
+
+    public void testMaybeExpression() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference9", "k");
+        assertInstanceOf(tsOdinType, TsOdinTuple.class);
+        List<TsOdinType> types = ((TsOdinTuple) tsOdinType).getTypes();
+        assertSize(2, types);
+        assertEquals("Point", types.get(0).getName());
+        assertEquals("bool", types.get(1).getName());
+    }
+
+    public void testOrElseExpression() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference10", "point");
+        assertInstanceOf(tsOdinType, TsOdinStructType.class);
+        assertEquals("Point", tsOdinType.getName());
+    }
+
+    public void testTypeAssertOneValue() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference11", "point");
+        assertInstanceOf(tsOdinType, TsOdinStructType.class);
+        assertEquals("Point", tsOdinType.getName());
+    }
+
+    public void testTypeAssertTwoValues() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference12", "y");
+            assertEquals("bool", tsOdinType.getName());
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference12", "x");
+            assertEquals("Point", tsOdinType.getName());
+        }
+
+    }
+
+    public void testUnaryAndOperator() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference13", "point_ptr");
+        TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+        TsOdinStructType structType = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinStructType.class);
+        assertEquals("Point", structType.getName());
+
+    }
+
+
+    private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
+        var shapeVariable = findFirstVariableDeclarationStatement(odinFile, procedureName,
+                variableName);
+        OdinExpression odinExpression = shapeVariable.getExpressionsList().getExpressionList().get(0);
+        return OdinInferenceEngine.doInferType(odinExpression);
+    }
+
 
     private static @NotNull OdinProcedureDeclarationStatement findFirstProcedure(OdinFile odinFile, String procedureName) {
         Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
@@ -731,12 +785,5 @@ public class OdinParsingTest extends UsefulTestCase {
 
         return variable;
     }
-
-    public void testRefSolver() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
-        Collection<OdinRefExpression> refExpressions = PsiTreeUtil.findChildrenOfType(odinFile, OdinRefExpression.class);
-
-    }
-
 
 }

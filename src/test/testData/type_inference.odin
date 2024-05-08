@@ -57,7 +57,7 @@ get_entry :: proc(dict: Dict($Key, $Value)) -> (Key, Value) {
 }
 
 get_shape :: proc() -> Shape {
-    return Line {}
+    return Line { }
 }
 
 get_as_first_polyshape :: proc(poly_shape: PolyShape($T1, $T2)) -> T1 {
@@ -99,7 +99,7 @@ testTypeInference5:: proc() {
 }
 
 testTypeInference6 :: proc() {
-    dict := Dict(i32, Point) {}
+    dict := Dict(i32, Point) { }
     key, value := get_entry(dict)
     point := value
 }
@@ -109,6 +109,47 @@ testTypeInference7 :: proc() {
 }
 
 testTypeInference8 :: proc() {
-    poly_shape : PolyShape(Line, Point) = Line {}
+    poly_shape : PolyShape(Line, Point) = Line { }
     first_shape := get_as_first_polyshape(poly_shape)
+}
+
+testTypeInference9 :: proc() {
+    OptionalPoint :: union {
+        Point
+    }
+
+    o : OptionalPoint = Point { 0, 0 }
+    k := o.?
+}
+
+testTypeInference10 :: proc() {
+    OptionalPoint :: union {
+        Point
+    }
+
+    o : OptionalPoint = Point { 0, 0 }
+    point := o.? or_else Point { 0, 0 } // expect k to be Point
+}
+
+testTypeInference11 :: proc() {
+    OptionalPoint :: union {
+        Point
+    }
+
+    point := o.(Point) // expect k to be Point
+}
+
+testTypeInference12 :: proc() {
+    OptionalPoint :: union {
+        Point
+    }
+
+    point, ok := o.(Point) // expect k to be Point
+    x := point
+    y := ok
+}
+
+testTypeInference13 :: proc() {
+    point := Point {}
+    point_ptr := &point
 }

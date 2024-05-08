@@ -490,7 +490,7 @@ ternaryIfExpression                  ::= expression if       <<enterMode "OPERAN
 ternaryWhenExpression                ::= expression WHEN     <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
 
 castExpression                       ::= CAST LPAREN typeDefinitionExpression RPAREN expression {methods=[typeDefinitionExpression="/expression[0]"]}
-transmuteExpression                  ::= TRANSMUTE LPAREN expression RPAREN expression
+transmuteExpression                  ::= TRANSMUTE LPAREN expression RPAREN expression {methods=[typeDefinitionExpression="/expression[0]"]}
 autoCastExpression                   ::= AUTO_CAST expression
 nilLiteral                           ::= NIL
 uninitializedExpression              ::= TRIPLE_DASH
