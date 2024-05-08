@@ -755,6 +755,15 @@ public class OdinParsingTest extends UsefulTestCase {
 
     }
 
+    public void testSliceExpression() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference14", "point_slice");
+        TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
+        TsOdinStructType structType = assertInstanceOf(tsOdinArrayType.getElementType(), TsOdinStructType.class);
+        assertEquals("Point", structType.getName());
+
+    }
+
 
     private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         var shapeVariable = findFirstVariableDeclarationStatement(odinFile, procedureName,

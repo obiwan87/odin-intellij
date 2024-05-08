@@ -153,3 +153,8 @@ testTypeInference13 :: proc() {
     point := Point {}
     point_ptr := &point
 }
+
+testTypeInference14 :: proc() {
+    points := []Point { Point {}, Point {}}
+    point_slice := points[0:2]
+}

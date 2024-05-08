@@ -172,7 +172,11 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitSliceExpression(@NotNull OdinSliceExpression o) {
-        super.visitSliceExpression(o);
+        OdinExpression expression = o.getExpression();
+        TsOdinType tsOdinType = doInferType(scope, expression);
+        if(tsOdinType instanceof TsOdinArrayType) {
+            this.type = tsOdinType;
+        }
     }
 
     @Override
