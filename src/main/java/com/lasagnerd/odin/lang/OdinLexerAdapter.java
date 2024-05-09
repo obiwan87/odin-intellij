@@ -112,6 +112,7 @@ public class OdinLexerAdapter extends LexerBase {
                 } while((tokenType != OdinTypes.SQ_STRING_END && tokenType != OdinTypes.NEW_LINE) && tokenType != null);
                 tokenType = OdinTypes.SQ_STRING_LITERAL;
             }
+            // TODO try to subtract 1 when yypushback-ing -> pushback changes marked position but not start position
             tokenEnd = flexLexer.getTokenEnd();
         }
         catch (ProcessCanceledException e) {
