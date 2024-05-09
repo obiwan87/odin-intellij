@@ -128,7 +128,7 @@ public class OdinTypeInstantiator {
 
                 TsOdinType argumentType = resolveArgumentType(argumentExpression, tsOdinParameter, outerScope);
                 if (argumentType.isUnknown()) {
-                    System.out.println("Could not resolve argument type");
+                    System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n", tsOdinParameter.getValueName(), baseType.getClass().getSimpleName(), baseType.getName());
                     continue;
                 }
 

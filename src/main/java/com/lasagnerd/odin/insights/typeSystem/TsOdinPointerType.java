@@ -7,4 +7,9 @@ import lombok.EqualsAndHashCode;
 @Data
 public class TsOdinPointerType extends TsOdinType {
     private TsOdinType dereferencedType;
+
+    @Override
+    public String getLabel() {
+        return "^" + (dereferencedType != null ? dereferencedType.getLabel() : "<undefined>");
+    }
 }

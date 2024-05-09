@@ -7,4 +7,9 @@ import lombok.EqualsAndHashCode;
 @Data
 public class TsOdinArrayType extends TsOdinType {
     TsOdinType elementType;
+
+    @Override
+    public String getLabel() {
+        return "[]" + (elementType != null ? elementType.getLabel() : "<undefined>");
+    }
 }

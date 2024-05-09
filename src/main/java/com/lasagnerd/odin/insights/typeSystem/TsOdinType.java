@@ -8,10 +8,8 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 public abstract class TsOdinType {
@@ -49,6 +47,7 @@ public abstract class TsOdinType {
         {
             this.scope = OdinScope.EMPTY;
         }
+
         @Override
         public String getLabel() {
             return "UNKNOWN";
@@ -95,19 +94,22 @@ public abstract class TsOdinType {
         return this instanceof TsOdinPolymorphicType;
     }
 
-    public String getLabel() {
-        if (type != null) {
-            return type.getText();
-        }
-        if (name != null)
-            return name;
-
-        return "<undefined>";
-    }
-
     public boolean isNillable() {
         // TODO continue list
-        return this instanceof TsOdinUnionType || this instanceof TsOdinEnumType ;
+        return this instanceof TsOdinUnionType || this instanceof TsOdinEnumType;
+    }
+
+
+    public String getLabel() {
+        String label = getName() == null ? "<undefined>" : getName();
+        String parametersList = parameters.stream()
+                .map(TsOdinParameter::getType)
+                .filter(Objects::nonNull).map(TsOdinType::getLabel)
+                .collect(Collectors.joining(", "));
+        if (!parameters.isEmpty()) {
+            label += "(" + parametersList + ")";
+        }
+        return label;
     }
 }
 

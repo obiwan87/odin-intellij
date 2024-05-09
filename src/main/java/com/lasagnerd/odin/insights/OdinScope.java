@@ -2,6 +2,7 @@ package com.lasagnerd.odin.insights;
 
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
+import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +25,7 @@ public class OdinScope {
      * keeps track of the types
      */
     Map<String, TsOdinType> typeTable = new HashMap<>();
+    Map<OdinDeclaredIdentifier, TsOdinType> knownTypes = new HashMap<>();
 
     public OdinScope() {
 
@@ -39,8 +41,14 @@ public class OdinScope {
         return typeTable.get(polymorphicParameter);
     }
 
+    @Deprecated
     public void addType(String typeName, TsOdinType type) {
         typeTable.put(typeName, type);
+    }
+
+    @Deprecated
+    public void addTypes(OdinScope scope) {
+        typeTable.putAll(scope.typeTable);
     }
 
     public Collection<PsiNamedElement> getNamedElements() {
@@ -66,10 +74,15 @@ public class OdinScope {
     public void putAll(OdinScope scope) {
         symbolTable.putAll(scope.symbolTable);
         typeTable.putAll(scope.typeTable);
+        knownTypes.putAll(scope.knownTypes);
     }
 
-    public void addTypes(OdinScope scope) {
-        typeTable.putAll(scope.typeTable);
+    public void addKnownType(OdinDeclaredIdentifier declaredIdentifier, TsOdinType type) {
+        knownTypes.put(declaredIdentifier, type);
+    }
+
+    public void addKnownTypes(OdinScope scope) {
+        knownTypes.putAll(scope.knownTypes);
     }
 
     public void add(PsiNamedElement namedElement) {
