@@ -74,7 +74,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitTypeDefinitionExpression(@NotNull OdinTypeDefinitionExpression o) {
-        this.type = TsOdinBuiltInType.TYPE_ID;
+        this.type = TsOdinBuiltInType.TYPEID;
     }
 
     @Override
@@ -302,7 +302,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitBooleanLiteral(@NotNull OdinBooleanLiteral o) {
-        this.type = TsOdinBuiltInType.BOOLEAN;
+        this.type = TsOdinBuiltInType.BOOL;
     }
 
     @Override
@@ -335,13 +335,13 @@ public class OdinInferenceEngine extends OdinVisitor {
 
 
     private static @NotNull TsOdinTuple createOptionalOkTuple(TsOdinType tsOdinType) {
-        return new TsOdinTuple(List.of(tsOdinType, TsOdinBuiltInType.BOOLEAN));
+        return new TsOdinTuple(List.of(tsOdinType, TsOdinBuiltInType.BOOL));
     }
 
     private static boolean isOptionalOkTuple(TsOdinType tsOdinType) {
         if (tsOdinType instanceof TsOdinTuple tsOdinTuple) {
             return tsOdinTuple.getTypes().size() == 2
-                    && (tsOdinTuple.getTypes().get(1) == TsOdinBuiltInType.BOOLEAN || tsOdinTuple.getTypes().get(1).isNillable());
+                    && (tsOdinTuple.getTypes().get(1) == TsOdinBuiltInType.BOOL || tsOdinTuple.getTypes().get(1).isNillable());
         }
         return false;
     }

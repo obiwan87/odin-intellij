@@ -39,8 +39,8 @@ public class OdinScope {
         return typeTable.get(polymorphicParameter);
     }
 
-    public void addType(String polymorphicParameter, TsOdinType type) {
-        typeTable.put(polymorphicParameter, type);
+    public void addType(String typeName, TsOdinType type) {
+        typeTable.put(typeName, type);
     }
 
     public Collection<PsiNamedElement> getNamedElements() {

@@ -175,8 +175,7 @@ public class OdinTypeInstantiator {
         OdinTypeInferenceResult odinTypeInferenceResult = inferType(newScope, argumentExpression);
         TsOdinType argumentType = odinTypeInferenceResult.getType();
         if (argumentType instanceof TsOdinMetaType metaType && parameterType.isTypeId()) {
-            TsOdinType resolvedMetaType = OdinTypeResolver.resolveMetaType(newScope, metaType);
-            return Objects.requireNonNullElse(resolvedMetaType, TsOdinType.UNKNOWN);
+            return OdinTypeResolver.resolveMetaType(newScope, metaType);
         }
 
         // Case 2: The argumentExpression is a polymorphic type. In that case we know its type already and

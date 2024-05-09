@@ -8,6 +8,7 @@ import com.lasagnerd.odin.insights.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,10 +23,51 @@ import static com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator.RESERVED_TYPES;
 @Data
 public class OdinTypeResolver extends OdinVisitor {
 
-    public static @NotNull TsOdinType resolveType(OdinScope scope, OdinType type) {
+    public static @NotNull TsOdinType resolveType(OdinScope scope, @NotNull OdinType type) {
         OdinTypeResolver typeResolver = new OdinTypeResolver(scope);
         type.accept(typeResolver);
         return Objects.requireNonNullElse(typeResolver.type, TsOdinType.UNKNOWN);
+    }
+
+    public static @NonNull TsOdinType resolveType(OdinScope scope, OdinDeclaredIdentifier declaredIdentifier, OdinDeclaration declaration, @NotNull OdinType type) {
+        OdinTypeResolver typeResolver = new OdinTypeResolver(scope, declaration, declaredIdentifier);
+        type.accept(typeResolver);
+        return Objects.requireNonNullElse(typeResolver.type, TsOdinType.UNKNOWN);
+    }
+
+    private static List<TsOdinParameter> createParameters(List<OdinParamEntry> paramEntries, OdinScope localScope) {
+        List<TsOdinParameter> typeParameters = new ArrayList<>();
+        int k = 0;
+        for (var paramEntry : paramEntries) {
+            OdinParameterDeclaration parameterDeclaration = paramEntry.getParameterDeclaration();
+
+            // First, add all $Identifier expressions we encounter in this parameter to the current scope
+            for (OdinPolymorphicType odinPolymorphicType : PsiTreeUtil.findChildrenOfType(paramEntry, OdinPolymorphicType.class)) {
+                TsOdinType tsOdinType = resolveType(localScope, odinPolymorphicType);
+                localScope.addType(tsOdinType.getName(), tsOdinType);
+                localScope.add(odinPolymorphicType.getDeclaredIdentifier());
+            }
+
+            for (OdinDeclaredIdentifier declaredIdentifier : PsiTreeUtil.findChildrenOfType(paramEntry, OdinDeclaredIdentifier.class)) {
+                if (declaredIdentifier.getDollar() != null) {
+                    TsOdinPolymorphicType valuePolymorphicType = new TsOdinPolymorphicType();
+                    String name = declaredIdentifier.getName();
+                    valuePolymorphicType.setName(name);
+                    valuePolymorphicType.setDeclaredIdentifier(declaredIdentifier);
+                    localScope.addType(valuePolymorphicType.getName(), valuePolymorphicType);
+                    localScope.add(declaredIdentifier);
+                }
+            }
+
+            List<TsOdinParameterSpec> declarationSpecs = TsOdinParameterSpec.from(parameterDeclaration);
+            for (var declarationSpec : declarationSpecs) {
+                TsOdinParameter tsOdinParameter = mapSpecToParameter(localScope, declarationSpec, k);
+                typeParameters.add(tsOdinParameter);
+                k++;
+            }
+        }
+
+        return typeParameters;
     }
 
     @Data
@@ -34,13 +76,29 @@ public class OdinTypeResolver extends OdinVisitor {
         OdinType type;
     }
 
-    OdinScope scope;
-    private final OdinScope initialScope;
+    // Result
     TsOdinType type;
 
+    private final OdinScope scope;
+    private final OdinDeclaration typeDeclaration;
+    private final OdinDeclaredIdentifier typeDeclaredIdentifier;
+
     public OdinTypeResolver(OdinScope scope) {
-        this.initialScope = scope;
         this.scope = scope;
+        this.typeDeclaredIdentifier = null;
+        this.typeDeclaration = null;
+    }
+
+    public OdinTypeResolver(OdinScope scope, OdinDeclaration typeDeclaration, OdinDeclaredIdentifier typeDeclaredIdentifier) {
+        this.scope = scope;
+        this.typeDeclaration = typeDeclaration;
+        this.typeDeclaredIdentifier = typeDeclaredIdentifier;
+    }
+
+    private void setTypeDeclaration(TsOdinType tsOdinType) {
+        tsOdinType.setDeclaredIdentifier(typeDeclaredIdentifier);
+        tsOdinType.setName(typeDeclaredIdentifier != null? typeDeclaredIdentifier.getName() :  null);
+        tsOdinType.setDeclaration(typeDeclaration);
     }
 
     @Override
@@ -48,10 +106,8 @@ public class OdinTypeResolver extends OdinVisitor {
 
         if (qualifiedType.getPackageIdentifier() != null) {
             OdinScope packageScope = scope.getScopeOfImport(qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
-            OdinTypeResolver odinTypeExpressionResolver = new OdinTypeResolver(packageScope);
-            OdinType typeExpression = qualifiedType.getType();
-            typeExpression.accept(odinTypeExpressionResolver);
-            this.type = odinTypeExpressionResolver.type;
+
+            this.type = resolveType(packageScope, qualifiedType);
             return;
         }
 
@@ -83,7 +139,7 @@ public class OdinTypeResolver extends OdinVisitor {
         PsiNamedElement declaration;
         String identifierText = typeIdentifier.getText();
         if (RESERVED_TYPES.contains(identifierText)) {
-            type = (TsOdinBuiltInType) TsOdinBuiltInType.getBuiltInType(identifierText);
+            type = TsOdinBuiltInType.getBuiltInType(identifierText);
 
         } else {
             TsOdinType scopeType = scope.getType(typeIdentifier.getIdentifierToken().getText());
@@ -104,6 +160,8 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinUnionType tsOdinUnionType = new TsOdinUnionType();
         tsOdinUnionType.setType(unionType);
         tsOdinUnionType.getScope().putAll(scope);
+        setTypeDeclaration(tsOdinUnionType);
+
         List<TsOdinParameter> parameters = createParameters(unionType.getParamEntryList(), tsOdinUnionType.getScope());
         tsOdinUnionType.setParameters(parameters);
 
@@ -136,14 +194,10 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitMapType(@NotNull OdinMapType mapType) {
         TsOdinMapType tsOdinMapType = new TsOdinMapType();
         tsOdinMapType.setType(mapType);
-        OdinTypeResolver keyOdinTypeExpressionResolver = new OdinTypeResolver(scope);
-        mapType.getKeyType().accept(keyOdinTypeExpressionResolver);
-        TsOdinType keyType = keyOdinTypeExpressionResolver.type;
+        TsOdinType keyType = resolveType(scope, mapType.getKeyType());
         tsOdinMapType.setKeyType(keyType);
 
-        OdinTypeResolver valueOdinTypeExpressionResolver = new OdinTypeResolver(scope);
-        mapType.getValueType().accept(valueOdinTypeExpressionResolver);
-        TsOdinType valueType = valueOdinTypeExpressionResolver.type;
+        TsOdinType valueType = resolveType(scope, mapType.getValueType());
         tsOdinMapType.setValueType(valueType);
         this.type = tsOdinMapType;
     }
@@ -152,13 +206,8 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitPointerType(@NotNull OdinPointerType odinPointerType) {
         TsOdinPointerType tsOdinPointerType = new TsOdinPointerType();
         tsOdinPointerType.setType(odinPointerType);
-        OdinTypeResolver odinTypeExpressionResolver = new OdinTypeResolver(scope);
-        var typeExpression = odinPointerType.getType();
 
-        Objects.requireNonNull(typeExpression)
-                .accept(odinTypeExpressionResolver);
-
-        TsOdinType elementType = odinTypeExpressionResolver.type;
+        TsOdinType elementType = resolveType(scope, Objects.requireNonNull(odinPointerType.getType()));
         tsOdinPointerType.setDereferencedType(elementType);
 
         this.type = tsOdinPointerType;
@@ -169,6 +218,7 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinProcedureType tsOdinProcedureType = new TsOdinProcedureType();
         tsOdinProcedureType.setType(procedureType);
         tsOdinProcedureType.getScope().putAll(scope);
+        setTypeDeclaration(tsOdinProcedureType);
 
         List<TsOdinParameter> parameters = createParameters(procedureType.getParamEntryList(), tsOdinProcedureType.getScope());
         tsOdinProcedureType.setParameters(parameters);
@@ -206,6 +256,8 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinStructType tsOdinStructType = new TsOdinStructType();
         tsOdinStructType.setType(structType);
         tsOdinStructType.getScope().putAll(scope);
+        setTypeDeclaration(tsOdinStructType);
+
         List<OdinParamEntry> paramEntries = structType.getParamEntryList();
 
         List<TsOdinParameter> parameters = createParameters(paramEntries, tsOdinStructType.getScope());
@@ -221,40 +273,8 @@ public class OdinTypeResolver extends OdinVisitor {
         this.type = tsOdinStructType;
     }
 
-    private static List<TsOdinParameter> createParameters(List<OdinParamEntry> paramEntries, OdinScope localScope) {
-        List<TsOdinParameter> typeParameters = new ArrayList<>();
-        int k = 0;
-        for (var paramEntry : paramEntries) {
-            OdinParameterDeclaration parameterDeclaration = paramEntry.getParameterDeclaration();
 
-            // First, add all $Identifier expressions we encounter in this parameter to the current scope
-            for (OdinPolymorphicType odinPolymorphicType : PsiTreeUtil.findChildrenOfType(paramEntry, OdinPolymorphicType.class)) {
-                TsOdinType tsOdinType = resolveType(localScope, odinPolymorphicType);
-                localScope.addType(tsOdinType.getName(), tsOdinType);
-                localScope.add(odinPolymorphicType.getDeclaredIdentifier());
-            }
 
-            for (OdinDeclaredIdentifier declaredIdentifier : PsiTreeUtil.findChildrenOfType(paramEntry, OdinDeclaredIdentifier.class)) {
-                if (declaredIdentifier.getDollar() != null) {
-                    TsOdinPolymorphicType valuePolymorphicType = new TsOdinPolymorphicType();
-                    String name = declaredIdentifier.getName();
-                    valuePolymorphicType.setName(name);
-                    valuePolymorphicType.setDeclaredIdentifier(declaredIdentifier);
-                    localScope.addType(valuePolymorphicType.getName(), valuePolymorphicType);
-                    localScope.add(declaredIdentifier);
-                }
-            }
-
-            List<TsOdinParameterSpec> declarationSpecs = TsOdinParameterSpec.from(parameterDeclaration);
-            for (var declarationSpec : declarationSpecs) {
-                TsOdinParameter tsOdinParameter = mapSpecToParameter(localScope, declarationSpec, k);
-                typeParameters.add(tsOdinParameter);
-                k++;
-            }
-        }
-
-        return typeParameters;
-    }
 
     @Data
     private static class TsOdinParameterSpec {
@@ -321,6 +341,7 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitEnumType(@NotNull OdinEnumType o) {
         TsOdinEnumType enumType = new TsOdinEnumType();
         enumType.setScope(scope);
+        setTypeDeclaration(enumType);
         // TODO Set fields
 
     }
@@ -352,22 +373,22 @@ public class OdinTypeResolver extends OdinVisitor {
                 OdinDeclaration.class);
 
         if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-            structDeclarationStatement.getStructType().accept(this);
+            return resolveType(scope, identifier,  odinDeclaration, structDeclarationStatement.getStructType());
         }
 
-        if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
-            enumDeclarationStatement.getEnumType().accept(this);
+        else if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
+            return resolveType(scope, identifier, odinDeclaration, enumDeclarationStatement.getEnumType());
         }
 
-        if (odinDeclaration instanceof OdinUnionDeclarationStatement unionDeclarationStatement) {
-            unionDeclarationStatement.getUnionType().accept(this);
+        else if (odinDeclaration instanceof OdinUnionDeclarationStatement unionDeclarationStatement) {
+            return resolveType(scope, identifier, odinDeclaration, unionDeclarationStatement.getUnionType());
         }
 
-        if (odinDeclaration instanceof OdinProcedureDeclarationStatement procedureDeclarationStatement) {
-            procedureDeclarationStatement.getProcedureType().accept(this);
+        else if (odinDeclaration instanceof OdinProcedureDeclarationStatement procedureDeclarationStatement) {
+            return resolveType(scope, identifier, odinDeclaration, procedureDeclarationStatement.getProcedureType());
         }
 
-        if (odinDeclaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
+        else if (odinDeclaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
             List<OdinExpression> expressionList = constantInitializationStatement.getExpressionsList().getExpressionList();
             if (!expressionList.isEmpty()) {
                 int index = constantInitializationStatement.getDeclaredIdentifiers().indexOf(identifier);
@@ -381,37 +402,35 @@ public class OdinTypeResolver extends OdinVisitor {
                 OdinExpression odinExpression = expressionList.get(index);
                 OdinTypeInferenceResult typeInferenceResult = inferType(scope, odinExpression);
                 if (typeInferenceResult.getType() instanceof TsOdinMetaType metaType) {
-                    this.type = resolveMetaType(scope, metaType);
-                    odinDeclaration = metaType.getDeclaration();
+                   return resolveMetaType(scope, identifier, odinDeclaration, metaType);
                 }
             }
         }
 
-        if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
-            polymorphicType.accept(this);
-        }
-
-        if (this.type != null) {
-            this.type.setDeclaration(odinDeclaration);
-            this.type.setName(identifier.getName());
-            this.type.setDeclaredIdentifier(identifier);
-            return this.type;
+        else if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
+            return resolveType(scope, identifier, odinDeclaration, polymorphicType);
         }
 
         return TsOdinType.UNKNOWN;
     }
 
     public static TsOdinType resolveMetaType(OdinScope scope, TsOdinMetaType metaType) {
+        return resolveMetaType(scope, null, null, metaType);
+    }
+
+    public static TsOdinType resolveMetaType(OdinScope scope, OdinDeclaredIdentifier declaredIdentifier, OdinDeclaration declaration, TsOdinMetaType metaType) {
         if (metaType.getMetaType() == TsOdinMetaType.MetaType.BUILTIN) {
             return TsOdinBuiltInType.getBuiltInType(metaType.getName());
         } else if (metaType.getType() != null) {
-            TsOdinType tsOdinType = resolveType(scope, metaType.getType());
+            TsOdinType tsOdinType = resolveType(scope, declaredIdentifier, declaration, metaType.getType());
             tsOdinType.setDeclaration(metaType.getDeclaration());
             tsOdinType.setName(metaType.getName());
 //            tsOdinType.setScope(metaType.getScope());
             tsOdinType.setDeclaredIdentifier(metaType.getDeclaredIdentifier());
             return tsOdinType;
         }
-        return null;
+        return TsOdinType.UNKNOWN;
     }
+
+
 }
