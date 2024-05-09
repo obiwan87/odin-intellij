@@ -20,7 +20,7 @@ import static com.lasagnerd.odin.lang.psi.OdinTypes.*;
   }
 
   public IElementType determineFloatType() {
-      char lastChar = yycharat(zzCurrentPos);
+      char lastChar = yytext().charAt(yylength()-1);
       if(lastChar == 'j' || lastChar == 'k') {
           return QUAT_FLOAT_LITERAL;
       }
@@ -124,9 +124,9 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 
         {IntegerDecLiteral} { yybegin(NLSEMI_STATE); return INTEGER_DEC_LITERAL; }
 
+        {IntegerDecLiteral} "." [0-9]+ { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
         {IntegerDecLiteral}? "." {IntegerDecLiteral} {ExponentPart}? [ijk]? {yybegin(NLSEMI_STATE); return determineFloatType(); }
         {IntegerDecLiteral} "." / [^.] {yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
-        {IntegerDecLiteral} "." [0-9]+ { yybegin(NLSEMI_STATE); return FLOAT_DEC_LITERAL; }
         {IntegerDecLiteral}{ExponentPart}[ijk]? {yybegin(NLSEMI_STATE); return determineFloatType(); }
 
         {IntegerOctLiteral} { yybegin(NLSEMI_STATE); return INTEGER_OCT_LITERAL; }
