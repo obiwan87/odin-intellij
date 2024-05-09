@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.lang.psi.OdinStringLiteral;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,27 @@ public class OdinAnnotator implements Annotator {
                             .highlightType(ProblemHighlightType.GENERIC_ERROR)
                             .create();
                 }
+            }
+        }
+
+        IElementType elementType = PsiUtilCore.getElementType(element);
+        if(elementType == OdinTypes.DQ_STRING_LITERAL) {
+            String text = element.getText();
+            if(text.contains("\n") || (text.endsWith("\\\"") || !text.endsWith("\""))) {
+                holder.newAnnotation(HighlightSeverity.ERROR, "Line end not allowed inside string literals")
+                        .range(element.getTextRange())
+                        .highlightType(ProblemHighlightType.GENERIC_ERROR)
+                        .create();
+            }
+        }
+
+        if(elementType == OdinTypes.SQ_STRING_LITERAL) {
+            String text = element.getText();
+            if(text.contains("\n") || (text.endsWith("\\'") || !text.endsWith("'"))) {
+                holder.newAnnotation(HighlightSeverity.ERROR, "Line end not allowed inside rune literals")
+                        .range(element.getTextRange())
+                        .highlightType(ProblemHighlightType.GENERIC_ERROR)
+                        .create();
             }
         }
     }
