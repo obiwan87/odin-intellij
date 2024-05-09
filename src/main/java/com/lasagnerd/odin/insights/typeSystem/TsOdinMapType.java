@@ -8,4 +8,9 @@ import lombok.EqualsAndHashCode;
 public class TsOdinMapType extends TsOdinType {
     TsOdinType keyType;
     TsOdinType valueType;
+
+    @Override
+    public String getLabel() {
+        return "map[" + getLabelOrUndefined(keyType) + "]" + getLabelOrUndefined(valueType);
+    }
 }

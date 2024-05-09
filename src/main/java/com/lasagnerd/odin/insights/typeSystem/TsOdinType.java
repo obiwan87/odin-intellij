@@ -4,9 +4,8 @@ import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinType;
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -102,14 +101,25 @@ public abstract class TsOdinType {
 
     public String getLabel() {
         String label = getName() == null ? "<undefined>" : getName();
-        String parametersList = parameters.stream()
-                .map(TsOdinParameter::getType)
-                .filter(Objects::nonNull).map(TsOdinType::getLabel)
-                .collect(Collectors.joining(", "));
+        List<TsOdinParameter> parameters1 = parameters;
+        String parametersList = getParametersString(parameters1);
         if (!parameters.isEmpty()) {
             label += "(" + parametersList + ")";
         }
         return label;
+    }
+
+    static @NotNull String getParametersString(List<TsOdinParameter> parameters1) {
+        return parameters1.stream()
+                .map(TsOdinParameter::getType)
+                .filter(Objects::nonNull).map(TsOdinType::getLabel)
+                .collect(Collectors.joining(", "));
+    }
+
+    static String getLabelOrUndefined(TsOdinType type) {
+        if(type == null)
+            return "<undefined>";
+        return type.getLabel();
     }
 }
 

@@ -386,6 +386,10 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitPolymorphicType(@NotNull OdinPolymorphicType polymorphicType) {
         TsOdinPolymorphicType tsOdinPolymorphicType = new TsOdinPolymorphicType();
         initializeNamedType(tsOdinPolymorphicType);
+        tsOdinPolymorphicType.setDeclaration(polymorphicType);
+        tsOdinPolymorphicType.setDeclaredIdentifier(polymorphicType.getDeclaredIdentifier());
+        tsOdinPolymorphicType.setName(polymorphicType.getDeclaredIdentifier().getName());
+
         tsOdinPolymorphicType.setScope(scope);
 
         tsOdinPolymorphicType.setType(polymorphicType);
