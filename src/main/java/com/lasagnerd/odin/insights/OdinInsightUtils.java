@@ -12,7 +12,6 @@ import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -56,10 +55,6 @@ public class OdinInsightUtils {
 
     public static PsiElement findFirstDeclaration(OdinIdentifier identifier) {
         OdinScope parentScope = findScope(identifier).with(getPackagePath(identifier));
-        return findFirstDeclaration(parentScope, identifier);
-    }
-
-    private static @Nullable PsiNamedElement findFirstDeclaration(OdinScope parentScope, OdinIdentifier identifier) {
         OdinRefExpression refExpression = findFirstParentOfType(identifier, true, OdinRefExpression.class);
         OdinScope scope = OdinScope.EMPTY;
         if (refExpression != null) {
@@ -69,24 +64,10 @@ public class OdinInsightUtils {
                 scope = parentScope;
             }
         } else {
-
-            OdinTypeDefinitionExpression typeDefinitionExpression = findFirstParentOfType(identifier, true, OdinTypeDefinitionExpression.class);
-            if (typeDefinitionExpression != null) {
-                OdinType odinType = typeDefinitionExpression.getType();
-                if (odinType instanceof OdinQualifiedType qualifiedType) {
-                    if (qualifiedType.getPackageIdentifier() != null && qualifiedType.getPackageIdentifier()
-                            .getIdentifierToken()
-                            .getText()
-                            .equals(identifier.getIdentifierToken().getText())) {
-                        scope = parentScope;
-                    } else {
-                        TsOdinType type = OdinTypeResolver.resolveType(parentScope, qualifiedType);
-                        scope = type.getScope();
-                    }
-                } else {
-                    TsOdinType type = OdinTypeResolver.resolveType(parentScope, odinType);
-                    scope = type.getScope();
-                }
+            OdinType odinType = OdinInsightUtils.findFirstParentOfType(identifier, true, OdinType.class);
+            if (odinType instanceof OdinQualifiedType || odinType instanceof OdinSimpleRefType) {
+                TsOdinType type = OdinTypeResolver.resolveType(parentScope, odinType);
+                scope = type.getScope();
             }
         }
 
