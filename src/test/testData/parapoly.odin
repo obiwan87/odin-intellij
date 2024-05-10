@@ -1,6 +1,2 @@
-package tests
+package main
 
-import "vendor:glfw"
-P :: struct {
-    x: glfw.
-}
