@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 public abstract class TsOdinType {
     String name;
 
+    // Connections to PSI tree
     OdinDeclaration declaration;
     OdinDeclaredIdentifier declaredIdentifier;
     List<TsOdinParameter> parameters = new ArrayList<>();

@@ -5,7 +5,6 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class TsOdinTypeAlias extends TsOdinType {
-    boolean distinct;
-    TsOdinType aliasedType;
+public class TsOdinMultiPointerType extends TsOdinType {
+    TsOdinType dereferencedType;
 }

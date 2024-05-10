@@ -203,8 +203,8 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | unionDeclarationStatement
                                          | structDeclarationStatement
                                          | procedureDeclarationStatement
-                                         | constantInitializationStatement
                                          | bitsetDeclarationStatement
+                                         | constantInitializationStatement
                                          | variableInitializationStatement
                                          | variableDeclarationStatement
                                          | procedureOverloadDeclarationStatement
@@ -233,11 +233,11 @@ structDeclarationStatement           ::= (attributeStatement eos?)* declaredIden
 structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> structBlock
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
-fieldDeclarationStatement            ::= USING? tagHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinitionExpression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
+fieldDeclarationStatement            ::= USING? directiveHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinitionExpression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
 
 // Enum
 enumDeclarationStatement             ::= (attributeStatement eos?)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
-enumType                             ::= ENUM [IDENTIFIER_TOKEN (DOT IDENTIFIER_TOKEN)*] enumBlock
+enumType                             ::= ENUM [qualifiedType|simpleRefType] enumBlock
 enumBlock                            ::= blockStart [enumBody] blockEnd
 enumBody                             ::= enumValueDeclaration (COMMA enumValueDeclaration)* [EOS_TOKEN|COMMA]
 enumValueDeclaration                 ::= declaredIdentifier [EQ expression]
@@ -306,12 +306,12 @@ multiPointerType                     ::= LBRACKET CARET RBRACKET type
 bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinitionExpression] RBRACKET
 mapType                              ::= MAP LBRACKET typeDefinitionExpression RBRACKET typeDefinitionExpression {methods=[getKeyType getValueType]}
 matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinitionExpression
-arrayType                            ::= [tagHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinitionExpression {methods=[getTypeDefinition]}
+arrayType                            ::= [directiveHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinitionExpression {methods=[getTypeDefinition]}
 
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList { methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
 
-private symbolDefinitionHead         ::= (attributeStatement eos?)* [tagHead] [USING] identifierList colonOpening typeDefinitionExpression?
+private symbolDefinitionHead         ::= (attributeStatement eos?)* [directiveHead] [USING] identifierList colonOpening typeDefinitionExpression?
 colonOpening                         ::= COLON
 
 variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition]}
@@ -319,7 +319,7 @@ variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' }
 
-assignmentStatement                  ::= [tagHead] expressionsList assignmentOperator expressionsList
+assignmentStatement                  ::= [directiveHead] expressionsList assignmentOperator expressionsList
 expressionsList                      ::= expression (COMMA expression)*
 
 assignmentOperator                   ::= EQ
@@ -398,20 +398,30 @@ expression                           ::= postfixGroup
 
 fake binaryExpression                ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
 
-
+// Arithmetic
 mulExpression                        ::= expression STAR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 divExpression                        ::= expression DIV             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 modExpression                        ::= expression MOD             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 remainderExpression                  ::= expression REMAINDER       <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 addExpression                        ::= expression PLUS            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 subExpression                        ::= expression MINUS           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+
+// Bitwise
 bitwiseAndExpression                 ::= expression AND             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 bitwiseOrExpression                  ::= expression PIPE            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 bitwiseXorExpression                 ::= expression TILDE           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 bitwiseAndNotExpression              ::= expression ANDNOT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-andExpression                        ::= expression ANDAND          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-orExpression                         ::= expression OROR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-orElseExpression                     ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression }
+lshiftExpression                     ::= expression LSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+rshiftExpression                     ::= expression RSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+
+// or_else
+orElseExpression                     ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression                             }
+
+// Range
+rangeInclusiveExpression             ::= expression RANGE_INCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+rangeExclusiveExpression             ::= expression RANGE_EXCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+
+// boolean operators
 inExpression                         ::= expression IN              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 notInExpression                      ::= expression NOT_IN          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 ltExpression                         ::= expression LT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
@@ -420,10 +430,8 @@ lteExpression                        ::= expression LTE             <<enterMode 
 gteExpression                        ::= expression GTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 eqeqExpression                       ::= expression EQEQ            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 neqExpression                        ::= expression NEQ             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-lshiftExpression                     ::= expression LSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-rshiftExpression                     ::= expression RSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-rangeInclusiveExpression             ::= expression RANGE_INCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-rangeExclusiveExpression             ::= expression RANGE_EXCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+orExpression                         ::= expression OROR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+andExpression                        ::= expression ANDAND          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
 
 private mulGroup                     ::= mulExpression
                                          | divExpression
@@ -571,8 +579,8 @@ compoundValueEnd                     ::= RBRACE
 compoundValueBody                    ::= [expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]
 
 directiveExpression                  ::= directive
-directive                            ::= tagHead [basicLiteral | (LPAREN expressionsList? RPAREN)]
-tagHead                              ::= HASH IDENTIFIER_TOKEN
+directive                            ::= directiveHead [basicLiteral | (LPAREN expressionsList? RPAREN)]
+directiveHead                        ::= HASH IDENTIFIER_TOKEN
 
 
 
@@ -665,7 +673,7 @@ forInParameter                       ::= AND? declaredIdentifier
 // Conditional statement (=if-elseif-else)
 private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit] SEMICOLON] condition <<exitNoBlockMode>>
 
-conditionalStatement                 ::= [label] [tagHead] ifBlock (sos elseIfBlock)* [sos elseBlock]
+conditionalStatement                 ::= [label] [directiveHead] ifBlock (sos elseIfBlock)* [sos elseBlock]
 
 ifBlock                              ::= if conditionalHead statementBody {
                                                 implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"
@@ -686,7 +694,7 @@ switchCase                           ::= CASE [expression (COMMA expression)*] c
 caseBlock                            ::= COLON statementList?
 
 // When statement (compile time, which means it does not support an init block)
-whenStatement                        ::= [label] [tagHead] WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody (sos elseWhenBlock)* [sos elseBlock]
+whenStatement                        ::= [label] [directiveHead] WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody (sos elseWhenBlock)* [sos elseBlock]
 elseWhenBlock                        ::= else WHEN <<enterNoBlockMode>>  condition <<exitNoBlockMode>> statementBody
 
 

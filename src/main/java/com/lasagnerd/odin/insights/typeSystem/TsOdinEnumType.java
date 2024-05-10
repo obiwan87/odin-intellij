@@ -6,4 +6,10 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class TsOdinEnumType extends TsOdinType {
+    TsOdinBuiltInType backingType;
+
+    @Override
+    public String getLabel() {
+        return "enum " + getName() + (backingType != null ? " " + backingType.getLabel() : "");
+    }
 }

@@ -52,7 +52,6 @@ import com.intellij.util.messages.MessageBus;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinReferenceResolver;
 import com.lasagnerd.odin.insights.OdinScope;
-import com.lasagnerd.odin.insights.OdinScopeResolver;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.insights.typeSystem.*;
@@ -803,6 +802,19 @@ public class OdinParsingTest extends UsefulTestCase {
         assertEquals("rune", r.getName());
         TsOdinType s = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "s");
         assertEquals("string", s.getName());
+    }
+
+    public void testBitSetsAndEnums() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference17", "b");
+            assertEquals("bit_set[enum Direction i32; u8]", tsOdinType.getLabel());
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference17", "c");
+            assertEquals("enum Direction i32", tsOdinType.getLabel());
+        }
     }
 
     private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {

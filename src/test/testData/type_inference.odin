@@ -176,3 +176,14 @@ testTypeInference16 :: proc() {
     r := '\n'
     s := "string"
 }
+
+Direction :: enum i32 {
+    North, East, South, West
+}
+
+DirectionSet :: bit_set[Direction; u8]
+
+testTypeInference17 :: proc() {
+    b := DirectionSet { .South, .East }
+    c := Direction.East
+}

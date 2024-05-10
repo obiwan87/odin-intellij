@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.insights.typeInference;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.insights.typeSystem.*;
@@ -72,6 +73,8 @@ public class OdinInferenceEngine extends OdinVisitor {
         return doInferType(scope, odinExpression);
     }
 
+
+
     @Override
     public void visitTypeDefinitionExpression(@NotNull OdinTypeDefinitionExpression o) {
         this.type = TsOdinBuiltInType.TYPEID;
@@ -132,7 +135,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             if (tsOdinMetaType.getMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
                 TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
-                if (procedureType != null && !procedureType.getReturnTypes().isEmpty()) {
+                if (!procedureType.getReturnTypes().isEmpty()) {
                     TsOdinProcedureType instantiatedType = OdinTypeInstantiator
                             .instantiateProcedure(scope, o.getArgumentList(), procedureType);
                     if (instantiatedType.getReturnTypes().size() == 1) {
@@ -147,9 +150,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             if (tsOdinMetaType.getMetaType() == TsOdinMetaType.MetaType.STRUCT) {
                 TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
-                if (structType != null) {
-                    this.type = OdinTypeInstantiator.instantiateStruct(scope, o.getArgumentList(), structType);
-                }
+                this.type = OdinTypeInstantiator.instantiateStruct(scope, o.getArgumentList(), structType);
             }
         }
     }
@@ -166,6 +167,14 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         if (tsOdinType instanceof TsOdinMapType mapType) {
             this.type = mapType.getValueType();
+        }
+
+        if(tsOdinType instanceof TsOdinMatrixType matrixType) {
+            this.type = matrixType.getElementType();
+        }
+
+        if(tsOdinType instanceof TsOdinMultiPointerType multiPointerType) {
+            this.type = multiPointerType.getDereferencedType();
         }
     }
 
@@ -333,6 +342,17 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
     }
 
+    @Override
+    public void visitRangeInclusiveExpression(@NotNull OdinRangeInclusiveExpression o) {
+        OdinExpression odinExpression = o.getExpressionList().get(0);
+        this.type = doInferType(scope, odinExpression);
+    }
+
+    @Override
+    public void visitRangeExclusiveExpression(@NotNull OdinRangeExclusiveExpression o) {
+        OdinExpression odinExpression = o.getExpressionList().get(0);
+        this.type = doInferType(scope, odinExpression);
+    }
 
     private static @NotNull TsOdinTuple createOptionalOkTuple(TsOdinType tsOdinType) {
         return new TsOdinTuple(List.of(tsOdinType, TsOdinBuiltInType.BOOL));
@@ -408,8 +428,13 @@ public class OdinInferenceEngine extends OdinVisitor {
                 OdinType mainType = initializationStatement.getTypeDefinitionExpression().getType();
                 return OdinTypeResolver.resolveType(parentScope, mainType);
             }
-            int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
-            List<OdinExpression> expressionList = initializationStatement.getExpressionsList().getExpressionList();
+            int index = initializationStatement.getIdentifierList()
+                    .getDeclaredIdentifierList()
+                    .indexOf(declaredIdentifier);
+
+            List<OdinExpression> expressionList = initializationStatement
+                    .getExpressionsList()
+                    .getExpressionList();
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
             for (OdinExpression odinExpression : expressionList) {
@@ -498,6 +523,16 @@ public class OdinInferenceEngine extends OdinVisitor {
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
             tsOdinMetaType.setName(declaredIdentifier.getName());
             return tsOdinMetaType;
+        }
+
+        if(odinDeclaration instanceof OdinEnumValueDeclaration odinEnumValueDeclaration) {
+            OdinEnumType enumType = OdinInsightUtils.findFirstParentOfType(odinEnumValueDeclaration, true, OdinEnumType.class);
+            OdinEnumDeclarationStatement enumDeclarationStatement = OdinInsightUtils.findFirstParentOfType(enumType, true, OdinEnumDeclarationStatement.class);
+            OdinDeclaredIdentifier enumDeclaredIdentifier = null;
+            if(enumDeclarationStatement != null) {
+                enumDeclaredIdentifier = enumDeclarationStatement.getDeclaredIdentifier();
+            }
+            return OdinTypeResolver.resolveType(parentScope, enumDeclaredIdentifier, enumDeclarationStatement, enumType);
         }
 
         return TsOdinType.UNKNOWN;

@@ -143,12 +143,12 @@ public class OdinLangSyntaxAnnotator implements Annotator {
 
         highlightEscapeSequences(psiElement, annotationHolder);
 
-        if (psiElement instanceof OdinTagHead tagHead) {
+        if (psiElement instanceof OdinDirectiveHead tagHead) {
             highlightTagHead(tagHead, annotationHolder);
         }
     }
 
-    private static void highlightTagHead(OdinTagHead tagHead, @NotNull AnnotationHolder annotationHolder) {
+    private static void highlightTagHead(OdinDirectiveHead tagHead, @NotNull AnnotationHolder annotationHolder) {
 
         var matchRange = tagHead.getTextRange();
         annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
