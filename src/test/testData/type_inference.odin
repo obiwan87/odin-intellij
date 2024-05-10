@@ -194,3 +194,9 @@ testTypeInference_withTypeAliases :: proc() {
     x := PointDict {}
     point := x.entries[0]
 }
+
+Points :: []Point
+testTypeInference_withTypeAliases_2 :: proc() {
+    x : Points = []Point2D {}
+    point := x[0]
+}

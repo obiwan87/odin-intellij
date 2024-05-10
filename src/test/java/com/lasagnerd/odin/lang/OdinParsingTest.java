@@ -823,6 +823,13 @@ public class OdinParsingTest extends UsefulTestCase {
         assertInstanceOf(tsOdinType, TsOdinStructType.class);
     }
 
+    public void testTypeAliases_2() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference_withTypeAliases_2", "point");
+        assertInstanceOf(tsOdinType, TsOdinStructType.class);
+        assertEquals("Point", tsOdinType.getName());
+    }
+
     private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         var shapeVariable = findFirstVariableDeclarationStatement(odinFile, procedureName,
                 variableName);
