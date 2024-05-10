@@ -11,7 +11,6 @@ import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine.doInferType;
 import static com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine.inferType;
@@ -529,10 +528,17 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitConstrainedType(@NotNull OdinConstrainedType constrainedType) {
         OdinType mainType = constrainedType.getTypeList().get(0);
         OdinType specializedType = constrainedType.getTypeList().get(1);
+        TsOdinConstrainedType tsOdinConstrainedType = new TsOdinConstrainedType();
+        tsOdinConstrainedType.setType(constrainedType);
+        initializeNamedType(tsOdinConstrainedType);
 
-        // TODO
+        TsOdinType tsOdinMainType = doResolveType(tsOdinConstrainedType.getScope(), mainType);
+        TsOdinType tsOdinSpecializedType = doResolveType(tsOdinConstrainedType.getScope(), specializedType);
 
-        super.visitConstrainedType(constrainedType);
+        tsOdinConstrainedType.setMainType(tsOdinMainType);
+        tsOdinConstrainedType.setSpecializedType(tsOdinSpecializedType);
+
+        this.type = tsOdinConstrainedType;
     }
 
     private static class OdinMetaTypeResolver extends OdinVisitor {
