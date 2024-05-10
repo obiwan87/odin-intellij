@@ -39,7 +39,7 @@ public abstract class TsOdinType {
      */
     OdinScope scope = new OdinScope();
 
-    Map<String, TsOdinType> resolvedPolymorphicParameters = new HashMap<>();
+    Map<String, TsOdinType> polymorphicParameters = new HashMap<>();
 
     public OdinType type;
 

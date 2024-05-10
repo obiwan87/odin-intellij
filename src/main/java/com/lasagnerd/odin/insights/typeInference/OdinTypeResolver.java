@@ -355,6 +355,9 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinArrayType tsOdinArrayType = new TsOdinArrayType();
         tsOdinArrayType.setType(arrayType);
         TsOdinType elementType = resolveType(scope, arrayType.getTypeDefinition());
+//        if(elementType.isPolymorphic()) {
+//            tsOdinArrayType.getResolvedPolymorphicParameters().put(elementType.getName(), elementType);
+//        }
         tsOdinArrayType.setElementType(elementType);
 
         this.type = tsOdinArrayType;
