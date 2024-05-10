@@ -15,4 +15,9 @@ public class TsOdinTuple extends TsOdinType {
         }
         return TsOdinType.UNKNOWN;
     }
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.UNKNOWN;
+    }
 }

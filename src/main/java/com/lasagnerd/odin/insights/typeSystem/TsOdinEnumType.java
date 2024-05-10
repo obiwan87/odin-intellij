@@ -12,4 +12,9 @@ public class TsOdinEnumType extends TsOdinType {
     public String getLabel() {
         return "enum " + getName() + (backingType != null ? " " + backingType.getLabel() : "");
     }
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.ENUM;
+    }
 }

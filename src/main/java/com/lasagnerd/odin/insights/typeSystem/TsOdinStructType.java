@@ -13,4 +13,8 @@ public class TsOdinStructType extends TsOdinType {
 
     Map<String, TsOdinType> fields = new HashMap<>();
 
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.STRUCT;
+    }
 }

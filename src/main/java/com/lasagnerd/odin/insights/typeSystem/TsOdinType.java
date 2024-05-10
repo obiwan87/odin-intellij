@@ -54,6 +54,11 @@ public abstract class TsOdinType {
         }
 
         @Override
+        public TsOdinMetaType.MetaType getMetaType() {
+            return TsOdinMetaType.MetaType.UNKNOWN;
+        }
+
+        @Override
         public String getName() {
             return "UNKNOWN";
         }
@@ -71,6 +76,11 @@ public abstract class TsOdinType {
         @Override
         public String getLabel() {
             return "VOID";
+        }
+
+        @Override
+        public TsOdinMetaType.MetaType getMetaType() {
+            return TsOdinMetaType.MetaType.VOID;
         }
     };
 
@@ -99,7 +109,6 @@ public abstract class TsOdinType {
         return this instanceof TsOdinUnionType || this instanceof TsOdinEnumType;
     }
 
-
     public String getLabel() {
         String label = getName() == null ? "<undefined>" : getName();
         List<TsOdinParameter> parameters1 = parameters;
@@ -109,6 +118,8 @@ public abstract class TsOdinType {
         }
         return label;
     }
+
+    public abstract TsOdinMetaType.MetaType getMetaType();
 
     static @NotNull String getParametersString(List<TsOdinParameter> parameters1) {
         return parameters1.stream()
@@ -122,5 +133,9 @@ public abstract class TsOdinType {
             return "<undefined>";
         return type.getLabel();
     }
+
+
+
+
 }
 

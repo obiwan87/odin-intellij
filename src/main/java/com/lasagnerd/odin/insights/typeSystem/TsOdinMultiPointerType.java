@@ -7,4 +7,9 @@ import lombok.EqualsAndHashCode;
 @Data
 public class TsOdinMultiPointerType extends TsOdinType {
     TsOdinType dereferencedType;
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.MULTI_POINTER;
+    }
 }

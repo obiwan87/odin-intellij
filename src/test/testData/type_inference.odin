@@ -150,8 +150,8 @@ testTypeInference12 :: proc() {
 }
 
 testTypeInference13 :: proc() {
-    point := Point { }
-    point_ptr := &point
+    p := Point { }
+    point_ptr := &p
 }
 
 testTypeInference14 :: proc() {
@@ -186,4 +186,11 @@ DirectionSet :: bit_set[Direction; u8]
 testTypeInference17 :: proc() {
     b := DirectionSet { .South, .East }
     c := Direction.East
+}
+
+Point2D :: Point
+PointDict :: Dict(i32, Point)
+testTypeInference_withTypeAliases :: proc() {
+    x := PointDict {}
+    point := x.entries[0]
 }

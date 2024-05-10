@@ -7,4 +7,9 @@ import lombok.EqualsAndHashCode;
 @Data
 public class TsOdinMatrixType extends TsOdinType {
     TsOdinType elementType;
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.UNKNOWN;
+    }
 }

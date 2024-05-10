@@ -33,13 +33,40 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     public static @NotNull TsOdinType resolveType(int level,
-                                                   OdinScope scope,
-                                                   OdinDeclaredIdentifier declaredIdentifier,
-                                                   OdinDeclaration declaration,
-                                                   OdinType type) {
+                                                  OdinScope scope,
+                                                  OdinDeclaredIdentifier declaredIdentifier,
+                                                  OdinDeclaration declaration,
+                                                  OdinType type) {
         OdinTypeResolver typeResolver = new OdinTypeResolver(level, scope, declaration, declaredIdentifier);
         type.accept(typeResolver);
         return Objects.requireNonNullElse(typeResolver.type, TsOdinType.UNKNOWN);
+    }
+
+    public static @NotNull TsOdinMetaType findMetaType(OdinScope scope,
+                                                       @NotNull OdinType type) {
+        return findMetaType(scope, null, null, type);
+    }
+
+    public static @NotNull TsOdinMetaType findMetaType(OdinScope scope,
+                                                       OdinDeclaredIdentifier declaredIdentifier,
+                                                       OdinDeclaration declaration,
+                                                       @NotNull OdinType type) {
+        if (type instanceof OdinQualifiedType || type instanceof OdinSimpleRefType) {
+            TsOdinType tsOdinType = resolveType(scope, declaredIdentifier, declaration, type);
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(tsOdinType.getMetaType());
+            tsOdinMetaType.setName(tsOdinType.getName());
+            tsOdinMetaType.setDeclaredIdentifier(tsOdinMetaType.getDeclaredIdentifier());
+            tsOdinMetaType.setDeclaration(tsOdinType.getDeclaration());
+            tsOdinMetaType.setScope(tsOdinType.getScope());
+            tsOdinMetaType.setRepresentedType(tsOdinType);
+            return tsOdinMetaType;
+        }
+
+        TsOdinMetaType tsOdinMetaType = OdinMetaTypeResolver.resolveMetaType(type);
+        tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
+        tsOdinMetaType.setDeclaration(declaration);
+        tsOdinMetaType.setName(declaredIdentifier != null ? declaredIdentifier.getName() : null);
+        return tsOdinMetaType;
     }
 
     public static @NotNull TsOdinType resolveMetaType(OdinScope scope, TsOdinMetaType metaType) {
@@ -47,7 +74,7 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     public static TsOdinType resolveMetaType(int level, OdinScope scope, TsOdinMetaType metaType) {
-        if (metaType.getMetaType() == TsOdinMetaType.MetaType.BUILTIN) {
+        if (metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.BUILTIN) {
             return TsOdinBuiltInType.getBuiltInType(metaType.getName());
         } else if (metaType.getType() != null) {
             OdinDeclaredIdentifier declaredIdentifier = metaType.getDeclaredIdentifier();
@@ -57,7 +84,7 @@ public class OdinTypeResolver extends OdinVisitor {
 //            tsOdinType.setScope(metaType.getScope());
             tsOdinType.setDeclaredIdentifier(declaredIdentifier);
             scope.addKnownType(declaredIdentifier, tsOdinType);
-            if(declaredIdentifier != null) {
+            if (declaredIdentifier != null) {
                 tsOdinType.setName(declaredIdentifier.getName());
             }
             tsOdinType.getScope().putAll(scope);
@@ -65,12 +92,6 @@ public class OdinTypeResolver extends OdinVisitor {
             return tsOdinType;
         }
         return TsOdinType.UNKNOWN;
-    }
-
-    @Data
-    static class Parameter {
-        OdinDeclaredIdentifier identifier;
-        OdinType type;
     }
 
     // Result
@@ -111,7 +132,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
     public @NotNull TsOdinType doResolveType(OdinScope scope, OdinExpression odinExpression) {
         TsOdinType tsOdinType = doInferType(scope, odinExpression);
-        if(tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
+        if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             return doResolveMetaType(scope, tsOdinMetaType);
         }
         return tsOdinType;
@@ -122,7 +143,6 @@ public class OdinTypeResolver extends OdinVisitor {
         System.out.println("\t".repeat(level) + message);
     }
 
-    //
     private List<TsOdinParameter> createParameters(List<OdinParamEntry> paramEntries, OdinScope localScope) {
         List<TsOdinParameter> typeParameters = new ArrayList<>();
         int k = 0;
@@ -227,6 +247,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 if (typeInferenceResult.getType() instanceof TsOdinMetaType metaType) {
                     return doResolveMetaType(scope, metaType);
                 }
+                return typeInferenceResult.getType();
             }
         } else if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
             return doResolveType(scope, identifier, odinDeclaration, polymorphicType);
@@ -275,7 +296,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitMatrixType(@NotNull OdinMatrixType o) {
         OdinExpression typeExpression = o.getExpressionList().get(o.getExpressionList().size() - 1);
-        if(typeExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+        if (typeExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
             this.type = doResolveType(scope, typeDefinitionExpression.getType());
         }
     }
@@ -297,7 +318,7 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinType tsOdinElementType = doResolveType(scope, elementTypeExpression);
         tsOdinBitSetType.setElementType(tsOdinElementType);
 
-        if(o.getExpressionList().size() > 1) {
+        if (o.getExpressionList().size() > 1) {
             TsOdinType tsBackingType = doResolveType(scope, ((OdinTypeDefinitionExpression) o.getExpressionList().get(1)).getType());
             tsOdinBitSetType.setBackingType(tsBackingType);
         }
@@ -491,9 +512,9 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinEnumType tsOdinEnumType = new TsOdinEnumType();
         initializeNamedType(tsOdinEnumType);
 
-        if(o.getType() != null) {
+        if (o.getType() != null) {
             TsOdinType tsOdinType = doResolveType(scope, o.getType());
-            if(tsOdinType instanceof TsOdinBuiltInType tsOdinBuiltInType) {
+            if (tsOdinType instanceof TsOdinBuiltInType tsOdinBuiltInType) {
                 tsOdinEnumType.setBackingType(tsOdinBuiltInType);
             }
         }
@@ -524,5 +545,86 @@ public class OdinTypeResolver extends OdinVisitor {
         // TODO
 
         super.visitConstrainedType(constrainedType);
+    }
+
+    private static class OdinMetaTypeResolver extends OdinVisitor {
+
+        private TsOdinMetaType metaType;
+
+        public OdinMetaTypeResolver() {
+        }
+
+        public static TsOdinMetaType resolveMetaType(OdinType type) {
+            OdinMetaTypeResolver odinMetaTypeResolver = new OdinMetaTypeResolver();
+            type.accept(odinMetaTypeResolver);
+            return odinMetaTypeResolver.metaType;
+        }
+
+        TsOdinMetaType createMetaType(OdinType type, TsOdinMetaType.MetaType metaType) {
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(metaType);
+            tsOdinMetaType.setType(type);
+
+            return tsOdinMetaType;
+        }
+
+        @Override
+        public void visitArrayType(@NotNull OdinArrayType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.ARRAY);
+        }
+
+        @Override
+        public void visitProcedureType(@NotNull OdinProcedureType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.PROCEDURE);
+        }
+
+        @Override
+        public void visitPointerType(@NotNull OdinPointerType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.POINTER);
+        }
+
+        @Override
+        public void visitMultiPointerType(@NotNull OdinMultiPointerType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.MULTI_POINTER);
+        }
+
+        @Override
+        public void visitBitSetType(@NotNull OdinBitSetType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.BIT_SET);
+        }
+
+        @Override
+        public void visitMatrixType(@NotNull OdinMatrixType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.MATRIX);
+        }
+
+        @Override
+        public void visitMapType(@NotNull OdinMapType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.MAP);
+        }
+
+        @Override
+        public void visitStructType(@NotNull OdinStructType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.STRUCT);
+        }
+
+        @Override
+        public void visitEnumType(@NotNull OdinEnumType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.ENUM);
+        }
+
+        @Override
+        public void visitUnionType(@NotNull OdinUnionType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.UNION);
+        }
+
+        @Override
+        public void visitPolymorphicType(@NotNull OdinPolymorphicType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.POLYMORPHIC);
+        }
+
+        @Override
+        public void visitQualifiedType(@NotNull OdinQualifiedType o) {
+
+        }
     }
 }

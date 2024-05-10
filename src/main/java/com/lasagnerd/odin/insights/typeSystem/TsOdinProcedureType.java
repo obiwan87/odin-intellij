@@ -32,4 +32,9 @@ public class TsOdinProcedureType extends TsOdinType {
         }
         return label;
     }
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.PROCEDURE;
+    }
 }

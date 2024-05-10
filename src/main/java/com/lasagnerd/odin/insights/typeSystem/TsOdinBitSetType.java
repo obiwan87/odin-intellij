@@ -16,4 +16,9 @@ public class TsOdinBitSetType extends TsOdinType {
         }
         return "bit_set[" + elementType.getLabel() + "; " + backingType.getLabel() + "]";
     }
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.BIT_SET;
+    }
 }

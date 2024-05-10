@@ -12,4 +12,9 @@ public class TsOdinPointerType extends TsOdinType {
     public String getLabel() {
         return "^" + (dereferencedType != null ? dereferencedType.getLabel() : "<undefined>");
     }
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.POINTER;
+    }
 }

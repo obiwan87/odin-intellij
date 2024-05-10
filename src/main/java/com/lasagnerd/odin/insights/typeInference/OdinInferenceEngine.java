@@ -1,7 +1,6 @@
 package com.lasagnerd.odin.insights.typeInference;
 
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.insights.typeSystem.*;
@@ -14,15 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OdinInferenceEngine extends OdinVisitor {
-
-    final OdinScope scope;
-
+    // Result fields
     TsOdinType type;
     OdinImportDeclarationStatement importDeclarationStatement;
-
     boolean isImport;
 
-
+    // Input fields
+    final OdinScope scope;
     private final TsOdinType expectedType;
     private final int lhsValuesCount;
 
@@ -74,10 +71,9 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
 
-
     @Override
     public void visitTypeDefinitionExpression(@NotNull OdinTypeDefinitionExpression o) {
-        this.type = TsOdinBuiltInType.TYPEID;
+        this.type = OdinTypeResolver.findMetaType(scope, o.getType());
     }
 
     @Override
@@ -133,7 +129,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         // Get type of expression. If it is callable, retrieve the return type and set that as result
         TsOdinType tsOdinType = doInferType(scope, o.getExpression());
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            if (tsOdinMetaType.getMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
+            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
                 TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
                 if (!procedureType.getReturnTypes().isEmpty()) {
                     TsOdinProcedureType instantiatedType = OdinTypeInstantiator
@@ -148,9 +144,14 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
             }
 
-            if (tsOdinMetaType.getMetaType() == TsOdinMetaType.MetaType.STRUCT) {
+            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.STRUCT) {
                 TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
                 this.type = OdinTypeInstantiator.instantiateStruct(scope, o.getArgumentList(), structType);
+            }
+
+            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.UNION) {
+                TsOdinUnionType unionType = (TsOdinUnionType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
+                this.type = OdinTypeInstantiator.instantiateUnion(scope, o.getArgumentList(), unionType);
             }
         }
     }
@@ -169,11 +170,11 @@ public class OdinInferenceEngine extends OdinVisitor {
             this.type = mapType.getValueType();
         }
 
-        if(tsOdinType instanceof TsOdinMatrixType matrixType) {
+        if (tsOdinType instanceof TsOdinMatrixType matrixType) {
             this.type = matrixType.getElementType();
         }
 
-        if(tsOdinType instanceof TsOdinMultiPointerType multiPointerType) {
+        if (tsOdinType instanceof TsOdinMultiPointerType multiPointerType) {
             this.type = multiPointerType.getDereferencedType();
         }
     }
@@ -333,11 +334,11 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitStringLiteral(@NotNull OdinStringLiteral o) {
-        if(o.getSqStringLiteral() != null) {
+        if (o.getSqStringLiteral() != null) {
             this.type = TsOdinBuiltInType.RUNE;
         }
 
-        if(o.getDqStringLiteral() != null || o.getRawStringLiteral() != null) {
+        if (o.getDqStringLiteral() != null || o.getRawStringLiteral() != null) {
             this.type = TsOdinBuiltInType.STRING;
         }
     }
@@ -389,8 +390,8 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     public static TsOdinType resolveTypeOfDeclaration(OdinScope parentScope,
-                                                              OdinDeclaredIdentifier declaredIdentifier,
-                                                              OdinDeclaration odinDeclaration) {
+                                                      OdinDeclaredIdentifier declaredIdentifier,
+                                                      OdinDeclaration odinDeclaration) {
         if (odinDeclaration instanceof OdinVariableDeclarationStatement declarationStatement) {
             var mainType = declarationStatement.getTypeDefinitionExpression().getType();
             //return getDeclaredIdentifierQualifiedType(parentScope, mainType);
@@ -517,7 +518,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
-            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.POLYMORPHIC_PARAMETER);
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.POLYMORPHIC);
             tsOdinMetaType.setDeclaration(polymorphicType);
             tsOdinMetaType.setType(polymorphicType);
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
@@ -525,11 +526,11 @@ public class OdinInferenceEngine extends OdinVisitor {
             return tsOdinMetaType;
         }
 
-        if(odinDeclaration instanceof OdinEnumValueDeclaration odinEnumValueDeclaration) {
+        if (odinDeclaration instanceof OdinEnumValueDeclaration odinEnumValueDeclaration) {
             OdinEnumType enumType = OdinInsightUtils.findFirstParentOfType(odinEnumValueDeclaration, true, OdinEnumType.class);
             OdinEnumDeclarationStatement enumDeclarationStatement = OdinInsightUtils.findFirstParentOfType(enumType, true, OdinEnumDeclarationStatement.class);
             OdinDeclaredIdentifier enumDeclaredIdentifier = null;
-            if(enumDeclarationStatement != null) {
+            if (enumDeclarationStatement != null) {
                 enumDeclaredIdentifier = enumDeclarationStatement.getDeclaredIdentifier();
             }
             return OdinTypeResolver.resolveType(parentScope, enumDeclaredIdentifier, enumDeclarationStatement, enumType);

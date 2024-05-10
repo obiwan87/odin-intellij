@@ -10,4 +10,9 @@ public class TsOdinPolymorphicType extends TsOdinType {
     public String getLabel() {
         return "$" + super.getLabel();
     }
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.POLYMORPHIC;
+    }
 }

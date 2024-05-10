@@ -12,4 +12,9 @@ public class TsOdinArrayType extends TsOdinType {
     public String getLabel() {
         return "[]" + (elementType != null ? elementType.getLabel() : "<undefined>");
     }
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.ARRAY;
+    }
 }

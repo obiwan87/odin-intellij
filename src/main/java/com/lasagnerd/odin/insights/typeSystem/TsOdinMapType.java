@@ -13,4 +13,9 @@ public class TsOdinMapType extends TsOdinType {
     public String getLabel() {
         return "map[" + getLabelOrUndefined(keyType) + "]" + getLabelOrUndefined(valueType);
     }
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.MAP;
+    }
 }

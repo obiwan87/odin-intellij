@@ -135,4 +135,10 @@ public class TsOdinBuiltInType extends TsOdinType {
     public static TsOdinBuiltInType getBuiltInType(String identifierText) {
         return builtInTypeMap.get(identifierText);
     }
+
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.BUILTIN;
+    }
 }

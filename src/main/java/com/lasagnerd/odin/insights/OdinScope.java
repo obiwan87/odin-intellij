@@ -41,12 +41,10 @@ public class OdinScope {
         return typeTable.get(polymorphicParameter);
     }
 
-    @Deprecated
     public void addType(String typeName, TsOdinType type) {
         typeTable.put(typeName, type);
     }
 
-    @Deprecated
     public void addTypes(OdinScope scope) {
         typeTable.putAll(scope.typeTable);
     }
