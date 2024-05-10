@@ -187,8 +187,21 @@ public class OdinTypeInstantiator {
                 } else if (parameterType instanceof TsOdinBitSetType bitSetType &&
                         argumentType instanceof TsOdinBitSetType bitSetType1) {
                     findResolvedTypes(bitSetType.getElementType(), bitSetType1.getElementType(), resolvedTypes);
-                }
-                // This should be working only structs, unions and procedures
+                } else  if (parameterType instanceof TsOdinProcedureType procedureType &&
+                        argumentType instanceof TsOdinProcedureType procedureType1) {
+                    for (int i = 0; i < procedureType.getParameters().size(); i++) {
+                        // TODO Check if equal amount of params and return params first -> OutOfBounds exception could oocur
+                        TsOdinParameter parameterParameter = procedureType.getParameters().get(i);
+                        TsOdinParameter argumentParameter = procedureType1.getParameters().get(i);
+                        findResolvedTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
+                    }
+
+                    for (int i = 0; i < procedureType.getReturnParameters().size(); i++) {
+                        TsOdinParameter parameterParameter = procedureType.getReturnParameters().get(i);
+                        TsOdinParameter argumentParameter = procedureType1.getReturnParameters().get(i);
+                        findResolvedTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
+                    }
+                } // This should be working only structs, unions and procedures
                 else {
                     for (Map.Entry<String, TsOdinType> entry : parameterType.getPolymorphicParameters().entrySet()) {
                         TsOdinType nextArgumentType = argumentType.getPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinType.UNKNOWN);
@@ -205,7 +218,8 @@ public class OdinTypeInstantiator {
         TsOdinType parameterType = parameter.getType();
         OdinTypeInferenceResult odinTypeInferenceResult = inferType(newScope, argumentExpression);
         TsOdinType argumentType = odinTypeInferenceResult.getType();
-        if (argumentType instanceof TsOdinMetaType metaType && parameterType.isTypeId()) {
+        if (argumentType instanceof TsOdinMetaType metaType && (parameterType.isTypeId()
+                || parameterType.getMetaType() == metaType.getRepresentedMetaType())) {
             return OdinTypeResolver.resolveMetaType(newScope, metaType);
         }
 

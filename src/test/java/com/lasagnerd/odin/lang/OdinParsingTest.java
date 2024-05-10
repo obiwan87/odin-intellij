@@ -857,6 +857,14 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testParapoly_proc() throws IOException {
+        OdinFile odinFile = load("src/test/testData/parapoly.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testParapoly_proc", "x");
+            assertEquals("i32", tsOdinType.getName());
+        }
+    }
+
     private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         var shapeVariable = findFirstVariableDeclarationStatement(odinFile, procedureName,
                 variableName);
