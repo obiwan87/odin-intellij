@@ -64,10 +64,11 @@ public class OdinInsightUtils {
                 scope = parentScope;
             }
         } else {
-            OdinType odinType = OdinInsightUtils.findFirstParentOfType(identifier, true, OdinType.class);
-            if (odinType instanceof OdinQualifiedType || odinType instanceof OdinSimpleRefType) {
-                TsOdinType type = OdinTypeResolver.resolveType(parentScope, odinType);
-                scope = type.getScope();
+            OdinQualifiedType qualifiedType = OdinInsightUtils.findFirstParentOfType(identifier, true, OdinQualifiedType.class);
+            if (qualifiedType != null) {
+                scope = OdinReferenceResolver.resolve(parentScope, qualifiedType);
+            } else {
+                scope = parentScope;
             }
         }
 

@@ -139,7 +139,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
     // logging
     public void log(String message) {
-        System.out.println("\t".repeat(level) + message);
+//        System.out.println("\t".repeat(level) + message);
     }
 
     private List<TsOdinParameter> createParameters(List<OdinParamEntry> paramEntries, OdinScope localScope) {

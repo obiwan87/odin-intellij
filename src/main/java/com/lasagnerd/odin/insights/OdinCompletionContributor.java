@@ -26,7 +26,9 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 public class OdinCompletionContributor extends CompletionContributor {
     public static final PsiElementPattern.@NotNull Capture<PsiElement> REFERENCE = psiElement().withElementType(OdinTypes.IDENTIFIER_TOKEN).afterLeaf(".");
 
-    public static final @NotNull ElementPattern<PsiElement> AT_IDENTIFIER = psiElement().withElementType(OdinTypes.IDENTIFIER_TOKEN).andNot(REFERENCE);
+    public static final @NotNull ElementPattern<PsiElement> AT_IDENTIFIER = psiElement()
+            .withElementType(OdinTypes.IDENTIFIER_TOKEN)
+            .andNot(REFERENCE);
 
     public OdinCompletionContributor() {
 
@@ -45,20 +47,24 @@ public class OdinCompletionContributor extends CompletionContributor {
                         PsiElement parent = PsiTreeUtil.findFirstParent(position, e -> e instanceof OdinRefExpression);
 
                         // This constitutes our scope
-
                         if (parent instanceof OdinRefExpression reference) {
-                            OdinScope scope = OdinInsightUtils.findScope(reference, e -> true).with(parameters
-                                    .getOriginalFile()
-                                    .getContainingDirectory()
-                                    .getVirtualFile()
-                                    .getPath());
+                            OdinScope scope = createScope(parameters, reference);
 
                             if (reference.getExpression() != null) {
                                 // TODO at some point we should return the type of each symbol
                                 OdinScope completionScope = OdinReferenceResolver.resolve(scope, reference.getExpression());
-                                if(completionScope != null) {
+                                if (completionScope != null) {
                                     addLookUpElements(result, completionScope.getNamedElements());
                                 }
+                            }
+                        }
+
+                        OdinType parentType = OdinInsightUtils.findFirstParentOfType(position, true, OdinType.class);
+                        if (parentType instanceof OdinSimpleRefType) {
+                            OdinScope scope = createScope(parameters, parentType);
+                            OdinScope completionScope = OdinReferenceResolver.resolve(scope, parentType);
+                            if (completionScope != null) {
+                                addLookUpElements(result, completionScope.getNamedElements());
                             }
                         }
                     }
@@ -94,6 +100,14 @@ public class OdinCompletionContributor extends CompletionContributor {
                 }
         );
 
+    }
+
+    private static OdinScope createScope(@NotNull CompletionParameters parameters, PsiElement reference) {
+        return OdinInsightUtils.findScope(reference, e -> true).with(parameters
+                .getOriginalFile()
+                .getContainingDirectory()
+                .getVirtualFile()
+                .getPath());
     }
 
     private static void addLookUpElements(@NotNull CompletionResultSet result, Collection<PsiNamedElement> namedElements) {
