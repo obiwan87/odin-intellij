@@ -189,17 +189,19 @@ public class OdinTypeInstantiator {
                     findResolvedTypes(bitSetType.getElementType(), bitSetType1.getElementType(), resolvedTypes);
                 } else  if (parameterType instanceof TsOdinProcedureType procedureType &&
                         argumentType instanceof TsOdinProcedureType procedureType1) {
-                    for (int i = 0; i < procedureType.getParameters().size(); i++) {
-                        // TODO Check if equal amount of params and return params first -> OutOfBounds exception could oocur
-                        TsOdinParameter parameterParameter = procedureType.getParameters().get(i);
-                        TsOdinParameter argumentParameter = procedureType1.getParameters().get(i);
-                        findResolvedTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
+                    if(procedureType.getParameters().size() == procedureType1.getParameters().size()) {
+                        for (int i = 0; i < procedureType.getParameters().size(); i++) {
+                            TsOdinParameter parameterParameter = procedureType.getParameters().get(i);
+                            TsOdinParameter argumentParameter = procedureType1.getParameters().get(i);
+                            findResolvedTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
+                        }
                     }
-
-                    for (int i = 0; i < procedureType.getReturnParameters().size(); i++) {
-                        TsOdinParameter parameterParameter = procedureType.getReturnParameters().get(i);
-                        TsOdinParameter argumentParameter = procedureType1.getReturnParameters().get(i);
-                        findResolvedTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
+                    if(procedureType.getReturnParameters().size() == procedureType1.getReturnParameters().size()) {
+                        for (int i = 0; i < procedureType.getReturnParameters().size(); i++) {
+                            TsOdinParameter parameterParameter = procedureType.getReturnParameters().get(i);
+                            TsOdinParameter argumentParameter = procedureType1.getReturnParameters().get(i);
+                            findResolvedTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
+                        }
                     }
                 } // This should be working only structs, unions and procedures
                 else {
