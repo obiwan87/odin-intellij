@@ -4,7 +4,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.lang.psi.*;
-import kotlinx.coroutines.repackaged.net.bytebuddy.description.type.TypeDefinition;
 
 import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
 

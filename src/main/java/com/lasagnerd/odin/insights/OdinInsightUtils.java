@@ -56,7 +56,7 @@ public class OdinInsightUtils {
     public static PsiElement findFirstDeclaration(OdinIdentifier identifier) {
         OdinScope parentScope = findScope(identifier).with(getPackagePath(identifier));
         OdinRefExpression refExpression = findFirstParentOfType(identifier, true, OdinRefExpression.class);
-        OdinScope scope = OdinScope.EMPTY;
+        OdinScope scope;
         if (refExpression != null) {
             if (refExpression.getExpression() != null) {
                 scope = OdinReferenceResolver.resolve(parentScope, refExpression.getExpression());

@@ -138,6 +138,7 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     // logging
+    @SuppressWarnings("unused")
     public void log(String message) {
 //        System.out.println("\t".repeat(level) + message);
     }
