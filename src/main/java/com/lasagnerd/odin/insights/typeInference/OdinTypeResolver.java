@@ -431,18 +431,6 @@ public class OdinTypeResolver extends OdinVisitor {
         List<TsOdinParameter> parameters = createParameters(paramEntries, tsOdinStructType.getScope());
         tsOdinStructType.setParameters(parameters);
 
-        for (OdinFieldDeclarationStatement field : OdinInsightUtils.getStructFieldsDeclarationStatements(structType)) {
-            List<OdinDeclaredIdentifier> declaredIdentifiers = field.getDeclaredIdentifiers();
-            String fields = declaredIdentifiers.stream()
-                    .map(PsiNamedElement::getName).collect(Collectors.joining(", "));
-            log("Resolving type of fields: " + fields);
-            TsOdinType tsFieldType = doResolveType(tsOdinStructType.getScope(), field.getTypeDefinition().getType());
-            tsOdinStructType.getScope().addKnownTypes(tsFieldType.getScope());
-            for (OdinDeclaredIdentifier declaredIdentifier : declaredIdentifiers) {
-                tsOdinStructType.getFields().put(declaredIdentifier.getName(), tsFieldType);
-            }
-        }
-
         this.type = tsOdinStructType;
     }
 
