@@ -158,58 +158,57 @@ public class OdinTypeInstantiator {
     }
 
     private static void findResolvedTypes(@NotNull TsOdinType parameterType, @NotNull TsOdinType argumentType, @NotNull Map<String, TsOdinType> resolvedTypes) {
-        if (parameterType instanceof TsOdinConstrainedType constrainedType) {
-            findResolvedTypes(constrainedType.getMainType(), argumentType, resolvedTypes);
-            TsOdinType resolvedMainType = resolvedTypes.get(constrainedType.getMainType().getName());
-            if(resolvedMainType != null) {
-                findResolvedTypes(constrainedType.getSpecializedType(), resolvedMainType, resolvedTypes);
-            }
+        if (parameterType.isPolymorphic() && !argumentType.isPolymorphic()) {
+            resolvedTypes.put(parameterType.getName(), argumentType);
         } else {
-            if (parameterType.isPolymorphic() && !argumentType.isPolymorphic()) {
-                resolvedTypes.put(parameterType.getName(), argumentType);
-            } else {
-                if (parameterType instanceof TsOdinArrayType parameterArrayType
-                        && argumentType instanceof TsOdinArrayType argumentArrayType) {
-                    findResolvedTypes(parameterArrayType.getElementType(), argumentArrayType.getElementType(), resolvedTypes);
-                } else if (parameterType instanceof TsOdinPointerType pointerType
-                        && argumentType instanceof TsOdinPointerType pointerType1) {
-                    findResolvedTypes(pointerType.getDereferencedType(), pointerType1.getDereferencedType(), resolvedTypes);
-                } else if (parameterType instanceof TsOdinMultiPointerType pointerType
-                        && argumentType instanceof TsOdinMultiPointerType pointerType1) {
-                    findResolvedTypes(pointerType.getDereferencedType(), pointerType1.getDereferencedType(), resolvedTypes);
-                } else if (parameterType instanceof TsOdinMapType mapType
-                        && argumentType instanceof TsOdinMapType mapType1) {
-                    findResolvedTypes(mapType.getKeyType(), mapType1.getKeyType(), resolvedTypes);
-                    findResolvedTypes(mapType.getValueType(), mapType1.getValueType(), resolvedTypes);
-                } else if (parameterType instanceof TsOdinMatrixType matrixType &&
-                        argumentType instanceof TsOdinMatrixType matrixType1) {
-                    findResolvedTypes(matrixType.getElementType(), matrixType1.getElementType(), resolvedTypes);
-                } else if (parameterType instanceof TsOdinBitSetType bitSetType &&
-                        argumentType instanceof TsOdinBitSetType bitSetType1) {
-                    findResolvedTypes(bitSetType.getElementType(), bitSetType1.getElementType(), resolvedTypes);
-                } else  if (parameterType instanceof TsOdinProcedureType procedureType &&
-                        argumentType instanceof TsOdinProcedureType procedureType1) {
-                    if(procedureType.getParameters().size() == procedureType1.getParameters().size()) {
-                        for (int i = 0; i < procedureType.getParameters().size(); i++) {
-                            TsOdinParameter parameterParameter = procedureType.getParameters().get(i);
-                            TsOdinParameter argumentParameter = procedureType1.getParameters().get(i);
-                            findResolvedTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
-                        }
+            if (parameterType instanceof TsOdinConstrainedType constrainedType) {
+                findResolvedTypes(constrainedType.getMainType(), argumentType, resolvedTypes);
+                TsOdinType resolvedMainType = resolvedTypes.get(constrainedType.getMainType().getName());
+                if (resolvedMainType != null) {
+                    findResolvedTypes(constrainedType.getSpecializedType(), resolvedMainType, resolvedTypes);
+                }
+            }
+            if (parameterType instanceof TsOdinArrayType parameterArrayType
+                    && argumentType instanceof TsOdinArrayType argumentArrayType) {
+                findResolvedTypes(parameterArrayType.getElementType(), argumentArrayType.getElementType(), resolvedTypes);
+            } else if (parameterType instanceof TsOdinPointerType pointerType
+                    && argumentType instanceof TsOdinPointerType pointerType1) {
+                findResolvedTypes(pointerType.getDereferencedType(), pointerType1.getDereferencedType(), resolvedTypes);
+            } else if (parameterType instanceof TsOdinMultiPointerType pointerType
+                    && argumentType instanceof TsOdinMultiPointerType pointerType1) {
+                findResolvedTypes(pointerType.getDereferencedType(), pointerType1.getDereferencedType(), resolvedTypes);
+            } else if (parameterType instanceof TsOdinMapType mapType
+                    && argumentType instanceof TsOdinMapType mapType1) {
+                findResolvedTypes(mapType.getKeyType(), mapType1.getKeyType(), resolvedTypes);
+                findResolvedTypes(mapType.getValueType(), mapType1.getValueType(), resolvedTypes);
+            } else if (parameterType instanceof TsOdinMatrixType matrixType &&
+                    argumentType instanceof TsOdinMatrixType matrixType1) {
+                findResolvedTypes(matrixType.getElementType(), matrixType1.getElementType(), resolvedTypes);
+            } else if (parameterType instanceof TsOdinBitSetType bitSetType &&
+                    argumentType instanceof TsOdinBitSetType bitSetType1) {
+                findResolvedTypes(bitSetType.getElementType(), bitSetType1.getElementType(), resolvedTypes);
+            } else if (parameterType instanceof TsOdinProcedureType procedureType &&
+                    argumentType instanceof TsOdinProcedureType procedureType1) {
+                if (procedureType.getParameters().size() == procedureType1.getParameters().size()) {
+                    for (int i = 0; i < procedureType.getParameters().size(); i++) {
+                        TsOdinParameter parameterParameter = procedureType.getParameters().get(i);
+                        TsOdinParameter argumentParameter = procedureType1.getParameters().get(i);
+                        findResolvedTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
                     }
-                    if(procedureType.getReturnParameters().size() == procedureType1.getReturnParameters().size()) {
-                        for (int i = 0; i < procedureType.getReturnParameters().size(); i++) {
-                            TsOdinParameter parameterParameter = procedureType.getReturnParameters().get(i);
-                            TsOdinParameter argumentParameter = procedureType1.getReturnParameters().get(i);
-                            findResolvedTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
-                        }
+                }
+                if (procedureType.getReturnParameters().size() == procedureType1.getReturnParameters().size()) {
+                    for (int i = 0; i < procedureType.getReturnParameters().size(); i++) {
+                        TsOdinParameter parameterParameter = procedureType.getReturnParameters().get(i);
+                        TsOdinParameter argumentParameter = procedureType1.getReturnParameters().get(i);
+                        findResolvedTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
                     }
-                } // This should be working only structs, unions and procedures
-                else {
-                    for (Map.Entry<String, TsOdinType> entry : parameterType.getPolymorphicParameters().entrySet()) {
-                        TsOdinType nextArgumentType = argumentType.getPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinType.UNKNOWN);
-                        TsOdinType nextParameterType = entry.getValue();
-                        findResolvedTypes(nextParameterType, nextArgumentType, resolvedTypes);
-                    }
+                }
+            } // This should be working only structs, unions and procedures
+            else {
+                for (Map.Entry<String, TsOdinType> entry : parameterType.getPolymorphicParameters().entrySet()) {
+                    TsOdinType nextArgumentType = argumentType.getPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinType.UNKNOWN);
+                    TsOdinType nextParameterType = entry.getValue();
+                    findResolvedTypes(nextParameterType, nextArgumentType, resolvedTypes);
                 }
             }
         }
