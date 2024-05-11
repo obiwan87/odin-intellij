@@ -128,8 +128,27 @@ public class TsOdinBuiltInType extends TsOdinType {
         builtInTypeMap.put(ANY.getName(), ANY);
     }
 
+    private final boolean untyped;
+    private TsOdinBuiltInType untypedType;
+
     private TsOdinBuiltInType(String name) {
         this.name = name;
+        this.untyped = false;
+    }
+
+    private TsOdinBuiltInType(String name, boolean untyped) {
+        this.name = name;
+        this.untyped = untyped;
+    }
+
+    public TsOdinBuiltInType asUntyped() {
+        if (untypedType == null)
+            untypedType = new TsOdinBuiltInType(this.name, true);
+        return untypedType;
+    }
+
+    public TsOdinBuiltInType asTyped() {
+        return builtInTypeMap.get(getName());
     }
 
     public static TsOdinBuiltInType getBuiltInType(String identifierText) {

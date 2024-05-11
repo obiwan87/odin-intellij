@@ -86,7 +86,9 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.INTEGER_BIN_LITERAL,
             OdinTypes.FLOAT_DEC_LITERAL,
             OdinTypes.COMPLEX_FLOAT_LITERAL,
-            OdinTypes.COMPLEX_INTEGER_DEC_LITERAL
+            OdinTypes.COMPLEX_INTEGER_DEC_LITERAL,
+            OdinTypes.QUAT_FLOAT_LITERAL,
+            OdinTypes.QUAT_INTEGER_DEC_LITERAL
     );
 
     @Override

@@ -96,11 +96,42 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .beforeInside(OdinTypes.COMPOUND_VALUE_END, OdinTypes.COMPOUND_VALUE)
                 .spaces(1)
 
-                .aroundInside(BINARY_OPERATORS, OdinTypes.BINARY_EXPRESSION)
+                .aroundInside(BINARY_OPERATORS, BINARY_EXPRESSIONS)
                 .spaces(1)
                 ;
     }
 
+    public static final TokenSet BINARY_EXPRESSIONS = TokenSet.create(
+        OdinTypes.AND_EXPRESSION,
+            OdinTypes.OR_EXPRESSION,
+            OdinTypes.LT_EXPRESSION,
+            OdinTypes.LTE_EXPRESSION,
+            OdinTypes.GT_EXPRESSION,
+            OdinTypes.GTE_EXPRESSION,
+            OdinTypes.NEQ_EXPRESSION,
+            OdinTypes.EQEQ_EXPRESSION,
+            OdinTypes.IN_EXPRESSION,
+            OdinTypes.NOT_IN_EXPRESSION,
+
+            OdinTypes.BITWISE_AND_EXPRESSION,
+            OdinTypes.BITWISE_OR_EXPRESSION,
+            OdinTypes.BITWISE_AND_NOT_EXPRESSION,
+            OdinTypes.BITWISE_XOR_EXPRESSION,
+            OdinTypes.LSHIFT_EXPRESSION,
+            OdinTypes.RSHIFT_EXPRESSION,
+
+            OdinTypes.RANGE_EXCLUSIVE_EXPRESSION,
+            OdinTypes.RANGE_INCLUSIVE_EXPRESSION,
+
+            OdinTypes.ADD_EXPRESSION,
+            OdinTypes.MUL_EXPRESSION,
+            OdinTypes.DIV_EXPRESSION,
+            OdinTypes.REMAINDER_EXPRESSION,
+            OdinTypes.MOD_EXPRESSION,
+            OdinTypes.SUB_EXPRESSION,
+
+            OdinTypes.OR_ELSE_EXPRESSION
+    );
     private static final  TokenSet BINARY_OPERATORS = TokenSet.create(
             OdinTypes.AND,
             OdinTypes.OROR,

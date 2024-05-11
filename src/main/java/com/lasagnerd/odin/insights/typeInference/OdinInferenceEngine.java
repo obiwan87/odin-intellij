@@ -4,6 +4,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.insights.typeSystem.*;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinMetaType.MetaType;
 import com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.lasagnerd.odin.insights.typeSystem.TsOdinMetaType.MetaType.*;
 
 public class OdinInferenceEngine extends OdinVisitor {
     // Result fields
@@ -109,7 +112,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         } else if (namedElement == null) {
             if (OdinLangSyntaxAnnotator.RESERVED_TYPES.contains(name)) {
-                TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.BUILTIN);
+                TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(BUILTIN);
                 tsOdinMetaType.setName(name);
                 this.type = tsOdinMetaType;
             }
@@ -129,7 +132,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         // Get type of expression. If it is callable, retrieve the return type and set that as result
         TsOdinType tsOdinType = doInferType(scope, o.getExpression());
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
+            if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE) {
                 TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
                 if (!procedureType.getReturnTypes().isEmpty()) {
                     TsOdinProcedureType instantiatedType = OdinTypeInstantiator
@@ -144,14 +147,20 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
             }
 
-            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.STRUCT) {
+            if (tsOdinMetaType.getRepresentedMetaType() == STRUCT) {
                 TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
-                this.type = OdinTypeInstantiator.instantiateStruct(scope, o.getArgumentList(), structType);
+                TsOdinStructType instantiatedStructType = OdinTypeInstantiator.instantiateStruct(scope, o.getArgumentList(), structType);
+                TsOdinMetaType resultType = new TsOdinMetaType(STRUCT);
+                resultType.setRepresentedType(instantiatedStructType);
+                this.type = resultType;
             }
 
-            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.UNION) {
+            if (tsOdinMetaType.getRepresentedMetaType() == UNION) {
                 TsOdinUnionType unionType = (TsOdinUnionType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
-                this.type = OdinTypeInstantiator.instantiateUnion(scope, o.getArgumentList(), unionType);
+                TsOdinType instantiatedUnion = OdinTypeInstantiator.instantiateUnion(scope, o.getArgumentList(), unionType);
+                TsOdinMetaType resultType = new TsOdinMetaType(UNION);
+                resultType.setRepresentedType(instantiatedUnion);
+                this.type = resultType;
             }
         }
     }
@@ -222,7 +231,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitProcedureExpression(@NotNull OdinProcedureExpression o) {
         // get type of expression. If it is a procedure, retrieve the return type and set that as result
         var procedureType = o.getProcedureTypeContainer().getProcedureType();
-        TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.PROCEDURE);
+        TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(PROCEDURE);
         tsOdinMetaType.setType(procedureType);
 
         this.type = tsOdinMetaType;
@@ -318,16 +327,16 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitNumericLiteral(@NotNull OdinNumericLiteral o) {
         if (o.getFloatDecLiteral() != null) {
-            this.type = TsOdinBuiltInType.F64;
+            this.type = TsOdinBuiltInType.F64; // .asUntyped();
         } else if (o.getIntegerBinLiteral() != null
                 || o.getIntegerHexLiteral() != null
                 || o.getIntegerOctLiteral() != null
                 || o.getIntegerDecLiteral() != null) {
-            this.type = TsOdinBuiltInType.INT;
+            this.type = TsOdinBuiltInType.INT; // .asUntyped();
         } else if (o.getComplexFloatLiteral() != null || o.getComplexIntegerDecLiteral() != null) {
-            this.type = TsOdinBuiltInType.COMPLEX128;
+            this.type = TsOdinBuiltInType.COMPLEX128; // .asUntyped();
         } else if (o.getQuatFloatLiteral() != null || o.getQuatIntegerDecLiteral() != null) {
-            this.type = TsOdinBuiltInType.QUATERNION256;
+            this.type = TsOdinBuiltInType.QUATERNION256; // .asUntyped();
         }
         super.visitNumericLiteral(o);
     }
@@ -335,11 +344,11 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitStringLiteral(@NotNull OdinStringLiteral o) {
         if (o.getSqStringLiteral() != null) {
-            this.type = TsOdinBuiltInType.RUNE;
+            this.type = TsOdinBuiltInType.RUNE; // .asUntyped();
         }
 
         if (o.getDqStringLiteral() != null || o.getRawStringLiteral() != null) {
-            this.type = TsOdinBuiltInType.STRING;
+            this.type = TsOdinBuiltInType.STRING; // .asUntyped();
         }
     }
 
@@ -354,6 +363,65 @@ public class OdinInferenceEngine extends OdinVisitor {
         OdinExpression odinExpression = o.getExpressionList().get(0);
         this.type = doInferType(scope, odinExpression);
     }
+
+    @Override
+    public void visitAndExpression(@NotNull OdinAndExpression o) {
+        this.type = TsOdinBuiltInType.BOOL;
+    }
+
+    @Override
+    public void visitOrExpression(@NotNull OdinOrExpression o) {
+        this.type = TsOdinBuiltInType.BOOL;
+    }
+
+    @Override
+    public void visitGteExpression(@NotNull OdinGteExpression o) {
+        this.type = TsOdinBuiltInType.BOOL;
+    }
+
+    @Override
+    public void visitGtExpression(@NotNull OdinGtExpression o) {
+        this.type = TsOdinBuiltInType.BOOL;
+    }
+
+    @Override
+    public void visitLtExpression(@NotNull OdinLtExpression o) {
+        this.type = TsOdinBuiltInType.BOOL;
+    }
+
+    @Override
+    public void visitLteExpression(@NotNull OdinLteExpression o) {
+        this.type = TsOdinBuiltInType.BOOL;
+    }
+
+    @Override
+    public void visitEqeqExpression(@NotNull OdinEqeqExpression o) {
+        this.type = TsOdinBuiltInType.BOOL;
+    }
+
+    @Override
+    public void visitNeqExpression(@NotNull OdinNeqExpression o) {
+        this.type = TsOdinBuiltInType.BOOL;
+    }
+
+    @Override
+    public void visitInExpression(@NotNull OdinInExpression o) {
+        this.type = TsOdinBuiltInType.BOOL;
+    }
+
+    @Override
+    public void visitNotInExpression(@NotNull OdinNotInExpression o) {
+        this.type = TsOdinBuiltInType.BOOL;
+    }
+/*
+Require knowledge about type conversion:
+mulExpression
+divExpression
+modExpression
+remainderExpression
+addExpression
+subExpression
+ */
 
     private static @NotNull TsOdinTuple createOptionalOkTuple(TsOdinType tsOdinType) {
         return new TsOdinTuple(List.of(tsOdinType, TsOdinBuiltInType.BOOL));
@@ -482,7 +550,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         // Meta types
         if (odinDeclaration instanceof OdinProcedureDeclarationStatement procedure) {
-            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.PROCEDURE);
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(PROCEDURE);
             tsOdinMetaType.setDeclaration(procedure);
             tsOdinMetaType.setType(procedure.getProcedureType());
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
@@ -491,7 +559,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.STRUCT);
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(STRUCT);
             tsOdinMetaType.setDeclaration(structDeclarationStatement);
             tsOdinMetaType.setType(structDeclarationStatement.getStructType());
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
@@ -500,7 +568,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
-            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.ENUM);
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(ENUM);
             tsOdinMetaType.setDeclaration(enumDeclarationStatement);
             tsOdinMetaType.setType(enumDeclarationStatement.getEnumType());
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
@@ -509,7 +577,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinUnionDeclarationStatement unionDeclarationStatement) {
-            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.UNION);
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(UNION);
             tsOdinMetaType.setDeclaration(unionDeclarationStatement);
             tsOdinMetaType.setType(unionDeclarationStatement.getUnionType());
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
@@ -518,7 +586,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
-            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(TsOdinMetaType.MetaType.POLYMORPHIC);
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(POLYMORPHIC);
             tsOdinMetaType.setDeclaration(polymorphicType);
             tsOdinMetaType.setType(polymorphicType);
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);

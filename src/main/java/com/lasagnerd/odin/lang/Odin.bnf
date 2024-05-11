@@ -399,20 +399,20 @@ expression                           ::= postfixGroup
 fake binaryExpression                ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
 
 // Arithmetic
-mulExpression                        ::= expression STAR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-divExpression                        ::= expression DIV             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-modExpression                        ::= expression MOD             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-remainderExpression                  ::= expression REMAINDER       <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-addExpression                        ::= expression PLUS            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-subExpression                        ::= expression MINUS           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+mulExpression                        ::= expression STAR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+divExpression                        ::= expression DIV             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+modExpression                        ::= expression MOD             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+remainderExpression                  ::= expression REMAINDER       <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+addExpression                        ::= expression PLUS            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+subExpression                        ::= expression MINUS           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
 
 // Bitwise
-bitwiseAndExpression                 ::= expression AND             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-bitwiseOrExpression                  ::= expression PIPE            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-bitwiseXorExpression                 ::= expression TILDE           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-bitwiseAndNotExpression              ::= expression ANDNOT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-lshiftExpression                     ::= expression LSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-rshiftExpression                     ::= expression RSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+bitwiseAndExpression                 ::= expression AND             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+bitwiseOrExpression                  ::= expression PIPE            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+bitwiseXorExpression                 ::= expression TILDE           <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+bitwiseAndNotExpression              ::= expression ANDNOT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+lshiftExpression                     ::= expression LSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+rshiftExpression                     ::= expression RSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
 
 // or_else
 orElseExpression                     ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression                             }
@@ -422,16 +422,16 @@ rangeInclusiveExpression             ::= expression RANGE_INCLUSIVE <<enterMode 
 rangeExclusiveExpression             ::= expression RANGE_EXCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
 
 // boolean operators
-inExpression                         ::= expression IN              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-notInExpression                      ::= expression NOT_IN          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-ltExpression                         ::= expression LT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-gtExpression                         ::= expression GT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-lteExpression                        ::= expression LTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-gteExpression                        ::= expression GTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-eqeqExpression                       ::= expression EQEQ            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-neqExpression                        ::= expression NEQ             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-orExpression                         ::= expression OROR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
-andExpression                        ::= expression ANDAND          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression elementType=binaryExpression}
+inExpression                         ::= expression IN              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+notInExpression                      ::= expression NOT_IN          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+ltExpression                         ::= expression LT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+gtExpression                         ::= expression GT              <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+lteExpression                        ::= expression LTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+gteExpression                        ::= expression GTE             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+eqeqExpression                       ::= expression EQEQ            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+neqExpression                        ::= expression NEQ             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+orExpression                         ::= expression OROR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
+andExpression                        ::= expression ANDAND          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
 
 private mulGroup                     ::= mulExpression
                                          | divExpression
