@@ -559,7 +559,9 @@ numericLiteral                       ::= INTEGER_DEC_LITERAL
                                          | QUAT_INTEGER_DEC_LITERAL
                                          | COMPLEX_FLOAT_LITERAL
                                          | QUAT_FLOAT_LITERAL  {extends=basicLiteral}
-
+// TODO there is no such thing as a boolean literal in Odin, true and false are just
+//  identifiers that have the type bool and the respective values. Things as
+//  true :: false are allowed
 booleanLiteral                       ::= TRUE
                                          | FALSE       {extends=basicLiteral}
 

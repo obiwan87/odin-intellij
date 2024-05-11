@@ -201,6 +201,9 @@ public class OdinTypeResolver extends OdinVisitor {
     private void resolveIdentifier(OdinIdentifier typeIdentifier) {
         PsiNamedElement declaration;
         String identifierText = typeIdentifier.getText();
+
+        // TODO reserved types should be checked last
+        //  in Odin you can define int :: struct {x,y: f32}
         if (RESERVED_TYPES.contains(identifierText)) {
             type = TsOdinBuiltInType.getBuiltInType(identifierText);
 
