@@ -23,7 +23,11 @@ public class OdinTypeInstantiator {
         instantiatedType.getScope().putAll(baseType.getScope());
 
         OdinScope newScope = instantiatedType.getScope();
-        resolveArguments(outerScope, baseType, instantiatedType, arguments);
+        resolveArguments(outerScope,
+                baseType,
+                baseType.getParameters(),
+                instantiatedType,
+                arguments);
         instantiatedType.setType(baseType.getType());
         instantiatedType.setName(baseType.getName());
         instantiatedType.setDeclaration(baseType.getDeclaration());
@@ -58,7 +62,11 @@ public class OdinTypeInstantiator {
         instantiatedType.setDeclaration(baseType.getDeclaration());
         instantiatedType.setDeclaredIdentifier(baseType.getDeclaredIdentifier());
         instantiatedType.setReturnParameters(baseType.getReturnParameters());
-        resolveArguments(outerScope, baseType, instantiatedType, arguments);
+        resolveArguments(outerScope,
+                baseType,
+                baseType.getParameters(),
+                instantiatedType,
+                arguments);
 
         for (TsOdinParameter tsOdinReturnType : baseType.getReturnParameters()) {
             TsOdinType tsOdinType = OdinTypeResolver.resolveType(instantiatedType.getScope(), tsOdinReturnType.getTypeDefinitionExpression().getType());
@@ -79,7 +87,11 @@ public class OdinTypeInstantiator {
         instantiatedType.setName(baseType.getName());
         instantiatedType.setDeclaration(baseType.getDeclaration());
         instantiatedType.setDeclaredIdentifier(baseType.getDeclaredIdentifier());
-        resolveArguments(outerScope, baseType, instantiatedType, arguments);
+        resolveArguments(outerScope,
+                baseType,
+                baseType.getParameters(),
+                instantiatedType,
+                arguments);
 
 
         for (TsOdinUnionVariant baseField : baseType.getVariants()) {
@@ -96,6 +108,7 @@ public class OdinTypeInstantiator {
     private static void resolveArguments(
             OdinScope outerScope,
             TsOdinType baseType,
+            List<TsOdinParameter> parameters,
             TsOdinType instantiatedType,
             List<OdinArgument> arguments
     ) {
@@ -111,13 +124,13 @@ public class OdinTypeInstantiator {
 
                 if (odinArgument instanceof OdinUnnamedArgument argument) {
                     argumentExpression = argument.getExpression();
-                    tsOdinParameter = baseType.getParameters().stream()
+                    tsOdinParameter = parameters.stream()
                             .filter(p -> p.getIndex() == currentIndex)
                             .findFirst().orElse(null);
                 }
 
                 if (odinArgument instanceof OdinNamedArgument argument) {
-                    tsOdinParameter = baseType.getParameters().stream()
+                    tsOdinParameter = parameters.stream()
                             .filter(p -> argument.getIdentifierToken().getText().equals(p.getValueName()))
                             .findFirst().orElse(null);
                     argumentExpression = argument.getExpression();

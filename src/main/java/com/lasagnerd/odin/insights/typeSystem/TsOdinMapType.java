@@ -11,7 +11,7 @@ public class TsOdinMapType extends TsOdinType {
 
     @Override
     public String getLabel() {
-        return "map[" + getLabelOrUndefined(keyType) + "]" + getLabelOrUndefined(valueType);
+        return "map[" + TsOdinUtils.getLabelOrUndefined(keyType) + "]" + TsOdinUtils.getLabelOrUndefined(valueType);
     }
 
     @Override

@@ -307,7 +307,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         TsOdinType tsOdinTrueType = doInferType(scope, trueBranchExpression);
         TsOdinType tsOdinFalseType = doInferType(scope, falseBranchExpression);
 
-        if (TsOdinType.areEqual(tsOdinTrueType, tsOdinFalseType)) {
+        if (TsOdinUtils.areEqual(tsOdinTrueType, tsOdinFalseType)) {
             return tsOdinTrueType;
         }
         return TsOdinType.UNKNOWN;

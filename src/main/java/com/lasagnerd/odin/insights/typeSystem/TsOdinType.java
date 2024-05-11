@@ -5,19 +5,18 @@ import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinType;
 import lombok.Data;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Data
 public abstract class TsOdinType {
     String name;
 
     // Connections to PSI tree
+    @Deprecated
     OdinDeclaration declaration;
+    @Deprecated
     OdinDeclaredIdentifier declaredIdentifier;
-    List<TsOdinParameter> parameters = new ArrayList<>();
 
     /**
      * Maintains the scope visible from where the type is declared.
@@ -84,10 +83,6 @@ public abstract class TsOdinType {
         }
     };
 
-    public static boolean areEqual(TsOdinType tsOdinTrueType, TsOdinType tsOdinFalseType) {
-        return true;
-    }
-
     public boolean isUnknown() {
         return UNKNOWN == this;
     }
@@ -110,31 +105,10 @@ public abstract class TsOdinType {
     }
 
     public String getLabel() {
-        String label = getName() == null ? "<undefined>" : getName();
-        List<TsOdinParameter> parameters1 = parameters;
-        String parametersList = getParametersString(parameters1);
-        if (!parameters.isEmpty()) {
-            label += "(" + parametersList + ")";
-        }
-        return label;
+        return getName() == null ? "<undefined>" : getName();
     }
 
     public abstract TsOdinMetaType.MetaType getMetaType();
-
-    static @NotNull String getParametersString(List<TsOdinParameter> parameters1) {
-        return parameters1.stream()
-                .map(TsOdinParameter::getType)
-                .filter(Objects::nonNull).map(TsOdinType::getLabel)
-                .collect(Collectors.joining(", "));
-    }
-
-    static String getLabelOrUndefined(TsOdinType type) {
-        if(type == null)
-            return "<undefined>";
-        return type.getLabel();
-    }
-
-
 
 
 }

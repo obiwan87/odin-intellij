@@ -10,9 +10,15 @@ import java.util.List;
 @Data
 public class TsOdinUnionType extends TsOdinType {
     List<TsOdinUnionVariant> variants = new ArrayList<>();
+    List<TsOdinParameter> parameters = new ArrayList<>();
 
     @Override
     public TsOdinMetaType.MetaType getMetaType() {
         return TsOdinMetaType.MetaType.UNION;
+    }
+
+    @Override
+    public String getLabel() {
+        return super.getLabel() + TsOdinUtils.parametersStringIfNonEmpty(parameters);
     }
 }
