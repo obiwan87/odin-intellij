@@ -13,11 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine.doInferType;
-import static com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine.inferType;
 import static com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator.RESERVED_TYPES;
 
 @EqualsAndHashCode(callSuper = true)
-@Data
 public class OdinTypeResolver extends OdinVisitor {
 
     public static @NotNull TsOdinType resolveType(OdinScope scope, @NotNull OdinType type) {
@@ -108,7 +106,7 @@ public class OdinTypeResolver extends OdinVisitor {
     private final OdinDeclaredIdentifier typeDeclaredIdentifier;
 
     // avoid stackoverflow when encountering circular references
-    private Set<OdinDeclaredIdentifier> visitedDeclaredIdentifiers = new HashSet<>();
+    private final Set<OdinDeclaredIdentifier> visitedDeclaredIdentifiers = new HashSet<>();
 
 
     public OdinTypeResolver(int level, OdinScope scope, OdinDeclaration typeDeclaration, OdinDeclaredIdentifier typeDeclaredIdentifier) {
@@ -253,6 +251,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 OdinExpression odinExpression = expressionList.get(index);
                 TsOdinType tsOdinType = doInferType(scope, odinExpression);
                 if (tsOdinType instanceof TsOdinMetaType metaType) {
+
                     return doResolveMetaType(scope, metaType);
                 }
                 return TsOdinType.UNKNOWN;

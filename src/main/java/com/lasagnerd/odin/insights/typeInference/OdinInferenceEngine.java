@@ -4,7 +4,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.insights.typeSystem.*;
-import com.lasagnerd.odin.insights.typeSystem.TsOdinMetaType.MetaType;
 import com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
