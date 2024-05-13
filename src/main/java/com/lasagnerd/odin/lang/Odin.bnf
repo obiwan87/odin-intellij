@@ -504,7 +504,7 @@ compoundLiteralUntyped               ::= compoundValueUntyped {extends=compoundL
 
 index                                ::= LBRACKET expression [COMMA expression] RBRACKET
 slice                                ::= LBRACKET expression? COLON expression? RBRACKET
-private arguments                    ::= LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> RPAREN
+private arguments                    ::= LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
 
 elvisExpression                      ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">>
 ternaryIfExpression                  ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
