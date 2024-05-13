@@ -22,9 +22,14 @@ public class OdinScope {
     Map<String, PsiNamedElement> symbolTable = new HashMap<>();
 
     /**
-     * keeps track of the types
+     * Used substituting polymorphic types. The key
+     * is the name of the polymorphic type
      */
     Map<String, TsOdinType> typeTable = new HashMap<>();
+
+    /**
+     * Acts as a cache for already defined types.
+     */
     Map<OdinDeclaredIdentifier, TsOdinType> knownTypes = new HashMap<>();
 
     public OdinScope() {

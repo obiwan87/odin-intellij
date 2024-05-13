@@ -154,13 +154,19 @@ public class OdinTypeResolver extends OdinVisitor {
             OdinParameterDeclaration parameterDeclaration = paramEntry.getParameterDeclaration();
 
             // First, add all $Identifier expressions we encounter in this parameter to the current scope
+
+            // Implicit polymorphism
             for (OdinPolymorphicType odinPolymorphicType : PsiTreeUtil.findChildrenOfType(paramEntry, OdinPolymorphicType.class)) {
                 TsOdinType tsOdinType = doResolveType(localScope, odinPolymorphicType);
                 localScope.addType(tsOdinType.getName(), tsOdinType);
                 localScope.add(odinPolymorphicType.getDeclaredIdentifier());
-                baseType.getPolymorphicParameters().put(tsOdinType.getName(), tsOdinType);
+                if(baseType instanceof TsOdinStructType ||baseType instanceof TsOdinUnionType) {
+                    baseType.getPolymorphicParameters().put(tsOdinType.getName(), tsOdinType);
+                }
             }
 
+            // Explicit polymorphism
+            // TODO this will also find the polymorphic types of above, but they will filtered out by the declaredIdentifier.getDollar() != null check
             for (OdinDeclaredIdentifier declaredIdentifier : PsiTreeUtil.findChildrenOfType(paramEntry, OdinDeclaredIdentifier.class)) {
                 if (declaredIdentifier.getDollar() != null) {
                     TsOdinPolymorphicType valuePolymorphicType = new TsOdinPolymorphicType();
@@ -169,7 +175,9 @@ public class OdinTypeResolver extends OdinVisitor {
                     valuePolymorphicType.setDeclaredIdentifier(declaredIdentifier);
                     localScope.addType(valuePolymorphicType.getName(), valuePolymorphicType);
                     localScope.add(declaredIdentifier);
-                    baseType.getPolymorphicParameters().put(valuePolymorphicType.getName(), valuePolymorphicType);
+                    if(baseType instanceof TsOdinStructType || baseType instanceof TsOdinUnionType) {
+                        baseType.getPolymorphicParameters().put(valuePolymorphicType.getName(), valuePolymorphicType);
+                    }
                 }
             }
 
@@ -417,7 +425,6 @@ public class OdinTypeResolver extends OdinVisitor {
                 if (type instanceof OdinPolymorphicType polymorphicType) {
                     tsOdinProcedureType.getScope().addType(tsOdinType.getName(), tsOdinType);
                     tsOdinProcedureType.getScope().add(polymorphicType.getDeclaredIdentifier());
-                    tsOdinProcedureType.getPolymorphicParameters().put(tsOdinType.getName(), tsOdinType);
                 }
             } else {
                 List<OdinParamEntry> returnParameterEntries = returnParameters.getParamEntryList();
@@ -448,14 +455,13 @@ public class OdinTypeResolver extends OdinVisitor {
 
     @Data
     private static class TsOdinParameterSpec {
-        OdinDeclaredIdentifier valueDeclaredIdentifier;
-        OdinExpression valueExpression;
+        OdinDeclaredIdentifier nameDeclaredIdentifier;
         OdinTypeDefinitionExpression typeDefinitionExpression;
 
-        boolean isVariadic;
+        OdinExpression valueExpression;
 
         boolean isValuePolymorphic() {
-            return valueDeclaredIdentifier != null && valueDeclaredIdentifier.getDollar() != null;
+            return nameDeclaredIdentifier != null && nameDeclaredIdentifier.getDollar() != null;
         }
 
         static List<TsOdinParameterSpec> from(OdinParameterDeclaration parameterDeclaration) {
@@ -464,7 +470,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 TsOdinParameterSpec tsOdinParameterSpec = new TsOdinParameterSpec();
                 tsOdinParameterSpec.setTypeDefinitionExpression(odinParameterInitialization.getTypeDefinition());
                 tsOdinParameterSpec.setValueExpression(odinParameterInitialization.getExpression());
-                tsOdinParameterSpec.setValueDeclaredIdentifier(odinParameterInitialization.getParameter().getDeclaredIdentifier());
+                tsOdinParameterSpec.setNameDeclaredIdentifier(odinParameterInitialization.getParameter().getDeclaredIdentifier());
                 return List.of(tsOdinParameterSpec);
             }
 
@@ -473,7 +479,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 for (OdinParameter odinParameter : parameterDeclaration.getParameterList()) {
                     TsOdinParameterSpec tsOdinParameterSpec = new TsOdinParameterSpec();
                     tsOdinParameterSpec.setTypeDefinitionExpression(odinParameterDecl.getTypeDefinition());
-                    tsOdinParameterSpec.setValueDeclaredIdentifier(odinParameter.getDeclaredIdentifier());
+                    tsOdinParameterSpec.setNameDeclaredIdentifier(odinParameter.getDeclaredIdentifier());
                     parameterSpecs.add(tsOdinParameterSpec);
                 }
                 return parameterSpecs;
@@ -491,11 +497,11 @@ public class OdinTypeResolver extends OdinVisitor {
 
     private @NotNull TsOdinParameter mapSpecToParameter(OdinScope scope, TsOdinParameterSpec parameterSpec, int parameterIndex) {
         TsOdinParameter tsOdinParameter = new TsOdinParameter();
-        tsOdinParameter.setValueDeclaredIdentifier(parameterSpec.getValueDeclaredIdentifier());
-        if (parameterSpec.getValueDeclaredIdentifier() != null) {
-            tsOdinParameter.setValueName(parameterSpec.getValueDeclaredIdentifier().getName());
+        tsOdinParameter.setValueDeclaredIdentifier(parameterSpec.getNameDeclaredIdentifier());
+        if (parameterSpec.getNameDeclaredIdentifier() != null) {
+            tsOdinParameter.setValueName(parameterSpec.getNameDeclaredIdentifier().getName());
         }
-        tsOdinParameter.setValuePolymorphic(parameterSpec.isValuePolymorphic());
+        tsOdinParameter.setExplicitPolymorphicParameter(parameterSpec.isValuePolymorphic());
         tsOdinParameter.setIndex(parameterIndex);
         if (parameterSpec.getTypeDefinitionExpression() != null) {
             TsOdinType tsOdinType = doResolveType(scope, parameterSpec.getTypeDefinitionExpression().getType());

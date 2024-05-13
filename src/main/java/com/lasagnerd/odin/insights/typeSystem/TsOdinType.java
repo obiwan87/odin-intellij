@@ -13,9 +13,7 @@ public abstract class TsOdinType {
     String name;
 
     // Connections to PSI tree
-    @Deprecated
     OdinDeclaration declaration;
-    @Deprecated
     OdinDeclaredIdentifier declaredIdentifier;
 
     /**
@@ -23,22 +21,43 @@ public abstract class TsOdinType {
      * <p>
      * Example:
      * <p>
-     * File A:
-     * s := B {x=...}
+     * Package A:
+     * s := B.B {x=...}
      * <p>
-     * File B:
-     * B :: struct {x: C}
+     * Package B:
+     * B :: struct {x: C.C}
      * <p>
-     * File C:
+     * Package C:
      * C :: struct {y: i32}
      * <p>
-     * If we are in A and want to resolve the type of s.x, we need the parent scope of B, which would tell use about the existence
+     * If we are in A and want to resolve the type of s.x, we need the parent scope of B, which would tell how to resolve
+     * the reference to struct C.
      * of C.
-     * TODO: this is now used as a container for both local and global symbols. Change it! This will eventually lead to bugs.
      */
     OdinScope scope = new OdinScope();
 
+    /**
+     * Stores the polymorphic parameters of this type, e.g.:
+     * For a struct "A struct ($K, $V) {}" this map would contain
+     *  K -> TsOdinPolymorphicType,
+     *  V -> TsOdinPolymorphicType
+     */
     Map<String, TsOdinType> polymorphicParameters = new HashMap<>();
+
+    /**
+     * For instantiated types, this represents a mapping of a polymorphic
+     * parameters to the typed passed at instantiation time. e.g. (continued from above):
+     * For instantiated struct "V :: A(i32, string)" this map would contain
+     * K -> i32
+     * V -> i32
+     * <p>
+     * For an instantiated type the length of polymorphicParameters and resolvedPolymorphicParameters
+     * must be the same.
+     * <p>
+     * If a type only contains polymorphic parameters but no resolved ones, then it is considered
+     * a generic type. Otherwise, it is considered a specialized type.
+     */
+    Map<String, TsOdinType> resolvedPolymorphicParameters = new HashMap<>();
 
     public OdinType type;
 
@@ -97,6 +116,14 @@ public abstract class TsOdinType {
 
     public boolean isPolymorphic() {
         return this instanceof TsOdinPolymorphicType;
+    }
+
+    public boolean isGeneric() {
+        return !getPolymorphicParameters().isEmpty();
+    }
+
+    public boolean isSpecialized() {
+        return getPolymorphicParameters().isEmpty();
     }
 
     public boolean isNillable() {

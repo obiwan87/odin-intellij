@@ -8,17 +8,11 @@ import lombok.Data;
 public class TsOdinParameter {
     String valueName;
     OdinDeclaredIdentifier valueDeclaredIdentifier;
-    boolean isValuePolymorphic;
+
+    boolean isExplicitPolymorphicParameter;
+
     OdinTypeDefinitionExpression typeDefinitionExpression;
     TsOdinType type;
 
     int index;
-
-    public boolean isTypePolymorphic() {
-        return type instanceof TsOdinPolymorphicType;
-    }
-
-    public boolean isPolymorphic() {
-        return isValuePolymorphic || isTypePolymorphic();
-    }
 }

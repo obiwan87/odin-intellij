@@ -33,7 +33,6 @@ public class OdinTypeInstantiator {
         instantiatedType.setDeclaration(baseType.getDeclaration());
         instantiatedType.setDeclaredIdentifier(baseType.getDeclaredIdentifier());
         instantiatedType.getFields().putAll(baseType.getFields());
-        instantiatedType.setParameters(baseType.getParameters());
 
         OdinStructType type = baseType.type();
         List<OdinFieldDeclarationStatement> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(type);
@@ -145,21 +144,19 @@ public class OdinTypeInstantiator {
                     continue;
                 }
 
-                // This is only valid if poly parameter type is built-in type typeid
                 TsOdinType parameterType = tsOdinParameter.getType();
                 if (parameterType == null) {
                     System.out.println("Could not resolve parameter type");
                     continue;
                 }
 
-                if (tsOdinParameter.isValuePolymorphic()) {
-                    instantiatedType.getPolymorphicParameters().put(tsOdinParameter.getValueName(), argumentType);
+                if (tsOdinParameter.isExplicitPolymorphicParameter()) {
+                    instantiatedType.getResolvedPolymorphicParameters().put(tsOdinParameter.getValueName(), argumentType);
                     instantiationScope.addType(tsOdinParameter.getValueName(), argumentType);
                 }
 
-
                 Map<String, TsOdinType> resolvedTypes = substituteTypes(parameterType, argumentType);
-                instantiatedType.getPolymorphicParameters().putAll(resolvedTypes);
+                instantiatedType.getResolvedPolymorphicParameters().putAll(resolvedTypes);
                 for (Map.Entry<String, TsOdinType> entry : resolvedTypes.entrySet()) {
                     instantiationScope.addType(entry.getKey(), entry.getValue());
                 }
@@ -217,6 +214,9 @@ public class OdinTypeInstantiator {
             } else if (parameterType instanceof TsOdinProcedureType procedureType &&
                     argumentType instanceof TsOdinProcedureType procedureType1) {
                 if (procedureType.getParameters().size() == procedureType1.getParameters().size()) {
+
+                    // Note: explicit polymorphic parameters are not allowed in this scenario, as they don't make
+                    //  sense in a type definition
                     for (int i = 0; i < procedureType.getParameters().size(); i++) {
                         TsOdinParameter parameterParameter = procedureType.getParameters().get(i);
                         TsOdinParameter argumentParameter = procedureType1.getParameters().get(i);
@@ -232,8 +232,8 @@ public class OdinTypeInstantiator {
                 }
             } // This should be working only structs, unions and procedures
             else {
-                for (Map.Entry<String, TsOdinType> entry : parameterType.getPolymorphicParameters().entrySet()) {
-                    TsOdinType nextArgumentType = argumentType.getPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinType.UNKNOWN);
+                for (Map.Entry<String, TsOdinType> entry : parameterType.getResolvedPolymorphicParameters().entrySet()) {
+                    TsOdinType nextArgumentType = argumentType.getResolvedPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinType.UNKNOWN);
                     TsOdinType nextParameterType = entry.getValue();
                     doSubstituteTypes(nextParameterType, nextArgumentType, resolvedTypes);
                 }

@@ -20,6 +20,10 @@ poly_proc :: proc(x: proc(p: $K) -> $E, y: K) -> E {
     return x(y)
 }
 
+poly_proc_explicit :: proc(x: proc($K: typeid, index: i32) -> K) -> K {
+    return x(K, 2)
+}
+
 testParapoly_slice :: proc() {
     x := parapoly_slice([]i32 { })
 }
@@ -33,4 +37,13 @@ testParapoly_slice_constrained :: proc() {
 
 testParapoly_proc :: proc() {
     x := poly_proc(proc(x: i32) -> i32 { return 1}, 1)
+}
+
+Dict :: struct($Key, $Value: typeid) {
+
+}
+testParapoly_instantiatedStruct :: proc() {
+    PointDict :: Dict(int, Point)
+
+    x := PointDict {}
 }
