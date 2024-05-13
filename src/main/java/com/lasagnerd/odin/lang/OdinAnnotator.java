@@ -9,7 +9,6 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
-import com.lasagnerd.odin.lang.psi.OdinStringLiteral;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +49,8 @@ public class OdinAnnotator implements Annotator {
         IElementType elementType = PsiUtilCore.getElementType(element);
         if(elementType == OdinTypes.DQ_STRING_LITERAL) {
             String text = element.getText();
-            if(text.contains("\n") || (text.endsWith("\\\"") || !text.endsWith("\""))) {
+
+            if(text.contains("\n") || isIncorrectlyEndedStringLiteral(text, '"')) {
                 holder.newAnnotation(HighlightSeverity.ERROR, "Line end not allowed inside string literals")
                         .range(element.getTextRange())
                         .highlightType(ProblemHighlightType.GENERIC_ERROR)
@@ -60,12 +60,46 @@ public class OdinAnnotator implements Annotator {
 
         if(elementType == OdinTypes.SQ_STRING_LITERAL) {
             String text = element.getText();
-            if(text.contains("\n") || (text.endsWith("\\'") || !text.endsWith("'"))) {
+            if(text.contains("\n") || isIncorrectlyEndedStringLiteral(text, '\'')) {
                 holder.newAnnotation(HighlightSeverity.ERROR, "Line end not allowed inside rune literals")
                         .range(element.getTextRange())
                         .highlightType(ProblemHighlightType.GENERIC_ERROR)
                         .create();
             }
         }
+    }
+
+    /**
+     * Checks if the provided string is a correctly ended Java string literal.
+     * A correctly ended string literal must:
+     * - Start and end with a double quote character.
+     * - Have all internal double quotes escaped properly.
+     *
+     * @param literal The string to be checked.
+     * @param quoteChar The character used for quotes
+     * @return true if the string is a valid Java string literal, false otherwise.
+     */
+    public static boolean isIncorrectlyEndedStringLiteral(String literal, char quoteChar) {
+        if (literal == null || literal.length() < 2) {
+            return true;
+        }
+
+        // Check if it starts and ends with a quote
+        if (literal.charAt(0) != quoteChar || literal.charAt(literal.length() - 1) != quoteChar) {
+            return true;
+        }
+
+        // Check internal structure for correctly escaped quotes
+        for (int i = 1; i < literal.length() - 1; i++) {
+            if (literal.charAt(i) == quoteChar) {
+                // Check if the preceding character is not an escaping backslash
+                // or if it is an escaping backslash, it must itself be escaped
+                if (literal.charAt(i - 1) != '\\' || (i > 1 && literal.charAt(i - 1) == '\\' && literal.charAt(i - 2) == '\\')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
