@@ -8,7 +8,7 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class TsOdinUnionType extends TsOdinType {
+public class TsOdinUnionType extends TsOdinGenericType {
     List<TsOdinUnionVariant> variants = new ArrayList<>();
     List<TsOdinParameter> parameters = new ArrayList<>();
 

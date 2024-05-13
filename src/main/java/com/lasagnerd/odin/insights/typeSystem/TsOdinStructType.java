@@ -7,9 +7,12 @@ import java.util.*;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class TsOdinStructType extends TsOdinType {
+public class TsOdinStructType extends TsOdinGenericType {
+
     List<TsOdinParameter> parameters = new ArrayList<>();
     Map<String, TsOdinType> fields = new HashMap<>();
+
+
 
     @Override
     public TsOdinMetaType.MetaType getMetaType() {

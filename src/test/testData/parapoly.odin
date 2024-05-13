@@ -42,7 +42,7 @@ testParapoly_proc :: proc() {
 Dict :: struct($Key, $Value: typeid) {
 
 }
-testParapoly_instantiatedStruct :: proc() {
+testParapoly_specializedStruct :: proc() {
     PointDict :: Dict(int, Point)
 
     x := PointDict {}

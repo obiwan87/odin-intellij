@@ -36,28 +36,7 @@ public abstract class TsOdinType {
      */
     OdinScope scope = new OdinScope();
 
-    /**
-     * Stores the polymorphic parameters of this type, e.g.:
-     * For a struct "A struct ($K, $V) {}" this map would contain
-     *  K -> TsOdinPolymorphicType,
-     *  V -> TsOdinPolymorphicType
-     */
-    Map<String, TsOdinType> polymorphicParameters = new HashMap<>();
 
-    /**
-     * For instantiated types, this represents a mapping of a polymorphic
-     * parameters to the typed passed at instantiation time. e.g. (continued from above):
-     * For instantiated struct "V :: A(i32, string)" this map would contain
-     * K -> i32
-     * V -> i32
-     * <p>
-     * For an instantiated type the length of polymorphicParameters and resolvedPolymorphicParameters
-     * must be the same.
-     * <p>
-     * If a type only contains polymorphic parameters but no resolved ones, then it is considered
-     * a generic type. Otherwise, it is considered a specialized type.
-     */
-    Map<String, TsOdinType> resolvedPolymorphicParameters = new HashMap<>();
 
     public OdinType type;
 
@@ -81,6 +60,7 @@ public abstract class TsOdinType {
             return "UNKNOWN";
         }
     };
+
     public static final TsOdinType VOID = new TsOdinType() {
         {
             this.scope = OdinScope.EMPTY;
@@ -116,14 +96,6 @@ public abstract class TsOdinType {
 
     public boolean isPolymorphic() {
         return this instanceof TsOdinPolymorphicType;
-    }
-
-    public boolean isGeneric() {
-        return !getPolymorphicParameters().isEmpty();
-    }
-
-    public boolean isSpecialized() {
-        return getPolymorphicParameters().isEmpty();
     }
 
     public boolean isNillable() {

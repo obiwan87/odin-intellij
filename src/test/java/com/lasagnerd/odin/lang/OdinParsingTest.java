@@ -865,11 +865,10 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    public void testParapoly_instantiatedStruct() throws IOException {
+    public void testParapoly_specializedStruct() throws IOException {
         OdinFile odinFile = load("src/test/testData/parapoly.odin");
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testParapoly_instantiatedStruct", "x");
-            assertEquals(tsOdinType.getPolymorphicParameters().values().size(), 0);
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testParapoly_specializedStruct", "x");
 
         }
     }

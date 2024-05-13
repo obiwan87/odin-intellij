@@ -134,12 +134,12 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE) {
                 TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
                 if (!procedureType.getReturnTypes().isEmpty()) {
-                    TsOdinProcedureType instantiatedType = OdinTypeInstantiator
-                            .instantiateProcedure(scope, o.getArgumentList(), procedureType);
-                    if (instantiatedType.getReturnTypes().size() == 1) {
-                        this.type = instantiatedType.getReturnTypes().get(0);
-                    } else if (instantiatedType.getReturnTypes().size() > 1) {
-                        this.type = new TsOdinTuple(instantiatedType.getReturnTypes());
+                    TsOdinProcedureType specializedType = OdinTypeSpecializer
+                            .specializeProcedure(scope, o.getArgumentList(), procedureType);
+                    if (specializedType.getReturnTypes().size() == 1) {
+                        this.type = specializedType.getReturnTypes().get(0);
+                    } else if (specializedType.getReturnTypes().size() > 1) {
+                        this.type = new TsOdinTuple(specializedType.getReturnTypes());
                     } else {
                         this.type = TsOdinType.VOID;
                     }
@@ -148,17 +148,17 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             if (tsOdinMetaType.getRepresentedMetaType() == STRUCT) {
                 TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
-                TsOdinStructType instantiatedStructType = OdinTypeInstantiator.instantiateStruct(scope, o.getArgumentList(), structType);
+                TsOdinStructType specializedStructType = OdinTypeSpecializer.specializeStruct(scope, o.getArgumentList(), structType);
                 TsOdinMetaType resultType = new TsOdinMetaType(STRUCT);
-                resultType.setRepresentedType(instantiatedStructType);
+                resultType.setRepresentedType(specializedStructType);
                 this.type = resultType;
             }
 
             if (tsOdinMetaType.getRepresentedMetaType() == UNION) {
                 TsOdinUnionType unionType = (TsOdinUnionType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
-                TsOdinType instantiatedUnion = OdinTypeInstantiator.instantiateUnion(scope, o.getArgumentList(), unionType);
+                TsOdinType specializedUnion = OdinTypeSpecializer.specializeUnion(scope, o.getArgumentList(), unionType);
                 TsOdinMetaType resultType = new TsOdinMetaType(UNION);
-                resultType.setRepresentedType(instantiatedUnion);
+                resultType.setRepresentedType(specializedUnion);
                 this.type = resultType;
             }
         }

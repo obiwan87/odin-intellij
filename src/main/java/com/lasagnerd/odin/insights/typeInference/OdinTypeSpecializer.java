@@ -10,108 +10,110 @@ import java.util.*;
 
 import static com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine.inferType;
 
-public class OdinTypeInstantiator {
+public class OdinTypeSpecializer {
 
-    public static @NotNull TsOdinStructType instantiateStruct(OdinScope outerScope,
-                                                              @NotNull List<OdinArgument> arguments,
-                                                              TsOdinStructType baseType) {
-        List<TsOdinParameter> parameters = baseType.getParameters();
+    public static @NotNull TsOdinStructType specializeStruct(OdinScope outerScope,
+                                                             @NotNull List<OdinArgument> arguments,
+                                                             TsOdinStructType genericType) {
+        List<TsOdinParameter> parameters = genericType.getParameters();
         if (parameters.isEmpty())
-            return baseType;
+            return genericType;
 
-        TsOdinStructType instantiatedType = new TsOdinStructType();
-        instantiatedType.getScope().putAll(baseType.getScope());
+        TsOdinStructType specializedType = new TsOdinStructType();
+        specializedType.setGenericType(genericType);
+        specializedType.getScope().putAll(genericType.getScope());
 
-        OdinScope newScope = instantiatedType.getScope();
+        OdinScope newScope = specializedType.getScope();
         resolveArguments(outerScope,
-                baseType,
-                baseType.getParameters(),
-                instantiatedType,
+                genericType,
+                genericType.getParameters(),
+                specializedType,
                 arguments);
-        instantiatedType.setType(baseType.getType());
-        instantiatedType.setName(baseType.getName());
-        instantiatedType.setDeclaration(baseType.getDeclaration());
-        instantiatedType.setDeclaredIdentifier(baseType.getDeclaredIdentifier());
-        instantiatedType.getFields().putAll(baseType.getFields());
+        specializedType.setType(genericType.getType());
+        specializedType.setName(genericType.getName());
+        specializedType.setDeclaration(genericType.getDeclaration());
+        specializedType.setDeclaredIdentifier(genericType.getDeclaredIdentifier());
+        specializedType.getFields().putAll(genericType.getFields());
 
-        OdinStructType type = baseType.type();
+        OdinStructType type = genericType.type();
         List<OdinFieldDeclarationStatement> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(type);
         for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarations) {
             OdinTypeDefinitionExpression typeDefinition = fieldDeclaration.getTypeDefinition();
             TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, typeDefinition.getType());
             for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifiers()) {
-                instantiatedType.getFields().put(declaredIdentifier.getName(), tsOdinType);
+                specializedType.getFields().put(declaredIdentifier.getName(), tsOdinType);
             }
         }
 
-        return instantiatedType;
+        return specializedType;
     }
 
-    public static @NotNull TsOdinProcedureType instantiateProcedure(@NotNull OdinScope outerScope,
-                                                                    List<OdinArgument> arguments,
-                                                                    TsOdinProcedureType baseType) {
-        List<TsOdinParameter> parameters = baseType.getParameters();
+    public static @NotNull TsOdinProcedureType specializeProcedure(@NotNull OdinScope outerScope,
+                                                                   List<OdinArgument> arguments,
+                                                                   TsOdinProcedureType genericType) {
+        List<TsOdinParameter> parameters = genericType.getParameters();
         if (parameters.isEmpty())
-            return baseType;
+            return genericType;
 
-        TsOdinProcedureType instantiatedType = new TsOdinProcedureType();
-        instantiatedType.getScope().putAll(baseType.getScope());
-        instantiatedType.setType(baseType.getType());
-        instantiatedType.setName(baseType.getName());
-        instantiatedType.setDeclaration(baseType.getDeclaration());
-        instantiatedType.setDeclaredIdentifier(baseType.getDeclaredIdentifier());
-        instantiatedType.setReturnParameters(baseType.getReturnParameters());
+        TsOdinProcedureType specializedType = new TsOdinProcedureType();
+        specializedType.getScope().putAll(genericType.getScope());
+        specializedType.setType(genericType.getType());
+        specializedType.setName(genericType.getName());
+        specializedType.setDeclaration(genericType.getDeclaration());
+        specializedType.setDeclaredIdentifier(genericType.getDeclaredIdentifier());
+        specializedType.setReturnParameters(genericType.getReturnParameters());
         resolveArguments(outerScope,
-                baseType,
-                baseType.getParameters(),
-                instantiatedType,
+                genericType,
+                genericType.getParameters(),
+                specializedType,
                 arguments);
 
-        for (TsOdinParameter tsOdinReturnType : baseType.getReturnParameters()) {
-            TsOdinType tsOdinType = OdinTypeResolver.resolveType(instantiatedType.getScope(), tsOdinReturnType.getTypeDefinitionExpression().getType());
-            instantiatedType.getReturnTypes().add(tsOdinType);
+        for (TsOdinParameter tsOdinReturnType : genericType.getReturnParameters()) {
+            TsOdinType tsOdinType = OdinTypeResolver.resolveType(specializedType.getScope(), tsOdinReturnType.getTypeDefinitionExpression().getType());
+            specializedType.getReturnTypes().add(tsOdinType);
         }
 
-        return instantiatedType;
+        return specializedType;
     }
 
-    public static TsOdinType instantiateUnion(OdinScope outerScope, List<OdinArgument> arguments, TsOdinUnionType baseType) {
-        List<TsOdinParameter> parameters = baseType.getParameters();
+    public static TsOdinType specializeUnion(OdinScope outerScope, List<OdinArgument> arguments, TsOdinUnionType genericType) {
+        List<TsOdinParameter> parameters = genericType.getParameters();
         if (parameters.isEmpty())
-            return baseType;
+            return genericType;
 
-        TsOdinUnionType instantiatedType = new TsOdinUnionType();
-        instantiatedType.getScope().putAll(baseType.getScope());
-        instantiatedType.setType(baseType.getType());
-        instantiatedType.setName(baseType.getName());
-        instantiatedType.setDeclaration(baseType.getDeclaration());
-        instantiatedType.setDeclaredIdentifier(baseType.getDeclaredIdentifier());
+        TsOdinUnionType specializedType = new TsOdinUnionType();
+        specializedType.setGenericType(genericType);
+        specializedType.getScope().putAll(genericType.getScope());
+        specializedType.setType(genericType.getType());
+        specializedType.setName(genericType.getName());
+        specializedType.setDeclaration(genericType.getDeclaration());
+        specializedType.setDeclaredIdentifier(genericType.getDeclaredIdentifier());
         resolveArguments(outerScope,
-                baseType,
-                baseType.getParameters(),
-                instantiatedType,
+                genericType,
+                genericType.getParameters(),
+                specializedType,
                 arguments);
 
 
-        for (TsOdinUnionVariant baseField : baseType.getVariants()) {
-            TsOdinType instantiatedFieldType = OdinTypeResolver.resolveType(instantiatedType.getScope(), baseField.getTypeDefinitionExpression().getType());
-            TsOdinUnionVariant instantiatedField = new TsOdinUnionVariant();
-            instantiatedField.setTypeDefinitionExpression(baseField.getTypeDefinitionExpression());
-            instantiatedField.setType(instantiatedFieldType);
-            instantiatedType.getVariants().add(instantiatedField);
+        for (TsOdinUnionVariant baseField : genericType.getVariants()) {
+            TsOdinType specializedFieldType = OdinTypeResolver.resolveType(specializedType.getScope(), baseField.getTypeDefinitionExpression().getType());
+            TsOdinUnionVariant specializedField = new TsOdinUnionVariant();
+            specializedField.setTypeDefinitionExpression(baseField.getTypeDefinitionExpression());
+            specializedField.setType(specializedFieldType);
+            specializedType.getVariants().add(specializedField);
         }
 
-        return instantiatedType;
+        return specializedType;
     }
 
     private static void resolveArguments(
             OdinScope outerScope,
-            TsOdinType baseType,
+            TsOdinType genericType,
             List<TsOdinParameter> parameters,
-            TsOdinType instantiatedType,
+            TsOdinType specializedType,
             List<OdinArgument> arguments
     ) {
-        OdinScope instantiationScope = instantiatedType.getScope();
+        OdinScope instantiationScope = specializedType.getScope();
 
         if (!arguments.isEmpty()) {
             for (int i = 0; i < arguments.size(); i++) {
@@ -140,7 +142,7 @@ public class OdinTypeInstantiator {
 
                 TsOdinType argumentType = resolveArgumentType(argumentExpression, tsOdinParameter, outerScope);
                 if (argumentType.isUnknown()) {
-                    System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n", tsOdinParameter.getValueName(), baseType.getClass().getSimpleName(), baseType.getName());
+                    System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n", tsOdinParameter.getValueName(), genericType.getClass().getSimpleName(), genericType.getName());
                     continue;
                 }
 
@@ -151,12 +153,16 @@ public class OdinTypeInstantiator {
                 }
 
                 if (tsOdinParameter.isExplicitPolymorphicParameter()) {
-                    instantiatedType.getResolvedPolymorphicParameters().put(tsOdinParameter.getValueName(), argumentType);
+                    if (specializedType instanceof TsOdinGenericType generalizableType) {
+                        generalizableType.getResolvedPolymorphicParameters().put(tsOdinParameter.getValueName(), argumentType);
+                    }
                     instantiationScope.addType(tsOdinParameter.getValueName(), argumentType);
                 }
 
                 Map<String, TsOdinType> resolvedTypes = substituteTypes(parameterType, argumentType);
-                instantiatedType.getResolvedPolymorphicParameters().putAll(resolvedTypes);
+                if(specializedType instanceof TsOdinGenericType generalizableType) {
+                    generalizableType.getResolvedPolymorphicParameters().putAll(resolvedTypes);
+                }
                 for (Map.Entry<String, TsOdinType> entry : resolvedTypes.entrySet()) {
                     instantiationScope.addType(entry.getKey(), entry.getValue());
                 }
@@ -168,11 +174,12 @@ public class OdinTypeInstantiator {
      * The method substituteTypes maps $T -> Point as shown in the example below
      * declared type:         List($Item) { items: []$Item }
      * polymorphic parameter: List($T):       $Item -> $T
-     *                              |                   |
-     *                              v                   v
+     * |                   |
+     * v                   v
      * argument:              List(Point)   : $Item  -> Point
+     *
      * @param parameterType The parameter type
-     * @param argumentType The argument type
+     * @param argumentType  The argument type
      * @return a substitution map
      */
     private static @NotNull Map<String, TsOdinType> substituteTypes(TsOdinType parameterType, TsOdinType argumentType) {
@@ -231,11 +238,13 @@ public class OdinTypeInstantiator {
                     }
                 }
             } // This should be working only structs, unions and procedures
-            else {
-                for (Map.Entry<String, TsOdinType> entry : parameterType.getResolvedPolymorphicParameters().entrySet()) {
-                    TsOdinType nextArgumentType = argumentType.getResolvedPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinType.UNKNOWN);
-                    TsOdinType nextParameterType = entry.getValue();
-                    doSubstituteTypes(nextParameterType, nextArgumentType, resolvedTypes);
+            else if (parameterType instanceof TsOdinGenericType generalizableType && argumentType instanceof TsOdinGenericType generalizableType1) {
+                if (generalizableType1.getClass().equals(generalizableType.getClass())) {
+                    for (Map.Entry<String, TsOdinType> entry : generalizableType.getResolvedPolymorphicParameters().entrySet()) {
+                        TsOdinType nextArgumentType = generalizableType1.getResolvedPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinType.UNKNOWN);
+                        TsOdinType nextParameterType = entry.getValue();
+                        doSubstituteTypes(nextParameterType, nextArgumentType, resolvedTypes);
+                    }
                 }
             }
         }

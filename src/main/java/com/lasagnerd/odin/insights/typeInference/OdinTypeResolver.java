@@ -160,8 +160,8 @@ public class OdinTypeResolver extends OdinVisitor {
                 TsOdinType tsOdinType = doResolveType(localScope, odinPolymorphicType);
                 localScope.addType(tsOdinType.getName(), tsOdinType);
                 localScope.add(odinPolymorphicType.getDeclaredIdentifier());
-                if(baseType instanceof TsOdinStructType ||baseType instanceof TsOdinUnionType) {
-                    baseType.getPolymorphicParameters().put(tsOdinType.getName(), tsOdinType);
+                if (baseType instanceof TsOdinGenericType tsOdinGenericType) {
+                    tsOdinGenericType.getPolymorphicParameters().put(tsOdinType.getName(), tsOdinType);
                 }
             }
 
@@ -175,8 +175,8 @@ public class OdinTypeResolver extends OdinVisitor {
                     valuePolymorphicType.setDeclaredIdentifier(declaredIdentifier);
                     localScope.addType(valuePolymorphicType.getName(), valuePolymorphicType);
                     localScope.add(declaredIdentifier);
-                    if(baseType instanceof TsOdinStructType || baseType instanceof TsOdinUnionType) {
-                        baseType.getPolymorphicParameters().put(valuePolymorphicType.getName(), valuePolymorphicType);
+                    if (baseType instanceof TsOdinGenericType tsOdinGenericType) {
+                        tsOdinGenericType.getPolymorphicParameters().put(valuePolymorphicType.getName(), valuePolymorphicType);
                     }
                 }
             }
@@ -297,11 +297,11 @@ public class OdinTypeResolver extends OdinVisitor {
         resolveIdentifier(identifier);
 
         if (this.type instanceof TsOdinStructType structType) {
-            this.type = OdinTypeInstantiator.instantiateStruct(scope, o.getArgumentList(), structType);
+            this.type = OdinTypeSpecializer.specializeStruct(scope, o.getArgumentList(), structType);
         }
 
         if (this.type instanceof TsOdinUnionType unionType) {
-            this.type = OdinTypeInstantiator.instantiateUnion(scope, o.getArgumentList(), unionType);
+            this.type = OdinTypeSpecializer.specializeUnion(scope, o.getArgumentList(), unionType);
         }
     }
 
