@@ -869,7 +869,12 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = load("src/test/testData/parapoly.odin");
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testParapoly_specializedStruct", "x");
-
+            TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertTrue(structType.isSpecialized());
+            assertFalse(structType.isGeneric());
+            assertNotSame(structType.getGenericType(), TsOdinGenericType.NO_GENERIC_TYPE);
+            assertTrue(structType.getGenericType().isGeneric());
+            assertFalse(structType.getGenericType().isSpecialized());
         }
     }
 

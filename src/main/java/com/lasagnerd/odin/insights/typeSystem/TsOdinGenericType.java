@@ -2,6 +2,7 @@ package com.lasagnerd.odin.insights.typeSystem;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,24 +16,25 @@ import java.util.Map;
 @Data
 public abstract class TsOdinGenericType extends TsOdinType {
 
-    public static TsOdinGenericType UNKNOWN_GENERIC_TYPE = new TsOdinGenericType() {
+    public static TsOdinGenericType NO_GENERIC_TYPE = new TsOdinGenericType() {
         @Override
         public TsOdinMetaType.MetaType getMetaType() {
             return TsOdinMetaType.MetaType.UNKNOWN;
         }
     };
 
+    @NotNull
     private TsOdinGenericType genericType;
 
-    public TsOdinGenericType()  {
-        this.genericType = UNKNOWN_GENERIC_TYPE;
+    public TsOdinGenericType() {
+        this.genericType = NO_GENERIC_TYPE;
     }
 
     /**
      * Stores the polymorphic parameters of this type, e.g.:
      * For a struct "A struct ($K, $V) {}" this map would contain
-     *  K -> TsOdinPolymorphicType,
-     *  V -> TsOdinPolymorphicType
+     * K -> TsOdinPolymorphicType,
+     * V -> TsOdinPolymorphicType
      */
     Map<String, TsOdinType> polymorphicParameters = new HashMap<>();
 
@@ -43,7 +45,7 @@ public abstract class TsOdinGenericType extends TsOdinType {
      * K -> i32
      * V -> i32
      * <p>
-     * For an specialized type the length of polymorphicParameters and resolvedPolymorphicParameters
+     * For a specialized type the length of polymorphicParameters and resolvedPolymorphicParameters
      * must be the same.
      * <p>
      * If a type only contains polymorphic parameters but no resolved ones, then it is considered
@@ -52,11 +54,20 @@ public abstract class TsOdinGenericType extends TsOdinType {
     Map<String, TsOdinType> resolvedPolymorphicParameters = new HashMap<>();
 
     public boolean isGeneric() {
-        return !getPolymorphicParameters().isEmpty();
+        return !isSpecialized();
     }
 
+    /**
+     * A type is considered specialized if the set of resolved parameters is equal to the set of polymorphic
+     * parameters of the generic type.
+     *
+     * @return True if the type is specialized
+     * @see #isGeneric()
+     */
     public boolean isSpecialized() {
-        return getPolymorphicParameters().isEmpty();
+        return getPolymorphicParameters().isEmpty() &&
+               genericType.getPolymorphicParameters()
+                        .keySet().stream().allMatch(k -> getResolvedPolymorphicParameters().containsKey(k));
     }
 
 }
