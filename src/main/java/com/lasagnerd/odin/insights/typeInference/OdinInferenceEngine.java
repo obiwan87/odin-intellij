@@ -94,26 +94,37 @@ public class OdinInferenceEngine extends OdinVisitor {
             localScope = this.scope;
         }
 
-        // using current scope, find identifier declaration and extract type
-        String name = refExpression.getIdentifier().getText();
-        PsiNamedElement namedElement = localScope.getNamedElement(name);
-        if (namedElement instanceof OdinImportDeclarationStatement) {
-            isImport = true;
-            importDeclarationStatement = (OdinImportDeclarationStatement) namedElement;
-        } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
-            OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinDeclaration.class);
-
-            if (odinDeclaration instanceof OdinImportDeclarationStatement) {
+        if (refExpression.getIdentifier() != null) {
+            // using current scope, find identifier declaration and extract type
+            String name = refExpression.getIdentifier().getText();
+            PsiNamedElement namedElement = localScope.getNamedElement(name);
+            if (namedElement instanceof OdinImportDeclarationStatement) {
                 isImport = true;
-                importDeclarationStatement = (OdinImportDeclarationStatement) odinDeclaration;
-            } else {
-                this.type = resolveTypeOfDeclaration(this.scope, declaredIdentifier, odinDeclaration);
+                importDeclarationStatement = (OdinImportDeclarationStatement) namedElement;
+            } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
+                OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinDeclaration.class);
+
+                if (odinDeclaration instanceof OdinImportDeclarationStatement) {
+                    isImport = true;
+                    importDeclarationStatement = (OdinImportDeclarationStatement) odinDeclaration;
+                } else {
+                    this.type = resolveTypeOfDeclaration(this.scope, declaredIdentifier, odinDeclaration);
+                }
+            } else if (namedElement == null) {
+                if (OdinLangSyntaxAnnotator.RESERVED_TYPES.contains(name)) {
+                    TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(BUILTIN);
+                    tsOdinMetaType.setName(name);
+                    this.type = tsOdinMetaType;
+                }
             }
-        } else if (namedElement == null) {
-            if (OdinLangSyntaxAnnotator.RESERVED_TYPES.contains(name)) {
-                TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(BUILTIN);
-                tsOdinMetaType.setName(name);
-                this.type = tsOdinMetaType;
+        }
+
+        if (refExpression.getType() != null) {
+            TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, refExpression.getType());
+            if (this.lhsValuesCount == 2) {
+                this.type = createOptionalOkTuple(tsOdinType);
+            } else {
+                this.type = tsOdinType;
             }
         }
     }
@@ -207,7 +218,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     @Override
-    public void visitUnaryAndExpression(@NotNull OdinUnaryAndExpression o) {
+    public void visitAddressExpression(@NotNull OdinAddressExpression o) {
         OdinExpression expression = o.getExpression();
         if (expression != null) {
             TsOdinType referencedType = doInferType(scope, expression);
@@ -260,16 +271,6 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (isOptionalOkTuple(tsOdinType)) {
                 this.type = ((TsOdinTuple) tsOdinType).getTypes().get(0);
             }
-        }
-    }
-
-    @Override
-    public void visitTypeAssertionExpression(@NotNull OdinTypeAssertionExpression o) {
-        TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, o.getType());
-        if (this.lhsValuesCount == 2) {
-            this.type = createOptionalOkTuple(tsOdinType);
-        } else {
-            this.type = tsOdinType;
         }
     }
 

@@ -470,22 +470,21 @@ private ternaryGroup                 ::= elvisExpression
 private postfixGroup                 ::= orReturnExpression
                                          | orBreakExpression
                                          | orContinueExpression
-                                         | typeAssertionExpression
 
 
 parenthesizedExpression              ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
 
 // should we define the arrow operator on its own?
-fake refExpression                   ::= expression? refOperator identifier
+fake refExpression                   ::= expression? refOperator (identifier|typeAssert)
 simpleRefExpression                  ::= identifier {extends=refExpression elementType=refExpression}
-qualificationExpression              ::= expression refOperator identifier {extends=refExpression elementType=refExpression pin(".*")=refOperator recoverWhile=eos_recover}
+qualificationExpression              ::= expression refOperator (identifier|typeAssert) {extends=refExpression elementType=refExpression pin(".*")=refOperator recoverWhile=eos_recover}
+private typeAssert                   ::= LPAREN type RPAREN
 private refOperator ::= (DOT|ARROW)
 
 
 implicitSelectorExpression           ::= DOT identifier
 indexExpression                      ::= expression index
 sliceExpression                      ::= expression slice
-typeAssertionExpression              ::= expression DOT LPAREN type RPAREN {methods=[subject="/expression[0]" targetType="/expression[1]"]}
 procedureExpression                  ::= procedureTypeContainer procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
 procedureTypeContainer               ::= procedureType
 dereferenceExpression                ::= expression CARET
@@ -526,7 +525,7 @@ maybeExpression                      ::= expression DOT_QUESTION
 private unaryGroup                   ::= unaryPlusExpression
                                          | unaryMinusExpression
                                          | unaryTildeExpression
-                                         | unaryAndExpression
+                                         | addressExpression
                                          | unaryNotExpression
                                          | unaryRangeExpression
 
@@ -535,7 +534,7 @@ private unaryGroup                   ::= unaryPlusExpression
 unaryPlusExpression                  ::= PLUS  <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
 unaryMinusExpression                 ::= MINUS <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
 unaryTildeExpression                 ::= TILDE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unaryAndExpression                   ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+addressExpression                    ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
 unaryNotExpression                   ::= NOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
 unaryRangeExpression                 ::= RANGE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
 
@@ -636,6 +635,7 @@ expressionStatement                  ::= orReturnExpression
                                           | orContinueExpression
                                           | callExpression
                                           | qualificationExpression
+                                          | typeAssert
                                           | primaryGroup
 
 label                                ::= IDENTIFIER_TOKEN COLON
