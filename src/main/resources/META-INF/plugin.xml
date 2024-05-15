@@ -2,19 +2,42 @@
 
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <version>0.3.1</version>
+    <version>0.4.0</version>
     <name>Odin Support</name>
     <change-notes><![CDATA[
         <h2>Features</h2>
         <ul>
-            <li>Support for IntelliJ 2024.1</li>
+            <li>Code Completion
+                <ul>
+                    <li>Support for Specialized/generic types</li>
+                    <li>Support for Generic methods</li>
+                    <li>Support for boolean and comparison operators</li>
+                    <li>Expanded support for "Go to declaration..."</li>
+                    <li>Foreign procedures added to suggestions </li>
+                    <li>Add support for auto-completion of types in other packages</li>
+                </ul>
+            <li>Rename Refactoring</li>
+            <li>Backend</li>
+            <ul>
+                <li>Lots of work on the Inference engine</li>
+                <li>Added type specializer</li>
+            </ul>
         </ul>
-        <h2>Bugfixes</h2>
+
+        <h2>Bug Fixes</h2>
         <ul>
-            <li>NPE fixed in completion contributor</li>
-            <li>NPE fixed in configuration producer</li>
-            <li>Completion now shows for unaliased imports as well</li>
+            <li>Fixed bug where imports wouldn't work</li>
+            <li>Fixed bug where symbols from other files in the same package
+                wouldn't be brought into scope</li>
+            <li>Fixed problem with parsing type asserts</li>
+            <li>Fixed parse problem with argument lists ending on a new line</li>
         </ul>
+
+        Lots of work has been done on the backend. This release is the foundation for more quality of life features
+        in the near future.
+
+        Shout-out and special thanks to @MineBill, for supporting by reporting issues and helping with the testing.
+
         ]]>
     </change-notes>
     <vendor email="simon.distefano@gmx.de" url="https://lasagnerd.com">Lasagnerd</vendor>
@@ -51,7 +74,7 @@
                 id="com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable"
                 displayName="Odin"/>
         <projectService serviceImplementation="com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState"/>
-        <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory" />
+        <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType" id="OdinRunConfigurationType"/>
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
         <runLineMarkerContributor language="Odin" implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
@@ -60,7 +83,8 @@
         <lang.quoteHandler language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinQuoteHandler"/>
         <lang.commenter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinCommenter"/>
         <lang.foldingBuilder language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFoldingBuilder"/>
-        <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier" implementationClass="com.lasagnerd.odin.lang.OdinElementManipulators"/>
+        <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier"
+                                 implementationClass="com.lasagnerd.odin.lang.OdinElementManipulators"/>
 
         <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.insights.OdinCompletionContributor"/>
         <sdkType implementation="com.lasagnerd.odin.sdkConfig.OdinSdkType"/>
