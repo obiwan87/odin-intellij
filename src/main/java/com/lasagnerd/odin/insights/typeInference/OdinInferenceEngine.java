@@ -534,7 +534,7 @@ subExpression
             return OdinTypeResolver.resolveType(parentScope, type);
         }
 
-        if (odinDeclaration instanceof OdinParameterDecl parameterDeclaration) {
+        if (odinDeclaration instanceof OdinParameterDeclarator parameterDeclaration) {
             return OdinTypeResolver.resolveType(parentScope, parameterDeclaration.getTypeDefinition().getType());
         }
 

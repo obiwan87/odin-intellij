@@ -251,7 +251,7 @@ unionBody                            ::= typeDefinitionExpression (COMMA typeDef
 bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
-procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 procedureType                        ::= directive? PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
 
 whereClause                          ::= WHERE expression (COMMA expression)*
@@ -346,14 +346,14 @@ private polymorphicParameterList     ::= paramEntries
 private paramEntries                         ::= paramEntry (COMMA paramEntry)* COMMA?
 paramEntry                           ::= directive? (
                                              parameterInitialization
-                                             | parameterDecl
+                                             | parameterDeclarator
                                              | unnamedParameter
                                          )
 fake parameterDeclaration            ::= parameter+ typeDefinitionContainer? expression { methods=[getTypeDefinition]}
 typeDefinitionContainer              ::= typeDefinitionExpression
 
 parameter                            ::= [USING] directive? declaredIdentifier
-parameterDecl                        ::= parameter (COMMA parameter)* COLON typeDefinitionContainer {extends=parameterDeclaration  methods=[getTypeDefinition]}
+parameterDeclarator                  ::= parameter (COMMA parameter)* COLON typeDefinitionContainer {extends=parameterDeclaration  methods=[getTypeDefinition]}
 parameterInitialization              ::= parameter COLON [typeDefinitionContainer] EQ expression {extends=parameterDeclaration methods=[getTypeDefinition] }
 
 unnamedParameter                     ::= RANGE? typeDefinitionContainer {extends=parameterDeclaration methods=[getTypeDefinition]}
@@ -485,7 +485,7 @@ private refOperator ::= (DOT|ARROW)
 implicitSelectorExpression           ::= DOT identifier
 indexExpression                      ::= expression index
 sliceExpression                      ::= expression slice
-procedureExpression                  ::= procedureTypeContainer procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+procedureExpression                  ::= procedureTypeContainer procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 procedureTypeContainer               ::= procedureType
 dereferenceExpression                ::= expression CARET
 identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference]}
@@ -639,7 +639,7 @@ expressionStatement                  ::= orReturnExpression
                                           | primaryGroup
 
 label                                ::= IDENTIFIER_TOKEN COLON
-blockStatement                       ::= [(directive eos?)|label] block {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+blockStatement                       ::= [(directive eos?)|label] block {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 
 deferStatement                       ::= DEFER deferrableStatement
 private deferrableStatement          ::= assignmentStatement
@@ -664,12 +664,12 @@ statementBody                        ::= block|doStatement
 // For
 forStatement                         ::= label? directive? forBlock
 private forHead                      ::= <<enterNoBlockMode>> [[[controlFlowInit] SEMICOLON] condition? [SEMICOLON [forUpdate]]] <<exitNoBlockMode>>
-forBlock                             ::= FOR forHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+forBlock                             ::= FOR forHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 forUpdate                            ::= assignmentStatement | callExpression
 
 // For-In
 forInStatement                       ::= label? directive? forInBlock
-forInBlock                           ::= FOR <<enterNoBlockMode>> [forInParameter (COMMA forInParameter)*] IN expression <<exitNoBlockMode>> statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+forInBlock                           ::= FOR <<enterNoBlockMode>> [forInParameter (COMMA forInParameter)*] IN expression <<exitNoBlockMode>> statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 forInParameter                       ::= AND? declaredIdentifier
 
 // Conditional statement (=if-elseif-else)
@@ -679,11 +679,11 @@ conditionalStatement                 ::= [label] [directiveHead] ifBlock (sos el
 
 ifBlock                              ::= if conditionalHead statementBody {
                                                 implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"
-                                                methods = [ getBlockStatements getDeclarationsSpecs ]
+                                                methods = [ getBlockStatements getSymbols ]
                                             }
-elseIfBlock                          ::= elseIf conditionalHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+elseIfBlock                          ::= elseIf conditionalHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 elseIf                               ::= else if
-elseBlock                            ::= else statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getDeclarationsSpecs ] }
+elseBlock                            ::= else statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 if                                   ::= IF_TOKEN
 else                                 ::= ELSE_TOKEN
 

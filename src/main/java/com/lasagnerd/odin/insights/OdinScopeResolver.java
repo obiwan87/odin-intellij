@@ -76,7 +76,7 @@ public class OdinScopeResolver {
         for (int i = scopeNodes.size() - 1; i >= 0; i--) {
             ScopeNode scopeNode = scopeNodes.get(i);
             OdinScopeBlock containingBlock = scopeNode.getScopeBlock();
-            OdinScope declarationsOfContainingBlock = getDeclarationsOfContainingBlock(scope, containingBlock);
+            OdinScope declarationsOfContainingBlock = getScopeOfContainingBlock(scope, containingBlock);
             scope.addAll(declarationsOfContainingBlock.getNamedElements());
 
             for (OdinStatement statement : scopeNode.getStatements()) {
@@ -204,18 +204,18 @@ public class OdinScopeResolver {
         }
     }
 
-    public OdinScope getDeclarationsOfContainingBlock(OdinScope parentScope, OdinScopeBlock containingBlock) {
+    public OdinScope getScopeOfContainingBlock(OdinScope parentScope, OdinScopeBlock containingBlock) {
         OdinScope scope = new OdinScope();
         scope.setPackagePath(parentScope.getPackagePath());
-        for (OdinDeclarationSpec declarationsSpec : containingBlock.getDeclarationsSpecs()) {
-            scope.add(declarationsSpec.getValueDeclaredIdentifier());
-            if(declarationsSpec.isHasUsing()) {
-                if(declarationsSpec.getTypeDefinitionExpression() != null) {
-                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, declarationsSpec.getTypeDefinitionExpression().getType());
+        for (OdinSymbol symbol : containingBlock.getSymbols()) {
+            scope.add(symbol.getDeclaredIdentifier());
+            if(symbol.isHasUsing()) {
+                if(symbol.getTypeDefinitionExpression() != null) {
+                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, symbol.getTypeDefinitionExpression().getType());
                     scope.addAll(getScopeProvidedByType(tsOdinType).getNamedElements());
                 } else {
-                    if(declarationsSpec.getValueExpression() != null) {
-                        OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(parentScope, declarationsSpec.getValueExpression());
+                    if(symbol.getValueExpression() != null) {
+                        OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(parentScope, symbol.getValueExpression());
                         TsOdinType type = typeInferenceResult.getType();
                         if(type != null) {
                             scope.addAll(getScopeProvidedByType(type).getNamedElements());
