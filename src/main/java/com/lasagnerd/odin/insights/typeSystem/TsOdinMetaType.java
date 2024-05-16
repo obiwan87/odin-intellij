@@ -19,6 +19,7 @@ public class TsOdinMetaType extends TsOdinType {
 
     public enum MetaType {
         PROCEDURE,
+        PACKAGE,
         STRUCT,
         UNION,
         ENUM,

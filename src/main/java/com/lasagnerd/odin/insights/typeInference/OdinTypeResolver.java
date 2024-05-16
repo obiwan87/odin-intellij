@@ -474,11 +474,11 @@ public class OdinTypeResolver extends OdinVisitor {
                 return List.of(tsOdinParameterSpec);
             }
 
-            if (parameterDeclaration instanceof OdinParameterDecl odinParameterDecl) {
+            if (parameterDeclaration instanceof OdinParameterDeclarator odinParameterDeclarator) {
                 List<TsOdinParameterSpec> parameterSpecs = new ArrayList<>();
                 for (OdinParameter odinParameter : parameterDeclaration.getParameterList()) {
                     TsOdinParameterSpec tsOdinParameterSpec = new TsOdinParameterSpec();
-                    tsOdinParameterSpec.setTypeDefinitionExpression(odinParameterDecl.getTypeDefinition());
+                    tsOdinParameterSpec.setTypeDefinitionExpression(odinParameterDeclarator.getTypeDefinition());
                     tsOdinParameterSpec.setNameDeclaredIdentifier(odinParameter.getDeclaredIdentifier());
                     parameterSpecs.add(tsOdinParameterSpec);
                 }

@@ -3,8 +3,8 @@ package com.lasagnerd.odin.lang.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.insights.OdinDeclarationSpec;
-import com.lasagnerd.odin.insights.OdinDeclarationSpecifier;
+import com.lasagnerd.odin.insights.OdinSymbol;
+import com.lasagnerd.odin.insights.OdinSymbolResolver;
 import com.lasagnerd.odin.insights.OdinImportInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +99,7 @@ public class OdinPsiUtil {
     }
 
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinParameterDecl statement) {
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinParameterDeclarator statement) {
         return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
     }
 
@@ -121,7 +121,7 @@ public class OdinPsiUtil {
         return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
     }
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDecl statement) {
+    public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDeclarator statement) {
         return doGetTypeDefinitionExpression(statement.getTypeDefinitionContainer().getTypeDefinitionExpression());
     }
 
@@ -318,31 +318,31 @@ public class OdinPsiUtil {
 
     // Procedures
 
-    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinProcedureDeclarationStatement procedureDeclarationStatement) {
+    public static List<OdinSymbol> getSymbols(OdinProcedureDeclarationStatement procedureDeclarationStatement) {
         OdinProcedureType procedureType = procedureDeclarationStatement.getProcedureType();
         return doGetProcedureTypeDeclarationSpecs(procedureType);
     }
 
-    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinProcedureExpression procedureExpression) {
+    public static List<OdinSymbol> getSymbols(OdinProcedureExpression procedureExpression) {
         OdinProcedureType procedureType = procedureExpression.getProcedureTypeContainer().getProcedureType();
         return doGetProcedureTypeDeclarationSpecs(procedureType);
     }
 
-    private static @NotNull List<OdinDeclarationSpec> doGetProcedureTypeDeclarationSpecs(OdinProcedureType procedureType) {
-        List<OdinDeclarationSpec> declarations = new ArrayList<>();
+    private static @NotNull List<OdinSymbol> doGetProcedureTypeDeclarationSpecs(OdinProcedureType procedureType) {
+        List<OdinSymbol> declarations = new ArrayList<>();
         {
 
             for (OdinParamEntry odinParamEntry : procedureType.getParamEntryList()) {
-                declarations.addAll(OdinDeclarationSpecifier.getDeclarationSpecs(odinParamEntry.getParameterDeclaration()));
+                declarations.addAll(OdinSymbolResolver.getSymbols(odinParamEntry.getParameterDeclaration()));
             }
         }
 
         Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(procedureType, OdinPolymorphicType.class);
         for (OdinPolymorphicType polymorphicType : polymorphicTypes) {
-            OdinDeclarationSpec odinDeclarationSpec = new OdinDeclarationSpec();
-            odinDeclarationSpec.setValueDeclaredIdentifier(polymorphicType.getDeclaredIdentifier());
-            odinDeclarationSpec.setHasUsing(false);
-            declarations.add(odinDeclarationSpec);
+            OdinSymbol odinSymbol = new OdinSymbol();
+            odinSymbol.setDeclaredIdentifier(polymorphicType.getDeclaredIdentifier());
+            odinSymbol.setHasUsing(false);
+            declarations.add(odinSymbol);
         }
 
         OdinReturnParameters returnParameters = procedureType.getReturnParameters();
@@ -350,7 +350,7 @@ public class OdinPsiUtil {
             if (returnParameters != null) {
                 var paramEntries = procedureType.getParamEntryList();
                 for (OdinParamEntry odinParamEntry : paramEntries) {
-                    declarations.addAll(OdinDeclarationSpecifier.getDeclarationSpecs(odinParamEntry.getParameterDeclaration()));
+                    declarations.addAll(OdinSymbolResolver.getSymbols(odinParamEntry.getParameterDeclaration()));
                 }
             }
         }
@@ -358,67 +358,67 @@ public class OdinPsiUtil {
     }
 
     // Simple Block
-    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinBlockStatement ignored) {
+    public static List<OdinSymbol> getSymbols(OdinBlockStatement ignored) {
         return Collections.emptyList();
     }
 
     // Control flow blocks
 
-    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinIfBlock ifBlock) {
+    public static List<OdinSymbol> getSymbols(OdinIfBlock ifBlock) {
         OdinControlFlowInit controlFlowInit = ifBlock.getControlFlowInit();
         if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
-            return OdinDeclarationSpecifier.getDeclarationSpecs(odinDeclaration);
+            return OdinSymbolResolver.getSymbols(odinDeclaration);
         }
         return Collections.emptyList();
     }
 
-    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinElseIfBlock elseIfBlock) {
-        List<OdinDeclarationSpec> specs = new ArrayList<>();
+    public static List<OdinSymbol> getSymbols(OdinElseIfBlock elseIfBlock) {
+        List<OdinSymbol> specs = new ArrayList<>();
         OdinControlFlowInit controlFlowInit = elseIfBlock.getControlFlowInit();
         if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
-            specs.addAll(OdinDeclarationSpecifier.getDeclarationSpecs(odinDeclaration));
+            specs.addAll(OdinSymbolResolver.getSymbols(odinDeclaration));
         }
         addSpecsOfPreviousBlocks(elseIfBlock, specs);
 
         return specs;
     }
 
-    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinElseBlock elseBlock) {
-        List<OdinDeclarationSpec> specs = new ArrayList<>();
+    public static List<OdinSymbol> getSymbols(OdinElseBlock elseBlock) {
+        List<OdinSymbol> specs = new ArrayList<>();
         addSpecsOfPreviousBlocks(elseBlock, specs);
         return specs;
     }
 
-    private static void addSpecsOfPreviousBlocks(PsiElement conditionalBlock, List<OdinDeclarationSpec> specs) {
+    private static void addSpecsOfPreviousBlocks(PsiElement conditionalBlock, List<OdinSymbol> specs) {
         PsiElement prevSibling;
         PsiElement current = conditionalBlock;
         while ((prevSibling = current.getPrevSibling()) != null) {
             if (prevSibling instanceof OdinElseIfBlock elseIfBlocSibling) {
-                specs.addAll(elseIfBlocSibling.getDeclarationsSpecs());
+                specs.addAll(elseIfBlocSibling.getSymbols());
                 break;
             }
 
             if (prevSibling instanceof OdinIfBlock ifBlock) {
-                specs.addAll(ifBlock.getDeclarationsSpecs());
+                specs.addAll(ifBlock.getSymbols());
                 break;
             }
             current = prevSibling;
         }
     }
 
-    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinForBlock forBlock) {
+    public static List<OdinSymbol> getSymbols(OdinForBlock forBlock) {
         OdinControlFlowInit controlFlowInit = forBlock.getControlFlowInit();
         if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
-            return OdinDeclarationSpecifier.getDeclarationSpecs(odinDeclaration);
+            return OdinSymbolResolver.getSymbols(odinDeclaration);
         }
         return Collections.emptyList();
     }
 
-    public static List<OdinDeclarationSpec> getDeclarationsSpecs(OdinForInBlock forInStatement) {
-        List<OdinDeclarationSpec> specs = new ArrayList<>();
+    public static List<OdinSymbol> getSymbols(OdinForInBlock forInStatement) {
+        List<OdinSymbol> specs = new ArrayList<>();
         for (var forInParameter : forInStatement.getForInParameterList()) {
-            OdinDeclarationSpec spec = new OdinDeclarationSpec();
-            spec.setValueDeclaredIdentifier(forInParameter.getDeclaredIdentifier());
+            OdinSymbol spec = new OdinSymbol();
+            spec.setDeclaredIdentifier(forInParameter.getDeclaredIdentifier());
             specs.add(spec);
         }
         return specs;

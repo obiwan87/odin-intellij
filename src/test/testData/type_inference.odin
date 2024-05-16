@@ -44,7 +44,7 @@ get_at :: proc(list: List($T), index: i32) -> T {
     return list.items[index]
 }
 
-get_key :: proc(dict: Dict($K, $V), key: K) -> V {
+get_value :: proc(dict: Dict($K, $V), key: K) -> V {
     return dict.entries[key]
 }
 
@@ -78,9 +78,13 @@ testTypeInference :: proc() {
 
 }
 
+Dict :: struct($Key: typeid, $Value: typeid) {
+    entries: map[Key]Value
+}
+
 testTypeInference2 :: proc() {
     dict := Dict(i32, Point) { entries = { 1 = Point{ a, b } } }
-    get_key(dict, 1)
+    get_value(dict, 1)
 }
 
 testTypeInference3 :: proc() {
@@ -90,12 +94,12 @@ testTypeInference3 :: proc() {
 
 testTypeInference4:: proc() {
     dict := Dict(i32, List(Point)) { entries = { 1 = Point{ a, b } } }
-    get_key(dict, 1)
+    get_value(dict, 1)
 }
 
 testTypeInference5:: proc() {
     dict := Dict(i32, List(Point)) { entries = { 1 = Point{ a, b } } }
-    get_key(dict, 1).items[0]
+    get_value(dict, 1).items[0]
 }
 
 testTypeInference6 :: proc() {

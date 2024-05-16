@@ -113,6 +113,10 @@ public class OdinScope {
         return scope;
     }
 
+    static OdinScope from(List<OdinSymbol> symbols) {
+        return OdinScope.from(symbols.stream().map(OdinSymbol::getDeclaredIdentifier).toList());
+    }
+
     static OdinScope from(List<? extends PsiNamedElement> identifiers, String packagePath) {
         OdinScope scope = from(identifiers);
         scope.packagePath = packagePath;

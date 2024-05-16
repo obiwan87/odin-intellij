@@ -85,7 +85,7 @@ public class OdinInsightUtils {
 
     public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
         // Find all blocks that are not in a procedure
-        List<PsiNamedElement> declarations = new ArrayList<>();
+        List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
 
         Stack<PsiElement> statementStack = new Stack<>();
 
@@ -93,16 +93,14 @@ public class OdinInsightUtils {
         statementStack.addAll(fileScope.getStatementList());
         while (!statementStack.isEmpty()) {
             PsiElement element = statementStack.pop();
-            if (element instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                var alias = importDeclarationStatement.getAlias();
-                declarations.add(Objects.requireNonNullElse(alias, importDeclarationStatement));
-            } else if (element instanceof OdinDeclaration declaration) {
-                declarations.addAll(declaration.getDeclaredIdentifiers());
+            if (element instanceof OdinDeclaration declaration) {
+                List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(declaration);
+                fileScopeSymbols.addAll(symbols);
             } else {
                 getStatements(element).forEach(statementStack::push);
             }
         }
-        return OdinScope.from(declarations);
+        return OdinScope.from(fileScopeSymbols);
     }
 
     private static List<OdinStatement> getStatements(PsiElement psiElement) {
