@@ -81,10 +81,6 @@ public class OdinScope {
         }
     }
 
-    public void addNamedElements(Collection<? extends PsiNamedElement> namedElements) {
-        addNamedElements(namedElements, true);
-    }
-
     public void addNamedElements(Collection<? extends PsiNamedElement> namedElements, boolean override) {
         addAll(namedElements.stream().map(OdinSymbol::new).toList(), override);
     }

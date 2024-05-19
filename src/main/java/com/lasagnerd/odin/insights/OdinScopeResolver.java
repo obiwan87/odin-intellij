@@ -5,10 +5,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
-import com.lasagnerd.odin.insights.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
-import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.insights.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
+import com.lasagnerd.odin.lang.psi.*;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +61,7 @@ public class OdinScopeResolver {
             scope.addAll(fileScopeDeclarations.getFiltered(matcher), false);
         }
 
-        if(packagePath != null) {
+        if (packagePath != null) {
             List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(element.getProject(), packagePath, getFileName(element));
             for (OdinFile odinFile : otherFilesInPackage) {
                 if (odinFile == null || odinFile.getFileScope() == null) {
@@ -77,10 +77,14 @@ public class OdinScopeResolver {
             ScopeNode scopeNode = scopeNodes.get(i);
             OdinScopeBlock containingBlock = scopeNode.getScopeBlock();
             OdinScope declarationsOfContainingBlock = getScopeOfContainingBlock(scope, containingBlock);
-            scope.addNamedElements(declarationsOfContainingBlock.getNamedElements());
+            scope.putAll(declarationsOfContainingBlock);
 
             for (OdinStatement statement : scopeNode.getStatements()) {
                 if (statement instanceof OdinDeclaration declaration) {
+                    // List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(declaration)
+                    //  .stream()
+                    //  .filter(s -> matcher.test(s.getDeclaredIdentifier())).toList();
+
                     List<? extends PsiNamedElement> declaredIdentifiers = declaration
                             .getDeclaredIdentifiers()
                             .stream().filter(matcher).toList();
@@ -91,12 +95,12 @@ public class OdinScopeResolver {
                     OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(scope, usingStatement.getExpression());
                     if (typeInferenceResult.getType() != null) {
                         OdinScope usingScope = getScopeProvidedByType(typeInferenceResult.getType());
-                        scope.addNamedElements(usingScope.getNamedElements(), true);
+                        scope.putAll(usingScope);
                     }
 
                     if (typeInferenceResult.isImport()) {
-                        OdinScope declarationsOfImportedPackage = getDeclarationsOfImportedPackage(typeInferenceResult.getImportDeclarationStatement());
-                        scope.putAll(declarationsOfImportedPackage);
+                        OdinScope packageScope = getDeclarationsOfImportedPackage(typeInferenceResult.getImportDeclarationStatement());
+                        scope.putAll(packageScope);
                     }
                 }
 
@@ -140,7 +144,7 @@ public class OdinScopeResolver {
     /**
      * Gets the files in the indicated package but excludes the file fileName
      *
-     * @param project The current project
+     * @param project     The current project
      * @param packagePath The packagePath
      * @param fileName    The file to exclude
      * @return Other files in package
@@ -210,15 +214,15 @@ public class OdinScopeResolver {
         scope.setPackagePath(parentScope.getPackagePath());
         for (OdinSymbol symbol : containingBlock.getSymbols()) {
             scope.add(symbol.getDeclaredIdentifier());
-            if(symbol.isHasUsing()) {
-                if(symbol.getType() != null) {
+            if (symbol.isHasUsing()) {
+                if (symbol.getType() != null) {
                     TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, symbol.getType());
                     scope.putAll(getScopeProvidedByType(tsOdinType));
                 } else {
-                    if(symbol.getValueExpression() != null) {
+                    if (symbol.getValueExpression() != null) {
                         OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(parentScope, symbol.getValueExpression());
                         TsOdinType type = typeInferenceResult.getType();
-                        if(type != null) {
+                        if (type != null) {
                             scope.putAll(getScopeProvidedByType(type));
                         }
                     }
