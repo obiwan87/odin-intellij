@@ -4,6 +4,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.lang.psi.*;
+import kotlinx.coroutines.internal.Symbol;
 
 import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
 
@@ -14,7 +15,7 @@ public class OdinReferenceResolver {
         if (typeInferenceResult.isImport()) {
             return getDeclarationsOfImportedPackage(scope, typeInferenceResult.getImportDeclarationStatement());
         }
-        if(typeInferenceResult.getType() != null) {
+        if (typeInferenceResult.getType() != null) {
             return getScopeProvidedByType(typeInferenceResult.getType());
         }
         return OdinScope.EMPTY;
@@ -22,7 +23,7 @@ public class OdinReferenceResolver {
 
     public static OdinScope resolve(OdinScope scope, OdinType type) {
         OdinQualifiedType qualifiedType = findFirstParentOfType(type, false, OdinQualifiedType.class);
-        if(qualifiedType != null) {
+        if (qualifiedType != null) {
             return resolve(scope, qualifiedType);
         }
         return OdinScope.EMPTY;
@@ -30,10 +31,12 @@ public class OdinReferenceResolver {
 
     public static OdinScope resolve(OdinScope scope, OdinQualifiedType qualifiedType) {
         OdinIdentifier identifier = qualifiedType.getIdentifier();
-        PsiNamedElement namedElement = scope.getNamedElement(identifier.getIdentifierToken().getText());
-        OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(namedElement, false, OdinDeclaration.class);
-        if(odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-            return getDeclarationsOfImportedPackage(scope, importDeclarationStatement);
+        OdinSymbol odinSymbol = scope.getSymbol(identifier.getIdentifierToken().getText());
+        if (odinSymbol != null) {
+            OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
+            if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+                return getDeclarationsOfImportedPackage(scope, importDeclarationStatement);
+            }
         }
         return OdinScope.EMPTY;
     }

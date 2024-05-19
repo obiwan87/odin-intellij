@@ -3,6 +3,7 @@ package com.lasagnerd.odin.insights.typeInference;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinScope;
+import com.lasagnerd.odin.insights.OdinSymbol;
 import com.lasagnerd.odin.insights.typeSystem.*;
 import com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator;
 import com.lasagnerd.odin.lang.psi.*;
@@ -97,20 +98,23 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (refExpression.getIdentifier() != null) {
             // using current scope, find identifier declaration and extract type
             String name = refExpression.getIdentifier().getText();
-            PsiNamedElement namedElement = localScope.getNamedElement(name);
-            if (namedElement instanceof OdinImportDeclarationStatement) {
-                isImport = true;
-                importDeclarationStatement = (OdinImportDeclarationStatement) namedElement;
-            } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
-                OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinDeclaration.class);
-
-                if (odinDeclaration instanceof OdinImportDeclarationStatement) {
+            OdinSymbol symbol = localScope.getSymbol(name);
+            if (symbol != null) {
+                PsiNamedElement namedElement = symbol.getDeclaredIdentifier();
+                if (namedElement instanceof OdinImportDeclarationStatement) {
                     isImport = true;
-                    importDeclarationStatement = (OdinImportDeclarationStatement) odinDeclaration;
-                } else {
-                    this.type = resolveTypeOfDeclaration(this.scope, declaredIdentifier, odinDeclaration);
+                    importDeclarationStatement = (OdinImportDeclarationStatement) namedElement;
+                } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
+                    OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinDeclaration.class);
+
+                    if (odinDeclaration instanceof OdinImportDeclarationStatement) {
+                        isImport = true;
+                        importDeclarationStatement = (OdinImportDeclarationStatement) odinDeclaration;
+                    } else {
+                        this.type = resolveTypeOfDeclaration(this.scope, declaredIdentifier, odinDeclaration);
+                    }
                 }
-            } else if (namedElement == null) {
+            } else {
                 if (OdinLangSyntaxAnnotator.RESERVED_TYPES.contains(name)) {
                     TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(BUILTIN);
                     tsOdinMetaType.setName(name);

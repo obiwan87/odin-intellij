@@ -53,7 +53,7 @@ public class OdinInsightUtils {
         return null;
     }
 
-    public static PsiElement findFirstDeclaration(OdinIdentifier identifier) {
+    public static OdinSymbol findSymbol(OdinIdentifier identifier) {
         OdinScope parentScope = findScope(identifier).with(getPackagePath(identifier));
         OdinRefExpression refExpression = findFirstParentOfType(identifier, true, OdinRefExpression.class);
         OdinScope scope;
@@ -77,7 +77,7 @@ public class OdinInsightUtils {
         }
 
         if (scope != null) {
-            return scope.getNamedElement(identifier.getIdentifierToken().getText());
+            return scope.getSymbol(identifier.getIdentifierToken().getText());
         }
 
         return null;
@@ -169,7 +169,7 @@ public class OdinInsightUtils {
         OdinDeclaration odinDeclaration = type.getDeclaration();
 
         if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-            List<PsiNamedElement> structFields = getStructFields(structDeclarationStatement);
+            List<OdinSymbol> structFields = getStructFields(structDeclarationStatement);
             for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : getStructFieldsDeclarationStatements(structDeclarationStatement).stream()
                     .filter(f -> f.getUsing() != null)
                     .toList()) {
@@ -194,13 +194,13 @@ public class OdinInsightUtils {
     }
 
     @NotNull
-    public static List<PsiNamedElement> getEnumFields(OdinEnumDeclarationStatement enumDeclarationStatement) {
+    public static List<OdinSymbol> getEnumFields(OdinEnumDeclarationStatement enumDeclarationStatement) {
         OdinEnumType enumType = enumDeclarationStatement.getEnumType();
 
         return getEnumFields(enumType);
     }
 
-    private static @NotNull List<PsiNamedElement> getEnumFields(OdinEnumType enumType) {
+    private static @NotNull List<OdinSymbol> getEnumFields(OdinEnumType enumType) {
         OdinEnumBody enumBody = enumType
                 .getEnumBlock()
                 .getEnumBody();
@@ -212,14 +212,16 @@ public class OdinInsightUtils {
                 .getEnumValueDeclarationList()
                 .stream()
                 .map(OdinEnumValueDeclaration::getDeclaredIdentifier)
+                .map(OdinSymbol::new)
                 .collect(Collectors.toList());
     }
 
-    public static List<PsiNamedElement> getStructFields(OdinStructDeclarationStatement structDeclarationStatement) {
+    public static List<OdinSymbol> getStructFields(OdinStructDeclarationStatement structDeclarationStatement) {
         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structDeclarationStatement);
 
         return fieldDeclarationStatementList.stream()
                 .flatMap(x -> x.getDeclaredIdentifiers().stream())
+                .map(OdinSymbol::new)
                 .collect(Collectors.toList());
     }
 
@@ -251,7 +253,7 @@ public class OdinInsightUtils {
         return OdinScopeResolver.resolveScope(element);
     }
 
-    public static Collection<PsiNamedElement> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
+    public static Collection<OdinSymbol> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
         return getFileScopeDeclarations(odinFileScope).getFiltered(matcher);
     }
 
@@ -339,7 +341,7 @@ public class OdinInsightUtils {
      * @return Scope
      */
     public static OdinScope getDeclarationsOfImportedPackage(OdinImportInfo importInfo, String sourceFilePath, Project project) {
-        List<PsiNamedElement> packageDeclarations = new ArrayList<>();
+        List<OdinSymbol> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
 
 
@@ -372,7 +374,7 @@ public class OdinInsightUtils {
                         continue;
                     }
 
-                    Collection<PsiNamedElement> fileScopeDeclarations = getFileScopeDeclarations(importedFileScope, PUBLIC_ELEMENTS_MATCHER);
+                    Collection<OdinSymbol> fileScopeDeclarations = getFileScopeDeclarations(importedFileScope, PUBLIC_ELEMENTS_MATCHER);
                     packageDeclarations.addAll(fileScopeDeclarations);
                 }
 
