@@ -67,7 +67,7 @@ public class OdinScopeResolver {
                 if (odinFile == null || odinFile.getFileScope() == null) {
                     continue;
                 }
-                Collection<PsiNamedElement> fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), PACKAGE_VISIBLE_ELEMENTS_MATCHER);
+                Collection<OdinSymbol> fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), PACKAGE_VISIBLE_ELEMENTS_MATCHER);
                 scope.addAll(fileScopeDeclarations);
             }
         }
@@ -77,25 +77,26 @@ public class OdinScopeResolver {
             ScopeNode scopeNode = scopeNodes.get(i);
             OdinScopeBlock containingBlock = scopeNode.getScopeBlock();
             OdinScope declarationsOfContainingBlock = getScopeOfContainingBlock(scope, containingBlock);
-            scope.addAll(declarationsOfContainingBlock.getNamedElements());
+            scope.addNamedElements(declarationsOfContainingBlock.getNamedElements());
 
             for (OdinStatement statement : scopeNode.getStatements()) {
                 if (statement instanceof OdinDeclaration declaration) {
-                    List<? extends PsiNamedElement> declaredIdentifiers = declaration.getDeclaredIdentifiers()
+                    List<? extends PsiNamedElement> declaredIdentifiers = declaration
+                            .getDeclaredIdentifiers()
                             .stream().filter(matcher).toList();
-                    scope.addAll(declaredIdentifiers, false);
+                    scope.addNamedElements(declaredIdentifiers, false);
                 }
 
                 if (statement instanceof OdinUsingStatement usingStatement) {
                     OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(scope, usingStatement.getExpression());
                     if (typeInferenceResult.getType() != null) {
                         OdinScope usingScope = getScopeProvidedByType(typeInferenceResult.getType());
-                        scope.addAll(usingScope.getNamedElements(), true);
+                        scope.addNamedElements(usingScope.getNamedElements(), true);
                     }
 
                     if (typeInferenceResult.isImport()) {
                         OdinScope declarationsOfImportedPackage = getDeclarationsOfImportedPackage(typeInferenceResult.getImportDeclarationStatement());
-                        scope.addAll(declarationsOfImportedPackage.getNamedElements());
+                        scope.putAll(declarationsOfImportedPackage);
                     }
                 }
 
@@ -106,7 +107,7 @@ public class OdinScopeResolver {
                             OdinType mainTypeExpression = typeDefinitionExpression.getType();
                             TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, mainTypeExpression);
                             OdinScope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
-                            scope.addAll(scopeProvidedByType.getNamedElements());
+                            scope.putAll(scopeProvidedByType);
                         } else {
                             List<OdinExpression> expressionList = variableInitializationStatement.getExpressionsList().getExpressionList();
                             if (!expressionList.isEmpty()) {
@@ -115,7 +116,7 @@ public class OdinScopeResolver {
                                 TsOdinType type = typeInferenceResult.getType();
                                 if (type != null) {
                                     OdinScope scopeProvidedByType = getScopeProvidedByType(type);
-                                    scope.addAll(scopeProvidedByType.getNamedElements());
+                                    scope.putAll(scopeProvidedByType);
                                 }
                             }
                         }
@@ -127,7 +128,7 @@ public class OdinScopeResolver {
                         OdinType mainTypeExpression = variableDeclarationStatement.getTypeDefinitionExpression().getType();
                         TsOdinType type = OdinTypeResolver.resolveType(scope, mainTypeExpression);
                         OdinScope scopeProvidedByType = getScopeProvidedByType(type);
-                        scope.addAll(scopeProvidedByType.getNamedElements());
+                        scope.putAll(scopeProvidedByType);
                     }
                 }
             }
@@ -210,15 +211,15 @@ public class OdinScopeResolver {
         for (OdinSymbol symbol : containingBlock.getSymbols()) {
             scope.add(symbol.getDeclaredIdentifier());
             if(symbol.isHasUsing()) {
-                if(symbol.getTypeDefinitionExpression() != null) {
-                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, symbol.getTypeDefinitionExpression().getType());
-                    scope.addAll(getScopeProvidedByType(tsOdinType).getNamedElements());
+                if(symbol.getType() != null) {
+                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, symbol.getType());
+                    scope.putAll(getScopeProvidedByType(tsOdinType));
                 } else {
                     if(symbol.getValueExpression() != null) {
                         OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(parentScope, symbol.getValueExpression());
                         TsOdinType type = typeInferenceResult.getType();
                         if(type != null) {
-                            scope.addAll(getScopeProvidedByType(type).getNamedElements());
+                            scope.putAll(getScopeProvidedByType(type));
                         }
                     }
                 }

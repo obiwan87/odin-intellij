@@ -19,7 +19,7 @@ public class OdinScope {
     @Setter
     private String packagePath;
     public static final OdinScope EMPTY = new OdinScope();
-    Map<String, PsiNamedElement> symbolTable = new HashMap<>();
+    Map<String, OdinSymbol> symbolTable = new HashMap<>();
 
     /**
      * Used substituting polymorphic types. The key
@@ -38,10 +38,17 @@ public class OdinScope {
 
 
     @Nullable
-    public PsiNamedElement getNamedElement(String name) {
+    public OdinSymbol getSymbol(String name) {
         return symbolTable.get(name);
     }
 
+    @Nullable
+    public PsiNamedElement getNamedElement(String name) {
+        OdinSymbol odinSymbol = symbolTable.get(name);
+        if(odinSymbol != null)
+            return odinSymbol.getDeclaredIdentifier();
+        return null;
+    }
     public TsOdinType getType(String polymorphicParameter) {
         return typeTable.get(polymorphicParameter);
     }
@@ -55,23 +62,31 @@ public class OdinScope {
     }
 
     public Collection<PsiNamedElement> getNamedElements() {
-        return symbolTable.values();
+        return symbolTable.values().stream().map(OdinSymbol::getDeclaredIdentifier).toList();
     }
 
-    public Collection<PsiNamedElement> getFiltered(Predicate<? super PsiNamedElement> predicate) {
-        return symbolTable.values().stream().filter(predicate).toList();
+    public Collection<OdinSymbol> getFiltered(Predicate<? super PsiNamedElement> predicate) {
+        return symbolTable.values().stream().filter(s -> predicate.test(s.getDeclaredIdentifier())).toList();
     }
 
-    public void addAll(Collection<? extends PsiNamedElement> namedElements) {
-        addAll(namedElements, true);
+    public void addAll(Collection<? extends OdinSymbol> symbols) {
+        addAll(symbols, true);
     }
 
-    public void addAll(Collection<? extends PsiNamedElement> namedElements, boolean override) {
-        for (PsiNamedElement namedElement : namedElements) {
-            if(!symbolTable.containsKey(namedElement.getName()) || !override) {
-                symbolTable.put(namedElement.getName(), namedElement);
+    public void addAll(Collection<? extends OdinSymbol> symbols, boolean override) {
+        for (OdinSymbol symbol : symbols) {
+            if(!symbolTable.containsKey(symbol.getName()) || !override) {
+                symbolTable.put(symbol.getName(), symbol);
             }
         }
+    }
+
+    public void addNamedElements(Collection<? extends PsiNamedElement> namedElements) {
+        addNamedElements(namedElements, true);
+    }
+
+    public void addNamedElements(Collection<? extends PsiNamedElement> namedElements, boolean override) {
+        addAll(namedElements.stream().map(OdinSymbol::new).toList(), override);
     }
 
     public void putAll(OdinScope scope) {
@@ -88,43 +103,44 @@ public class OdinScope {
         knownTypes.putAll(scope.knownTypes);
     }
 
-    public void add(PsiNamedElement namedElement) {
-        add(namedElement, true);
+    public void add(OdinSymbol odinSymbol) {
+        add(odinSymbol, true);
     }
 
-    public void add(PsiNamedElement namedElement, boolean override) {
+    public void add(PsiNamedElement namedElement) {
+        add(new OdinSymbol(namedElement));
+    }
+
+    public void add(OdinSymbol symbol, boolean override) {
         if(!override)
-            symbolTable.put(namedElement.getName(), namedElement);
-        else if(!symbolTable.containsKey(namedElement.getName())) {
-            symbolTable.put(namedElement.getName(), namedElement);
+            symbolTable.put(symbol.getName(), symbol);
+        else if(!symbolTable.containsKey(symbol.getName())) {
+            symbolTable.put(symbol.getName(), symbol);
         }
 
     }
 
-    static OdinScope from(Collection<? extends PsiNamedElement> identifiers) {
-        if (identifiers.isEmpty())
+    static OdinScope from(Collection<OdinSymbol> symbols) {
+        if (symbols.isEmpty())
             return OdinScope.EMPTY;
 
         OdinScope scope = new OdinScope();
-        for (var declaredIdentifier : identifiers) {
+        for (var declaredIdentifier : symbols) {
             scope.symbolTable.put(declaredIdentifier.getName(), declaredIdentifier);
         }
 
         return scope;
     }
 
-    static OdinScope from(List<OdinSymbol> symbols) {
-        return OdinScope.from(symbols.stream().map(OdinSymbol::getDeclaredIdentifier).toList());
-    }
 
-    static OdinScope from(List<? extends PsiNamedElement> identifiers, String packagePath) {
+    static OdinScope from(List<OdinSymbol> identifiers, String packagePath) {
         OdinScope scope = from(identifiers);
         scope.packagePath = packagePath;
 
         return scope;
     }
 
-    public OdinScope with(List<? extends PsiNamedElement> identifiers) {
+    public OdinScope with(List<OdinSymbol> identifiers) {
         OdinScope scope = from(identifiers);
         scope.packagePath = this.packagePath;
 
@@ -147,8 +163,8 @@ public class OdinScope {
      */
 
     public OdinScope getScopeOfImport(String packageIdentifier) {
-        PsiNamedElement psiNamedElement = symbolTable.get(packageIdentifier);
-        if (psiNamedElement instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+        OdinSymbol odinSymbol = symbolTable.get(packageIdentifier);
+        if (odinSymbol instanceof OdinImportDeclarationStatement importDeclarationStatement) {
             return OdinInsightUtils.getDeclarationsOfImportedPackage(this, importDeclarationStatement);
         }
         return OdinScope.EMPTY;

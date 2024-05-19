@@ -4,6 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
+import com.lasagnerd.odin.insights.OdinSymbol;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,11 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public @Nullable PsiElement resolve() {
-        return OdinInsightUtils.findFirstDeclaration(getElement());
+        OdinSymbol firstDeclaration = OdinInsightUtils.findSymbol(getElement());
+        if (firstDeclaration != null) {
+            return firstDeclaration.getDeclaredIdentifier();
+        }
+        return null;
     }
 
     @Override

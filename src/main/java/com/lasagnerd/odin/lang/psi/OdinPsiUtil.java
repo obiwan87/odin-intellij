@@ -339,8 +339,7 @@ public class OdinPsiUtil {
 
         Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(procedureType, OdinPolymorphicType.class);
         for (OdinPolymorphicType polymorphicType : polymorphicTypes) {
-            OdinSymbol odinSymbol = new OdinSymbol();
-            odinSymbol.setDeclaredIdentifier(polymorphicType.getDeclaredIdentifier());
+            OdinSymbol odinSymbol = new OdinSymbol(polymorphicType.getDeclaredIdentifier());
             odinSymbol.setHasUsing(false);
             declarations.add(odinSymbol);
         }
@@ -415,13 +414,12 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinSymbol> getSymbols(OdinForInBlock forInStatement) {
-        List<OdinSymbol> specs = new ArrayList<>();
+        List<OdinSymbol> symbols = new ArrayList<>();
         for (var forInParameter : forInStatement.getForInParameterList()) {
-            OdinSymbol spec = new OdinSymbol();
-            spec.setDeclaredIdentifier(forInParameter.getDeclaredIdentifier());
-            specs.add(spec);
+            OdinSymbol spec = new OdinSymbol(forInParameter.getDeclaredIdentifier());
+            symbols.add(spec);
         }
-        return specs;
+        return symbols;
     }
 
 }

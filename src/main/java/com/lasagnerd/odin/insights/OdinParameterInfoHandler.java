@@ -68,12 +68,13 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
             if (parts.length > 1) {
                 String importName = parts[0];
                 OdinFile containingFile = (OdinFile) callExpression.getContainingFile();
-                var allImportedDeclarations = getDeclarationsOfImportedPackage(
+                OdinScope allImportedDeclarations = getDeclarationsOfImportedPackage(
                         OdinInsightUtils.getImportStatementsInfo(containingFile.getFileScope()).get(importName), containingFile.getVirtualFile().getPath(),
                         callExpression.getProject());
-                declarations.addAll(allImportedDeclarations.getNamedElements()
+                declarations.addAll(allImportedDeclarations.getSymbolTable()
+                        .values()
                         .stream()
-                        .filter(decl -> decl.getText().equals(parts[1]))
+                        .filter(decl -> decl.getDeclaredIdentifier().getText().equals(parts[1]))
                         .toList());
             }
         }
