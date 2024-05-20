@@ -84,16 +84,13 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         "switch"      { return SWITCH; }
         "case"        { return CASE; }
         "fallthrough" { yybegin(NLSEMI_STATE); return FALLTHROUGH; }
-        "true"        { yybegin(NLSEMI_STATE); return TRUE; }
-        "false"       { yybegin(NLSEMI_STATE); return FALSE; }
         "when"        { return WHEN; }
         "break"       { yybegin(NLSEMI_STATE); return BREAK; }
         "continue"    { yybegin(NLSEMI_STATE); return CONTINUE; }
-        "nil"         { yybegin(NLSEMI_STATE); return NIL; }
         "or_else"     { return OR_ELSE; }
         "or_return"   { yybegin(NLSEMI_STATE); return OR_RETURN; }
-        "or_break"   { yybegin(NLSEMI_STATE); return OR_BREAK; }
-        "or_continue"   { yybegin(NLSEMI_STATE); return OR_CONTINUE; }
+        "or_break"    { yybegin(NLSEMI_STATE); return OR_BREAK; }
+        "or_continue" { yybegin(NLSEMI_STATE); return OR_CONTINUE; }
         "foreign"     { return FOREIGN; }
         "cast"        { return CAST; }
         "transmute"   { return TRANSMUTE; }
@@ -106,8 +103,8 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         "enum"        { return ENUM; }
         "union"       { return UNION; }
         "distinct"    { return DISTINCT; }
-        "matrix"    { return MATRIX; }
-        "where"    { return WHERE; }
+        "matrix"      { return MATRIX; }
+        "where"       { return WHERE; }
 
 
         {LineComment}  { return LINE_COMMENT; }
@@ -153,6 +150,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         "?"         { return QUESTION; }
         "^"         { yybegin(NLSEMI_STATE); return CARET; }
         "@"         { return AT; }
+        "..."       { return ELLIPSIS; }
 
         "/*"        { yybegin(BLOCK_COMMENT_STATE); newLineSeen=false; commentNestingDepth = 1; previousState=YYINITIAL; return BLOCK_COMMENT_START; }
 
