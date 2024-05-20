@@ -614,7 +614,9 @@ subExpression
             if (enumDeclarationStatement != null) {
                 enumDeclaredIdentifier = enumDeclarationStatement.getDeclaredIdentifier();
             }
-            return OdinTypeResolver.resolveType(parentScope, enumDeclaredIdentifier, enumDeclarationStatement, enumType);
+            if(enumType != null) {
+                return OdinTypeResolver.resolveType(parentScope, enumDeclaredIdentifier, enumDeclarationStatement, enumType);
+            }
         }
 
         return TsOdinType.UNKNOWN;
