@@ -46,8 +46,12 @@ public class OdinInferenceEngine extends OdinVisitor {
         expression.accept(odinExpressionTypeResolver);
         OdinTypeInferenceResult typeInferenceResult = new OdinTypeInferenceResult();
         typeInferenceResult.setImportDeclarationStatement(odinExpressionTypeResolver.importDeclarationStatement);
-        typeInferenceResult.setType(odinExpressionTypeResolver.type);
         typeInferenceResult.setImport(odinExpressionTypeResolver.isImport);
+        if (odinExpressionTypeResolver.isImport) {
+            typeInferenceResult.setType(createPackageReferenceType(scope.getPackagePath(), odinExpressionTypeResolver.importDeclarationStatement));
+        }
+
+        typeInferenceResult.setType(odinExpressionTypeResolver.type);
         return typeInferenceResult;
     }
 
@@ -59,18 +63,23 @@ public class OdinInferenceEngine extends OdinVisitor {
         OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(scope, expectedType, lhsValuesCount);
         expression.accept(odinExpressionTypeResolver);
 
-        if(odinExpressionTypeResolver.isImport) {
-            TsOdinPackageType packageType = new TsOdinPackageType();
-            packageType.setDeclaration(odinExpressionTypeResolver.importDeclarationStatement);
-            return packageType;
+        if (odinExpressionTypeResolver.isImport) {
+            OdinImportDeclarationStatement importDeclarationStatement = odinExpressionTypeResolver.importDeclarationStatement;
+            return createPackageReferenceType(scope.getPackagePath(), importDeclarationStatement);
         }
         TsOdinType type = odinExpressionTypeResolver.type;
         if (type == null) {
             return TsOdinType.UNKNOWN;
         }
 
-
         return type;
+    }
+
+    private static @NotNull TsOdinPackageReferenceType createPackageReferenceType(String packagePath,
+                                                                                  OdinImportDeclarationStatement importDeclarationStatement) {
+        TsOdinPackageReferenceType packageType = new TsOdinPackageReferenceType(packagePath);
+        packageType.setDeclaration(importDeclarationStatement);
+        return packageType;
     }
 
     public static TsOdinType doInferType(OdinScope scope, int lhsValuesCount, @NotNull OdinExpression expression) {
@@ -614,7 +623,7 @@ subExpression
             if (enumDeclarationStatement != null) {
                 enumDeclaredIdentifier = enumDeclarationStatement.getDeclaredIdentifier();
             }
-            if(enumType != null) {
+            if (enumType != null) {
                 return OdinTypeResolver.resolveType(parentScope, enumDeclaredIdentifier, enumDeclarationStatement, enumType);
             }
         }

@@ -160,8 +160,8 @@ public class OdinScope {
 
     public OdinScope getScopeOfImport(String packageIdentifier) {
         OdinSymbol odinSymbol = symbolTable.get(packageIdentifier);
-        if (odinSymbol instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-            return OdinInsightUtils.getDeclarationsOfImportedPackage(this, importDeclarationStatement);
+        if (odinSymbol != null && odinSymbol.getDeclaredIdentifier() instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+            return OdinInsightUtils.getDeclarationsOfImportedPackage(this.getPackagePath(), importDeclarationStatement);
         }
         return OdinScope.EMPTY;
     }

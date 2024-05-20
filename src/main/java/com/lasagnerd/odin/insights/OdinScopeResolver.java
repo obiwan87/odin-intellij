@@ -160,10 +160,10 @@ public class OdinScopeResolver {
                         scope.putAll(usingScope);
                     }
 
-                    if (typeInferenceResult.isImport()) {
-                        OdinScope packageScope = getDeclarationsOfImportedPackage(typeInferenceResult.getImportDeclarationStatement());
-                        scope.putAll(packageScope);
-                    }
+//                    if (typeInferenceResult.isImport()) {
+//                        OdinScope packageScope = getDeclarationsOfImportedPackage(typeInferenceResult.getImportDeclarationStatement());
+//                        scope.putAll(packageScope);
+//                    }
                 }
 
                 if (statement instanceof OdinVariableInitializationStatement variableInitializationStatement) {

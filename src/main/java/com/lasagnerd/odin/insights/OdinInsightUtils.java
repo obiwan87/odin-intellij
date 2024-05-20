@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeResolver;
-import com.lasagnerd.odin.insights.typeSystem.TsOdinPackageType;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinPackageReferenceType;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinPointerType;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -121,10 +121,10 @@ public class OdinInsightUtils {
         return null;
     }
 
-    public static OdinScope getDeclarationsOfImportedPackage(OdinScope scope, OdinImportDeclarationStatement importStatement) {
+    public static OdinScope getDeclarationsOfImportedPackage(String packagePath, OdinImportDeclarationStatement importStatement) {
         OdinImportInfo importInfo = importStatement.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
-        String path = Path.of(scope.getPackagePath(), OdinInsightUtils.getFileName(importStatement)).toString();
+        String path = Path.of(packagePath, OdinInsightUtils.getFileName(importStatement)).toString();
         String name = importInfo.packageName();
         Project project = importStatement.getProject();
         return getDeclarationsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
@@ -137,9 +137,10 @@ public class OdinInsightUtils {
      * @return The scope
      */
     public static OdinScope getScopeProvidedByType(TsOdinType type) {
-        if (type instanceof TsOdinPackageType packageType) {
+        if (type instanceof TsOdinPackageReferenceType packageType) {
             return OdinInsightUtils
-                    .getDeclarationsOfImportedPackage((OdinImportDeclarationStatement) packageType.getDeclaration());
+                    .getDeclarationsOfImportedPackage(packageType.getReferencingPackagePath(),
+                            (OdinImportDeclarationStatement) packageType.getDeclaration());
         }
         OdinScope typeScope = type.getScope();
         OdinScope scope = new OdinScope();
