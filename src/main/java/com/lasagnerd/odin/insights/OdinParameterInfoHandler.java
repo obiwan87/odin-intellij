@@ -56,8 +56,6 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
             return false;
         });
 
-
-
         OdinExpression expression = callExpression.getExpression();
 
         if (expression instanceof OdinRefExpression) {
@@ -139,9 +137,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
 
     @Override
     public void updateUI(OdinProcedureDeclarationStatement p, @NotNull ParameterInfoUIContext context) {
-
-        System.out.println("Parameter index in Update UI: " + context.getCurrentParameterIndex());
-        var parameters = p.getProcedureType().getParamEntryList();
+        List<OdinParamEntry> parameters = p.getProcedureType().getParamEntryList();
         // Each entry can declare several parameters. In order to make navigation easier we flatten the list.
 
         List<String> params = new ArrayList<>();

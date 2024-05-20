@@ -25,7 +25,10 @@ public class OdinSymbolResolver extends OdinVisitor {
         odinSymbolResolver.fileVisibility = fileVisibility;
         odinDeclaration.accept(odinSymbolResolver);
         if (odinSymbolResolver.symbols.isEmpty()) {
-            odinSymbolResolver.addSymbols(odinDeclaration);
+            for (OdinDeclaredIdentifier declaredIdentifier : odinDeclaration.getDeclaredIdentifiers()) {
+                OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
+                odinSymbolResolver.symbols.add(odinSymbol);
+            }
         }
         return odinSymbolResolver.symbols;
     }
@@ -94,13 +97,6 @@ public class OdinSymbolResolver extends OdinVisitor {
         }
     }
 
-    private void addSymbols(@NotNull OdinDeclaration o) {
-        for (OdinDeclaredIdentifier declaredIdentifier : o.getDeclaredIdentifiers()) {
-            OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
-            symbols.add(odinSymbol);
-        }
-    }
-
     @Override
     public void visitPackageDeclaration(@NotNull OdinPackageDeclaration o) {
         super.visitPackageDeclaration(o);
@@ -124,32 +120,15 @@ public class OdinSymbolResolver extends OdinVisitor {
         symbols.add(odinSymbol);
     }
 
+    @Override
+    public void visitProcedureOverloadDeclarationStatement(@NotNull OdinProcedureOverloadDeclarationStatement o) {
+        OdinSymbol symbol = new OdinSymbol(o.getDeclaredIdentifier());
+        symbol.setAttributeStatements(o.getAttributeStatementList());
+        this.symbols.add(symbol);
+    }
+
     private OdinSymbol.OdinVisibility getVisibility(@NotNull OdinProcedureDeclarationStatement o) {
-        return fileVisibility == null ? computeVisibility(o.getAttributeStatementList()) : fileVisibility;
+        return fileVisibility == null ? OdinAttributeUtils.computeVisibility(o.getAttributeStatementList()) : fileVisibility;
     }
 
-    private static OdinSymbol.OdinVisibility computeVisibility(@NotNull List<OdinAttributeStatement> attributeStatements) {
-        for (OdinAttributeStatement attributeStatement : attributeStatements) {
-            for (OdinArgument odinArgument : attributeStatement.getArgumentList()) {
-                if (odinArgument instanceof OdinNamedArgument odinNamedArgument) {
-                    String text = odinNamedArgument.getIdentifierToken().getText();
-                    if (text.equals("private")) {
-                        OdinExpression valueExpression = odinNamedArgument.getExpression();
-                        if (OdinInsightUtils.isStringLiteralWithValue(valueExpression, "file")) {
-                            return OdinSymbol.OdinVisibility.FILE_PRIVATE;
-                        }
-                    }
-                }
-
-                if (odinArgument instanceof OdinUnnamedArgument unnamedArgument) {
-                    OdinExpression expression = unnamedArgument.getExpression();
-                    if (expression.getText().equals("private")) {
-                        return OdinSymbol.OdinVisibility.PACKAGE_PRIVATE;
-                    }
-                }
-            }
-        }
-
-        return OdinSymbol.OdinVisibility.PUBLIC;
-    }
 }
