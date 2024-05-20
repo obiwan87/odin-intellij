@@ -235,11 +235,11 @@ public class OdinScopeResolver {
 
     private void findDeclaringBlocks(PsiElement entrance) {
         ScopeNode scopeNode = new ScopeNode();
-        OdinScopeBlock containingBlock = OdinInsightUtils.findFirstParentOfType(entrance, true, OdinScopeBlock.class);
+        OdinScopeBlock containingBlock = PsiTreeUtil.getParentOfType(entrance, true, OdinScopeBlock.class);
 
         if (containingBlock != null) {
             scopeNode.setScopeBlock(containingBlock);
-            OdinStatement containingStatement = findFirstParentOfType(entrance, false, OdinStatement.class);
+            OdinStatement containingStatement = PsiTreeUtil.getParentOfType(entrance, false, OdinStatement.class);
             OdinStatement lastValidStatement;
             if (PsiTreeUtil.isAncestor(containingBlock, containingStatement, true)) {
                 // This means the containing statement is inside the containing block

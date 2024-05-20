@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.insights.typeInference;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinScope;
 import com.lasagnerd.odin.insights.OdinScopeResolver;
@@ -113,8 +114,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     isImport = true;
                     importDeclarationStatement = (OdinImportDeclarationStatement) namedElement;
                 } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
-                    OdinDeclaration odinDeclaration = OdinInsightUtils
-                            .findFirstParentOfType(declaredIdentifier, true, OdinDeclaration.class);
+                    OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinDeclaration.class);
 
                     if (odinDeclaration instanceof OdinImportDeclarationStatement) {
                         isImport = true;
@@ -608,8 +608,8 @@ subExpression
         }
 
         if (odinDeclaration instanceof OdinEnumValueDeclaration odinEnumValueDeclaration) {
-            OdinEnumType enumType = OdinInsightUtils.findFirstParentOfType(odinEnumValueDeclaration, true, OdinEnumType.class);
-            OdinEnumDeclarationStatement enumDeclarationStatement = OdinInsightUtils.findFirstParentOfType(enumType, true, OdinEnumDeclarationStatement.class);
+            OdinEnumType enumType = PsiTreeUtil.getParentOfType(odinEnumValueDeclaration, true, OdinEnumType.class);
+            OdinEnumDeclarationStatement enumDeclarationStatement = PsiTreeUtil.getParentOfType(enumType, true, OdinEnumDeclarationStatement.class);
             OdinDeclaredIdentifier enumDeclaredIdentifier = null;
             if (enumDeclarationStatement != null) {
                 enumDeclaredIdentifier = enumDeclarationStatement.getDeclaredIdentifier();

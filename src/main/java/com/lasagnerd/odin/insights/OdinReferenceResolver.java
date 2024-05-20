@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.insights;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.lang.psi.*;
@@ -22,7 +23,7 @@ public class OdinReferenceResolver {
     }
 
     public static OdinScope resolve(OdinScope scope, OdinType type) {
-        OdinQualifiedType qualifiedType = findFirstParentOfType(type, false, OdinQualifiedType.class);
+        OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(type, false, OdinQualifiedType.class);
         if (qualifiedType != null) {
             return resolve(scope, qualifiedType);
         }
@@ -33,7 +34,7 @@ public class OdinReferenceResolver {
         OdinIdentifier identifier = qualifiedType.getIdentifier();
         OdinSymbol odinSymbol = scope.getSymbol(identifier.getIdentifierToken().getText());
         if (odinSymbol != null) {
-            OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
+            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
                 return getDeclarationsOfImportedPackage(scope, importDeclarationStatement);
             }

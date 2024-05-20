@@ -7,6 +7,7 @@ import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
 
         OdinCallExpression callExpression = null;
         if (element != null) {
-            callExpression = OdinInsightUtils.findFirstParentOfType(element, false, OdinCallExpression.class);
+            callExpression = PsiTreeUtil.getParentOfType(element, false, OdinCallExpression.class);
         }
         return callExpression;
     }

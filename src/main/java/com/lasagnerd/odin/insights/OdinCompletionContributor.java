@@ -59,7 +59,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                             }
                         }
 
-                        OdinType parentType = OdinInsightUtils.findFirstParentOfType(position, true, OdinType.class);
+                        OdinType parentType = PsiTreeUtil.getParentOfType(position, true, OdinType.class);
                         if (parentType instanceof OdinSimpleRefType) {
                             OdinScope scope = createScope(parameters, parentType);
                             OdinScope completionScope = OdinReferenceResolver.resolve(scope, parentType);
@@ -79,7 +79,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                   @NotNull ProcessingContext context,
                                                   @NotNull CompletionResultSet result) {
                         PsiElement position = parameters.getPosition();
-                        PsiElement parent = OdinInsightUtils.findFirstParentOfType(
+                        PsiElement parent = PsiTreeUtil.getParentOfType(
                                 position,
                                 true,
                                 OdinRefExpression.class);
@@ -87,7 +87,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         if (parent != null) {
                             // Struct construction
                             OdinCompoundLiteral compoundLiteral
-                                    = OdinInsightUtils.findFirstParentOfType(parent, true, OdinCompoundLiteral.class);
+                                    = PsiTreeUtil.getParentOfType(parent, true, OdinCompoundLiteral.class);
 
                             // TODO replace with working version
 //                            findCompletionsForStruct(result, compoundLiteral);
@@ -133,11 +133,11 @@ public class OdinCompletionContributor extends CompletionContributor {
                             .create(declaredIdentifier.getText())
                             .withIcon(icon);
 
-                    OdinProcedureDeclarationStatement firstParentOfType = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
+                    OdinProcedureDeclarationStatement firstParentOfType = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
                     element = procedureLookupElement(element, firstParentOfType).withInsertHandler(procedureInsertHandler());
                     result.addElement(PrioritizedLookupElement.withPriority(element, 0));
                 } else if (typeType == OdinTypeType.PROCEDURE_OVERLOAD) {
-                    OdinProcedureOverloadDeclarationStatement procedureOverloadStatement = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinProcedureOverloadDeclarationStatement.class);
+                    OdinProcedureOverloadDeclarationStatement procedureOverloadStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinProcedureOverloadDeclarationStatement.class);
                     for (OdinIdentifier odinIdentifier : procedureOverloadStatement.getIdentifierList()) {
                         var resolvedReference = odinIdentifier.getReference();
 
@@ -157,7 +157,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         }
                     }
                 } else if (typeType == OdinTypeType.PACKAGE) {
-                    OdinImportDeclarationStatement odinDeclaration = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, false, OdinImportDeclarationStatement.class);
+                    OdinImportDeclarationStatement odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinImportDeclarationStatement.class);
 
                     OdinImportInfo info = odinDeclaration.getImportInfo();
 
