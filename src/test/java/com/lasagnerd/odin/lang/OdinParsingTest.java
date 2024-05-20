@@ -900,7 +900,7 @@ public class OdinParsingTest extends UsefulTestCase {
         }
 
         {
-            OdinFile odinFile = load("src/test/testData/mypackage/mypackage_1.odin");
+            OdinFile odinFile = load("src/test/testData/mypackage/file_private.odin");
             OdinSymbol.OdinVisibility globalVisibility = OdinScopeResolver.getGlobalFileVisibility(odinFile.getFileScope());
             assertEquals(OdinSymbol.OdinVisibility.FILE_PRIVATE, globalVisibility);
         }
