@@ -191,6 +191,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                 resultType.setRepresentedType(specializedUnion);
                 this.type = resultType;
             }
+
+            // TODO add casting expression T(expr)
         }
     }
 
@@ -268,8 +270,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitCastExpression(@NotNull OdinCastExpression o) {
-        OdinTypeDefinitionExpression typeDefinitionExpression = (OdinTypeDefinitionExpression) o.getTypeDefinitionExpression();
-        this.type = OdinTypeResolver.resolveType(scope, typeDefinitionExpression.getType());
+        this.type = OdinTypeResolver.resolveType(scope, o.getType());
     }
 
     @Override
@@ -279,8 +280,8 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitTransmuteExpression(@NotNull OdinTransmuteExpression o) {
-        OdinTypeDefinitionExpression typeDefinitionExpression = (OdinTypeDefinitionExpression) o.getTypeDefinitionExpression();
-        this.type = OdinTypeResolver.resolveType(scope, typeDefinitionExpression.getType());
+
+        this.type = OdinTypeResolver.resolveType(scope, o.getType());
     }
 
     @Override
@@ -475,15 +476,14 @@ subExpression
                                                       OdinDeclaredIdentifier declaredIdentifier,
                                                       OdinDeclaration odinDeclaration) {
         if (odinDeclaration instanceof OdinVariableDeclarationStatement declarationStatement) {
-            var mainType = declarationStatement.getTypeDefinitionExpression().getType();
+            var mainType = declarationStatement.getType();
             //return getDeclaredIdentifierQualifiedType(parentScope, mainType);
             return OdinTypeResolver.resolveType(parentScope, mainType);
         }
 
         if (odinDeclaration instanceof OdinVariableInitializationStatement initializationStatement) {
-            if (initializationStatement.getTypeDefinitionExpression() != null) {
-                OdinType mainTypeExpression = initializationStatement.getTypeDefinitionExpression().getType();
-                return OdinTypeResolver.resolveType(parentScope, mainTypeExpression);
+            if (initializationStatement.getType() != null) {
+                return OdinTypeResolver.resolveType(parentScope, initializationStatement.getType());
             }
 
             int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
@@ -507,8 +507,8 @@ subExpression
         }
 
         if (odinDeclaration instanceof OdinConstantInitializationStatement initializationStatement) {
-            if (initializationStatement.getTypeDefinitionExpression() != null) {
-                OdinType mainType = initializationStatement.getTypeDefinitionExpression().getType();
+            if (initializationStatement.getType() != null) {
+                OdinType mainType = initializationStatement.getType();
                 return OdinTypeResolver.resolveType(parentScope, mainType);
             }
             int index = initializationStatement.getIdentifierList()
@@ -536,26 +536,17 @@ subExpression
         }
 
         if (odinDeclaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
-            OdinType type;
-            if (fieldDeclarationStatement.getTypeDefinitionExpression() instanceof OdinType expr) {
-                type = expr;
-            } else {
-
-                OdinTypeDefinitionExpression typeDefinition = fieldDeclarationStatement.getTypeDefinitionExpression();
-                type = typeDefinition.getType();
-            }
-
-            return OdinTypeResolver.resolveType(parentScope, type);
+            return OdinTypeResolver.resolveType(parentScope, fieldDeclarationStatement.getType());
         }
 
         if (odinDeclaration instanceof OdinParameterDeclarator parameterDeclaration) {
-            return OdinTypeResolver.resolveType(parentScope, parameterDeclaration.getTypeDefinition().getType());
+            return OdinTypeResolver.resolveType(parentScope, parameterDeclaration.getTypeDefinitionContainer().getType());
         }
 
         if (odinDeclaration instanceof OdinParameterInitialization parameterInitialization) {
-            OdinTypeDefinitionExpression typeDefinition = parameterInitialization.getTypeDefinition();
-            if (typeDefinition != null) {
-                return OdinTypeResolver.resolveType(parentScope, typeDefinition.getType());
+            OdinType type = parameterInitialization.getTypeDefinition();
+            if (type != null) {
+                return OdinTypeResolver.resolveType(parentScope, type);
             }
 
             OdinExpression odinExpression = parameterInitialization.getExpression();

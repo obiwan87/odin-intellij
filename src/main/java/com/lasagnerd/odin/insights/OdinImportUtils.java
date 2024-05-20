@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +15,6 @@ import java.util.function.Predicate;
 public class OdinImportUtils {
     public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC
             && s.getSymbolType() != OdinSymbol.OdinSymbolType.PACKAGE_REFERENCE;
-
-    public static OdinDeclaration getDeclaration(PsiNamedElement declaredIdentifier) {
-        return PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinDeclaration.class);
-    }
 
     @NotNull
     public static String getFileName(@NotNull PsiElement psiElement) {

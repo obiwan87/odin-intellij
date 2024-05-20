@@ -149,7 +149,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
         int length = 0;
         lengths.add(length);
         for (OdinParamEntry odinParamEntry : parameters) {
-            OdinTypeDefinitionExpression typeDefinition = odinParamEntry.getParameterDeclaration().getTypeDefinition();
+            OdinType typeDefinition = odinParamEntry.getParameterDeclaration().getTypeDefinition();
             for (OdinParameter odinParamDeclaration : odinParamEntry.getParameterDeclaration().getParameterList()) {
                 String param = odinParamDeclaration.getDeclaredIdentifier().getText();
                 if (typeDefinition != null) {

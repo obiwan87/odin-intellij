@@ -92,7 +92,7 @@ public class OdinInsightUtils {
                 if (odinFieldDeclarationStatement.getDeclaredIdentifiers().isEmpty())
                     continue;
 
-                TsOdinType usedType = OdinTypeResolver.resolveType(typeScope, odinFieldDeclarationStatement.getTypeDefinitionExpression().getType());
+                TsOdinType usedType = OdinTypeResolver.resolveType(typeScope, odinFieldDeclarationStatement.getType());
                 OdinScope subScope = getScopeProvidedByType(usedType);
                 scope.putAll(subScope);
             }

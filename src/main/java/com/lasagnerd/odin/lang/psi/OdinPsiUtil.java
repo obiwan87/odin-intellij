@@ -7,7 +7,6 @@ import com.lasagnerd.odin.insights.OdinSymbol;
 import com.lasagnerd.odin.insights.OdinSymbolResolver;
 import com.lasagnerd.odin.insights.OdinImportInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -113,38 +112,38 @@ public class OdinPsiUtil {
 
     // OdinTypedDeclaration
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinConstantInitializationStatement statement) {
-        return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
+    public static OdinType getTypeDefinition(OdinConstantInitializationStatement statement) {
+        return statement.getType();
     }
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinVariableDeclarationStatement statement) {
-        return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
+    public static OdinType getTypeDefinition(OdinVariableDeclarationStatement statement) {
+        return statement.getType();
     }
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDeclarator statement) {
-        return doGetTypeDefinitionExpression(statement.getTypeDefinitionContainer().getTypeDefinitionExpression());
+    public static OdinType getTypeDefinition(OdinParameterDeclarator statement) {
+        return statement.getTypeDefinitionContainer().getType();
     }
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinVariableInitializationStatement statement) {
-        return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
+    public static OdinType getTypeDefinition(OdinVariableInitializationStatement statement) {
+        return statement.getType();
     }
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinFieldDeclarationStatement statement) {
-        return doGetTypeDefinitionExpression(statement.getTypeDefinitionExpression());
+    public static OdinType getTypeDefinition(OdinFieldDeclarationStatement statement) {
+        return statement.getType();
     }
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinUnnamedParameter parameter) {
-        return doGetTypeDefinitionExpression(parameter.getTypeDefinitionContainer().getTypeDefinitionExpression());
+    public static OdinType getTypeDefinition(OdinUnnamedParameter parameter) {
+        return parameter.getTypeDefinitionContainer().getType();
     }
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterDeclaration parameterDeclaration) {
+    public static OdinType getTypeDefinition(OdinParameterDeclaration parameterDeclaration) {
         throw new RuntimeException("This shouldn't be called! you have a bug somewhere: " + parameterDeclaration.getClass().getSimpleName());
     }
 
-    public static OdinTypeDefinitionExpression getTypeDefinition(OdinParameterInitialization declaration) {
+    public static OdinType getTypeDefinition(OdinParameterInitialization declaration) {
         OdinTypeDefinitionContainer typeDefinitionContainer = declaration.getTypeDefinitionContainer();
         if (typeDefinitionContainer != null) {
-            return typeDefinitionContainer.getTypeDefinitionExpression();
+            return typeDefinitionContainer.getType();
         }
         return null;
     }
@@ -163,15 +162,6 @@ public class OdinPsiUtil {
         if (importStatement.getAlias() != null)
             return importStatement.getAlias();
         return importStatement.getPath();
-    }
-
-
-    @Nullable
-    private static OdinTypeDefinitionExpression doGetTypeDefinitionExpression(OdinExpression statement) {
-        if (statement instanceof OdinTypeDefinitionExpression typeDefinition) {
-            return typeDefinition;
-        }
-        return null;
     }
 
 
@@ -225,32 +215,15 @@ public class OdinPsiUtil {
     }
 
     public static OdinType getTypeDefinition(OdinArrayType arrayType) {
-        OdinTypeDefinitionExpression typeDefinitionExpression = null;
-        if (arrayType.getExpressionList().size() > 1) {
-            OdinExpression odinExpression = arrayType.getExpressionList().get(1);
-            if (odinExpression instanceof OdinTypeDefinitionExpression) {
-                typeDefinitionExpression = (OdinTypeDefinitionExpression) odinExpression;
-            }
-        }
-        if (!arrayType.getExpressionList().isEmpty()) {
-            OdinExpression odinExpression = arrayType.getExpressionList().get(0);
-            if (odinExpression instanceof OdinTypeDefinitionExpression) {
-                typeDefinitionExpression = (OdinTypeDefinitionExpression) odinExpression;
-            }
-        }
-
-        if (typeDefinitionExpression != null)
-            return typeDefinitionExpression.getType();
-
-        return null;
+        return arrayType.getType();
     }
 
     public static OdinType getKeyType(OdinMapType mapType) {
-        return mapType.getTypeDefinitionExpressionList().get(0).getType();
+        return mapType.getTypeList().get(0);
     }
 
     public static OdinType getValueType(OdinMapType mapType) {
-        return mapType.getTypeDefinitionExpressionList().get(1).getType();
+        return mapType.getTypeList().get(1);
     }
 
     public static List<OdinStatement> getStatements(OdinBlock odinBlock) {

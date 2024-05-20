@@ -44,10 +44,6 @@ public class OdinScopeResolver {
         this.element = element;
     }
 
-    public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
-        return getFileScopeDeclarations(fileScope, getGlobalFileVisibility(fileScope));
-    }
-
     public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope, OdinSymbol.OdinVisibility globalFileVisibility) {
         // Find all blocks that are not in a procedure
         List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
@@ -153,18 +149,17 @@ public class OdinScopeResolver {
 
                 if (statement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
                     if (variableInitializationStatement.getUsing() != null) {
-                        OdinTypeDefinitionExpression typeDefinitionExpression = variableInitializationStatement.getTypeDefinitionExpression();
-                        if (typeDefinitionExpression != null) {
-                            OdinType mainTypeExpression = typeDefinitionExpression.getType();
-                            TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, mainTypeExpression);
+                        OdinType type = variableInitializationStatement.getType();
+                        if (type != null) {
+                            TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, type);
                             OdinScope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
                             scope.putAll(scopeProvidedByType);
                         } else {
                             List<OdinExpression> expressionList = variableInitializationStatement.getExpressionsList().getExpressionList();
                             if (!expressionList.isEmpty()) {
                                 OdinExpression odinExpression = expressionList.get(0);
-                                TsOdinType type = OdinInferenceEngine.inferType(scope, odinExpression);
-                                OdinScope scopeProvidedByType = getScopeProvidedByType(type);
+                                TsOdinType tsOdinType = OdinInferenceEngine.inferType(scope, odinExpression);
+                                OdinScope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
                                 scope.putAll(scopeProvidedByType);
                             }
                         }
@@ -173,9 +168,9 @@ public class OdinScopeResolver {
 
                 if (statement instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
                     if (variableDeclarationStatement.getUsing() != null) {
-                        OdinType mainTypeExpression = variableDeclarationStatement.getTypeDefinitionExpression().getType();
-                        TsOdinType type = OdinTypeResolver.resolveType(scope, mainTypeExpression);
-                        OdinScope scopeProvidedByType = getScopeProvidedByType(type);
+                        OdinType psiType = variableDeclarationStatement.getType();
+                        TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, psiType);
+                        OdinScope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
                         scope.putAll(scopeProvidedByType);
                     }
                 }
