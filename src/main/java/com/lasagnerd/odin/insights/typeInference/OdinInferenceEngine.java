@@ -41,18 +41,15 @@ public class OdinInferenceEngine extends OdinVisitor {
         this.lhsValuesCount = lhsValuesCount;
     }
 
-    public static OdinTypeInferenceResult inferType(OdinScope scope, OdinExpression expression) {
+    @NotNull
+    public static TsOdinType inferType(OdinScope scope, OdinExpression expression) {
         OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(scope);
         expression.accept(odinExpressionTypeResolver);
-        OdinTypeInferenceResult typeInferenceResult = new OdinTypeInferenceResult();
-        typeInferenceResult.setImportDeclarationStatement(odinExpressionTypeResolver.importDeclarationStatement);
-        typeInferenceResult.setImport(odinExpressionTypeResolver.isImport);
         if (odinExpressionTypeResolver.isImport) {
-            typeInferenceResult.setType(createPackageReferenceType(scope.getPackagePath(), odinExpressionTypeResolver.importDeclarationStatement));
+            return createPackageReferenceType(scope.getPackagePath(), odinExpressionTypeResolver.importDeclarationStatement);
+        } else {
+            return odinExpressionTypeResolver.type != null? odinExpressionTypeResolver.type : TsOdinType.UNKNOWN;
         }
-
-        typeInferenceResult.setType(odinExpressionTypeResolver.type);
-        return typeInferenceResult;
     }
 
     public static TsOdinType doInferType(OdinScope scope, @NotNull OdinExpression expression) {

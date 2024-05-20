@@ -7,7 +7,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
-import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -143,27 +142,17 @@ public class OdinScopeResolver {
 
             for (OdinStatement statement : scopeNode.getStatements()) {
                 if (statement instanceof OdinDeclaration declaration) {
-                     List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(declaration)
-                      .stream()
-                      .filter(s -> matcher.test(s.getDeclaredIdentifier())).toList();
+                    List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(declaration)
+                            .stream()
+                            .filter(s -> matcher.test(s.getDeclaredIdentifier())).toList();
 
-//                    List<? extends PsiNamedElement> declaredIdentifiers = declaration
-//                            .getDeclaredIdentifiers()
-//                            .stream().filter(matcher).toList();
                     scope.addAll(symbols, false);
                 }
 
                 if (statement instanceof OdinUsingStatement usingStatement) {
-                    OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(scope, usingStatement.getExpression());
-                    if (typeInferenceResult.getType() != null) {
-                        OdinScope usingScope = getScopeProvidedByType(typeInferenceResult.getType());
-                        scope.putAll(usingScope);
-                    }
-
-//                    if (typeInferenceResult.isImport()) {
-//                        OdinScope packageScope = getDeclarationsOfImportedPackage(typeInferenceResult.getImportDeclarationStatement());
-//                        scope.putAll(packageScope);
-//                    }
+                    var type = OdinInferenceEngine.inferType(scope, usingStatement.getExpression());
+                    OdinScope usingScope = getScopeProvidedByType(type);
+                    scope.putAll(usingScope);
                 }
 
                 if (statement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
@@ -178,12 +167,9 @@ public class OdinScopeResolver {
                             List<OdinExpression> expressionList = variableInitializationStatement.getExpressionsList().getExpressionList();
                             if (!expressionList.isEmpty()) {
                                 OdinExpression odinExpression = expressionList.get(0);
-                                OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(scope, odinExpression);
-                                TsOdinType type = typeInferenceResult.getType();
-                                if (type != null) {
-                                    OdinScope scopeProvidedByType = getScopeProvidedByType(type);
-                                    scope.putAll(scopeProvidedByType);
-                                }
+                                TsOdinType type = OdinInferenceEngine.inferType(scope, odinExpression);
+                                OdinScope scopeProvidedByType = getScopeProvidedByType(type);
+                                scope.putAll(scopeProvidedByType);
                             }
                         }
                     }
@@ -241,7 +227,7 @@ public class OdinScopeResolver {
             scopeNode.setScopeBlock(containingBlock);
             OdinStatement containingStatement = PsiTreeUtil.getParentOfType(entrance, false, OdinStatement.class);
             OdinStatement lastValidStatement;
-            if (PsiTreeUtil.isAncestor(containingBlock, containingStatement, true)) {
+            if (containingStatement != null && PsiTreeUtil.isAncestor(containingBlock, containingStatement, true)) {
                 // This means the containing statement is inside the containing block
                 lastValidStatement = containingStatement;
             } else {
@@ -300,11 +286,8 @@ public class OdinScopeResolver {
                     scope.putAll(getScopeProvidedByType(tsOdinType));
                 } else {
                     if (symbol.getValueExpression() != null) {
-                        OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(parentScope, symbol.getValueExpression());
-                        TsOdinType type = typeInferenceResult.getType();
-                        if (type != null) {
-                            scope.putAll(getScopeProvidedByType(type));
-                        }
+                        TsOdinType type = OdinInferenceEngine.inferType(parentScope, symbol.getValueExpression());
+                        scope.putAll(getScopeProvidedByType(type));
                     }
                 }
             }
