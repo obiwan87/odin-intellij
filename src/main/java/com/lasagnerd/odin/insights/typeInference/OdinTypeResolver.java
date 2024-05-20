@@ -236,7 +236,7 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     private TsOdinType resolveTypeFromDeclaredIdentifier(OdinScope scope, OdinDeclaredIdentifier identifier) {
-        OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(identifier,
+        OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(identifier,
                 false,
                 OdinDeclaration.class);
 

@@ -5,6 +5,7 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.OdinLexerAdapter;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
@@ -28,7 +29,7 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
 
     @Override
     public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
-        return OdinInsightUtils.findFirstParentOfType(psiElement, false, OdinDeclaration.class) != null;
+        return PsiTreeUtil.getParentOfType(psiElement, false, OdinDeclaration.class) != null;
     }
 
     @Override
@@ -38,7 +39,7 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
 
     @Override
     public @Nls @NotNull String getType(@NotNull PsiElement psiElement) {
-        OdinDeclaredIdentifier declaredIdentifier = OdinInsightUtils.findFirstParentOfType(psiElement, false, OdinDeclaredIdentifier.class);
+        OdinDeclaredIdentifier declaredIdentifier = PsiTreeUtil.getParentOfType(psiElement, false, OdinDeclaredIdentifier.class);
 
         OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
         return typeType != null ? typeType.getHumanReadableName() : OdinTypeType.UNKNOWN.getHumanReadableName();

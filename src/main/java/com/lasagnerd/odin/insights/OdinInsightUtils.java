@@ -1,13 +1,10 @@
 package com.lasagnerd.odin.insights;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinPackageType;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinPointerType;
@@ -16,7 +13,6 @@ import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
-import org.mozilla.javascript.ast.StringLiteral;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -36,7 +32,7 @@ public class OdinInsightUtils {
     public static final Predicate<PsiElement> PACKAGE_VISIBLE_ELEMENTS_MATCHER = PUBLIC_ELEMENTS_MATCHER;
 
     public static OdinDeclaration getDeclaration(PsiNamedElement declaredIdentifier) {
-        return findFirstParentOfType(declaredIdentifier, false, OdinDeclaration.class);
+        return PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinDeclaration.class);
     }
 
     @NotNull
@@ -60,7 +56,7 @@ public class OdinInsightUtils {
 
     public static OdinSymbol findSymbol(OdinIdentifier identifier) {
         OdinScope parentScope = OdinScopeResolver.resolveScope(identifier).with(getPackagePath(identifier));
-        OdinRefExpression refExpression = findFirstParentOfType(identifier, true, OdinRefExpression.class);
+        OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(identifier, true, OdinRefExpression.class);
         OdinScope scope;
         if (refExpression != null) {
             if (refExpression.getExpression() != null) {
@@ -69,7 +65,7 @@ public class OdinInsightUtils {
                 scope = parentScope;
             }
         } else {
-            OdinQualifiedType qualifiedType = OdinInsightUtils.findFirstParentOfType(identifier, true, OdinQualifiedType.class);
+            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, true, OdinQualifiedType.class);
             if (qualifiedType != null) {
                 scope = OdinReferenceResolver.resolve(parentScope, qualifiedType);
             } else {
@@ -141,7 +137,7 @@ public class OdinInsightUtils {
      * @return The scope
      */
     public static OdinScope getScopeProvidedByType(TsOdinType type) {
-        if(type instanceof TsOdinPackageType packageType) {
+        if (type instanceof TsOdinPackageType packageType) {
             return OdinInsightUtils
                     .getDeclarationsOfImportedPackage((OdinImportDeclarationStatement) packageType.getDeclaration());
         }
@@ -229,14 +225,9 @@ public class OdinInsightUtils {
         return fieldDeclarationStatementList;
     }
 
-    public static <T> T findFirstParentOfType(PsiElement element, boolean strict, Class<T> type) {
-        //noinspection unchecked
-        return (T) PsiTreeUtil.findFirstParent(element, strict, Conditions.instanceOf(type));
-    }
-
     public static boolean isVariableDeclaration(PsiElement element) {
-        return findFirstParentOfType(element, true, OdinVariableDeclarationStatement.class) != null
-                || findFirstParentOfType(element, true, OdinVariableInitializationStatement.class) != null;
+        return PsiTreeUtil.getParentOfType(element, true, OdinVariableDeclarationStatement.class) != null
+                || PsiTreeUtil.getParentOfType(element, true, OdinVariableInitializationStatement.class) != null;
     }
 
     public static boolean isProcedureDeclaration(PsiElement element) {
@@ -248,7 +239,7 @@ public class OdinInsightUtils {
     }
 
     public static boolean isConstantDeclaration(PsiElement element) {
-        return findFirstParentOfType(element, true, OdinConstantInitializationStatement.class) != null;
+        return PsiTreeUtil.getParentOfType(element, true, OdinConstantInitializationStatement.class) != null;
     }
 
     public static boolean isStructDeclaration(PsiElement element) {
@@ -299,7 +290,7 @@ public class OdinInsightUtils {
     }
 
     public static boolean isParameterDeclaration(PsiElement element) {
-        return OdinInsightUtils.findFirstParentOfType(element, true, OdinDeclaration.class) instanceof OdinParameterDeclaration;
+        return PsiTreeUtil.getParentOfType(element, true, OdinDeclaration.class) instanceof OdinParameterDeclaration;
     }
 
     public static OdinProcedureDeclarationStatement getDeclaringProcedure(OdinDeclaredIdentifier element) {
