@@ -35,13 +35,11 @@
         SWITCH='regexp:switch'
         CASE='regexp:case'
         FALLTHROUGH='regexp:fallthrough'
-        TRUE='regexp:true'
-        FALSE='regexp:false'
         WHEN='regexp:when'
         BREAK='regexp:break'
         CONTINUE='regexp:continue'
-        NIL='regexp:nil'
         TRIPLE_DASH='regexp:---'
+        ELLIPSIS='regexp:\.\.\.'
         OR_ELSE='regexp:or_else'
         OR_RETURN='regexp:or_return'
         OR_BREAK='regexp:or_break'
@@ -288,9 +286,11 @@ type                                 ::= mapType
                                          | parExpressionType
                                          | qualifiedType
                                          | callType
+                                         | ellipsisType
                                          | variadicType
                                          | simpleRefType
 
+ellipsisType                         ::= ELLIPSIS
 variadicType                         ::= RANGE type
 callType                             ::= identifier arguments
 constrainedType                      ::= type DIV type {pin=2}
@@ -343,7 +343,7 @@ variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] iden
 // Parameters for procedures and assignments
 private polymorphicParameterList     ::= paramEntries
 
-private paramEntries                         ::= paramEntry (COMMA paramEntry)* COMMA?
+private paramEntries                 ::= paramEntry (COMMA paramEntry)* COMMA?
 paramEntry                           ::= directive? (
                                              parameterInitialization
                                              | parameterDeclarator
@@ -516,6 +516,7 @@ autoCastExpression                   ::= AUTO_CAST expression
 
 uninitializedExpression              ::= TRIPLE_DASH
 
+
 // TODO this is a duplicate of compoundLiteralValue but without the non-consuming <<>>-rules
 // --> fix this
 compoundValueUntyped                 ::= ((<<isModeOn "OPERAND">> | <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
@@ -544,7 +545,6 @@ orBreakExpression                    ::= expression OR_BREAK [IDENTIFIER_TOKEN]
 orContinueExpression                 ::= expression OR_CONTINUE [IDENTIFIER_TOKEN]
 
 
-nilLiteral                           ::= NIL  {extends=basicLiteral}
 stringLiteral                        ::= DQ_STRING_LITERAL
                                          | SQ_STRING_LITERAL
                                          | RAW_STRING_LITERAL  {extends=basicLiteral}
@@ -561,13 +561,9 @@ numericLiteral                       ::= INTEGER_DEC_LITERAL
 // TODO there is no such thing as a boolean literal in Odin, true and false are just
 //  identifiers that have the type bool and the respective values. Things as
 //  true :: false are allowed
-booleanLiteral                       ::= TRUE
-                                         | FALSE       {extends=basicLiteral}
 
-basicLiteral                         ::= nilLiteral
-                                         | stringLiteral
+basicLiteral                         ::= stringLiteral
                                          | numericLiteral
-                                         | booleanLiteral
 
 private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | callType | simpleRefType | parExpressionType
 parExpressionType                    ::= parenthesizedExpression

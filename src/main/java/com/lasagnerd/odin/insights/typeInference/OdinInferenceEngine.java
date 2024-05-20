@@ -339,11 +339,6 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     @Override
-    public void visitBooleanLiteral(@NotNull OdinBooleanLiteral o) {
-        this.type = TsOdinBuiltInType.BOOL;
-    }
-
-    @Override
     public void visitNumericLiteral(@NotNull OdinNumericLiteral o) {
         if (o.getFloatDecLiteral() != null) {
             this.type = TsOdinBuiltInType.F64; // .asUntyped();

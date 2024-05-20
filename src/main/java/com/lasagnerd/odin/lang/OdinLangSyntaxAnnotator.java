@@ -74,7 +74,10 @@ public class OdinLangSyntaxAnnotator implements Annotator {
             "cstring",
             "rawptr",
             "typeid",
-            "any"
+            "any",
+            "true",
+            "false",
+            "nil"
     );
 
 
