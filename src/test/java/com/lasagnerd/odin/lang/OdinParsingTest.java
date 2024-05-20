@@ -68,7 +68,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 /**
- * @noinspection unused, UnstableApiUsage
+ * @noinspection unused, UnstableApiUsage, deprecation
  */
 public class OdinParsingTest extends UsefulTestCase {
     private PluginDescriptor pluginDescriptor;
@@ -887,7 +887,9 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinFile odinFile = load("src/test/testData/mypackage/visibility_annotations.odin");
             OdinProcedureDeclarationStatement proc = PsiTreeUtil.findChildOfType(odinFile, OdinProcedureDeclarationStatement.class);
-            List<OdinSymbol> symbols = new ArrayList<>(OdinScopeResolver.getFileScopeDeclarations(odinFile.getFileScope(), e -> true));
+            OdinFileScope odinFileScope = odinFile.getFileScope();
+            List<OdinSymbol> symbols = new ArrayList<>(OdinScopeResolver.getFileScopeDeclarations(odinFileScope)
+                    .getFilteredSymbols(e -> true));
             symbols.sort(Comparator.comparing(OdinSymbol::getName));
             assertEquals(3, symbols.size());
             assertEquals(OdinSymbol.OdinVisibility.PUBLIC, symbols.get(0).getVisibility());

@@ -65,8 +65,8 @@ public class OdinScope {
         return symbolTable.values().stream().map(OdinSymbol::getDeclaredIdentifier).toList();
     }
 
-    public Collection<OdinSymbol> getFiltered(Predicate<? super PsiNamedElement> predicate) {
-        return symbolTable.values().stream().filter(s -> predicate.test(s.getDeclaredIdentifier())).toList();
+    public Collection<OdinSymbol> getFilteredSymbols(Predicate<OdinSymbol> filter) {
+        return symbolTable.values().stream().filter(filter).toList();
     }
 
     public void addAll(Collection<? extends OdinSymbol> symbols) {
@@ -161,7 +161,7 @@ public class OdinScope {
     public OdinScope getScopeOfImport(String packageIdentifier) {
         OdinSymbol odinSymbol = symbolTable.get(packageIdentifier);
         if (odinSymbol != null && odinSymbol.getDeclaredIdentifier() instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-            return OdinInsightUtils.getDeclarationsOfImportedPackage(this.getPackagePath(), importDeclarationStatement);
+            return OdinImportUtils.getSymbolsOfImportedPackage(this.getPackagePath(), importDeclarationStatement);
         }
         return OdinScope.EMPTY;
     }
