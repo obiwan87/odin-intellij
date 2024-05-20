@@ -888,7 +888,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinFile odinFile = load("src/test/testData/mypackage/visibility_annotations.odin");
             OdinProcedureDeclarationStatement proc = PsiTreeUtil.findChildOfType(odinFile, OdinProcedureDeclarationStatement.class);
             OdinFileScope odinFileScope = odinFile.getFileScope();
-            List<OdinSymbol> symbols = new ArrayList<>(OdinScopeResolver.getFileScopeDeclarations(odinFileScope)
+            List<OdinSymbol> symbols = new ArrayList<>(OdinScopeResolver.getFileScopeDeclarations(odinFileScope, OdinScopeResolver.getGlobalFileVisibility(odinFileScope))
                     .getFilteredSymbols(e -> true));
             symbols.sort(Comparator.comparing(OdinSymbol::getName));
             assertEquals(3, symbols.size());

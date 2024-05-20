@@ -45,7 +45,10 @@ public class OdinScopeResolver {
     }
 
     public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
-        OdinSymbol.OdinVisibility globalFileVisibility = getGlobalFileVisibility(fileScope);
+        return getFileScopeDeclarations(fileScope, getGlobalFileVisibility(fileScope));
+    }
+
+    public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope, OdinSymbol.OdinVisibility globalFileVisibility) {
         // Find all blocks that are not in a procedure
         List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
 
@@ -100,7 +103,7 @@ public class OdinScopeResolver {
         fileScopeScope.setPackagePath(packagePath);
         OdinFileScope fileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(element, psi -> psi instanceof OdinFileScope);
         if (fileScope != null) {
-            OdinScope fileScopeDeclarations = getFileScopeDeclarations(fileScope);
+            OdinScope fileScopeDeclarations = getFileScopeDeclarations(fileScope, getGlobalFileVisibility(fileScope));
             scope.addAll(fileScopeDeclarations.getFilteredSymbols(matcher), false);
         }
 
@@ -111,8 +114,9 @@ public class OdinScopeResolver {
                 if (odinFile == null || odinFile.getFileScope() == null) {
                     continue;
                 }
-                if (getGlobalFileVisibility(odinFile.getFileScope()) == OdinSymbol.OdinVisibility.FILE_PRIVATE) continue;
-                Collection<OdinSymbol> fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope())
+                OdinSymbol.OdinVisibility globalFileVisibility = getGlobalFileVisibility(odinFile.getFileScope());
+                if (globalFileVisibility == OdinSymbol.OdinVisibility.FILE_PRIVATE) continue;
+                Collection<OdinSymbol> fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), globalFileVisibility)
                         .getSymbolTable()
                         .values()
                         .stream()
