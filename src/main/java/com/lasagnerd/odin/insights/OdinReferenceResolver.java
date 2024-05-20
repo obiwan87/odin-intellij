@@ -1,21 +1,17 @@
 package com.lasagnerd.odin.insights;
 
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.lang.psi.*;
-import kotlinx.coroutines.internal.Symbol;
 
-import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
+import static com.lasagnerd.odin.insights.OdinInsightUtils.getDeclarationsOfImportedPackage;
+import static com.lasagnerd.odin.insights.OdinInsightUtils.getScopeProvidedByType;
 
 public class OdinReferenceResolver {
     public static OdinScope resolve(OdinScope scope, OdinExpression valueExpression) {
         // Add filter for referenceable elements
         OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(scope, valueExpression);
-        if (typeInferenceResult.isImport()) {
-            return getDeclarationsOfImportedPackage(scope, typeInferenceResult.getImportDeclarationStatement());
-        }
         if (typeInferenceResult.getType() != null) {
             return getScopeProvidedByType(typeInferenceResult.getType());
         }
@@ -36,7 +32,7 @@ public class OdinReferenceResolver {
         if (odinSymbol != null) {
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return getDeclarationsOfImportedPackage(scope, importDeclarationStatement);
+                return getDeclarationsOfImportedPackage(scope.getPackagePath(), importDeclarationStatement);
             }
         }
         return OdinScope.EMPTY;
