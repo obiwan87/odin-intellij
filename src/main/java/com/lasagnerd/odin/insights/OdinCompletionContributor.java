@@ -93,8 +93,7 @@ public class OdinCompletionContributor extends CompletionContributor {
 //                            findCompletionsForStruct(result, compoundLiteral);
                         }
 
-                        OdinScope declarations = OdinInsightUtils
-                                .findScope(position, e -> true);
+                        OdinScope declarations = OdinScopeResolver.resolveScope(position, e -> true);
                         addLookUpElements(result, declarations.getNamedElements());
                     }
                 }
@@ -103,7 +102,7 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     private static OdinScope createScope(@NotNull CompletionParameters parameters, PsiElement reference) {
-        return OdinInsightUtils.findScope(reference, e -> true).with(parameters
+        return OdinScopeResolver.resolveScope(reference, e -> true).with(parameters
                 .getOriginalFile()
                 .getContainingDirectory()
                 .getVirtualFile()

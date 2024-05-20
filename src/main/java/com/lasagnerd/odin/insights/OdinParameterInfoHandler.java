@@ -47,16 +47,15 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
     }
 
     public static List<PsiElement> findMatchingDeclarations(String name, OdinCallExpression callExpression) {
-        OdinScope declarations = OdinInsightUtils.findScope(
-                callExpression, psiElement -> {
-                    if (psiElement instanceof OdinDeclaredIdentifier identifier)
-                        if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||
-                                identifier.getParent() instanceof OdinProcedureOverloadDeclarationStatement
-                        ) {
-                            return identifier.getText().equals(name);
-                        }
-                    return false;
-                });
+        OdinScope declarations = OdinScopeResolver.resolveScope(callExpression, psiElement -> {
+            if (psiElement instanceof OdinDeclaredIdentifier identifier)
+                if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||
+                        identifier.getParent() instanceof OdinProcedureOverloadDeclarationStatement
+                ) {
+                    return identifier.getText().equals(name);
+                }
+            return false;
+        });
 
 
 

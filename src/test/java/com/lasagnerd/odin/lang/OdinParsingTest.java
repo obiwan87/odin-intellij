@@ -49,9 +49,10 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinReferenceResolver;
 import com.lasagnerd.odin.insights.OdinScope;
+import com.lasagnerd.odin.insights.OdinScopeResolver;
+import com.lasagnerd.odin.insights.OdinSymbol;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.insights.typeSystem.*;
@@ -600,7 +601,7 @@ public class OdinParsingTest extends UsefulTestCase {
         Objects.requireNonNull(refExpressions);
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
 
-        OdinScope scope = OdinInsightUtils.findScope(odinRefExpression);
+        OdinScope scope = OdinScopeResolver.resolveScope(odinRefExpression);
         OdinReferenceResolver.resolve(scope, odinRefExpression);
 
     }
@@ -679,7 +680,7 @@ public class OdinParsingTest extends UsefulTestCase {
                 .findFirst().orElseThrow();
 
         OdinExpression expression = odinExpressionStatement.getExpression();
-        OdinScope scope = OdinInsightUtils.findScope(expression);
+        OdinScope scope = OdinScopeResolver.resolveScope(expression);
         return OdinInferenceEngine.inferType(scope, expression);
     }
 
@@ -878,6 +879,33 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    // Visibility tests
+
+    public void testVisibility() throws IOException {
+        {
+            OdinFile odinFile = load("src/test/testData/mypackage/visibility_annotations.odin");
+            OdinProcedureDeclarationStatement proc = PsiTreeUtil.findChildOfType(odinFile, OdinProcedureDeclarationStatement.class);
+            List<OdinSymbol> symbols = new ArrayList<>(OdinScopeResolver.getFileScopeDeclarations(odinFile.getFileScope(), e -> true));
+            symbols.sort(Comparator.comparing(OdinSymbol::getName));
+            assertEquals(3, symbols.size());
+            assertEquals(OdinSymbol.OdinVisibility.PUBLIC, symbols.get(0).getVisibility());
+            assertEquals(OdinSymbol.OdinVisibility.PACKAGE_PRIVATE, symbols.get(1).getVisibility());
+            assertEquals(OdinSymbol.OdinVisibility.FILE_PRIVATE, symbols.get(2).getVisibility());
+        }
+
+        {
+            OdinFile odinFile = load("src/test/testData/mypackage/package_private.odin");
+            OdinSymbol.OdinVisibility globalVisibility = OdinScopeResolver.getGlobalFileVisibility(odinFile.getFileScope());
+            assertEquals(OdinSymbol.OdinVisibility.PACKAGE_PRIVATE, globalVisibility);
+        }
+
+        {
+            OdinFile odinFile = load("src/test/testData/mypackage/mypackage_1.odin");
+            OdinSymbol.OdinVisibility globalVisibility = OdinScopeResolver.getGlobalFileVisibility(odinFile.getFileScope());
+            assertEquals(OdinSymbol.OdinVisibility.FILE_PRIVATE, globalVisibility);
+        }
+    }
+
     private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         var shapeVariable = findFirstVariableDeclarationStatement(odinFile, procedureName,
                 variableName);
@@ -906,7 +934,6 @@ public class OdinParsingTest extends UsefulTestCase {
 
         return variable;
     }
-
 
 
 }

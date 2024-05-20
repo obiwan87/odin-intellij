@@ -3,6 +3,7 @@ package com.lasagnerd.odin.insights.typeInference;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.insights.OdinInsightUtils;
 import com.lasagnerd.odin.insights.OdinScope;
+import com.lasagnerd.odin.insights.OdinScopeResolver;
 import com.lasagnerd.odin.insights.OdinSymbol;
 import com.lasagnerd.odin.insights.typeSystem.*;
 import com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator;
@@ -57,10 +58,17 @@ public class OdinInferenceEngine extends OdinVisitor {
         OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(scope, expectedType, lhsValuesCount);
         expression.accept(odinExpressionTypeResolver);
 
+        if(odinExpressionTypeResolver.isImport) {
+            TsOdinPackageType packageType = new TsOdinPackageType();
+            packageType.setDeclaration(odinExpressionTypeResolver.importDeclarationStatement);
+            return packageType;
+        }
         TsOdinType type = odinExpressionTypeResolver.type;
         if (type == null) {
             return TsOdinType.UNKNOWN;
         }
+
+
         return type;
     }
 
@@ -69,7 +77,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     public static TsOdinType doInferType(OdinExpression odinExpression) {
-        OdinScope scope = OdinInsightUtils.findScope(odinExpression);
+        OdinScope scope = OdinScopeResolver.resolveScope(odinExpression);
         return doInferType(scope, odinExpression);
     }
 
@@ -105,7 +113,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                     isImport = true;
                     importDeclarationStatement = (OdinImportDeclarationStatement) namedElement;
                 } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
-                    OdinDeclaration odinDeclaration = OdinInsightUtils.findFirstParentOfType(declaredIdentifier, true, OdinDeclaration.class);
+                    OdinDeclaration odinDeclaration = OdinInsightUtils
+                            .findFirstParentOfType(declaredIdentifier, true, OdinDeclaration.class);
 
                     if (odinDeclaration instanceof OdinImportDeclarationStatement) {
                         isImport = true;
