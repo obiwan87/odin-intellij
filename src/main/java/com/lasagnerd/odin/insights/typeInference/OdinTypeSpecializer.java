@@ -253,8 +253,7 @@ public class OdinTypeSpecializer {
     @NotNull
     private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, TsOdinParameter parameter, OdinScope newScope) {
         TsOdinType parameterType = parameter.getType();
-        OdinTypeInferenceResult odinTypeInferenceResult = inferType(newScope, argumentExpression);
-        TsOdinType argumentType = odinTypeInferenceResult.getType();
+        TsOdinType argumentType = inferType(newScope, argumentExpression);
         if (argumentType instanceof TsOdinMetaType metaType && (parameterType.isTypeId()
                 || parameterType.getMetaType() == metaType.getRepresentedMetaType())) {
             return OdinTypeResolver.resolveMetaType(newScope, metaType);
@@ -269,7 +268,7 @@ public class OdinTypeSpecializer {
             return TsOdinType.UNKNOWN;
         }
         // Case 3: The argument has been resolved to a proper type. Just add the mapping
-        return Objects.requireNonNullElse(argumentType, TsOdinType.UNKNOWN);
+        return argumentType;
     }
 
     private static @NotNull TsOdinType createPolymorphicType(OdinScope newScope, OdinPolymorphicType polymorphicType) {

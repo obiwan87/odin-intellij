@@ -2,7 +2,7 @@ package com.lasagnerd.odin.insights;
 
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
-import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
+import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 
 import static com.lasagnerd.odin.insights.OdinInsightUtils.getDeclarationsOfImportedPackage;
@@ -11,11 +11,8 @@ import static com.lasagnerd.odin.insights.OdinInsightUtils.getScopeProvidedByTyp
 public class OdinReferenceResolver {
     public static OdinScope resolve(OdinScope scope, OdinExpression valueExpression) {
         // Add filter for referenceable elements
-        OdinTypeInferenceResult typeInferenceResult = OdinInferenceEngine.inferType(scope, valueExpression);
-        if (typeInferenceResult.getType() != null) {
-            return getScopeProvidedByType(typeInferenceResult.getType());
-        }
-        return OdinScope.EMPTY;
+        TsOdinType type = OdinInferenceEngine.inferType(scope, valueExpression);
+        return getScopeProvidedByType(type);
     }
 
     public static OdinScope resolve(OdinScope scope, OdinType type) {
