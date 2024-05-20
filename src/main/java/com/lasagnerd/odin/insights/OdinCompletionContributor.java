@@ -229,7 +229,7 @@ public class OdinCompletionContributor extends CompletionContributor {
         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
 
         for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarationStatementList) {
-            String typeOfField = fieldDeclaration.getTypeDefinitionExpression().getText();
+            String typeOfField = fieldDeclaration.getType().getText();
             for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifierList()) {
                 LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier)
                         .withIcon(ExpUiIcons.Nodes.Property)

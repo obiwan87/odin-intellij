@@ -231,7 +231,7 @@ structDeclarationStatement           ::= (attributeStatement eos?)* declaredIden
 structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> structBlock
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
-fieldDeclarationStatement            ::= USING? directiveHead? declaredIdentifier (COMMA declaredIdentifier)* COLON typeDefinitionExpression [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
+fieldDeclarationStatement            ::= USING? directiveHead? declaredIdentifier (COMMA declaredIdentifier)* COLON type [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
 
 // Enum
 enumDeclarationStatement             ::= (attributeStatement eos?)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
@@ -243,7 +243,7 @@ enumValueDeclaration                 ::= declaredIdentifier [EQ expression]
 unionDeclarationStatement            ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? unionType
 unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> unionBlock
 unionBlock                           ::= blockStart [unionBody] blockEnd
-unionBody                            ::= typeDefinitionExpression (COMMA typeDefinitionExpression)* [COMMA|EOS_TOKEN]
+unionBody                            ::= type (COMMA type)* [COMMA|EOS_TOKEN]
 
 // Bit Set
 bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator DISTINCT? bitSetType
@@ -256,7 +256,7 @@ whereClause                          ::= WHERE expression (COMMA expression)*
 procedureBody                        ::= tripleDashBlock
                                           | block
 private tripleDashBlock              ::= [directive] TRIPLE_DASH {pin=2}
-returnParameters                     ::= NOT | LPAREN paramEntries RPAREN | typeDefinitionExpression
+returnParameters                     ::= NOT | LPAREN paramEntries RPAREN | type
 
 returnStatement                      ::= [directive] RETURN returnArgumentList?
 private returnArgumentList           ::= expression (COMMA expression)* COMMA?
@@ -276,6 +276,7 @@ type                                 ::= mapType
                                          | bitSetType
                                          | multiPointerType
                                          | arrayType
+                                         | relativeType
                                          | procedureType
                                          | structType
                                          | enumType
@@ -290,6 +291,7 @@ type                                 ::= mapType
                                          | variadicType
                                          | simpleRefType
 
+relativeType                         ::= directive type
 ellipsisType                         ::= ELLIPSIS
 variadicType                         ::= RANGE type
 callType                             ::= identifier arguments
@@ -303,15 +305,15 @@ pointerType                          ::= CARET type
 multiPointerType                     ::= LBRACKET CARET RBRACKET type
 
 
-bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON typeDefinitionExpression] RBRACKET
-mapType                              ::= MAP LBRACKET typeDefinitionExpression RBRACKET typeDefinitionExpression {methods=[getKeyType getValueType]}
-matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET typeDefinitionExpression
-arrayType                            ::= [directiveHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET typeDefinitionExpression {methods=[getTypeDefinition]}
+bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON type] RBRACKET
+mapType                              ::= MAP LBRACKET type RBRACKET type {methods=[getKeyType getValueType]}
+matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET type
+arrayType                            ::= [directiveHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET type {methods=[getTypeDefinition]}
 
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList { methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
 
-private symbolDefinitionHead         ::= (attributeStatement eos?)* [directiveHead] [USING] identifierList colonOpening typeDefinitionExpression?
+private symbolDefinitionHead         ::= (attributeStatement eos?)* [directiveHead] [USING] identifierList colonOpening type?
 colonOpening                         ::= COLON
 
 variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition]}
@@ -338,7 +340,7 @@ assignmentOperator                   ::= EQ
                                          | RSHIFT_EQ
                                          | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] identifierList COLON typeDefinitionExpression { methods=[getTypeDefinition]}
+variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] identifierList COLON type { methods=[getTypeDefinition]}
 
 // Parameters for procedures and assignments
 private polymorphicParameterList     ::= paramEntries
@@ -350,7 +352,7 @@ paramEntry                           ::= directive? (
                                              | unnamedParameter
                                          )
 fake parameterDeclaration            ::= parameter+ typeDefinitionContainer? expression { methods=[getTypeDefinition]}
-typeDefinitionContainer              ::= typeDefinitionExpression
+typeDefinitionContainer              ::= type
 
 parameter                            ::= [USING] directive? declaredIdentifier
 parameterDeclarator                  ::= parameter (COMMA parameter)* COLON typeDefinitionContainer {extends=parameterDeclaration  methods=[getTypeDefinition]}
@@ -510,8 +512,8 @@ elvisExpression                      ::= expression QUESTION <<enterMode "OPERAN
 ternaryIfExpression                  ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
 ternaryWhenExpression                ::= expression WHEN     <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
 
-castExpression                       ::= CAST LPAREN typeDefinitionExpression RPAREN expression {methods=[typeDefinitionExpression="/expression[0]"]}
-transmuteExpression                  ::= TRANSMUTE LPAREN expression RPAREN expression {methods=[typeDefinitionExpression="/expression[0]"]}
+castExpression                       ::= CAST LPAREN type RPAREN expression
+transmuteExpression                  ::= TRANSMUTE LPAREN type RPAREN expression
 autoCastExpression                   ::= AUTO_CAST expression
 
 uninitializedExpression              ::= TRIPLE_DASH

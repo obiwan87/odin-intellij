@@ -38,8 +38,8 @@ public class OdinTypeSpecializer {
         OdinStructType type = genericType.type();
         List<OdinFieldDeclarationStatement> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(type);
         for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarations) {
-            OdinTypeDefinitionExpression typeDefinition = fieldDeclaration.getTypeDefinition();
-            TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, typeDefinition.getType());
+            var fieldType = fieldDeclaration.getType();
+            TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, fieldType);
             for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifiers()) {
                 specializedType.getFields().put(declaredIdentifier.getName(), tsOdinType);
             }
@@ -69,7 +69,7 @@ public class OdinTypeSpecializer {
                 arguments);
 
         for (TsOdinParameter tsOdinReturnType : genericType.getReturnParameters()) {
-            TsOdinType tsOdinType = OdinTypeResolver.resolveType(specializedType.getScope(), tsOdinReturnType.getTypeDefinitionExpression().getType());
+            TsOdinType tsOdinType = OdinTypeResolver.resolveType(specializedType.getScope(), tsOdinReturnType.getPsiType());
             specializedType.getReturnTypes().add(tsOdinType);
         }
 
@@ -96,9 +96,9 @@ public class OdinTypeSpecializer {
 
 
         for (TsOdinUnionVariant baseField : genericType.getVariants()) {
-            TsOdinType specializedFieldType = OdinTypeResolver.resolveType(specializedType.getScope(), baseField.getTypeDefinitionExpression().getType());
+            TsOdinType specializedFieldType = OdinTypeResolver.resolveType(specializedType.getScope(), baseField.getPsiType());
             TsOdinUnionVariant specializedField = new TsOdinUnionVariant();
-            specializedField.setTypeDefinitionExpression(baseField.getTypeDefinitionExpression());
+            specializedField.setPsiType(baseField.getPsiType());
             specializedField.setType(specializedFieldType);
             specializedType.getVariants().add(specializedField);
         }
