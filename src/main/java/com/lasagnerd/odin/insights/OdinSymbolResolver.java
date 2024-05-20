@@ -10,13 +10,19 @@ import java.util.Objects;
 public class OdinSymbolResolver extends OdinVisitor {
 
     List<OdinSymbol> symbols = new ArrayList<>();
+    OdinSymbol.OdinVisibility fileVisibility;
 
     private OdinSymbolResolver() {
 
     }
 
     public static List<OdinSymbol> getSymbols(OdinDeclaration odinDeclaration) {
+        return getSymbols(null, odinDeclaration);
+    }
+
+    public static List<OdinSymbol> getSymbols(OdinSymbol.OdinVisibility fileVisibility, OdinDeclaration odinDeclaration) {
         OdinSymbolResolver odinSymbolResolver = new OdinSymbolResolver();
+        odinSymbolResolver.fileVisibility = fileVisibility;
         odinDeclaration.accept(odinSymbolResolver);
         if (odinSymbolResolver.symbols.isEmpty()) {
             odinSymbolResolver.addSymbols(odinDeclaration);
@@ -74,7 +80,7 @@ public class OdinSymbolResolver extends OdinVisitor {
     @Override
     public void visitVariableInitializationStatement(@NotNull OdinVariableInitializationStatement o) {
         boolean hasUsing = o.getUsing() != null;
-        OdinTypeDefinitionExpression typeDefinition = o.getTypeDefinition();
+        OdinTypeDefinitionExpression typeDefinition = o.getTypeDefinitionExpression();
         for (int i = 0; i < o.getDeclaredIdentifiers().size(); i++) {
             OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifiers().get(i));
             OdinExpressionsList expressionsList = o.getExpressionsList();
@@ -83,7 +89,8 @@ public class OdinSymbolResolver extends OdinVisitor {
                 odinSymbol.setValueExpression(odinExpression);
             }
             odinSymbol.setHasUsing(hasUsing);
-            odinSymbol.setType(typeDefinition.getType());
+            if (typeDefinition != null)
+                odinSymbol.setType(typeDefinition.getType());
 
             symbols.add(odinSymbol);
         }
@@ -111,9 +118,39 @@ public class OdinSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitProcedureDeclarationStatement(@NotNull OdinProcedureDeclarationStatement o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier());
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o));
         odinSymbol.setAttributeStatements(o.getAttributeStatementList());
         odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.PROCEDURE);
+        odinSymbol.setAttributeStatements(o.getAttributeStatementList());
         symbols.add(odinSymbol);
+    }
+
+    private OdinSymbol.OdinVisibility getVisibility(@NotNull OdinProcedureDeclarationStatement o) {
+        return fileVisibility == null ? computeVisibility(o.getAttributeStatementList()) : fileVisibility;
+    }
+
+    private static OdinSymbol.OdinVisibility computeVisibility(@NotNull List<OdinAttributeStatement> attributeStatements) {
+        for (OdinAttributeStatement attributeStatement : attributeStatements) {
+            for (OdinArgument odinArgument : attributeStatement.getArgumentList()) {
+                if (odinArgument instanceof OdinNamedArgument odinNamedArgument) {
+                    String text = odinNamedArgument.getIdentifierToken().getText();
+                    if (text.equals("private")) {
+                        OdinExpression valueExpression = odinNamedArgument.getExpression();
+                        if (OdinInsightUtils.isStringLiteralWithValue(valueExpression, "file")) {
+                            return OdinSymbol.OdinVisibility.FILE_PRIVATE;
+                        }
+                    }
+                }
+
+                if (odinArgument instanceof OdinUnnamedArgument unnamedArgument) {
+                    OdinExpression expression = unnamedArgument.getExpression();
+                    if (expression.getText().equals("private")) {
+                        return OdinSymbol.OdinVisibility.PACKAGE_PRIVATE;
+                    }
+                }
+            }
+        }
+
+        return OdinSymbol.OdinVisibility.PUBLIC;
     }
 }

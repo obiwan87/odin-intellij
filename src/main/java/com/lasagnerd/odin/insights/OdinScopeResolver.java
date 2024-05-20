@@ -2,8 +2,10 @@ package com.lasagnerd.odin.insights;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeInferenceResult;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeResolver;
@@ -13,10 +15,7 @@ import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
@@ -24,12 +23,17 @@ import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
 public class OdinScopeResolver {
     public static OdinScope resolveScope(PsiElement element) {
         OdinScopeResolver odinScopeResolver = new OdinScopeResolver(element);
-        return odinScopeResolver.findScope();
+        return odinScopeResolver.findScope(getPackagePath(odinScopeResolver.element));
     }
 
     public static OdinScope resolveScope(PsiElement element, Predicate<PsiElement> matcher) {
         OdinScopeResolver odinScopeResolver = new OdinScopeResolver(element, matcher);
-        return odinScopeResolver.findScope();
+        return odinScopeResolver.findScope(getPackagePath(odinScopeResolver.element));
+    }
+
+    public static OdinScope resolveScope(PsiElement element, String packagePath) {
+        OdinScopeResolver odinScopeResolver = new OdinScopeResolver(element);
+        return odinScopeResolver.findScope(packagePath);
     }
 
     private final Predicate<PsiElement> matcher;
@@ -46,8 +50,57 @@ public class OdinScopeResolver {
         this.element = element;
     }
 
-    private OdinScope findScope() {
-        String packagePath = getPackagePath(element);
+    private static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
+        OdinSymbol.OdinVisibility globalFileVisibility = getGlobalFileVisibility(fileScope);
+        // Find all blocks that are not in a procedure
+        List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
+
+        Stack<PsiElement> statementStack = new Stack<>();
+
+        // do bfs
+        statementStack.addAll(fileScope.getStatementList());
+        while (!statementStack.isEmpty()) {
+            PsiElement element = statementStack.pop();
+            if (element instanceof OdinDeclaration declaration) {
+                List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(globalFileVisibility, declaration);
+                fileScopeSymbols.addAll(symbols);
+            } else {
+                getStatements(element).forEach(statementStack::push);
+            }
+        }
+        return OdinScope.from(fileScopeSymbols);
+    }
+
+    private static List<OdinStatement> getStatements(PsiElement psiElement) {
+        if (psiElement instanceof OdinWhenStatement odinWhenStatement) {
+            if (odinWhenStatement.getStatementBody().getBlock() != null) {
+                OdinStatementList statementList = odinWhenStatement.getStatementBody().getBlock().getStatementList();
+                if (statementList != null) {
+                    return statementList.getStatementList();
+                }
+            }
+
+            if (odinWhenStatement.getStatementBody().getDoStatement() != null) {
+                return List.of(odinWhenStatement.getStatementBody().getDoStatement());
+            }
+        }
+
+        if (psiElement instanceof OdinForeignStatement foreignStatement) {
+            OdinForeignBlock foreignBlock = foreignStatement.getForeignBlock();
+            OdinForeignStatementList foreignStatementList = foreignBlock.getForeignStatementList();
+            if (foreignStatementList != null) {
+                return foreignStatementList.getStatementList();
+            }
+        }
+
+        return Collections.emptyList();
+    }
+
+    public static Collection<OdinSymbol> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
+        return getFileScopeDeclarations(odinFileScope).getFiltered(matcher);
+    }
+
+    private OdinScope findScope(String packagePath) {
         OdinScope scope = new OdinScope();
         scope.setPackagePath(packagePath);
 
@@ -62,12 +115,21 @@ public class OdinScopeResolver {
         }
 
         if (packagePath != null) {
+            // Filter out symbols declared with private="file" or do not include anything if comment //+private is in front of package declaration
             List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(element.getProject(), packagePath, getFileName(element));
             for (OdinFile odinFile : otherFilesInPackage) {
                 if (odinFile == null || odinFile.getFileScope() == null) {
                     continue;
                 }
-                Collection<OdinSymbol> fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), PACKAGE_VISIBLE_ELEMENTS_MATCHER);
+                if (getGlobalFileVisibility(odinFile.getFileScope()) == OdinSymbol.OdinVisibility.FILE_PRIVATE) continue;
+                Collection<OdinSymbol> fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope())
+                        .getSymbolTable()
+                        .values()
+                        .stream()
+                        .filter(o -> !o.getVisibility().equals(OdinSymbol.OdinVisibility.FILE_PRIVATE))
+                        .toList();
+
+
                 scope.addAll(fileScopeDeclarations);
             }
         }
@@ -81,14 +143,14 @@ public class OdinScopeResolver {
 
             for (OdinStatement statement : scopeNode.getStatements()) {
                 if (statement instanceof OdinDeclaration declaration) {
-                    // List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(declaration)
-                    //  .stream()
-                    //  .filter(s -> matcher.test(s.getDeclaredIdentifier())).toList();
+                     List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(declaration)
+                      .stream()
+                      .filter(s -> matcher.test(s.getDeclaredIdentifier())).toList();
 
-                    List<? extends PsiNamedElement> declaredIdentifiers = declaration
-                            .getDeclaredIdentifiers()
-                            .stream().filter(matcher).toList();
-                    scope.addNamedElements(declaredIdentifiers, false);
+//                    List<? extends PsiNamedElement> declaredIdentifiers = declaration
+//                            .getDeclaredIdentifiers()
+//                            .stream().filter(matcher).toList();
+                    scope.addAll(symbols, false);
                 }
 
                 if (statement instanceof OdinUsingStatement usingStatement) {
@@ -139,6 +201,24 @@ public class OdinScopeResolver {
         }
         scope.setPackagePath(packagePath);
         return scope;
+    }
+
+    public static OdinSymbol.OdinVisibility getGlobalFileVisibility(OdinFileScope fileScope) {
+        PsiElement lineComment = PsiTreeUtil.skipSiblingsBackward(fileScope, PsiWhiteSpace.class);
+        if (lineComment != null) {
+            IElementType elementType = PsiUtilCore.getElementType(lineComment.getNode());
+            if (elementType == OdinTypes.LINE_COMMENT) {
+                System.out.println("Line comment found");
+                if (lineComment.getText().equals("//+private")) {
+                    return OdinSymbol.OdinVisibility.PACKAGE_PRIVATE;
+                }
+
+                if (lineComment.getText().equals("//+private file")) {
+                    return OdinSymbol.OdinVisibility.FILE_PRIVATE;
+                }
+            }
+        }
+        return null;
     }
 
     /**

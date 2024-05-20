@@ -2,9 +2,7 @@ package com.lasagnerd.odin.insights;
 
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.lang.psi.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,6 +16,18 @@ public class OdinSymbol {
     OdinType type;
     OdinSymbolType symbolType;
     List<OdinAttributeStatement> attributeStatements;
+
+    private final OdinVisibility visibility;
+
+    public OdinSymbol(@NotNull PsiNamedElement declaredIdentifier, OdinVisibility visibility) {
+        this.declaredIdentifier = declaredIdentifier;
+        this.visibility = visibility;
+    }
+
+    public OdinSymbol(@NotNull PsiNamedElement declaredIdentifier) {
+        this.declaredIdentifier = declaredIdentifier;
+        this.visibility = OdinVisibility.PUBLIC;
+    }
 
     public boolean isTyped() {
         return type != null;
@@ -39,4 +49,11 @@ public class OdinSymbol {
         VARIABLE,
         PACKAGE,
     }
+
+    public enum OdinVisibility {
+        PACKAGE_PRIVATE,
+        FILE_PRIVATE,
+        PUBLIC
+    }
+
 }
