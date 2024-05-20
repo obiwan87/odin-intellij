@@ -15,8 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.lasagnerd.odin.insights.OdinInsightUtils.getDeclarationsOfImportedPackage;
-
 public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallExpression, OdinProcedureDeclarationStatement> {
 
     private static final String DELIMITER = ", ";
@@ -48,8 +46,8 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
     }
 
     public static List<PsiElement> findMatchingDeclarations(String name, OdinCallExpression callExpression) {
-        OdinScope declarations = OdinScopeResolver.resolveScope(callExpression, psiElement -> {
-            if (psiElement instanceof OdinDeclaredIdentifier identifier)
+        OdinScope declarations = OdinScopeResolver.resolveScope(callExpression, symbol -> {
+            if (symbol != null && symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier identifier)
                 if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||
                         identifier.getParent() instanceof OdinProcedureOverloadDeclarationStatement
                 ) {
@@ -68,8 +66,8 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
             if (parts.length > 1) {
                 String importName = parts[0];
                 OdinFile containingFile = (OdinFile) callExpression.getContainingFile();
-                OdinScope allImportedDeclarations = getDeclarationsOfImportedPackage(
-                        OdinInsightUtils.getImportStatementsInfo(containingFile.getFileScope()).get(importName), containingFile.getVirtualFile().getPath(),
+                OdinScope allImportedDeclarations = OdinImportUtils.getSymbolsOfImportedPackage(
+                        OdinImportUtils.getImportStatementsInfo(containingFile.getFileScope()).get(importName), containingFile.getVirtualFile().getPath(),
                         callExpression.getProject());
                 declarations.addAll(allImportedDeclarations.getSymbolTable()
                         .values()

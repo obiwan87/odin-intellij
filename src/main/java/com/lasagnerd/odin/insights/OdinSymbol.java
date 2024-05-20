@@ -13,7 +13,7 @@ public class OdinSymbol {
     @NotNull
     private final PsiNamedElement declaredIdentifier;
     OdinExpression valueExpression;
-    OdinType type;
+    OdinType psiType;
     OdinSymbolType symbolType;
     List<OdinAttributeStatement> attributeStatements;
 
@@ -30,7 +30,7 @@ public class OdinSymbol {
     }
 
     public boolean isTyped() {
-        return type != null;
+        return psiType != null;
     }
 
     public String getName() {
@@ -47,7 +47,7 @@ public class OdinSymbol {
         UNION,
         CONSTANT,
         VARIABLE,
-        PACKAGE,
+        PACKAGE_REFERENCE,
     }
 
     public enum OdinVisibility {

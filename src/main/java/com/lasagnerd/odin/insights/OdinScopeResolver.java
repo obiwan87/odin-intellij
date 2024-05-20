@@ -22,20 +22,15 @@ import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
 public class OdinScopeResolver {
     public static OdinScope resolveScope(PsiElement element) {
         OdinScopeResolver odinScopeResolver = new OdinScopeResolver(element);
-        return odinScopeResolver.findScope(getPackagePath(odinScopeResolver.element));
+        return odinScopeResolver.findScope(OdinImportUtils.getPackagePath(odinScopeResolver.element));
     }
 
-    public static OdinScope resolveScope(PsiElement element, Predicate<PsiElement> matcher) {
+    public static OdinScope resolveScope(PsiElement element, Predicate<OdinSymbol> matcher) {
         OdinScopeResolver odinScopeResolver = new OdinScopeResolver(element, matcher);
-        return odinScopeResolver.findScope(getPackagePath(odinScopeResolver.element));
+        return odinScopeResolver.findScope(OdinImportUtils.getPackagePath(odinScopeResolver.element));
     }
 
-    public static OdinScope resolveScope(PsiElement element, String packagePath) {
-        OdinScopeResolver odinScopeResolver = new OdinScopeResolver(element);
-        return odinScopeResolver.findScope(packagePath);
-    }
-
-    private final Predicate<PsiElement> matcher;
+    private final Predicate<OdinSymbol> matcher;
     private final Stack<ScopeNode> scopeNodes = new Stack<>();
     private final PsiElement element;
 
@@ -44,12 +39,12 @@ public class OdinScopeResolver {
         this.matcher = e -> true;
     }
 
-    private OdinScopeResolver(PsiElement element, Predicate<PsiElement> matcher) {
+    private OdinScopeResolver(PsiElement element, Predicate<OdinSymbol> matcher) {
         this.matcher = matcher;
         this.element = element;
     }
 
-    private static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
+    public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
         OdinSymbol.OdinVisibility globalFileVisibility = getGlobalFileVisibility(fileScope);
         // Find all blocks that are not in a procedure
         List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
@@ -95,10 +90,6 @@ public class OdinScopeResolver {
         return Collections.emptyList();
     }
 
-    public static Collection<OdinSymbol> getFileScopeDeclarations(OdinFileScope odinFileScope, Predicate<PsiElement> matcher) {
-        return getFileScopeDeclarations(odinFileScope).getFiltered(matcher);
-    }
-
     private OdinScope findScope(String packagePath) {
         OdinScope scope = new OdinScope();
         scope.setPackagePath(packagePath);
@@ -110,12 +101,12 @@ public class OdinScopeResolver {
         OdinFileScope fileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(element, psi -> psi instanceof OdinFileScope);
         if (fileScope != null) {
             OdinScope fileScopeDeclarations = getFileScopeDeclarations(fileScope);
-            scope.addAll(fileScopeDeclarations.getFiltered(matcher), false);
+            scope.addAll(fileScopeDeclarations.getFilteredSymbols(matcher), false);
         }
 
         if (packagePath != null) {
             // Filter out symbols declared with private="file" or do not include anything if comment //+private is in front of package declaration
-            List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(element.getProject(), packagePath, getFileName(element));
+            List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(element.getProject(), packagePath, OdinImportUtils.getFileName(element));
             for (OdinFile odinFile : otherFilesInPackage) {
                 if (odinFile == null || odinFile.getFileScope() == null) {
                     continue;
@@ -144,7 +135,8 @@ public class OdinScopeResolver {
                 if (statement instanceof OdinDeclaration declaration) {
                     List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(declaration)
                             .stream()
-                            .filter(s -> matcher.test(s.getDeclaredIdentifier())).toList();
+                            .filter(matcher)
+                            .toList();
 
                     scope.addAll(symbols, false);
                 }
@@ -216,7 +208,7 @@ public class OdinScopeResolver {
      * @return Other files in package
      */
     private static @NotNull List<OdinFile> getOtherFilesInPackage(@NotNull Project project, @NotNull String packagePath, String fileName) {
-        return getFilesInPackage(project, Path.of(packagePath), virtualFile -> !virtualFile.getName().equals(fileName));
+        return OdinImportUtils.getFilesInPackage(project, Path.of(packagePath), virtualFile -> !virtualFile.getName().equals(fileName));
     }
 
     private void findDeclaringBlocks(PsiElement entrance) {
@@ -281,8 +273,8 @@ public class OdinScopeResolver {
         for (OdinSymbol symbol : containingBlock.getSymbols()) {
             scope.add(symbol.getDeclaredIdentifier());
             if (symbol.isHasUsing()) {
-                if (symbol.getType() != null) {
-                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, symbol.getType());
+                if (symbol.getPsiType() != null) {
+                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, symbol.getPsiType());
                     scope.putAll(getScopeProvidedByType(tsOdinType));
                 } else {
                     if (symbol.getValueExpression() != null) {

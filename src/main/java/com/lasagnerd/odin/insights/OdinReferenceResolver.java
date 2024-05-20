@@ -5,7 +5,7 @@ import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 
-import static com.lasagnerd.odin.insights.OdinInsightUtils.getDeclarationsOfImportedPackage;
+import static com.lasagnerd.odin.insights.OdinImportUtils.getSymbolsOfImportedPackage;
 import static com.lasagnerd.odin.insights.OdinInsightUtils.getScopeProvidedByType;
 
 public class OdinReferenceResolver {
@@ -29,7 +29,7 @@ public class OdinReferenceResolver {
         if (odinSymbol != null) {
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return getDeclarationsOfImportedPackage(scope.getPackagePath(), importDeclarationStatement);
+                return getSymbolsOfImportedPackage(scope.getPackagePath(), importDeclarationStatement);
             }
         }
         return OdinScope.EMPTY;

@@ -46,7 +46,7 @@ public class OdinSymbolResolver extends OdinVisitor {
         for (var declaredIdentifier : o.getDeclaredIdentifiers()) {
             OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
             odinSymbol.setValueExpression(valueExpression);
-            odinSymbol.setType(type);
+            odinSymbol.setPsiType(type);
             odinSymbol.setHasUsing(using);
 
             symbols.add(odinSymbol);
@@ -60,7 +60,7 @@ public class OdinSymbolResolver extends OdinVisitor {
             OdinDeclaredIdentifier declaredIdentifier = odinParameter.getDeclaredIdentifier();
             OdinSymbol symbol = new OdinSymbol(declaredIdentifier);
             symbol.setHasUsing(odinParameter.getUsing() != null);
-            symbol.setType(typeDefinition.getType());
+            symbol.setPsiType(typeDefinition.getType());
             symbols.add(symbol);
         }
     }
@@ -71,7 +71,7 @@ public class OdinSymbolResolver extends OdinVisitor {
 
         for (var declaredIdentifier : o.getDeclaredIdentifiers()) {
             OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
-            odinSymbol.setType(o.getTypeDefinitionExpression().getType());
+            odinSymbol.setPsiType(o.getTypeDefinitionExpression().getType());
             odinSymbol.setHasUsing(hasUsing);
             symbols.add(odinSymbol);
         }
@@ -90,7 +90,7 @@ public class OdinSymbolResolver extends OdinVisitor {
             }
             odinSymbol.setHasUsing(hasUsing);
             if (typeDefinition != null)
-                odinSymbol.setType(typeDefinition.getType());
+                odinSymbol.setPsiType(typeDefinition.getType());
 
             symbols.add(odinSymbol);
         }
@@ -112,6 +112,7 @@ public class OdinSymbolResolver extends OdinVisitor {
     public void visitImportDeclarationStatement(@NotNull OdinImportDeclarationStatement o) {
         var alias = o.getAlias();
         OdinSymbol odinSymbol = new OdinSymbol(Objects.requireNonNullElse(alias, o));
+        odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.PACKAGE_REFERENCE);
 
         symbols.add(odinSymbol);
     }
