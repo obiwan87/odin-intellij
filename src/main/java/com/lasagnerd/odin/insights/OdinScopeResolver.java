@@ -1,7 +1,10 @@
 package com.lasagnerd.odin.insights;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -10,6 +13,7 @@ import com.lasagnerd.odin.insights.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.insights.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.insights.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,23 +93,61 @@ public class OdinScopeResolver {
         return Collections.emptyList();
     }
 
+    private static List<OdinSymbol> getBuiltInSymbols(Project project) {
+        // TODO Cache this stuff
+        List<OdinSymbol> builtinSymbols = new ArrayList<>();
+        // 0. Import built-in symbols
+        OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
+        String sdkPath = sdkConfig.getSdkPath();
+
+        Path coreBuiltinPath = Path.of(sdkPath, "base", "runtime", "core_builtin.odin");
+        Path coreBuiltinSoaPath = Path.of(sdkPath, "base", "runtime", "core_builtin_soa.odin");
+
+        List<Path> builtinPaths = List.of(coreBuiltinPath, coreBuiltinSoaPath);
+        for (Path builtinPath : builtinPaths) {
+            OdinFile odinFile = createOdinFile(project, builtinPath);
+            if (odinFile != null) {
+                OdinScope fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), getGlobalFileVisibility(odinFile.getFileScope()));
+                Collection<OdinSymbol> symbols = fileScopeDeclarations
+                        .getSymbolTable().values()
+                        .stream()
+                        .filter(odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributeStatements()))
+                        .toList();
+                builtinSymbols.addAll(symbols);
+            }
+        }
+        return builtinSymbols;
+    }
+
+    private static OdinFile createOdinFile(Project project, Path path) {
+        VirtualFile virtualFile = VfsUtil.findFile(path, true);
+        if (virtualFile != null) {
+            return (OdinFile) PsiManager.getInstance(project).findFile(virtualFile);
+        }
+        return null;
+    }
+
     private OdinScope findScope(String packagePath) {
+        Project project = element.getProject();
+
         OdinScope scope = new OdinScope();
         scope.setPackagePath(packagePath);
 
+        // Build the scope tree
         findDeclaringBlocks(element);
+        scope.addAll(getBuiltInSymbols(project));
 
-        OdinScope fileScopeScope = new OdinScope();
-        fileScopeScope.setPackagePath(packagePath);
+        // 1. Import symbols from this file
         OdinFileScope fileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(element, psi -> psi instanceof OdinFileScope);
         if (fileScope != null) {
             OdinScope fileScopeDeclarations = getFileScopeDeclarations(fileScope, getGlobalFileVisibility(fileScope));
             scope.addAll(fileScopeDeclarations.getFilteredSymbols(matcher), false);
         }
 
+        // 2. Import symbols from other files in the same package
         if (packagePath != null) {
             // Filter out symbols declared with private="file" or do not include anything if comment //+private is in front of package declaration
-            List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(element.getProject(), packagePath, OdinImportUtils.getFileName(element));
+            List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(project, packagePath, OdinImportUtils.getFileName(element));
             for (OdinFile odinFile : otherFilesInPackage) {
                 if (odinFile == null || odinFile.getFileScope() == null) {
                     continue;
@@ -185,7 +227,6 @@ public class OdinScopeResolver {
         if (lineComment != null) {
             IElementType elementType = PsiUtilCore.getElementType(lineComment.getNode());
             if (elementType == OdinTypes.LINE_COMMENT) {
-                System.out.println("Line comment found");
                 if (lineComment.getText().equals("//+private")) {
                     return OdinSymbol.OdinVisibility.PACKAGE_PRIVATE;
                 }

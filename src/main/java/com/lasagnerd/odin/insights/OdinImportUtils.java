@@ -81,7 +81,7 @@ public class OdinImportUtils {
 
             for (Path dir : dirs) {
                 Path packagePath = dir.resolve(importInfo.path());
-                var importedFiles = getFilesInPackage(project, packagePath);
+                List<OdinFile> importedFiles = getFilesInPackage(project, packagePath);
                 for (OdinFile importedFile : importedFiles) {
                     OdinFileScope importedFileScope = importedFile.getFileScope();
                     if (importedFileScope == null) {
