@@ -74,6 +74,7 @@ public class OdinSymbolResolver extends OdinVisitor {
             OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
             odinSymbol.setPsiType(o.getType());
             odinSymbol.setHasUsing(hasUsing);
+            odinSymbol.setAttributeStatements(o.getAttributeStatementList());
             symbols.add(odinSymbol);
         }
     }
