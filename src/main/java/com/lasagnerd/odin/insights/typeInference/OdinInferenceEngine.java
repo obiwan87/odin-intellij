@@ -206,6 +206,10 @@ public class OdinInferenceEngine extends OdinVisitor {
             this.type = arrayType.getElementType();
         }
 
+        if(tsOdinType instanceof TsOdinSliceType sliceType) {
+            this.type = sliceType.getElementType();
+        }
+
         if (tsOdinType instanceof TsOdinMapType mapType) {
             this.type = mapType.getValueType();
         }
@@ -342,16 +346,16 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitNumericLiteral(@NotNull OdinNumericLiteral o) {
         if (o.getFloatDecLiteral() != null) {
-            this.type = TsOdinBuiltInType.F64; // .asUntyped();
+            this.type = TsOdinBuiltInType.F64.asUntyped();
         } else if (o.getIntegerBinLiteral() != null
                 || o.getIntegerHexLiteral() != null
                 || o.getIntegerOctLiteral() != null
                 || o.getIntegerDecLiteral() != null) {
-            this.type = TsOdinBuiltInType.INT; // .asUntyped();
+            this.type = TsOdinBuiltInType.INT.asUntyped();
         } else if (o.getComplexFloatLiteral() != null || o.getComplexIntegerDecLiteral() != null) {
-            this.type = TsOdinBuiltInType.COMPLEX128; // .asUntyped();
+            this.type = TsOdinBuiltInType.COMPLEX128.asUntyped();
         } else if (o.getQuatFloatLiteral() != null || o.getQuatIntegerDecLiteral() != null) {
-            this.type = TsOdinBuiltInType.QUATERNION256; // .asUntyped();
+            this.type = TsOdinBuiltInType.QUATERNION256.asUntyped();
         }
         super.visitNumericLiteral(o);
     }
@@ -359,11 +363,11 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitStringLiteral(@NotNull OdinStringLiteral o) {
         if (o.getSqStringLiteral() != null) {
-            this.type = TsOdinBuiltInType.RUNE; // .asUntyped();
+            this.type = TsOdinBuiltInType.RUNE.asUntyped();
         }
 
         if (o.getDqStringLiteral() != null || o.getRawStringLiteral() != null) {
-            this.type = TsOdinBuiltInType.STRING; // .asUntyped();
+            this.type = TsOdinBuiltInType.STRING.asUntyped();
         }
     }
 

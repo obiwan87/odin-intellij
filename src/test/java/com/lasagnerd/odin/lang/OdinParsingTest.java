@@ -644,8 +644,8 @@ public class OdinParsingTest extends UsefulTestCase {
         TsOdinStructType structType = (TsOdinStructType) type;
         assertNotEmpty(structType.getFields().values());
         assertTrue(structType.getFields().containsKey("items"));
-        assertInstanceOf(structType.getFields().get("items"), TsOdinArrayType.class);
-        TsOdinArrayType fieldType = (TsOdinArrayType) structType.getFields().get("items");
+        assertInstanceOf(structType.getFields().get("items"), TsOdinSliceType.class);
+        TsOdinSliceType fieldType = (TsOdinSliceType) structType.getFields().get("items");
         assertInstanceOf(fieldType.getElementType(), TsOdinStructType.class);
         TsOdinStructType elementType = (TsOdinStructType) fieldType.getElementType();
         assertEquals("Point", elementType.getName());

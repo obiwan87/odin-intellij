@@ -312,6 +312,17 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     @Override
+    public void visitSliceType(@NotNull OdinSliceType o) {
+        OdinType elementPsiType = o.getType();
+        TsOdinSliceType tsOdinSliceType = new TsOdinSliceType();
+        if(elementPsiType != null) {
+            TsOdinType tsOdinElementType = OdinTypeResolver.resolveType(scope, elementPsiType);
+            tsOdinSliceType.setElementType(tsOdinElementType);
+            this.type = tsOdinSliceType;
+        }
+    }
+
+    @Override
     public void visitMultiPointerType(@NotNull OdinMultiPointerType o) {
         TsOdinMultiPointerType tsOdinMultiPointerType = new TsOdinMultiPointerType();
         tsOdinMultiPointerType.setType(o);
@@ -363,6 +374,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitArrayType(@NotNull OdinArrayType arrayType) {
         TsOdinArrayType tsOdinArrayType = new TsOdinArrayType();
+        tsOdinArrayType.setPsiSizeElement(arrayType.getArraySize());
         tsOdinArrayType.setType(arrayType);
         TsOdinType elementType = resolveType(scope, arrayType.getTypeDefinition());
         tsOdinArrayType.setElementType(elementType);
@@ -577,6 +589,11 @@ public class OdinTypeResolver extends OdinVisitor {
         @Override
         public void visitArrayType(@NotNull OdinArrayType o) {
             this.metaType = createMetaType(o, TsOdinMetaType.MetaType.ARRAY);
+        }
+
+        @Override
+        public void visitSliceType(@NotNull OdinSliceType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.SLICE);
         }
 
         @Override
