@@ -26,6 +26,7 @@ public class TsOdinMetaType extends TsOdinType {
         BIT_SET,
         MATRIX,
         ARRAY,
+        SLICE,
         MAP,
         POINTER,
         MULTI_POINTER,

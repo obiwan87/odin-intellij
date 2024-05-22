@@ -160,7 +160,7 @@ public class OdinTypeSpecializer {
                 }
 
                 Map<String, TsOdinType> resolvedTypes = substituteTypes(parameterType, argumentType);
-                if(specializedType instanceof TsOdinGenericType generalizableType) {
+                if (specializedType instanceof TsOdinGenericType generalizableType) {
                     generalizableType.getResolvedPolymorphicParameters().putAll(resolvedTypes);
                 }
                 for (Map.Entry<String, TsOdinType> entry : resolvedTypes.entrySet()) {
@@ -202,6 +202,9 @@ public class OdinTypeSpecializer {
             if (parameterType instanceof TsOdinArrayType parameterArrayType
                     && argumentType instanceof TsOdinArrayType argumentArrayType) {
                 doSubstituteTypes(parameterArrayType.getElementType(), argumentArrayType.getElementType(), resolvedTypes);
+            } else if (parameterType instanceof TsOdinSliceType sliceType
+                    && argumentType instanceof TsOdinSliceType sliceType1) {
+                doSubstituteTypes(sliceType.getElementType(), sliceType1.getElementType(), resolvedTypes);
             } else if (parameterType instanceof TsOdinPointerType pointerType
                     && argumentType instanceof TsOdinPointerType pointerType1) {
                 doSubstituteTypes(pointerType.getDereferencedType(), pointerType1.getDereferencedType(), resolvedTypes);

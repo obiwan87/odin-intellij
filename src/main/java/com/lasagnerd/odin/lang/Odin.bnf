@@ -275,6 +275,7 @@ type                                 ::= mapType
                                          | matrixType
                                          | bitSetType
                                          | multiPointerType
+                                         | sliceType
                                          | arrayType
                                          | relativeType
                                          | procedureType
@@ -308,8 +309,9 @@ multiPointerType                     ::= LBRACKET CARET RBRACKET type
 bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON type] RBRACKET
 mapType                              ::= MAP LBRACKET type RBRACKET type {methods=[getKeyType getValueType]}
 matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET type
-arrayType                            ::= [directiveHead] LBRACKET [QUESTION|DYNAMIC|expression] RBRACKET type {methods=[getTypeDefinition]}
-
+arrayType                            ::= [directiveHead] LBRACKET arraySize RBRACKET type {methods=[getTypeDefinition]}
+arraySize                            ::= QUESTION|DYNAMIC|expression
+sliceType                            ::= [directiveHead] LBRACKET RBRACKET type
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList { methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
 
@@ -567,7 +569,7 @@ numericLiteral                       ::= INTEGER_DEC_LITERAL
 basicLiteral                         ::= stringLiteral
                                          | numericLiteral
 
-private compoundType                 ::= arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | callType | simpleRefType | parExpressionType
+private compoundType                 ::= sliceType | arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | callType | simpleRefType | parExpressionType
 parExpressionType                    ::= parenthesizedExpression
 
 
