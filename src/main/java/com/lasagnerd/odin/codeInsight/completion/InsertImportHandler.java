@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.lasagnerd.odin.codeInsight.OdinImportInfo;
@@ -39,8 +40,9 @@ public class InsertImportHandler implements InsertHandler<LookupElement> {
             return;
         }
 
-        String relativePath = Path.of(sourcePackagePath).relativize(Path.of(targetPackagePath)).toString()
-                .replace("\\", "/");
+
+        String relativePath = FileUtil
+                .toSystemIndependentName(Path.of(sourcePackagePath).relativize(Path.of(targetPackagePath)).toString());
 
         // Check if package is already imported
         for (OdinImportDeclarationStatement importStatement : sourceFile.getFileScope().getImportStatements()) {
