@@ -3,9 +3,9 @@ package com.lasagnerd.odin.lang.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.insights.OdinSymbol;
-import com.lasagnerd.odin.insights.OdinSymbolResolver;
-import com.lasagnerd.odin.insights.OdinImportInfo;
+import com.lasagnerd.odin.codeInsight.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.OdinSymbolResolver;
+import com.lasagnerd.odin.codeInsight.OdinImportInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

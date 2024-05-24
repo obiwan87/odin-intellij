@@ -1,7 +1,7 @@
 package com.lasagnerd.odin.lang.psi;
 
 import com.intellij.psi.PsiElement;
-import com.lasagnerd.odin.insights.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.OdinSymbol;
 
 import java.util.List;
 
