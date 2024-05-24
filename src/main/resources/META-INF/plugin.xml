@@ -86,13 +86,13 @@
         <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier"
                                  implementationClass="com.lasagnerd.odin.lang.OdinElementManipulators"/>
 
-        <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.completion.OdinCompletionContributor"/>
+        <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor"/>
         <sdkType implementation="com.lasagnerd.odin.sdkConfig.OdinSdkType"/>
-        <codeInsight.parameterInfo language="Odin" implementationClass="com.lasagnerd.odin.insights.OdinParameterInfoHandler"/>
+        <codeInsight.parameterInfo language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.OdinParameterInfoHandler"/>
         <lang.findUsagesProvider
                 language="Odin"
-                implementationClass="com.lasagnerd.odin.insights.OdinFindUsagesProvider"/>
-        <!-- TODO        <usageTypeProvider implementation="com.lasagnerd.odin.insights.OdinUsageTypeProvider"/>-->
+                implementationClass="com.lasagnerd.odin.codeInsight.OdinFindUsagesProvider"/>
+        <!-- TODO        <usageTypeProvider implementation="com.lasagnerd.odin.codeInsight.OdinUsageTypeProvider"/>-->
         <lang.refactoringSupport language="Odin" implementationClass="com.lasagnerd.odin.refactor.OdinRefactoringSupport"/>
     </extensions>
 

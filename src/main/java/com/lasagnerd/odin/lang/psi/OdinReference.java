@@ -3,8 +3,8 @@ package com.lasagnerd.odin.lang.psi;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
-import com.lasagnerd.odin.insights.OdinInsightUtils;
-import com.lasagnerd.odin.insights.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.OdinSymbol;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

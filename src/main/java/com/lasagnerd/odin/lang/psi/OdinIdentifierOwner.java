@@ -1,20 +1,13 @@
 package com.lasagnerd.odin.lang.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
-import com.intellij.icons.AllIcons;
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
-import com.lasagnerd.odin.insights.OdinInsightUtils;
-import com.lasagnerd.odin.lang.psi.impl.OdinStatementImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implements OdinDeclaredIdentifier, PsiNameIdentifierOwner {
     public OdinIdentifierOwner(@NotNull ASTNode node) {
