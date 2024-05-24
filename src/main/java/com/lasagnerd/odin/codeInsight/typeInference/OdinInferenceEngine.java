@@ -151,8 +151,8 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitCompoundLiteralExpression(@NotNull OdinCompoundLiteralExpression o) {
         if (o.getCompoundLiteral() instanceof OdinCompoundLiteralTyped typed) {
-            OdinType typeExpression = typed.getType();
-            this.type = OdinTypeResolver.resolveType(this.scope, typeExpression);
+            OdinType psiType = typed.getType();
+            this.type = OdinTypeResolver.resolveType(this.scope, psiType);
         }
     }
 
@@ -227,7 +227,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitSliceExpression(@NotNull OdinSliceExpression o) {
         OdinExpression expression = o.getExpression();
         TsOdinType tsOdinType = doInferType(scope, expression);
-        if (tsOdinType instanceof TsOdinArrayType) {
+        if (tsOdinType instanceof TsOdinSliceType) {
             this.type = tsOdinType;
         }
     }
