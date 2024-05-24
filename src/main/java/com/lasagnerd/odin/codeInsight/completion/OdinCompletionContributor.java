@@ -21,7 +21,6 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -125,7 +124,8 @@ public class OdinCompletionContributor extends CompletionContributor {
 
                             // packages now contains all packages (recursively) under source root
                             // 1. add all the symbols to the lookup elements whilst taking into consideration
-                            //  their origin package. Upon accepting a suggestion
+                            //  their origin package. Upon accepting a suggestion insert the import statement
+                            // if not already present
 
                             for (Map.Entry<String, List<OdinFile>> entry : packages.entrySet()) {
                                 String packagePath = entry.getKey();
@@ -133,14 +133,21 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 for (OdinFile file : files) {
                                     if (file.getFileScope() == null)
                                         continue;
+                                    OdinSymbol.OdinVisibility globalFileVisibility = OdinScopeResolver.getGlobalFileVisibility(file.getFileScope());
                                     OdinScope fileScopeDeclarations = OdinScopeResolver.getFileScopeDeclarations(file.getFileScope(),
-                                            OdinScopeResolver.getGlobalFileVisibility(file.getFileScope()));
+                                            globalFileVisibility);
+
+                                    List<PsiNamedElement> visibleSymbols = fileScopeDeclarations
+                                            .getSymbols(OdinSymbol.OdinVisibility.PUBLIC)
+                                            .stream()
+                                            .map(OdinSymbol::getDeclaredIdentifier)
+                                            .collect(Collectors.toList());
+
                                     addLookUpElements(thisOdinFile,
                                             thisPackagePath,
                                             packagePath,
                                             result,
-                                            fileScopeDeclarations.getNamedElements());
-
+                                            visibleSymbols);
                                 }
                             }
                         }
@@ -169,18 +176,12 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     private static void addLookUpElements(OdinFile sourceFile, String sourcePackagePath, String targetPackagePath, @NotNull CompletionResultSet result, Collection<PsiNamedElement> namedElements) {
-        String prefix = "";
-        if (targetPackagePath != null && !targetPackagePath.isBlank()) {
-            // Get last segment of path
-            prefix = Path.of(targetPackagePath).getFileName().toString() + ".";
-        }
-
         for (var namedElement : namedElements) {
             if (namedElement instanceof PsiNameIdentifierOwner declaredIdentifier) {
                 OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
                 Icon icon = getIcon(typeType);
 
-                final String lookupString = prefix + declaredIdentifier.getText();
+                final String lookupString = declaredIdentifier.getText();
 
                 switch (typeType) {
                     case PROCEDURE -> {
@@ -197,7 +198,6 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                     new InsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
                                             )
                                     );
-
                             result.addElement(PrioritizedLookupElement.withPriority(element, 0));
                         }
                     }
@@ -282,8 +282,7 @@ public class OdinCompletionContributor extends CompletionContributor {
 
         OdinReturnParameters returnType = declaringProcedure.getProcedureType().getReturnParameters();
         if (returnType != null) {
-            element = element.withTypeText(returnType
-                    .getText());
+            element = element.withTypeText(returnType.getText());
         }
         return element;
     }

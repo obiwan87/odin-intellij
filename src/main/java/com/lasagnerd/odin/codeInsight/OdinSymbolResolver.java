@@ -114,10 +114,19 @@ public class OdinSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitProcedureDeclarationStatement(@NotNull OdinProcedureDeclarationStatement o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o));
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeStatementList()));
         odinSymbol.setAttributeStatements(o.getAttributeStatementList());
         odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.PROCEDURE);
+
+        symbols.add(odinSymbol);
+    }
+
+    @Override
+    public void visitStructDeclarationStatement(@NotNull OdinStructDeclarationStatement o) {
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeStatementList()));
         odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+        odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.STRUCT);
+
         symbols.add(odinSymbol);
     }
 
@@ -128,8 +137,8 @@ public class OdinSymbolResolver extends OdinVisitor {
         this.symbols.add(symbol);
     }
 
-    private OdinSymbol.OdinVisibility getVisibility(@NotNull OdinProcedureDeclarationStatement o) {
-        return fileVisibility == null ? OdinAttributeUtils.computeVisibility(o.getAttributeStatementList()) : fileVisibility;
+    private OdinSymbol.OdinVisibility getVisibility(@NotNull List<OdinAttributeStatement> attributeStatementList) {
+        return fileVisibility == null ? OdinAttributeUtils.computeVisibility(attributeStatementList) : fileVisibility;
     }
 
 }

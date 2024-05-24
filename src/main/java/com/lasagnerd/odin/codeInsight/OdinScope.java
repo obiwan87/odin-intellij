@@ -69,6 +69,15 @@ public class OdinScope {
         return symbolTable.values().stream().filter(filter).toList();
     }
 
+    public Collection<OdinSymbol> getSymbols() {
+        return symbolTable.values();
+    }
+
+    public Collection<OdinSymbol> getSymbols(OdinSymbol.OdinVisibility minVisibility) {
+        return getFilteredSymbols(symbol -> symbol.getVisibility().compareTo(minVisibility) >= 0);
+    }
+
+
     public void addAll(Collection<? extends OdinSymbol> symbols) {
         addAll(symbols, true);
     }
@@ -81,10 +90,6 @@ public class OdinScope {
         }
     }
 
-    public void addNamedElements(Collection<? extends PsiNamedElement> namedElements, boolean override) {
-        addAll(namedElements.stream().map(OdinSymbol::new).toList(), override);
-    }
-
     public void putAll(OdinScope scope) {
         symbolTable.putAll(scope.symbolTable);
         typeTable.putAll(scope.typeTable);
@@ -93,10 +98,6 @@ public class OdinScope {
 
     public void addKnownType(OdinDeclaredIdentifier declaredIdentifier, TsOdinType type) {
         knownTypes.put(declaredIdentifier, type);
-    }
-
-    public void addKnownTypes(OdinScope scope) {
-        knownTypes.putAll(scope.knownTypes);
     }
 
     public void add(OdinSymbol odinSymbol) {
