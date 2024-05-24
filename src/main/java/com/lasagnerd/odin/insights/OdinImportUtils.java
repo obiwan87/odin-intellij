@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
+import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -13,6 +14,11 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class OdinImportUtils {
+    @Data
+    public static class OdinPackage {
+        String packagePath;
+        List<OdinFile> odinFiles = new ArrayList<>();
+    }
     public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC
             && s.getSymbolType() != OdinSymbol.OdinSymbolType.PACKAGE_REFERENCE;
 
@@ -127,11 +133,12 @@ public class OdinImportUtils {
 
     static @NotNull List<OdinFile> getFilesInPackage(Project project, Path importPath, Predicate<VirtualFile> matcher) {
         List<OdinFile> files = new ArrayList<>();
+        PsiManager psiManager = PsiManager.getInstance(project);
         VirtualFile packageDirectory = VfsUtil.findFile(importPath, true);
         if (packageDirectory != null) {
             for (VirtualFile child : packageDirectory.getChildren()) {
                 if (matcher.test(child)) {
-                    PsiFile psiFile = PsiManager.getInstance(project).findFile(child);
+                    PsiFile psiFile = psiManager.findFile(child);
                     if (psiFile instanceof OdinFile odinFile) {
                         files.add(odinFile);
                     }

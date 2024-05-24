@@ -86,7 +86,7 @@
         <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier"
                                  implementationClass="com.lasagnerd.odin.lang.OdinElementManipulators"/>
 
-        <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.insights.OdinCompletionContributor"/>
+        <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.completion.OdinCompletionContributor"/>
         <sdkType implementation="com.lasagnerd.odin.sdkConfig.OdinSdkType"/>
         <codeInsight.parameterInfo language="Odin" implementationClass="com.lasagnerd.odin.insights.OdinParameterInfoHandler"/>
         <lang.findUsagesProvider
