@@ -98,6 +98,9 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
 
                 .aroundInside(BINARY_OPERATORS, BINARY_EXPRESSIONS)
                 .spaces(1)
+
+                .after(OdinTypes.IMPORT_DECLARATION_STATEMENT)
+                .lineBreakInCode()
                 ;
     }
 

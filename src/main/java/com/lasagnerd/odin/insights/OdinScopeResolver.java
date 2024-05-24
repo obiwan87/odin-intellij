@@ -26,7 +26,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static com.lasagnerd.odin.insights.OdinInsightUtils.*;
+import static com.lasagnerd.odin.insights.OdinInsightUtils.getScopeProvidedByType;
 
 public class OdinScopeResolver {
     public static OdinScope resolveScope(PsiElement element) {
@@ -102,11 +102,12 @@ public class OdinScopeResolver {
         // TODO Cache this stuff
         List<OdinSymbol> builtinSymbols = new ArrayList<>();
         // 0. Import built-in symbols
-        OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
-        if(sdkConfig == null)
-            return Collections.emptyList();
-        String sdkPath = sdkConfig.getSdkPath();
+        Optional<String> sdkPathOptional = OdinSdkConfigPersistentState.getSdkPath(project);
 
+        if (sdkPathOptional.isEmpty())
+            return Collections.emptyList();
+
+        String sdkPath = sdkPathOptional.get();
         Path coreBuiltinPath = Path.of(sdkPath, "base", "runtime", "core_builtin.odin");
         Path coreBuiltinSoaPath = Path.of(sdkPath, "base", "runtime", "core_builtin_soa.odin");
 
@@ -127,7 +128,7 @@ public class OdinScopeResolver {
         List<String> resources = List.of("odin/builtin.odin", "odin/intrinsics.odin");
         for (String resource : resources) {
             OdinFile odinFile = createOdinFileFromResource(project, resource);
-            if(odinFile != null) {
+            if (odinFile != null) {
                 OdinScope fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), getGlobalFileVisibility(odinFile.getFileScope()));
                 Collection<OdinSymbol> symbols = fileScopeDeclarations
                         .getSymbolTable().values()
@@ -150,9 +151,9 @@ public class OdinScopeResolver {
 
     private static OdinFile createOdinFileFromResource(Project project, String resourcePath) {
         InputStream resource = OdinScopeResolver.class.getClassLoader().getResourceAsStream(resourcePath);
-        if(resource == null)
+        if (resource == null)
             return null;
-        try(resource) {
+        try (resource) {
             String text = new String(resource.readAllBytes(), StandardCharsets.UTF_8);
             return (OdinFile) PsiFileFactory.getInstance(project).createFileFromText("resource.odin", OdinFileType.INSTANCE, text);
         } catch (IOException e) {
@@ -168,10 +169,15 @@ public class OdinScopeResolver {
 
         // Build the scope tree
         findDeclaringBlocks(element);
-        scope.addAll(getBuiltInSymbols(project));
+
+        List<OdinSymbol> builtInSymbols = getBuiltInSymbols(project);
+
+        // 0. Import built-in symbols
+        scope.addAll(builtInSymbols);
 
         // 1. Import symbols from this file
         OdinFileScope fileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(element, psi -> psi instanceof OdinFileScope);
+
         if (fileScope != null) {
             OdinScope fileScopeDeclarations = getFileScopeDeclarations(fileScope, getGlobalFileVisibility(fileScope));
             scope.addAll(fileScopeDeclarations.getFilteredSymbols(matcher), false);

@@ -1,24 +1,27 @@
 package com.lasagnerd.odin.lang.psi;
 
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
 import com.lasagnerd.odin.lang.OdinFileType;
-import org.apache.commons.lang3.NotImplementedException;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 public class OdinPsiElementFactory {
 
     @Language("Odin")
-    private static final String DUMMY_FILE_TEMPLATE = """
+    private static final String VARIABLE_DECLARATION = """
     package dummy
     
     declaredIdentifier := identifier
     """;
+
+    @Language("Odin")
+    private static final String IMPORT = """
+            package dummy;
+            
+            import "packagePath"
+            """;
 
     private final Project project;
 
@@ -32,7 +35,7 @@ public class OdinPsiElementFactory {
 
     @NotNull
     public OdinIdentifier createIdentifier(String name) {
-        String dummyCode = DUMMY_FILE_TEMPLATE.replaceAll("identifier", name);
+        String dummyCode = VARIABLE_DECLARATION.replaceAll("identifier", name);
         OdinFile file = createFile(dummyCode);
         OdinStatement odinStatement = file.getFileScope().getStatementList().get(0);
         if(odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
@@ -54,11 +57,16 @@ public class OdinPsiElementFactory {
     }
 
     public OdinDeclaredIdentifier createDeclaredIdentifier(String name) {
-        OdinFile file = createFile(DUMMY_FILE_TEMPLATE.replaceAll("declaredIdentifier", name));
+        OdinFile file = createFile(VARIABLE_DECLARATION.replaceAll("declaredIdentifier", name));
         OdinStatement odinStatement = file.getFileScope().getStatementList().get(0);
         if(odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
             return (OdinDeclaredIdentifier) variableInitializationStatement.getDeclaredIdentifiers().get(0);
         }
         throw new RuntimeException("Something went wrong.");
+    }
+
+    public OdinImportDeclarationStatement createImport(String relativePath) {
+        OdinFile file = createFile(IMPORT.replaceAll("packagePath", relativePath));
+        return file.getFileScope().getImportStatements().get(0);
     }
 }

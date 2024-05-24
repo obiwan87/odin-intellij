@@ -10,6 +10,10 @@ import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.util.Optional;
+
 
 @Setter
 @Getter
@@ -34,5 +38,23 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
     @Override
     public void loadState(@NotNull OdinSdkConfigPersistentState state) {
         XmlSerializerUtil.copyBean(state, this);
+    }
+
+    public static Optional<String> getSdkPath(Project project) {
+        OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
+        if(sdkConfig == null)
+            return Optional.empty();
+        String sdkPath = sdkConfig.getSdkPath();
+        if(sdkPath == null || sdkPath.isBlank()) {
+
+            return Optional.empty();
+        }
+
+        try {
+            Path ignore = Path.of(sdkPath);
+        } catch (InvalidPathException e) {
+            return Optional.empty();
+        }
+        return Optional.of(sdkPath);
     }
 }
