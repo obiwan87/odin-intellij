@@ -91,7 +91,7 @@ public class OdinImportUtils {
                 for (OdinFile importedFile : importedFiles) {
                     OdinFileScope importedFileScope = importedFile.getFileScope();
                     if (importedFileScope == null) {
-                        System.out.println("File scope is null for file %s" + importedFile.getVirtualFile().getPath());
+                        System.out.printf("File scope is null for file %s%n", importedFile.getVirtualFile().getPath());
                         continue;
                     }
                     OdinSymbol.OdinVisibility globalFileVisibility = OdinScopeResolver.getGlobalFileVisibility(importedFileScope);

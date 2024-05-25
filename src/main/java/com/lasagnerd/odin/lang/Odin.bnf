@@ -492,7 +492,7 @@ sliceExpression                      ::= expression slice
 procedureExpression                  ::= procedureTypeContainer procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 procedureTypeContainer               ::= procedureType
 dereferenceExpression                ::= expression CARET
-identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference]}
+identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference delete]}
 
 callExpression                       ::= expression arguments
 

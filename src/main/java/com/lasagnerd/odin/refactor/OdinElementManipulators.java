@@ -1,11 +1,9 @@
-package com.lasagnerd.odin.lang;
+package com.lasagnerd.odin.refactor;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
-import com.intellij.psi.ElementManipulator;
 import com.intellij.util.IncorrectOperationException;
-import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinPsiElementFactory;
 import com.lasagnerd.odin.lang.psi.OdinTypes;

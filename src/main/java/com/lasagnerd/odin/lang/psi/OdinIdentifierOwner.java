@@ -39,6 +39,12 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
 
     }
 
+
+    @Override
+    public void delete() throws IncorrectOperationException {
+        System.out.println("Delete was called");
+    }
+
     @Override
     public @NotNull SearchScope getUseScope() {
         return super.getUseScope();
