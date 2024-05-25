@@ -30,7 +30,7 @@ public class OdinImportOptimizer implements ImportOptimizer {
             // Keep used imports
             List<OdinImportDeclarationStatement> usedImports = importStatements.stream()
                     .filter(importDeclarationStatement -> !OdinImportUtils.isUnusedImport(importDeclarationStatement))
-                    .sorted(Comparator.comparing(i -> i.getImportInfo().path()))
+                    .sorted(Comparator.comparing(i -> i.getImportInfo().fullImportPath()))
                     .collect(Collectors.toList());
 
             // Create new import statements container with sorted imports

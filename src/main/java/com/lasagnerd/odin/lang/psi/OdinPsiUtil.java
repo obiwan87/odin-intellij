@@ -175,7 +175,8 @@ public class OdinPsiUtil {
                 ? importStatement.getAlias().getText()
                 : null;
 
-        String path = importStatement.getPath().getText();
+        String fullPath = importStatement.getPath().getText();
+        String path = fullPath;
         // Remove quotes
         path = path.substring(1, path.length() - 1);
 
@@ -194,7 +195,7 @@ public class OdinPsiUtil {
             name = pathParts[pathParts.length - 1];
         }
 
-        return new OdinImportInfo(name, path, library);
+        return new OdinImportInfo(fullPath, name, path, library);
     }
 
     public static OdinIdentifier getPackageIdentifier(OdinQualifiedType qualifiedType) {
