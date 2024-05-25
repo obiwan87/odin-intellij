@@ -161,7 +161,7 @@ public class OdinPsiUtil {
     public static PsiElement getNameIdentifier(OdinImportDeclarationStatement importStatement) {
         if (importStatement.getAlias() != null)
             return importStatement.getAlias();
-        return importStatement.getPath();
+        return importStatement;
     }
 
 
