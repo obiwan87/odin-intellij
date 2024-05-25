@@ -3,6 +3,8 @@ package com.lasagnerd.odin.runConfiguration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.filters.ConsoleFilterProvider;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessHandlerFactory;
@@ -69,76 +71,90 @@ public class OdinRunConfiguration extends RunConfigurationBase<OdinRunConfigurat
 
     @Override
     public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
-        return new CommandLineState(environment) {
-            @Override
-            protected @NotNull ProcessHandler startProcess() throws ExecutionException {
-                OdinRunConfigurationOptions options = getOptions();
-
-                List<String> command = new ArrayList<>();
-                String sdkPath = OdinSdkConfigPersistentState.getInstance(getProject()).getSdkPath();
-                String projectDirectoryPath = options.getProjectDirectoryPath();
-                String compilerPath = sdkPath + "/odin";
-                String compilerOptions = Objects.requireNonNullElse(options.getCompilerOptions(), "");
-                String outputPathString = Objects.requireNonNullElse(options.getOutputPath(), "");
-
-                addCommandPart(command, compilerPath);
-                addCommandPart(command, "run");
-                addCommandPart(command, projectDirectoryPath);
-                addCommandPart(command, compilerOptions);
-
-                String basePath = getProject().getBasePath();
-                if (!outputPathString.isEmpty()) {
-                    ProgramParametersConfigurator configurator = new ProgramParametersConfigurator();
-                    String expandedPath = configurator.expandPathAndMacros(outputPathString, null, getProject());
-
-                    Path outputPath = getAbsolutePath(getProject(), expandedPath);
-                    if (!outputPath.getParent().toFile().exists()) {
-                        boolean success = outputPath.getParent().toFile().mkdirs();
-                        if (!success) {
-                            throw new ExecutionException("Failed to create output directory");
-                        }
-                    }
-
-                    addCommandPart(command, "-out:" + expandedPath);
-                }
-
-                if(options.getProgramArguments() != null && !options.getProgramArguments().isEmpty()) {
-                    addCommandPart(command, "--");
-                    addCommandPart(command, options.getProgramArguments());
-                }
-
-                GeneralCommandLine commandLine = new GeneralCommandLine(command);
-                String workingDirectory;
-                if (options.getWorkingDirectory() != null) {
-                    workingDirectory = options.getWorkingDirectory();
-                } else {
-                    workingDirectory = basePath;
-                }
-                commandLine.setWorkDirectory(workingDirectory);
-
-                OSProcessHandler processHandler = ProcessHandlerFactory.getInstance().createColoredProcessHandler(commandLine);
-                ProcessTerminatedListener.attach(processHandler);
-                return processHandler;
-            }
-
-            public Path getAbsolutePath(Project project, String expandedPath) {
-                String projectBasePathString = project.getBasePath();
-                if (projectBasePathString == null) {
-                    throw new RuntimeException("Project base path is null");
-                }
-                Path basePath = Paths.get(projectBasePathString);
-                Path outputPathFile = Paths.get(expandedPath);
-
-                return basePath.resolve(outputPathFile);
-            }
-
-            public void addCommandPart(List<String> list, String item) {
-                if (item != null && !item.isEmpty()) {
-                    list.add(item);
-                }
-            }
-        };
+        return new OdinBuildCommandLineState(environment);
     }
 
 
+    private class OdinBuildCommandLineState extends CommandLineState {
+        public OdinBuildCommandLineState(@NotNull ExecutionEnvironment environment) {
+            super(environment);
+        }
+
+        @Override
+        protected @NotNull ProcessHandler startProcess() throws ExecutionException {
+
+            ConsoleFilterProvider[] filterProviders = ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions();
+            for (ConsoleFilterProvider provider : filterProviders) {
+                for (Filter filter : provider.getDefaultFilters(getEnvironment().getProject())) {
+                    addConsoleFilters(filter);
+                }
+            }
+
+            OdinRunConfigurationOptions options = getOptions();
+
+            List<String> command = new ArrayList<>();
+            String sdkPath = OdinSdkConfigPersistentState.getInstance(getProject()).getSdkPath();
+            String projectDirectoryPath = options.getProjectDirectoryPath();
+            String compilerPath = sdkPath + "/odin";
+            String compilerOptions = Objects.requireNonNullElse(options.getCompilerOptions(), "");
+            String outputPathString = Objects.requireNonNullElse(options.getOutputPath(), "");
+
+            addCommandPart(command, compilerPath);
+            addCommandPart(command, "run");
+            addCommandPart(command, projectDirectoryPath);
+            addCommandPart(command, compilerOptions);
+
+            String basePath = getProject().getBasePath();
+            if (!outputPathString.isEmpty()) {
+                ProgramParametersConfigurator configurator = new ProgramParametersConfigurator();
+                String expandedPath = configurator.expandPathAndMacros(outputPathString, null, getProject());
+
+                Path outputPath = getAbsolutePath(getProject(), expandedPath);
+                if (!outputPath.getParent().toFile().exists()) {
+                    boolean success = outputPath.getParent().toFile().mkdirs();
+                    if (!success) {
+                        throw new ExecutionException("Failed to create output directory");
+                    }
+                }
+
+                addCommandPart(command, "-out:" + expandedPath);
+            }
+
+            if(options.getProgramArguments() != null && !options.getProgramArguments().isEmpty()) {
+                addCommandPart(command, "--");
+                addCommandPart(command, options.getProgramArguments());
+            }
+
+            GeneralCommandLine commandLine = new GeneralCommandLine(command);
+            String workingDirectory;
+            if (options.getWorkingDirectory() != null) {
+                workingDirectory = options.getWorkingDirectory();
+            } else {
+                workingDirectory = basePath;
+            }
+            commandLine.setWorkDirectory(workingDirectory);
+
+            OSProcessHandler processHandler = ProcessHandlerFactory.getInstance().createColoredProcessHandler(commandLine);
+            ProcessTerminatedListener.attach(processHandler);
+            return processHandler;
+        }
+
+        public Path getAbsolutePath(Project project, String expandedPath) {
+            String projectBasePathString = project.getBasePath();
+            if (projectBasePathString == null) {
+                throw new RuntimeException("Project base path is null");
+            }
+            Path basePath = Paths.get(projectBasePathString);
+            Path outputPathFile = Paths.get(expandedPath);
+
+            return basePath.resolve(outputPathFile);
+        }
+
+        public void addCommandPart(List<String> list, String item) {
+            if (item != null && !item.isEmpty()) {
+                list.add(item);
+            }
+        }
+
+    }
 }
