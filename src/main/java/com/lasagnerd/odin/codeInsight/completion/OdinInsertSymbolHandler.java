@@ -16,6 +16,10 @@ class OdinInsertSymbolHandler implements InsertHandler<LookupElement> {
         this(null, prefix);
     }
 
+    OdinInsertSymbolHandler(OdinTypeType typeType) {
+        this(typeType, "");
+    }
+
     OdinInsertSymbolHandler(OdinTypeType typeType, String prefix) {
         this.typeType = typeType;
         this.prefix = prefix != null ? prefix : "";

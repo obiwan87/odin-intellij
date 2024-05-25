@@ -138,9 +138,10 @@ public class OdinImportUtils {
                             || globalFileVisibility == OdinSymbol.OdinVisibility.FILE_PRIVATE)
                         continue;
 
-                    Collection<OdinSymbol> fileScopeDeclarations = OdinScopeResolver.getFileScopeDeclarations(importedFileScope,
-                                    globalFileVisibility)
+                    Collection<OdinSymbol> fileScopeDeclarations = importedFileScope
+                            .getScope()
                             .getFilteredSymbols(PUBLIC_ELEMENTS_MATCHER);
+
                     packageDeclarations.addAll(fileScopeDeclarations);
                 }
 

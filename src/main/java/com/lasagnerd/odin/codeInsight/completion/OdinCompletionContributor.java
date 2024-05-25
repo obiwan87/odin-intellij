@@ -131,13 +131,13 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 for (OdinFile file : files) {
                                     if (file.getFileScope() == null)
                                         continue;
-                                    OdinSymbol.OdinVisibility globalFileVisibility = OdinScopeResolver.getGlobalFileVisibility(file.getFileScope());
-                                    OdinScope fileScopeDeclarations = OdinScopeResolver.getFileScopeDeclarations(file.getFileScope(),
-                                            globalFileVisibility);
+                                    OdinFileScope fileScope = file.getFileScope();
+                                    OdinScope fileScopeDeclarations = fileScope.getScope();
 
                                     List<PsiNamedElement> visibleSymbols = fileScopeDeclarations
                                             .getSymbols(OdinSymbol.OdinVisibility.PUBLIC)
                                             .stream()
+                                            .filter(s -> s.getSymbolType() != OdinSymbol.OdinSymbolType.PACKAGE_REFERENCE)
                                             .map(OdinSymbol::getDeclaredIdentifier)
                                             .collect(Collectors.toList());
 
@@ -185,7 +185,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                 OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
                 Icon icon = getIcon(typeType);
 
-                final String lookupString = declaredIdentifier.getText();
+                final String lookupString = prefix + declaredIdentifier.getText();
 
                 switch (typeType) {
                     case PROCEDURE -> {
@@ -198,7 +198,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                             element = procedureLookupElement(element, firstParentOfType)
                                     .withInsertHandler(
                                             new CombinedInsertHandler(
-                                                    new OdinInsertSymbolHandler(typeType, prefix),
+                                                    new OdinInsertSymbolHandler(typeType),
                                                     new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
                                             )
                                     );
@@ -223,7 +223,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                 .withIcon(icon)
                                                 .withInsertHandler(
                                                         new CombinedInsertHandler(
-                                                                new OdinInsertSymbolHandler(typeType, prefix),
+                                                                new OdinInsertSymbolHandler(typeType),
                                                                 new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
                                                         )
                                                 );
@@ -254,7 +254,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon)
                                 .withInsertHandler(
                                         new CombinedInsertHandler(
-                                                new OdinInsertSymbolHandler(typeType, prefix),
+                                                new OdinInsertSymbolHandler(typeType),
                                                 new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
                                         )
                                 );

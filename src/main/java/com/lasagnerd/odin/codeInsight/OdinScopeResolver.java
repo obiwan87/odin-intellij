@@ -116,7 +116,7 @@ public class OdinScopeResolver {
         for (Path builtinPath : builtinPaths) {
             OdinFile odinFile = createOdinFile(project, builtinPath);
             if (odinFile != null) {
-                OdinScope fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), getGlobalFileVisibility(odinFile.getFileScope()));
+                OdinScope fileScopeDeclarations = odinFile.getFileScope().getScope();
                 Collection<OdinSymbol> symbols = fileScopeDeclarations
                         .getSymbolTable().values()
                         .stream()
@@ -130,7 +130,7 @@ public class OdinScopeResolver {
         for (String resource : resources) {
             OdinFile odinFile = createOdinFileFromResource(project, resource);
             if (odinFile != null) {
-                OdinScope fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), getGlobalFileVisibility(odinFile.getFileScope()));
+                OdinScope fileScopeDeclarations = odinFile.getFileScope().getScope();
                 Collection<OdinSymbol> symbols = fileScopeDeclarations
                         .getSymbolTable().values()
                         .stream()
@@ -194,8 +194,7 @@ public class OdinScopeResolver {
                 }
                 OdinSymbol.OdinVisibility globalFileVisibility = getGlobalFileVisibility(odinFile.getFileScope());
                 if (globalFileVisibility == OdinSymbol.OdinVisibility.FILE_PRIVATE) continue;
-                Collection<OdinSymbol> fileScopeDeclarations = getFileScopeDeclarations(odinFile.getFileScope(), globalFileVisibility)
-                        .getSymbolTable()
+                Collection<OdinSymbol> fileScopeDeclarations = odinFile.getFileScope().getScope().getSymbolTable()
                         .values()
                         .stream()
                         .filter(o -> !o.getVisibility().equals(OdinSymbol.OdinVisibility.FILE_PRIVATE))
