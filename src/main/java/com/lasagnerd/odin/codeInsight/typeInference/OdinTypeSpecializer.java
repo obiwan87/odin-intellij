@@ -21,6 +21,7 @@ public class OdinTypeSpecializer {
 
         TsOdinStructType specializedType = new TsOdinStructType();
         specializedType.setGenericType(genericType);
+        specializedType.getScope().setPackagePath(genericType.getScope().getPackagePath());
         specializedType.getScope().putAll(genericType.getScope());
 
         OdinScope newScope = specializedType.getScope();
@@ -56,6 +57,7 @@ public class OdinTypeSpecializer {
             return genericType;
 
         TsOdinProcedureType specializedType = new TsOdinProcedureType();
+        specializedType.getScope().setPackagePath(genericType.getScope().getPackagePath());
         specializedType.getScope().putAll(genericType.getScope());
         specializedType.setType(genericType.getType());
         specializedType.setName(genericType.getName());
@@ -82,6 +84,7 @@ public class OdinTypeSpecializer {
             return genericType;
 
         TsOdinUnionType specializedType = new TsOdinUnionType();
+        specializedType.getScope().setPackagePath(genericType.getScope().getPackagePath());
         specializedType.setGenericType(genericType);
         specializedType.getScope().putAll(genericType.getScope());
         specializedType.setType(genericType.getType());
