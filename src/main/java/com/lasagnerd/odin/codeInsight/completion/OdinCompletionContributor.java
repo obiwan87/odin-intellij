@@ -21,6 +21,7 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,9 +35,6 @@ public class OdinCompletionContributor extends CompletionContributor {
     public static final @NotNull ElementPattern<PsiElement> AT_IDENTIFIER = psiElement()
             .withElementType(OdinTypes.IDENTIFIER_TOKEN)
             .andNot(REFERENCE);
-
-    // Insert handlers
-    private static final ProcedureInsertHandler procedureInsertHandler = new ProcedureInsertHandler();
 
     public OdinCompletionContributor() {
 
@@ -176,6 +174,12 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     private static void addLookUpElements(OdinFile sourceFile, String sourcePackagePath, String targetPackagePath, @NotNull CompletionResultSet result, Collection<PsiNamedElement> namedElements) {
+        String prefix = "";
+        if (targetPackagePath != null && !targetPackagePath.isBlank()) {
+            // Get last segment of path
+            prefix = Path.of(targetPackagePath).getFileName().toString() + ".";
+        }
+
         for (var namedElement : namedElements) {
             if (namedElement instanceof PsiNameIdentifierOwner declaredIdentifier) {
                 OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
@@ -194,8 +198,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                             element = procedureLookupElement(element, firstParentOfType)
                                     .withInsertHandler(
                                             new CombinedInsertHandler(
-                                                    procedureInsertHandler,
-                                                    new InsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
+                                                    new OdinInsertSymbolHandler(typeType, prefix),
+                                                    new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
                                             )
                                     );
                             result.addElement(PrioritizedLookupElement.withPriority(element, 0));
@@ -219,8 +223,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                 .withIcon(icon)
                                                 .withInsertHandler(
                                                         new CombinedInsertHandler(
-                                                                procedureInsertHandler,
-                                                                new InsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
+                                                                new OdinInsertSymbolHandler(typeType, prefix),
+                                                                new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
                                                         )
                                                 );
                                         element = procedureLookupElement(element, declaringProcedure);
@@ -248,7 +252,12 @@ public class OdinCompletionContributor extends CompletionContributor {
                     }
                     default -> {
                         LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon)
-                                .withInsertHandler(new InsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile));
+                                .withInsertHandler(
+                                        new CombinedInsertHandler(
+                                                new OdinInsertSymbolHandler(typeType, prefix),
+                                                new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
+                                        )
+                                );
                         result.addElement(PrioritizedLookupElement.withPriority(element, 0));
                     }
                 }

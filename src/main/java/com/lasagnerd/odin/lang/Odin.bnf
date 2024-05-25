@@ -174,21 +174,17 @@
   psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
 }
 
-
-
-
 odinFile                             ::= fileScope
-
-// UTILS
 
 // General recovery rules
 private eos_recover ::= !eos
 
-fileScope                            ::= packageDeclaration eos importStatements fileScopeStatementList <<eof>> {
-    methods=[getImportStatements]
+fileScope                            ::= packageDeclaration eos importStatementsContainer fileScopeStatementList <<eof>> {
+    methods=[getImportStatements getScope]
+    mixin= "com.lasagnerd.odin.lang.psi.OdinFileScopeMixin"
 }
-private importStatements             ::= (importDeclarationStatement eos)*
-private fileScopeStatementList       ::= (fileScopeStatement eos)*
+importStatementsContainer            ::= (importDeclarationStatement eos)*
+fileScopeStatementList               ::= (fileScopeStatement eos)*
 packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=0 recoverWhile=eos_recover}
 
 

@@ -60,7 +60,8 @@ public class OdinScopeResolver {
         Stack<PsiElement> statementStack = new Stack<>();
 
         // do bfs
-        statementStack.addAll(fileScope.getStatementList());
+        statementStack.addAll(fileScope.getFileScopeStatementList().getStatementList());
+        statementStack.addAll(fileScope.getImportStatementsContainer().getImportDeclarationStatementList());
         while (!statementStack.isEmpty()) {
             PsiElement element = statementStack.pop();
             if (element instanceof OdinDeclaration declaration) {
@@ -179,7 +180,7 @@ public class OdinScopeResolver {
         OdinFileScope fileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(element, psi -> psi instanceof OdinFileScope);
 
         if (fileScope != null) {
-            OdinScope fileScopeDeclarations = getFileScopeDeclarations(fileScope, getGlobalFileVisibility(fileScope));
+            OdinScope fileScopeDeclarations = fileScope.getScope();
             scope.addAll(fileScopeDeclarations.getFilteredSymbols(matcher), false);
         }
 

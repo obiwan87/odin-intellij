@@ -19,12 +19,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
-public class InsertImportHandler implements InsertHandler<LookupElement> {
+public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
     private final String sourcePackagePath;
     private final String targetPackagePath;
     private final OdinFile sourceFile;
 
-    public InsertImportHandler(String sourcePackagePath, String targetPackagePath, OdinFile sourceFile) {
+    public OdinInsertImportHandler(String sourcePackagePath, String targetPackagePath, OdinFile sourceFile) {
         this.sourcePackagePath = sourcePackagePath;
         this.targetPackagePath = targetPackagePath;
         this.sourceFile = sourceFile;
@@ -39,7 +39,6 @@ public class InsertImportHandler implements InsertHandler<LookupElement> {
         if (sourceFile == null) {
             return;
         }
-
 
         String relativePath = FileUtil
                 .toSystemIndependentName(Path.of(sourcePackagePath).relativize(Path.of(targetPackagePath)).toString());
@@ -64,9 +63,9 @@ public class InsertImportHandler implements InsertHandler<LookupElement> {
                         .createImport(relativePath);
                 if (!fileScope.getImportStatements().isEmpty()) {
                     OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatements().get(fileScope.getImportStatements().size() - 1);
-                    fileScope.addAfter(anImport, odinImportDeclarationStatement);
+                    fileScope.getImportStatementsContainer().addAfter(anImport, odinImportDeclarationStatement);
                 } else {
-                    fileScope.addAfter(fileScope.getPackageDeclaration(), anImport);
+                    fileScope.getImportStatementsContainer().add(anImport);
                 }
                 Document document = manager.getDocument(odinFile);
                 if (document != null) {

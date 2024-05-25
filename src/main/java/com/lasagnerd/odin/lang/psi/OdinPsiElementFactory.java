@@ -7,14 +7,17 @@ import com.lasagnerd.odin.lang.OdinFileType;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.Objects;
+
 public class OdinPsiElementFactory {
 
     @Language("Odin")
     private static final String VARIABLE_DECLARATION = """
-    package dummy
-    
-    declaredIdentifier := identifier
-    """;
+            package dummy
+            
+            declaredIdentifier := identifier
+            """;
 
     @Language("Odin")
     private static final String IMPORT = """
@@ -37,11 +40,11 @@ public class OdinPsiElementFactory {
     public OdinIdentifier createIdentifier(String name) {
         String dummyCode = VARIABLE_DECLARATION.replaceAll("identifier", name);
         OdinFile file = createFile(dummyCode);
-        OdinStatement odinStatement = file.getFileScope().getStatementList().get(0);
-        if(odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
+        OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().get(0);
+        if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
             OdinExpression odinExpression = variableInitializationStatement.getExpressionsList().getExpressionList().get(0);
-            if(odinExpression instanceof OdinRefExpression refExpression) {
-                return refExpression.getIdentifier();
+            if (odinExpression instanceof OdinRefExpression refExpression) {
+                return Objects.requireNonNull(refExpression.getIdentifier());
             }
         }
         throw new RuntimeException("Something went wrong.");
@@ -58,9 +61,9 @@ public class OdinPsiElementFactory {
 
     public OdinDeclaredIdentifier createDeclaredIdentifier(String name) {
         OdinFile file = createFile(VARIABLE_DECLARATION.replaceAll("declaredIdentifier", name));
-        OdinStatement odinStatement = file.getFileScope().getStatementList().get(0);
-        if(odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            return (OdinDeclaredIdentifier) variableInitializationStatement.getDeclaredIdentifiers().get(0);
+        OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().get(0);
+        if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
+            return variableInitializationStatement.getDeclaredIdentifiers().get(0);
         }
         throw new RuntimeException("Something went wrong.");
     }
@@ -68,5 +71,17 @@ public class OdinPsiElementFactory {
     public OdinImportDeclarationStatement createImport(String relativePath) {
         OdinFile file = createFile(IMPORT.replaceAll("packagePath", relativePath));
         return file.getFileScope().getImportStatements().get(0);
+    }
+
+    public OdinImportStatementsContainer createImports(List<OdinImportDeclarationStatement> imports) {
+        String importStatements = imports.stream()
+                .map(OdinImportDeclarationStatement::getText).reduce("", (a, b) -> a + "\n" + b);
+        String dummyCode = """
+                package dummy;
+                
+                %s
+                """.formatted(importStatements);
+        OdinFile file = createFile(dummyCode);
+        return file.getFileScope().getImportStatementsContainer();
     }
 }

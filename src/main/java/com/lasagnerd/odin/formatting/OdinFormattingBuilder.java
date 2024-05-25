@@ -23,9 +23,6 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .before(OdinTypes.BLOCK_END)
                 .lineBreakInCode()
 
-                .after(OdinTypes.PACKAGE_DECLARATION)
-                .blankLines(1)
-
                 .between(OdinTypes.ELSE, OdinTypes.BLOCK)
                 .spacing(1, 1, 0, false, 0)
 
@@ -99,13 +96,21 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .aroundInside(BINARY_OPERATORS, BINARY_EXPRESSIONS)
                 .spaces(1)
 
-                .after(OdinTypes.IMPORT_DECLARATION_STATEMENT)
-                .lineBreakInCode()
+                .between(OdinTypes.IMPORT_DECLARATION_STATEMENT, OdinTypes.IMPORT_DECLARATION_STATEMENT)
+                .spacing(0, 0, 1, false, 0)
+
+                .between(OdinTypes.PACKAGE_DECLARATION, OdinTypes.IMPORT_STATEMENTS_CONTAINER)
+                .spacing(0, 0, 2, false, 1)
+
+                // make sure there is exactly one line break before and after the importsContainer
+                .between(OdinTypes.IMPORT_STATEMENTS_CONTAINER, OdinTypes.FILE_SCOPE_STATEMENT_LIST)
+                .spacing(0, 0, 2, false, 1)
+
                 ;
     }
 
     public static final TokenSet BINARY_EXPRESSIONS = TokenSet.create(
-        OdinTypes.AND_EXPRESSION,
+            OdinTypes.AND_EXPRESSION,
             OdinTypes.OR_EXPRESSION,
             OdinTypes.LT_EXPRESSION,
             OdinTypes.LTE_EXPRESSION,
@@ -135,7 +140,7 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
 
             OdinTypes.OR_ELSE_EXPRESSION
     );
-    private static final  TokenSet BINARY_OPERATORS = TokenSet.create(
+    private static final TokenSet BINARY_OPERATORS = TokenSet.create(
             OdinTypes.AND,
             OdinTypes.OROR,
             OdinTypes.EQ,
