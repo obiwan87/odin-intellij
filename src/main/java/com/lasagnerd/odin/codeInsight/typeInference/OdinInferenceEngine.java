@@ -7,7 +7,7 @@ import com.lasagnerd.odin.codeInsight.OdinScope;
 import com.lasagnerd.odin.codeInsight.OdinScopeResolver;
 import com.lasagnerd.odin.codeInsight.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
-import com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator;
+import com.lasagnerd.odin.codeInsight.annotators.OdinLangSyntaxAnnotator;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
