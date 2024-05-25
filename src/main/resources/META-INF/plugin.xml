@@ -64,9 +64,9 @@
         <lang.parserDefinition language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinParserDefinition"/>
         <lang.syntaxHighlighterFactory language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinSyntaxHighlighterFactory"/>
         <lang.braceMatcher language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinBraceMatcher"/>
-        <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinLangSyntaxAnnotator"/>
+        <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinLangSyntaxAnnotator"/>
         <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFormattingBuilder"/>
-        <annotator language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinAnnotator"/>
+        <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinAnnotator"/>
         <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
         <projectConfigurable
                 parentId="language"
@@ -84,7 +84,7 @@
         <lang.commenter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinCommenter"/>
         <lang.foldingBuilder language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFoldingBuilder"/>
         <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier"
-                                 implementationClass="com.lasagnerd.odin.lang.OdinElementManipulators"/>
+                                 implementationClass="com.lasagnerd.odin.refactor.OdinElementManipulators"/>
 
         <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor"/>
         <sdkType implementation="com.lasagnerd.odin.sdkConfig.OdinSdkType"/>
@@ -95,6 +95,8 @@
         <!-- TODO        <usageTypeProvider implementation="com.lasagnerd.odin.codeInsight.OdinUsageTypeProvider"/>-->
         <lang.refactoringSupport language="Odin" implementationClass="com.lasagnerd.odin.refactor.OdinRefactoringSupport"/>
         <consoleFilterProvider implementation="com.lasagnerd.odin.runConfiguration.OdinBuildConsoleFilterProvider"/>
+        <refactoring.safeDeleteProcessor implementation="com.lasagnerd.odin.refactor.OdinSafeDeleteProcessor" />
+        <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinUnusedAnnotator"/>
     </extensions>
 
 </idea-plugin>
