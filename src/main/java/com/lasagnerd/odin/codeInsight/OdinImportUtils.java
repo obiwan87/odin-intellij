@@ -4,6 +4,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.Query;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import lombok.Data;
@@ -14,11 +19,45 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class OdinImportUtils {
+    public static boolean isUnusedImport(OdinImportDeclarationStatement importDeclarationStatement) {
+        PsiFile containingFile = importDeclarationStatement.getContainingFile();
+        if (importDeclarationStatement.getDeclaredIdentifier() == null) {
+            String text = importDeclarationStatement.getImportInfo().packageName();
+
+            if (text.isBlank())
+                return false;
+
+            Project project = importDeclarationStatement.getProject();
+
+            return PsiSearchHelper.getInstance(project).processElementsWithWord(
+                    (element, offsetInElement) -> {
+                        if (element instanceof OdinIdentifier identifier) {
+                            PsiReference reference = identifier.getReference();
+                            if (reference != null) {
+                                PsiElement resolvedReference = reference.resolve();
+                                return resolvedReference != importDeclarationStatement;
+                            }
+                        }
+                        return true;
+                    },
+
+                    new LocalSearchScope(containingFile),
+                    text,
+                    UsageSearchContext.IN_CODE,
+                    true
+            );
+        } else {
+            Query<PsiReference> search = ReferencesSearch.search(importDeclarationStatement.getDeclaredIdentifier(), new LocalSearchScope(containingFile), true);
+            return search.findFirst() == null;
+        }
+    }
+
     @Data
     public static class OdinPackage {
         String packagePath;
         List<OdinFile> odinFiles = new ArrayList<>();
     }
+
     public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC
             && s.getSymbolType() != OdinSymbol.OdinSymbolType.PACKAGE_REFERENCE;
 
@@ -96,7 +135,7 @@ public class OdinImportUtils {
                     }
                     OdinSymbol.OdinVisibility globalFileVisibility = OdinScopeResolver.getGlobalFileVisibility(importedFileScope);
                     if (globalFileVisibility == OdinSymbol.OdinVisibility.PACKAGE_PRIVATE
-                            || globalFileVisibility  == OdinSymbol.OdinVisibility.FILE_PRIVATE)
+                            || globalFileVisibility == OdinSymbol.OdinVisibility.FILE_PRIVATE)
                         continue;
 
                     Collection<OdinSymbol> fileScopeDeclarations = OdinScopeResolver.getFileScopeDeclarations(importedFileScope,

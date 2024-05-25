@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.refactor;
+package com.lasagnerd.odin.codeInsight.refactor;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;

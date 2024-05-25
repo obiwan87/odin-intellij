@@ -84,7 +84,7 @@
         <lang.commenter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinCommenter"/>
         <lang.foldingBuilder language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFoldingBuilder"/>
         <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier"
-                                 implementationClass="com.lasagnerd.odin.refactor.OdinElementManipulators"/>
+                                 implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinElementManipulators"/>
 
         <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor"/>
         <sdkType implementation="com.lasagnerd.odin.sdkConfig.OdinSdkType"/>
@@ -93,10 +93,11 @@
                 language="Odin"
                 implementationClass="com.lasagnerd.odin.codeInsight.OdinFindUsagesProvider"/>
         <!-- TODO        <usageTypeProvider implementation="com.lasagnerd.odin.codeInsight.OdinUsageTypeProvider"/>-->
-        <lang.refactoringSupport language="Odin" implementationClass="com.lasagnerd.odin.refactor.OdinRefactoringSupport"/>
+        <lang.refactoringSupport language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinRefactoringSupport"/>
         <consoleFilterProvider implementation="com.lasagnerd.odin.runConfiguration.OdinBuildConsoleFilterProvider"/>
-        <refactoring.safeDeleteProcessor implementation="com.lasagnerd.odin.refactor.OdinSafeDeleteProcessor" />
+        <refactoring.safeDeleteProcessor implementation="com.lasagnerd.odin.codeInsight.refactor.OdinSafeDeleteProcessor" />
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinUnusedAnnotator"/>
+        <lang.importOptimizer language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinImportOptimizer"/>
     </extensions>
 
 </idea-plugin>

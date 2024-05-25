@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.refactor;
+package com.lasagnerd.odin.codeInsight.refactor;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
