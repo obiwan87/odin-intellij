@@ -10,6 +10,7 @@ import com.lasagnerd.odin.lang.OdinLexerAdapter;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
+import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -41,6 +42,12 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
     public @Nls @NotNull String getType(@NotNull PsiElement psiElement) {
         OdinDeclaredIdentifier declaredIdentifier = PsiTreeUtil.getParentOfType(psiElement, false, OdinDeclaredIdentifier.class);
 
+        if(declaredIdentifier == null) {
+            if(psiElement instanceof OdinImportDeclarationStatement) {
+                return OdinTypeType.PACKAGE.getHumanReadableName();
+            }
+            return OdinTypeType.UNKNOWN.getHumanReadableName();
+        }
         OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
         return typeType != null ? typeType.getHumanReadableName() : OdinTypeType.UNKNOWN.getHumanReadableName();
     }
