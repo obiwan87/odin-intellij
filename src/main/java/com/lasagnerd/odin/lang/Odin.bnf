@@ -2,7 +2,7 @@
   parserImports="static com.intellij.lang.parser.GeneratedParserUtilBase.*"
   parserClass="com.lasagnerd.odin.lang.OdinParser"
 
-  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+  extends="com.lasagnerd.odin.lang.psi.OdinPsiElement"
 
 
   psiClassPrefix="Odin"
