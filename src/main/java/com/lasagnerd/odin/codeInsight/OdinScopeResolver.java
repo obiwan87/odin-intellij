@@ -168,8 +168,8 @@ public class OdinScopeResolver {
         OdinScope scope = new OdinScope();
         scope.setPackagePath(packagePath);
 
-        // Build the scope tree
-        findDeclaringBlocks(element);
+        // Builds the relevant part of the scope tree
+        buildPartialScopeTree(element);
 
         List<OdinSymbol> builtInSymbols = getBuiltInSymbols(project);
 
@@ -205,7 +205,7 @@ public class OdinScopeResolver {
             }
         }
 
-        // Here we can resolve all using nodes
+        // 3. Import symbols from the scope tree
         for (int i = scopeNodes.size() - 1; i >= 0; i--) {
             ScopeNode scopeNode = scopeNodes.get(i);
             OdinScopeBlock containingBlock = scopeNode.getScopeBlock();
@@ -290,7 +290,7 @@ public class OdinScopeResolver {
         return OdinImportUtils.getFilesInPackage(project, Path.of(packagePath), virtualFile -> !virtualFile.getName().equals(fileName));
     }
 
-    private void findDeclaringBlocks(PsiElement entrance) {
+    private void buildPartialScopeTree(PsiElement entrance) {
         ScopeNode scopeNode = new ScopeNode();
         OdinScopeBlock containingBlock = PsiTreeUtil.getParentOfType(entrance, true, OdinScopeBlock.class);
 
@@ -341,7 +341,7 @@ public class OdinScopeResolver {
             scopeNode.setEndOfScopeStatement(lastValidStatement);
             scopeNodes.add(scopeNode);
             if (!blockIsInsideProcedure) {
-                findDeclaringBlocks(containingBlock);
+                buildPartialScopeTree(containingBlock);
             }
         }
     }

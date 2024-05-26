@@ -53,7 +53,8 @@ public class OdinSymbol {
     public enum OdinVisibility {
         PACKAGE_PRIVATE,
         FILE_PRIVATE,
-        PUBLIC
+        PUBLIC,
+        LOCAL
     }
 
 }
