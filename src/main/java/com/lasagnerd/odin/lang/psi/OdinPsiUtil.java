@@ -294,15 +294,15 @@ public class OdinPsiUtil {
 
     public static List<OdinSymbol> getSymbols(OdinProcedureDeclarationStatement procedureDeclarationStatement) {
         OdinProcedureType procedureType = procedureDeclarationStatement.getProcedureType();
-        return doGetProcedureTypeDeclarationSpecs(procedureType);
+        return doGetProcedureTypeSymbols(procedureType);
     }
 
     public static List<OdinSymbol> getSymbols(OdinProcedureExpression procedureExpression) {
         OdinProcedureType procedureType = procedureExpression.getProcedureTypeContainer().getProcedureType();
-        return doGetProcedureTypeDeclarationSpecs(procedureType);
+        return doGetProcedureTypeSymbols(procedureType);
     }
 
-    private static @NotNull List<OdinSymbol> doGetProcedureTypeDeclarationSpecs(OdinProcedureType procedureType) {
+    private static @NotNull List<OdinSymbol> doGetProcedureTypeSymbols(OdinProcedureType procedureType) {
         List<OdinSymbol> declarations = new ArrayList<>();
         {
 
@@ -321,7 +321,7 @@ public class OdinPsiUtil {
         OdinReturnParameters returnParameters = procedureType.getReturnParameters();
         {
             if (returnParameters != null) {
-                var paramEntries = procedureType.getParamEntryList();
+                var paramEntries = procedureType.getReturnParameters().getParamEntryList();
                 for (OdinParamEntry odinParamEntry : paramEntries) {
                     declarations.addAll(OdinSymbolResolver.getSymbols(odinParamEntry.getParameterDeclaration()));
                 }
