@@ -16,7 +16,6 @@ public abstract class OdinFileScopeMixin extends ASTWrapperPsiElement {
 
     @Override
     public void subtreeChanged() {
-        System.out.println("Invalidating scope cache");
         scope = null;
     }
 
@@ -27,8 +26,6 @@ public abstract class OdinFileScopeMixin extends ASTWrapperPsiElement {
                         odinFileScope,
                         OdinScopeResolver.getGlobalFileVisibility(odinFileScope)
                 );
-            } else {
-                System.out.println("Retrieving scope from cache");
             }
 
             return scope;
