@@ -53,7 +53,7 @@ public class OdinScopeResolver {
         this.element = element;
     }
 
-    public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope, OdinSymbol.OdinVisibility globalFileVisibility) {
+    public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope, @NotNull OdinSymbol.OdinVisibility globalVisibility) {
         // Find all blocks that are not in a procedure
         List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
 
@@ -65,7 +65,7 @@ public class OdinScopeResolver {
         while (!statementStack.isEmpty()) {
             PsiElement element = statementStack.pop();
             if (element instanceof OdinDeclaration declaration) {
-                List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(globalFileVisibility, declaration);
+                List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(globalVisibility, declaration);
                 fileScopeSymbols.addAll(symbols);
             } else {
                 getStatements(element).forEach(statementStack::push);
@@ -163,6 +163,8 @@ public class OdinScopeResolver {
     }
 
     private OdinScope findScope(String packagePath) {
+        // TODO: When looking for a specific declaration, this can be optimized:
+        // when building the scope tree, just stop as soon as we find the first matching declaration
         Project project = element.getProject();
 
         OdinScope scope = new OdinScope();
@@ -197,6 +199,7 @@ public class OdinScopeResolver {
                 Collection<OdinSymbol> fileScopeDeclarations = odinFile.getFileScope().getScope().getSymbolTable()
                         .values()
                         .stream()
+                        // TODO check why visibility is null
                         .filter(o -> !o.getVisibility().equals(OdinSymbol.OdinVisibility.FILE_PRIVATE))
                         .toList();
 
@@ -214,7 +217,7 @@ public class OdinScopeResolver {
 
             for (OdinStatement statement : scopeNode.getStatements()) {
                 if (statement instanceof OdinDeclaration declaration) {
-                    List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(declaration)
+                    List<OdinSymbol> symbols = OdinSymbolResolver.getLocalSymbols(declaration)
                             .stream()
                             .filter(matcher)
                             .toList();
@@ -275,7 +278,7 @@ public class OdinScopeResolver {
                 }
             }
         }
-        return null;
+        return OdinSymbol.OdinVisibility.PUBLIC;
     }
 
     /**

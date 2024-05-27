@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,7 +37,7 @@ public class OdinAttributeUtils {
         return false;
     }
 
-    public static OdinSymbol.OdinVisibility computeVisibility(@NotNull List<OdinAttributeStatement> attributeStatements) {
+    public static @NotNull OdinSymbol.OdinVisibility computeVisibility(@NotNull Collection<OdinAttributeStatement> attributeStatements) {
         for (OdinAttributeStatement attributeStatement : attributeStatements) {
             for (OdinArgument odinArgument : attributeStatement.getArgumentList()) {
                 if (odinArgument instanceof OdinNamedArgument odinNamedArgument) {

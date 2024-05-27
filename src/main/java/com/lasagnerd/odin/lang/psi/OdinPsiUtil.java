@@ -307,7 +307,7 @@ public class OdinPsiUtil {
         {
 
             for (OdinParamEntry odinParamEntry : procedureType.getParamEntryList()) {
-                declarations.addAll(OdinSymbolResolver.getSymbols(odinParamEntry.getParameterDeclaration()));
+                declarations.addAll(OdinSymbolResolver.getLocalSymbols(odinParamEntry.getParameterDeclaration()));
             }
         }
 
@@ -323,7 +323,7 @@ public class OdinPsiUtil {
             if (returnParameters != null) {
                 var paramEntries = procedureType.getReturnParameters().getParamEntryList();
                 for (OdinParamEntry odinParamEntry : paramEntries) {
-                    declarations.addAll(OdinSymbolResolver.getSymbols(odinParamEntry.getParameterDeclaration()));
+                    declarations.addAll(OdinSymbolResolver.getLocalSymbols(odinParamEntry.getParameterDeclaration()));
                 }
             }
         }
@@ -340,7 +340,7 @@ public class OdinPsiUtil {
     public static List<OdinSymbol> getSymbols(OdinIfBlock ifBlock) {
         OdinControlFlowInit controlFlowInit = ifBlock.getControlFlowInit();
         if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
-            return OdinSymbolResolver.getSymbols(odinDeclaration);
+            return OdinSymbolResolver.getLocalSymbols(odinDeclaration);
         }
         return Collections.emptyList();
     }
@@ -349,7 +349,7 @@ public class OdinPsiUtil {
         List<OdinSymbol> specs = new ArrayList<>();
         OdinControlFlowInit controlFlowInit = elseIfBlock.getControlFlowInit();
         if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
-            specs.addAll(OdinSymbolResolver.getSymbols(odinDeclaration));
+            specs.addAll(OdinSymbolResolver.getLocalSymbols(odinDeclaration));
         }
         addSpecsOfPreviousBlocks(elseIfBlock, specs);
 
@@ -382,7 +382,7 @@ public class OdinPsiUtil {
     public static List<OdinSymbol> getSymbols(OdinForBlock forBlock) {
         OdinControlFlowInit controlFlowInit = forBlock.getControlFlowInit();
         if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
-            return OdinSymbolResolver.getSymbols(odinDeclaration);
+            return OdinSymbolResolver.getLocalSymbols(odinDeclaration);
         }
         return Collections.emptyList();
     }

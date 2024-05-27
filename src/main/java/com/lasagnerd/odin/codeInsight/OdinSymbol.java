@@ -19,7 +19,7 @@ public class OdinSymbol {
 
     private final OdinVisibility visibility;
 
-    public OdinSymbol(@NotNull PsiNamedElement declaredIdentifier, OdinVisibility visibility) {
+    public OdinSymbol(@NotNull PsiNamedElement declaredIdentifier, @NotNull OdinVisibility visibility) {
         this.declaredIdentifier = declaredIdentifier;
         this.visibility = visibility;
     }
