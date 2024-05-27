@@ -56,23 +56,21 @@ public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
 
         OdinFileScope fileScope = odinFile.getFileScope();
         Project project = context.getProject();
-        ApplicationManager.getApplication().invokeLater(() -> {
-            WriteCommandAction.runWriteCommandAction(project, () -> {
-                PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-                OdinImportDeclarationStatement anImport = OdinPsiElementFactory.getInstance(project)
-                        .createImport(relativePath);
-                if (!fileScope.getImportStatements().isEmpty()) {
-                    OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatements().get(fileScope.getImportStatements().size() - 1);
-                    fileScope.getImportStatementsContainer().addAfter(anImport, odinImportDeclarationStatement);
-                } else {
-                    fileScope.getImportStatementsContainer().add(anImport);
-                }
-                Document document = manager.getDocument(odinFile);
-                if (document != null) {
-                    manager.commitDocument(document);
-                }
-            });
-        });
+        ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.runWriteCommandAction(project, () -> {
+            PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+            OdinImportDeclarationStatement anImport = OdinPsiElementFactory.getInstance(project)
+                    .createImport(relativePath);
+            if (!fileScope.getImportStatements().isEmpty()) {
+                OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatements().get(fileScope.getImportStatements().size() - 1);
+                fileScope.getImportStatementsContainer().addAfter(anImport, odinImportDeclarationStatement);
+            } else {
+                fileScope.getImportStatementsContainer().add(anImport);
+            }
+            Document document = manager.getDocument(odinFile);
+            if (document != null) {
+                manager.commitDocument(document);
+            }
+        }));
 
         CodeStyleManager.getInstance(project).reformat(fileScope);
 
