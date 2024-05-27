@@ -100,4 +100,13 @@
         <lang.importOptimizer language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinImportOptimizer"/>
     </extensions>
 
+    <actions>
+        <action id="com.lasagnerd.odin.actions.NewOdinFileAction"
+                class="com.lasagnerd.odin.actions.NewOdinFileAction"
+                text="Odin File"
+                icon="com.lasagnerd.odin.OdinIcons.OdinFileType"
+                description="Creates a new Odin file">
+            <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
+        </action>
+    </actions>
 </idea-plugin>
