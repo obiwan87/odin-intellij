@@ -86,7 +86,6 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                   @NotNull CompletionResultSet result) {
                         PsiElement position = parameters.getPosition();
 
-
                         // TODO This is probably where we will need stub indices / file based indices
 
                         // 1. Add symbols from all visible stuff in my project
@@ -173,7 +172,11 @@ public class OdinCompletionContributor extends CompletionContributor {
         addLookUpElements(null, "", "", result, namedElements);
     }
 
-    private static void addLookUpElements(OdinFile sourceFile, String sourcePackagePath, String targetPackagePath, @NotNull CompletionResultSet result, Collection<PsiNamedElement> namedElements) {
+    private static void addLookUpElements(OdinFile sourceFile,
+                                          String sourcePackagePath,
+                                          String targetPackagePath,
+                                          @NotNull CompletionResultSet result,
+                                          Collection<PsiNamedElement> namedElements) {
         String prefix = "";
         if (targetPackagePath != null && !targetPackagePath.isBlank()) {
             // Get last segment of path
@@ -185,12 +188,14 @@ public class OdinCompletionContributor extends CompletionContributor {
                 OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
                 Icon icon = getIcon(typeType);
 
+                final String unprefixedLookupString = declaredIdentifier.getText();
                 final String lookupString = prefix + declaredIdentifier.getText();
 
                 switch (typeType) {
                     case PROCEDURE -> {
                         LookupElementBuilder element = LookupElementBuilder
                                 .create(lookupString)
+                                .withLookupString(unprefixedLookupString)
                                 .withIcon(icon);
 
                         OdinProcedureDeclarationStatement firstParentOfType = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
@@ -218,7 +223,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 if (resolved instanceof OdinDeclaredIdentifier) {
                                     OdinProcedureDeclarationStatement declaringProcedure = OdinInsightUtils.getDeclaringProcedure((OdinDeclaredIdentifier) resolved);
                                     if (declaringProcedure != null) {
-                                        LookupElementBuilder element = LookupElementBuilder.create(resolved, lookupString)
+                                        LookupElementBuilder element = LookupElementBuilder
+                                                .create(resolved, lookupString)
                                                 .withItemTextItalic(true)
                                                 .withIcon(icon)
                                                 .withInsertHandler(
@@ -252,6 +258,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                     }
                     default -> {
                         LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon)
+                                .withLookupString(unprefixedLookupString)
                                 .withInsertHandler(
                                         new CombinedInsertHandler(
                                                 new OdinInsertSymbolHandler(typeType),
