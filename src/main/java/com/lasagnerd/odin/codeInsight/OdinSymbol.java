@@ -51,10 +51,18 @@ public class OdinSymbol {
     }
 
     public enum OdinVisibility {
+        LOCAL,
         PACKAGE_PRIVATE,
         FILE_PRIVATE,
-        PUBLIC,
-        LOCAL
+        PUBLIC
+    }
+
+    public static OdinVisibility min(OdinVisibility v1, OdinVisibility v2) {
+        return v1.ordinal() < v2.ordinal() ? v1 : v2;
+    }
+
+    public static OdinVisibility max(OdinVisibility v1, OdinVisibility v2) {
+        return v1.ordinal() > v2.ordinal() ? v1 : v2;
     }
 
 }
