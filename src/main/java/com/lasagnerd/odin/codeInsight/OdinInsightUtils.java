@@ -28,7 +28,11 @@ public class OdinInsightUtils {
         } else {
             OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, true, OdinQualifiedType.class);
             if (qualifiedType != null) {
-                scope = OdinReferenceResolver.resolve(parentScope, qualifiedType);
+                if (qualifiedType.getPackageIdentifier() == identifier) {
+                    scope = parentScope;
+                } else {
+                    scope = OdinReferenceResolver.resolve(parentScope, qualifiedType);
+                }
             } else {
                 scope = parentScope;
             }

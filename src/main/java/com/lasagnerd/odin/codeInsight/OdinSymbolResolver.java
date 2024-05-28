@@ -173,7 +173,8 @@ public class OdinSymbolResolver extends OdinVisitor {
     }
 
     private static @NotNull OdinSymbol.OdinVisibility getVisibility(@NotNull Collection<OdinAttributeStatement> attributeStatementList, OdinSymbol.OdinVisibility defaultVisibility) {
-        return defaultVisibility == null ? OdinAttributeUtils.computeVisibility(attributeStatementList) : defaultVisibility;
+        OdinSymbol.OdinVisibility odinVisibility = OdinAttributeUtils.computeVisibility(attributeStatementList);
+        return defaultVisibility == null ? odinVisibility : OdinSymbol.min(defaultVisibility, odinVisibility);
     }
 
 }

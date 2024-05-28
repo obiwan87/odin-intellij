@@ -2,7 +2,10 @@ package com.lasagnerd.odin.lang.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -12,6 +15,8 @@ import com.lasagnerd.odin.codeInsight.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.OdinSymbolResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implements OdinDeclaredIdentifier, PsiNameIdentifierOwner {
     public OdinIdentifierOwner(@NotNull ASTNode node) {
@@ -52,12 +57,32 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
     @Override
     public @NotNull SearchScope getUseScope() {
         OdinSymbol symbol = OdinSymbolResolver.createSymbol(this);
-        if (symbol.getVisibility() == OdinSymbol.OdinVisibility.LOCAL) {
-            OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
-            if (fileScope != null) {
-                return new LocalSearchScope(fileScope);
+        switch (symbol.getVisibility()) {
+            case LOCAL -> {
+                OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
+                if (fileScope != null) {
+                    return new LocalSearchScope(fileScope);
+                }
+            }
+            case FILE_PRIVATE -> {
+                OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
+                if (fileScope != null) {
+                    return new LocalSearchScope(fileScope.getContainingFile());
+                }
             }
         }
+
+
         return super.getUseScope();
+    }
+
+    private OdinFile @NotNull [] getOdinFiles(List<VirtualFile> odinFilesInPackage) {
+        OdinFile[] packageFiles = new OdinFile[odinFilesInPackage.size()];
+        for (int i = 0; i < odinFilesInPackage.size(); i++) {
+            VirtualFile virtualFile = odinFilesInPackage.get(i);
+            PsiFile file = PsiManager.getInstance(getProject()).findFile(virtualFile);
+            packageFiles[i] = (OdinFile) file;
+        }
+        return packageFiles;
     }
 }
