@@ -8,10 +8,7 @@ import com.lasagnerd.odin.codeInsight.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.OdinSymbolResolver;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class OdinPsiUtil {
     public static PsiReference getReference(OdinIdentifier self) {
@@ -267,12 +264,10 @@ public class OdinPsiUtil {
         return doGetBlockStatements(ifBlock.getStatementBody());
     }
 
-    public static List<OdinStatement> getBlockStatements(OdinElseIfBlock elseIfBlock) {
-        return doGetBlockStatements(elseIfBlock.getStatementBody());
-    }
-
     public static List<OdinStatement> getBlockStatements(OdinElseBlock elseBlock) {
-        return doGetBlockStatements(elseBlock.getStatementBody());
+        OdinStatementBody statementBody = elseBlock.getStatementBody();
+        return statementBody != null? doGetBlockStatements(statementBody)
+                : Objects.requireNonNull(elseBlock.getIfBlock()).getBlockStatements();
     }
 
     public static List<OdinStatement> getBlockStatements(OdinBlockStatement blockStatement) {
@@ -345,39 +340,39 @@ public class OdinPsiUtil {
         return Collections.emptyList();
     }
 
-    public static List<OdinSymbol> getSymbols(OdinElseIfBlock elseIfBlock) {
-        List<OdinSymbol> specs = new ArrayList<>();
-        OdinControlFlowInit controlFlowInit = elseIfBlock.getControlFlowInit();
-        if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
-            specs.addAll(OdinSymbolResolver.getLocalSymbols(odinDeclaration));
-        }
-        addSpecsOfPreviousBlocks(elseIfBlock, specs);
-
-        return specs;
-    }
-
+//    public static List<OdinSymbol> getSymbols(OdinElseIfBlock elseIfBlock) {
+//        List<OdinSymbol> specs = new ArrayList<>();
+//        OdinControlFlowInit controlFlowInit = elseIfBlock.getControlFlowInit();
+//        if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
+//            specs.addAll(OdinSymbolResolver.getLocalSymbols(odinDeclaration));
+//        }
+//        addSpecsOfPreviousBlocks(elseIfBlock, specs);
+//
+//        return specs;
+//    }
+//
     public static List<OdinSymbol> getSymbols(OdinElseBlock elseBlock) {
         List<OdinSymbol> specs = new ArrayList<>();
-        addSpecsOfPreviousBlocks(elseBlock, specs);
+//        addSpecsOfPreviousBlocks(elseBlock, specs);
         return specs;
     }
-
-    private static void addSpecsOfPreviousBlocks(PsiElement conditionalBlock, List<OdinSymbol> specs) {
-        PsiElement prevSibling;
-        PsiElement current = conditionalBlock;
-        while ((prevSibling = current.getPrevSibling()) != null) {
-            if (prevSibling instanceof OdinElseIfBlock elseIfBlocSibling) {
-                specs.addAll(elseIfBlocSibling.getSymbols());
-                break;
-            }
-
-            if (prevSibling instanceof OdinIfBlock ifBlock) {
-                specs.addAll(ifBlock.getSymbols());
-                break;
-            }
-            current = prevSibling;
-        }
-    }
+//
+//    private static void addSpecsOfPreviousBlocks(PsiElement conditionalBlock, List<OdinSymbol> specs) {
+//        PsiElement prevSibling;
+//        PsiElement current = conditionalBlock;
+//        while ((prevSibling = current.getPrevSibling()) != null) {
+//            if (prevSibling instanceof OdinElseIfBlock elseIfBlocSibling) {
+//                specs.addAll(elseIfBlocSibling.getSymbols());
+//                break;
+//            }
+//
+//            if (prevSibling instanceof OdinIfBlock ifBlock) {
+//                specs.addAll(ifBlock.getSymbols());
+//                break;
+//            }
+//            current = prevSibling;
+//        }
+//    }
 
     public static List<OdinSymbol> getSymbols(OdinForBlock forBlock) {
         OdinControlFlowInit controlFlowInit = forBlock.getControlFlowInit();
