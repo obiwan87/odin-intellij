@@ -635,7 +635,7 @@ expressionStatement                  ::= orReturnExpression
                                           | primaryGroup
 
 label                                ::= IDENTIFIER_TOKEN COLON
-blockStatement                       ::= [(directive eos?)|label] block {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
+blockStatement                       ::= [directive eos?] [label] block {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 
 deferStatement                       ::= DEFER deferrableStatement
 private deferrableStatement          ::= assignmentStatement
