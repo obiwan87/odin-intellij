@@ -76,15 +76,15 @@ public class OdinScopeResolver {
 
     private static List<OdinStatement> getStatements(PsiElement psiElement) {
         if (psiElement instanceof OdinWhenStatement odinWhenStatement) {
-            if (odinWhenStatement.getStatementBody().getBlock() != null) {
-                OdinStatementList statementList = odinWhenStatement.getStatementBody().getBlock().getStatementList();
+            if (odinWhenStatement.getWhenBlock().getStatementBody().getBlock() != null) {
+                OdinStatementList statementList = odinWhenStatement.getWhenBlock().getStatementBody().getBlock().getStatementList();
                 if (statementList != null) {
                     return statementList.getStatementList();
                 }
             }
 
-            if (odinWhenStatement.getStatementBody().getDoStatement() != null) {
-                return List.of(odinWhenStatement.getStatementBody().getDoStatement());
+            if (odinWhenStatement.getWhenBlock().getStatementBody().getDoStatement() != null) {
+                return List.of(odinWhenStatement.getWhenBlock().getStatementBody().getDoStatement());
             }
         }
 

@@ -23,13 +23,10 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .before(OdinTypes.BLOCK_END)
                 .lineBreakInCode()
 
-                .between(OdinTypes.ELSE, OdinTypes.BLOCK)
+                .between(OdinTypes.ELSE, OdinTypes.STATEMENT_BODY)
                 .spacing(1, 1, 0, false, 0)
 
                 .withinPairInside(OdinTypes.CONDITION, OdinTypes.BLOCK, OdinTypes.CONDITIONAL_STATEMENT)
-                .spacing(1, 1, 0, false, 0)
-
-                .withinPairInside(OdinTypes.CONDITION, OdinTypes.BLOCK, OdinTypes.ELSE_IF_BLOCK)
                 .spacing(1, 1, 0, false, 0)
 
                 .withinPairInside(OdinTypes.SWITCH, OdinTypes.SWITCH_BODY, OdinTypes.SWITCH_STATEMENT)
@@ -42,13 +39,7 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .withinPair(OdinTypes.PROCEDURE_TYPE, OdinTypes.PROCEDURE_BODY)
                 .spacing(1, 1, 0, false, 0)
 
-                .between(OdinTypes.ELSE, OdinTypes.IF)
-                .spacing(1, 1, 0, false, 0)
-
-                .between(OdinTypes.BLOCK, OdinTypes.ELSE_IF_BLOCK)
-                .spacing(1, 1, 0, false, 0)
-
-                .between(OdinTypes.BLOCK, OdinTypes.ELSE_BLOCK)
+                .between(OdinTypes.ELSE, OdinTypes.IF_BLOCK)
                 .spacing(1, 1, 0, false, 0)
 
                 .between(OdinTypes.COLON, OdinTypes.EQ)

@@ -658,28 +658,26 @@ doStatement                          ::= DO statement
 statementBody                        ::= block|doStatement
 
 // For
-forStatement                         ::= label? directive? forBlock
+forStatement                         ::= [directive] [label] forBlock
 private forHead                      ::= <<enterNoBlockMode>> [[[controlFlowInit] SEMICOLON] condition? [SEMICOLON [forUpdate]]] <<exitNoBlockMode>>
 forBlock                             ::= FOR forHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 forUpdate                            ::= assignmentStatement | callExpression
 
 // For-In
-forInStatement                       ::= label? directive? forInBlock
+forInStatement                       ::= [directive] [label] forInBlock
 forInBlock                           ::= FOR <<enterNoBlockMode>> [forInParameter (COMMA forInParameter)*] IN expression <<exitNoBlockMode>> statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 forInParameter                       ::= AND? declaredIdentifier
 
 // Conditional statement (=if-elseif-else)
 private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit] SEMICOLON] condition <<exitNoBlockMode>>
 
-conditionalStatement                 ::= [label] [directiveHead] ifBlock (sos elseIfBlock)* [sos elseBlock]
+conditionalStatement                 ::= [directive] [label] ifBlock
 
-ifBlock                              ::= if conditionalHead statementBody {
+ifBlock                              ::= if conditionalHead statementBody [sos elseBlock] {
                                                 implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"
                                                 methods = [ getBlockStatements getSymbols ]
-                                            }
-elseIfBlock                          ::= elseIf conditionalHead statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
-elseIf                               ::= else if
-elseBlock                            ::= else statementBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
+                                         }
+elseBlock                            ::= else (ifBlock|statementBody) {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] }
 if                                   ::= IF_TOKEN
 else                                 ::= ELSE_TOKEN
 
@@ -692,8 +690,9 @@ switchCase                           ::= CASE [expression (COMMA expression)*] c
 caseBlock                            ::= COLON statementList?
 
 // When statement (compile time, which means it does not support an init block)
-whenStatement                        ::= [label] [directiveHead] WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody (sos elseWhenBlock)* [sos elseBlock]
-elseWhenBlock                        ::= else WHEN <<enterNoBlockMode>>  condition <<exitNoBlockMode>> statementBody
+whenStatement                        ::= [directive] [label] whenBlock
+whenBlock                            ::= WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody [sos elseWhenBlock]
+elseWhenBlock                        ::= else (whenBlock|statementBody)
 
 
 
