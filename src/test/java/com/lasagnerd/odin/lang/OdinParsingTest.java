@@ -670,21 +670,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
     }
 
-    private static @NotNull TsOdinType inferTypeOfFirstExpressionInProcedure(OdinFile odinFile, String procedureName) {
-        OdinProcedureDeclarationStatement testTypeInference = findFirstProcedure(odinFile, procedureName);
-        OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) Objects.requireNonNull(testTypeInference.
-                        getProcedureDefinition()
-                        .getProcedureBody().getBlock()).getStatements()
-                .stream().filter(s -> s instanceof OdinExpressionStatement)
-                .findFirst().orElseThrow();
 
-        OdinExpression expression = odinExpressionStatement.getExpression();
-        OdinScope scope = OdinScopeResolver.resolveScope(expression);
-        if (expression != null) {
-            return OdinInferenceEngine.inferType(scope, expression);
-        }
-        return TsOdinType.UNKNOWN;
-    }
 
     public void testPolymorphicTypesWithMultipleReturnTypes() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
@@ -927,7 +913,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
         // Partial scope
         {
-            OdinExpression expression = getFirstExpressionOfVariable(odinFile, "partial_scope", "test");
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "partial_scope", "test");
             OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
 
             assertNotNull(odinScope.getSymbol("x"));
@@ -939,7 +925,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
             // if branch
             {
-                OdinExpression expression = getFirstExpressionOfVariable(odinFile, "conditional_block", "test_if");
+                OdinExpression expression = findFirstExpressionOfVariable(odinFile, "conditional_block", "test_if");
                 OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
 
                 assertNotNull(odinScope.getSymbol("y"));
@@ -948,7 +934,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
             // else-if branch
             {
-                OdinExpression expression = getFirstExpressionOfVariable(odinFile, "conditional_block", "test_else_if");
+                OdinExpression expression = findFirstExpressionOfVariable(odinFile, "conditional_block", "test_else_if");
                 OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
 
                 assertNotNull(odinScope.getSymbol("z"));
@@ -958,7 +944,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
             // else branch
             {
-                OdinExpression expression = getFirstExpressionOfVariable(odinFile, "conditional_block", "test_else");
+                OdinExpression expression = findFirstExpressionOfVariable(odinFile, "conditional_block", "test_else");
                 OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
 
                 assertNotNull(odinScope.getSymbol("z"));
@@ -1046,7 +1032,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
         // File scope
         {
-            OdinExpression expression = getFirstExpressionOfVariable(odinFile, "file_scope", "test");
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "file_scope", "test");
             OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
 
             assertNotNull(odinScope.getSymbol("assignment"));
@@ -1066,7 +1052,7 @@ public class OdinParsingTest extends UsefulTestCase {
         // Procedure parameters
         OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
         {
-            OdinExpression expression = getFirstExpressionOfVariable(odinFile, "params", "test");
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "params", "test");
             OdinScope visibleSymbols = OdinSymbolFinder.doFindVisibleSymbols(expression);
             assertNotNull(visibleSymbols.getSymbol("x"));
             assertNotNull(visibleSymbols.getSymbol("y"));
@@ -1088,7 +1074,7 @@ public class OdinParsingTest extends UsefulTestCase {
         }
 
         {
-            OdinExpression expression = getFirstExpressionOfVariable(odinFile, "poly_params", "test");
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "poly_params", "test");
             OdinScope visibleSymbols = OdinSymbolFinder.doFindVisibleSymbols(expression);
             assertNotNull(visibleSymbols.getSymbol("T"));
             assertNotNull(visibleSymbols.getSymbol("Key"));
@@ -1152,18 +1138,41 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testScoping_constants() throws IOException {
+        // Constants
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "constants", "test_outer");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("K"));
+            assertNotNull(odinScope.getSymbol("p"));
+            assertNotNull(odinScope.getSymbol("S"));
+        }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "constants", "test_inner");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("Kinner"));
+            assertNotNull(odinScope.getSymbol("K"));
+            assertNotNull(odinScope.getSymbol("p"));
+            assertNotNull(odinScope.getSymbol("S"));
+        }
+    }
+
+    // Helpers
+
     private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
-        OdinExpression odinExpression = getFirstExpressionOfVariable(odinFile, procedureName, variableName);
+        OdinExpression odinExpression = findFirstExpressionOfVariable(odinFile, procedureName, variableName);
         return OdinInferenceEngine.doInferType(odinExpression);
     }
 
-    private static OdinExpression getFirstExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
+    private static OdinExpression findFirstExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         var shapeVariable = findFirstVariableDeclarationStatement(odinFile, procedureName,
                 variableName);
         return shapeVariable.getExpressionsList().getExpressionList().get(0);
     }
 
-    private static @NotNull OdinProcedureDeclarationStatement findFirstProcedure(OdinFile odinFile, String procedureName) {
+    private static @NotNull OdinProcedureDeclarationStatement findFirstProcedure(@NotNull OdinFile odinFile, String procedureName) {
         Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
                 OdinProcedureDeclarationStatement.class);
 
@@ -1187,6 +1196,22 @@ public class OdinParsingTest extends UsefulTestCase {
         assertNotNull(variable);
 
         return variable;
+    }
+
+    private static @NotNull TsOdinType inferTypeOfFirstExpressionInProcedure(OdinFile odinFile, String procedureName) {
+        OdinProcedureDeclarationStatement testTypeInference = findFirstProcedure(odinFile, procedureName);
+        OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) Objects.requireNonNull(testTypeInference.
+                        getProcedureDefinition()
+                        .getProcedureBody().getBlock()).getStatements()
+                .stream().filter(s -> s instanceof OdinExpressionStatement)
+                .findFirst().orElseThrow();
+
+        OdinExpression expression = odinExpressionStatement.getExpression();
+        OdinScope scope = OdinScopeResolver.resolveScope(expression);
+        if (expression != null) {
+            return OdinInferenceEngine.inferType(scope, expression);
+        }
+        return TsOdinType.UNKNOWN;
     }
 
 

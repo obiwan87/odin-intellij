@@ -67,15 +67,21 @@ poly_params :: proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val) -> (r1
 
 constants :: proc() {
     K :: 1
+
     p :: proc() { }
 
-    test_outer := 1
+    test_outer := S {}
+    p()
 
     {
-        test_inner = 1
+        test_inner := 1
         Kinner :: 1
     }
 
-    s :: struct { }
+    S :: struct { }
+
+}
+
+defers :: proc() {
 
 }

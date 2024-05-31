@@ -43,24 +43,26 @@ public class OdinSymbolFinder {
 
         OdinScope scope = new OdinScope();
         for (OdinSymbol symbol : symbols) {
-            PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
-
-            PsiElement commonParent = PsiTreeUtil.findCommonParent(position, declaredIdentifier);
-            if (commonParent == null) {
+            PositionCheckResult positionCheckResult = checkPosition(symbol, position);
+            if(!positionCheckResult.validPosition)
                 continue;
+
+            OdinDeclaration declaration = positionCheckResult.declaration();
+
+            if(declaration instanceof OdinConstantDeclaration constantDeclaration) {
+                // TODO these could also be global symbols, in fact, we can generalize getFileScopeDeclarations to this
+                List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(constantDeclaration);
+                scope.addAll(localSymbols);
             }
+        }
 
-            OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
-            // if the position is in the declaration itself, we can assume the identifier has not been really declared yet. skip
-            if (declaration == commonParent || declaration == null)
+        for (OdinSymbol symbol : symbols) {
+            PositionCheckResult positionCheckResult = checkPosition(symbol, position);
+            if(!positionCheckResult.validPosition)
                 continue;
 
-            // When the declaration is queried from above of where the declaration is in the tree,
-            // by definition, we do not add the symbol
-            boolean positionIsAboveDeclaration = PsiTreeUtil.isAncestor(position, declaration, false);
-            if(positionIsAboveDeclaration)
-                continue;
-
+            PsiElement commonParent = positionCheckResult.commonParent();
+            PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
             PsiElement containerOfSymbol = PsiTreeUtil.findPrevParent(commonParent, declaredIdentifier);
             PsiElement containerOfPosition = PsiTreeUtil.findPrevParent(commonParent, position);
 
@@ -151,4 +153,31 @@ public class OdinSymbolFinder {
     }
 
 
+    record PositionCheckResult(boolean validPosition, PsiElement commonParent, OdinDeclaration declaration) {
+
+    }
+
+    private static PositionCheckResult checkPosition(OdinSymbol symbol, PsiElement position) {
+        PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
+
+        // the position and the symbol MUST share a common parent
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(position, declaredIdentifier);
+        if (commonParent == null) {
+            return new PositionCheckResult(false, null, null);
+        }
+
+        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
+        // if the position is in the declaration itself, we can assume the identifier has not been really declared yet. skip
+        if (declaration == commonParent || declaration == null) {
+            return new PositionCheckResult(false, commonParent, declaration);
+        }
+
+        // When the declaration is queried from above of where the declaration is in the tree,
+        // by definition, we do not add the symbol
+        boolean positionIsAboveDeclaration = PsiTreeUtil.isAncestor(position, declaration, false);
+        if(positionIsAboveDeclaration)
+            return new PositionCheckResult(false, commonParent, declaration);
+
+        return new PositionCheckResult(true, commonParent, declaration);
+    }
 }
