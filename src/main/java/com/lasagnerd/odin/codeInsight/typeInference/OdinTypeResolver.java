@@ -246,7 +246,7 @@ public class OdinTypeResolver extends OdinVisitor {
         } else if (odinDeclaration instanceof OdinUnionDeclarationStatement unionDeclarationStatement) {
             return doResolveType(scope, identifier, odinDeclaration, unionDeclarationStatement.getUnionType());
         } else if (odinDeclaration instanceof OdinProcedureDeclarationStatement procedureDeclarationStatement) {
-            return doResolveType(scope, identifier, odinDeclaration, procedureDeclarationStatement.getProcedureType());
+            return doResolveType(scope, identifier, odinDeclaration, procedureDeclarationStatement.getProcedureDefinition().getProcedureType());
         } else if (odinDeclaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
             List<OdinExpression> expressionList = constantInitializationStatement.getExpressionsList().getExpressionList();
             if (!expressionList.isEmpty()) {

@@ -53,6 +53,10 @@ public class OdinScopeResolver {
         this.element = element;
     }
 
+    public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
+        return getFileScopeDeclarations(fileScope, getGlobalFileVisibility(fileScope));
+    }
+
     public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope, @NotNull OdinSymbol.OdinVisibility globalVisibility) {
         // Find all blocks that are not in a procedure
         List<OdinSymbol> fileScopeSymbols = new ArrayList<>();

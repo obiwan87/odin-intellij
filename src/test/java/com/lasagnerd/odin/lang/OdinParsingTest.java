@@ -49,10 +49,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.lasagnerd.odin.codeInsight.OdinReferenceResolver;
-import com.lasagnerd.odin.codeInsight.OdinScope;
-import com.lasagnerd.odin.codeInsight.OdinScopeResolver;
-import com.lasagnerd.odin.codeInsight.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -156,7 +153,7 @@ public class OdinParsingTest extends UsefulTestCase {
         Language language = definition.getFileNodeType().getLanguage();
         myLangParserDefinition.registerExtension(new KeyedLazyInstance<>() {
             @Override
-            public String getKey() {
+            public @NotNull String getKey() {
                 return language.getID();
             }
 
@@ -664,7 +661,7 @@ public class OdinParsingTest extends UsefulTestCase {
         assertNotNull(callExpression);
         OdinRefExpression expression = (OdinRefExpression) callExpression.getExpression();
 
-        PsiReference reference = expression.getIdentifier().getReference();
+        PsiReference reference = Objects.requireNonNull(expression.getIdentifier()).getReference();
         assertNotNull(reference);
         PsiElement resolvedReference = reference.resolve();
         assertInstanceOf(resolvedReference, OdinDeclaredIdentifier.class);
@@ -675,7 +672,10 @@ public class OdinParsingTest extends UsefulTestCase {
 
     private static @NotNull TsOdinType inferTypeOfFirstExpressionInProcedure(OdinFile odinFile, String procedureName) {
         OdinProcedureDeclarationStatement testTypeInference = findFirstProcedure(odinFile, procedureName);
-        OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) testTypeInference.getBlockStatements().stream().filter(s -> s instanceof OdinExpressionStatement)
+        OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) Objects.requireNonNull(testTypeInference.
+                        getProcedureDefinition()
+                        .getProcedureBody().getBlock()).getStatements()
+                .stream().filter(s -> s instanceof OdinExpressionStatement)
                 .findFirst().orElseThrow();
 
         OdinExpression expression = odinExpressionStatement.getExpression();
@@ -910,11 +910,257 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+
+    // Scope tests
+
+    public void testScoping() throws IOException {
+        // Assignment
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        {
+            OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(odinFile, "assignment", "test");
+            OdinExpression odinExpression = var.getExpressionsList().getExpressionList().get(0);
+
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(odinExpression);
+            assertNull(odinScope.getSymbol("test"));
+            assertNotNull(odinScope.getSymbol("x"));
+        }
+
+        // Partial scope
+        {
+            OdinExpression expression = getFirstExpressionOfVariable(odinFile, "partial_scope", "test");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+
+            assertNotNull(odinScope.getSymbol("x"));
+            assertNull(odinScope.getSymbol("y"));
+        }
+
+        // Conditional block
+        {
+
+            // if branch
+            {
+                OdinExpression expression = getFirstExpressionOfVariable(odinFile, "conditional_block", "test_if");
+                OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+
+                assertNotNull(odinScope.getSymbol("y"));
+                assertNotNull(odinScope.getSymbol("x"));
+            }
+
+            // else-if branch
+            {
+                OdinExpression expression = getFirstExpressionOfVariable(odinFile, "conditional_block", "test_else_if");
+                OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+
+                assertNotNull(odinScope.getSymbol("z"));
+                assertNotNull(odinScope.getSymbol("x"));
+                assertNull(odinScope.getSymbol("y"));
+            }
+
+            // else branch
+            {
+                OdinExpression expression = getFirstExpressionOfVariable(odinFile, "conditional_block", "test_else");
+                OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+
+                assertNotNull(odinScope.getSymbol("z"));
+                assertNotNull(odinScope.getSymbol("x"));
+                assertNotNull(odinScope.getSymbol("w"));
+                assertNull(odinScope.getSymbol("y"));
+            }
+
+
+            // Check visibility in conditional expressions
+            {
+                OdinProcedureDeclarationStatement proc = findFirstProcedure(odinFile, "conditional_block");
+                // if
+                {
+                    OdinIfBlock odinIfBlock = PsiTreeUtil.findChildOfType(proc, OdinIfBlock.class);
+                    assertNotNull(odinIfBlock);
+                    assertNotNull(odinIfBlock.getCondition());
+                    {
+                        OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(odinIfBlock.getCondition());
+                        assertNotNull(odinScope.getSymbol("x"));
+                    }
+                    assertNotNull(odinIfBlock.getControlFlowInit());
+                    {
+                        OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(odinIfBlock.getControlFlowInit());
+                        assertNull(odinScope.getSymbol("x"));
+                    }
+                }
+
+
+                OdinElseBlock odinElseBlock = PsiTreeUtil.findChildOfType(proc, OdinElseBlock.class);
+                assertNotNull(odinElseBlock);
+                assertNotNull(odinElseBlock.getIfBlock());
+                assertNotNull(odinElseBlock.getIfBlock().getCondition());
+                {
+                    OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(odinElseBlock.getIfBlock().getCondition());
+                    assertNotNull(odinScope.getSymbol("x"));
+                    assertNotNull(odinScope.getSymbol("z"));
+                }
+
+                assertNotNull(odinElseBlock.getIfBlock().getControlFlowInit());
+                {
+                    OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(odinElseBlock.getIfBlock().getControlFlowInit());
+                    assertNotNull(odinScope.getSymbol("x"));
+                    assertNull(odinScope.getSymbol("z"));
+                }
+            }
+        }
+
+        // Shadowing
+        {
+            OdinProcedureDeclarationStatement proc = findFirstProcedure(odinFile, "shadowing");
+            OdinBlock block = proc.getProcedureDefinition().getProcedureBody().getBlock();
+            assertNotNull(block);
+
+            OdinBlock shadowingBlock = PsiTreeUtil.findChildOfType(block.getStatementList(), OdinBlock.class);
+            assertNotNull(shadowingBlock);
+
+            // Check that expression of x that shadows outer x, only sees outer x
+            {
+                OdinVariableInitializationStatement shadowingX = PsiTreeUtil.findChildOfType(shadowingBlock, OdinVariableInitializationStatement.class);
+                assertNotNull(shadowingX);
+                OdinExpression odinExpression = shadowingX.getExpressionsList().getExpressionList().get(0);
+                OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(odinExpression);
+                OdinSymbol symbol = odinScope.getSymbol("x");
+                assertNotNull(symbol);
+                PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
+                OdinVariableInitializationStatement variableInitializationStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinVariableInitializationStatement.class);
+                assertNotNull(variableInitializationStatement);
+                assertEquals(variableInitializationStatement.getText(), "x := 1");
+            }
+
+            // Check that expression of y, only sees inner x
+            {
+                OdinVariableInitializationStatement y = findFirstVariable(shadowingBlock, "y");
+                OdinExpression odinExpression = y.getExpressionsList().getExpressionList().get(0);
+                OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(odinExpression);
+                OdinSymbol symbol = odinScope.getSymbol("x");
+                assertNotNull(symbol);
+                PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
+                OdinVariableInitializationStatement variableInitializationStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinVariableInitializationStatement.class);
+                assertNotNull(variableInitializationStatement);
+                assertEquals(variableInitializationStatement.getText(), "x := x");
+            }
+        }
+
+        // File scope
+        {
+            OdinExpression expression = getFirstExpressionOfVariable(odinFile, "file_scope", "test");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+
+            assertNotNull(odinScope.getSymbol("assignment"));
+            assertNotNull(odinScope.getSymbol("partial_scope"));
+            assertNotNull(odinScope.getSymbol("conditional_block"));
+            assertNotNull(odinScope.getSymbol("shadowing"));
+            assertNotNull(odinScope.getSymbol("file_scope"));
+            assertNotNull(odinScope.getSymbol("fmt"));
+            assertNotNull(odinScope.getSymbol("MyStruct"));
+        }
+
+
+
+    }
+
+    public void testScoping_params() throws IOException {
+        // Procedure parameters
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        {
+            OdinExpression expression = getFirstExpressionOfVariable(odinFile, "params", "test");
+            OdinScope visibleSymbols = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(visibleSymbols.getSymbol("x"));
+            assertNotNull(visibleSymbols.getSymbol("y"));
+            assertNotNull(visibleSymbols.getSymbol("z"));
+            assertNotNull(visibleSymbols.getSymbol("u"));
+            assertNotNull(visibleSymbols.getSymbol("v"));
+            assertNotNull(visibleSymbols.getSymbol("w"));
+            assertNotNull(visibleSymbols.getSymbol("my_struct"));
+            assertNotNull(visibleSymbols.getSymbol("k"));
+
+            // Return parameters
+            assertNotNull(visibleSymbols.getSymbol("r1"));
+            assertNotNull(visibleSymbols.getSymbol("r2"));
+            assertNotNull(visibleSymbols.getSymbol("r3"));
+            assertNotNull(visibleSymbols.getSymbol("r4"));
+
+            // Procedure itself
+            assertNotNull(visibleSymbols.getSymbol("params"));
+        }
+
+        {
+            OdinExpression expression = getFirstExpressionOfVariable(odinFile, "poly_params", "test");
+            OdinScope visibleSymbols = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(visibleSymbols.getSymbol("T"));
+            assertNotNull(visibleSymbols.getSymbol("Key"));
+            assertNotNull(visibleSymbols.getSymbol("Val"));
+        }
+
+        {
+            OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, "poly_params");
+            List<OdinParamEntry> parameters = procedure.getProcedureDefinition().getProcedureType().getParamEntryList();
+
+            // proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val)
+            {
+                OdinParamEntry paramEntry = parameters.get(0); // param "t"
+                OdinScope visibleSymbols = OdinSymbolFinder.doFindVisibleSymbols(paramEntry);
+                assertNull(visibleSymbols.getSymbol("T"));
+                assertNull(visibleSymbols.getSymbol("Key"));
+                assertNull(visibleSymbols.getSymbol("Val"));
+            }
+
+            // proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val)
+            {
+                OdinParamEntry paramEntry = parameters.get(1); // param "t"
+                {
+                    OdinScope visibleSymbols = OdinSymbolFinder.doFindVisibleSymbols(paramEntry);
+                    assertNotNull(visibleSymbols.getSymbol("T"));
+                    assertNull(visibleSymbols.getSymbol("Key"));
+                    assertNull(visibleSymbols.getSymbol("Val"));
+                }
+                // Constrained type $Val/Key
+                {
+                    OdinConstrainedType constrainedType = PsiTreeUtil.findChildOfType(paramEntry, OdinConstrainedType.class);
+                    OdinScope visibleSymbols = OdinSymbolFinder.doFindVisibleSymbols(constrainedType);
+                    assertNotNull(visibleSymbols.getSymbol("T"));
+                    assertNotNull(visibleSymbols.getSymbol("Key"));
+                    assertNull(visibleSymbols.getSymbol("Value"));
+                }
+            }
+
+            // proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val)
+            {
+                OdinParamEntry paramEntry = parameters.get(2); // param "t"
+                OdinScope visibleSymbols = OdinSymbolFinder.doFindVisibleSymbols(paramEntry);
+                assertNotNull(visibleSymbols.getSymbol("T"));
+                assertNotNull(visibleSymbols.getSymbol("Key"));
+                assertNotNull(visibleSymbols.getSymbol("Val"));
+            }
+
+            // Return params -> (r1: T, r2: Val, r3: Key)
+            OdinReturnParameters returnParameters = procedure.getProcedureDefinition().getProcedureType().getReturnParameters();
+            assertNotNull(returnParameters);
+            assertNotNull(returnParameters.getParamEntries());
+            List<OdinParamEntry> returnParams = returnParameters.getParamEntries().getParamEntryList();
+            {
+                for (OdinParamEntry returnParam : returnParams) {
+                    OdinScope visibleSymbols = OdinSymbolFinder.doFindVisibleSymbols(returnParam);
+                    assertNotNull(visibleSymbols.getSymbol("T"));
+                    assertNotNull(visibleSymbols.getSymbol("Key"));
+                    assertNotNull(visibleSymbols.getSymbol("Val"));
+                }
+            }
+        }
+    }
+
     private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
+        OdinExpression odinExpression = getFirstExpressionOfVariable(odinFile, procedureName, variableName);
+        return OdinInferenceEngine.doInferType(odinExpression);
+    }
+
+    private static OdinExpression getFirstExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         var shapeVariable = findFirstVariableDeclarationStatement(odinFile, procedureName,
                 variableName);
-        OdinExpression odinExpression = shapeVariable.getExpressionsList().getExpressionList().get(0);
-        return OdinInferenceEngine.doInferType(odinExpression);
+        return shapeVariable.getExpressionsList().getExpressionList().get(0);
     }
 
     private static @NotNull OdinProcedureDeclarationStatement findFirstProcedure(OdinFile odinFile, String procedureName) {
@@ -929,10 +1175,14 @@ public class OdinParsingTest extends UsefulTestCase {
     private static @NotNull OdinVariableInitializationStatement findFirstVariableDeclarationStatement(OdinFile odinFile, String procedureName, String variableName) {
         OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, procedureName);
         assertNotNull(procedure);
-        List<OdinStatement> statements = procedure.getBlockStatements();
-        OdinVariableInitializationStatement variable = (OdinVariableInitializationStatement) statements.stream()
-                .filter(s -> s instanceof OdinVariableInitializationStatement)
-                .filter(v -> ((OdinVariableInitializationStatement) v).getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
+        return findFirstVariable(procedure, variableName);
+    }
+
+    private static @NotNull OdinVariableInitializationStatement findFirstVariable(PsiElement parent, String variableName) {
+        Collection<OdinVariableInitializationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinVariableInitializationStatement.class);
+
+        OdinVariableInitializationStatement variable = vars.stream()
+                .filter(v -> v.getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
                 .findFirst().orElse(null);
         assertNotNull(variable);
 

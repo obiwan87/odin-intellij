@@ -561,7 +561,7 @@ subExpression
         if (odinDeclaration instanceof OdinProcedureDeclarationStatement procedure) {
             TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(PROCEDURE);
             tsOdinMetaType.setDeclaration(procedure);
-            tsOdinMetaType.setType(procedure.getProcedureType());
+            tsOdinMetaType.setType(procedure.getProcedureDefinition().getProcedureType());
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
             tsOdinMetaType.setName(declaredIdentifier.getName());
             return tsOdinMetaType;
