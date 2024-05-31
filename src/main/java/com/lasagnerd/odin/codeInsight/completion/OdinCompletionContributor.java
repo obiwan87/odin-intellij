@@ -289,55 +289,17 @@ public class OdinCompletionContributor extends CompletionContributor {
 
     @NotNull
     private static LookupElementBuilder procedureLookupElement(LookupElementBuilder element, OdinProcedureDeclarationStatement declaringProcedure) {
-        var params = declaringProcedure.getProcedureType().getParamEntryList();
+        var params = declaringProcedure.getProcedureDefinition().getProcedureType().getParamEntryList();
         StringBuilder tailText = new StringBuilder("(");
         String paramList = params.stream().map(PsiElement::getText).collect(Collectors.joining(", "));
         tailText.append(paramList);
         tailText.append(")");
         element = element.withTailText(tailText.toString());
 
-        OdinReturnParameters returnType = declaringProcedure.getProcedureType().getReturnParameters();
+        OdinReturnParameters returnType = declaringProcedure.getProcedureDefinition().getProcedureType().getReturnParameters();
         if (returnType != null) {
             element = element.withTypeText(returnType.getText());
         }
         return element;
     }
-
-    // TODO Doesn't work anymore
-    private static void findCompletionsForStruct(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral) {
-        // Use type resolver
-        if (compoundLiteral == null || !(compoundLiteral.getType() instanceof OdinQualifiedType typeRef)) {
-            return;
-        }
-
-        var structTypeExpression = (OdinQualifiedType) typeRef.getType();
-        var identifier = structTypeExpression.getIdentifier();
-        PsiElement reference = Objects.requireNonNull(identifier.getReference()).resolve();
-
-        if (reference == null || !(reference.getParent() instanceof OdinStructDeclarationStatement structDeclarationStatement)) {
-            return;
-        }
-
-        String structName = structDeclarationStatement.getDeclaredIdentifier().getText();
-        OdinStructBody structBody = structDeclarationStatement.getStructType().getStructBlock().getStructBody();
-        if (structBody == null) {
-            return;
-        }
-
-        List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
-
-        for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarationStatementList) {
-            String typeOfField = fieldDeclaration.getType().getText();
-            for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifierList()) {
-                LookupElementBuilder element = LookupElementBuilder.create(declaredIdentifier)
-                        .withIcon(ExpUiIcons.Nodes.Property)
-                        .withBoldness(true)
-                        .withTypeText(typeOfField)
-                        .withTailText(" -> " + structName);
-
-                result.addElement(PrioritizedLookupElement.withPriority(element, 100));
-            }
-        }
-    }
-
 }

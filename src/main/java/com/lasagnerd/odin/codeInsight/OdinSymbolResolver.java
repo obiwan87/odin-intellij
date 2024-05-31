@@ -28,7 +28,7 @@ public class OdinSymbolResolver extends OdinVisitor {
                     declaration.set(odinDeclaration);
                 }
             }
-            return parent instanceof OdinFileScope || parent instanceof OdinScopeBlock;
+            return parent instanceof OdinScopeBlock;
         });
 
         if(declaringParent instanceof OdinFileScope fileScope) {
@@ -69,6 +69,11 @@ public class OdinSymbolResolver extends OdinVisitor {
     }
 
     @Override
+    public void visitUnnamedParameter(@NotNull OdinUnnamedParameter o) {
+        addPolymorphicTypes(o);
+    }
+
+    @Override
     public void visitParameterInitialization(@NotNull OdinParameterInitialization o) {
         boolean using = o.getParameter().getUsing() != null;
         OdinType type = null;
@@ -87,6 +92,7 @@ public class OdinSymbolResolver extends OdinVisitor {
 
             symbols.add(odinSymbol);
         }
+        addPolymorphicTypes(o);
     }
 
     @Override
@@ -99,6 +105,13 @@ public class OdinSymbolResolver extends OdinVisitor {
             symbol.setPsiType(psiType);
             symbols.add(symbol);
         }
+
+        addPolymorphicTypes(o);
+    }
+
+    private void addPolymorphicTypes(OdinParameterDeclaration parameterDeclaration) {
+        Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(parameterDeclaration, OdinPolymorphicType.class);
+        polymorphicTypes.forEach(t -> symbols.add(new OdinSymbol(t.getDeclaredIdentifier())));
     }
 
     @Override

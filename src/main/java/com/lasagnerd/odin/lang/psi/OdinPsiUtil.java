@@ -24,7 +24,13 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinImportDeclarationStatement> getImportStatements(OdinFileScope self) {
-        return self.getImportStatementsContainer().getImportDeclarationStatementList();
+        List<OdinImportDeclarationStatement> importDeclarationStatementList = new ArrayList<>(self.getImportStatementsContainer().getImportDeclarationStatementList());
+        self.getFileScopeStatementList().getStatementList().stream()
+                .map(s -> s instanceof OdinImportDeclarationStatement)
+                .map(OdinImportDeclarationStatement.class::cast)
+                .forEach(importDeclarationStatementList::add);
+
+        return importDeclarationStatementList;
     }
 
     // OdinDeclaration
@@ -151,7 +157,7 @@ public class OdinPsiUtil {
         return importStatement.getImportInfo().packageName();
     }
 
-    public static PsiElement setName(OdinImportDeclarationStatement importStatement, @NotNull String name) {
+    public static PsiElement setName(OdinImportDeclarationStatement importStatement, @NotNull String ignored) {
         return importStatement;
     }
 
@@ -234,7 +240,7 @@ public class OdinPsiUtil {
     // Scope Blocks
 
     public static List<OdinStatement> getBlockStatements(OdinProcedureDeclarationStatement procedureDeclarationStatement) {
-        OdinBlock block = procedureDeclarationStatement.getProcedureBody().getBlock();
+        OdinBlock block = procedureDeclarationStatement.getProcedureDefinition().getProcedureBody().getBlock();
         if (block != null) {
             return block.getStatements();
         }
@@ -266,7 +272,7 @@ public class OdinPsiUtil {
 
     public static List<OdinStatement> getBlockStatements(OdinElseBlock elseBlock) {
         OdinStatementBody statementBody = elseBlock.getStatementBody();
-        return statementBody != null? doGetBlockStatements(statementBody)
+        return statementBody != null ? doGetBlockStatements(statementBody)
                 : Objects.requireNonNull(elseBlock.getIfBlock()).getBlockStatements();
     }
 
@@ -288,7 +294,7 @@ public class OdinPsiUtil {
     // Procedures
 
     public static List<OdinSymbol> getSymbols(OdinProcedureDeclarationStatement procedureDeclarationStatement) {
-        OdinProcedureType procedureType = procedureDeclarationStatement.getProcedureType();
+        OdinProcedureType procedureType = procedureDeclarationStatement.getProcedureDefinition().getProcedureType();
         return doGetProcedureTypeSymbols(procedureType);
     }
 
@@ -332,56 +338,6 @@ public class OdinPsiUtil {
 
     // Control flow blocks
 
-    public static List<OdinSymbol> getSymbols(OdinIfBlock ifBlock) {
-        OdinControlFlowInit controlFlowInit = ifBlock.getControlFlowInit();
-        if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
-            return OdinSymbolResolver.getLocalSymbols(odinDeclaration);
-        }
-        return Collections.emptyList();
-    }
-
-//    public static List<OdinSymbol> getSymbols(OdinElseIfBlock elseIfBlock) {
-//        List<OdinSymbol> specs = new ArrayList<>();
-//        OdinControlFlowInit controlFlowInit = elseIfBlock.getControlFlowInit();
-//        if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
-//            specs.addAll(OdinSymbolResolver.getLocalSymbols(odinDeclaration));
-//        }
-//        addSpecsOfPreviousBlocks(elseIfBlock, specs);
-//
-//        return specs;
-//    }
-//
-    public static List<OdinSymbol> getSymbols(OdinElseBlock elseBlock) {
-        List<OdinSymbol> specs = new ArrayList<>();
-//        addSpecsOfPreviousBlocks(elseBlock, specs);
-        return specs;
-    }
-//
-//    private static void addSpecsOfPreviousBlocks(PsiElement conditionalBlock, List<OdinSymbol> specs) {
-//        PsiElement prevSibling;
-//        PsiElement current = conditionalBlock;
-//        while ((prevSibling = current.getPrevSibling()) != null) {
-//            if (prevSibling instanceof OdinElseIfBlock elseIfBlocSibling) {
-//                specs.addAll(elseIfBlocSibling.getSymbols());
-//                break;
-//            }
-//
-//            if (prevSibling instanceof OdinIfBlock ifBlock) {
-//                specs.addAll(ifBlock.getSymbols());
-//                break;
-//            }
-//            current = prevSibling;
-//        }
-//    }
-
-    public static List<OdinSymbol> getSymbols(OdinForBlock forBlock) {
-        OdinControlFlowInit controlFlowInit = forBlock.getControlFlowInit();
-        if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration odinDeclaration) {
-            return OdinSymbolResolver.getLocalSymbols(odinDeclaration);
-        }
-        return Collections.emptyList();
-    }
-
     public static List<OdinSymbol> getSymbols(OdinForInBlock forInStatement) {
         List<OdinSymbol> symbols = new ArrayList<>();
         for (var forInParameter : forInStatement.getForInParameterList()) {
@@ -389,6 +345,30 @@ public class OdinPsiUtil {
             symbols.add(spec);
         }
         return symbols;
+    }
+
+    public static List<OdinParamEntry> getParamEntryList(OdinProcedureType procedureType) {
+        if (procedureType.getParamEntries() != null)
+            return procedureType.getParamEntries().getParamEntryList();
+        return Collections.emptyList();
+    }
+
+    public static List<OdinParamEntry> getParamEntryList(OdinStructType structType) {
+        if (structType.getParamEntries() != null)
+            return structType.getParamEntries().getParamEntryList();
+        return Collections.emptyList();
+    }
+
+    public static List<OdinParamEntry> getParamEntryList(OdinUnionType unionType) {
+        if (unionType.getParamEntries() != null)
+            return unionType.getParamEntries().getParamEntryList();
+        return Collections.emptyList();
+    }
+
+    public static List<OdinParamEntry> getParamEntryList(OdinReturnParameters returnParameters) {
+        if (returnParameters.getParamEntries() != null)
+            return returnParameters.getParamEntries().getParamEntryList();
+        return Collections.emptyList();
     }
 
 }

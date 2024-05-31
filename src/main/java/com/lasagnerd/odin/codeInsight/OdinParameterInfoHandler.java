@@ -137,7 +137,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
 
     @Override
     public void updateUI(OdinProcedureDeclarationStatement p, @NotNull ParameterInfoUIContext context) {
-        List<OdinParamEntry> parameters = p.getProcedureType().getParamEntryList();
+        List<OdinParamEntry> parameters = p.getProcedureDefinition().getProcedureType().getParamEntryList();
         // Each entry can declare several parameters. In order to make navigation easier we flatten the list.
 
         List<String> params = new ArrayList<>();

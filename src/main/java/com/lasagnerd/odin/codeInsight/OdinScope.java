@@ -8,14 +8,15 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 
 @Getter
 public class OdinScope {
+
+    @Setter
+    OdinScope parentScope;
+
     @Setter
     private String packagePath;
     public static final OdinScope EMPTY = new OdinScope();
@@ -39,12 +40,17 @@ public class OdinScope {
 
     @Nullable
     public OdinSymbol getSymbol(String name) {
-        return symbolTable.get(name);
+
+        OdinSymbol odinSymbol = symbolTable.get(name);
+        if(odinSymbol != null)
+            return odinSymbol;
+
+        return parentScope != null? parentScope.getSymbol(name) : null;
     }
 
     @Nullable
     public PsiNamedElement getNamedElement(String name) {
-        OdinSymbol odinSymbol = symbolTable.get(name);
+        OdinSymbol odinSymbol = getSymbol(name);
         if(odinSymbol != null)
             return odinSymbol.getDeclaredIdentifier();
         return null;
