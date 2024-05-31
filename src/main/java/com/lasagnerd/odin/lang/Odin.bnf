@@ -170,7 +170,8 @@
 
   methods('.*([iI]nitialization|[dD]eclaration).*') = [getDeclaredIdentifiers]
   implements('.*([iI]nitialization|[dD]eclaration).*') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
-
+  implements('(procedure|struct|union)DeclarationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
+  implements('constantInitializationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
   psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
 }
 
