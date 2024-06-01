@@ -654,7 +654,7 @@ controlFlowInit                  ::= assignmentStatement
                                          | callExpression
 
 condition                            ::= expression
-doStatement                          ::= DO statement
+doStatement                          ::= DO statement {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 statementBody                        ::= block|doStatement
 
 // For
@@ -664,7 +664,7 @@ forBlock                             ::= FOR forHead statementBody {implements=[
 forUpdate                            ::= assignmentStatement | callExpression
 
 // For-In
-forInStatement                       ::= [directive] [label] forInBlock
+forInStatement                       ::= [directive] [label] forInBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 forInBlock                           ::= FOR <<enterNoBlockMode>> [forInParameter (COMMA forInParameter)*] IN expression <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 forInParameter                       ::= AND? declaredIdentifier
 
@@ -682,7 +682,11 @@ if                                   ::= IF_TOKEN
 else                                 ::= ELSE_TOKEN
 
 // Switch
-switchStatement                      ::= [directive] [label]  SWITCH IN? switchHead switchBody
+switchStatement                      ::= [directive] [label] (switchInBlock|switchBlock)
+
+switchInBlock                        ::= SWITCH declaredIdentifier IN expression switchBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+
+switchBlock                          ::= SWITCH switchHead switchBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 private switchHead                   ::= <<enterNoBlockMode>> [[controlFlowInit SEMICOLON] [expression]] <<exitNoBlockMode>>
 switchBody                           ::= eos? blockStart switchCases blockEnd
 switchCases                          ::= switchCase*

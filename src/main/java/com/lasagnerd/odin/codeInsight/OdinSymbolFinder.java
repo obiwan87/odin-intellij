@@ -5,6 +5,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -44,12 +45,12 @@ public class OdinSymbolFinder {
         OdinScope scope = new OdinScope();
         for (OdinSymbol symbol : symbols) {
             PositionCheckResult positionCheckResult = checkPosition(symbol, position);
-            if(!positionCheckResult.validPosition)
+            if (!positionCheckResult.validPosition)
                 continue;
 
             OdinDeclaration declaration = positionCheckResult.declaration();
 
-            if(declaration instanceof OdinConstantDeclaration constantDeclaration) {
+            if (declaration instanceof OdinConstantDeclaration constantDeclaration) {
                 // TODO these could also be global symbols, in fact, we can generalize getFileScopeDeclarations to this
                 List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(constantDeclaration);
                 scope.addAll(localSymbols);
@@ -58,7 +59,7 @@ public class OdinSymbolFinder {
 
         for (OdinSymbol symbol : symbols) {
             PositionCheckResult positionCheckResult = checkPosition(symbol, position);
-            if(!positionCheckResult.validPosition)
+            if (!positionCheckResult.validPosition)
                 continue;
 
             PsiElement commonParent = positionCheckResult.commonParent();
@@ -75,7 +76,7 @@ public class OdinSymbolFinder {
                 scope.add(symbol);
             }
 
-            if(scopeCondition.match(scope))
+            if (scopeCondition.match(scope))
                 return scope;
         }
 
@@ -95,10 +96,7 @@ public class OdinSymbolFinder {
         }
 
         if (containingScopeBlock instanceof OdinIfBlock odinIfBlock) {
-            OdinControlFlowInit controlFlowInit = odinIfBlock.getControlFlowInit();
-            if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration declaration) {
-                symbols.addAll(OdinSymbolResolver.getLocalSymbols(declaration));
-            }
+            addControlFlowInit(odinIfBlock.getControlFlowInit(), symbols);
         }
 
         if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
@@ -109,9 +107,9 @@ public class OdinSymbolFinder {
                 symbols.addAll(OdinSymbolResolver.getLocalSymbols(declaration));
             }
 
-            if(procedureType.getReturnParameters() != null) {
+            if (procedureType.getReturnParameters() != null) {
                 OdinParamEntries returnParamEntries = procedureType.getReturnParameters().getParamEntries();
-                if(returnParamEntries != null) {
+                if (returnParamEntries != null) {
                     for (OdinParamEntry paramEntry : returnParamEntries.getParamEntryList()) {
                         OdinDeclaration declaration = paramEntry.getParameterDeclaration();
                         symbols.addAll(OdinSymbolResolver.getLocalSymbols(declaration));
@@ -125,19 +123,41 @@ public class OdinSymbolFinder {
         if (containingScopeBlock instanceof OdinParamEntries paramEntries) {
             addParamEntries(paramEntries, symbols);
 
-            if(paramEntries.getParent() instanceof OdinReturnParameters returnParameters) {
+            if (paramEntries.getParent() instanceof OdinReturnParameters returnParameters) {
                 OdinProcedureType procedureType = PsiTreeUtil.getParentOfType(returnParameters, OdinProcedureType.class);
-                if(procedureType != null) {
-                    if(procedureType.getParamEntries() != null) {
+                if (procedureType != null) {
+                    if (procedureType.getParamEntries() != null) {
                         addParamEntries(procedureType.getParamEntries(), symbols);
                     }
                 }
             }
         }
 
+        if (containingScopeBlock instanceof OdinForBlock forBlock) {
+            addControlFlowInit(forBlock.getControlFlowInit(), symbols);
+        }
 
+        if(containingScopeBlock instanceof OdinForInBlock forInBlock) {
+            forInBlock.getForInParameterList().stream().map(
+                    p -> new OdinSymbol(p.getDeclaredIdentifier())
+            ).forEach(symbols::add);
+        }
+
+        if(containingScopeBlock instanceof OdinSwitchBlock switchBlock) {
+            addControlFlowInit(switchBlock.getControlFlowInit(), symbols);
+        }
+
+        if(containingScopeBlock instanceof OdinSwitchInBlock switchInBlock) {
+            symbols.add(new OdinSymbol(switchInBlock.getDeclaredIdentifier()));
+        }
 
         return symbols;
+    }
+
+    private static void addControlFlowInit(@Nullable OdinControlFlowInit controlFlowInit, List<OdinSymbol> symbols) {
+        if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration declaration) {
+            symbols.addAll(OdinSymbolResolver.getLocalSymbols(declaration));
+        }
     }
 
     private static void addParamEntries(OdinParamEntries paramEntries, List<OdinSymbol> symbols) {
@@ -145,7 +165,7 @@ public class OdinSymbolFinder {
         for (OdinParamEntry paramEntry : paramEntryList) {
             Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(paramEntry, OdinPolymorphicType.class);
             Collection<OdinDeclaredIdentifier> polymorphicIdentifiers = PsiTreeUtil.findChildrenOfType(paramEntry, OdinDeclaredIdentifier.class)
-                            .stream().filter(i -> i.getDollar() != null).toList();
+                    .stream().filter(i -> i.getDollar() != null).toList();
 
             polymorphicIdentifiers.forEach(i -> symbols.add(new OdinSymbol(i)));
             polymorphicTypes.forEach(t -> symbols.add(new OdinSymbol(t.getDeclaredIdentifier())));
@@ -175,7 +195,7 @@ public class OdinSymbolFinder {
         // When the declaration is queried from above of where the declaration is in the tree,
         // by definition, we do not add the symbol
         boolean positionIsAboveDeclaration = PsiTreeUtil.isAncestor(position, declaration, false);
-        if(positionIsAboveDeclaration)
+        if (positionIsAboveDeclaration)
             return new PositionCheckResult(false, commonParent, declaration);
 
         return new PositionCheckResult(true, commonParent, declaration);
