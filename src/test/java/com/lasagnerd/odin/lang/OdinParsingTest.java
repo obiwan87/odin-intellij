@@ -671,7 +671,6 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
 
-
     public void testPolymorphicTypesWithMultipleReturnTypes() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         var pointVariable = findFirstVariableDeclarationStatement(odinFile, "testTypeInference6", "point");
@@ -991,6 +990,16 @@ public class OdinParsingTest extends UsefulTestCase {
                     assertNull(odinScope.getSymbol("z"));
                 }
             }
+
+            // Check visibility in do <something>
+            {
+                OdinProcedureDeclarationStatement procedureDeclarationStatement = findFirstProcedure(odinFile, "conditional_block");
+                OdinDoStatement doStatement = PsiTreeUtil.findChildOfType(procedureDeclarationStatement, OdinDoStatement.class);
+                assertNotNull(doStatement);
+
+                OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(doStatement);
+                assertNotNull(odinScope.getSymbol("x"));
+            }
         }
 
         // Shadowing
@@ -1043,7 +1052,6 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(odinScope.getSymbol("fmt"));
             assertNotNull(odinScope.getSymbol("MyStruct"));
         }
-
 
 
     }
@@ -1156,6 +1164,86 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(odinScope.getSymbol("K"));
             assertNotNull(odinScope.getSymbol("p"));
             assertNotNull(odinScope.getSymbol("S"));
+        }
+    }
+
+    public void testScoping_for() throws IOException {
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "for_block", "test");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("i"));
+            assertNotNull(odinScope.getSymbol("j"));
+        }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "for_in_block", "test");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("index"));
+            assertNotNull(odinScope.getSymbol("val"));
+        }
+    }
+
+    public void testScoping_switch() throws IOException {
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "switch_block", "test_case_1");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("x"));
+            assertNotNull(odinScope.getSymbol("y"));
+            assertNotNull(odinScope.getSymbol("s"));
+        }
+
+        {
+            {
+                OdinExpression expression = findFirstExpressionOfVariable(odinFile, "switch_block", "test_case_2");
+                OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+                assertNull(odinScope.getSymbol("x"));
+                assertNotNull(odinScope.getSymbol("y"));
+                assertNotNull(odinScope.getSymbol("s"));
+            }
+
+            {
+                OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, "switch_block");
+                OdinSwitchBlock odinSwitchBlock = PsiTreeUtil.findChildOfType(procedure, OdinSwitchBlock.class);
+                assertNotNull(odinSwitchBlock);
+                {
+                    OdinExpression expression = odinSwitchBlock.getExpression();
+                    OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+                    assertNull(odinScope.getSymbol("x"));
+                    assertNotNull(odinScope.getSymbol("u"));
+                    assertNotNull(odinScope.getSymbol("s"));
+                    assertNull(odinScope.getSymbol("test_case_1"));
+                    assertNull(odinScope.getSymbol("test_case_2"));
+                }
+
+                OdinSwitchCase odinSwitchCase = odinSwitchBlock.getSwitchBody().getSwitchCases().getSwitchCaseList().get(0);
+                {
+                    OdinExpression expression = odinSwitchCase.getExpressionList().get(0);
+                    OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+                    assertNull(odinScope.getSymbol("x"));
+                    assertNotNull(odinScope.getSymbol("u"));
+                    assertNotNull(odinScope.getSymbol("s"));
+                    assertNull(odinScope.getSymbol("test_case_1"));
+                    assertNull(odinScope.getSymbol("test_case_2"));
+                }
+            }
+        }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "switch_in_block", "test_f32");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("x"));
+            assertNotNull(odinScope.getSymbol("t"));
+            assertNull(odinScope.getSymbol("test_i32"));
+        }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "switch_in_block", "test_i32");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("x"));
+            assertNotNull(odinScope.getSymbol("t"));
+            assertNull(odinScope.getSymbol("test_f32"));
         }
     }
 

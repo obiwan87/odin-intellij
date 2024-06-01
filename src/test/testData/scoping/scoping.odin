@@ -2,7 +2,8 @@ package scoping
 
 import "core:fmt"
 
-main :: proc() {}
+main :: proc() {
+}
 
 MyStruct :: struct {
 
@@ -22,7 +23,7 @@ partial_scope :: proc() {
 }
 
 conditional_block :: proc() {
-    if x := 1; x > 0 {
+    if x, v := 1, 1; x > 0 {
     // x should be in scope here
         y := x
         test_if := 1
@@ -35,6 +36,8 @@ conditional_block :: proc() {
         w := x + z
         test_else := 1
     }
+
+    if x:=0; x > 0 do fmt.println(x)
 }
 
 shadowing :: proc() {
@@ -68,9 +71,10 @@ poly_params :: proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val) -> (r1
 constants :: proc() {
     K :: 1
 
-    p :: proc() { }
+    p :: proc() {
+    }
 
-    test_outer := S {}
+    test_outer := S { }
     p()
 
     {
@@ -78,10 +82,54 @@ constants :: proc() {
         Kinner :: 1
     }
 
-    S :: struct { }
+    S :: struct {
+    }
 
 }
 
-defers :: proc() {
+for_block :: proc() {
+    for i, j := 0, 0; i <= 10; i += 1 {
+        test := 1
+        fmt.println(test)
+    }
+}
 
+for_in_block :: proc() {
+    arr := [?]i32 { 1, 2, 3, 4 }
+    for index, val in arr {
+        test := 1
+        fmt.println(test)
+    }
+}
+
+switch_block :: proc() {
+    u := 1
+    switch s := 1; u {
+    case 1:
+        y := 0
+        x := 0
+        fmt.println(y)
+        fmt.println(x)
+        test_case_1 := 1
+        fmt.println(test_case_1)
+    case 2:
+        y := 1
+        fmt.println(y)
+        test_case_2 := 1
+        fmt.println(test_case_2)
+
+    }
+}
+
+switch_in_block :: proc() {
+    U :: union {i32, f32}
+    x : U = 1
+    switch t in x {
+    case i32:
+        test_i32 := 1
+        fmt.println("it's an i32", test_i32)
+    case f32:
+        test_f32 := 1
+        fmt.println("it's an f32", test_f32)
+    }
 }
