@@ -171,6 +171,8 @@
   methods('.*([iI]nitialization|[dD]eclaration).*') = [getDeclaredIdentifiers]
   implements('.*([iI]nitialization|[dD]eclaration).*') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
   implements('(procedure|struct|union)DeclarationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
+  implements('usingStatement') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
+  methods('usingStatement') = [getDeclaredIdentifiers]
   implements('constantInitializationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
   psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
 }
@@ -226,9 +228,9 @@ attributeStatement                   ::= AT IDENTIFIER_TOKEN
                                          | AT arguments
 // Struct
 structDeclarationStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? structType
-structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> structBlock {methods=[getParamEntryList]}
+structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> structBlock {methods=[getParamEntryList] implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 structBlock                          ::= blockStart [structBody] blockEnd
-structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN]
+structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 fieldDeclarationStatement            ::= USING? directiveHead? declaredIdentifier (COMMA declaredIdentifier)* COLON type [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
 
 // Enum
@@ -237,11 +239,12 @@ enumType                             ::= ENUM [qualifiedType|simpleRefType] enum
 enumBlock                            ::= blockStart [enumBody] blockEnd
 enumBody                             ::= enumValueDeclaration (COMMA enumValueDeclaration)* [EOS_TOKEN|COMMA]
 enumValueDeclaration                 ::= declaredIdentifier [EQ expression]
+
 // Union
 unionDeclarationStatement            ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? unionType
-unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> unionBlock {methods=[getParamEntryList]}
+unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> unionBlock {methods=[getParamEntryList] implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 unionBlock                           ::= blockStart [unionBody] blockEnd
-unionBody                            ::= type (COMMA type)* [COMMA|EOS_TOKEN]
+unionBody                            ::= type (COMMA type)* [COMMA|EOS_TOKEN] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 
 // Bit Set
 bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator DISTINCT? bitSetType
@@ -665,8 +668,8 @@ forUpdate                            ::= assignmentStatement | callExpression
 
 // For-In
 forInStatement                       ::= [directive] [label] forInBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-forInBlock                           ::= FOR <<enterNoBlockMode>> [forInParameter (COMMA forInParameter)*] IN expression <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
-forInParameter                       ::= AND? declaredIdentifier
+forInBlock                           ::= FOR <<enterNoBlockMode>> [forInParameterDeclaration (COMMA forInParameterDeclaration)*] IN expression <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
+forInParameterDeclaration            ::= AND? declaredIdentifier
 
 // Conditional statement (=if-elseif-else)
 private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit] SEMICOLON] condition <<exitNoBlockMode>>
@@ -684,8 +687,8 @@ else                                 ::= ELSE_TOKEN
 // Switch
 switchStatement                      ::= [directive] [label] (switchInBlock|switchBlock)
 
-switchInBlock                        ::= SWITCH declaredIdentifier IN expression switchBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-
+switchInBlock                        ::= SWITCH switchTypeVariableDeclaration IN expression switchBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+switchTypeVariableDeclaration        ::= declaredIdentifier
 switchBlock                          ::= SWITCH switchHead switchBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 private switchHead                   ::= <<enterNoBlockMode>> [[controlFlowInit SEMICOLON] [expression]] <<exitNoBlockMode>>
 switchBody                           ::= eos? blockStart switchCases blockEnd

@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.codeInsight;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -9,55 +8,28 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class OdinSymbolResolver extends OdinVisitor {
 
     List<OdinSymbol> symbols = new ArrayList<>();
-    OdinSymbol.OdinVisibility defaultVisibility;
+    private final OdinSymbol.OdinVisibility defaultVisibility;
+    private final OdinScope scope;
 
-    private OdinSymbolResolver() {
-
-    }
-
-    public static OdinSymbol createSymbol(OdinDeclaredIdentifier declaredIdentifier) {
-        AtomicReference<OdinDeclaration> declaration = new AtomicReference<>();
-        PsiElement declaringParent = PsiTreeUtil.findFirstParent(declaredIdentifier, parent -> {
-            if(parent instanceof OdinDeclaration odinDeclaration) {
-                if(odinDeclaration.getDeclaredIdentifiers().contains(declaredIdentifier)) {
-                    declaration.set(odinDeclaration);
-                }
-            }
-            return parent instanceof OdinScopeBlock;
-        });
-
-        if(declaringParent instanceof OdinFileScope fileScope) {
-            Collection<OdinAttributeStatement> attributeStatements = PsiTreeUtil.findChildrenOfType(declaration.get(), OdinAttributeStatement.class);
-            OdinSymbol.OdinVisibility globalFileVisibility = OdinScopeResolver.getGlobalFileVisibility(fileScope);
-            return new OdinSymbol(declaredIdentifier, getVisibility(attributeStatements, globalFileVisibility));
-        }
-
-        if(declaringParent instanceof OdinScopeBlock) {
-            if(declaration.get() != null) {
-                if(declaration.get().getParent() instanceof OdinFileScopeStatementList fileScopeStatementList) {
-                    Collection<OdinAttributeStatement> attributeStatements = PsiTreeUtil.findChildrenOfType(declaration.get(), OdinAttributeStatement.class);
-                    OdinFileScope fileScopeStatementListParent = (OdinFileScope) fileScopeStatementList.getParent();
-                    OdinSymbol.OdinVisibility globalFileVisibility = OdinScopeResolver.getGlobalFileVisibility(fileScopeStatementListParent);
-                    return new OdinSymbol(declaredIdentifier, getVisibility(attributeStatements, globalFileVisibility));
-                }
-            }
-            return new OdinSymbol(declaredIdentifier, OdinSymbol.OdinVisibility.LOCAL);
-        }
-        return new OdinSymbol(declaredIdentifier);
+    public OdinSymbolResolver(OdinSymbol.OdinVisibility defaultVisibility, OdinScope scope) {
+        this.defaultVisibility = defaultVisibility;
+        this.scope = scope;
     }
 
     public static List<OdinSymbol> getLocalSymbols(OdinDeclaration odinDeclaration) {
-        return getSymbols(OdinSymbol.OdinVisibility.LOCAL, odinDeclaration);
+        return getLocalSymbols(odinDeclaration, OdinScope.EMPTY);
     }
 
-    public static List<OdinSymbol> getSymbols(@NotNull OdinSymbol.OdinVisibility defaultVisibility, OdinDeclaration odinDeclaration) {
-        OdinSymbolResolver odinSymbolResolver = new OdinSymbolResolver();
-        odinSymbolResolver.defaultVisibility = defaultVisibility;
+    public static List<OdinSymbol> getLocalSymbols(OdinDeclaration odinDeclaration, OdinScope odinScope) {
+        return getSymbols(OdinSymbol.OdinVisibility.LOCAL, odinDeclaration, odinScope);
+    }
+
+    public static List<OdinSymbol> getSymbols(@NotNull OdinSymbol.OdinVisibility defaultVisibility, OdinDeclaration odinDeclaration, OdinScope scope) {
+        OdinSymbolResolver odinSymbolResolver = new OdinSymbolResolver(defaultVisibility, scope);
         odinDeclaration.accept(odinSymbolResolver);
         if (odinSymbolResolver.symbols.isEmpty()) {
             for (OdinDeclaredIdentifier declaredIdentifier : odinDeclaration.getDeclaredIdentifiers()) {
@@ -70,7 +42,6 @@ public class OdinSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitUnnamedParameter(@NotNull OdinUnnamedParameter o) {
-        addPolymorphicTypes(o);
     }
 
     @Override
@@ -92,7 +63,6 @@ public class OdinSymbolResolver extends OdinVisitor {
 
             symbols.add(odinSymbol);
         }
-        addPolymorphicTypes(o);
     }
 
     @Override
@@ -105,13 +75,6 @@ public class OdinSymbolResolver extends OdinVisitor {
             symbol.setPsiType(psiType);
             symbols.add(symbol);
         }
-
-        addPolymorphicTypes(o);
-    }
-
-    private void addPolymorphicTypes(OdinParameterDeclaration parameterDeclaration) {
-        Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(parameterDeclaration, OdinPolymorphicType.class);
-        polymorphicTypes.forEach(t -> symbols.add(new OdinSymbol(t.getDeclaredIdentifier())));
     }
 
     @Override
@@ -185,7 +148,35 @@ public class OdinSymbolResolver extends OdinVisitor {
         this.symbols.add(symbol);
     }
 
-    private static @NotNull OdinSymbol.OdinVisibility getVisibility(@NotNull Collection<OdinAttributeStatement> attributeStatementList, OdinSymbol.OdinVisibility defaultVisibility) {
+    @Override
+    public void visitUsingStatement(@NotNull OdinUsingStatement o) {
+        List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeSymbols(o.getExpression(), this.scope);
+        symbols.addAll(typeSymbols);
+    }
+
+    @Override
+    public void visitForInParameterDeclaration(@NotNull OdinForInParameterDeclaration o) {
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.LOCAL);
+        odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.VARIABLE);
+        symbols.add(odinSymbol);
+    }
+
+    @Override
+    public void visitSwitchTypeVariableDeclaration(@NotNull OdinSwitchTypeVariableDeclaration o) {
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.LOCAL);
+        odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.VARIABLE);
+        symbols.add(odinSymbol);
+    }
+
+    @Override
+    public void visitPolymorphicType(@NotNull OdinPolymorphicType o) {
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.LOCAL);
+        odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.POLYMORPHIC_TYPE);
+        symbols.add(odinSymbol);
+    }
+
+    public static @NotNull OdinSymbol.OdinVisibility getVisibility(@NotNull Collection<OdinAttributeStatement> attributeStatementList,
+                                                                   OdinSymbol.OdinVisibility defaultVisibility) {
         OdinSymbol.OdinVisibility odinVisibility = OdinAttributeUtils.computeVisibility(attributeStatementList);
         return defaultVisibility == null ? odinVisibility : OdinSymbol.min(defaultVisibility, odinVisibility);
     }

@@ -10,8 +10,10 @@ import java.util.List;
 @Data
 public class OdinSymbol {
     // Can't be an OdinDeclared identifier because here we might have
-    @NotNull
     private final PsiNamedElement declaredIdentifier;
+    /**
+     * Used for symbols with initialization. Don't know if it actually belongs here
+     */
     OdinExpression valueExpression;
     OdinType psiType;
     OdinSymbolType symbolType;
@@ -19,12 +21,12 @@ public class OdinSymbol {
 
     private final OdinVisibility visibility;
 
-    public OdinSymbol(@NotNull PsiNamedElement declaredIdentifier, @NotNull OdinVisibility visibility) {
+    public OdinSymbol(PsiNamedElement declaredIdentifier, @NotNull OdinVisibility visibility) {
         this.declaredIdentifier = declaredIdentifier;
         this.visibility = visibility;
     }
 
-    public OdinSymbol(@NotNull PsiNamedElement declaredIdentifier) {
+    public OdinSymbol(PsiNamedElement declaredIdentifier) {
         this.declaredIdentifier = declaredIdentifier;
         this.visibility = OdinVisibility.PUBLIC;
     }
@@ -45,9 +47,11 @@ public class OdinSymbol {
         PROCEDURE,
         STRUCT,
         UNION,
+        ENUM_FIELD,
         CONSTANT,
         VARIABLE,
         PACKAGE_REFERENCE,
+        POLYMORPHIC_TYPE
     }
 
     public enum OdinVisibility {
@@ -64,5 +68,4 @@ public class OdinSymbol {
     public static OdinVisibility max(OdinVisibility v1, OdinVisibility v2) {
         return v1.ordinal() > v2.ordinal() ? v1 : v2;
     }
-
 }

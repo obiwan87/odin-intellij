@@ -11,16 +11,50 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.lasagnerd.odin.codeInsight.OdinScopeResolver;
 import com.lasagnerd.odin.codeInsight.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.OdinSymbolResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implements OdinDeclaredIdentifier, PsiNameIdentifierOwner {
     public OdinIdentifierOwner(@NotNull ASTNode node) {
         super(node);
+    }
+
+    public static OdinSymbol createSymbol(OdinDeclaredIdentifier declaredIdentifier) {
+        AtomicReference<OdinDeclaration> declaration = new AtomicReference<>();
+        PsiElement declaringParent = PsiTreeUtil.findFirstParent(declaredIdentifier, parent -> {
+            if(parent instanceof OdinDeclaration odinDeclaration) {
+                if(odinDeclaration.getDeclaredIdentifiers().contains(declaredIdentifier)) {
+                    declaration.set(odinDeclaration);
+                }
+            }
+            return parent instanceof OdinScopeBlock;
+        });
+
+        if(declaringParent instanceof OdinFileScope fileScope) {
+            Collection<OdinAttributeStatement> attributeStatements = PsiTreeUtil.findChildrenOfType(declaration.get(), OdinAttributeStatement.class);
+            OdinSymbol.OdinVisibility globalFileVisibility = OdinScopeResolver.getGlobalFileVisibility(fileScope);
+            return new OdinSymbol(declaredIdentifier, OdinSymbolResolver.getVisibility(attributeStatements, globalFileVisibility));
+        }
+
+        if(declaringParent instanceof OdinScopeBlock) {
+            if(declaration.get() != null) {
+                if(declaration.get().getParent() instanceof OdinFileScopeStatementList fileScopeStatementList) {
+                    Collection<OdinAttributeStatement> attributeStatements = PsiTreeUtil.findChildrenOfType(declaration.get(), OdinAttributeStatement.class);
+                    OdinFileScope fileScopeStatementListParent = (OdinFileScope) fileScopeStatementList.getParent();
+                    OdinSymbol.OdinVisibility globalFileVisibility = OdinScopeResolver.getGlobalFileVisibility(fileScopeStatementListParent);
+                    return new OdinSymbol(declaredIdentifier, OdinSymbolResolver.getVisibility(attributeStatements, globalFileVisibility));
+                }
+            }
+            return new OdinSymbol(declaredIdentifier, OdinSymbol.OdinVisibility.LOCAL);
+        }
+        return new OdinSymbol(declaredIdentifier);
     }
 
     @Override
@@ -56,7 +90,7 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
 
     @Override
     public @NotNull SearchScope getUseScope() {
-        OdinSymbol symbol = OdinSymbolResolver.createSymbol(this);
+        OdinSymbol symbol = createSymbol(this);
         switch (symbol.getVisibility()) {
             case LOCAL -> {
                 OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);

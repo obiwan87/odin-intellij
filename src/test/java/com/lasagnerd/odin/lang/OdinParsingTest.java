@@ -54,6 +54,7 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 
@@ -1244,6 +1245,63 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(odinScope.getSymbol("x"));
             assertNotNull(odinScope.getSymbol("t"));
             assertNull(odinScope.getSymbol("test_f32"));
+        }
+    }
+
+    public void testScoping_struct_union() throws IOException {
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        {
+            OdinProcedureDeclarationStatement proc = findFirstProcedure(odinFile, "structs_unions");
+            OdinStructDeclarationStatement struct = PsiTreeUtil.findChildOfType(proc, OdinStructDeclarationStatement.class);
+            assertNotNull(struct);
+            OdinStructBody structBody = struct.getStructType().getStructBlock().getStructBody();
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(structBody);
+            assertNotNull(odinScope.getSymbol("Key"));
+            assertNotNull(odinScope.getSymbol("Value"));
+        }
+
+        OdinProcedureDeclarationStatement proc = findFirstProcedure(odinFile, "structs_unions");
+        OdinUnionDeclarationStatement union = PsiTreeUtil.findChildOfType(proc, OdinUnionDeclarationStatement.class);
+        assertNotNull(union);
+        OdinUnionBody structBody = union.getUnionType().getUnionBlock().getUnionBody();
+        OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(structBody);
+        assertNotNull(odinScope.getSymbol("T1"));
+        assertNotNull(odinScope.getSymbol("T2"));
+    }
+
+    public void testScoping_recursiveLocalDefs() throws IOException {
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        {
+            OdinProcedureDeclarationStatement proc = findFirstProcedure(odinFile, "recursive_local_defs");
+            OdinProcedureDeclarationStatement localProc = PsiTreeUtil.findChildOfType(proc, OdinProcedureDeclarationStatement.class);
+            {
+                OdinVariableInitializationStatement testVar = findFirstVariable(localProc, "test");
+                OdinExpression odinExpression = testVar.getExpressionsList().getExpressionList().get(0);
+                OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(odinExpression);
+                assertNotNull(odinScope.getSymbol("p"));
+            }
+            {
+                OdinStructDeclarationStatement structVar = PsiTreeUtil.findChildOfType(proc, OdinStructDeclarationStatement.class);
+                assertNotNull(structVar);
+                OdinStructBody structBody = structVar.getStructType().getStructBlock().getStructBody();
+                assertNotNull(structBody);
+                List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
+                OdinFieldDeclarationStatement fieldDeclaration = fieldDeclarationStatementList.get(0);
+                OdinType type = fieldDeclaration.getType();
+                OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(type);
+
+                assertNotNull(odinScope.getSymbol("s"));
+            }
+        }
+    }
+
+    public void testScoping_usingStatement() throws IOException {
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_statement", "test");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("x"));
+            assertNotNull(odinScope.getSymbol("y"));
         }
     }
 

@@ -3,9 +3,9 @@ package com.lasagnerd.odin.lang.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.OdinImportInfo;
-import com.lasagnerd.odin.codeInsight.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.OdinSymbolResolver;
+import com.lasagnerd.odin.codeInsight.*;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -340,7 +340,7 @@ public class OdinPsiUtil {
 
     public static List<OdinSymbol> getSymbols(OdinForInBlock forInStatement) {
         List<OdinSymbol> symbols = new ArrayList<>();
-        for (var forInParameter : forInStatement.getForInParameterList()) {
+        for (var forInParameter : forInStatement.getForInParameterDeclarationList()) {
             OdinSymbol spec = new OdinSymbol(forInParameter.getDeclaredIdentifier());
             symbols.add(spec);
         }
@@ -371,4 +371,22 @@ public class OdinPsiUtil {
         return Collections.emptyList();
     }
 
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinUsingStatement usingStatement) {
+        OdinExpression expression = usingStatement.getExpression();
+        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+
+        OdinScope scopeProvidedByType = OdinInsightUtils.getScopeProvidedByType(tsOdinType);
+
+        return scopeProvidedByType.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
+                .map(OdinDeclaredIdentifier.class::cast)
+                .toList();
+    }
+
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinForInParameterDeclaration forInParameterDeclaration) {
+        return Collections.singletonList(forInParameterDeclaration.getDeclaredIdentifier());
+    }
+
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinSwitchTypeVariableDeclaration typeVariableDeclaration) {
+        return Collections.singletonList(typeVariableDeclaration.getDeclaredIdentifier());
+    }
 }
