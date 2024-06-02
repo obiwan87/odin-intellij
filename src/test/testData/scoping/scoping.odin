@@ -37,7 +37,7 @@ conditional_block :: proc() {
         test_else := 1
     }
 
-    if x:=0; x > 0 do fmt.println(x)
+    if x := 0; x > 0 do fmt.println(x)
 }
 
 shadowing :: proc() {
@@ -122,7 +122,9 @@ switch_block :: proc() {
 }
 
 switch_in_block :: proc() {
-    U :: union {i32, f32}
+    U :: union {
+        i32, f32
+    }
     x : U = 1
     switch t in x {
     case i32:
@@ -132,4 +134,39 @@ switch_in_block :: proc() {
         test_f32 := 1
         fmt.println("it's an f32", test_f32)
     }
+}
+
+structs_unions :: proc() {
+    S :: struct($Key, $Value: i32) {
+        x: Key,
+        y: Value
+    }
+
+    U :: union($T1, $T2: typeid) {
+        T1,
+        T2
+    }
+}
+
+recursive_local_defs :: proc() {
+    p :: proc() {
+        test := 1
+        fmt.println(test)
+    }
+
+    s :: struct {
+        next: ^s
+    }
+}
+
+using_statement :: proc() {
+    Point :: struct {
+        x, y: i32
+    }
+
+    p := Point { x = 1, y = 1 }
+    using p
+
+    test := 1
+    fmt.println(test)
 }

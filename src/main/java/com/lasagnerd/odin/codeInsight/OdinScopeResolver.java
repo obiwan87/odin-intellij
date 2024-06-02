@@ -69,7 +69,7 @@ public class OdinScopeResolver {
         while (!statementStack.isEmpty()) {
             PsiElement element = statementStack.pop();
             if (element instanceof OdinDeclaration declaration) {
-                List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(globalVisibility, declaration);
+                List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(globalVisibility, declaration, OdinScope.EMPTY);
                 fileScopeSymbols.addAll(symbols);
             } else {
                 getStatements(element).forEach(statementStack::push);
@@ -221,7 +221,7 @@ public class OdinScopeResolver {
 
             for (OdinStatement statement : scopeNode.getStatements()) {
                 if (statement instanceof OdinDeclaration declaration) {
-                    List<OdinSymbol> symbols = OdinSymbolResolver.getLocalSymbols(declaration)
+                    List<OdinSymbol> symbols = OdinSymbolResolver.getLocalSymbols(declaration, scope)
                             .stream()
                             .filter(matcher)
                             .toList();

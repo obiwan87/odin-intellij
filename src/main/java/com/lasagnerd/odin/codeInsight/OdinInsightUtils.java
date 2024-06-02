@@ -1,16 +1,19 @@
 package com.lasagnerd.odin.codeInsight;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPackageReferenceType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPointerType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.apache.commons.text.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class OdinInsightUtils {
@@ -115,9 +118,7 @@ public class OdinInsightUtils {
 
     @NotNull
     public static List<OdinSymbol> getEnumFields(OdinEnumDeclarationStatement enumDeclarationStatement) {
-        OdinEnumType enumType = enumDeclarationStatement.getEnumType();
-
-        return getEnumFields(enumType);
+        return getEnumFields(enumDeclarationStatement.getEnumType());
     }
 
     private static @NotNull List<OdinSymbol> getEnumFields(OdinEnumType enumType) {
@@ -128,21 +129,57 @@ public class OdinInsightUtils {
         if (enumBody == null)
             return Collections.emptyList();
 
-        return enumBody
-                .getEnumValueDeclarationList()
-                .stream()
-                .map(OdinEnumValueDeclaration::getDeclaredIdentifier)
-                .map(OdinSymbol::new)
-                .collect(Collectors.toList());
+        List<OdinSymbol> symbols = new ArrayList<>();
+        for (OdinEnumValueDeclaration odinEnumValueDeclaration : enumBody
+                .getEnumValueDeclarationList()) {
+            // TODO move to SymbolResolver
+            OdinDeclaredIdentifier identifier = odinEnumValueDeclaration.getDeclaredIdentifier();
+            OdinSymbol odinSymbol = new OdinSymbol(identifier);
+            odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.ENUM_FIELD);
+            odinSymbol.setPsiType(enumType);
+            odinSymbol.setValueExpression(odinEnumValueDeclaration.getExpression());
+            symbols.add(odinSymbol);
+        }
+        return symbols;
     }
 
     public static List<OdinSymbol> getStructFields(OdinStructDeclarationStatement structDeclarationStatement) {
+        return getStructFields(OdinScope.EMPTY, structDeclarationStatement);
+    }
+
+    public static List<OdinSymbol> getStructFields(OdinScope scope, OdinStructDeclarationStatement structDeclarationStatement) {
         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structDeclarationStatement);
 
-        return fieldDeclarationStatementList.stream()
-                .flatMap(x -> x.getDeclaredIdentifiers().stream())
-                .map(OdinSymbol::new)
-                .collect(Collectors.toList());
+        List<OdinSymbol> symbols = new ArrayList<>();
+        for (OdinFieldDeclarationStatement x : fieldDeclarationStatementList) {
+            for (OdinDeclaredIdentifier odinDeclaredIdentifier : x.getDeclaredIdentifiers()) {
+                OdinSymbol odinSymbol = new OdinSymbol(odinDeclaredIdentifier);
+                odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FIELD);
+                symbols.add(odinSymbol);
+                if (x.getUsing() != null) {
+                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, x.getType());
+                    TsOdinStructType structType;
+                    if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
+                        if (tsOdinPointerType.getDereferencedType() instanceof TsOdinStructType) {
+                            structType = (TsOdinStructType) tsOdinPointerType.getDereferencedType();
+                        } else {
+                            structType = null;
+                        }
+                    } else if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
+                        structType = tsOdinStructType;
+                    } else {
+                        structType = null;
+                    }
+
+                    if(structType != null) {
+                        List<OdinSymbol> structFields = getStructFields(structType.getScope(), (OdinStructDeclarationStatement) structType.getDeclaration());
+                        symbols.addAll(structFields);
+                    }
+                }
+
+            }
+        }
+        return symbols;
     }
 
     public static @NotNull List<OdinFieldDeclarationStatement> getStructFieldsDeclarationStatements(OdinStructDeclarationStatement structDeclarationStatement) {
@@ -236,6 +273,21 @@ public class OdinInsightUtils {
     public static OdinProcedureDeclarationStatement getDeclaringProcedure(OdinDeclaredIdentifier element) {
         return element.getParent() instanceof OdinProcedureDeclarationStatement ? (OdinProcedureDeclarationStatement) element.getParent() : null;
     }
+
+    public static List<OdinSymbol> getTypeSymbols(OdinExpression expression, OdinScope scope) {
+        TsOdinType tsOdinType = OdinInferenceEngine.inferType(scope, expression);
+        if (tsOdinType instanceof TsOdinStructType structType) {
+            return getStructFields((OdinStructDeclarationStatement) structType.getDeclaration());
+        }
+
+        if(tsOdinType instanceof TsOdinEnumType enumType) {
+            return getEnumFields((OdinEnumDeclarationStatement) enumType.getType());
+        }
+
+        return Collections.emptyList();
+    }
+
+
 
 
 }

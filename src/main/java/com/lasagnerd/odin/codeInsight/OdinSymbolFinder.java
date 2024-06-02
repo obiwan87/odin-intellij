@@ -7,7 +7,10 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public class OdinSymbolFinder {
     @FunctionalInterface
@@ -22,10 +25,10 @@ public class OdinSymbolFinder {
     public static OdinScope doFindVisibleSymbols(PsiElement position, ScopeCondition scopeCondition) {
         // 1. Find the starting point
         //  = a statement whose parent is a scope block
-        // 2. Get the parent and define a flattened view of statements/expressions
-        // 3. Check where the child is within that view
-        // 4. Include all symbols previous to that child
-        // 5. Set position to the parent and repeat recursively
+        // 2. Get the parent and define and get all declarations inside the scope block
+        // 3. Add all constant declarations as they are not dependent on the position within the scope block
+        // 4. Add all non-constant declarations, depending on whether the position is before or after
+        //    the declared symbol
 
         OdinScopeArea containingScopeBlock = PsiTreeUtil.getParentOfType(position, OdinScopeArea.class);
 
@@ -36,149 +39,160 @@ public class OdinSymbolFinder {
             return OdinScopeResolver.getFileScopeDeclarations(odinFileScope);
         }
 
+        OdinScope scope = new OdinScope();
+        OdinScope parentScope = doFindVisibleSymbols(containingScopeBlock, scopeCondition);
+        scope.setParentScope(parentScope);
+
         // Finds the child of the scope block, where of which this element is a child. If we find the parent, this is guaranteed
         // to be != null
-        List<OdinSymbol> symbols = getSymbols(containingScopeBlock);
+        List<OdinDeclaration> declarations = getDeclarations(containingScopeBlock);
 
-        // TODO Add constant symbols "::"
-
-        OdinScope scope = new OdinScope();
-        for (OdinSymbol symbol : symbols) {
-            PositionCheckResult positionCheckResult = checkPosition(symbol, position);
+        for (OdinDeclaration declaration : declarations) {
+            PositionCheckResult positionCheckResult = checkPosition(position, declaration, declaration);
             if (!positionCheckResult.validPosition)
                 continue;
-
-            OdinDeclaration declaration = positionCheckResult.declaration();
 
             if (declaration instanceof OdinConstantDeclaration constantDeclaration) {
                 // TODO these could also be global symbols, in fact, we can generalize getFileScopeDeclarations to this
-                List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(constantDeclaration);
+                List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(constantDeclaration, scope);
                 scope.addAll(localSymbols);
             }
-        }
 
-        for (OdinSymbol symbol : symbols) {
-            PositionCheckResult positionCheckResult = checkPosition(symbol, position);
-            if (!positionCheckResult.validPosition)
-                continue;
-
-            PsiElement commonParent = positionCheckResult.commonParent();
-            PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
-            PsiElement containerOfSymbol = PsiTreeUtil.findPrevParent(commonParent, declaredIdentifier);
-            PsiElement containerOfPosition = PsiTreeUtil.findPrevParent(commonParent, position);
-
-            // Now check if symbol is strictly a previous sibling of position
-            List<@NotNull PsiElement> childrenList = Arrays.stream(commonParent.getChildren()).toList();
-            int indexOfSymbol = childrenList.indexOf(containerOfSymbol);
-            int indexOfPosition = childrenList.indexOf(containerOfPosition);
-
-            if (indexOfPosition > indexOfSymbol) {
-                scope.add(symbol);
-            }
-
-            if (scopeCondition.match(scope))
+            if(scopeCondition.match(scope))
                 return scope;
         }
 
-        OdinScope parentScope = doFindVisibleSymbols(containingScopeBlock, scopeCondition);
-        scope.setParentScope(parentScope);
+
+        for (var declaration : declarations) {
+            if(declaration instanceof OdinConstantDeclaration)
+                continue;
+            List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(declaration);
+            for (OdinSymbol symbol : localSymbols) {
+                PositionCheckResult positionCheckResult = checkPosition(position, symbol.getDeclaredIdentifier(), declaration);
+                if (!positionCheckResult.validPosition)
+                    continue;
+
+                PsiElement commonParent = positionCheckResult.commonParent();
+                PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
+                PsiElement containerOfSymbol = PsiTreeUtil.findPrevParent(commonParent, declaredIdentifier);
+                PsiElement containerOfPosition = PsiTreeUtil.findPrevParent(commonParent, position);
+
+                // Now check if symbol is strictly a previous sibling of position
+                List<@NotNull PsiElement> childrenList = Arrays.stream(commonParent.getChildren()).toList();
+                int indexOfSymbol = childrenList.indexOf(containerOfSymbol);
+                int indexOfPosition = childrenList.indexOf(containerOfPosition);
+
+                if (indexOfPosition > indexOfSymbol) {
+                    scope.add(symbol);
+                }
+
+                if (scopeCondition.match(scope))
+                    return scope;
+            }
+        }
+
         return scope;
     }
 
-    private static @NotNull List<OdinSymbol> getSymbols(PsiElement containingScopeBlock) {
-        List<OdinSymbol> symbols = new ArrayList<>();
+    private static @NotNull List<OdinDeclaration> getDeclarations(PsiElement containingScopeBlock) {
+        List<OdinDeclaration> declarations = new ArrayList<>();
         if (containingScopeBlock instanceof OdinStatementList statementList) {
             for (OdinStatement odinStatement : statementList.getStatementList()) {
                 if (odinStatement instanceof OdinDeclaration declaration) {
-                    symbols.addAll(OdinSymbolResolver.getLocalSymbols(declaration));
+                    declarations.add(declaration);
                 }
             }
         }
 
         if (containingScopeBlock instanceof OdinIfBlock odinIfBlock) {
-            addControlFlowInit(odinIfBlock.getControlFlowInit(), symbols);
+            addControlFlowInit(odinIfBlock.getControlFlowInit(), declarations);
         }
 
         if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
             OdinProcedureType procedureType = procedureDefinition.getProcedureType();
-            List<OdinParamEntry> paramEntryList = procedureType.getParamEntryList();
-            for (OdinParamEntry paramEntry : paramEntryList) {
-                OdinDeclaration declaration = paramEntry.getParameterDeclaration();
-                symbols.addAll(OdinSymbolResolver.getLocalSymbols(declaration));
-            }
+
+            addParamEntries(procedureType.getParamEntries(), declarations);
+            addPolymorphicDeclarations(procedureType.getParamEntries(), declarations);
 
             if (procedureType.getReturnParameters() != null) {
                 OdinParamEntries returnParamEntries = procedureType.getReturnParameters().getParamEntries();
-                if (returnParamEntries != null) {
-                    for (OdinParamEntry paramEntry : returnParamEntries.getParamEntryList()) {
-                        OdinDeclaration declaration = paramEntry.getParameterDeclaration();
-                        symbols.addAll(OdinSymbolResolver.getLocalSymbols(declaration));
-                    }
-                }
+                addParamEntries(returnParamEntries, declarations);
             }
         }
 
         // Here we are in a parameter list. The only thing that adds scope in this context are the polymorphic
         // parameters
         if (containingScopeBlock instanceof OdinParamEntries paramEntries) {
-            addParamEntries(paramEntries, symbols);
+            paramEntries.getParamEntryList().forEach(p -> declarations.add(p.getParameterDeclaration()));
 
             if (paramEntries.getParent() instanceof OdinReturnParameters returnParameters) {
                 OdinProcedureType procedureType = PsiTreeUtil.getParentOfType(returnParameters, OdinProcedureType.class);
                 if (procedureType != null) {
-                    if (procedureType.getParamEntries() != null) {
-                        addParamEntries(procedureType.getParamEntries(), symbols);
-                    }
+                    OdinParamEntries inParamEntries = procedureType.getParamEntries();
+                    addParamEntries(inParamEntries, declarations);
+                    addPolymorphicDeclarations(inParamEntries, declarations);
                 }
+            } else {
+                addPolymorphicDeclarations(paramEntries, declarations);
             }
         }
 
         if (containingScopeBlock instanceof OdinForBlock forBlock) {
-            addControlFlowInit(forBlock.getControlFlowInit(), symbols);
+            addControlFlowInit(forBlock.getControlFlowInit(), declarations);
         }
 
-        if(containingScopeBlock instanceof OdinForInBlock forInBlock) {
-            forInBlock.getForInParameterList().stream().map(
-                    p -> new OdinSymbol(p.getDeclaredIdentifier())
-            ).forEach(symbols::add);
+        if (containingScopeBlock instanceof OdinForInBlock forInBlock) {
+            declarations.addAll(forInBlock.getForInParameterDeclarationList());
         }
 
-        if(containingScopeBlock instanceof OdinSwitchBlock switchBlock) {
-            addControlFlowInit(switchBlock.getControlFlowInit(), symbols);
+        if (containingScopeBlock instanceof OdinSwitchBlock switchBlock) {
+            addControlFlowInit(switchBlock.getControlFlowInit(), declarations);
         }
 
-        if(containingScopeBlock instanceof OdinSwitchInBlock switchInBlock) {
-            symbols.add(new OdinSymbol(switchInBlock.getDeclaredIdentifier()));
+        if (containingScopeBlock instanceof OdinSwitchInBlock switchInBlock) {
+            declarations.add(switchInBlock.getSwitchTypeVariableDeclaration());
         }
 
-        return symbols;
+        if (containingScopeBlock instanceof OdinUnionType unionType) {
+            OdinParamEntries paramEntries = unionType.getParamEntries();
+            addParamEntries(paramEntries, declarations);
+        }
+
+        if (containingScopeBlock instanceof OdinStructType structType) {
+            OdinParamEntries paramEntries = structType.getParamEntries();
+            addParamEntries(paramEntries, declarations);
+        }
+
+        return declarations;
     }
 
-    private static void addControlFlowInit(@Nullable OdinControlFlowInit controlFlowInit, List<OdinSymbol> symbols) {
+    private static void addPolymorphicDeclarations(OdinParamEntries paramEntries, List<OdinDeclaration> declarations) {
+        if(paramEntries != null) {
+            Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(paramEntries, OdinPolymorphicType.class);
+            declarations.addAll(polymorphicTypes);
+        }
+    }
+
+    private static void addParamEntries(OdinParamEntries paramEntries, List<OdinDeclaration> declarations) {
+        if (paramEntries != null) {
+            for (OdinParamEntry paramEntry : paramEntries.getParamEntryList()) {
+                OdinDeclaration declaration = paramEntry.getParameterDeclaration();
+                declarations.add(declaration);
+            }
+        }
+    }
+
+    private static void addControlFlowInit(@Nullable OdinControlFlowInit controlFlowInit, List<OdinDeclaration> declarations) {
         if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration declaration) {
-            symbols.addAll(OdinSymbolResolver.getLocalSymbols(declaration));
+            declarations.add(declaration);
         }
     }
-
-    private static void addParamEntries(OdinParamEntries paramEntries, List<OdinSymbol> symbols) {
-        List<OdinParamEntry> paramEntryList = paramEntries.getParamEntryList();
-        for (OdinParamEntry paramEntry : paramEntryList) {
-            Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(paramEntry, OdinPolymorphicType.class);
-            Collection<OdinDeclaredIdentifier> polymorphicIdentifiers = PsiTreeUtil.findChildrenOfType(paramEntry, OdinDeclaredIdentifier.class)
-                    .stream().filter(i -> i.getDollar() != null).toList();
-
-            polymorphicIdentifiers.forEach(i -> symbols.add(new OdinSymbol(i)));
-            polymorphicTypes.forEach(t -> symbols.add(new OdinSymbol(t.getDeclaredIdentifier())));
-        }
-    }
-
 
     record PositionCheckResult(boolean validPosition, PsiElement commonParent, OdinDeclaration declaration) {
 
     }
 
-    private static PositionCheckResult checkPosition(OdinSymbol symbol, PsiElement position) {
-        PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
+    private static PositionCheckResult checkPosition(PsiElement position, @NotNull PsiElement declaredIdentifier, OdinDeclaration declaration) {
 
         // the position and the symbol MUST share a common parent
         PsiElement commonParent = PsiTreeUtil.findCommonParent(position, declaredIdentifier);
@@ -186,9 +200,11 @@ public class OdinSymbolFinder {
             return new PositionCheckResult(false, null, null);
         }
 
-        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
         // if the position is in the declaration itself, we can assume the identifier has not been really declared yet. skip
-        if (declaration == commonParent || declaration == null) {
+        // EXCEPT: If we are in a constant declaration, the declaration itself is in scope, however, it is only legal
+        // to use in structs, and procedures. In union and constants using the declaration is not legal.
+        boolean usageInsideDeclaration = declaration == commonParent || declaration == null;
+        if (usageInsideDeclaration && !(declaration instanceof OdinConstantDeclaration)) {
             return new PositionCheckResult(false, commonParent, declaration);
         }
 
