@@ -247,7 +247,7 @@ unionBlock                           ::= blockStart [unionBody] blockEnd
 unionBody                            ::= type (COMMA type)* [COMMA|EOS_TOKEN] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 
 // Bit Set
-bitsetDeclarationStatement           ::= declaredIdentifier doubleColonOperator DISTINCT? bitSetType
+bitsetDeclarationStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
 procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureDefinition {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ]}
