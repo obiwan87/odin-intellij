@@ -164,9 +164,67 @@ using_statement :: proc() {
         x, y: i32
     }
 
-    p := Point { x = 1, y = 1 }
-    using p
+    Line :: struct {
+        p1, p2: Point
+    }
 
-    test := 1
-    fmt.println(test)
+    Triangle :: struct {
+        using line: Line,
+        p3: Point
+    }
+
+    point := Point { x = 1, y = 1 }
+    {
+        using point
+        test := 1
+        fmt.println(test)
+    }
+
+    {
+        using l := Line { p1 = point, p2 = point }
+        test_line := 1
+        fmt.println(test_line)
+    }
+
+    {
+        using t : Triangle
+        test_triangle := 1
+        fmt.println(test_triangle)
+        fmt.println(p1, p2, p3)
+    }
+
+    {
+        p :: proc(using p: Point) {
+            test_proc := 1
+        }
+    }
+
+    {
+        Channels :: enum {
+            R, G, B
+        }
+
+        using Channels
+
+        test_enum := 1
+    }
+
+    {
+        P, Q :: struct {
+        }, struct{
+        }
+    }
+}
+
+nested_procs :: proc() {
+    invisible := 1;
+    S :: struct {
+    }
+    p :: proc() {
+        s := S { }
+        r :: proc() {
+            test := S { }
+            nested_procs()
+        }
+    }
 }

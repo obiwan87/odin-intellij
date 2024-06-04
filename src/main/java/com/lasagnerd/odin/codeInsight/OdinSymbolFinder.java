@@ -23,6 +23,10 @@ public class OdinSymbolFinder {
     }
 
     public static OdinScope doFindVisibleSymbols(PsiElement position, ScopeCondition scopeCondition) {
+        return doFindVisibleSymbols(position, scopeCondition, false);
+    }
+
+    public static OdinScope doFindVisibleSymbols(PsiElement position, ScopeCondition scopeCondition, boolean constantsOnly) {
         // 1. Find the starting point
         //  = a statement whose parent is a scope block
         // 2. Get the parent and define and get all declarations inside the scope block
@@ -40,7 +44,10 @@ public class OdinSymbolFinder {
         }
 
         OdinScope scope = new OdinScope();
-        OdinScope parentScope = doFindVisibleSymbols(containingScopeBlock, scopeCondition);
+        // Since odin does not support closures, all symbols above the current scope, are visible only if they are constants
+        boolean isContainingBlockProcedure = containingScopeBlock instanceof OdinProcedureDefinition;
+        boolean constantsOnlyNext = isContainingBlockProcedure || constantsOnly;
+        OdinScope parentScope = doFindVisibleSymbols(containingScopeBlock, scopeCondition, constantsOnlyNext);
         scope.setParentScope(parentScope);
 
         // Finds the child of the scope block, where of which this element is a child. If we find the parent, this is guaranteed
@@ -62,11 +69,13 @@ public class OdinSymbolFinder {
                 return scope;
         }
 
+        if(constantsOnly)
+            return scope;
 
         for (var declaration : declarations) {
             if(declaration instanceof OdinConstantDeclaration)
                 continue;
-            List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(declaration);
+            List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(declaration, scope);
             for (OdinSymbol symbol : localSymbols) {
                 PositionCheckResult positionCheckResult = checkPosition(position, symbol.getDeclaredIdentifier(), declaration);
                 if (!positionCheckResult.validPosition)

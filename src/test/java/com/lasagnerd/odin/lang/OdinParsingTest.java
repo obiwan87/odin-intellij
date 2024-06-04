@@ -54,7 +54,6 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 
@@ -1302,6 +1301,55 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
             assertNotNull(odinScope.getSymbol("x"));
             assertNotNull(odinScope.getSymbol("y"));
+        }
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_statement", "test_line");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNull(odinScope.getSymbol("x"));
+            assertNull(odinScope.getSymbol("y"));
+            assertNotNull(odinScope.getSymbol("p1"));
+            assertNotNull(odinScope.getSymbol("p2"));
+        }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_statement", "test_triangle");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNull(odinScope.getSymbol("x"));
+            assertNull(odinScope.getSymbol("y"));
+            assertNotNull(odinScope.getSymbol("p1"));
+            assertNotNull(odinScope.getSymbol("p2"));
+            assertNotNull(odinScope.getSymbol("p3"));
+        }
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_statement", "test_proc");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("x"));
+            assertNotNull(odinScope.getSymbol("y"));
+        }
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_statement", "test_enum");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("R"));
+            assertNotNull(odinScope.getSymbol("G"));
+            assertNotNull(odinScope.getSymbol("B"));
+        }
+    }
+
+    public void testScoping_nestedProcs() throws IOException {
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        {
+            OdinProcedureDeclarationStatement proc = findFirstProcedure(odinFile, "nested_procs");
+            OdinProcedureDeclarationStatement nestedProc = PsiTreeUtil.findChildOfType(proc, OdinProcedureDeclarationStatement.class);
+            {
+                OdinVariableInitializationStatement testVar = findFirstVariable(nestedProc, "test");
+                OdinExpression odinExpression = testVar.getExpressionsList().getExpressionList().get(0);
+                OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(odinExpression);
+                assertNotNull(odinScope.getSymbol("S"));
+                assertNotNull(odinScope.getSymbol("nested_procs"));
+                assertNotNull(odinScope.getSymbol("r"));
+                assertNotNull(odinScope.getSymbol("p"));
+                assertNull(odinScope.getSymbol("invisible"));
+            }
         }
     }
 
