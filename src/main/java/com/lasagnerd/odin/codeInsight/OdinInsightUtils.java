@@ -13,8 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class OdinInsightUtils {
 
@@ -50,10 +48,6 @@ public class OdinInsightUtils {
         }
 
         return null;
-    }
-
-    public static boolean isStringLiteralWithValue(OdinExpression odinExpression, String val) {
-        return Objects.equals(getStringLiteralValue(odinExpression), val);
     }
 
     public static String getStringLiteralValue(OdinExpression odinExpression) {
@@ -171,7 +165,7 @@ public class OdinInsightUtils {
                         structType = null;
                     }
 
-                    if(structType != null) {
+                    if (structType != null) {
                         List<OdinSymbol> structFields = getStructFields(structType.getScope(), (OdinStructDeclarationStatement) structType.getDeclaration());
                         symbols.addAll(structFields);
                     }
@@ -276,18 +270,32 @@ public class OdinInsightUtils {
 
     public static List<OdinSymbol> getTypeSymbols(OdinExpression expression, OdinScope scope) {
         TsOdinType tsOdinType = OdinInferenceEngine.inferType(scope, expression);
+        if(tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
+            return getTypeSymbols(OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType), scope);
+        }
+        return getTypeSymbols(tsOdinType, scope);
+    }
+
+    public static List<OdinSymbol> getTypeSymbols(OdinType type, OdinScope scope) {
+        TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, type);
+        return getTypeSymbols(tsOdinType, scope);
+    }
+
+    public static @NotNull List<OdinSymbol> getTypeSymbols(TsOdinType tsOdinType, OdinScope scope) {
         if (tsOdinType instanceof TsOdinStructType structType) {
-            return getStructFields((OdinStructDeclarationStatement) structType.getDeclaration());
+            return getStructFields(scope, (OdinStructDeclarationStatement) structType.getDeclaration());
         }
 
-        if(tsOdinType instanceof TsOdinEnumType enumType) {
-            return getEnumFields((OdinEnumDeclarationStatement) enumType.getType());
+        if (tsOdinType instanceof TsOdinEnumType enumType) {
+            return getEnumFields((OdinEnumDeclarationStatement) enumType.getDeclaration());
+        }
+
+        if(tsOdinType instanceof TsOdinPackageReferenceType) {
+            // TODO
         }
 
         return Collections.emptyList();
     }
-
-
 
 
 }

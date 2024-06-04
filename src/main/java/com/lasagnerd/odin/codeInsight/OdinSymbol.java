@@ -48,10 +48,12 @@ public class OdinSymbol {
         STRUCT,
         UNION,
         ENUM_FIELD,
+        ENUM,
         CONSTANT,
         VARIABLE,
         PACKAGE_REFERENCE,
-        POLYMORPHIC_TYPE
+        POLYMORPHIC_TYPE,
+        BIT_SET
     }
 
     public enum OdinVisibility {

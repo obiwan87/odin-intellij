@@ -56,7 +56,11 @@ public class OdinScope {
         return null;
     }
     public TsOdinType getType(String polymorphicParameter) {
-        return typeTable.get(polymorphicParameter);
+        TsOdinType tsOdinType = typeTable.get(polymorphicParameter);
+        if(tsOdinType == null) {
+            return parentScope != null? parentScope.getType(polymorphicParameter) : null;
+        }
+        return tsOdinType;
     }
 
     public void addType(String typeName, TsOdinType type) {
@@ -100,6 +104,12 @@ public class OdinScope {
         symbolTable.putAll(scope.symbolTable);
         typeTable.putAll(scope.typeTable);
         knownTypes.putAll(scope.knownTypes);
+        if(scope.getParentScope() != null) {
+            if(parentScope == null) {
+                parentScope = new OdinScope();
+            }
+            parentScope.putAll(scope.getParentScope());
+        }
     }
 
     public void addKnownType(OdinDeclaredIdentifier declaredIdentifier, TsOdinType type) {
@@ -154,7 +164,7 @@ public class OdinScope {
         OdinScope scope = new OdinScope();
         scope.symbolTable = this.symbolTable;
         scope.packagePath = packagePath;
-
+        scope.parentScope = parentScope;
         return scope;
     }
 
