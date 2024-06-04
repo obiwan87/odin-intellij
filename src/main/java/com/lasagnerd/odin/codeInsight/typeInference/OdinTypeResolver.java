@@ -524,12 +524,15 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinEnumType tsOdinEnumType = new TsOdinEnumType();
         initializeNamedType(tsOdinEnumType);
 
-        if (o.getType() != null) {
-            TsOdinType tsOdinType = doResolveType(scope, o.getType());
+        OdinType backingType = o.getType();
+        if (backingType != null) {
+            TsOdinType tsOdinType = doResolveType(scope, backingType);
             if (tsOdinType instanceof TsOdinBuiltInType tsOdinBuiltInType) {
                 tsOdinEnumType.setBackingType(tsOdinBuiltInType);
             }
         }
+
+        tsOdinEnumType.setType(o);
 
         // TODO Set fields
         this.type = tsOdinEnumType;
