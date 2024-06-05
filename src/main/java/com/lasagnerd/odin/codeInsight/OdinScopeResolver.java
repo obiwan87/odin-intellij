@@ -10,6 +10,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
@@ -31,12 +32,12 @@ import static com.lasagnerd.odin.codeInsight.OdinInsightUtils.getScopeProvidedBy
 public class OdinScopeResolver {
     public static OdinScope resolveScope(PsiElement element) {
         OdinScopeResolver odinScopeResolver = new OdinScopeResolver(element);
-        return odinScopeResolver.findScope(OdinImportUtils.getPackagePath(odinScopeResolver.element));
+        return odinScopeResolver.findScope(OdinImportService.getInstance(element.getProject()).getPackagePath(odinScopeResolver.element));
     }
 
     public static OdinScope resolveScope(PsiElement element, Predicate<OdinSymbol> matcher) {
         OdinScopeResolver odinScopeResolver = new OdinScopeResolver(element, matcher);
-        return odinScopeResolver.findScope(OdinImportUtils.getPackagePath(odinScopeResolver.element));
+        return odinScopeResolver.findScope(OdinImportService.getInstance(element.getProject()).getPackagePath(odinScopeResolver.element));
     }
 
     private final Predicate<OdinSymbol> matcher;
