@@ -126,7 +126,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                         isImport = true;
                         importDeclarationStatement = (OdinImportDeclarationStatement) odinDeclaration;
                     } else {
-                        this.type = resolveTypeOfDeclaration(this.scope, declaredIdentifier, odinDeclaration);
+                        this.type = resolveTypeOfDeclaration(localScope, declaredIdentifier, odinDeclaration);
                     }
                 }
             } else {
@@ -162,7 +162,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         TsOdinType tsOdinType = doInferType(scope, o.getExpression());
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE) {
-                TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType);
+                TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(tsOdinType.getScope(), tsOdinMetaType);
                 if (!procedureType.getReturnTypes().isEmpty()) {
                     TsOdinProcedureType specializedType = OdinTypeSpecializer
                             .specializeProcedure(scope, o.getArgumentList(), procedureType);
@@ -560,6 +560,7 @@ subExpression
         // Meta types
         if (odinDeclaration instanceof OdinProcedureDeclarationStatement procedure) {
             TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(PROCEDURE);
+            tsOdinMetaType.setScope(parentScope);
             tsOdinMetaType.setDeclaration(procedure);
             tsOdinMetaType.setType(procedure.getProcedureDefinition().getProcedureType());
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
@@ -569,6 +570,7 @@ subExpression
 
         if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
             TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(STRUCT);
+            tsOdinMetaType.setScope(parentScope);
             tsOdinMetaType.setDeclaration(structDeclarationStatement);
             tsOdinMetaType.setType(structDeclarationStatement.getStructType());
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
@@ -578,6 +580,7 @@ subExpression
 
         if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
             TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(ENUM);
+            tsOdinMetaType.setScope(parentScope);
             tsOdinMetaType.setDeclaration(enumDeclarationStatement);
             tsOdinMetaType.setType(enumDeclarationStatement.getEnumType());
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
@@ -587,6 +590,7 @@ subExpression
 
         if (odinDeclaration instanceof OdinUnionDeclarationStatement unionDeclarationStatement) {
             TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(UNION);
+            tsOdinMetaType.setScope(parentScope);
             tsOdinMetaType.setDeclaration(unionDeclarationStatement);
             tsOdinMetaType.setType(unionDeclarationStatement.getUnionType());
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
@@ -596,6 +600,7 @@ subExpression
 
         if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
             TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(POLYMORPHIC);
+            tsOdinMetaType.setScope(parentScope);
             tsOdinMetaType.setDeclaration(polymorphicType);
             tsOdinMetaType.setType(polymorphicType);
             tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);

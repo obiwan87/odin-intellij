@@ -1,15 +1,21 @@
 package com.lasagnerd.odin.codeInsight;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Query;
-import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
+import com.lasagnerd.odin.lang.psi.OdinFile;
+import com.lasagnerd.odin.lang.psi.OdinFileScope;
+import com.lasagnerd.odin.lang.psi.OdinIdentifier;
+import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
@@ -68,17 +74,6 @@ public class OdinImportUtils {
                 () -> psiElement.getContainingFile().getViewProvider().getVirtualFile()).getName();
     }
 
-    public static String getPackagePath(PsiElement psiElement) {
-        OdinFile containingFile = (OdinFile) psiElement.getContainingFile();
-        if (containingFile == null)
-            return null;
-        @NotNull PsiFile virtualFile = containingFile.getOriginalFile();
-        PsiDirectory containingDirectory = virtualFile.getContainingDirectory();
-        if (containingDirectory != null) {
-            return containingDirectory.getVirtualFile().getPath();
-        }
-        return null;
-    }
 
     public static OdinScope getSymbolsOfImportedPackage(OdinImportDeclarationStatement importStatement) {
         OdinImportInfo importInfo = importStatement.getImportInfo();
@@ -91,11 +86,12 @@ public class OdinImportUtils {
             virtualFile = containingFile.getViewProvider().getVirtualFile();
         }
 
-        String path = virtualFile.getCanonicalPath();
+        String path = OdinImportService.getInstance(importStatement.getProject()).getCanonicalPath(virtualFile);
         String name = importInfo.packageName();
         Project project = importStatement.getProject();
         return getSymbolsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
     }
+
 
     /**
      * @param importInfo     The import to be imported
@@ -125,7 +121,7 @@ public class OdinImportUtils {
             dirs.add(currentDir);
 
             for (Path dir : dirs) {
-                Path packagePath = dir.resolve(importInfo.path());
+                Path packagePath = dir.resolve(importInfo.path()).normalize();
                 List<OdinFile> importedFiles = getFilesInPackage(project, packagePath);
                 for (OdinFile importedFile : importedFiles) {
                     OdinFileScope importedFileScope = importedFile.getFileScope();
@@ -174,14 +170,13 @@ public class OdinImportUtils {
     static @NotNull List<OdinFile> getFilesInPackage(Project project, Path importPath, Predicate<VirtualFile> matcher) {
         List<OdinFile> files = new ArrayList<>();
         PsiManager psiManager = PsiManager.getInstance(project);
-        VirtualFile packageDirectory = VfsUtil.findFile(importPath, true);
-        if (packageDirectory != null) {
-            for (VirtualFile child : packageDirectory.getChildren()) {
-                if (matcher.test(child)) {
-                    PsiFile psiFile = psiManager.findFile(child);
-                    if (psiFile instanceof OdinFile odinFile) {
-                        files.add(odinFile);
-                    }
+        VirtualFile[] children = OdinImportService.getInstance(project).getFilesInPath(importPath);
+
+        for (VirtualFile child : children) {
+            if (matcher.test(child)) {
+                PsiFile psiFile = OdinImportService.getInstance(project).createPsiFile(child);
+                if (psiFile instanceof OdinFile odinFile) {
+                    files.add(odinFile);
                 }
             }
         }

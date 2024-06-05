@@ -75,6 +75,7 @@
                 displayName="Odin"/>
         <projectService serviceImplementation="com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState"/>
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
+        <projectService serviceInterface="com.lasagnerd.odin.codeInsight.imports.OdinImportService" serviceImplementation="com.lasagnerd.odin.codeInsight.imports.OdinImportServiceImpl"/>
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType" id="OdinRunConfigurationType"/>
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
         <runLineMarkerContributor language="Odin" implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>

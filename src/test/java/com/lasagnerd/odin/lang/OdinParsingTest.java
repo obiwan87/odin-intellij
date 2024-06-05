@@ -50,6 +50,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.lasagnerd.odin.codeInsight.*;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -61,6 +62,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -131,6 +133,7 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(TreeAspect.class, new TreeAspect());
         project.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(project, new PsiCachedValuesFactory(project)));
         project.registerService(StartupManager.class, new StartupManagerImpl(project, project.getCoroutineScope()));
+        project.registerService(OdinImportService.class, new MockOdinImportService(myFileFactory));
         registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
         registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 
@@ -374,8 +377,8 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     protected void doReparseTest(String textBefore, String textAfter) {
-        var file = createFile("test." + myFileExt, textBefore);
-        var fileAfter = createFile("test." + myFileExt, textAfter);
+        var file = createFile("test." + myFileExt, textBefore, myLanguage);
+        var fileAfter = createFile("test." + myFileExt, textAfter, myLanguage);
 
         var rangeStart = StringUtil.commonPrefixLength(textBefore, textAfter);
         var rangeEnd = textBefore.length() - StringUtil.commonSuffixLength(textBefore, textAfter);
@@ -397,11 +400,12 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     protected PsiFile createPsiFile(@NotNull String name, @NotNull String text) {
-        return createFile(name + "." + myFileExt, text);
+        String name1 = name.endsWith("." + myFileExt) ? name : name + "." + myFileExt;
+        return createFile(name1, text, myLanguage);
     }
 
-    protected PsiFile createFile(@NotNull String name, @NotNull String text) {
-        LightVirtualFile virtualFile = new LightVirtualFile(name, myLanguage, text);
+    protected PsiFile createFile(@NotNull String name, @NotNull String text, Language language) {
+        LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
         virtualFile.setCharset(StandardCharsets.UTF_8);
         return createFile(virtualFile);
     }
@@ -559,7 +563,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
     protected OdinFile load(String path) throws IOException {
         String fileContent = FileUtil.loadFile(new File(path), CharsetToolkit.UTF8, true).trim();
-        return ((OdinFile) parseFile("my_file", fileContent));
+        return ((OdinFile) parseFile(Path.of(path).toFile().getName(), fileContent));
     }
 
 
@@ -876,10 +880,11 @@ public class OdinParsingTest extends UsefulTestCase {
             List<OdinSymbol> symbols = new ArrayList<>(OdinScopeResolver.getFileScopeDeclarations(odinFileScope, OdinScopeResolver.getGlobalFileVisibility(odinFileScope))
                     .getFilteredSymbols(e -> true));
             symbols.sort(Comparator.comparing(OdinSymbol::getName));
-            assertEquals(3, symbols.size());
+            assertEquals(4, symbols.size());
             assertEquals(OdinSymbol.OdinVisibility.PUBLIC, symbols.get(0).getVisibility());
-            assertEquals(OdinSymbol.OdinVisibility.PACKAGE_PRIVATE, symbols.get(1).getVisibility());
-            assertEquals(OdinSymbol.OdinVisibility.FILE_PRIVATE, symbols.get(2).getVisibility());
+            assertEquals(OdinSymbol.OdinVisibility.PUBLIC, symbols.get(1).getVisibility());
+            assertEquals(OdinSymbol.OdinVisibility.PACKAGE_PRIVATE, symbols.get(2).getVisibility());
+            assertEquals(OdinSymbol.OdinVisibility.FILE_PRIVATE, symbols.get(3).getVisibility());
         }
 
         {
@@ -1350,6 +1355,31 @@ public class OdinParsingTest extends UsefulTestCase {
                 assertNotNull(odinScope.getSymbol("p"));
                 assertNull(odinScope.getSymbol("invisible"));
             }
+        }
+    }
+
+    public void testImportPackage() throws IOException {
+        {
+            OdinFile odinFile = load("src/test/testData/mypackage/packages.odin");
+
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "main", "test");
+            OdinScope odinScope = OdinScopeResolver.resolveScope(expression);
+            assertNotNull(odinScope.getSymbol("a_mypublic_proc"));
+            assertNotNull(odinScope.getSymbol("b_mypackage_private_proc"));
+            assertNull(odinScope.getSymbol("c_myfile_private_proc"));
+
+            assertNotNull(odinScope.getSymbol("my_private_proc"));
+            assertNotNull(odinScope.getSymbol("my_private_struct"));
+
+            assertNull(odinScope.getSymbol("my_file_private_global"));
+        }
+
+        {
+            OdinFile odinFile = load("src/test/testData/otherpackage/other_package.odin");
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "main", "test");
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+            TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals(structType.getName(), "a_ret");
         }
     }
 

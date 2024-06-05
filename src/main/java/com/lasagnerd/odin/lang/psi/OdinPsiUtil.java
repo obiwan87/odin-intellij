@@ -26,7 +26,7 @@ public class OdinPsiUtil {
     public static List<OdinImportDeclarationStatement> getImportStatements(OdinFileScope self) {
         List<OdinImportDeclarationStatement> importDeclarationStatementList = new ArrayList<>(self.getImportStatementsContainer().getImportDeclarationStatementList());
         self.getFileScopeStatementList().getStatementList().stream()
-                .map(s -> s instanceof OdinImportDeclarationStatement)
+                .filter(s -> s instanceof OdinImportDeclarationStatement)
                 .map(OdinImportDeclarationStatement.class::cast)
                 .forEach(importDeclarationStatementList::add);
 

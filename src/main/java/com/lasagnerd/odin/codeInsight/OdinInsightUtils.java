@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -17,7 +18,8 @@ import java.util.List;
 public class OdinInsightUtils {
 
     public static OdinSymbol findSymbol(OdinIdentifier identifier) {
-        OdinScope parentScope = OdinScopeResolver.resolveScope(identifier).with(OdinImportUtils.getPackagePath(identifier));
+        OdinScope parentScope = OdinScopeResolver.resolveScope(identifier)
+                .with(OdinImportService.getInstance(identifier.getProject()).getPackagePath(identifier));
         OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(identifier, true, OdinRefExpression.class);
         OdinScope scope;
         if (refExpression != null) {
