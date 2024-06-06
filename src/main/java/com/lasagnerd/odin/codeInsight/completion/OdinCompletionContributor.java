@@ -60,7 +60,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 // TODO at some point we should return the type of each symbol
                                 OdinScope completionScope = OdinReferenceResolver.resolve(scope, reference.getExpression());
                                 if (completionScope != null) {
-                                    addLookUpElements(result, completionScope.getNamedElements());
+                                    addLookUpElements(result, completionScope.flatten().getNamedElements());
                                 }
                             }
                         }
@@ -70,7 +70,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                             OdinScope scope = createScope(parameters, parentType);
                             OdinScope completionScope = OdinReferenceResolver.resolve(scope, parentType);
                             if (completionScope != null) {
-                                addLookUpElements(result, completionScope.getNamedElements());
+                                addLookUpElements(result, completionScope.flatten().getNamedElements());
                             }
                         }
                     }
@@ -152,8 +152,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                         // 2. Add symbols from SDK (core, vendor, etc.)
 
                         // 3. Add symbols from local scope
-                        OdinScope localScope = OdinScopeResolver.resolveScope(position, e -> true);
-                        addLookUpElements(result, localScope.getNamedElements());
+                        OdinScope flatScope = OdinScopeResolver.resolveScope(position, e -> true).flatten();
+                        addLookUpElements(result, flatScope.getNamedElements());
                     }
                 }
         );
