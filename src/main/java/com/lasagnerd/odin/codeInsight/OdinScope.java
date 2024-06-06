@@ -17,6 +17,10 @@ public class OdinScope {
     @Setter
     OdinScope parentScope;
 
+    public OdinScope(String packagePath) {
+        this.packagePath = packagePath;
+    }
+
     @Setter
     private String packagePath;
     public static final OdinScope EMPTY = new OdinScope();

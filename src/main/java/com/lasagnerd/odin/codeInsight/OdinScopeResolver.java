@@ -25,26 +25,11 @@ import java.util.function.Predicate;
 
 public class OdinScopeResolver {
     public static OdinScope resolveScope(PsiElement element) {
-        OdinScopeResolver odinScopeResolver = new OdinScopeResolver(element);
-        return odinScopeResolver.findScope(OdinImportService.getInstance(element.getProject()).getPackagePath(odinScopeResolver.element));
+        return findScope(element, OdinImportService.getInstance(element.getProject()).getPackagePath(element), s -> true);
     }
 
     public static OdinScope resolveScope(PsiElement element, Predicate<OdinSymbol> matcher) {
-        OdinScopeResolver odinScopeResolver = new OdinScopeResolver(element, matcher);
-        return odinScopeResolver.findScope(OdinImportService.getInstance(element.getProject()).getPackagePath(odinScopeResolver.element));
-    }
-
-    private final Predicate<OdinSymbol> matcher;
-    private final PsiElement element;
-
-    private OdinScopeResolver(PsiElement element) {
-        this.element = element;
-        this.matcher = e -> true;
-    }
-
-    private OdinScopeResolver(PsiElement element, Predicate<OdinSymbol> matcher) {
-        this.matcher = matcher;
-        this.element = element;
+        return findScope(element, OdinImportService.getInstance(element.getProject()).getPackagePath(element), matcher);
     }
 
     public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
@@ -160,7 +145,7 @@ public class OdinScopeResolver {
         }
     }
 
-    private OdinScope findScope(String packagePath) {
+    private static OdinScope findScope(PsiElement element, String packagePath, Predicate<OdinSymbol> matcher) {
         // TODO: When looking for a specific declaration, this can be optimized:
         // when building the scope tree, just stop as soon as we find the first matching declaration
         Project project = element.getProject();
@@ -194,7 +179,6 @@ public class OdinScopeResolver {
                 Collection<OdinSymbol> fileScopeDeclarations = odinFile.getFileScope().getScope().getSymbolTable()
                         .values()
                         .stream()
-                        // TODO check why visibility is null
                         .filter(o -> !o.getVisibility().equals(OdinSymbol.OdinVisibility.FILE_PRIVATE))
                         .toList();
 

@@ -113,6 +113,10 @@ public class OdinPsiUtil {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinLabelDeclaration labelDeclaration) {
+        return Collections.singletonList(labelDeclaration.getDeclaredIdentifier());
+    }
+
     // OdinTypedDeclaration
 
     public static OdinType getTypeDefinition(OdinConstantInitializationStatement statement) {

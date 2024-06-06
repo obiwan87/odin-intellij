@@ -1,7 +1,7 @@
 package scoping
 
 import "core:fmt"
-
+import p "../mypackage"
 main :: proc() {
 }
 
@@ -227,4 +227,26 @@ nested_procs :: proc() {
             nested_procs()
         }
     }
+}
+
+labels :: proc() {
+    label1: for {
+        test_1 := 1
+        label2: for{
+            test_2 := 2
+            label3: if 1 == 1 {
+                test_3 := 3
+
+                label4: switch test_3 {
+                case 3:
+                    test_4 := 1
+                }
+            }
+        }
+    }
+}
+
+using_import :: proc() {
+    using p
+    test := 1
 }

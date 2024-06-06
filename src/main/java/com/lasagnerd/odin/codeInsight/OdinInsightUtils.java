@@ -292,8 +292,11 @@ public class OdinInsightUtils {
             return getEnumFields((OdinEnumDeclarationStatement) enumType.getDeclaration());
         }
 
-        if(tsOdinType instanceof TsOdinPackageReferenceType) {
-            // TODO
+        if(tsOdinType instanceof TsOdinPackageReferenceType packageReferenceType) {
+            OdinScope symbolsOfImportedPackage = OdinImportUtils
+                    .getSymbolsOfImportedPackage(packageReferenceType.getReferencingPackagePath(),
+                            (OdinImportDeclarationStatement) packageReferenceType.getDeclaration());
+            return new ArrayList<>(symbolsOfImportedPackage.getSymbols());
         }
 
         return Collections.emptyList();
