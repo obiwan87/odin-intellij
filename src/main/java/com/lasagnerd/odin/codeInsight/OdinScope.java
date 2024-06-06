@@ -1,7 +1,9 @@
 package com.lasagnerd.odin.codeInsight;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
 import lombok.Getter;
@@ -181,10 +183,26 @@ public class OdinScope {
 
     public OdinScope getScopeOfImport(String packageIdentifier) {
         OdinSymbol odinSymbol = symbolTable.get(packageIdentifier);
-        if (odinSymbol != null && odinSymbol.getDeclaredIdentifier() instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-            return OdinImportUtils.getSymbolsOfImportedPackage(this.getPackagePath(), importDeclarationStatement);
+        if (odinSymbol != null) {
+            PsiNamedElement declaredIdentifier = odinSymbol.getDeclaredIdentifier();
+            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
+            if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+                return OdinImportUtils.getSymbolsOfImportedPackage(this.getPackagePath(), importDeclarationStatement);
+            }
         }
         return OdinScope.EMPTY;
     }
 
+    public OdinScope flatten() {
+        OdinScope odinScope = new OdinScope();
+        odinScope.setPackagePath(packagePath);
+
+        OdinScope curr = this;
+        do {
+            odinScope.addAll(curr.getSymbols(), false);
+            curr = curr.getParentScope();
+        } while(curr != null);
+
+        return odinScope;
+    }
 }

@@ -260,6 +260,16 @@ public class OdinSymbolResolver extends OdinVisitor {
         symbols.add(odinSymbol);
     }
 
+    @Override
+    public void visitForeignImportDeclarationStatement(@NotNull OdinForeignImportDeclarationStatement o) {
+        for (OdinDeclaredIdentifier declaredIdentifier : o.getDeclaredIdentifiers()) {
+            OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
+            odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FOREIGN_IMPORT);
+            odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+            symbols.add(odinSymbol);
+        }
+    }
+
     public static @NotNull OdinSymbol.OdinVisibility getVisibility(@NotNull Collection<OdinAttributeStatement> attributeStatementList,
                                                                    OdinSymbol.OdinVisibility defaultVisibility) {
         OdinSymbol.OdinVisibility odinVisibility = OdinAttributeUtils.computeVisibility(attributeStatementList);

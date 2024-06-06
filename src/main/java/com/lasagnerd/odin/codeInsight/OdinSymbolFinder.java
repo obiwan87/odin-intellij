@@ -60,7 +60,6 @@ public class OdinSymbolFinder {
             if (!positionCheckResult.validPosition)
                 continue;
 
-            // TODO these could also be global symbols, in fact, we can generalize getFileScopeDeclarations to this
             List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(constantDeclaration, scope);
             scope.addAll(localSymbols);
 
