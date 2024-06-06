@@ -11,13 +11,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
-import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -26,8 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
-
-import static com.lasagnerd.odin.codeInsight.OdinInsightUtils.getScopeProvidedByType;
 
 public class OdinScopeResolver {
     public static OdinScope resolveScope(PsiElement element) {
@@ -41,7 +35,6 @@ public class OdinScopeResolver {
     }
 
     private final Predicate<OdinSymbol> matcher;
-    private final Stack<ScopeNode> scopeNodes = new Stack<>();
     private final PsiElement element;
 
     private OdinScopeResolver(PsiElement element) {
@@ -175,9 +168,6 @@ public class OdinScopeResolver {
         OdinScope scope = new OdinScope();
         scope.setPackagePath(packagePath);
 
-        // Builds the relevant part of the scope tree
-        buildPartialScopeTree(element);
-
         List<OdinSymbol> builtInSymbols = getBuiltInSymbols(project);
 
         // 0. Import built-in symbols
@@ -214,59 +204,11 @@ public class OdinScopeResolver {
         }
 
         // 3. Import symbols from the scope tree
-        for (int i = scopeNodes.size() - 1; i >= 0; i--) {
-            ScopeNode scopeNode = scopeNodes.get(i);
-            OdinScopeBlock containingBlock = scopeNode.getScopeBlock();
-            OdinScope declarationsOfContainingBlock = getScopeOfContainingBlock(scope, containingBlock);
-            scope.putAll(declarationsOfContainingBlock);
+        OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(element);
+        odinScope.putAll(scope);
+        odinScope.setPackagePath(packagePath);
 
-            for (OdinStatement statement : scopeNode.getStatements()) {
-                if (statement instanceof OdinDeclaration declaration) {
-                    List<OdinSymbol> symbols = OdinSymbolResolver.getLocalSymbols(declaration, scope)
-                            .stream()
-                            .filter(matcher)
-                            .toList();
-
-                    scope.addAll(symbols, false);
-                }
-
-                if (statement instanceof OdinUsingStatement usingStatement) {
-                    var type = OdinInferenceEngine.inferType(scope, usingStatement.getExpression());
-                    OdinScope usingScope = getScopeProvidedByType(type);
-                    scope.putAll(usingScope);
-                }
-
-                if (statement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-                    if (variableInitializationStatement.getUsing() != null) {
-                        OdinType type = variableInitializationStatement.getType();
-                        if (type != null) {
-                            TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, type);
-                            OdinScope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
-                            scope.putAll(scopeProvidedByType);
-                        } else {
-                            List<OdinExpression> expressionList = variableInitializationStatement.getExpressionsList().getExpressionList();
-                            if (!expressionList.isEmpty()) {
-                                OdinExpression odinExpression = expressionList.get(0);
-                                TsOdinType tsOdinType = OdinInferenceEngine.inferType(scope, odinExpression);
-                                OdinScope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
-                                scope.putAll(scopeProvidedByType);
-                            }
-                        }
-                    }
-                }
-
-                if (statement instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
-                    if (variableDeclarationStatement.getUsing() != null) {
-                        OdinType psiType = variableDeclarationStatement.getType();
-                        TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, psiType);
-                        OdinScope scopeProvidedByType = getScopeProvidedByType(tsOdinType);
-                        scope.putAll(scopeProvidedByType);
-                    }
-                }
-            }
-        }
-        scope.setPackagePath(packagePath);
-        return scope;
+        return odinScope;
     }
 
     public static OdinSymbol.OdinVisibility getGlobalFileVisibility(OdinFileScope fileScope) {
@@ -296,93 +238,6 @@ public class OdinScopeResolver {
      */
     private static @NotNull List<OdinFile> getOtherFilesInPackage(@NotNull Project project, @NotNull String packagePath, String fileName) {
         return OdinImportUtils.getFilesInPackage(project, Path.of(packagePath), virtualFile -> !virtualFile.getName().equals(fileName));
-    }
-
-    private void buildPartialScopeTree(PsiElement entrance) {
-        ScopeNode scopeNode = new ScopeNode();
-        OdinScopeBlock containingBlock = PsiTreeUtil.getParentOfType(entrance, true, OdinScopeBlock.class);
-
-        if (containingBlock != null) {
-            scopeNode.setScopeBlock(containingBlock);
-            OdinStatement containingStatement = PsiTreeUtil.getParentOfType(entrance, false, OdinStatement.class);
-            OdinStatement lastValidStatement;
-            if (containingStatement != null && PsiTreeUtil.isAncestor(containingBlock, containingStatement, true)) {
-                // This means the containing statement is inside the containing block
-                lastValidStatement = containingStatement;
-            } else {
-                lastValidStatement = null;
-            }
-
-            boolean blockIsInsideProcedure = containingBlock instanceof OdinProcedureExpression
-                    || containingBlock instanceof OdinProcedureDeclarationStatement;
-            // If we are inside a procedure body we also add (return) parameters
-            // We don't further look for scope, because a procedure is not a closure in Odin
-
-            boolean afterStatement = false;
-            for (OdinStatement statement : containingBlock.getBlockStatements()) {
-                if (!afterStatement) {
-                    if (statement instanceof OdinDeclaration) {
-                        scopeNode.addStatement(statement);
-                    }
-
-                    if (statement instanceof OdinUsingStatement usingStatement) {
-                        scopeNode.addStatement(usingStatement);
-                    }
-                } else {
-                    // Here we only add stuff that is not a variable initialization or declaration
-                    // Background: Constants and type definitions are available in the entire block, no matter where they
-                    // were declared.
-                    if (statement instanceof OdinVariableDeclarationStatement)
-                        continue;
-                    if (statement instanceof OdinVariableInitializationStatement) {
-                        continue;
-                    }
-                    if (statement instanceof OdinDeclaration) {
-                        scopeNode.addStatement(statement);
-                    }
-                }
-                if (statement == lastValidStatement) {
-                    afterStatement = true;
-                }
-            }
-
-            scopeNode.setEndOfScopeStatement(lastValidStatement);
-            scopeNodes.add(scopeNode);
-            if (!blockIsInsideProcedure) {
-                buildPartialScopeTree(containingBlock);
-            }
-        }
-    }
-
-    public OdinScope getScopeOfContainingBlock(OdinScope parentScope, OdinScopeBlock containingBlock) {
-        OdinScope scope = new OdinScope();
-        scope.setPackagePath(parentScope.getPackagePath());
-        for (OdinSymbol symbol : containingBlock.getSymbols()) {
-            scope.add(symbol.getDeclaredIdentifier());
-            if (symbol.isHasUsing()) {
-                if (symbol.getPsiType() != null) {
-                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(parentScope, symbol.getPsiType());
-                    scope.putAll(getScopeProvidedByType(tsOdinType));
-                } else {
-                    if (symbol.getValueExpression() != null) {
-                        TsOdinType type = OdinInferenceEngine.inferType(parentScope, symbol.getValueExpression());
-                        scope.putAll(getScopeProvidedByType(type));
-                    }
-                }
-            }
-        }
-        return scope;
-    }
-
-    @Data
-    static class ScopeNode {
-        OdinStatement endOfScopeStatement;
-        OdinScopeBlock scopeBlock;
-        List<OdinStatement> statements = new ArrayList<>();
-
-        public void addStatement(OdinStatement statement) {
-            statements.add(statement);
-        }
     }
 }
 
