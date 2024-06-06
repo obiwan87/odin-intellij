@@ -1,7 +1,6 @@
 package com.lasagnerd.odin.codeInsight;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +22,10 @@ public class OdinSymbolFinder {
     }
 
     public static OdinScope doFindVisibleSymbols(PsiElement position, ScopeCondition scopeCondition) {
-        return doFindVisibleSymbols(position, scopeCondition, false);
+        return doFindVisibleSymbols(null, position, scopeCondition, false);
     }
 
-    public static OdinScope doFindVisibleSymbols(PsiElement position, ScopeCondition scopeCondition, boolean constantsOnly) {
+    public static OdinScope doFindVisibleSymbols(String packagePath, PsiElement position, ScopeCondition scopeCondition, boolean constantsOnly) {
         // 1. Find the starting point
         //  = a statement whose parent is a scope block
         // 2. Get the parent and define and get all declarations inside the scope block
@@ -37,17 +36,17 @@ public class OdinSymbolFinder {
         OdinScopeArea containingScopeBlock = PsiTreeUtil.getParentOfType(position, OdinScopeArea.class);
 
         if (containingScopeBlock == null)
-            return OdinScope.EMPTY;
+            return new OdinScope(packagePath);
 
         if (containingScopeBlock instanceof OdinFileScope odinFileScope) {
             return OdinScopeResolver.getFileScopeDeclarations(odinFileScope);
         }
 
-        OdinScope scope = new OdinScope();
+        OdinScope scope = new OdinScope(packagePath);
         // Since odin does not support closures, all symbols above the current scope, are visible only if they are constants
         boolean isContainingBlockProcedure = containingScopeBlock instanceof OdinProcedureDefinition;
         boolean constantsOnlyNext = isContainingBlockProcedure || constantsOnly;
-        OdinScope parentScope = doFindVisibleSymbols(containingScopeBlock, scopeCondition, constantsOnlyNext);
+        OdinScope parentScope = doFindVisibleSymbols(packagePath, containingScopeBlock, scopeCondition, constantsOnlyNext);
         scope.setParentScope(parentScope);
 
         // Finds the child of the scope block, where of which this element is a child. If we find the parent, this is guaranteed
@@ -55,35 +54,34 @@ public class OdinSymbolFinder {
         List<OdinDeclaration> declarations = getDeclarations(containingScopeBlock);
 
         for (OdinDeclaration declaration : declarations) {
-            PositionCheckResult positionCheckResult = checkPosition(position, declaration, declaration);
+            if (!(declaration instanceof OdinConstantDeclaration constantDeclaration))
+                continue;
+            PositionCheckResult positionCheckResult = checkPosition(position, declaration);
             if (!positionCheckResult.validPosition)
                 continue;
 
-            if (declaration instanceof OdinConstantDeclaration constantDeclaration) {
-                // TODO these could also be global symbols, in fact, we can generalize getFileScopeDeclarations to this
-                List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(constantDeclaration, scope);
-                scope.addAll(localSymbols);
-            }
+            // TODO these could also be global symbols, in fact, we can generalize getFileScopeDeclarations to this
+            List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(constantDeclaration, scope);
+            scope.addAll(localSymbols);
 
-            if(scopeCondition.match(scope))
+            if (scopeCondition.match(scope))
                 return scope;
         }
 
-        if(constantsOnly)
+        if (constantsOnly)
             return scope;
 
         for (var declaration : declarations) {
-            if(declaration instanceof OdinConstantDeclaration)
+            if (declaration instanceof OdinConstantDeclaration)
                 continue;
             List<OdinSymbol> localSymbols = OdinSymbolResolver.getLocalSymbols(declaration, scope);
             for (OdinSymbol symbol : localSymbols) {
-                PositionCheckResult positionCheckResult = checkPosition(position, symbol.getDeclaredIdentifier(), declaration);
+                PositionCheckResult positionCheckResult = checkPosition(position, declaration);
                 if (!positionCheckResult.validPosition)
                     continue;
 
                 PsiElement commonParent = positionCheckResult.commonParent();
-                PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
-                PsiElement containerOfSymbol = PsiTreeUtil.findPrevParent(commonParent, declaredIdentifier);
+                PsiElement containerOfSymbol = declaration != commonParent? PsiTreeUtil.findPrevParent(commonParent, declaration) : declaration;
                 PsiElement containerOfPosition = PsiTreeUtil.findPrevParent(commonParent, position);
 
                 // Now check if symbol is strictly a previous sibling of position
@@ -172,11 +170,39 @@ public class OdinSymbolFinder {
             addParamEntries(paramEntries, declarations);
         }
 
+        if (containingScopeBlock instanceof OdinConditionalStatement conditionalStatement) {
+            OdinLabelDeclaration labelDeclaration = conditionalStatement.getLabelDeclaration();
+            if(labelDeclaration != null) {
+                declarations.add(labelDeclaration);
+            }
+        }
+
+        if (containingScopeBlock instanceof OdinSwitchStatement switchStatement) {
+            OdinLabelDeclaration labelDeclaration = switchStatement.getLabelDeclaration();
+            if(labelDeclaration != null) {
+                declarations.add(labelDeclaration);
+            }
+        }
+
+        if (containingScopeBlock instanceof OdinForStatement forStatement) {
+            OdinLabelDeclaration labelDeclaration = forStatement.getLabelDeclaration();
+            if(labelDeclaration != null) {
+                declarations.add(labelDeclaration);
+            }
+        }
+
+        if (containingScopeBlock instanceof OdinForInStatement forInStatement) {
+            OdinLabelDeclaration labelDeclaration = forInStatement.getLabelDeclaration();
+            if(labelDeclaration != null) {
+                declarations.add(labelDeclaration);
+            }
+        }
+
         return declarations;
     }
 
     private static void addPolymorphicDeclarations(OdinParamEntries paramEntries, List<OdinDeclaration> declarations) {
-        if(paramEntries != null) {
+        if (paramEntries != null) {
             Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(paramEntries, OdinPolymorphicType.class);
             declarations.addAll(polymorphicTypes);
         }
@@ -201,10 +227,9 @@ public class OdinSymbolFinder {
 
     }
 
-    private static PositionCheckResult checkPosition(PsiElement position, @NotNull PsiElement declaredIdentifier, OdinDeclaration declaration) {
-
+    private static PositionCheckResult checkPosition(PsiElement position, OdinDeclaration declaration) {
         // the position and the symbol MUST share a common parent
-        PsiElement commonParent = PsiTreeUtil.findCommonParent(position, declaredIdentifier);
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(position, declaration);
         if (commonParent == null) {
             return new PositionCheckResult(false, null, null);
         }
@@ -212,7 +237,7 @@ public class OdinSymbolFinder {
         // if the position is in the declaration itself, we can assume the identifier has not been really declared yet. skip
         // EXCEPT: If we are in a constant declaration, the declaration itself is in scope, however, it is only legal
         // to use in structs, and procedures. In union and constants using the declaration is not legal.
-        boolean usageInsideDeclaration = declaration == commonParent || declaration == null;
+        boolean usageInsideDeclaration = declaration == commonParent;
         if (usageInsideDeclaration && !(declaration instanceof OdinConstantDeclaration)) {
             return new PositionCheckResult(false, commonParent, declaration);
         }

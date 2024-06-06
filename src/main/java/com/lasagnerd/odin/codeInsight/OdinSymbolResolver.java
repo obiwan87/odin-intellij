@@ -253,6 +253,13 @@ public class OdinSymbolResolver extends OdinVisitor {
         symbols.add(odinSymbol);
     }
 
+    @Override
+    public void visitLabelDeclaration(@NotNull OdinLabelDeclaration o) {
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.LOCAL);
+        odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.LABEL);
+        symbols.add(odinSymbol);
+    }
+
     public static @NotNull OdinSymbol.OdinVisibility getVisibility(@NotNull Collection<OdinAttributeStatement> attributeStatementList,
                                                                    OdinSymbol.OdinVisibility defaultVisibility) {
         OdinSymbol.OdinVisibility odinVisibility = OdinAttributeUtils.computeVisibility(attributeStatementList);

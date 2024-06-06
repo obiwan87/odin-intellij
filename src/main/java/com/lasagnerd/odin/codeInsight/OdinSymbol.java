@@ -53,7 +53,7 @@ public class OdinSymbol {
         VARIABLE,
         PACKAGE_REFERENCE,
         POLYMORPHIC_TYPE,
-        BIT_SET
+        LABEL, BIT_SET
     }
 
     public enum OdinVisibility {

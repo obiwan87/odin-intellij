@@ -1358,6 +1358,50 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testScoping_labels()throws IOException {
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "labels", "test_1");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("label1"));
+        }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "labels", "test_2");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("label1"));
+            assertNotNull(odinScope.getSymbol("label2"));
+        }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "labels", "test_3");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("label1"));
+            assertNotNull(odinScope.getSymbol("label2"));
+            assertNotNull(odinScope.getSymbol("label3"));
+        }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "labels", "test_4");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(expression);
+            assertNotNull(odinScope.getSymbol("label1"));
+            assertNotNull(odinScope.getSymbol("label2"));
+            assertNotNull(odinScope.getSymbol("label3"));
+            assertNotNull(odinScope.getSymbol("label4"));
+        }
+    }
+
+    public void testScoping_usingPackage() throws IOException {
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        String packagePath = OdinImportService.getInstance(project).getPackagePath(odinFile);
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_import", "test");
+            OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(packagePath, expression, scope -> false, false);
+            assertNotNull(odinScope.getSymbol("a_mypublic_proc"));
+            assertNotNull(odinScope.getSymbol("a_ret"));
+        }
+    }
+
     public void testImportPackage() throws IOException {
         {
             OdinFile odinFile = load("src/test/testData/mypackage/packages.odin");

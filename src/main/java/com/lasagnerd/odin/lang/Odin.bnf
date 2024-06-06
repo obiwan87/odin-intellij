@@ -637,8 +637,8 @@ expressionStatement                  ::= orReturnExpression
                                           | typeAssert
                                           | primaryGroup
 
-label                                ::= IDENTIFIER_TOKEN COLON
-blockStatement                       ::= [directive eos?] [label] block {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
+labelDeclaration                     ::= declaredIdentifier COLON
+blockStatement                       ::= [directive eos?] [labelDeclaration] block {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 
 deferStatement                       ::= DEFER deferrableStatement
 private deferrableStatement          ::= assignmentStatement
@@ -661,20 +661,20 @@ doStatement                          ::= DO statement {implements="com.lasagnerd
 statementBody                        ::= block|doStatement
 
 // For
-forStatement                         ::= [directive] [label] forBlock
+forStatement                         ::= [directive] [labelDeclaration] forBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 private forHead                      ::= <<enterNoBlockMode>> [[[controlFlowInit] SEMICOLON] condition? [SEMICOLON [forUpdate]]] <<exitNoBlockMode>>
 forBlock                             ::= FOR forHead statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 forUpdate                            ::= assignmentStatement | callExpression
 
-// For-In
-forInStatement                       ::= [directive] [label] forInBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+// For-InG
+forInStatement                       ::= [directive] [labelDeclaration] forInBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 forInBlock                           ::= FOR <<enterNoBlockMode>> [forInParameterDeclaration (COMMA forInParameterDeclaration)*] IN expression <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 forInParameterDeclaration            ::= AND? declaredIdentifier
 
 // Conditional statement (=if-elseif-else)
 private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit] SEMICOLON] condition <<exitNoBlockMode>>
 
-conditionalStatement                 ::= [directive] [label] ifBlock
+conditionalStatement                 ::= [directive] [labelDeclaration] ifBlock {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
 
 ifBlock                              ::= if conditionalHead statementBody [sos elseBlock] {
                                                 implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
@@ -685,7 +685,7 @@ if                                   ::= IF_TOKEN
 else                                 ::= ELSE_TOKEN
 
 // Switch
-switchStatement                      ::= [directive] [label] (switchInBlock|switchBlock)
+switchStatement                      ::= [directive] [labelDeclaration] (switchInBlock|switchBlock) {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
 
 switchInBlock                        ::= SWITCH switchTypeVariableDeclaration IN expression switchBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 switchTypeVariableDeclaration        ::= declaredIdentifier
@@ -697,7 +697,7 @@ switchCase                           ::= CASE [expression (COMMA expression)*] c
 caseBlock                            ::= COLON statementList?
 
 // When statement (compile time, which means it does not support an init block)
-whenStatement                        ::= [directive] [label] whenBlock
+whenStatement                        ::= [directive] [labelDeclaration] whenBlock
 whenBlock                            ::= WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody [sos elseWhenBlock]
 elseWhenBlock                        ::= else (whenBlock|statementBody)
 
