@@ -169,6 +169,8 @@
   extends('.*Type$') = type
 
   methods('.*([iI]nitialization|[dD]eclaration).*') = [getDeclaredIdentifiers]
+
+  implements("binaryExpression|unaryExpression|castExpression|transmuteExpression|autoCastExpression|orElseExpression|orReturnExpression|orBreakExpression|orContinueExpression|ternaryExpression") = 'com.lasagnerd.odin.lang.psi.OdinOperator'
   implements('.*([iI]nitialization|[dD]eclaration).*') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
   implements('(procedure|struct|union)DeclarationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
   implements('usingStatement') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
@@ -381,7 +383,7 @@ expression                           ::= postfixGroup
                                          | rangeGroup
                                          | orGroup
                                          | andGroup
-                                         | orderGroup
+                                         | comparisonGroup
                                          | addGroup
                                          | mulGroup
                                          | unaryGroup
@@ -455,7 +457,7 @@ private addGroup                     ::= addExpression
                                          | inExpression
                                          | notInExpression
 
-private orderGroup                   ::= ltExpression
+private comparisonGroup              ::= ltExpression
                                          | gtExpression
                                          | lteExpression
                                          | gteExpression
@@ -498,23 +500,28 @@ identifier                           ::= IDENTIFIER_TOKEN { methods = [getRefere
 
 callExpression                       ::= expression arguments
 
-private primaryGroup                 ::= simpleRefExpression | parenthesizedExpression | typeDefinitionExpression | directiveExpression | literalExpression
+private primaryGroup                 ::= simpleRefExpression
+                                         | parenthesizedExpression
+                                         | typeDefinitionExpression
+                                         | directiveExpression
+                                         | literalExpression
 
 literalExpression                    ::= basicLiteral
 
 compoundLiteralExpression            ::= compoundLiteralTyped | compoundLiteralUntyped
 fake compoundValue                   ::= {methods=[getCompoundValueBody]}
 fake compoundLiteral                 ::= type? (compoundValueTyped | compoundValueUntyped)
-compoundLiteralTyped                 ::= compoundType compoundValueTyped {extends=compoundLiteral}
-compoundLiteralUntyped               ::= compoundValueUntyped {extends=compoundLiteral}
+compoundLiteralTyped                 ::= compoundType compoundValueTyped {extends=compoundLiteral implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+compoundLiteralUntyped               ::= compoundValueUntyped            {extends=compoundLiteral implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 
 index                                ::= LBRACKET expression [COMMA expression] RBRACKET
 slice                                ::= LBRACKET expression? COLON expression? RBRACKET
 private arguments                    ::= LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
 
-elvisExpression                      ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">>
-ternaryIfExpression                  ::= expression if       <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
-ternaryWhenExpression                ::= expression WHEN     <<enterMode "OPERAND">> expression else expression  <<exitMode "OPERAND">>
+fake ternaryExpression                    ::= expression 'OP' expression 'OP' expression
+elvisExpression                      ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">> {extends=ternaryExpression}
+ternaryIfExpression                  ::= expression IF_TOKEN <<enterMode "OPERAND">> expression ELSE_TOKEN expression  <<exitMode "OPERAND">> {extends=ternaryExpression}
+ternaryWhenExpression                ::= expression WHEN     <<enterMode "OPERAND">> expression ELSE_TOKEN expression  <<exitMode "OPERAND">> {extends=ternaryExpression}
 
 castExpression                       ::= CAST LPAREN type RPAREN expression
 transmuteExpression                  ::= TRANSMUTE LPAREN type RPAREN expression
@@ -537,13 +544,14 @@ private unaryGroup                   ::= unaryPlusExpression
                                          | unaryRangeExpression
 
 
+fake unaryExpression                 ::= 'OP' expression
 
-unaryPlusExpression                  ::= PLUS  <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unaryMinusExpression                 ::= MINUS <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unaryTildeExpression                 ::= TILDE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-addressExpression                    ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unaryNotExpression                   ::= NOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
-unaryRangeExpression                 ::= RANGE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">>
+unaryPlusExpression                  ::= PLUS  <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
+unaryMinusExpression                 ::= MINUS <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
+unaryTildeExpression                 ::= TILDE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
+addressExpression                    ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
+unaryNotExpression                   ::= NOT   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
+unaryRangeExpression                 ::= RANGE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
 
 
 orReturnExpression                   ::= expression OR_RETURN

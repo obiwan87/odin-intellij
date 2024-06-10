@@ -90,6 +90,7 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
 
     @Override
     public @NotNull SearchScope getUseScope() {
+        // TODO
         OdinSymbol symbol = createSymbol(this);
         switch (symbol.getVisibility()) {
             case LOCAL -> {

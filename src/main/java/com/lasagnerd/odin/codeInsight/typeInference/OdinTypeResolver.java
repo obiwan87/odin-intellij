@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.doInferType;
-import static com.lasagnerd.odin.codeInsight.annotators.OdinLangSyntaxAnnotator.RESERVED_TYPES;
+import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInType.RESERVED_TYPES;
 
 @EqualsAndHashCode(callSuper = true)
 public class OdinTypeResolver extends OdinVisitor {
@@ -278,9 +278,7 @@ public class OdinTypeResolver extends OdinVisitor {
     // Visitor methods
     @Override
     public void visitQualifiedType(@NotNull OdinQualifiedType qualifiedType) {
-        qualifiedType.getIdentifier();
         OdinScope packageScope = scope.getScopeOfImport(qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
-
         this.type = doResolveType(packageScope, qualifiedType.getType());
     }
 

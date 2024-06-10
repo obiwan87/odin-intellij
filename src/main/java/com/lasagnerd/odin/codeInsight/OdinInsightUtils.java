@@ -3,7 +3,6 @@ package com.lasagnerd.odin.codeInsight;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -17,40 +16,15 @@ import java.util.List;
 
 public class OdinInsightUtils {
 
-    public static OdinSymbol findSymbol(OdinIdentifier identifier) {
-        OdinScope parentScope = OdinScopeResolver.resolveScope(identifier)
-                .with(OdinImportService.getInstance(identifier.getProject()).getPackagePath(identifier));
-        OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(identifier, true, OdinRefExpression.class);
-        OdinScope scope;
-        if (refExpression != null) {
-            if (refExpression.getExpression() != null) {
-                scope = OdinReferenceResolver.resolve(parentScope, refExpression.getExpression());
-            } else {
-                scope = parentScope;
-            }
-        } else {
-            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, true, OdinQualifiedType.class);
-            if (qualifiedType != null) {
-                if (qualifiedType.getPackageIdentifier() == identifier) {
-                    scope = parentScope;
-                } else {
-                    scope = OdinReferenceResolver.resolve(parentScope, qualifiedType);
-                }
-            } else {
-                scope = parentScope;
-            }
-        }
+    public static final List<Class<?>> OPERAND_BOUNDARY_CLASSES = List.of(
+            OdinOperator.class,
 
-        if (scope == OdinScope.EMPTY || scope == null) {
-            scope = parentScope;
-        }
+            OdinArgument.class,
+            OdinDeclaration.class,
+            OdinStatement.class,
 
-        if (scope != null) {
-            return scope.getSymbol(identifier.getIdentifierToken().getText());
-        }
-
-        return null;
-    }
+            OdinExpressionsList.class
+    );
 
     public static String getStringLiteralValue(OdinExpression odinExpression) {
         if (odinExpression instanceof OdinLiteralExpression literalExpression) {
@@ -272,7 +246,7 @@ public class OdinInsightUtils {
 
     public static List<OdinSymbol> getTypeSymbols(OdinExpression expression, OdinScope scope) {
         TsOdinType tsOdinType = OdinInferenceEngine.inferType(scope, expression);
-        if(tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
+        if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             return getTypeSymbols(OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType), scope);
         }
         return getTypeSymbols(tsOdinType, scope);
@@ -292,7 +266,7 @@ public class OdinInsightUtils {
             return getEnumFields((OdinEnumDeclarationStatement) enumType.getDeclaration());
         }
 
-        if(tsOdinType instanceof TsOdinPackageReferenceType packageReferenceType) {
+        if (tsOdinType instanceof TsOdinPackageReferenceType packageReferenceType) {
             OdinScope symbolsOfImportedPackage = OdinImportUtils
                     .getSymbolsOfImportedPackage(packageReferenceType.getReferencingPackagePath(),
                             (OdinImportDeclarationStatement) packageReferenceType.getDeclaration());
@@ -303,4 +277,31 @@ public class OdinInsightUtils {
     }
 
 
+    public static OdinExpression findOperand(PsiElement element) {
+        PsiElement operand = PsiTreeUtil.findFirstParent(element, psiElement -> OPERAND_BOUNDARY_CLASSES.stream()
+                .anyMatch(s -> s.isInstance(psiElement.getParent()) && psiElement instanceof OdinExpression)
+        );
+
+        if (operand != null)
+            return (OdinExpression) operand;
+        return null;
+    }
+
+    public static boolean isInstanceOfAny(Object obj, List<Class<?>> classes) {
+        return classes.stream().anyMatch(s -> s.isInstance(obj));
+    }
+
+    public static OdinRefExpression findTopMostRefExpression(PsiElement element) {
+        List<OdinRefExpression> odinRefExpressions = unfoldRefExpressions(element);
+        if (odinRefExpressions.isEmpty())
+            return null;
+        return odinRefExpressions.get(odinRefExpressions.size() - 1);
+    }
+
+    public static @NotNull List<OdinRefExpression> unfoldRefExpressions(PsiElement element) {
+        return PsiTreeUtil.collectParents(element,
+                OdinRefExpression.class,
+                true,
+                p -> isInstanceOfAny(p, OPERAND_BOUNDARY_CLASSES));
+    }
 }
