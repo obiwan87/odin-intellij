@@ -379,9 +379,9 @@ public class OdinPsiUtil {
         OdinExpression expression = usingStatement.getExpression();
         TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
 
-        OdinScope scopeProvidedByType = OdinInsightUtils.getScopeProvidedByType(tsOdinType);
+        OdinSymbolTable typeSymbols = OdinInsightUtils.getScopeProvidedByType(tsOdinType);
 
-        return scopeProvidedByType.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
+        return typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
                 .map(OdinDeclaredIdentifier.class::cast)
                 .toList();
     }

@@ -2,13 +2,13 @@ package com.lasagnerd.odin.lang.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
-import com.lasagnerd.odin.codeInsight.OdinScope;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.OdinScopeResolver;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class OdinFileScopeMixin extends ASTWrapperPsiElement {
 
-    protected OdinScope scope;
+    protected OdinSymbolTable symbolTable;
 
     public OdinFileScopeMixin(@NotNull ASTNode node) {
         super(node);
@@ -16,19 +16,19 @@ public abstract class OdinFileScopeMixin extends ASTWrapperPsiElement {
 
     @Override
     public void subtreeChanged() {
-        scope = null;
+        symbolTable = null;
     }
 
-    public OdinScope getScope() {
+    public OdinSymbolTable getSymbolTable() {
         if (this instanceof OdinFileScope odinFileScope) {
-            if (scope == null) {
-                scope = OdinScopeResolver.getFileScopeDeclarations(
+            if (symbolTable == null) {
+                symbolTable = OdinScopeResolver.getFileScopeDeclarations(
                         odinFileScope,
                         OdinScopeResolver.getGlobalFileVisibility(odinFileScope)
                 );
             }
 
-            return scope;
+            return symbolTable;
         }
         return null;
     }

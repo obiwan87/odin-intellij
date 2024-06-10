@@ -24,19 +24,19 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class OdinScopeResolver {
-    public static OdinScope resolveScope(PsiElement element) {
+    public static OdinSymbolTable resolveScope(PsiElement element) {
         return findScope(element, OdinImportService.getInstance(element.getProject()).getPackagePath(element), s -> true);
     }
 
-    public static OdinScope resolveScope(PsiElement element, Predicate<OdinSymbol> matcher) {
+    public static OdinSymbolTable resolveScope(PsiElement element, Predicate<OdinSymbol> matcher) {
         return findScope(element, OdinImportService.getInstance(element.getProject()).getPackagePath(element), matcher);
     }
 
-    public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
+    public static OdinSymbolTable getFileScopeDeclarations(@NotNull OdinFileScope fileScope) {
         return getFileScopeDeclarations(fileScope, getGlobalFileVisibility(fileScope));
     }
 
-    public static OdinScope getFileScopeDeclarations(@NotNull OdinFileScope fileScope, @NotNull OdinSymbol.OdinVisibility globalVisibility) {
+    public static OdinSymbolTable getFileScopeDeclarations(@NotNull OdinFileScope fileScope, @NotNull OdinSymbol.OdinVisibility globalVisibility) {
         // Find all blocks that are not in a procedure
         List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
 
@@ -48,13 +48,13 @@ public class OdinScopeResolver {
         while (!statementStack.isEmpty()) {
             PsiElement element = statementStack.pop();
             if (element instanceof OdinDeclaration declaration) {
-                List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(globalVisibility, declaration, OdinScope.EMPTY);
+                List<OdinSymbol> symbols = OdinSymbolResolver.getSymbols(globalVisibility, declaration, OdinSymbolTable.EMPTY);
                 fileScopeSymbols.addAll(symbols);
             } else {
                 getStatements(element).forEach(statementStack::push);
             }
         }
-        return OdinScope.from(fileScopeSymbols);
+        return OdinSymbolTable.from(fileScopeSymbols);
     }
 
     private static List<OdinStatement> getStatements(PsiElement psiElement) {
@@ -99,9 +99,9 @@ public class OdinScopeResolver {
         for (Path builtinPath : builtinPaths) {
             OdinFile odinFile = createOdinFile(project, builtinPath);
             if (odinFile != null) {
-                OdinScope fileScopeDeclarations = odinFile.getFileScope().getScope();
+                OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getSymbolTable();
                 Collection<OdinSymbol> symbols = fileScopeDeclarations
-                        .getSymbolTable().values()
+                        .getSymbolNameMap().values()
                         .stream()
                         .filter(odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributeStatements()))
                         .toList();
@@ -113,9 +113,9 @@ public class OdinScopeResolver {
         for (String resource : resources) {
             OdinFile odinFile = createOdinFileFromResource(project, resource);
             if (odinFile != null) {
-                OdinScope fileScopeDeclarations = odinFile.getFileScope().getScope();
+                OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getSymbolTable();
                 Collection<OdinSymbol> symbols = fileScopeDeclarations
-                        .getSymbolTable().values()
+                        .getSymbolNameMap().values()
                         .stream()
                         .filter(odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributeStatements()))
                         .toList();
@@ -145,25 +145,25 @@ public class OdinScopeResolver {
         }
     }
 
-    private static OdinScope findScope(PsiElement element, String packagePath, Predicate<OdinSymbol> matcher) {
+    private static OdinSymbolTable findScope(PsiElement element, String packagePath, Predicate<OdinSymbol> matcher) {
         // TODO: When looking for a specific declaration, this can be optimized:
         // when building the scope tree, just stop as soon as we find the first matching declaration
         Project project = element.getProject();
 
-        OdinScope scope = new OdinScope();
-        scope.setPackagePath(packagePath);
+        OdinSymbolTable symbolTable = new OdinSymbolTable();
+        symbolTable.setPackagePath(packagePath);
 
         List<OdinSymbol> builtInSymbols = getBuiltInSymbols(project);
 
         // 0. Import built-in symbols
-        scope.addAll(builtInSymbols);
+        symbolTable.addAll(builtInSymbols);
 
         // 1. Import symbols from this file
         OdinFileScope fileScope = (OdinFileScope) PsiTreeUtil.findFirstParent(element, psi -> psi instanceof OdinFileScope);
 
         if (fileScope != null) {
-            OdinScope fileScopeDeclarations = fileScope.getScope();
-            scope.addAll(fileScopeDeclarations.getFilteredSymbols(matcher), false);
+            OdinSymbolTable fileScopeDeclarations = fileScope.getSymbolTable();
+            symbolTable.addAll(fileScopeDeclarations.getFilteredSymbols(matcher), false);
         }
 
         // 2. Import symbols from other files in the same package
@@ -176,23 +176,23 @@ public class OdinScopeResolver {
                 }
                 OdinSymbol.OdinVisibility globalFileVisibility = getGlobalFileVisibility(odinFile.getFileScope());
                 if (globalFileVisibility == OdinSymbol.OdinVisibility.FILE_PRIVATE) continue;
-                Collection<OdinSymbol> fileScopeDeclarations = odinFile.getFileScope().getScope().getSymbolTable()
+                Collection<OdinSymbol> fileScopeDeclarations = odinFile.getFileScope().getSymbolTable().getSymbolNameMap()
                         .values()
                         .stream()
                         .filter(o -> !o.getVisibility().equals(OdinSymbol.OdinVisibility.FILE_PRIVATE))
                         .toList();
 
 
-                scope.addAll(fileScopeDeclarations);
+                symbolTable.addAll(fileScopeDeclarations);
             }
         }
 
         // 3. Import symbols from the scope tree
-        OdinScope odinScope = OdinSymbolFinder.doFindVisibleSymbols(element);
-        odinScope.putAll(scope);
-        odinScope.setPackagePath(packagePath);
+        OdinSymbolTable odinSymbolTable = OdinSymbolFinder.doFindVisibleSymbols(element);
+        odinSymbolTable.putAll(symbolTable);
+        odinSymbolTable.setPackagePath(packagePath);
 
-        return odinScope;
+        return odinSymbolTable;
     }
 
     public static OdinSymbol.OdinVisibility getGlobalFileVisibility(OdinFileScope fileScope) {

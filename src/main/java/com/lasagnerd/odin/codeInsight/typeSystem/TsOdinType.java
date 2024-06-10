@@ -1,6 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
-import com.lasagnerd.odin.codeInsight.OdinScope;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinType;
@@ -32,7 +32,7 @@ public abstract class TsOdinType {
      * the reference to struct C.
      * of C.
      */
-    OdinScope scope = new OdinScope();
+    OdinSymbolTable symbolTable = new OdinSymbolTable();
 
 
 
@@ -40,7 +40,7 @@ public abstract class TsOdinType {
 
     public static final TsOdinType UNKNOWN = new TsOdinType() {
         {
-            this.scope = OdinScope.EMPTY;
+            this.symbolTable = OdinSymbolTable.EMPTY;
         }
 
         @Override
@@ -61,7 +61,7 @@ public abstract class TsOdinType {
 
     public static final TsOdinType VOID = new TsOdinType() {
         {
-            this.scope = OdinScope.EMPTY;
+            this.symbolTable = OdinSymbolTable.EMPTY;
         }
 
         @Override

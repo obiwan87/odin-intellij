@@ -1,7 +1,7 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.OdinScope;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,7 @@ import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.i
 
 public class OdinTypeSpecializer {
 
-    public static @NotNull TsOdinStructType specializeStruct(OdinScope outerScope,
+    public static @NotNull TsOdinStructType specializeStruct(OdinSymbolTable outerScope,
                                                              @NotNull List<OdinArgument> arguments,
                                                              TsOdinStructType genericType) {
         List<TsOdinParameter> parameters = genericType.getParameters();
@@ -21,10 +21,10 @@ public class OdinTypeSpecializer {
 
         TsOdinStructType specializedType = new TsOdinStructType();
         specializedType.setGenericType(genericType);
-        specializedType.getScope().setPackagePath(genericType.getScope().getPackagePath());
-        specializedType.getScope().putAll(genericType.getScope());
+        specializedType.getSymbolTable().setPackagePath(genericType.getSymbolTable().getPackagePath());
+        specializedType.getSymbolTable().putAll(genericType.getSymbolTable());
 
-        OdinScope newScope = specializedType.getScope();
+        OdinSymbolTable newScope = specializedType.getSymbolTable();
         resolveArguments(outerScope,
                 genericType,
                 genericType.getParameters(),
@@ -49,7 +49,7 @@ public class OdinTypeSpecializer {
         return specializedType;
     }
 
-    public static @NotNull TsOdinProcedureType specializeProcedure(@NotNull OdinScope outerScope,
+    public static @NotNull TsOdinProcedureType specializeProcedure(@NotNull OdinSymbolTable outerScope,
                                                                    List<OdinArgument> arguments,
                                                                    TsOdinProcedureType genericType) {
         List<TsOdinParameter> parameters = genericType.getParameters();
@@ -57,8 +57,8 @@ public class OdinTypeSpecializer {
             return genericType;
 
         TsOdinProcedureType specializedType = new TsOdinProcedureType();
-        specializedType.getScope().setPackagePath(genericType.getScope().getPackagePath());
-        specializedType.getScope().putAll(genericType.getScope());
+        specializedType.getSymbolTable().setPackagePath(genericType.getSymbolTable().getPackagePath());
+        specializedType.getSymbolTable().putAll(genericType.getSymbolTable());
         specializedType.setType(genericType.getType());
         specializedType.setName(genericType.getName());
         specializedType.setDeclaration(genericType.getDeclaration());
@@ -71,22 +71,22 @@ public class OdinTypeSpecializer {
                 arguments);
 
         for (TsOdinParameter tsOdinReturnType : genericType.getReturnParameters()) {
-            TsOdinType tsOdinType = OdinTypeResolver.resolveType(specializedType.getScope(), tsOdinReturnType.getPsiType());
+            TsOdinType tsOdinType = OdinTypeResolver.resolveType(specializedType.getSymbolTable(), tsOdinReturnType.getPsiType());
             specializedType.getReturnTypes().add(tsOdinType);
         }
 
         return specializedType;
     }
 
-    public static TsOdinType specializeUnion(OdinScope outerScope, List<OdinArgument> arguments, TsOdinUnionType genericType) {
+    public static TsOdinType specializeUnion(OdinSymbolTable outerScope, List<OdinArgument> arguments, TsOdinUnionType genericType) {
         List<TsOdinParameter> parameters = genericType.getParameters();
         if (parameters.isEmpty())
             return genericType;
 
         TsOdinUnionType specializedType = new TsOdinUnionType();
-        specializedType.getScope().setPackagePath(genericType.getScope().getPackagePath());
+        specializedType.getSymbolTable().setPackagePath(genericType.getSymbolTable().getPackagePath());
         specializedType.setGenericType(genericType);
-        specializedType.getScope().putAll(genericType.getScope());
+        specializedType.getSymbolTable().putAll(genericType.getSymbolTable());
         specializedType.setType(genericType.getType());
         specializedType.setName(genericType.getName());
         specializedType.setDeclaration(genericType.getDeclaration());
@@ -99,7 +99,7 @@ public class OdinTypeSpecializer {
 
 
         for (TsOdinUnionVariant baseField : genericType.getVariants()) {
-            TsOdinType specializedFieldType = OdinTypeResolver.resolveType(specializedType.getScope(), baseField.getPsiType());
+            TsOdinType specializedFieldType = OdinTypeResolver.resolveType(specializedType.getSymbolTable(), baseField.getPsiType());
             TsOdinUnionVariant specializedField = new TsOdinUnionVariant();
             specializedField.setPsiType(baseField.getPsiType());
             specializedField.setType(specializedFieldType);
@@ -110,13 +110,13 @@ public class OdinTypeSpecializer {
     }
 
     private static void resolveArguments(
-            OdinScope outerScope,
+            OdinSymbolTable outerScope,
             TsOdinType genericType,
             List<TsOdinParameter> parameters,
             TsOdinType specializedType,
             List<OdinArgument> arguments
     ) {
-        OdinScope instantiationScope = specializedType.getScope();
+        OdinSymbolTable instantiationScope = specializedType.getSymbolTable();
 
         if (!arguments.isEmpty()) {
             for (int i = 0; i < arguments.size(); i++) {
@@ -257,7 +257,7 @@ public class OdinTypeSpecializer {
     }
 
     @NotNull
-    private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, TsOdinParameter parameter, OdinScope newScope) {
+    private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, TsOdinParameter parameter, OdinSymbolTable newScope) {
         TsOdinType parameterType = parameter.getType();
         TsOdinType argumentType = inferType(newScope, argumentExpression);
         if (argumentType instanceof TsOdinMetaType metaType && (parameterType.isTypeId()
@@ -277,7 +277,7 @@ public class OdinTypeSpecializer {
         return argumentType;
     }
 
-    private static @NotNull TsOdinType createPolymorphicType(OdinScope newScope, OdinPolymorphicType polymorphicType) {
+    private static @NotNull TsOdinType createPolymorphicType(OdinSymbolTable newScope, OdinPolymorphicType polymorphicType) {
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, polymorphicType);
         OdinDeclaredIdentifier declaredIdentifier = polymorphicType.getDeclaredIdentifier();
         tsOdinType.setDeclaration(polymorphicType);
