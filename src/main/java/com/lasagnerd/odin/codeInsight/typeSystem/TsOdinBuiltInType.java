@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
@@ -65,6 +66,67 @@ public class TsOdinBuiltInType extends TsOdinType {
     public static final TsOdinBuiltInType RAWPTR = new TsOdinBuiltInType("rawptr");
     public static final TsOdinBuiltInType TYPEID = new TsOdinBuiltInType("typeid");
     public static final TsOdinBuiltInType ANY = new TsOdinBuiltInType("any");
+    public static final List<String> RESERVED_TYPES = List.of(
+            "bool",
+            "b8",
+            "b16",
+            "b32",
+            "b64",
+            "byte",
+            "int",
+            "i8",
+            "i16",
+            "i32",
+            "i64",
+            "i128",
+            "uint",
+            "u8",
+            "u16",
+            "u32",
+            "u64",
+            "u128",
+            "uintptr",
+            "i16le",
+            "i32le",
+            "i64le",
+            "i128le",
+            "u16le",
+            "u32le",
+            "u64le",
+            "u128le",
+            "i16be",
+            "i32be",
+            "i64be",
+            "i128be",
+            "u16be",
+            "u32be",
+            "u64be",
+            "u128be",
+            "f16",
+            "f32",
+            "f64",
+            "f16le",
+            "f32le",
+            "f64le",
+            "f16be",
+            "f32be",
+            "f64be",
+            "complex32",
+            "complex64",
+            "complex128",
+            "quaternion64",
+            "quaternion128",
+            "quaternion256",
+            "rune",
+            "string",
+            "cstring",
+            "rawptr",
+            "typeid",
+            "any",
+            "true",
+            "false",
+            "nil"
+    );
 
 
     private static final Map<String, TsOdinBuiltInType> builtInTypeMap = new HashMap<>();

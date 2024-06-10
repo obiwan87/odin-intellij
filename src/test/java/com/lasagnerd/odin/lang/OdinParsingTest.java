@@ -55,6 +55,7 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 
@@ -1358,7 +1359,7 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    public void testScoping_labels()throws IOException {
+    public void testScoping_labels() throws IOException {
         OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "labels", "test_1");
@@ -1426,6 +1427,78 @@ public class OdinParsingTest extends UsefulTestCase {
             assertEquals(structType.getName(), "a_ret");
         }
     }
+
+    public void testReferenceWalk() {
+        @org.intellij.lang.annotations.Language("Odin")
+        String fileContent = """
+                package main;
+                                
+                main :: proc() {
+                   a.b.c.d().e.f()
+                   a.?.b.c.d().e.f()
+                   a().b.?.c[0].d()^.e.f()
+                   x := x.b.c.d().e.f() + y.?.b.c.d().e.f() + z().b.?.c[0].d()^.e.f()
+                }
+                """;
+
+
+        OdinFile odinFile = (OdinFile) createPsiFile("refs", fileContent);
+        OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, "main");
+        {
+            OdinStatement odinStatement = procedure.getBlockStatements().get(0);
+            assertTopMostRefExpressionTextEquals(odinStatement, "a.b.c.d().e.f", "a");
+        }
+        {
+            OdinStatement odinStatement = procedure.getBlockStatements().get(1);
+            assertTopMostRefExpressionTextEquals(odinStatement, "a.?.b.c.d().e.f", "a");
+        }
+        {
+            OdinStatement odinStatement = procedure.getBlockStatements().get(2);
+            assertTopMostRefExpressionTextEquals(odinStatement, "a().b.?.c[0].d()^.e.f", "a");
+        }
+        {
+            OdinStatement odinStatement = procedure.getBlockStatements().get(3);
+            OdinVariableInitializationStatement var = assertInstanceOf(odinStatement, OdinVariableInitializationStatement.class);
+            OdinExpression odinExpression = var.getExpressionsList().getExpressionList().get(0);
+            assertTopMostRefExpressionTextEquals(odinExpression, "x.b.c.d().e.f", "x");
+            assertTopMostRefExpressionTextEquals(odinExpression, "y.?.b.c.d().e.f", "y");
+            assertTopMostRefExpressionTextEquals(odinExpression, "z().b.?.c[0].d()^.e.f", "z");
+        }
+        {
+            OdinStatement odinStatement = procedure.getBlockStatements().get(0);
+            OdinRefExpression topMostRefExpression = getTopMostRefExpression(procedure, "a");
+
+            Collection<OdinIdentifier> odinIdentifiers = PsiTreeUtil.findChildrenOfType(odinStatement, OdinIdentifier.class);
+            assertNotEmpty(odinIdentifiers);
+            OdinIdentifier identifier = odinIdentifiers.stream().filter(s -> s.getIdentifierToken().getText().equals("a")).findFirst().orElseThrow();
+            assertNotNull(identifier);
+
+            List<OdinRefExpression> odinRefExpressions = PsiTreeUtil.collectParents(identifier, OdinRefExpression.class, true, p -> p == topMostRefExpression);
+            for (OdinRefExpression odinRefExpression : odinRefExpressions) {
+                String text = odinRefExpression.getIdentifier().getText();
+
+                System.out.println(text);
+            }
+        }
+    }
+
+    private static void assertTopMostRefExpressionTextEquals(PsiElement odinStatement, String expected, String identifierName) {
+        OdinRefExpression topMostRefExpression = getTopMostRefExpression(odinStatement, identifierName);
+        assertNotNull(topMostRefExpression);
+        assertEquals(expected, topMostRefExpression.getText());
+    }
+
+    private static @NotNull OdinRefExpression getTopMostRefExpression(PsiElement odinStatement, String identifierName) {
+        Collection<OdinIdentifier> odinIdentifiers = PsiTreeUtil.findChildrenOfType(odinStatement, OdinIdentifier.class);
+        OdinIdentifier identifier = odinIdentifiers.stream().filter(s -> s.getIdentifierToken().getText().equals(identifierName)).findFirst().orElseThrow();
+        assertNotNull(identifier);
+        OdinRefExpression odinRefExpression = assertInstanceOf(identifier.getParent(), OdinRefExpression.class);
+
+        OdinRefExpression topMostRefExpression = OdinInsightUtils.findTopMostRefExpression(odinRefExpression);
+        assertNotNull(topMostRefExpression);
+        return topMostRefExpression;
+    }
+
 
     // Helpers
 

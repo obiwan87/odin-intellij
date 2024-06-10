@@ -17,7 +17,7 @@ assignment :: proc() {
 }
 
 partial_scope :: proc() {
-    x := 1
+    x : i32 = 1
     test := 1 // y should not be in scope here
     y := 1
 }

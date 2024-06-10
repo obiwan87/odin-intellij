@@ -3,6 +3,8 @@ package com.lasagnerd.odin.lang;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
@@ -14,20 +16,22 @@ import java.util.List;
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
 public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
-    public static final TextAttributesKey BUILTIN_FUNCTION = createTextAttributesKey("ODIN_BUILTIN_FUNCTION", DefaultLanguageHighlighterColors.KEYWORD);;
+    public static final TextAttributesKey BUILTIN_FUNCTION = createTextAttributesKey("ODIN_BUILTIN_FUNCTION", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
+    public static final TextAttributesKey PACKAGE = createTextAttributesKey("ODIN_PACKAGE", DefaultLanguageHighlighterColors.IDENTIFIER);
+    public static final TextAttributesKey PROCEDURE_TYPE = createTextAttributesKey("ODIN_PROCEDURE", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+    public static final TextAttributesKey KEYWORD =  createTextAttributesKey("ODIN_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
+    public static final TextAttributesKey IDENTIFIER = createTextAttributesKey("ODIN_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER);
+    public static final TextAttributesKey PROCEDURE_CALL = createTextAttributesKey("ODIN_PROCEDURE_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
+
+    public static final TextAttributesKey STRUCT_TYPE = createTextAttributesKey("ODIN_STRUCT_TYPE", DefaultLanguageHighlighterColors.CLASS_NAME);
+    public static final TextAttributesKey STRUCT_REF = createTextAttributesKey("ODIN_STRUCT_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+
+    public static final TextAttributesKey UNION_TYPE = createTextAttributesKey("ODIN_UNION_TYPE", DefaultLanguageHighlighterColors.CLASS_NAME);
+    public static final TextAttributesKey UNION_REF = createTextAttributesKey("ODIN_UNION_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+
 
     public static final TextAttributesKey BAD_CHARACTER =
             createTextAttributesKey("ODIN_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
-
-
-    public static final TextAttributesKey KEYWORD =
-            createTextAttributesKey("ODIN_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
-
-    public static final TextAttributesKey IDENTIFIER =
-            createTextAttributesKey("ODIN_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER);
-
-
-
 
     private static final TextAttributesKey[] KEYWORD_KEYS = new TextAttributesKey[]{KEYWORD};
 
@@ -95,8 +99,8 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
         }
 
         if (tokenType.equals(OdinTypes.DQ_STRING_LITERAL) ||
-            tokenType.equals(OdinTypes.SQ_STRING_LITERAL) ||
-            tokenType.equals(OdinTypes.RAW_STRING_LITERAL)
+                tokenType.equals(OdinTypes.SQ_STRING_LITERAL) ||
+                tokenType.equals(OdinTypes.RAW_STRING_LITERAL)
         ) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.STRING};
         }
@@ -141,7 +145,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BRACES};
         }
 
-        if(tokenType.equals(OdinTypes.AT)) {
+        if (tokenType.equals(OdinTypes.AT)) {
             return new TextAttributesKey[]{DefaultLanguageHighlighterColors.METADATA};
         }
 

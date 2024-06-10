@@ -7,7 +7,6 @@ import com.lasagnerd.odin.codeInsight.OdinScope;
 import com.lasagnerd.odin.codeInsight.OdinScopeResolver;
 import com.lasagnerd.odin.codeInsight.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
-import com.lasagnerd.odin.codeInsight.annotators.OdinLangSyntaxAnnotator;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,12 +42,12 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @NotNull
     public static TsOdinType inferType(OdinScope scope, OdinExpression expression) {
-        OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(scope);
-        expression.accept(odinExpressionTypeResolver);
-        if (odinExpressionTypeResolver.isImport) {
-            return createPackageReferenceType(scope.getPackagePath(), odinExpressionTypeResolver.importDeclarationStatement);
+        OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(scope);
+        expression.accept(odinInferenceEngine);
+        if (odinInferenceEngine.isImport) {
+            return createPackageReferenceType(scope.getPackagePath(), odinInferenceEngine.importDeclarationStatement);
         } else {
-            return odinExpressionTypeResolver.type != null? odinExpressionTypeResolver.type : TsOdinType.UNKNOWN;
+            return odinInferenceEngine.type != null? odinInferenceEngine.type : TsOdinType.UNKNOWN;
         }
     }
 
@@ -57,14 +56,14 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     public static TsOdinType doInferType(OdinScope scope, TsOdinType expectedType, int lhsValuesCount, @NotNull OdinExpression expression) {
-        OdinInferenceEngine odinExpressionTypeResolver = new OdinInferenceEngine(scope, expectedType, lhsValuesCount);
-        expression.accept(odinExpressionTypeResolver);
+        OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(scope, expectedType, lhsValuesCount);
+        expression.accept(odinInferenceEngine);
 
-        if (odinExpressionTypeResolver.isImport) {
-            OdinImportDeclarationStatement importDeclarationStatement = odinExpressionTypeResolver.importDeclarationStatement;
+        if (odinInferenceEngine.isImport) {
+            OdinImportDeclarationStatement importDeclarationStatement = odinInferenceEngine.importDeclarationStatement;
             return createPackageReferenceType(scope.getPackagePath(), importDeclarationStatement);
         }
-        TsOdinType type = odinExpressionTypeResolver.type;
+        TsOdinType type = odinInferenceEngine.type;
         if (type == null) {
             return TsOdinType.UNKNOWN;
         }
@@ -130,7 +129,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     }
                 }
             } else {
-                if (OdinLangSyntaxAnnotator.RESERVED_TYPES.contains(name)) {
+                if (TsOdinBuiltInType.RESERVED_TYPES.contains(name)) {
                     TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(BUILTIN);
                     tsOdinMetaType.setName(name);
                     this.type = tsOdinMetaType;

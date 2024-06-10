@@ -3,8 +3,8 @@ package com.lasagnerd.odin.lang.psi;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
-import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.OdinSymbolFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +20,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public @Nullable PsiElement resolve() {
-        OdinSymbol firstDeclaration = OdinInsightUtils.findSymbol(getElement());
+        OdinSymbol firstDeclaration = OdinSymbolFinder.findSymbol(getElement());
         if (firstDeclaration != null) {
             return firstDeclaration.getDeclaredIdentifier();
         }

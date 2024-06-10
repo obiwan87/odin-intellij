@@ -1,24 +1,32 @@
 package com.lasagnerd.odin.lang;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.JBColor;
 import com.lasagnerd.odin.OdinIcons;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 
 public class OdinColorSettingsPage implements ColorSettingsPage {
 
     AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = new AttributesDescriptor[]{
-            new AttributesDescriptor("Built-in function", OdinSyntaxHighlighter.BUILTIN_FUNCTION)
+            new AttributesDescriptor("Built-in symbol", OdinSyntaxHighlighter.BUILTIN_FUNCTION),
+            new AttributesDescriptor("Package", OdinSyntaxHighlighter.PACKAGE)
     };
 
     @Override
@@ -33,7 +41,9 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
 
     @Override
     public @NonNls @NotNull String getDemoText() {
-        return """
+
+        @Language("Odin")
+        String s = """
                 package main;
                 import "core:fmt"
                                 
@@ -51,12 +61,14 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                     my_value : <builtin>int</builtin> = 5
                 }
                 """;
+        return s;
     }
 
     @Override
     public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
         return Map.of(
                 "builtin", OdinSyntaxHighlighter.BUILTIN_FUNCTION,
+                "package", OdinSyntaxHighlighter.PACKAGE,
                 "constant", DefaultLanguageHighlighterColors.CONSTANT
         );
     }

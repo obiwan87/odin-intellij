@@ -2,6 +2,10 @@ package com.lasagnerd.odin.codeInsight;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +16,41 @@ import java.util.Collection;
 import java.util.List;
 
 public class OdinSymbolFinder {
+    public static OdinSymbol findSymbol(OdinIdentifier identifier) {
+        OdinScope parentScope = OdinScopeResolver.resolveScope(identifier)
+                .with(OdinImportService.getInstance(identifier.getProject()).getPackagePath(identifier));
+        OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(identifier, true, OdinRefExpression.class);
+        OdinScope scope;
+        if (refExpression != null) {
+            if (refExpression.getExpression() != null) {
+                scope = OdinReferenceResolver.resolve(parentScope, refExpression.getExpression());
+            } else {
+                scope = parentScope;
+            }
+        } else {
+            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, true, OdinQualifiedType.class);
+            if (qualifiedType != null) {
+                if (qualifiedType.getPackageIdentifier() == identifier) {
+                    scope = parentScope;
+                } else {
+                    scope = OdinReferenceResolver.resolve(parentScope, qualifiedType);
+                }
+            } else {
+                scope = parentScope;
+            }
+        }
+
+        if (scope == OdinScope.EMPTY || scope == null) {
+            scope = parentScope;
+        }
+
+        if (scope != null) {
+            return scope.getSymbol(identifier.getIdentifierToken().getText());
+        }
+
+        return null;
+    }
+
     @FunctionalInterface
     public interface ScopeCondition {
         boolean match(OdinScope scope);
@@ -49,10 +88,19 @@ public class OdinSymbolFinder {
         OdinScope parentScope = doFindVisibleSymbols(packagePath, containingScopeBlock, scopeCondition, constantsOnlyNext);
         scope.setParentScope(parentScope);
 
+        // TODO these symbols can't be passed down to lower scope objects
+        if(containingScopeBlock instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
+            TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, compoundLiteralTyped.getType());
+            if(tsOdinType instanceof TsOdinStructType tsOdinStructType) {
+                // TODO will this work with aliases?
+                List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeSymbols(tsOdinStructType, scope);
+                scope.addAll(typeSymbols);
+            }
+        }
+
         // Finds the child of the scope block, where of which this element is a child. If we find the parent, this is guaranteed
         // to be != null
         List<OdinDeclaration> declarations = getDeclarations(containingScopeBlock);
-
         for (OdinDeclaration declaration : declarations) {
             if (!(declaration instanceof OdinConstantDeclaration constantDeclaration))
                 continue;

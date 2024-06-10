@@ -1,0 +1,28 @@
+<?xml version='1.0'?>
+<list>
+    <option name="ODIN_BUILTIN_FUNCTION">
+        <value>
+            <option name="FOREGROUND" value="CC7832"/>
+        </value>
+    </option>
+    <option name="ODIN_PACKAGE">
+        <value>
+            <option name="FOREGROUND" value="AFBF7E"/>
+        </value>
+    </option>
+    <option name="ODIN_PROCEDURE">
+        <value>
+            <option name="FOREGROUND" value="61AFEF"/>
+        </value>
+    </option>
+    <option name="ODIN_STRUCT_REF">
+        <value>
+            <option name="FOREGROUND" value="6FAFBD"/>
+        </value>
+    </option>
+    <option name="ODIN_PROCEDURE_CALL">
+        <value>
+            <option name="FOREGROUND" value="B09D79"/>
+        </value>
+    </option>
+</list>
