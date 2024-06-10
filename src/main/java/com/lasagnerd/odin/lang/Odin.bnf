@@ -368,7 +368,7 @@ unnamedParameter                     ::= RANGE? typeDefinitionContainer {extends
 
 // Function calls
 private argumentList                 ::= argument (COMMA argument)* COMMA?
-namedArgument                        ::= IDENTIFIER_TOKEN EQ expression { extends = argument}
+namedArgument                        ::= identifier EQ expression { extends = argument}
 argument                             ::= namedArgument
                                          | unnamedArgument
 unnamedArgument                      ::= expression { extends = argument}

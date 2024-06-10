@@ -4,7 +4,7 @@ import com.intellij.lang.ImportOptimizer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.lasagnerd.odin.codeInsight.OdinImportUtils;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
 import com.lasagnerd.odin.lang.psi.OdinImportStatementsContainer;

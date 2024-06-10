@@ -1,18 +1,18 @@
-package com.lasagnerd.odin.codeInsight;
+package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 
-import static com.lasagnerd.odin.codeInsight.OdinImportUtils.getSymbolsOfImportedPackage;
-import static com.lasagnerd.odin.codeInsight.OdinInsightUtils.getScopeProvidedByType;
+import static com.lasagnerd.odin.codeInsight.imports.OdinImportUtils.getSymbolsOfImportedPackage;
+import static com.lasagnerd.odin.codeInsight.OdinInsightUtils.getTypeSymbols;
 
 public class OdinReferenceResolver {
     public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinExpression valueExpression) {
         // Add filter for referenceable elements
         TsOdinType type = OdinInferenceEngine.inferType(symbolTable, valueExpression);
-        return getScopeProvidedByType(type);
+        return getTypeSymbols(type);
     }
 
     public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinType type) {

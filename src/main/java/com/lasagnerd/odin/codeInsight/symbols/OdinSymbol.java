@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.codeInsight;
+package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.lang.psi.*;
@@ -9,17 +9,17 @@ import java.util.List;
 
 @Data
 public class OdinSymbol {
-    // Can't be an OdinDeclared identifier because here we might have
     private final PsiNamedElement declaredIdentifier;
     /**
      * Used for symbols with initialization. Don't know if it actually belongs here
      */
-    OdinExpression valueExpression;
-    OdinType psiType;
-    OdinSymbolType symbolType;
-    List<OdinAttributeStatement> attributeStatements;
+    private OdinExpression valueExpression;
+    private OdinType psiType;
+    private OdinSymbolType symbolType;
+    private List<OdinAttributeStatement> attributeStatements;
 
     private final OdinVisibility visibility;
+    private OdinScope scope;
 
     public OdinSymbol(PsiNamedElement declaredIdentifier, @NotNull OdinVisibility visibility) {
         this.declaredIdentifier = declaredIdentifier;
@@ -29,10 +29,6 @@ public class OdinSymbol {
     public OdinSymbol(PsiNamedElement declaredIdentifier) {
         this.declaredIdentifier = declaredIdentifier;
         this.visibility = OdinVisibility.PUBLIC;
-    }
-
-    public boolean isTyped() {
-        return psiType != null;
     }
 
     public String getName() {
@@ -63,6 +59,12 @@ public class OdinSymbol {
         PACKAGE_PRIVATE,
         FILE_PRIVATE,
         PUBLIC
+    }
+
+    public enum OdinScope {
+        GLOBAL,
+        LOCAL,
+        TYPE
     }
 
     public static OdinVisibility min(OdinVisibility v1, OdinVisibility v2) {

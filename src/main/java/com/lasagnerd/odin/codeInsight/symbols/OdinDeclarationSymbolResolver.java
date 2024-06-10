@@ -1,5 +1,8 @@
-package com.lasagnerd.odin.codeInsight;
+package com.lasagnerd.odin.codeInsight.symbols;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,13 +11,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-public class OdinSymbolResolver extends OdinVisitor {
-
+public class OdinDeclarationSymbolResolver extends OdinVisitor {
+    private static final Logger LOG = Logger.getInstance(OdinDeclarationSymbolResolver.class);
     List<OdinSymbol> symbols = new ArrayList<>();
     private final OdinSymbol.OdinVisibility defaultVisibility;
     private final OdinSymbolTable symbolTable;
 
-    public OdinSymbolResolver(OdinSymbol.OdinVisibility defaultVisibility, OdinSymbolTable symbolTable) {
+    public OdinDeclarationSymbolResolver(OdinSymbol.OdinVisibility defaultVisibility, OdinSymbolTable symbolTable) {
         this.defaultVisibility = defaultVisibility;
         this.symbolTable = symbolTable;
     }
@@ -30,16 +33,14 @@ public class OdinSymbolResolver extends OdinVisitor {
     public static List<OdinSymbol> getSymbols(@NotNull OdinSymbol.OdinVisibility defaultVisibility,
                                               OdinDeclaration odinDeclaration,
                                               OdinSymbolTable symbolTable) {
-        OdinSymbolResolver odinSymbolResolver = new OdinSymbolResolver(defaultVisibility, symbolTable);
-        odinDeclaration.accept(odinSymbolResolver);
-        if (odinSymbolResolver.symbols.isEmpty()) {
-            System.out.println("No symbols found for declaration with type " + odinDeclaration.getClass().getSimpleName());
-            for (OdinDeclaredIdentifier declaredIdentifier : odinDeclaration.getDeclaredIdentifiers()) {
-                OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier, defaultVisibility);
-                odinSymbolResolver.symbols.add(odinSymbol);
-            }
+        OdinDeclarationSymbolResolver odinDeclarationSymbolResolver = new OdinDeclarationSymbolResolver(defaultVisibility, symbolTable);
+        odinDeclaration.accept(odinDeclarationSymbolResolver);
+        if (odinDeclarationSymbolResolver.symbols.isEmpty()) {
+            LOG.debug("No symbols found for declaration with type " + odinDeclaration.getClass().getSimpleName());
+            LOG.debug("Containing file: " + odinDeclaration.getContainingFile().getVirtualFile().getPath());
+            LOG.debug("Text: " + odinDeclaration.getText());
         }
-        return odinSymbolResolver.symbols;
+        return odinDeclarationSymbolResolver.symbols;
     }
 
     @Override

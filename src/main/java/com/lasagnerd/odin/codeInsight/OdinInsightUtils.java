@@ -3,6 +3,9 @@ package com.lasagnerd.odin.codeInsight;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -48,7 +51,7 @@ public class OdinInsightUtils {
      * @param type The type of the expression
      * @return The scope
      */
-    public static OdinSymbolTable getScopeProvidedByType(TsOdinType type) {
+    public static OdinSymbolTable getTypeSymbols(TsOdinType type) {
         if (type instanceof TsOdinPackageReferenceType packageType) {
             return OdinImportUtils
                     .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
@@ -70,7 +73,7 @@ public class OdinInsightUtils {
                     continue;
 
                 TsOdinType usedType = OdinTypeResolver.resolveType(typeScope, odinFieldDeclarationStatement.getType());
-                OdinSymbolTable subScope = getScopeProvidedByType(usedType);
+                OdinSymbolTable subScope = getTypeSymbols(usedType);
                 symbolTable.putAll(subScope);
             }
 

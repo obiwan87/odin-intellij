@@ -4,6 +4,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.*;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
+import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
@@ -312,7 +316,7 @@ public class OdinPsiUtil {
         {
 
             for (OdinParamEntry odinParamEntry : procedureType.getParamEntryList()) {
-                declarations.addAll(OdinSymbolResolver.getLocalSymbols(odinParamEntry.getParameterDeclaration()));
+                declarations.addAll(OdinDeclarationSymbolResolver.getLocalSymbols(odinParamEntry.getParameterDeclaration()));
             }
         }
 
@@ -328,7 +332,7 @@ public class OdinPsiUtil {
             if (returnParameters != null) {
                 var paramEntries = procedureType.getReturnParameters().getParamEntryList();
                 for (OdinParamEntry odinParamEntry : paramEntries) {
-                    declarations.addAll(OdinSymbolResolver.getLocalSymbols(odinParamEntry.getParameterDeclaration()));
+                    declarations.addAll(OdinDeclarationSymbolResolver.getLocalSymbols(odinParamEntry.getParameterDeclaration()));
                 }
             }
         }
@@ -379,7 +383,7 @@ public class OdinPsiUtil {
         OdinExpression expression = usingStatement.getExpression();
         TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
 
-        OdinSymbolTable typeSymbols = OdinInsightUtils.getScopeProvidedByType(tsOdinType);
+        OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeSymbols(tsOdinType);
 
         return typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
                 .map(OdinDeclaredIdentifier.class::cast)

@@ -3,9 +3,9 @@ package com.lasagnerd.odin.codeInsight.typeInference;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.OdinScopeResolver;
-import com.lasagnerd.odin.codeInsight.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +83,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     public static TsOdinType doInferType(OdinExpression odinExpression) {
-        OdinSymbolTable symbolTable = OdinScopeResolver.resolveScope(odinExpression);
+        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
         return doInferType(symbolTable, odinExpression);
     }
 
@@ -98,10 +98,10 @@ public class OdinInferenceEngine extends OdinVisitor {
         OdinSymbolTable localScope;
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
-            // extract scope
+            // extract symbol table
 
             TsOdinType tsOdinType = doInferType(symbolTable, refExpression.getExpression());
-            localScope = OdinInsightUtils.getScopeProvidedByType(tsOdinType);
+            localScope = OdinInsightUtils.getTypeSymbols(tsOdinType);
 
             // The resolved polymorphic types must be taken over from type scope
             this.symbolTable.addTypes(localScope);

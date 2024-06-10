@@ -1,7 +1,8 @@
-package com.lasagnerd.odin.codeInsight;
+package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
@@ -139,7 +140,7 @@ public class OdinSymbolTable {
 
     }
 
-    static OdinSymbolTable from(Collection<OdinSymbol> symbols) {
+    public static OdinSymbolTable from(Collection<OdinSymbol> symbols) {
         if (symbols.isEmpty())
             return OdinSymbolTable.EMPTY;
 
@@ -152,7 +153,7 @@ public class OdinSymbolTable {
     }
 
 
-    static OdinSymbolTable from(List<OdinSymbol> identifiers, String packagePath) {
+    public static OdinSymbolTable from(List<OdinSymbol> identifiers, String packagePath) {
         OdinSymbolTable newSymbolTable = from(identifiers);
         newSymbolTable.packagePath = packagePath;
 
