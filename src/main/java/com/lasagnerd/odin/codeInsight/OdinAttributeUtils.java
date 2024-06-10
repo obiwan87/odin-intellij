@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight;
 
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +27,7 @@ public class OdinAttributeUtils {
                     }
 
                     if(odinArgument instanceof OdinNamedArgument) {
-                        if(((OdinNamedArgument) odinArgument).getIdentifierToken().getText().equals("builtin")) {
+                        if(((OdinNamedArgument) odinArgument).getIdentifier().getText().equals("builtin")) {
                             return true;
                         }
                     }
@@ -41,7 +42,7 @@ public class OdinAttributeUtils {
         for (OdinAttributeStatement attributeStatement : attributeStatements) {
             for (OdinArgument odinArgument : attributeStatement.getArgumentList()) {
                 if (odinArgument instanceof OdinNamedArgument odinNamedArgument) {
-                    String text = odinNamedArgument.getIdentifierToken().getText();
+                    String text = odinNamedArgument.getIdentifier().getText();
                     if (text.equals("private")) {
                         String attributeValue = OdinInsightUtils.getStringLiteralValue(odinNamedArgument.getExpression());
                         OdinExpression valueExpression = odinNamedArgument.getExpression();

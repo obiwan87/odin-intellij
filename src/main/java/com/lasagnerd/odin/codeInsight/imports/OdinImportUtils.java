@@ -1,17 +1,18 @@
-package com.lasagnerd.odin.codeInsight;
+package com.lasagnerd.odin.codeInsight.imports;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Query;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinFileScope;
 import com.lasagnerd.odin.lang.psi.OdinIdentifier;
@@ -129,7 +130,7 @@ public class OdinImportUtils {
                         System.out.printf("File scope is null for file %s%n", importedFile.getVirtualFile().getPath());
                         continue;
                     }
-                    OdinSymbol.OdinVisibility globalFileVisibility = OdinScopeResolver.getGlobalFileVisibility(importedFileScope);
+                    OdinSymbol.OdinVisibility globalFileVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(importedFileScope);
                     if (globalFileVisibility == OdinSymbol.OdinVisibility.PACKAGE_PRIVATE
                             || globalFileVisibility == OdinSymbol.OdinVisibility.FILE_PRIVATE)
                         continue;
@@ -167,9 +168,8 @@ public class OdinImportUtils {
         return getFilesInPackage(project, importPath, matcher);
     }
 
-    static @NotNull List<OdinFile> getFilesInPackage(Project project, Path importPath, Predicate<VirtualFile> matcher) {
+    public static @NotNull List<OdinFile> getFilesInPackage(Project project, Path importPath, Predicate<VirtualFile> matcher) {
         List<OdinFile> files = new ArrayList<>();
-        PsiManager psiManager = PsiManager.getInstance(project);
         VirtualFile[] children = OdinImportService.getInstance(project).getFilesInPath(importPath);
 
         for (VirtualFile child : children) {

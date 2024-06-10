@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.codeInsight;
+package com.lasagnerd.odin.codeInsight.imports;
 
 /**
  *

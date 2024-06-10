@@ -15,6 +15,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
 import com.lasagnerd.odin.lang.OdinSyntaxHighlighter;
 import com.lasagnerd.odin.lang.psi.*;
@@ -204,7 +205,6 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                                      OdinRefExpression refExpression,
                                      PsiElement identifierTokenParent,
                                      TextRange textRange) {
-
         OdinAnnotationSessionState annotationSessionState = getAnnotationSessionState(annotationHolder);
 
         // Unfold refExpression
@@ -226,12 +226,17 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             return;
 
         PsiElement refExpressionParent = refExpression.getParent();
-        OdinDeclaration declaration = resolveDeclaration(identifierTokenParent);
-        if (declaration == null) {
+
+        OdinSymbol symbol = resolveSymbol(identifierTokenParent);
+        if (symbol == null) {
             highlightUnknownReference(annotationHolder, identifierText, textRange);
             annotationSessionState.aborted.add(topMostExpression);
             return;
         }
+
+        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(symbol.getDeclaredIdentifier(),
+                OdinDeclaration.class,
+                true);
 
         if (refExpressionParent instanceof OdinCallExpression) {
             OdinIdentifier identifier = refExpression.getIdentifier();
@@ -316,6 +321,19 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             PsiElement resolvedReference = reference.resolve();
             return PsiTreeUtil.getParentOfType(resolvedReference, OdinDeclaration.class, false);
         }
+        return null;
+    }
+
+    private static OdinSymbol resolveSymbol(PsiElement psiElement) {
+        if (!(psiElement instanceof OdinIdentifier identifier)) {
+            return null;
+        }
+
+        PsiReference reference = identifier.getReference();
+        if(reference instanceof OdinReference odinReference) {
+            return odinReference.resolveSymbol();
+        }
+
         return null;
     }
 

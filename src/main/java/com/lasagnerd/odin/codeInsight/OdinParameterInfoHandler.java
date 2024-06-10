@@ -8,6 +8,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +49,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
     }
 
     public static List<PsiElement> findMatchingDeclarations(String name, OdinCallExpression callExpression) {
-        OdinSymbolTable declarations = OdinScopeResolver.resolveScope(callExpression, symbol -> {
+        OdinSymbolTable declarations = OdinSymbolTableResolver.computeSymbolTable(callExpression, symbol -> {
             if (symbol != null && symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier identifier)
                 if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||
                         identifier.getParent() instanceof OdinProcedureOverloadDeclarationStatement

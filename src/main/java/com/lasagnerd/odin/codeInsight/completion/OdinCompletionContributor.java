@@ -16,6 +16,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.OdinIcons;
 import com.lasagnerd.odin.codeInsight.*;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
+import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -152,7 +157,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         // 2. Add symbols from SDK (core, vendor, etc.)
 
                         // 3. Add symbols from local scope
-                        OdinSymbolTable flatScope = OdinScopeResolver.resolveScope(position, e -> true).flatten();
+                        OdinSymbolTable flatScope = OdinSymbolTableResolver.computeSymbolTable(position, e -> true).flatten();
                         addLookUpElements(result, flatScope.getNamedElements());
                     }
                 }
@@ -161,7 +166,7 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     private static OdinSymbolTable createScope(@NotNull CompletionParameters parameters, PsiElement reference) {
-        return OdinScopeResolver.resolveScope(reference, e -> true).with(parameters
+        return OdinSymbolTableResolver.computeSymbolTable(reference, e -> true).with(parameters
                 .getOriginalFile()
                 .getContainingDirectory()
                 .getVirtualFile()
