@@ -54,11 +54,11 @@ public class OdinCompletionContributor extends CompletionContributor {
 
                         // This constitutes our scope
                         if (parent instanceof OdinRefExpression reference) {
-                            OdinScope scope = createScope(parameters, reference);
+                            OdinSymbolTable symbolTable = createScope(parameters, reference);
 
                             if (reference.getExpression() != null) {
                                 // TODO at some point we should return the type of each symbol
-                                OdinScope completionScope = OdinReferenceResolver.resolve(scope, reference.getExpression());
+                                OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, reference.getExpression());
                                 if (completionScope != null) {
                                     addLookUpElements(result, completionScope.flatten().getNamedElements());
                                 }
@@ -67,8 +67,8 @@ public class OdinCompletionContributor extends CompletionContributor {
 
                         OdinType parentType = PsiTreeUtil.getParentOfType(position, true, OdinType.class);
                         if (parentType instanceof OdinSimpleRefType) {
-                            OdinScope scope = createScope(parameters, parentType);
-                            OdinScope completionScope = OdinReferenceResolver.resolve(scope, parentType);
+                            OdinSymbolTable symbolTable = createScope(parameters, parentType);
+                            OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, parentType);
                             if (completionScope != null) {
                                 addLookUpElements(result, completionScope.flatten().getNamedElements());
                             }
@@ -131,7 +131,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                     if (file.getFileScope() == null)
                                         continue;
                                     OdinFileScope fileScope = file.getFileScope();
-                                    OdinScope fileScopeDeclarations = fileScope.getScope();
+                                    OdinSymbolTable fileScopeDeclarations = fileScope.getSymbolTable();
 
                                     List<PsiNamedElement> visibleSymbols = fileScopeDeclarations
                                             .getSymbols(OdinSymbol.OdinVisibility.PUBLIC)
@@ -152,7 +152,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         // 2. Add symbols from SDK (core, vendor, etc.)
 
                         // 3. Add symbols from local scope
-                        OdinScope flatScope = OdinScopeResolver.resolveScope(position, e -> true).flatten();
+                        OdinSymbolTable flatScope = OdinScopeResolver.resolveScope(position, e -> true).flatten();
                         addLookUpElements(result, flatScope.getNamedElements());
                     }
                 }
@@ -160,7 +160,7 @@ public class OdinCompletionContributor extends CompletionContributor {
 
     }
 
-    private static OdinScope createScope(@NotNull CompletionParameters parameters, PsiElement reference) {
+    private static OdinSymbolTable createScope(@NotNull CompletionParameters parameters, PsiElement reference) {
         return OdinScopeResolver.resolveScope(reference, e -> true).with(parameters
                 .getOriginalFile()
                 .getContainingDirectory()

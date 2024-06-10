@@ -75,7 +75,7 @@ public class OdinImportUtils {
     }
 
 
-    public static OdinScope getSymbolsOfImportedPackage(OdinImportDeclarationStatement importStatement) {
+    public static OdinSymbolTable getSymbolsOfImportedPackage(OdinImportDeclarationStatement importStatement) {
         OdinImportInfo importInfo = importStatement.getImportInfo();
 
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
@@ -99,7 +99,7 @@ public class OdinImportUtils {
      * @param project        Project
      * @return Scope
      */
-    public static OdinScope getSymbolsOfImportedPackage(OdinImportInfo importInfo, String sourceFilePath, Project project) {
+    public static OdinSymbolTable getSymbolsOfImportedPackage(OdinImportInfo importInfo, String sourceFilePath, Project project) {
         List<OdinSymbol> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
             List<Path> dirs = new ArrayList<>();
@@ -135,18 +135,18 @@ public class OdinImportUtils {
                         continue;
 
                     Collection<OdinSymbol> fileScopeDeclarations = importedFileScope
-                            .getScope()
+                            .getSymbolTable()
                             .getFilteredSymbols(PUBLIC_ELEMENTS_MATCHER);
 
                     packageDeclarations.addAll(fileScopeDeclarations);
                 }
 
                 if (!importedFiles.isEmpty()) {
-                    return OdinScope.from(packageDeclarations, packagePath.toString());
+                    return OdinSymbolTable.from(packageDeclarations, packagePath.toString());
                 }
             }
         }
-        return OdinScope.EMPTY;
+        return OdinSymbolTable.EMPTY;
     }
 
     @NotNull
@@ -183,7 +183,7 @@ public class OdinImportUtils {
         return files;
     }
 
-    public static OdinScope getSymbolsOfImportedPackage(String packagePath, OdinImportDeclarationStatement importStatement) {
+    public static OdinSymbolTable getSymbolsOfImportedPackage(String packagePath, OdinImportDeclarationStatement importStatement) {
         OdinImportInfo importInfo = importStatement.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         String path = Path.of(packagePath, getFileName(importStatement)).toString();

@@ -48,14 +48,14 @@ public class OdinInsightUtils {
      * @param type The type of the expression
      * @return The scope
      */
-    public static OdinScope getScopeProvidedByType(TsOdinType type) {
+    public static OdinSymbolTable getScopeProvidedByType(TsOdinType type) {
         if (type instanceof TsOdinPackageReferenceType packageType) {
             return OdinImportUtils
                     .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
                             (OdinImportDeclarationStatement) packageType.getDeclaration());
         }
-        OdinScope typeScope = type.getScope();
-        OdinScope scope = new OdinScope();
+        OdinSymbolTable typeScope = type.getSymbolTable();
+        OdinSymbolTable symbolTable = new OdinSymbolTable();
         if (type instanceof TsOdinPointerType pointerType) {
             type = pointerType.getDereferencedType();
         }
@@ -70,20 +70,20 @@ public class OdinInsightUtils {
                     continue;
 
                 TsOdinType usedType = OdinTypeResolver.resolveType(typeScope, odinFieldDeclarationStatement.getType());
-                OdinScope subScope = getScopeProvidedByType(usedType);
-                scope.putAll(subScope);
+                OdinSymbolTable subScope = getScopeProvidedByType(usedType);
+                symbolTable.putAll(subScope);
             }
 
-            scope.addAll(structFields);
-            scope.addTypes(typeScope);
-            return scope;
+            symbolTable.addAll(structFields);
+            symbolTable.addTypes(typeScope);
+            return symbolTable;
         }
 
         if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
-            return scope.with(getEnumFields(enumDeclarationStatement));
+            return symbolTable.with(getEnumFields(enumDeclarationStatement));
         }
 
-        return OdinScope.EMPTY;
+        return OdinSymbolTable.EMPTY;
     }
 
     @NotNull
@@ -114,10 +114,10 @@ public class OdinInsightUtils {
     }
 
     public static List<OdinSymbol> getStructFields(OdinStructDeclarationStatement structDeclarationStatement) {
-        return getStructFields(OdinScope.EMPTY, structDeclarationStatement);
+        return getStructFields(OdinSymbolTable.EMPTY, structDeclarationStatement);
     }
 
-    public static List<OdinSymbol> getStructFields(OdinScope scope, OdinStructDeclarationStatement structDeclarationStatement) {
+    public static List<OdinSymbol> getStructFields(OdinSymbolTable symbolTable, OdinStructDeclarationStatement structDeclarationStatement) {
         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structDeclarationStatement);
 
         List<OdinSymbol> symbols = new ArrayList<>();
@@ -127,7 +127,7 @@ public class OdinInsightUtils {
                 odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FIELD);
                 symbols.add(odinSymbol);
                 if (x.getUsing() != null) {
-                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, x.getType());
+                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, x.getType());
                     TsOdinStructType structType;
                     if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
                         if (tsOdinPointerType.getDereferencedType() instanceof TsOdinStructType) {
@@ -142,7 +142,7 @@ public class OdinInsightUtils {
                     }
 
                     if (structType != null) {
-                        List<OdinSymbol> structFields = getStructFields(structType.getScope(), (OdinStructDeclarationStatement) structType.getDeclaration());
+                        List<OdinSymbol> structFields = getStructFields(structType.getSymbolTable(), (OdinStructDeclarationStatement) structType.getDeclaration());
                         symbols.addAll(structFields);
                     }
                 }
@@ -244,22 +244,22 @@ public class OdinInsightUtils {
         return element.getParent() instanceof OdinProcedureDeclarationStatement ? (OdinProcedureDeclarationStatement) element.getParent() : null;
     }
 
-    public static List<OdinSymbol> getTypeSymbols(OdinExpression expression, OdinScope scope) {
-        TsOdinType tsOdinType = OdinInferenceEngine.inferType(scope, expression);
+    public static List<OdinSymbol> getTypeSymbols(OdinExpression expression, OdinSymbolTable symbolTable) {
+        TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, expression);
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            return getTypeSymbols(OdinTypeResolver.resolveMetaType(scope, tsOdinMetaType), scope);
+            return getTypeSymbols(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType), symbolTable);
         }
-        return getTypeSymbols(tsOdinType, scope);
+        return getTypeSymbols(tsOdinType, symbolTable);
     }
 
-    public static List<OdinSymbol> getTypeSymbols(OdinType type, OdinScope scope) {
-        TsOdinType tsOdinType = OdinTypeResolver.resolveType(scope, type);
-        return getTypeSymbols(tsOdinType, scope);
+    public static List<OdinSymbol> getTypeSymbols(OdinType type, OdinSymbolTable symbolTable) {
+        TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, type);
+        return getTypeSymbols(tsOdinType, symbolTable);
     }
 
-    public static @NotNull List<OdinSymbol> getTypeSymbols(TsOdinType tsOdinType, OdinScope scope) {
+    public static @NotNull List<OdinSymbol> getTypeSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
         if (tsOdinType instanceof TsOdinStructType structType) {
-            return getStructFields(scope, (OdinStructDeclarationStatement) structType.getDeclaration());
+            return getStructFields(symbolTable, (OdinStructDeclarationStatement) structType.getDeclaration());
         }
 
         if (tsOdinType instanceof TsOdinEnumType enumType) {
@@ -267,7 +267,7 @@ public class OdinInsightUtils {
         }
 
         if (tsOdinType instanceof TsOdinPackageReferenceType packageReferenceType) {
-            OdinScope symbolsOfImportedPackage = OdinImportUtils
+            OdinSymbolTable symbolsOfImportedPackage = OdinImportUtils
                     .getSymbolsOfImportedPackage(packageReferenceType.getReferencingPackagePath(),
                             (OdinImportDeclarationStatement) packageReferenceType.getDeclaration());
             return new ArrayList<>(symbolsOfImportedPackage.getSymbols());

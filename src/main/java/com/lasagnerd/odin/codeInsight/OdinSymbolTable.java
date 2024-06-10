@@ -14,19 +14,19 @@ import java.util.*;
 import java.util.function.Predicate;
 
 @Getter
-public class OdinScope {
+public class OdinSymbolTable {
 
     @Setter
-    OdinScope parentScope;
+    OdinSymbolTable parentSymbolTable;
 
-    public OdinScope(String packagePath) {
+    public OdinSymbolTable(String packagePath) {
         this.packagePath = packagePath;
     }
 
     @Setter
     private String packagePath;
-    public static final OdinScope EMPTY = new OdinScope();
-    Map<String, OdinSymbol> symbolTable = new HashMap<>();
+    public static final OdinSymbolTable EMPTY = new OdinSymbolTable();
+    Map<String, OdinSymbol> symbolNameMap = new HashMap<>();
 
     /**
      * Used substituting polymorphic types. The key
@@ -39,7 +39,7 @@ public class OdinScope {
      */
     Map<OdinDeclaredIdentifier, TsOdinType> knownTypes = new HashMap<>();
 
-    public OdinScope() {
+    public OdinSymbolTable() {
 
     }
 
@@ -47,11 +47,11 @@ public class OdinScope {
     @Nullable
     public OdinSymbol getSymbol(String name) {
 
-        OdinSymbol odinSymbol = symbolTable.get(name);
+        OdinSymbol odinSymbol = symbolNameMap.get(name);
         if(odinSymbol != null)
             return odinSymbol;
 
-        return parentScope != null? parentScope.getSymbol(name) : null;
+        return parentSymbolTable != null? parentSymbolTable.getSymbol(name) : null;
     }
 
     @Nullable
@@ -64,7 +64,7 @@ public class OdinScope {
     public TsOdinType getType(String polymorphicParameter) {
         TsOdinType tsOdinType = typeTable.get(polymorphicParameter);
         if(tsOdinType == null) {
-            return parentScope != null? parentScope.getType(polymorphicParameter) : null;
+            return parentSymbolTable != null? parentSymbolTable.getType(polymorphicParameter) : null;
         }
         return tsOdinType;
     }
@@ -73,20 +73,20 @@ public class OdinScope {
         typeTable.put(typeName, type);
     }
 
-    public void addTypes(OdinScope scope) {
-        typeTable.putAll(scope.typeTable);
+    public void addTypes(OdinSymbolTable symbolTable) {
+        typeTable.putAll(symbolTable.typeTable);
     }
 
     public Collection<PsiNamedElement> getNamedElements() {
-        return symbolTable.values().stream().map(OdinSymbol::getDeclaredIdentifier).toList();
+        return symbolNameMap.values().stream().map(OdinSymbol::getDeclaredIdentifier).toList();
     }
 
     public Collection<OdinSymbol> getFilteredSymbols(Predicate<OdinSymbol> filter) {
-        return symbolTable.values().stream().filter(filter).toList();
+        return symbolNameMap.values().stream().filter(filter).toList();
     }
 
     public Collection<OdinSymbol> getSymbols() {
-        return symbolTable.values();
+        return symbolNameMap.values();
     }
 
     public Collection<OdinSymbol> getSymbols(OdinSymbol.OdinVisibility minVisibility) {
@@ -100,21 +100,21 @@ public class OdinScope {
 
     public void addAll(Collection<? extends OdinSymbol> symbols, boolean override) {
         for (OdinSymbol symbol : symbols) {
-            if(!symbolTable.containsKey(symbol.getName()) || !override) {
-                symbolTable.put(symbol.getName(), symbol);
+            if(!symbolNameMap.containsKey(symbol.getName()) || !override) {
+                symbolNameMap.put(symbol.getName(), symbol);
             }
         }
     }
 
-    public void putAll(OdinScope scope) {
-        symbolTable.putAll(scope.symbolTable);
-        typeTable.putAll(scope.typeTable);
-        knownTypes.putAll(scope.knownTypes);
-        if(scope.getParentScope() != null) {
-            if(parentScope == null) {
-                parentScope = new OdinScope();
+    public void putAll(OdinSymbolTable symbolTable) {
+        this.symbolNameMap.putAll(symbolTable.symbolNameMap);
+        typeTable.putAll(symbolTable.typeTable);
+        knownTypes.putAll(symbolTable.knownTypes);
+        if(symbolTable.getParentSymbolTable() != null) {
+            if(parentSymbolTable == null) {
+                parentSymbolTable = new OdinSymbolTable();
             }
-            parentScope.putAll(scope.getParentScope());
+            parentSymbolTable.putAll(symbolTable.getParentSymbolTable());
         }
     }
 
@@ -132,46 +132,46 @@ public class OdinScope {
 
     public void add(OdinSymbol symbol, boolean override) {
         if(!override)
-            symbolTable.put(symbol.getName(), symbol);
-        else if(!symbolTable.containsKey(symbol.getName())) {
-            symbolTable.put(symbol.getName(), symbol);
+            symbolNameMap.put(symbol.getName(), symbol);
+        else if(!symbolNameMap.containsKey(symbol.getName())) {
+            symbolNameMap.put(symbol.getName(), symbol);
         }
 
     }
 
-    static OdinScope from(Collection<OdinSymbol> symbols) {
+    static OdinSymbolTable from(Collection<OdinSymbol> symbols) {
         if (symbols.isEmpty())
-            return OdinScope.EMPTY;
+            return OdinSymbolTable.EMPTY;
 
-        OdinScope scope = new OdinScope();
+        OdinSymbolTable newSymbolTable = new OdinSymbolTable();
         for (var declaredIdentifier : symbols) {
-            scope.symbolTable.put(declaredIdentifier.getName(), declaredIdentifier);
+            newSymbolTable.symbolNameMap.put(declaredIdentifier.getName(), declaredIdentifier);
         }
 
-        return scope;
+        return newSymbolTable;
     }
 
 
-    static OdinScope from(List<OdinSymbol> identifiers, String packagePath) {
-        OdinScope scope = from(identifiers);
-        scope.packagePath = packagePath;
+    static OdinSymbolTable from(List<OdinSymbol> identifiers, String packagePath) {
+        OdinSymbolTable newSymbolTable = from(identifiers);
+        newSymbolTable.packagePath = packagePath;
 
-        return scope;
+        return newSymbolTable;
     }
 
-    public OdinScope with(List<OdinSymbol> identifiers) {
-        OdinScope scope = from(identifiers);
-        scope.packagePath = this.packagePath;
+    public OdinSymbolTable with(List<OdinSymbol> identifiers) {
+        OdinSymbolTable newSymbolTable = from(identifiers);
+        newSymbolTable.packagePath = this.packagePath;
 
-        return scope;
+        return newSymbolTable;
     }
 
-    public OdinScope with(String packagePath) {
-        OdinScope scope = new OdinScope();
-        scope.symbolTable = this.symbolTable;
-        scope.packagePath = packagePath;
-        scope.parentScope = parentScope;
-        return scope;
+    public OdinSymbolTable with(String packagePath) {
+        OdinSymbolTable newSymbolTable = new OdinSymbolTable();
+        newSymbolTable.symbolNameMap = this.symbolNameMap;
+        newSymbolTable.packagePath = packagePath;
+        newSymbolTable.parentSymbolTable = parentSymbolTable;
+        return newSymbolTable;
     }
 
     /**
@@ -181,8 +181,8 @@ public class OdinScope {
      * @return A new scope with all the declared symbols of the referenced package
      */
 
-    public OdinScope getScopeOfImport(String packageIdentifier) {
-        OdinSymbol odinSymbol = symbolTable.get(packageIdentifier);
+    public OdinSymbolTable getScopeOfImport(String packageIdentifier) {
+        OdinSymbol odinSymbol = symbolNameMap.get(packageIdentifier);
         if (odinSymbol != null) {
             PsiNamedElement declaredIdentifier = odinSymbol.getDeclaredIdentifier();
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
@@ -190,19 +190,19 @@ public class OdinScope {
                 return OdinImportUtils.getSymbolsOfImportedPackage(this.getPackagePath(), importDeclarationStatement);
             }
         }
-        return OdinScope.EMPTY;
+        return OdinSymbolTable.EMPTY;
     }
 
-    public OdinScope flatten() {
-        OdinScope odinScope = new OdinScope();
-        odinScope.setPackagePath(packagePath);
+    public OdinSymbolTable flatten() {
+        OdinSymbolTable odinSymbolTable = new OdinSymbolTable();
+        odinSymbolTable.setPackagePath(packagePath);
 
-        OdinScope curr = this;
+        OdinSymbolTable curr = this;
         do {
-            odinScope.addAll(curr.getSymbols(), false);
-            curr = curr.getParentScope();
+            odinSymbolTable.addAll(curr.getSymbols(), false);
+            curr = curr.getParentSymbolTable();
         } while(curr != null);
 
-        return odinScope;
+        return odinSymbolTable;
     }
 }

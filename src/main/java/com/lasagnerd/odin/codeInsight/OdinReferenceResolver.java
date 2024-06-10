@@ -9,30 +9,30 @@ import static com.lasagnerd.odin.codeInsight.OdinImportUtils.getSymbolsOfImporte
 import static com.lasagnerd.odin.codeInsight.OdinInsightUtils.getScopeProvidedByType;
 
 public class OdinReferenceResolver {
-    public static OdinScope resolve(OdinScope scope, OdinExpression valueExpression) {
+    public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinExpression valueExpression) {
         // Add filter for referenceable elements
-        TsOdinType type = OdinInferenceEngine.inferType(scope, valueExpression);
+        TsOdinType type = OdinInferenceEngine.inferType(symbolTable, valueExpression);
         return getScopeProvidedByType(type);
     }
 
-    public static OdinScope resolve(OdinScope scope, OdinType type) {
+    public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinType type) {
         OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(type, false, OdinQualifiedType.class);
         if (qualifiedType != null) {
-            return resolve(scope, qualifiedType);
+            return resolve(symbolTable, qualifiedType);
         }
-        return OdinScope.EMPTY;
+        return OdinSymbolTable.EMPTY;
     }
 
-    public static OdinScope resolve(OdinScope scope, OdinQualifiedType qualifiedType) {
+    public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinQualifiedType qualifiedType) {
         OdinIdentifier identifier = qualifiedType.getIdentifier();
-        OdinSymbol odinSymbol = scope.getSymbol(identifier.getIdentifierToken().getText());
+        OdinSymbol odinSymbol = symbolTable.getSymbol(identifier.getIdentifierToken().getText());
         if (odinSymbol != null) {
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return getSymbolsOfImportedPackage(scope.getPackagePath(), importDeclarationStatement);
+                return getSymbolsOfImportedPackage(symbolTable.getPackagePath(), importDeclarationStatement);
             }
         }
-        return OdinScope.EMPTY;
+        return OdinSymbolTable.EMPTY;
     }
 
 }
