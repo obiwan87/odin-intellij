@@ -10,12 +10,11 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.OdinIcons;
-import com.lasagnerd.odin.codeInsight.*;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
 import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
@@ -24,6 +23,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.nio.file.Path;
@@ -65,7 +65,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 // TODO at some point we should return the type of each symbol
                                 OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, reference.getExpression());
                                 if (completionScope != null) {
-                                    addLookUpElements(result, completionScope.flatten().getNamedElements());
+                                    addLookUpElements(result, completionScope.flatten().getSymbols());
                                 }
                             }
                         }
@@ -75,7 +75,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                             OdinSymbolTable symbolTable = createScope(parameters, parentType);
                             OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, parentType);
                             if (completionScope != null) {
-                                addLookUpElements(result, completionScope.flatten().getNamedElements());
+                                addLookUpElements(result, completionScope.flatten().getSymbols());
                             }
                         }
                     }
@@ -138,11 +138,10 @@ public class OdinCompletionContributor extends CompletionContributor {
                                     OdinFileScope fileScope = file.getFileScope();
                                     OdinSymbolTable fileScopeDeclarations = fileScope.getSymbolTable();
 
-                                    List<PsiNamedElement> visibleSymbols = fileScopeDeclarations
+                                    List<OdinSymbol> visibleSymbols = fileScopeDeclarations
                                             .getSymbols(OdinSymbol.OdinVisibility.PUBLIC)
                                             .stream()
                                             .filter(s -> s.getSymbolType() != OdinSymbol.OdinSymbolType.PACKAGE_REFERENCE)
-                                            .map(OdinSymbol::getDeclaredIdentifier)
                                             .collect(Collectors.toList());
 
                                     addLookUpElements(thisOdinFile,
@@ -157,8 +156,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                         // 2. Add symbols from SDK (core, vendor, etc.)
 
                         // 3. Add symbols from local scope
-                        OdinSymbolTable flatScope = OdinSymbolTableResolver.computeSymbolTable(position, e -> true).flatten();
-                        addLookUpElements(result, flatScope.getNamedElements());
+                        OdinSymbolTable flatSymbolTable = OdinSymbolTableResolver.computeSymbolTable(position, e -> true).flatten();
+                        addLookUpElements(result, flatSymbolTable.getSymbols());
                     }
                 }
         );
@@ -173,122 +172,126 @@ public class OdinCompletionContributor extends CompletionContributor {
                 .getPath());
     }
 
-    private static void addLookUpElements(@NotNull CompletionResultSet result, Collection<PsiNamedElement> namedElements) {
-        addLookUpElements(null, "", "", result, namedElements);
+    private static void addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols) {
+        addLookUpElements(null, "", "", result, symbols);
     }
 
     private static void addLookUpElements(OdinFile sourceFile,
                                           String sourcePackagePath,
                                           String targetPackagePath,
                                           @NotNull CompletionResultSet result,
-                                          Collection<PsiNamedElement> namedElements) {
+                                          Collection<OdinSymbol> symbols) {
         String prefix = "";
         if (targetPackagePath != null && !targetPackagePath.isBlank()) {
             // Get last segment of path
             prefix = Path.of(targetPackagePath).getFileName().toString() + ".";
         }
 
-        for (var namedElement : namedElements) {
-            if (namedElement instanceof PsiNameIdentifierOwner declaredIdentifier) {
-                OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
-                Icon icon = getIcon(typeType);
+        for (var symbol : symbols) {
+            Icon icon = getIcon(symbol.getSymbolType());
+            @Nullable PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
 
-                final String unprefixedLookupString = declaredIdentifier.getText();
-                final String lookupString = prefix + declaredIdentifier.getText();
+            final String unprefixedLookupString = symbol.getName();
+            final String lookupString = prefix + symbol.getName();
 
-                switch (typeType) {
-                    case PROCEDURE -> {
-                        LookupElementBuilder element = LookupElementBuilder
-                                .create(lookupString)
-                                .withLookupString(unprefixedLookupString)
-                                .withIcon(icon);
+            switch (symbol.getSymbolType()) {
+                case PROCEDURE -> {
+                    if (declaredIdentifier == null) break;
 
-                        OdinProcedureDeclarationStatement firstParentOfType = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
-                        if (firstParentOfType != null) {
-                            element = procedureLookupElement(element, firstParentOfType)
-                                    .withInsertHandler(
-                                            new CombinedInsertHandler(
-                                                    new OdinInsertSymbolHandler(typeType),
-                                                    new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
-                                            )
-                                    );
-                            result.addElement(PrioritizedLookupElement.withPriority(element, 0));
-                        }
-                    }
-                    case PROCEDURE_OVERLOAD -> {
-                        OdinProcedureOverloadDeclarationStatement procedureOverloadStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinProcedureOverloadDeclarationStatement.class);
-                        if (procedureOverloadStatement == null)
-                            break;
+                    LookupElementBuilder element = LookupElementBuilder
+                            .create(lookupString)
+                            .withLookupString(unprefixedLookupString)
+                            .withIcon(icon);
 
-                        for (OdinIdentifier odinIdentifier : procedureOverloadStatement.getIdentifierList()) {
-                            var resolvedReference = odinIdentifier.getReference();
-
-                            if (resolvedReference != null) {
-                                PsiElement resolved = resolvedReference.resolve();
-                                if (resolved instanceof OdinDeclaredIdentifier) {
-                                    OdinProcedureDeclarationStatement declaringProcedure = OdinInsightUtils.getDeclaringProcedure((OdinDeclaredIdentifier) resolved);
-                                    if (declaringProcedure != null) {
-                                        LookupElementBuilder element = LookupElementBuilder
-                                                .create(resolved, lookupString)
-                                                .withItemTextItalic(true)
-                                                .withIcon(icon)
-                                                .withInsertHandler(
-                                                        new CombinedInsertHandler(
-                                                                new OdinInsertSymbolHandler(typeType),
-                                                                new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
-                                                        )
-                                                );
-                                        element = procedureLookupElement(element, declaringProcedure);
-                                        result.addElement(PrioritizedLookupElement.withPriority(element, 0));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    case PACKAGE -> {
-                        OdinImportDeclarationStatement odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinImportDeclarationStatement.class);
-                        if (odinDeclaration != null) {
-                            OdinImportInfo info = odinDeclaration.getImportInfo();
-
-                            LookupElementBuilder element = LookupElementBuilder.create(info.packageName())
-                                    .withIcon(ExpUiIcons.Nodes.Package)
-                                    .withTypeText(info.path());
-
-                            if (info.library() != null) {
-                                element = element.withTailText(" -> " + info.library());
-                            }
-
-                            result.addElement(PrioritizedLookupElement.withPriority(element, 100));
-                        }
-                    }
-                    default -> {
-                        LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon)
-                                .withLookupString(unprefixedLookupString)
+                    OdinProcedureDeclarationStatement declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
+                    if (declaration != null) {
+                        element = procedureLookupElement(element, declaration)
                                 .withInsertHandler(
                                         new CombinedInsertHandler(
-                                                new OdinInsertSymbolHandler(typeType),
+                                                new OdinInsertSymbolHandler(symbol.getSymbolType()),
                                                 new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
                                         )
                                 );
                         result.addElement(PrioritizedLookupElement.withPriority(element, 0));
                     }
                 }
+                case PROCEDURE_OVERLOAD -> {
+                    OdinProcedureOverloadDeclarationStatement procedureOverloadStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinProcedureOverloadDeclarationStatement.class);
+                    if (procedureOverloadStatement == null)
+                        break;
+
+                    for (OdinIdentifier odinIdentifier : procedureOverloadStatement.getIdentifierList()) {
+                        var resolvedReference = odinIdentifier.getReference();
+
+                        if (resolvedReference != null) {
+                            PsiElement resolved = resolvedReference.resolve();
+                            if (resolved instanceof OdinDeclaredIdentifier) {
+                                OdinProcedureDeclarationStatement declaringProcedure = OdinInsightUtils.getDeclaringProcedure((OdinDeclaredIdentifier) resolved);
+                                if (declaringProcedure != null) {
+                                    LookupElementBuilder element = LookupElementBuilder
+                                            .create(resolved, lookupString)
+                                            .withItemTextItalic(true)
+                                            .withIcon(icon)
+                                            .withInsertHandler(
+                                                    new CombinedInsertHandler(
+                                                            new OdinInsertSymbolHandler(symbol.getSymbolType()),
+                                                            new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
+                                                    )
+                                            );
+                                    element = procedureLookupElement(element, declaringProcedure);
+                                    result.addElement(PrioritizedLookupElement.withPriority(element, 0));
+                                }
+                            }
+                        }
+                    }
+                }
+                case PACKAGE_REFERENCE -> {
+                    OdinImportDeclarationStatement odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinImportDeclarationStatement.class);
+                    if (odinDeclaration != null) {
+                        OdinImportInfo info = odinDeclaration.getImportInfo();
+
+                        LookupElementBuilder element = LookupElementBuilder.create(info.packageName())
+                                .withIcon(ExpUiIcons.Nodes.Package)
+                                .withTypeText(info.path());
+
+                        if (info.library() != null) {
+                            element = element.withTailText(" -> " + info.library());
+                        }
+
+                        result.addElement(PrioritizedLookupElement.withPriority(element, 100));
+                    }
+                }
+                default -> {
+                    LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon)
+                            .withLookupString(unprefixedLookupString)
+                            .withInsertHandler(
+                                    new CombinedInsertHandler(
+                                            new OdinInsertSymbolHandler(symbol.getSymbolType()),
+                                            new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
+                                    )
+                            );
+                    result.addElement(PrioritizedLookupElement.withPriority(element, 0));
+                }
             }
         }
     }
 
-    private static Icon getIcon(OdinTypeType typeType) {
+    private static Icon getIcon(OdinSymbol.OdinSymbolType typeType) {
+        if (typeType == null)
+            return null;
         return switch (typeType) {
             case STRUCT -> OdinIcons.Types.Struct;
+            case ENUM_FIELD, LABEL, FOREIGN_IMPORT, BIT_SET -> null;
             case ENUM -> ExpUiIcons.Nodes.Enum;
             case UNION -> OdinIcons.Types.Union;
             case PROCEDURE, PROCEDURE_OVERLOAD -> ExpUiIcons.Nodes.Function;
             case VARIABLE -> ExpUiIcons.Nodes.Variable;
             case CONSTANT -> ExpUiIcons.Nodes.Constant;
-            case PACKAGE -> ExpUiIcons.Nodes.Package;
+            case PACKAGE_REFERENCE -> ExpUiIcons.Nodes.Package;
             case FIELD -> ExpUiIcons.Nodes.Property;
             case PARAMETER -> ExpUiIcons.Nodes.Parameter;
             case UNKNOWN -> ExpUiIcons.FileTypes.Unknown;
+            case POLYMORPHIC_TYPE -> ExpUiIcons.Nodes.Type;
         };
     }
 

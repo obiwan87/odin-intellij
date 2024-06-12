@@ -391,14 +391,14 @@ expression                           ::= postfixGroup
                                          | maybeExpression
                                          | uninitializedExpression
                                          | callExpression
+                                         | castExpression
+                                         | autoCastExpression
                                          | qualificationExpression
                                          | indexExpression
                                          | sliceExpression
                                          | dereferenceExpression
                                          | procedureExpression
                                          | transmuteExpression
-                                         | autoCastExpression
-                                         | castExpression
                                          | compoundLiteralExpression
                                          | primaryGroup
 
@@ -493,8 +493,7 @@ private refOperator ::= (DOT|ARROW)
 implicitSelectorExpression           ::= DOT identifier
 indexExpression                      ::= expression index
 sliceExpression                      ::= expression slice
-procedureExpression                  ::= procedureTypeContainer procedureBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
-procedureTypeContainer               ::= procedureType
+procedureExpression                  ::= procedureDefinition {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 dereferenceExpression                ::= expression CARET
 identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference delete]}
 

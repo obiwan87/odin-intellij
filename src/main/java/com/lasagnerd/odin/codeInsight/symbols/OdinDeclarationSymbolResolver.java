@@ -27,7 +27,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     public static List<OdinSymbol> getLocalSymbols(OdinDeclaration odinDeclaration, OdinSymbolTable odinSymbolTable) {
-        return getSymbols(OdinSymbol.OdinVisibility.LOCAL, odinDeclaration, odinSymbolTable);
+        return getSymbols(OdinSymbol.OdinVisibility.NONE, odinDeclaration, odinSymbolTable);
     }
 
     public static List<OdinSymbol> getSymbols(@NotNull OdinSymbol.OdinVisibility defaultVisibility,
@@ -63,10 +63,11 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             odinSymbol.setValueExpression(valueExpression);
             odinSymbol.setPsiType(type);
             odinSymbol.setHasUsing(using);
+            odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.PARAMETER);
             symbols.add(odinSymbol);
         }
 
-        if(o.getDeclaredIdentifiers().size() == 1) {
+        if(using && o.getDeclaredIdentifiers().size() == 1) {
             if(type != null) {
                 symbols.addAll(OdinInsightUtils.getTypeSymbols(type, symbolTable));
             } else {
@@ -87,6 +88,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             // TODO why does every parameter have to option of having a "using"?
             symbol.setHasUsing(hasUsing);
             symbol.setPsiType(psiType);
+            symbol.setSymbolType(OdinSymbol.OdinSymbolType.PARAMETER);
 
             symbols.add(symbol);
         }
@@ -109,6 +111,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             odinSymbol.setPsiType(o.getType());
             odinSymbol.setHasUsing(hasUsing);
             odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+            odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.VARIABLE);
             symbols.add(odinSymbol);
         }
 
@@ -130,7 +133,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
                 OdinExpression odinExpression = expressionsList.getExpressionList().get(i);
                 odinSymbol.setValueExpression(odinExpression);
             }
-
+            odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.VARIABLE);
             odinSymbol.setHasUsing(hasUsing);
             odinSymbol.setPsiType(typeDefinition);
 
@@ -180,6 +183,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     public void visitProcedureOverloadDeclarationStatement(@NotNull OdinProcedureOverloadDeclarationStatement o) {
         OdinSymbol symbol = new OdinSymbol(o.getDeclaredIdentifier());
         symbol.setAttributeStatements(o.getAttributeStatementList());
+        symbol.setSymbolType(OdinSymbol.OdinSymbolType.PROCEDURE_OVERLOAD);
         this.symbols.add(symbol);
     }
 
@@ -191,21 +195,21 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitForInParameterDeclaration(@NotNull OdinForInParameterDeclaration o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.LOCAL);
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.NONE);
         odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.VARIABLE);
         symbols.add(odinSymbol);
     }
 
     @Override
     public void visitSwitchTypeVariableDeclaration(@NotNull OdinSwitchTypeVariableDeclaration o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.LOCAL);
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.NONE);
         odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.VARIABLE);
         symbols.add(odinSymbol);
     }
 
     @Override
     public void visitPolymorphicType(@NotNull OdinPolymorphicType o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.LOCAL);
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.NONE);
         odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.POLYMORPHIC_TYPE);
         symbols.add(odinSymbol);
     }
@@ -242,6 +246,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             odinSymbol.setHasUsing(false);
             odinSymbol.setPsiType(typeDefinition);
             odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.CONSTANT);
+            odinSymbol.setAttributeStatements(o.getAttributeStatementList());
             symbols.add(odinSymbol);
         }
 
@@ -258,7 +263,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitLabelDeclaration(@NotNull OdinLabelDeclaration o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.LOCAL);
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.NONE);
         odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.LABEL);
         symbols.add(odinSymbol);
     }
@@ -269,6 +274,22 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
             odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FOREIGN_IMPORT);
             odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+            symbols.add(odinSymbol);
+        }
+    }
+
+    @Override
+    public void visitFieldDeclarationStatement(@NotNull OdinFieldDeclarationStatement o) {
+        OdinType type = o.getType();
+        boolean hasUsing = o.getUsing() != null;
+        for (OdinDeclaredIdentifier odinDeclaredIdentifier : o.getDeclaredIdentifierList()) {
+            OdinSymbol odinSymbol = new OdinSymbol(odinDeclaredIdentifier, OdinSymbol.OdinVisibility.NONE);
+            odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FIELD);
+            odinSymbol.setPsiType(type);
+            odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+            odinSymbol.setImplicitlyDeclared(false);
+            odinSymbol.setHasUsing(hasUsing);
+//            odinSymbol.setPackagePath();
             symbols.add(odinSymbol);
         }
     }

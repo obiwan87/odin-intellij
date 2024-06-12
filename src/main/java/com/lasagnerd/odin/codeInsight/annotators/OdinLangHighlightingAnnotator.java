@@ -234,6 +234,9 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             return;
         }
 
+        if(symbol.isImplicitlyDeclared())
+            return;
+
         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(symbol.getDeclaredIdentifier(),
                 OdinDeclaration.class,
                 true);

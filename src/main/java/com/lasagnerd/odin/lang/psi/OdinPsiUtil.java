@@ -256,7 +256,7 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinStatement> getBlockStatements(OdinProcedureExpression procedureExpression) {
-        OdinBlock block = procedureExpression.getProcedureBody().getBlock();
+        OdinBlock block = procedureExpression.getProcedureDefinition().getProcedureBody().getBlock();
         if (block != null) {
             return block.getStatements();
         }
@@ -307,7 +307,7 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinSymbol> getSymbols(OdinProcedureExpression procedureExpression) {
-        OdinProcedureType procedureType = procedureExpression.getProcedureTypeContainer().getProcedureType();
+        OdinProcedureType procedureType = procedureExpression.getProcedureDefinition().getProcedureType();
         return doGetProcedureTypeSymbols(procedureType);
     }
 

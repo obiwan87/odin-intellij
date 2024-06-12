@@ -1,46 +1,58 @@
 package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.psi.*;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@NoArgsConstructor
 @Data
 public class OdinSymbol {
-    private final PsiNamedElement declaredIdentifier;
+//    private OdinDeclaration declaration;
+    private PsiNamedElement declaredIdentifier;
     /**
      * Used for symbols with initialization. Don't know if it actually belongs here
      */
     private OdinExpression valueExpression;
     private OdinType psiType;
-    private OdinSymbolType symbolType;
     private List<OdinAttributeStatement> attributeStatements;
 
-    private final OdinVisibility visibility;
+    private String name;
+    private String packagePath;
+    private OdinSymbolType symbolType;
+    private OdinVisibility visibility;
     private OdinScope scope;
+    boolean hasUsing;
+    boolean implicitlyDeclared;
 
     public OdinSymbol(PsiNamedElement declaredIdentifier, @NotNull OdinVisibility visibility) {
         this.declaredIdentifier = declaredIdentifier;
         this.visibility = visibility;
+        this.name = declaredIdentifier.getName();
     }
 
     public OdinSymbol(PsiNamedElement declaredIdentifier) {
         this.declaredIdentifier = declaredIdentifier;
         this.visibility = OdinVisibility.PUBLIC;
+        this.name = declaredIdentifier.getName();
     }
 
-    public String getName() {
-        return declaredIdentifier.getName();
+    public OdinDeclaration getDeclaration() {
+        if(declaredIdentifier != null) {
+            return PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
+        }
+        return null;
     }
-
-    boolean hasUsing;
 
     public enum OdinSymbolType {
+        UNKNOWN,
         PARAMETER,
         FIELD,
         PROCEDURE,
+        PROCEDURE_OVERLOAD,
         STRUCT,
         UNION,
         ENUM_FIELD,
@@ -55,7 +67,7 @@ public class OdinSymbol {
     }
 
     public enum OdinVisibility {
-        LOCAL,
+        NONE,
         PACKAGE_PRIVATE,
         FILE_PRIVATE,
         PUBLIC
