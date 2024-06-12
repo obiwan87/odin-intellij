@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
+import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -14,6 +15,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,14 +34,19 @@ public class OdinInsightUtils {
     public static String getStringLiteralValue(OdinExpression odinExpression) {
         if (odinExpression instanceof OdinLiteralExpression literalExpression) {
             if (literalExpression.getBasicLiteral() instanceof OdinStringLiteral stringLiteral) {
-                if (stringLiteral.getDqStringLiteral() != null || stringLiteral.getSqStringLiteral() != null) {
-                    String text = literalExpression.getText();
+                return getStringLiteralValue(stringLiteral);
+            }
+        }
+        return null;
+    }
 
-                    if (text.length() >= 2) {
-                        text = text.substring(1, text.length() - 1);
-                        return StringEscapeUtils.unescapeJava(text);
-                    }
-                }
+    public static String getStringLiteralValue(OdinStringLiteral stringLiteral) {
+        if (stringLiteral.getDqStringLiteral() != null || stringLiteral.getSqStringLiteral() != null) {
+            String text = stringLiteral.getText();
+
+            if (text.length() >= 2) {
+                text = text.substring(1, text.length() - 1);
+                return StringEscapeUtils.unescapeJava(text);
             }
         }
         return null;
@@ -62,31 +69,24 @@ public class OdinInsightUtils {
         if (type instanceof TsOdinPointerType pointerType) {
             type = pointerType.getDereferencedType();
         }
-        OdinDeclaration odinDeclaration = type.getDeclaration();
+        OdinType odinDeclaration = type.getType();
 
-        if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-            List<OdinSymbol> structFields = getStructFields(structDeclarationStatement);
-            for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : getStructFieldsDeclarationStatements(structDeclarationStatement).stream()
-                    .filter(f -> f.getUsing() != null)
-                    .toList()) {
-                if (odinFieldDeclarationStatement.getDeclaredIdentifiers().isEmpty())
-                    continue;
-
-                TsOdinType usedType = OdinTypeResolver.resolveType(typeScope, odinFieldDeclarationStatement.getType());
-                OdinSymbolTable subScope = getTypeSymbols(usedType);
-                symbolTable.putAll(subScope);
-            }
+        if (odinDeclaration instanceof OdinStructType structType) {
+            var structFields = getStructFieldsDeclarationStatements(structType).stream()
+                    .map(OdinDeclarationSymbolResolver::getLocalSymbols)
+                    .flatMap(Collection::stream)
+                    .toList();
 
             symbolTable.addAll(structFields);
             symbolTable.addTypes(typeScope);
             return symbolTable;
         }
 
-        if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
-            return symbolTable.with(getEnumFields(enumDeclarationStatement));
+        if (odinDeclaration instanceof OdinEnumType enumType) {
+            return symbolTable.with(getEnumFields(enumType));
         }
 
-        return OdinSymbolTable.EMPTY;
+        return symbolTable;
     }
 
     @NotNull

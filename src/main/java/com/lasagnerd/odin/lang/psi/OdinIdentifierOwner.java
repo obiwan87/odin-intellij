@@ -52,7 +52,7 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
                     return new OdinSymbol(declaredIdentifier, OdinDeclarationSymbolResolver.getVisibility(attributeStatements, globalFileVisibility));
                 }
             }
-            return new OdinSymbol(declaredIdentifier, OdinSymbol.OdinVisibility.LOCAL);
+            return new OdinSymbol(declaredIdentifier, OdinSymbol.OdinVisibility.NONE);
         }
         return new OdinSymbol(declaredIdentifier);
     }
@@ -93,7 +93,7 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
         // TODO
         OdinSymbol symbol = createSymbol(this);
         switch (symbol.getVisibility()) {
-            case LOCAL -> {
+            case NONE -> {
                 OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
                 if (fileScope != null) {
                     return new LocalSearchScope(fileScope);

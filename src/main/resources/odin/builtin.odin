@@ -104,3 +104,9 @@ ODIN_SANITIZER_FLAGS :: distinct bit_set[Odin_Sanitizer_Flag; u32]
 
 @builtin
 ODIN_DEBUG: bool
+
+@builtin
+ODIN_NO_RTTI: bool
+
+@builtin
+ODIN_DISABLE_ASSERT: bool

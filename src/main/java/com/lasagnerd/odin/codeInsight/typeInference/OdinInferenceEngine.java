@@ -1,8 +1,10 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
@@ -47,7 +49,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (odinInferenceEngine.isImport) {
             return createPackageReferenceType(symbolTable.getPackagePath(), odinInferenceEngine.importDeclarationStatement);
         } else {
-            return odinInferenceEngine.type != null? odinInferenceEngine.type : TsOdinType.UNKNOWN;
+            return odinInferenceEngine.type != null ? odinInferenceEngine.type : TsOdinType.UNKNOWN;
         }
     }
 
@@ -94,19 +96,49 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     @Override
+    public void visitDirectiveExpression(@NotNull OdinDirectiveExpression o) {
+        PsiElement identifierToken = o.getDirective().getDirectiveHead().getIdentifierToken();
+        if(identifierToken.getText().equals("caller_location")) {
+            OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(o.getProject());
+            if(builtinSymbolService != null) {
+                List<OdinSymbol> runtimeCoreSymbols = builtinSymbolService.getRuntimeCoreSymbols();
+                OdinSymbolTable odinSymbolTable = OdinSymbolTable.from(runtimeCoreSymbols);
+                OdinSymbol symbol = odinSymbolTable.getSymbol("Source_Code_Location");
+                if(symbol != null) {
+                    OdinDeclaration declaration = symbol.getDeclaration();
+                    if(declaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
+                        this.type = OdinTypeResolver.resolveType(odinSymbolTable, structDeclarationStatement.getStructType());
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
         OdinSymbolTable localScope;
+        OdinSymbolTable globalScope;
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
             // extract symbol table
 
             TsOdinType tsOdinType = doInferType(symbolTable, refExpression.getExpression());
-            localScope = OdinInsightUtils.getTypeSymbols(tsOdinType);
+            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeSymbols(tsOdinType);
 
+            if(tsOdinType instanceof TsOdinPackageReferenceType) {
+                localScope = typeSymbols;
+                globalScope = typeSymbols;
+            } else {
+                globalScope = tsOdinType.getSymbolTable();
+                localScope = typeSymbols;
+            }
+//            localScope.putAll(tsOdinType.getSymbolTable().flatten());
             // The resolved polymorphic types must be taken over from type scope
             this.symbolTable.addTypes(localScope);
+//            this.symbolTable.putAll(tsOdinType.getSymbolTable());
         } else {
             localScope = this.symbolTable;
+            globalScope = this.symbolTable;
         }
 
         if (refExpression.getIdentifier() != null) {
@@ -125,7 +157,16 @@ public class OdinInferenceEngine extends OdinVisitor {
                         isImport = true;
                         importDeclarationStatement = (OdinImportDeclarationStatement) odinDeclaration;
                     } else {
-                        this.type = resolveTypeOfDeclaration(localScope, declaredIdentifier, odinDeclaration);
+                        this.type = resolveTypeOfDeclaration(globalScope, declaredIdentifier, odinDeclaration);
+                    }
+                } else if (symbol.isImplicitlyDeclared()) {
+                    // TODO make this a bit less hard coded
+                    if(symbol.getName().equals("context")) {
+                        OdinType psiType = symbol.getPsiType();
+                        OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(psiType.getProject());
+                        List<OdinSymbol> runtimeCoreSymbols = builtinSymbolService.getRuntimeCoreSymbols();
+                        OdinSymbolTable odinSymbolTable = OdinSymbolTable.from(runtimeCoreSymbols);
+                        this.type = OdinTypeResolver.resolveType(odinSymbolTable, psiType);
                     }
                 }
             } else {
@@ -135,6 +176,10 @@ public class OdinInferenceEngine extends OdinVisitor {
                     this.type = tsOdinMetaType;
                 }
             }
+            /* TODO: rand.odin causes stack overflow these being the end and the start of the overflow error respectively
+             * .resolveTypeOfDeclaration(OdinInferenceEngine.java:498)
+             * 	at com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.visitRefExpression(OdinInferenceEngine.java:128)
+             */
         }
 
         if (refExpression.getType() != null) {
@@ -205,7 +250,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             this.type = arrayType.getElementType();
         }
 
-        if(tsOdinType instanceof TsOdinSliceType sliceType) {
+        if (tsOdinType instanceof TsOdinSliceType sliceType) {
             this.type = sliceType.getElementType();
         }
 
@@ -264,7 +309,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitProcedureExpression(@NotNull OdinProcedureExpression o) {
         // get type of expression. If it is a procedure, retrieve the return type and set that as result
-        var procedureType = o.getProcedureTypeContainer().getProcedureType();
+        var procedureType = o.getProcedureDefinition().getProcedureType();
         TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(PROCEDURE);
         tsOdinMetaType.setType(procedureType);
 
@@ -495,7 +540,10 @@ subExpression
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
             for (OdinExpression odinExpression : expressionList) {
-                TsOdinType tsOdinType = doInferType(parentScope, lhsValuesCount, odinExpression);
+                // TODO Only recompute if we know that the declared identifier is shadowing another one (maybe save this information
+                //  in the symbol?)
+                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
+                TsOdinType tsOdinType = doInferType(odinSymbolTable, lhsValuesCount, odinExpression);
                 if (tsOdinType instanceof TsOdinTuple tuple) {
                     tsOdinTypes.addAll(tuple.getTypes());
                 } else {

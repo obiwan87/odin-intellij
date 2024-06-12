@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.lang.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
+    public static Logger LOG = Logger.getInstance(OdinReference.class);
     public OdinReference(@NotNull OdinIdentifier element) {
         super(element);
     }
@@ -20,15 +22,25 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public @Nullable PsiElement resolve() {
-        OdinSymbol firstDeclaration = OdinSymbolTableResolver.findSymbol(getElement());
-        if (firstDeclaration != null) {
-            return firstDeclaration.getDeclaredIdentifier();
+        try {
+            OdinSymbol firstDeclaration = OdinSymbolTableResolver.findSymbol(getElement());
+            if (firstDeclaration != null) {
+                return firstDeclaration.getDeclaredIdentifier();
+            }
+            return null;
+        } catch (StackOverflowError e) {
+            LOG.error("Stack overflow caused by element at offset: " + getElement().getTextOffset());
+            return null;
         }
-        return null;
     }
 
     public OdinSymbol resolveSymbol() {
-        return OdinSymbolTableResolver.findSymbol(getElement());
+        try {
+            return OdinSymbolTableResolver.findSymbol(getElement());
+        } catch (StackOverflowError e) {
+            LOG.error("Stack overflow caused by element at offset: " + getElement().getTextOffset());
+            return null;
+        }
     }
 
     @Override

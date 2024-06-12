@@ -186,6 +186,7 @@ public class OdinImportUtils {
     public static OdinSymbolTable getSymbolsOfImportedPackage(String packagePath, OdinImportDeclarationStatement importStatement) {
         OdinImportInfo importInfo = importStatement.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
+        // Chec if package is null. If yes log debug
         String path = Path.of(packagePath, getFileName(importStatement)).toString();
         String name = importInfo.packageName();
         Project project = importStatement.getProject();

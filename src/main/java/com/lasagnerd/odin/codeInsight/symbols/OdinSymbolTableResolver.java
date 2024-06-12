@@ -1,11 +1,7 @@
 package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,17 +10,14 @@ import com.lasagnerd.odin.codeInsight.*;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinArrayType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
-import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
@@ -89,66 +82,10 @@ public class OdinSymbolTableResolver {
     }
 
     private static List<OdinSymbol> getBuiltInSymbols(Project project) {
-        // TODO Cache this stuff
-        List<OdinSymbol> builtinSymbols = new ArrayList<>();
-        // 0. Import built-in symbols
-        Optional<String> sdkPathOptional = OdinSdkConfigPersistentState.getSdkPath(project);
-
-        if (sdkPathOptional.isEmpty())
-            return Collections.emptyList();
-
-        String sdkPath = sdkPathOptional.get();
-        Path coreBuiltinPath = Path.of(sdkPath, "base", "runtime", "core_builtin.odin");
-        Path coreBuiltinSoaPath = Path.of(sdkPath, "base", "runtime", "core_builtin_soa.odin");
-
-        List<Path> builtinPaths = List.of(coreBuiltinPath, coreBuiltinSoaPath);
-        for (Path builtinPath : builtinPaths) {
-            OdinFile odinFile = createOdinFile(project, builtinPath);
-            if (odinFile != null) {
-                OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getSymbolTable();
-                Collection<OdinSymbol> symbols = fileScopeDeclarations
-                        .getSymbolNameMap().values()
-                        .stream()
-                        .filter(odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributeStatements()))
-                        .toList();
-                builtinSymbols.addAll(symbols);
-            }
-        }
-
-        List<String> resources = List.of("odin/builtin.odin", "odin/intrinsics.odin");
-        for (String resource : resources) {
-            OdinFile odinFile = createOdinFileFromResource(project, resource);
-            if (odinFile != null) {
-                OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getSymbolTable();
-                Collection<OdinSymbol> symbols = fileScopeDeclarations
-                        .getSymbolNameMap().values()
-                        .stream()
-                        .filter(odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributeStatements()))
-                        .toList();
-                builtinSymbols.addAll(symbols);
-            }
-        }
-        return builtinSymbols;
-    }
-
-    private static OdinFile createOdinFile(Project project, Path path) {
-        VirtualFile virtualFile = VfsUtil.findFile(path, true);
-        if (virtualFile != null) {
-            return (OdinFile) PsiManager.getInstance(project).findFile(virtualFile);
-        }
-        return null;
-    }
-
-    private static OdinFile createOdinFileFromResource(Project project, String resourcePath) {
-        InputStream resource = OdinSymbolTableResolver.class.getClassLoader().getResourceAsStream(resourcePath);
-        if (resource == null)
-            return null;
-        try (resource) {
-            String text = new String(resource.readAllBytes(), StandardCharsets.UTF_8);
-            return (OdinFile) PsiFileFactory.getInstance(project).createFileFromText("resource.odin", OdinFileType.INSTANCE, text);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(project);
+        if (builtinSymbolService != null)
+            return builtinSymbolService.getBuiltInSymbols();
+        return Collections.emptyList();
     }
 
     private static OdinSymbolTable findVisibleSymbols(PsiElement element, String packagePath, Predicate<OdinSymbol> matcher) {
@@ -194,7 +131,7 @@ public class OdinSymbolTableResolver {
         }
 
         // 3. Import symbols from the scope tree
-        OdinSymbolTable odinSymbolTable = doFindVisibleSymbols(element);
+        OdinSymbolTable odinSymbolTable = doFindVisibleSymbols(packagePath, element, s -> false, false);
         odinSymbolTable.putAll(symbolTable);
         odinSymbolTable.setPackagePath(packagePath);
 
@@ -265,10 +202,12 @@ public class OdinSymbolTableResolver {
         return null;
     }
 
+    @TestOnly
     public static OdinSymbolTable doFindVisibleSymbols(PsiElement position) {
         return doFindVisibleSymbols(position, symbolTable -> false);
     }
 
+    @TestOnly
     public static OdinSymbolTable doFindVisibleSymbols(PsiElement position, StopCondition stopCondition) {
         return doFindVisibleSymbols(null, position, stopCondition, false);
     }
@@ -298,12 +237,45 @@ public class OdinSymbolTableResolver {
         symbolTable.setParentSymbolTable(parentScope);
 
         // TODO these symbols can't be passed down to lower scope objects
-        if(containingScopeBlock instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
+        if (containingScopeBlock instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
             TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, compoundLiteralTyped.getType());
-            if(tsOdinType instanceof TsOdinStructType tsOdinStructType) {
+            if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
                 // TODO will this work with aliases?
                 List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeSymbols(tsOdinStructType, symbolTable);
                 symbolTable.addAll(typeSymbols);
+            }
+
+            if(tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+                List<String> swizzleSymbols = List.of("r", "g", "b", "a", "x", "y", "z", "w");
+                for (String swizzleSymbol : swizzleSymbols) {
+                    OdinSymbol odinSymbol = new OdinSymbol();
+                    odinSymbol.setName(swizzleSymbol);
+
+                    TsOdinType elementType = tsOdinArrayType.getElementType();
+                    if(elementType != null) {
+                        odinSymbol.setPsiType(elementType.getType());
+                    }
+                    odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
+                    odinSymbol.setImplicitlyDeclared(true);
+                    odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+                    odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FIELD);
+                    symbolTable.add(odinSymbol);
+                }
+            }
+        }
+
+        if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
+            OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(procedureDefinition.getProject());
+            if(builtinSymbolService != null) {
+                OdinStringLiteral callConvention = procedureDefinition.getProcedureType().getStringLiteral();
+                if (callConvention != null) {
+                    String stringLiteralValue = OdinInsightUtils.getStringLiteralValue(callConvention);
+                    if (stringLiteralValue == null || !stringLiteralValue.equals("contextless")) {
+                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
+                    }
+                } else {
+                    symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
+                }
             }
         }
 
@@ -337,7 +309,7 @@ public class OdinSymbolTableResolver {
                     continue;
 
                 PsiElement commonParent = positionCheckResult.commonParent();
-                PsiElement containerOfSymbol = declaration != commonParent? PsiTreeUtil.findPrevParent(commonParent, declaration) : declaration;
+                PsiElement containerOfSymbol = declaration != commonParent ? PsiTreeUtil.findPrevParent(commonParent, declaration) : declaration;
                 PsiElement containerOfPosition = PsiTreeUtil.findPrevParent(commonParent, position);
 
                 // Now check if symbol is strictly a previous sibling of position
@@ -376,6 +348,7 @@ public class OdinSymbolTableResolver {
 
             addParamEntries(procedureType.getParamEntries(), declarations);
             addPolymorphicDeclarations(procedureType.getParamEntries(), declarations);
+
 
             if (procedureType.getReturnParameters() != null) {
                 OdinParamEntries returnParamEntries = procedureType.getReturnParameters().getParamEntries();
@@ -428,28 +401,28 @@ public class OdinSymbolTableResolver {
 
         if (containingScopeBlock instanceof OdinConditionalStatement conditionalStatement) {
             OdinLabelDeclaration labelDeclaration = conditionalStatement.getLabelDeclaration();
-            if(labelDeclaration != null) {
+            if (labelDeclaration != null) {
                 declarations.add(labelDeclaration);
             }
         }
 
         if (containingScopeBlock instanceof OdinSwitchStatement switchStatement) {
             OdinLabelDeclaration labelDeclaration = switchStatement.getLabelDeclaration();
-            if(labelDeclaration != null) {
+            if (labelDeclaration != null) {
                 declarations.add(labelDeclaration);
             }
         }
 
         if (containingScopeBlock instanceof OdinForStatement forStatement) {
             OdinLabelDeclaration labelDeclaration = forStatement.getLabelDeclaration();
-            if(labelDeclaration != null) {
+            if (labelDeclaration != null) {
                 declarations.add(labelDeclaration);
             }
         }
 
         if (containingScopeBlock instanceof OdinForInStatement forInStatement) {
             OdinLabelDeclaration labelDeclaration = forInStatement.getLabelDeclaration();
-            if(labelDeclaration != null) {
+            if (labelDeclaration != null) {
                 declarations.add(labelDeclaration);
             }
         }
