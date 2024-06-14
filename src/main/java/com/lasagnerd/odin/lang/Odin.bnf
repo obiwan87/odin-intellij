@@ -50,6 +50,7 @@
         TRANSMUTE='regexp:TRANSMUTE'
         DYNAMIC='regexp:dynamic'
         BIT_SET='regexp:bit_set'
+        BIT_FIELD='regexp:bit_set'
         MAP='regexp:map'
         USING='regexp:using'
         ENUM='regexp:enum'
@@ -201,6 +202,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | importDeclarationStatement
                                          | enumDeclarationStatement
                                          | unionDeclarationStatement
+                                         | bitFieldDeclarationStatement
                                          | structDeclarationStatement
                                          | procedureDeclarationStatement
                                          | bitsetDeclarationStatement
@@ -248,6 +250,14 @@ unionType                            ::= UNION [LPAREN polymorphicParameterList 
 unionBlock                           ::= blockStart [unionBody] blockEnd
 unionBody                            ::= type (COMMA type)* [COMMA|EOS_TOKEN] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 
+
+bitFieldDeclarationStatement         ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitFieldType
+bitFieldType                         ::= BIT_FIELD type bitFieldBlock
+bitFieldBlock                        ::= blockStart bitFieldBody blockEnd
+bitFieldBody                         ::= bitFieldFieldDeclaration (COMMA bitFieldFieldDeclaration )*  [COMMA|EOS_TOKEN]
+bitFieldFieldDeclaration             ::= declaredIdentifier COLON type PIPE expression
+
+
 // Bit Set
 bitsetDeclarationStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitSetType
 
@@ -286,6 +296,7 @@ type                                 ::= mapType
                                          | structType
                                          | enumType
                                          | unionType
+                                         | bitFieldType
                                          | pointerType
                                          | polymorphicType
                                          | constrainedType
@@ -311,6 +322,7 @@ multiPointerType                     ::= LBRACKET CARET RBRACKET type
 
 
 bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON type] RBRACKET
+
 mapType                              ::= MAP LBRACKET type RBRACKET type {methods=[getKeyType getValueType]}
 matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET type
 arrayType                            ::= [directiveHead] LBRACKET arraySize RBRACKET type {methods=[getTypeDefinition]}
@@ -578,7 +590,7 @@ numericLiteral                       ::= INTEGER_DEC_LITERAL
 basicLiteral                         ::= stringLiteral
                                          | numericLiteral
 
-private compoundType                 ::= sliceType | arrayType | matrixType | bitSetType  | mapType | structType | qualifiedType | callType | simpleRefType | parExpressionType
+private compoundType                 ::= sliceType | arrayType | matrixType | bitSetType  | mapType | structType | bitFieldType | qualifiedType | callType | simpleRefType | parExpressionType
 parExpressionType                    ::= parenthesizedExpression
 
 
