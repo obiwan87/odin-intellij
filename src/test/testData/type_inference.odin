@@ -204,3 +204,42 @@ testTypeInference_withTypeAliases_2 :: proc() {
     x : Points = []Point2D { }
     point := x[0]
 }
+
+testForInVars :: proc() {
+    p := map[Point]Line { }
+    c := "string"
+    s := []Point { }
+    a := [1]Point { Point { } }
+    for point, line in p {
+        test1 := point
+        test2 := line
+    }
+
+    for val, idx in c {
+        test3 := val
+        test4 := idx
+    }
+
+    for val, idx in s {
+        test5 := val
+        test6 := idx
+    }
+
+    for val, idx in a {
+        test7 := val
+        test8 := idx
+    }
+}
+
+
+
+testTypeSwitch :: proc() {
+    x : Shape = Point { }
+
+    switch t in x {
+    case Point:
+        test1 := t
+    case Line:
+        test2 := t
+    }
+}

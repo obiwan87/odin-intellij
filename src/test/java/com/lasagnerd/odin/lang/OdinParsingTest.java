@@ -826,6 +826,83 @@ public class OdinParsingTest extends UsefulTestCase {
         assertEquals("Point", tsOdinType.getName());
     }
 
+    public void testForInVars() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            assertExpressionIsOfTypWithName(odinFile,
+                    "testForInVars",
+                    "test1",
+                    TsOdinStructType.class,
+                    "Point");
+
+            assertExpressionIsOfTypWithName(odinFile,
+                    "testForInVars",
+                    "test2",
+                    TsOdinStructType.class,
+                    "Line");
+
+            assertExpressionIsOfTypWithName(odinFile,
+                    "testForInVars",
+                    "test3",
+                    TsOdinBuiltInType.class,
+                    "rune");
+
+            assertExpressionIsOfTypWithName(odinFile,
+                    "testForInVars",
+                    "test4",
+                    TsOdinBuiltInType.class,
+                    "int");
+
+            assertExpressionIsOfTypWithName(odinFile,
+                    "testForInVars",
+                    "test5",
+                    TsOdinStructType.class,
+                    "Point");
+
+            assertExpressionIsOfTypWithName(odinFile,
+                    "testForInVars",
+                    "test6",
+                    TsOdinBuiltInType.class,
+                    "int");
+
+            assertExpressionIsOfTypWithName(odinFile,
+                    "testForInVars",
+                    "test7",
+                    TsOdinStructType.class,
+                    "Point");
+
+            assertExpressionIsOfTypWithName(odinFile,
+                    "testForInVars",
+                    "test8",
+                    TsOdinBuiltInType.class,
+                    "int");
+
+        }
+    }
+
+    public void testTypeSwitch() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            assertExpressionIsOfTypWithName(odinFile,
+                    "testTypeSwitch",
+                    "test1",
+                    TsOdinStructType.class,
+                    "Point");
+
+            assertExpressionIsOfTypWithName(odinFile,
+                    "testTypeSwitch",
+                    "test2",
+                    TsOdinStructType.class,
+                    "Line");
+        }
+    }
+
+    private static <T extends TsOdinType> void assertExpressionIsOfTypWithName(OdinFile odinFile, String procedure, String variableName, Class<T> aClass, String name) {
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, procedure, variableName);
+        T structType = assertInstanceOf(tsOdinType, aClass);
+        assertEquals(name, structType.getName());
+    }
+
     public void testParapoly() throws IOException {
         OdinFile odinFile = load("src/test/testData/parapoly.odin");
         {
@@ -892,7 +969,6 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
             TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
             assertEquals("Point", structType.getName());
-
 
 
         }
