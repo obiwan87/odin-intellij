@@ -2,9 +2,11 @@ package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinArrayType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 
+import static com.lasagnerd.odin.codeInsight.OdinInsightUtils.getSwizzleFields;
 import static com.lasagnerd.odin.codeInsight.imports.OdinImportUtils.getSymbolsOfImportedPackage;
 import static com.lasagnerd.odin.codeInsight.OdinInsightUtils.getTypeSymbols;
 
@@ -12,6 +14,9 @@ public class OdinReferenceResolver {
     public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinExpression valueExpression) {
         // Add filter for referenceable elements
         TsOdinType type = OdinInferenceEngine.inferType(symbolTable, valueExpression);
+        if(type instanceof TsOdinArrayType arrayType) {
+            return OdinSymbolTable.from(getSwizzleFields(arrayType));
+        }
         return getTypeSymbols(type);
     }
 

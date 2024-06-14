@@ -170,16 +170,16 @@ public class OdinSymbolTableResolver {
     public static OdinSymbol findSymbol(OdinIdentifier identifier) {
         OdinSymbolTable parentScope = computeSymbolTable(identifier)
                 .with(OdinImportService.getInstance(identifier.getProject()).getPackagePath(identifier));
-        OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(identifier, true, OdinRefExpression.class);
+        PsiElement parent = identifier.getParent();
         OdinSymbolTable symbolTable;
-        if (refExpression != null) {
+        if (parent instanceof OdinRefExpression refExpression) {
             if (refExpression.getExpression() != null) {
                 symbolTable = OdinReferenceResolver.resolve(parentScope, refExpression.getExpression());
             } else {
                 symbolTable = parentScope;
             }
         } else {
-            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, true, OdinQualifiedType.class);
+            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, OdinQualifiedType.class);
             if (qualifiedType != null) {
                 if (qualifiedType.getPackageIdentifier() == identifier) {
                     symbolTable = parentScope;

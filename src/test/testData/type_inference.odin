@@ -36,8 +36,8 @@ Shape :: union {
 }
 
 PolyShape :: union($T1: typeid, $T2: typeid ) {
-    T1,
-    T2
+    Parent,
+    Child
 }
 
 get_at :: proc(list: List($T), index: i32) -> T {
@@ -195,12 +195,12 @@ testTypeInference17 :: proc() {
 Point2D :: Point
 PointDict :: Dict(i32, Point)
 testTypeInference_withTypeAliases :: proc() {
-    x := PointDict {}
+    x := PointDict { }
     point := x.entries[0]
 }
 
 Points :: []Point
 testTypeInference_withTypeAliases_2 :: proc() {
-    x : Points = []Point2D {}
+    x : Points = []Point2D { }
     point := x[0]
 }

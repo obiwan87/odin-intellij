@@ -36,7 +36,9 @@ testParapoly_slice_constrained :: proc() {
 }
 
 testParapoly_proc :: proc() {
-    x := poly_proc(proc(x: i32) -> i32 { return 1}, 1)
+    x := poly_proc(proc(x: i32) -> i32 {
+        return 1
+    }, 1)
 }
 
 Dict :: struct($Key, $Value: typeid) {
@@ -45,5 +47,39 @@ Dict :: struct($Key, $Value: typeid) {
 testParapoly_specializedStruct :: proc() {
     PointDict :: Dict(int, Point)
 
-    x := PointDict {}
+    x := PointDict { }
+}
+
+
+testTypeInference_withRecursivePolyPara :: proc() {
+    Parent :: struct($T: typeid) {
+        children: []Child(T),
+        data: T
+    }
+
+    Child :: struct($T: typeid) {
+        parent: Parent(T),
+        change_parent: proc(parent: Parent(T)),
+        data: T
+    }
+
+    t1 := Parent(Point) { }
+    test := t1.data
+}
+
+testTypeInference_withDoubleInstantiation :: proc() {
+    Whole :: struct($T: typeid) {
+        part: Part(Other(T))
+    }
+
+    Part :: struct($T: typeid) {
+        data: T
+    }
+
+    Other :: struct($T: typeid) {
+        other: T
+    }
+
+    w := Whole(Point){ }
+    test := w.part.data.other
 }

@@ -281,6 +281,7 @@ public class OdinCompletionContributor extends CompletionContributor {
             return null;
         return switch (typeType) {
             case STRUCT -> OdinIcons.Types.Struct;
+            case SWIZZLE_FIELD, FIELD -> ExpUiIcons.Nodes.Property;
             case ENUM_FIELD, LABEL, FOREIGN_IMPORT, BIT_SET -> null;
             case ENUM -> ExpUiIcons.Nodes.Enum;
             case UNION -> OdinIcons.Types.Union;
@@ -288,7 +289,6 @@ public class OdinCompletionContributor extends CompletionContributor {
             case VARIABLE -> ExpUiIcons.Nodes.Variable;
             case CONSTANT -> ExpUiIcons.Nodes.Constant;
             case PACKAGE_REFERENCE -> ExpUiIcons.Nodes.Package;
-            case FIELD -> ExpUiIcons.Nodes.Property;
             case PARAMETER -> ExpUiIcons.Nodes.Parameter;
             case UNKNOWN -> ExpUiIcons.FileTypes.Unknown;
             case POLYMORPHIC_TYPE -> ExpUiIcons.Nodes.Type;

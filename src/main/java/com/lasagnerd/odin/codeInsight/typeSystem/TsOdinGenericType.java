@@ -23,7 +23,6 @@ public abstract class TsOdinGenericType extends TsOdinType {
         }
     };
 
-    @NotNull
     private TsOdinGenericType genericType;
 
     public TsOdinGenericType() {
