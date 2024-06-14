@@ -874,6 +874,29 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testParapoly_recursive() throws IOException {
+        OdinFile odinFile = load("src/test/testData/parapoly.odin");
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "testTypeInference_withRecursivePolyPara", "test");
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+            TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Point", structType.getName());
+
+        }
+    }
+
+    public void testParapoly_withDoubleInstantiation() throws IOException {
+        OdinFile odinFile = load("src/test/testData/parapoly.odin");
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "testTypeInference_withDoubleInstantiation", "test");
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+            TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Point", structType.getName());
+
+
+
+        }
+    }
     // Visibility tests
 
     public void testVisibility() throws IOException {
@@ -1543,8 +1566,8 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     private static @NotNull TsOdinType inferTypeOfFirstExpressionInProcedure(OdinFile odinFile, String procedureName) {
-        OdinProcedureDeclarationStatement testTypeInference = findFirstProcedure(odinFile, procedureName);
-        OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) Objects.requireNonNull(testTypeInference.
+        OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, procedureName);
+        OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) Objects.requireNonNull(procedure.
                         getProcedureDefinition()
                         .getProcedureBody().getBlock()).getStatements()
                 .stream().filter(s -> s instanceof OdinExpressionStatement)

@@ -63,7 +63,7 @@ public class OdinSymbol {
         POLYMORPHIC_TYPE,
         LABEL,
         FOREIGN_IMPORT,
-        BIT_SET
+        SWIZZLE_FIELD, BIT_SET
     }
 
     public enum OdinVisibility {

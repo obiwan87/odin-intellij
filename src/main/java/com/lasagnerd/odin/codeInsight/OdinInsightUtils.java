@@ -30,6 +30,8 @@ public class OdinInsightUtils {
 
             OdinExpressionsList.class
     );
+    public static final char[] RGBA = {'r', 'g', 'b', 'a'};
+    public static final char[] XYZW = {'x', 'y', 'z', 'w'};
 
     public static String getStringLiteralValue(OdinExpression odinExpression) {
         if (odinExpression instanceof OdinLiteralExpression literalExpression) {
@@ -277,6 +279,52 @@ public class OdinInsightUtils {
         }
 
         return Collections.emptyList();
+    }
+
+    public static List<OdinSymbol> doFindSwizzleFields(TsOdinArrayType arrayType, char[] input) {
+
+        List<String> result = new ArrayList<>();
+        // Generate combinations for lengths from 1 to maxLen
+        for (int len = 1; len <= 4; len++) {
+            generateCombinations(input, "", len, result);
+        }
+
+        List<OdinSymbol> symbols = new ArrayList<>();
+        // Print the results
+        for (String s : result) {
+            OdinSymbol odinSymbol = new OdinSymbol();
+            odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.SWIZZLE_FIELD);
+            odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+            odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
+            odinSymbol.setName(s);
+            odinSymbol.setImplicitlyDeclared(true);
+            TsOdinType elementType = arrayType.getElementType();
+            if(elementType != null) {
+                odinSymbol.setPsiType(elementType.getType());
+            }
+            symbols.add(odinSymbol);
+        }
+
+        return symbols;
+    }
+
+    // Recursive function to generate combinations
+    private static void generateCombinations(char[] input, String current, int length, List<String> result) {
+        if (length == 0) {
+            result.add(current);
+            return;
+        }
+
+        for (char c : input) {
+            generateCombinations(input, current + c, length - 1, result);
+        }
+    }
+
+    public static @NotNull List<OdinSymbol> getSwizzleFields(TsOdinArrayType tsOdinArrayType) {
+        List<OdinSymbol> symbols = new ArrayList<>();
+        symbols.addAll(doFindSwizzleFields(tsOdinArrayType, RGBA));
+        symbols.addAll(doFindSwizzleFields(tsOdinArrayType, XYZW));
+        return symbols;
     }
 
 

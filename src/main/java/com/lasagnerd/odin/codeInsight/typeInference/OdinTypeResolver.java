@@ -294,17 +294,20 @@ public class OdinTypeResolver extends OdinVisitor {
         resolveIdentifier(identifier);
 
         if (this.type instanceof TsOdinStructType structType) {
-            this.type = OdinTypeSpecializer.specializeStruct(symbolTable, o.getArgumentList(), structType);
+            // This should not be called again if type is already been visited
+            // it might be a better idea to specialize the type at inference time and not a at resolution time
+            this.type = OdinTypeSpecializer.specializeStructOrGetCached(symbolTable, structType, o.getArgumentList());
         }
 
         if (this.type instanceof TsOdinUnionType unionType) {
-            this.type = OdinTypeSpecializer.specializeUnion(symbolTable, o.getArgumentList(), unionType);
+            // This should not be called again if type is already been visited
+            this.type = OdinTypeSpecializer.specializeUnionOrGetCached(symbolTable, unionType, o.getArgumentList());
         }
     }
 
     @Override
     public void visitMatrixType(@NotNull OdinMatrixType o) {
-        if(o.getType() != null) {
+        if (o.getType() != null) {
             this.type = doResolveType(symbolTable, o.getType());
         }
     }
@@ -313,7 +316,7 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitSliceType(@NotNull OdinSliceType o) {
         OdinType elementPsiType = o.getType();
         TsOdinSliceType tsOdinSliceType = new TsOdinSliceType();
-        if(elementPsiType != null) {
+        if (elementPsiType != null) {
             TsOdinType tsOdinElementType = OdinTypeResolver.resolveType(symbolTable, elementPsiType);
             tsOdinSliceType.setElementType(tsOdinElementType);
             this.type = tsOdinSliceType;
@@ -383,6 +386,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitMapType(@NotNull OdinMapType mapType) {
         TsOdinMapType tsOdinMapType = new TsOdinMapType();
+        tsOdinMapType.setSymbolTable(symbolTable);
         tsOdinMapType.setType(mapType);
         TsOdinType keyType = doResolveType(symbolTable, mapType.getKeyType());
         tsOdinMapType.setKeyType(keyType);
@@ -399,7 +403,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
         TsOdinType elementType = doResolveType(symbolTable, Objects.requireNonNull(odinPointerType.getType()));
         tsOdinPointerType.setDereferencedType(elementType);
-
+        tsOdinPointerType.getSymbolTable().putAll(symbolTable);
         this.type = tsOdinPointerType;
     }
 

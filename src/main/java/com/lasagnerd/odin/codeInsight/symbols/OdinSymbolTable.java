@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.symbols;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
@@ -29,6 +30,7 @@ public class OdinSymbolTable {
     public static final OdinSymbolTable EMPTY = new OdinSymbolTable();
     Map<String, OdinSymbol> symbolNameMap = new HashMap<>();
 
+
     /**
      * Used substituting polymorphic types. The key
      * is the name of the polymorphic type
@@ -40,10 +42,23 @@ public class OdinSymbolTable {
      */
     Map<OdinDeclaredIdentifier, TsOdinType> knownTypes = new HashMap<>();
 
+    Map<TsOdinType, Map<List<? extends PsiElement>, TsOdinType>> specializedTypes = new HashMap<>();
     public OdinSymbolTable() {
 
     }
 
+
+    public TsOdinType getSpecializedType(TsOdinType genericType, List<PsiElement> arguments) {
+        Map<List<? extends PsiElement>, TsOdinType> argumentsMap = this.specializedTypes.get(genericType);
+        if(argumentsMap != null) {
+            return argumentsMap.get(arguments);
+        }
+        return null;
+    }
+
+    public void addSpecializedType(TsOdinType genericType, TsOdinType specializedType, List<PsiElement> arguments) {
+        specializedTypes.computeIfAbsent(genericType, t -> new HashMap<>()).put(arguments, specializedType);
+    }
 
     @Nullable
     public OdinSymbol getSymbol(String name) {
@@ -111,6 +126,7 @@ public class OdinSymbolTable {
         this.symbolNameMap.putAll(symbolTable.symbolNameMap);
         typeTable.putAll(symbolTable.typeTable);
         knownTypes.putAll(symbolTable.knownTypes);
+        specializedTypes.putAll(symbolTable.specializedTypes);
         if(symbolTable.getParentSymbolTable() != null) {
             if(parentSymbolTable == null) {
                 parentSymbolTable = new OdinSymbolTable();
@@ -186,7 +202,7 @@ public class OdinSymbolTable {
         OdinSymbol odinSymbol = symbolNameMap.get(packageIdentifier);
         if (odinSymbol != null) {
             PsiNamedElement declaredIdentifier = odinSymbol.getDeclaredIdentifier();
-            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
+            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
                 return OdinImportUtils.getSymbolsOfImportedPackage(this.getPackagePath(), importDeclarationStatement);
             }
