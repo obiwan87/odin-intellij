@@ -98,6 +98,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         "not_in"      { return NOT_IN; }
         "dynamic"     { return DYNAMIC; }
         "bit_set"     { return BIT_SET; }
+        "bit_field"   { return BIT_FIELD; }
         "map"         { return MAP; }
         "using"       { return USING; }
         "enum"        { return ENUM; }

@@ -10,6 +10,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.lang.psi.impl.OdinBitFieldDeclarationStatementImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -119,6 +120,14 @@ public class OdinPsiUtil {
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinLabelDeclaration labelDeclaration) {
         return Collections.singletonList(labelDeclaration.getDeclaredIdentifier());
+    }
+
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinBitFieldDeclarationStatementImpl bitFieldDeclarationStatement) {
+        return Collections.singletonList(bitFieldDeclarationStatement.getDeclaredIdentifier());
+    }
+
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinBitFieldFieldDeclaration bitFieldFieldDeclaration) {
+        return Collections.singletonList(bitFieldFieldDeclaration.getDeclaredIdentifier());
     }
 
     // OdinTypedDeclaration
