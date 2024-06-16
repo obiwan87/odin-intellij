@@ -6,6 +6,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.lang.OdinLexerAdapter;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
@@ -44,12 +45,34 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
 
         if(declaredIdentifier == null) {
             if(psiElement instanceof OdinImportDeclarationStatement) {
-                return OdinTypeType.PACKAGE.getHumanReadableName();
+                return getHumanReadableName(OdinSymbolType.PACKAGE_REFERENCE);
             }
-            return OdinTypeType.UNKNOWN.getHumanReadableName();
+            return getHumanReadableName(OdinSymbolType.UNKNOWN);
         }
-        OdinTypeType typeType = OdinInsightUtils.classify(declaredIdentifier);
-        return typeType != null ? typeType.getHumanReadableName() : OdinTypeType.UNKNOWN.getHumanReadableName();
+        OdinSymbolType symbolType = OdinInsightUtils.classify(declaredIdentifier);
+        return symbolType != null ? getHumanReadableName(symbolType) : getHumanReadableName(OdinSymbolType.UNKNOWN);
+    }
+
+    private String getHumanReadableName(@NotNull OdinSymbolType symbolType) {
+        return switch (symbolType) {
+            case UNKNOWN -> "Unknown";
+            case PARAMETER -> "Parameter";
+            case FIELD -> "Field";
+            case PROCEDURE -> "Procedure";
+            case PROCEDURE_OVERLOAD -> "Procedure overload";
+            case STRUCT -> "Struct";
+            case UNION -> "Union";
+            case ENUM_FIELD -> "Enum Field";
+            case ENUM -> "Enum";
+            case CONSTANT -> "Constant";
+            case VARIABLE -> "Variable";
+            case PACKAGE_REFERENCE -> "Package";
+            case POLYMORPHIC_TYPE -> "Polymorphic Type";
+            case LABEL -> "Label";
+            case FOREIGN_IMPORT -> "Foreign Import";
+            case SWIZZLE_FIELD -> "Swizzle Field";
+            case BIT_SET -> "Bit set";
+        };
     }
 
     @Override

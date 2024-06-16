@@ -5,23 +5,22 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
-import com.lasagnerd.odin.codeInsight.OdinTypeType;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import org.jetbrains.annotations.NotNull;
 
 class OdinInsertSymbolHandler implements InsertHandler<LookupElement> {
-    private final OdinSymbol.OdinSymbolType typeType;
+    private final OdinSymbolType typeType;
     private final String prefix;
 
     OdinInsertSymbolHandler(String prefix) {
         this(null, prefix);
     }
 
-    OdinInsertSymbolHandler(OdinSymbol.OdinSymbolType typeType) {
+    OdinInsertSymbolHandler(OdinSymbolType typeType) {
         this(typeType, "");
     }
 
-    OdinInsertSymbolHandler(OdinSymbol.OdinSymbolType typeType, String prefix) {
+    OdinInsertSymbolHandler(OdinSymbolType typeType, String prefix) {
         this.typeType = typeType;
         this.prefix = prefix != null ? prefix : "";
     }
@@ -32,7 +31,7 @@ class OdinInsertSymbolHandler implements InsertHandler<LookupElement> {
         if(!prefix.isBlank()) {
             document.insertString(insertionContext.getStartOffset(), prefix);
         }
-        if (typeType == OdinSymbol.OdinSymbolType.PROCEDURE || typeType == OdinSymbol.OdinSymbolType.PROCEDURE_OVERLOAD) {
+        if (typeType == OdinSymbolType.PROCEDURE || typeType == OdinSymbolType.PROCEDURE_OVERLOAD) {
 
             document.insertString(insertionContext.getTailOffset(), "(");
 

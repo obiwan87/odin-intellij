@@ -340,7 +340,7 @@ public class OdinSymbolTableResolver {
                 odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
                 odinSymbol.setImplicitlyDeclared(true);
                 odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
-                odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FIELD);
+                odinSymbol.setSymbolType(OdinSymbolType.FIELD);
                 symbolTable.add(odinSymbol);
             }
         }
