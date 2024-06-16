@@ -225,6 +225,11 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         if (annotationSessionState.aborted.contains(topMostExpression))
             return;
 
+        if(topMostExpression.getIdentifier() == identifierTokenParent) {
+            if(identifierText.equals("_"))
+                return;
+        }
+
         PsiElement refExpressionParent = refExpression.getParent();
 
         OdinSymbol symbol = resolveSymbol(identifierTokenParent);
