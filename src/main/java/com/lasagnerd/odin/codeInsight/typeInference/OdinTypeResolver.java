@@ -295,7 +295,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
         if (this.type instanceof TsOdinStructType structType) {
             // This should not be called again if type is already been visited
-            // it might be a better idea to specialize the type at inference time and not a at resolution time
+            // it might be a better idea to specialize the type at inference time and not at resolution time
             this.type = OdinTypeSpecializer.specializeStructOrGetCached(symbolTable, structType, o.getArgumentList());
         }
 
@@ -404,6 +404,7 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinType elementType = doResolveType(symbolTable, Objects.requireNonNull(odinPointerType.getType()));
         tsOdinPointerType.setDereferencedType(elementType);
         tsOdinPointerType.getSymbolTable().putAll(symbolTable);
+        tsOdinPointerType.getSymbolTable().setPackagePath(symbolTable.getPackagePath());
         this.type = tsOdinPointerType;
     }
 
