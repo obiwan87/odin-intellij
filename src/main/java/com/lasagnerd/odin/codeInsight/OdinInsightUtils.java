@@ -72,12 +72,9 @@ public class OdinInsightUtils {
             type = pointerType.getDereferencedType();
         }
         OdinType odinDeclaration = type.getType();
-
-        if (odinDeclaration instanceof OdinStructType structType) {
-            var structFields = getStructFieldsDeclarationStatements(structType).stream()
-                    .map(OdinDeclarationSymbolResolver::getLocalSymbols)
-                    .flatMap(Collection::stream)
-                    .toList();
+        OdinDeclaration declaration = type.getDeclaration();
+        if (declaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
+            var structFields = OdinInsightUtils.getStructFields(type.getSymbolTable(), structDeclarationStatement);
 
             symbolTable.addAll(structFields);
             symbolTable.addTypes(typeScope);
@@ -122,39 +119,47 @@ public class OdinInsightUtils {
         return getStructFields(OdinSymbolTable.EMPTY, structDeclarationStatement);
     }
 
+    // TODO This is kind of a duplicate of what OdinSymbolResolver does
     public static List<OdinSymbol> getStructFields(OdinSymbolTable symbolTable, OdinStructDeclarationStatement structDeclarationStatement) {
         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structDeclarationStatement);
 
         List<OdinSymbol> symbols = new ArrayList<>();
-        for (OdinFieldDeclarationStatement x : fieldDeclarationStatementList) {
-            for (OdinDeclaredIdentifier odinDeclaredIdentifier : x.getDeclaredIdentifiers()) {
+        for (OdinFieldDeclarationStatement field : fieldDeclarationStatementList) {
+            for (OdinDeclaredIdentifier odinDeclaredIdentifier : field.getDeclaredIdentifiers()) {
+                boolean hasUsing = field.getUsing() != null;
                 OdinSymbol odinSymbol = new OdinSymbol(odinDeclaredIdentifier);
                 odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FIELD);
+                odinSymbol.setPsiType(field.getType());
+                odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+                odinSymbol.setHasUsing(hasUsing);
                 symbols.add(odinSymbol);
-                if (x.getUsing() != null) {
-                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, x.getType());
-                    TsOdinStructType structType;
-                    if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
-                        if (tsOdinPointerType.getDereferencedType() instanceof TsOdinStructType) {
-                            structType = (TsOdinStructType) tsOdinPointerType.getDereferencedType();
-                        } else {
-                            structType = null;
-                        }
-                    } else if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
-                        structType = tsOdinStructType;
-                    } else {
-                        structType = null;
-                    }
-
-                    if (structType != null) {
-                        List<OdinSymbol> structFields = getStructFields(structType.getSymbolTable(), (OdinStructDeclarationStatement) structType.getDeclaration());
-                        symbols.addAll(structFields);
-                    }
+                if (field.getDeclaredIdentifiers().size() == 1 && hasUsing) {
+                    getSymbolsOfFieldWithUsing(symbolTable, field, symbols);
                 }
-
             }
         }
         return symbols;
+    }
+
+    public static void getSymbolsOfFieldWithUsing(OdinSymbolTable symbolTable, OdinFieldDeclarationStatement x, List<OdinSymbol> symbols) {
+        TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, x.getType());
+        TsOdinStructType structType;
+        if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
+            if (tsOdinPointerType.getDereferencedType() instanceof TsOdinStructType) {
+                structType = (TsOdinStructType) tsOdinPointerType.getDereferencedType();
+            } else {
+                structType = null;
+            }
+        } else if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
+            structType = tsOdinStructType;
+        } else {
+            structType = null;
+        }
+
+        if (structType != null) {
+            List<OdinSymbol> structFields = getStructFields(structType.getSymbolTable(), (OdinStructDeclarationStatement) structType.getDeclaration());
+            symbols.addAll(structFields);
+        }
     }
 
     public static @NotNull List<OdinFieldDeclarationStatement> getStructFieldsDeclarationStatements(OdinStructDeclarationStatement structDeclarationStatement) {
@@ -265,6 +270,10 @@ public class OdinInsightUtils {
     public static @NotNull List<OdinSymbol> getTypeSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
         if (tsOdinType instanceof TsOdinStructType structType) {
             return getStructFields(symbolTable, (OdinStructDeclarationStatement) structType.getDeclaration());
+        }
+
+        if(tsOdinType instanceof TsOdinPointerType pointerType) {
+            return getTypeSymbols(pointerType.getDereferencedType(), symbolTable);
         }
 
         if (tsOdinType instanceof TsOdinEnumType enumType) {
