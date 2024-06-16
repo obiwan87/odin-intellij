@@ -292,6 +292,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 //            odinSymbol.setPackagePath();
             symbols.add(odinSymbol);
         }
+        if(o.getDeclaredIdentifierList().size() == 1 && hasUsing) {
+            OdinInsightUtils.getSymbolsOfFieldWithUsing(symbolTable, o, symbols);
+        }
     }
 
     public static @NotNull OdinSymbol.OdinVisibility getVisibility(@NotNull Collection<OdinAttributeStatement> attributeStatementList,

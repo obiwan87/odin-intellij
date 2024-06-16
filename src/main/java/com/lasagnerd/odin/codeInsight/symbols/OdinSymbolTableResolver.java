@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.*;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinArrayType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
@@ -89,6 +90,8 @@ public class OdinSymbolTableResolver {
     }
 
     private static OdinSymbolTable findVisibleSymbols(PsiElement element, String packagePath, Predicate<OdinSymbol> matcher) {
+        // TODO: The different scopes (builtin, package, etc.) should be organized in their own SymbolTables for consistency and for correct behaviour
+        //  e.g. in Odin it's possible to override built-in symbols
         // TODO: When looking for a specific declaration, this can be optimized:
         // when building the scope tree, just stop as soon as we find the first matching declaration
         Project project = element.getProject();
@@ -111,6 +114,8 @@ public class OdinSymbolTableResolver {
 
         // 2. Import symbols from other files in the same package
         if (packagePath != null) {
+            // TODO actually include private symbols and rather don't suggest them in completion contributor. This way, we can show a different
+            //  kind of error when accessing private symbols as opposed to undefined symbols.
             // Filter out symbols declared with private="file" or do not include anything if comment //+private is in front of package declaration
             List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(project, packagePath, OdinImportUtils.getFileName(element));
             for (OdinFile odinFile : otherFilesInPackage) {
@@ -132,8 +137,8 @@ public class OdinSymbolTableResolver {
 
         // 3. Import symbols from the scope tree
         OdinSymbolTable odinSymbolTable = doFindVisibleSymbols(packagePath, element, s -> false, false);
-        odinSymbolTable.putAll(symbolTable);
         odinSymbolTable.setPackagePath(packagePath);
+        odinSymbolTable.setRoot(symbolTable);
 
         return odinSymbolTable;
     }
@@ -233,46 +238,32 @@ public class OdinSymbolTableResolver {
         // Since odin does not support closures, all symbols above the current scope, are visible only if they are constants
         boolean isContainingBlockProcedure = containingScopeBlock instanceof OdinProcedureDefinition;
         boolean constantsOnlyNext = isContainingBlockProcedure || constantsOnly;
-        OdinSymbolTable parentScope = doFindVisibleSymbols(packagePath, containingScopeBlock, stopCondition, constantsOnlyNext);
-        symbolTable.setParentSymbolTable(parentScope);
+        OdinSymbolTable parentSymbolTable = doFindVisibleSymbols(packagePath, containingScopeBlock, stopCondition, constantsOnlyNext);
+        symbolTable.setParentSymbolTable(parentSymbolTable);
 
-        // TODO these symbols can't be passed down to lower scope objects
-        if (containingScopeBlock instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
-            TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, compoundLiteralTyped.getType());
-            if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
-                // TODO will this work with aliases?
-                List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeSymbols(tsOdinStructType, symbolTable);
-                symbolTable.addAll(typeSymbols);
+        OdinLhs lhs = PsiTreeUtil.getParentOfType(position, OdinLhs.class, false);
+        if (lhs != null) {
+            if (containingScopeBlock instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
+                TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, compoundLiteralTyped.getType());
+                addElementSymbols(tsOdinType, symbolTable);
             }
-
-            if(tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
-                List<String> swizzleSymbols = List.of("r", "g", "b", "a", "x", "y", "z", "w");
-                for (String swizzleSymbol : swizzleSymbols) {
-                    OdinSymbol odinSymbol = new OdinSymbol();
-                    odinSymbol.setName(swizzleSymbol);
-
-                    TsOdinType elementType = tsOdinArrayType.getElementType();
-                    if(elementType != null) {
-                        odinSymbol.setPsiType(elementType.getType());
-                    }
-                    odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
-                    odinSymbol.setImplicitlyDeclared(true);
-                    odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
-                    odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FIELD);
-                    symbolTable.add(odinSymbol);
-                }
+            if (containingScopeBlock instanceof OdinCompoundLiteralUntyped untyped) {
+                TsOdinType tsOdinType = OdinInferenceEngine.inferExpectedType(symbolTable, (OdinExpression) untyped.getParent());
+                addElementSymbols(tsOdinType, symbolTable);
             }
         }
 
         if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
             OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(procedureDefinition.getProject());
-            if(builtinSymbolService != null) {
+            if (builtinSymbolService != null) {
                 OdinStringLiteral callConvention = procedureDefinition.getProcedureType().getStringLiteral();
                 if (callConvention != null) {
-                    String stringLiteralValue = OdinInsightUtils.getStringLiteralValue(callConvention);
-                    if (stringLiteralValue == null || !stringLiteralValue.equals("contextless")) {
-                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
-                    }
+                    // TODO it is unclear what "contextless" means in core.odin
+//                    String stringLiteralValue = OdinInsightUtils.getStringLiteralValue(callConvention);
+//                    if (stringLiteralValue == null && ) {
+//                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
+//                    }
+                    symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
                 } else {
                     symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
                 }
@@ -327,6 +318,32 @@ public class OdinSymbolTableResolver {
         }
 
         return symbolTable;
+    }
+
+    private static void addElementSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
+        if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
+            // TODO will this work with aliases?
+            List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeSymbols(tsOdinStructType, symbolTable);
+            symbolTable.addAll(typeSymbols);
+        }
+
+        if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+            List<String> swizzleSymbols = List.of("r", "g", "b", "a", "x", "y", "z", "w");
+            for (String swizzleSymbol : swizzleSymbols) {
+                OdinSymbol odinSymbol = new OdinSymbol();
+                odinSymbol.setName(swizzleSymbol);
+
+                TsOdinType elementType = tsOdinArrayType.getElementType();
+                if (elementType != null) {
+                    odinSymbol.setPsiType(elementType.getType());
+                }
+                odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
+                odinSymbol.setImplicitlyDeclared(true);
+                odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+                odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FIELD);
+                symbolTable.add(odinSymbol);
+            }
+        }
     }
 
     private static @NotNull List<OdinDeclaration> getDeclarations(PsiElement containingScopeBlock) {
