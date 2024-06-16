@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -157,7 +158,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                     importDeclarationStatement = (OdinImportDeclarationStatement) namedElement;
                 } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
                     OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinDeclaration.class);
-
                     if (odinDeclaration instanceof OdinImportDeclarationStatement) {
                         isImport = true;
                         importDeclarationStatement = (OdinImportDeclarationStatement) odinDeclaration;
@@ -167,11 +167,11 @@ public class OdinInferenceEngine extends OdinVisitor {
                 } else if (symbol.isImplicitlyDeclared()) {
                     // TODO make this a bit less hard coded
                     if (symbol.getName().equals("context")) {
-                        OdinType psiType = symbol.getPsiType();
-                        OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(psiType.getProject());
-                        List<OdinSymbol> runtimeCoreSymbols = builtinSymbolService.getRuntimeCoreSymbols();
-                        OdinSymbolTable odinSymbolTable = OdinSymbolTable.from(runtimeCoreSymbols);
-                        this.type = OdinTypeResolver.resolveType(odinSymbolTable, psiType);
+                        Project project = refExpression.getProject();
+                        OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(project);
+                        if(builtinSymbolService != null) {
+                            this.type = builtinSymbolService.getContextStructType();
+                        }
                     }
                 }
             } else {
@@ -733,7 +733,7 @@ subExpression
 
         }
 
-        if (odinDeclaration instanceof OdinSwitchTypeVariableDeclaration switchTypeVariableDeclaration) {
+        if (odinDeclaration instanceof OdinSwitchTypeVariableDeclaration) {
             OdinSwitchInBlock switchInBlock = PsiTreeUtil.getParentOfType(odinDeclaration, OdinSwitchInBlock.class, true);
             if (switchInBlock != null) {
                 TsOdinType tsOdinType = inferType(parentSymbolTable, switchInBlock.getExpression());
@@ -745,7 +745,7 @@ subExpression
                     if (expressionList.size() == 1) {
                         OdinExpression odinExpression = expressionList.get(0);
                         TsOdinType caseType = inferType(parentSymbolTable, odinExpression);
-                        if(caseType instanceof TsOdinMetaType metaType) {
+                        if (caseType instanceof TsOdinMetaType metaType) {
                             return OdinTypeResolver.resolveMetaType(parentSymbolTable, metaType);
                         }
                     }
@@ -759,6 +759,78 @@ subExpression
 
     public static TsOdinType createReferenceType(TsOdinType dereferencedType, boolean isReference) {
         return dereferencedType;
+    }
+
+    /**
+     * Types are expected at in/out nodes such as return statements, case blocks, arguments, assignments of typed variables, etc.
+     *
+     * @param symbolTable The symbol table used for resolving the expected type
+     * @param expression  The expression for which we want to find out, whether it is expected to have a certain type
+     * @return The expected type
+     */
+    public static TsOdinType inferExpectedType(OdinSymbolTable symbolTable, OdinExpression expression) {
+        PsiElement parent = expression.getParent();
+
+        if (parent instanceof OdinReturnStatement returnStatement) {
+            OdinProcedureDefinition procedureDefinition = PsiTreeUtil.getParentOfType(returnStatement, OdinProcedureDefinition.class);
+            if (procedureDefinition != null) {
+                int position = returnStatement.getExpressionList().indexOf(expression);
+                OdinReturnParameters returnParameters = procedureDefinition.getProcedureType().getReturnParameters();
+                if (returnParameters != null) {
+                    OdinParamEntries paramEntries = returnParameters.getParamEntries();
+                    if (paramEntries != null) {
+                        if (paramEntries.getParamEntryList().size() > position) {
+                            OdinParamEntry paramEntry = paramEntries.getParamEntryList().get(position);
+                            return OdinTypeResolver.resolveType(symbolTable, paramEntry.getParameterDeclaration().getTypeDefinition());
+                        }
+                    } else if (position == 0) {
+                        OdinType psiType = returnParameters.getType();
+                        if (psiType != null) {
+                            return OdinTypeResolver.resolveType(symbolTable, psiType);
+                        }
+                    }
+                }
+            }
+        }
+
+        if(parent instanceof OdinRhsExpressions rhsExpressions) {
+            int index = rhsExpressions.getExpressionList().indexOf(expression);
+            PsiElement grandParent = rhsExpressions.getParent();
+
+            if(grandParent instanceof OdinAssignmentStatement statement) {
+
+                List<OdinExpression> lhsExpressions = statement.getLhsExpressions().getExpressionList();
+                if(lhsExpressions.size() > index) {
+                    OdinExpression rhsExpression = lhsExpressions.get(index);
+                    return OdinInferenceEngine.inferType(symbolTable, rhsExpression);
+                }
+            }
+        }
+
+        return TsOdinType.VOID;
+    }
+
+    @Override
+    public void visitOrBreakExpression(@NotNull OdinOrBreakExpression o) {
+        OdinExpression expression = o.getExpression();
+        this.type = inferType(symbolTable, expression);
+    }
+
+    @Override
+    public void visitOrContinueExpression(@NotNull OdinOrContinueExpression o) {
+        OdinExpression expression = o.getExpression();
+        this.type = inferType(symbolTable, expression);
+    }
+
+    @Override
+    public void visitOrReturnExpression(@NotNull OdinOrReturnExpression o) {
+        OdinExpression expression = o.getExpression();
+        TsOdinType tsOdinType = inferType(symbolTable, expression);
+        if(tsOdinType instanceof TsOdinTuple tsOdinTuple) {
+            if(tsOdinTuple.getTypes().size() > 1) {
+                this.type = tsOdinTuple.getTypes().get(0);
+            }
+        }
     }
 
     // v.?
