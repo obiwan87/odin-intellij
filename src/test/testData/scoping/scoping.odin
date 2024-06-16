@@ -6,7 +6,7 @@ main :: proc() {
 }
 
 MyStruct :: struct {
-
+    a, b, c: i32
 }
 
 assignment :: proc() {
@@ -250,3 +250,37 @@ using_import :: proc() {
     using p
     test := 1
 }
+
+literal_blocks :: proc() {
+    x : MyStruct
+    x = { }
+}
+
+using_fields :: proc() {
+    Point :: struct {
+        x, y: i32
+    }
+
+    Line :: struct {
+        p1, p2: Point
+    }
+
+    Triangle :: struct {
+        using line: ^Line,
+        p3: Point
+    }
+
+    triangle := Triangle { }
+    test := triangle.p1
+}
+
+override_parent_symbols :: proc() {
+    Point :: struct {
+        x, y: i32
+    }
+    xyz := Point { }
+    test := xyz
+}
+
+xyz : i32 : 1
+
