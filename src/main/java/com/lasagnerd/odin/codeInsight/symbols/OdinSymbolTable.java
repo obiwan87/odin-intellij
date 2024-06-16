@@ -116,7 +116,7 @@ public class OdinSymbolTable {
 
     public void addAll(Collection<? extends OdinSymbol> symbols, boolean override) {
         for (OdinSymbol symbol : symbols) {
-            if(!symbolNameMap.containsKey(symbol.getName()) || !override) {
+            if(!symbolNameMap.containsKey(symbol.getName()) || override) {
                 symbolNameMap.put(symbol.getName(), symbol);
             }
         }
@@ -221,5 +221,13 @@ public class OdinSymbolTable {
         } while(curr != null);
 
         return odinSymbolTable;
+    }
+
+    public void setRoot(OdinSymbolTable symbolTable) {
+        if(parentSymbolTable != null) {
+            parentSymbolTable.setRoot(symbolTable);
+        } else {
+            parentSymbolTable = symbolTable;
+        }
     }
 }
