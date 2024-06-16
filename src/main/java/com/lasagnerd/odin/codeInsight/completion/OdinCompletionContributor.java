@@ -16,10 +16,7 @@ import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.OdinIcons;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
-import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -141,7 +138,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                     List<OdinSymbol> visibleSymbols = fileScopeDeclarations
                                             .getSymbols(OdinSymbol.OdinVisibility.PUBLIC)
                                             .stream()
-                                            .filter(s -> s.getSymbolType() != OdinSymbol.OdinSymbolType.PACKAGE_REFERENCE)
+                                            .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
                                             .collect(Collectors.toList());
 
                                     addLookUpElements(thisOdinFile,
@@ -276,7 +273,7 @@ public class OdinCompletionContributor extends CompletionContributor {
         }
     }
 
-    private static Icon getIcon(OdinSymbol.OdinSymbolType typeType) {
+    private static Icon getIcon(OdinSymbolType typeType) {
         if (typeType == null)
             return null;
         return switch (typeType) {

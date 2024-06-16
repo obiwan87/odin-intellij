@@ -4,8 +4,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
@@ -15,9 +15,10 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType.*;
 
 public class OdinInsightUtils {
 
@@ -107,16 +108,12 @@ public class OdinInsightUtils {
             // TODO move to SymbolResolver
             OdinDeclaredIdentifier identifier = odinEnumValueDeclaration.getDeclaredIdentifier();
             OdinSymbol odinSymbol = new OdinSymbol(identifier);
-            odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.ENUM_FIELD);
+            odinSymbol.setSymbolType(ENUM_FIELD);
             odinSymbol.setPsiType(enumType);
             odinSymbol.setValueExpression(odinEnumValueDeclaration.getExpression());
             symbols.add(odinSymbol);
         }
         return symbols;
-    }
-
-    public static List<OdinSymbol> getStructFields(OdinStructDeclarationStatement structDeclarationStatement) {
-        return getStructFields(OdinSymbolTable.EMPTY, structDeclarationStatement);
     }
 
     // TODO This is kind of a duplicate of what OdinSymbolResolver does
@@ -128,7 +125,7 @@ public class OdinInsightUtils {
             for (OdinDeclaredIdentifier odinDeclaredIdentifier : field.getDeclaredIdentifiers()) {
                 boolean hasUsing = field.getUsing() != null;
                 OdinSymbol odinSymbol = new OdinSymbol(odinDeclaredIdentifier);
-                odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.FIELD);
+                odinSymbol.setSymbolType(FIELD);
                 odinSymbol.setPsiType(field.getType());
                 odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
                 odinSymbol.setHasUsing(hasUsing);
@@ -220,29 +217,29 @@ public class OdinInsightUtils {
                 || element.getParent() instanceof OdinImportDeclarationStatement;
     }
 
-    public static OdinTypeType classify(PsiNamedElement element) {
+    public static OdinSymbolType classify(PsiNamedElement element) {
         if (isStructDeclaration(element)) {
-            return OdinTypeType.STRUCT;
+            return STRUCT;
         } else if (isEnumDeclaration(element)) {
-            return OdinTypeType.ENUM;
+            return ENUM;
         } else if (isUnionDeclaration(element)) {
-            return OdinTypeType.UNION;
+            return UNION;
         } else if (isProcedureDeclaration(element)) {
-            return OdinTypeType.PROCEDURE;
+            return PROCEDURE;
         } else if (isVariableDeclaration(element)) {
-            return OdinTypeType.VARIABLE;
+            return VARIABLE;
         } else if (isConstantDeclaration(element)) {
-            return OdinTypeType.CONSTANT;
+            return CONSTANT;
         } else if (isProcedureOverloadDeclaration(element)) {
-            return OdinTypeType.PROCEDURE_OVERLOAD;
+            return PROCEDURE_OVERLOAD;
         } else if (isPackageDeclaration(element)) {
-            return OdinTypeType.PACKAGE;
+            return PACKAGE_REFERENCE;
         } else if (isFieldDeclaration(element)) {
-            return OdinTypeType.FIELD;
+            return FIELD;
         } else if (isParameterDeclaration(element)) {
-            return OdinTypeType.PARAMETER;
+            return PARAMETER;
         } else {
-            return OdinTypeType.UNKNOWN;
+            return UNKNOWN;
         }
     }
 
@@ -272,7 +269,7 @@ public class OdinInsightUtils {
             return getStructFields(symbolTable, (OdinStructDeclarationStatement) structType.getDeclaration());
         }
 
-        if(tsOdinType instanceof TsOdinPointerType pointerType) {
+        if (tsOdinType instanceof TsOdinPointerType pointerType) {
             return getTypeSymbols(pointerType.getDereferencedType(), symbolTable);
         }
 
@@ -290,7 +287,7 @@ public class OdinInsightUtils {
         return Collections.emptyList();
     }
 
-    public static List<OdinSymbol> doFindSwizzleFields(TsOdinArrayType arrayType, char[] input) {
+    private static List<OdinSymbol> generateSwizzleFields(TsOdinArrayType arrayType, char[] input) {
 
         List<String> result = new ArrayList<>();
         // Generate combinations for lengths from 1 to maxLen
@@ -302,13 +299,13 @@ public class OdinInsightUtils {
         // Print the results
         for (String s : result) {
             OdinSymbol odinSymbol = new OdinSymbol();
-            odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.SWIZZLE_FIELD);
+            odinSymbol.setSymbolType(SWIZZLE_FIELD);
             odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
             odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
             odinSymbol.setName(s);
             odinSymbol.setImplicitlyDeclared(true);
             TsOdinType elementType = arrayType.getElementType();
-            if(elementType != null) {
+            if (elementType != null) {
                 odinSymbol.setPsiType(elementType.getType());
             }
             symbols.add(odinSymbol);
@@ -331,21 +328,11 @@ public class OdinInsightUtils {
 
     public static @NotNull List<OdinSymbol> getSwizzleFields(TsOdinArrayType tsOdinArrayType) {
         List<OdinSymbol> symbols = new ArrayList<>();
-        symbols.addAll(doFindSwizzleFields(tsOdinArrayType, RGBA));
-        symbols.addAll(doFindSwizzleFields(tsOdinArrayType, XYZW));
+        symbols.addAll(generateSwizzleFields(tsOdinArrayType, RGBA));
+        symbols.addAll(generateSwizzleFields(tsOdinArrayType, XYZW));
         return symbols;
     }
 
-
-    public static OdinExpression findOperand(PsiElement element) {
-        PsiElement operand = PsiTreeUtil.findFirstParent(element, psiElement -> OPERAND_BOUNDARY_CLASSES.stream()
-                .anyMatch(s -> s.isInstance(psiElement.getParent()) && psiElement instanceof OdinExpression)
-        );
-
-        if (operand != null)
-            return (OdinExpression) operand;
-        return null;
-    }
 
     public static boolean isInstanceOfAny(Object obj, List<Class<?>> classes) {
         return classes.stream().anyMatch(s -> s.isInstance(obj));

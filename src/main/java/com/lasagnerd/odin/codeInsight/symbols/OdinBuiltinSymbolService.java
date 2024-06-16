@@ -114,7 +114,7 @@ public class OdinBuiltinSymbolService {
         odinSymbol.setImplicitlyDeclared(true);
         odinSymbol.setPsiType(getContextType());
         odinSymbol.setName("context");
-        odinSymbol.setSymbolType(OdinSymbol.OdinSymbolType.PARAMETER);
+        odinSymbol.setSymbolType(OdinSymbolType.PARAMETER);
         odinSymbol.setScope(OdinSymbol.OdinScope.LOCAL);
         odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
         // TODO

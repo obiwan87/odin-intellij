@@ -13,6 +13,7 @@ import com.intellij.util.Query;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinFileScope;
 import com.lasagnerd.odin.lang.psi.OdinIdentifier;
@@ -66,7 +67,7 @@ public class OdinImportUtils {
     }
 
     public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC
-            && s.getSymbolType() != OdinSymbol.OdinSymbolType.PACKAGE_REFERENCE;
+            && s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE;
 
     @NotNull
     public static String getFileName(@NotNull PsiElement psiElement) {
