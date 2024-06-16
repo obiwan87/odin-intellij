@@ -7,11 +7,10 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinFileType;
-import com.lasagnerd.odin.lang.psi.OdinDeclaration;
-import com.lasagnerd.odin.lang.psi.OdinFile;
-import com.lasagnerd.odin.lang.psi.OdinStructDeclarationStatement;
-import com.lasagnerd.odin.lang.psi.OdinStructType;
+import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +34,7 @@ public class OdinBuiltinSymbolService {
     private List<OdinSymbol> runtimeCoreSymbols;
 
     private OdinSymbol context;
+    private TsOdinStructType contextStructType;
 
     public OdinBuiltinSymbolService(Project project) {
         this.project = project;
@@ -64,7 +64,7 @@ public class OdinBuiltinSymbolService {
         }
     }
 
-    public List<OdinSymbol> getRuntimeCoreSymbols() {
+    public List<OdinSymbol>  getRuntimeCoreSymbols() {
         if(runtimeCoreSymbols == null) {
             Optional<String> sdkPathOptional = OdinSdkConfigPersistentState.getSdkPath(project);
 
@@ -93,6 +93,22 @@ public class OdinBuiltinSymbolService {
         return context;
     }
 
+    public TsOdinType getContextStructType() {
+        if(contextStructType == null) {
+            OdinSymbol contextStructSymbol = getContextStructSymbol();
+            TsOdinStructType contextStructType = new TsOdinStructType();
+            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(getContextType());
+            contextStructType.setName("Context");
+            contextStructType.setDeclaredIdentifier((OdinDeclaredIdentifier) contextStructSymbol.getDeclaredIdentifier());
+            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(contextStructSymbol.getDeclaredIdentifier(), OdinDeclaration.class, true);
+            contextStructType.setDeclaration(odinDeclaration);
+            contextStructType.setSymbolTable(odinSymbolTable);
+            contextStructType.setType(getContextType());
+            this.contextStructType = contextStructType;
+        }
+        return contextStructType;
+    }
+
     public OdinSymbol createNewContextParameterSymbol() {
         OdinSymbol odinSymbol = new OdinSymbol();
         odinSymbol.setImplicitlyDeclared(true);
@@ -118,15 +134,6 @@ public class OdinBuiltinSymbolService {
         }
         return null;
     }
-
-    public OdinDeclaration getContextStructDeclaration() {
-        OdinSymbol contextStructSymbol = getContextStructSymbol();
-        if(contextStructSymbol != null) {
-            return PsiTreeUtil.getParentOfType(contextStructSymbol.getDeclaredIdentifier(), OdinDeclaration.class, true);
-        }
-        return null;
-    }
-
 
 
     private @NotNull List<OdinSymbol> doFindBuiltInSymbols() {
