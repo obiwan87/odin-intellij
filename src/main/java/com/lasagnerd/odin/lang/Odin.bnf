@@ -339,7 +339,9 @@ variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' }
 
-assignmentStatement                  ::= [directiveHead] expressionsList assignmentOperator expressionsList
+assignmentStatement                  ::= [directiveHead] lhsExpressions assignmentOperator rhsExpressions
+lhsExpressions                       ::= expression (COMMA expression)*
+rhsExpressions                       ::= expression (COMMA expression)*
 expressionsList                      ::= expression (COMMA expression)*
 
 assignmentOperator                   ::= EQ
@@ -598,7 +600,10 @@ compoundValueTyped                   ::= ((<<isModeOn "PAR">> | <<isModeOff "NO_
                                          | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeComma>>) {extends=compoundValue elementType=compoundValue}
 compoundValueStart                   ::= LBRACE
 compoundValueEnd                     ::= RBRACE
-compoundValueBody                    ::= [expression EQ] expression (COMMA [expression EQ] expression)* [EOS_TOKEN|COMMA]
+compoundValueBody                    ::= elementEntry (COMMA elementEntry)* [EOS_TOKEN|COMMA]
+elementEntry                         ::= [lhs EQ] rhs
+lhs                                  ::= expression
+rhs                                  ::= expression
 
 directiveExpression                  ::= directive
 directive                            ::= directiveHead [basicLiteral | (LPAREN expressionsList? RPAREN)]
