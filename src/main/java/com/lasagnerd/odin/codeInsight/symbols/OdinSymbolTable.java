@@ -199,7 +199,7 @@ public class OdinSymbolTable {
      */
 
     public OdinSymbolTable getScopeOfImport(String packageIdentifier) {
-        OdinSymbol odinSymbol = symbolNameMap.get(packageIdentifier);
+        OdinSymbol odinSymbol = getSymbol(packageIdentifier);
         if (odinSymbol != null) {
             PsiNamedElement declaredIdentifier = odinSymbol.getDeclaredIdentifier();
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
