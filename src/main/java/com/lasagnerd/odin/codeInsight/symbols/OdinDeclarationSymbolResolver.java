@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.*;
@@ -37,7 +38,10 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         odinDeclaration.accept(odinDeclarationSymbolResolver);
         if (odinDeclarationSymbolResolver.symbols.isEmpty()) {
             LOG.debug("No symbols found for declaration with type " + odinDeclaration.getClass().getSimpleName());
-            LOG.debug("Containing file: " + odinDeclaration.getContainingFile().getVirtualFile().getPath());
+            VirtualFile virtualFile = odinDeclaration.getContainingFile().getVirtualFile();
+            if(virtualFile != null) {
+                LOG.debug("Containing file: " + virtualFile.getPath());
+            }
             LOG.debug("Text: " + odinDeclaration.getText());
         }
         return odinDeclarationSymbolResolver.symbols;
