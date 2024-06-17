@@ -284,3 +284,25 @@ override_parent_symbols :: proc() {
 
 xyz : i32 : 1
 
+return_type_defined_proc :: proc() {
+
+    Error :: enum {
+        None,
+        Something_Bad,
+        Something_Worse,
+        The_Worst,
+        Your_Mum,
+    }
+
+    caller1 :: proc(e: Error) -> Error {
+        test1 := e
+
+        return e
+    }
+
+    caller2 :: proc() -> Error () {
+        return .None
+    }
+
+    test2 := caller2()
+}
