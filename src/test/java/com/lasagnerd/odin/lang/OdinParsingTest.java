@@ -1505,6 +1505,24 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testScoping_return_type_defined_proc() throws IOException {
+        OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        String packagePath = OdinImportService.getInstance(project).getPackagePath(odinFile);
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "return_type_defined_proc", "test1");
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("Error", tsOdinEnumType.getName());
+        }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "return_type_defined_proc", "test2");
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("Error", tsOdinEnumType.getName());
+        }
+    }
+
     public void testImportPackage() throws IOException {
         {
             OdinFile odinFile = load("src/test/testData/mypackage/packages.odin");
