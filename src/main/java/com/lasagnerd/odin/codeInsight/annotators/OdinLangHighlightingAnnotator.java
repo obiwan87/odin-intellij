@@ -239,6 +239,15 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             return;
         }
 
+        if(symbol.getPsiType() instanceof OdinPolymorphicType) {
+            return;
+        }
+
+        if(symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier declaredIdentifier) {
+            if(declaredIdentifier.getDollar() != null)
+                return;
+        }
+
         if(symbol.isImplicitlyDeclared())
             return;
 
