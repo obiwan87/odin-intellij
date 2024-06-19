@@ -1,11 +1,9 @@
 package com.lasagnerd.odin.codeInsight;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
@@ -55,13 +53,7 @@ public class OdinInsightUtils {
         return null;
     }
 
-    /**
-     * Returns the symbols provided by an expression of type `type` when it is referenced with "." or "->".
-     *
-     * @param type The type of the expression
-     * @return The scope
-     */
-    public static OdinSymbolTable getTypeSymbols(TsOdinType type) {
+    public static OdinSymbolTable getTypeElements(TsOdinType type) {
         if (type instanceof TsOdinPackageReferenceType packageType) {
             return OdinImportUtils
                     .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
@@ -89,11 +81,6 @@ public class OdinInsightUtils {
         return symbolTable;
     }
 
-    @NotNull
-    public static List<OdinSymbol> getEnumFields(OdinEnumDeclarationStatement enumDeclarationStatement) {
-        return getEnumFields(enumDeclarationStatement.getEnumType());
-    }
-
     private static @NotNull List<OdinSymbol> getEnumFields(OdinEnumType enumType) {
         OdinEnumBody enumBody = enumType
                 .getEnumBlock()
@@ -118,7 +105,9 @@ public class OdinInsightUtils {
 
     // TODO This is kind of a duplicate of what OdinSymbolResolver does
     public static List<OdinSymbol> getStructFields(OdinSymbolTable symbolTable, OdinStructDeclarationStatement structDeclarationStatement) {
-        List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structDeclarationStatement);
+        OdinStructType structType = structDeclarationStatement
+                .getStructType();
+        List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structType);
 
         List<OdinSymbol> symbols = new ArrayList<>();
         for (OdinFieldDeclarationStatement field : fieldDeclarationStatementList) {
@@ -159,12 +148,6 @@ public class OdinInsightUtils {
         }
     }
 
-    public static @NotNull List<OdinFieldDeclarationStatement> getStructFieldsDeclarationStatements(OdinStructDeclarationStatement structDeclarationStatement) {
-        OdinStructType structType = structDeclarationStatement
-                .getStructType();
-        return getStructFieldsDeclarationStatements(structType);
-    }
-
     public static @NotNull List<OdinFieldDeclarationStatement> getStructFieldsDeclarationStatements(OdinStructType structType) {
         OdinStructBody structBody = structType
                 .getStructBlock()
@@ -179,102 +162,30 @@ public class OdinInsightUtils {
         return fieldDeclarationStatementList;
     }
 
-    public static boolean isVariableDeclaration(PsiElement element) {
-        return PsiTreeUtil.getParentOfType(element, true, OdinVariableDeclarationStatement.class) != null
-                || PsiTreeUtil.getParentOfType(element, true, OdinVariableInitializationStatement.class) != null;
-    }
-
-    public static boolean isProcedureDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinProcedureDeclarationStatement;
-    }
-
-    public static boolean isProcedureOverloadDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinProcedureOverloadDeclarationStatement;
-    }
-
-    public static boolean isConstantDeclaration(PsiElement element) {
-        return PsiTreeUtil.getParentOfType(element, true, OdinConstantInitializationStatement.class) != null;
-    }
-
-    public static boolean isStructDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinStructDeclarationStatement;
-    }
-
-    public static boolean isEnumDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinEnumDeclarationStatement;
-    }
-
-    public static boolean isUnionDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinUnionDeclarationStatement;
-    }
-
-    private static boolean isFieldDeclaration(PsiNamedElement element) {
-        return element.getParent() instanceof OdinFieldDeclarationStatement;
-    }
-
-    private static boolean isPackageDeclaration(PsiNamedElement element) {
-        return element instanceof OdinImportDeclarationStatement
-                || element.getParent() instanceof OdinImportDeclarationStatement;
-    }
-
-    public static OdinSymbolType classify(PsiNamedElement element) {
-        if (isStructDeclaration(element)) {
-            return STRUCT;
-        } else if (isEnumDeclaration(element)) {
-            return ENUM;
-        } else if (isUnionDeclaration(element)) {
-            return UNION;
-        } else if (isProcedureDeclaration(element)) {
-            return PROCEDURE;
-        } else if (isVariableDeclaration(element)) {
-            return VARIABLE;
-        } else if (isConstantDeclaration(element)) {
-            return CONSTANT;
-        } else if (isProcedureOverloadDeclaration(element)) {
-            return PROCEDURE_OVERLOAD;
-        } else if (isPackageDeclaration(element)) {
-            return PACKAGE_REFERENCE;
-        } else if (isFieldDeclaration(element)) {
-            return FIELD;
-        } else if (isParameterDeclaration(element)) {
-            return PARAMETER;
-        } else {
-            return UNKNOWN;
-        }
-    }
-
-    public static boolean isParameterDeclaration(PsiElement element) {
-        return PsiTreeUtil.getParentOfType(element, true, OdinDeclaration.class) instanceof OdinParameterDeclaration;
-    }
-
-    public static OdinProcedureDeclarationStatement getDeclaringProcedure(OdinDeclaredIdentifier element) {
-        return element.getParent() instanceof OdinProcedureDeclarationStatement ? (OdinProcedureDeclarationStatement) element.getParent() : null;
-    }
-
-    public static List<OdinSymbol> getTypeSymbols(OdinExpression expression, OdinSymbolTable symbolTable) {
+    public static List<OdinSymbol> getTypeElements(OdinExpression expression, OdinSymbolTable symbolTable) {
         TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, expression);
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            return getTypeSymbols(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType), symbolTable);
+            return getTypeElements(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType), symbolTable);
         }
-        return getTypeSymbols(tsOdinType, symbolTable);
+        return getTypeElements(tsOdinType, symbolTable);
     }
 
-    public static List<OdinSymbol> getTypeSymbols(OdinType type, OdinSymbolTable symbolTable) {
+    public static List<OdinSymbol> getTypeElements(OdinType type, OdinSymbolTable symbolTable) {
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, type);
-        return getTypeSymbols(tsOdinType, symbolTable);
+        return getTypeElements(tsOdinType, symbolTable);
     }
 
-    public static @NotNull List<OdinSymbol> getTypeSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
+    public static @NotNull List<OdinSymbol> getTypeElements(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
         if (tsOdinType instanceof TsOdinStructType structType) {
             return getStructFields(symbolTable, (OdinStructDeclarationStatement) structType.getDeclaration());
         }
 
         if (tsOdinType instanceof TsOdinPointerType pointerType) {
-            return getTypeSymbols(pointerType.getDereferencedType(), symbolTable);
+            return getTypeElements(pointerType.getDereferencedType(), symbolTable);
         }
 
         if (tsOdinType instanceof TsOdinEnumType enumType) {
-            return getEnumFields((OdinEnumDeclarationStatement) enumType.getDeclaration());
+            return getEnumFields(((OdinEnumDeclarationStatement) enumType.getDeclaration()).getEnumType());
         }
 
         if (tsOdinType instanceof TsOdinPackageReferenceType packageReferenceType) {
@@ -285,6 +196,15 @@ public class OdinInsightUtils {
         }
 
         return Collections.emptyList();
+    }
+
+    // Swizzle field generator
+
+    public static @NotNull List<OdinSymbol> getSwizzleFields(TsOdinArrayType tsOdinArrayType) {
+        List<OdinSymbol> symbols = new ArrayList<>();
+        symbols.addAll(generateSwizzleFields(tsOdinArrayType, RGBA));
+        symbols.addAll(generateSwizzleFields(tsOdinArrayType, XYZW));
+        return symbols;
     }
 
     private static List<OdinSymbol> generateSwizzleFields(TsOdinArrayType arrayType, char[] input) {
@@ -313,8 +233,8 @@ public class OdinInsightUtils {
 
         return symbols;
     }
-
     // Recursive function to generate combinations
+
     private static void generateCombinations(char[] input, String current, int length, List<String> result) {
         if (length == 0) {
             result.add(current);
@@ -326,17 +246,6 @@ public class OdinInsightUtils {
         }
     }
 
-    public static @NotNull List<OdinSymbol> getSwizzleFields(TsOdinArrayType tsOdinArrayType) {
-        List<OdinSymbol> symbols = new ArrayList<>();
-        symbols.addAll(generateSwizzleFields(tsOdinArrayType, RGBA));
-        symbols.addAll(generateSwizzleFields(tsOdinArrayType, XYZW));
-        return symbols;
-    }
-
-
-    public static boolean isInstanceOfAny(Object obj, List<Class<?>> classes) {
-        return classes.stream().anyMatch(s -> s.isInstance(obj));
-    }
 
     public static OdinRefExpression findTopMostRefExpression(PsiElement element) {
         List<OdinRefExpression> odinRefExpressions = unfoldRefExpressions(element);
@@ -349,6 +258,6 @@ public class OdinInsightUtils {
         return PsiTreeUtil.collectParents(element,
                 OdinRefExpression.class,
                 true,
-                p -> isInstanceOfAny(p, OPERAND_BOUNDARY_CLASSES));
+                p -> OPERAND_BOUNDARY_CLASSES.stream().anyMatch(s -> s.isInstance(p)));
     }
 }

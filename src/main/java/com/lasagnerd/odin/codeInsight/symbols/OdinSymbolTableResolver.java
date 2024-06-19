@@ -323,7 +323,7 @@ public class OdinSymbolTableResolver {
     private static void addElementSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
         if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
             // TODO will this work with aliases?
-            List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeSymbols(tsOdinStructType, symbolTable);
+            List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(tsOdinStructType, symbolTable);
             symbolTable.addAll(typeSymbols);
         }
 
