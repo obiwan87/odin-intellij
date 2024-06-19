@@ -785,19 +785,19 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
 
         TsOdinType complexNumber1 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "complex_number1");
-        assertEquals("complex128", complexNumber1.getName());
+        assertEquals("untyped complex", complexNumber1.getName());
         TsOdinType complexNumber2 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "complex_number2");
-        assertEquals("complex128", complexNumber2.getName());
+        assertEquals("untyped complex", complexNumber2.getName());
         TsOdinType quaternion1 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "quaternion1");
-        assertEquals("quaternion256", quaternion1.getName());
+        assertEquals("untyped quaternion", quaternion1.getName());
         TsOdinType quaternion2 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "quaternion2");
-        assertEquals("quaternion256", quaternion2.getName());
+        assertEquals("untyped quaternion", quaternion2.getName());
         TsOdinType quaternion3 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "quaternion3");
-        assertEquals("quaternion256", quaternion3.getName());
+        assertEquals("untyped quaternion", quaternion3.getName());
         TsOdinType r = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "r");
-        assertEquals("rune", r.getName());
+        assertEquals("untyped rune", r.getName());
         TsOdinType s = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "s");
-        assertEquals("string", s.getName());
+        assertEquals("untyped string", s.getName());
     }
 
     public void testBitSetsAndEnums() throws IOException {
