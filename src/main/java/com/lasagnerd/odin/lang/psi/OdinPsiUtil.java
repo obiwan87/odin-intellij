@@ -392,7 +392,7 @@ public class OdinPsiUtil {
         OdinExpression expression = usingStatement.getExpression();
         TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
 
-        OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeSymbols(tsOdinType);
+        OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(tsOdinType);
 
         return typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
                 .map(OdinDeclaredIdentifier.class::cast)

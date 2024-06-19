@@ -404,8 +404,8 @@ expression                           ::= postfixGroup
                                          | implicitSelectorExpression
                                          | maybeExpression
                                          | uninitializedExpression
-                                         | callExpression
                                          | castExpression
+                                         | callExpression
                                          | autoCastExpression
                                          | qualificationExpression
                                          | indexExpression
