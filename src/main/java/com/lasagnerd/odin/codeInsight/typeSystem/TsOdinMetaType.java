@@ -17,22 +17,22 @@ public class TsOdinMetaType extends TsOdinType {
     }
 
     public enum MetaType {
-        PROCEDURE,
+        ARRAY,
+        BIT_SET,
+        BUILTIN,
+        ENUM,
+        MAP,
+        MATRIX,
+        MULTI_POINTER,
         PACKAGE,
+        POINTER,
+        POLYMORPHIC,
+        PROCEDURE,
+        SLICE,
         STRUCT,
         UNION,
-        ENUM,
-        BIT_SET,
-        MATRIX,
-        ARRAY,
-        SLICE,
-        MAP,
-        POINTER,
-        MULTI_POINTER,
-        POLYMORPHIC,
-        BUILTIN,
+        UNKNOWN,
         VOID,
-        UNKNOWN
     }
 
 

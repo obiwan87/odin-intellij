@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.doInferType;
-import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInType.RESERVED_TYPES;
+import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes.RESERVED_TYPES;
 
 @EqualsAndHashCode(callSuper = true)
 public class OdinTypeResolver extends OdinVisitor {
@@ -71,7 +71,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
     public static TsOdinType resolveMetaType(int level, OdinSymbolTable symbolTable, TsOdinMetaType metaType) {
         if (metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.BUILTIN) {
-            return TsOdinBuiltInType.getBuiltInType(metaType.getName());
+            return TsOdinBuiltInTypes.getBuiltInType(metaType.getName());
         } else {
             TsOdinType tsOdinType;
             if (metaType.getRepresentedType() != null) {
@@ -212,7 +212,7 @@ public class OdinTypeResolver extends OdinVisitor {
         // TODO reserved types should be checked last
         //  in Odin you can define int :: struct {x,y: f32}
         if (RESERVED_TYPES.contains(identifierText)) {
-            type = TsOdinBuiltInType.getBuiltInType(identifierText);
+            type = TsOdinBuiltInTypes.getBuiltInType(identifierText);
 
         } else {
             TsOdinType scopeType = symbolTable.getType(typeIdentifier.getIdentifierToken().getText());

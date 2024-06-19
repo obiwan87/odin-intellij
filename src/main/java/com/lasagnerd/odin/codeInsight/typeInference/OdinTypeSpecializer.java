@@ -2,7 +2,6 @@ package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.intellij.psi.PsiElement;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -265,7 +264,7 @@ public class OdinTypeSpecializer {
         }
 
         // TODO if argumentExpression is a reference to a polymorphic type we need to treat this as a polymorphic type
-        if(argumentExpression instanceof OdinRefExpression refExpression && argumentType == TsOdinBuiltInType.TYPEID) {
+        if(argumentExpression instanceof OdinRefExpression refExpression && argumentType == TsOdinBuiltInTypes.TYPEID) {
             OdinIdentifier identifier = refExpression.getIdentifier();
             if(identifier != null) {
                 TsOdinType tsOdinType = symbolTable.getType(identifier.getText());

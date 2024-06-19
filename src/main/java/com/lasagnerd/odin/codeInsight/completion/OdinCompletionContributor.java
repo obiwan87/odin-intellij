@@ -14,7 +14,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.OdinIcons;
-import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.lang.OdinFileType;
@@ -223,7 +222,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         if (resolvedReference != null) {
                             PsiElement resolved = resolvedReference.resolve();
                             if (resolved instanceof OdinDeclaredIdentifier) {
-                                OdinProcedureDeclarationStatement declaringProcedure = OdinInsightUtils.getDeclaringProcedure((OdinDeclaredIdentifier) resolved);
+                                OdinProcedureDeclarationStatement declaringProcedure = resolved.getParent() instanceof OdinProcedureDeclarationStatement ? (OdinProcedureDeclarationStatement) resolved.getParent() : null;
                                 if (declaringProcedure != null) {
                                     LookupElementBuilder element = LookupElementBuilder
                                             .create(resolved, lookupString)

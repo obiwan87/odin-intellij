@@ -105,9 +105,6 @@ public abstract class TsOdinType {
         return getName() == null ? "<undefined>" : getName();
     }
 
-    public boolean isBuiltInType(TsOdinBuiltInType builtInType) {
-        return this == builtInType || this == builtInType.asUntyped();
-    }
     public abstract TsOdinMetaType.MetaType getMetaType();
 
 

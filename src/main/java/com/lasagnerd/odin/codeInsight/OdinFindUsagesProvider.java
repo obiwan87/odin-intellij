@@ -4,21 +4,89 @@ import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.lang.OdinLexerAdapter;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
-import com.lasagnerd.odin.lang.psi.OdinDeclaration;
-import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
-import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
-import com.lasagnerd.odin.lang.psi.OdinTypes;
+import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType.*;
+
 public class OdinFindUsagesProvider implements FindUsagesProvider {
+
+    public static boolean isVariableDeclaration(PsiElement element) {
+        return PsiTreeUtil.getParentOfType(element, true, OdinVariableDeclarationStatement.class) != null
+                || PsiTreeUtil.getParentOfType(element, true, OdinVariableInitializationStatement.class) != null;
+    }
+
+    public static boolean isProcedureDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinProcedureDeclarationStatement;
+    }
+
+    public static boolean isProcedureOverloadDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinProcedureOverloadDeclarationStatement;
+    }
+
+    public static boolean isConstantDeclaration(PsiElement element) {
+        return PsiTreeUtil.getParentOfType(element, true, OdinConstantInitializationStatement.class) != null;
+    }
+
+    public static boolean isStructDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinStructDeclarationStatement;
+    }
+
+    public static boolean isEnumDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinEnumDeclarationStatement;
+    }
+
+    public static boolean isUnionDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinUnionDeclarationStatement;
+    }
+
+    private static boolean isFieldDeclaration(PsiNamedElement element) {
+        return element.getParent() instanceof OdinFieldDeclarationStatement;
+    }
+
+    private static boolean isPackageDeclaration(PsiNamedElement element) {
+        return element instanceof OdinImportDeclarationStatement
+                || element.getParent() instanceof OdinImportDeclarationStatement;
+    }
+
+    public static OdinSymbolType classify(PsiNamedElement element) {
+        if (isStructDeclaration(element)) {
+            return STRUCT;
+        } else if (isEnumDeclaration(element)) {
+            return ENUM;
+        } else if (isUnionDeclaration(element)) {
+            return UNION;
+        } else if (isProcedureDeclaration(element)) {
+            return PROCEDURE;
+        } else if (isVariableDeclaration(element)) {
+            return VARIABLE;
+        } else if (isConstantDeclaration(element)) {
+            return CONSTANT;
+        } else if (isProcedureOverloadDeclaration(element)) {
+            return PROCEDURE_OVERLOAD;
+        } else if (isPackageDeclaration(element)) {
+            return PACKAGE_REFERENCE;
+        } else if (isFieldDeclaration(element)) {
+            return FIELD;
+        } else if (isParameterDeclaration(element)) {
+            return PARAMETER;
+        } else {
+            return UNKNOWN;
+        }
+    }
+
+    public static boolean isParameterDeclaration(PsiElement element) {
+        return PsiTreeUtil.getParentOfType(element, true, OdinDeclaration.class) instanceof OdinParameterDeclaration;
+    }
 
     @Override
     public @Nullable WordsScanner getWordsScanner() {
@@ -49,7 +117,7 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
             }
             return getHumanReadableName(OdinSymbolType.UNKNOWN);
         }
-        OdinSymbolType symbolType = OdinInsightUtils.classify(declaredIdentifier);
+        OdinSymbolType symbolType = classify(declaredIdentifier);
         return symbolType != null ? getHumanReadableName(symbolType) : getHumanReadableName(OdinSymbolType.UNKNOWN);
     }
 
