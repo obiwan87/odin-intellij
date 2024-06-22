@@ -337,7 +337,7 @@ colonOpening                         ::= COLON
 variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition]}
 
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
-declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' }
+declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}
 
 assignmentStatement                  ::= [directiveHead] lhsExpressions assignmentOperator rhsExpressions
 lhsExpressions                       ::= expression (COMMA expression)*

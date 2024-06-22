@@ -1,10 +1,12 @@
 package com.lasagnerd.odin.codeInsight;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeSpecializer;
@@ -272,5 +274,73 @@ public class OdinInsightUtils {
                 OdinRefExpression.class,
                 true,
                 p -> OPERAND_BOUNDARY_CLASSES.stream().anyMatch(s -> s.isInstance(p)));
+    }
+
+    public static boolean isVariableDeclaration(PsiElement element) {
+        return PsiTreeUtil.getParentOfType(element, true, OdinVariableDeclarationStatement.class) != null
+                || PsiTreeUtil.getParentOfType(element, true, OdinVariableInitializationStatement.class) != null;
+    }
+
+    public static boolean isProcedureDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinProcedureDeclarationStatement;
+    }
+
+    public static boolean isProcedureOverloadDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinProcedureOverloadDeclarationStatement;
+    }
+
+    public static boolean isConstantDeclaration(PsiElement element) {
+        return PsiTreeUtil.getParentOfType(element, true, OdinConstantInitializationStatement.class) != null;
+    }
+
+    public static boolean isStructDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinStructDeclarationStatement;
+    }
+
+    public static boolean isEnumDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinEnumDeclarationStatement;
+    }
+
+    public static boolean isUnionDeclaration(PsiElement element) {
+        return element.getParent() instanceof OdinUnionDeclarationStatement;
+    }
+
+    private static boolean isFieldDeclaration(PsiNamedElement element) {
+        return element.getParent() instanceof OdinFieldDeclarationStatement;
+    }
+
+    private static boolean isPackageDeclaration(PsiNamedElement element) {
+        return element instanceof OdinImportDeclarationStatement
+                || element.getParent() instanceof OdinImportDeclarationStatement;
+    }
+
+    public static OdinSymbolType classify(PsiNamedElement element) {
+        if (isStructDeclaration(element)) {
+            return STRUCT;
+        } else if (isEnumDeclaration(element)) {
+            return ENUM;
+        } else if (isUnionDeclaration(element)) {
+            return UNION;
+        } else if (isProcedureDeclaration(element)) {
+            return PROCEDURE;
+        } else if (isVariableDeclaration(element)) {
+            return VARIABLE;
+        } else if (isConstantDeclaration(element)) {
+            return CONSTANT;
+        } else if (isProcedureOverloadDeclaration(element)) {
+            return PROCEDURE_OVERLOAD;
+        } else if (isPackageDeclaration(element)) {
+            return PACKAGE_REFERENCE;
+        } else if (isFieldDeclaration(element)) {
+            return FIELD;
+        } else if (isParameterDeclaration(element)) {
+            return PARAMETER;
+        } else {
+            return UNKNOWN;
+        }
+    }
+
+    public static boolean isParameterDeclaration(PsiElement element) {
+        return PsiTreeUtil.getParentOfType(element, true, OdinDeclaration.class) instanceof OdinParameterDeclaration;
     }
 }
