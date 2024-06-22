@@ -7,6 +7,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeSpecializer;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.apache.commons.text.StringEscapeUtils;
@@ -54,6 +55,10 @@ public class OdinInsightUtils {
     }
 
     public static OdinSymbolTable getTypeElements(TsOdinType type) {
+        return getTypeElements(type, false);
+    }
+
+    public static OdinSymbolTable getTypeElements(TsOdinType type, boolean includeReferenceableSymbols) {
         if (type instanceof TsOdinPackageReferenceType packageType) {
             return OdinImportUtils
                     .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
@@ -62,7 +67,11 @@ public class OdinInsightUtils {
         OdinSymbolTable typeScope = type.getSymbolTable();
         OdinSymbolTable symbolTable = new OdinSymbolTable();
         if (type instanceof TsOdinPointerType pointerType) {
-            type = pointerType.getDereferencedType();
+            return getTypeElements(pointerType.getDereferencedType(), includeReferenceableSymbols);
+        }
+        // TODO Check if this is correct!
+        if(type instanceof TsOdinConstrainedType constrainedType) {
+            return getTypeElements(constrainedType.getSpecializedType(), includeReferenceableSymbols);
         }
         OdinType odinDeclaration = type.getType();
         OdinDeclaration declaration = type.getDeclaration();
@@ -76,6 +85,10 @@ public class OdinInsightUtils {
 
         if (odinDeclaration instanceof OdinEnumType enumType) {
             return symbolTable.with(getEnumFields(enumType));
+        }
+
+        if(includeReferenceableSymbols && type instanceof TsOdinArrayType arrayType) {
+            return OdinSymbolTable.from(getSwizzleFields(arrayType));
         }
 
         return symbolTable;

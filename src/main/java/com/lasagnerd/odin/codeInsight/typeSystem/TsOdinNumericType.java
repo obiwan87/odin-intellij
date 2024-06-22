@@ -28,4 +28,9 @@ public class TsOdinNumericType extends TsOdinBuiltInType {
         this.signed = signed;
         this.endian = endian;
     }
+
+    @Override
+    public TsOdinMetaType.MetaType getMetaType() {
+        return TsOdinMetaType.MetaType.NUMERIC;
+    }
 }

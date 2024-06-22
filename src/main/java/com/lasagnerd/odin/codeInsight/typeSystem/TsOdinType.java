@@ -101,12 +101,19 @@ public abstract class TsOdinType {
         return this instanceof TsOdinUnionType || this instanceof TsOdinEnumType;
     }
 
+    public boolean isNumeric() {
+        return this instanceof TsOdinNumericType;
+    }
+
     public String getLabel() {
         return getName() == null ? "<undefined>" : getName();
     }
 
-    public abstract TsOdinMetaType.MetaType getMetaType();
+    public boolean isUntyped() {
+        return this instanceof TsOdinUntypedType;
+    }
 
+    public abstract TsOdinMetaType.MetaType getMetaType();
 
 }
 
