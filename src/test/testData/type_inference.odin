@@ -243,3 +243,10 @@ testTypeSwitch :: proc() {
         test2 := t
     }
 }
+
+binary_operators_on_arrays :: proc() {
+    a := [3]f32{1, 2, 3}
+    b := [3]f32{5, 6, 7}
+    c := (a * b)/2 + 1
+    test := c
+}

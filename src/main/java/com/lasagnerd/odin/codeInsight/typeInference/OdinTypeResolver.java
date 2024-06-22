@@ -70,7 +70,7 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     public static TsOdinType resolveMetaType(int level, OdinSymbolTable symbolTable, TsOdinMetaType metaType) {
-        if (metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.BUILTIN) {
+        if (metaType.getRepresentedType() instanceof TsOdinBuiltInType) {
             return TsOdinBuiltInTypes.getBuiltInType(metaType.getName());
         } else {
             TsOdinType tsOdinType;

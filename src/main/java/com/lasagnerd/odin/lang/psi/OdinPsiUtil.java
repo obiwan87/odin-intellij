@@ -21,6 +21,18 @@ public class OdinPsiUtil {
     }
 
     public static PsiElement getOperator(OdinBinaryExpression self) {
+        if(self instanceof OdinMulExpression mulExpression)
+            return mulExpression.getStar();
+
+        if(self instanceof OdinDivExpression divExpression)
+            return divExpression.getDiv();
+
+        if(self instanceof OdinAddExpression addExpression)
+            return addExpression.getPlus();
+
+        if(self instanceof OdinSubExpression subExpression)
+            return subExpression.getMinus();
+
         return self.getChildren().length > 1 ? self.getChildren()[1] : null;
     }
 

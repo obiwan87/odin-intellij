@@ -32,7 +32,7 @@ public class TsOdinMetaType extends TsOdinType {
         STRUCT,
         UNION,
         UNKNOWN,
-        VOID,
+        VOID, NUMERIC, BOOL, RUNE, STRING, RAWPTR,
     }
 
 

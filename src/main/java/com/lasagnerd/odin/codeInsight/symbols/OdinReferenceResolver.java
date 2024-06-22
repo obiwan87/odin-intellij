@@ -14,10 +14,7 @@ public class OdinReferenceResolver {
     public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinExpression valueExpression) {
         // Add filter for referenceable elements
         TsOdinType type = OdinInferenceEngine.inferType(symbolTable, valueExpression);
-        if(type instanceof TsOdinArrayType arrayType) {
-            return OdinSymbolTable.from(getSwizzleFields(arrayType));
-        }
-        return OdinInsightUtils.getTypeElements(type);
+        return OdinInsightUtils.getTypeElements(type, true);
     }
 
     public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinType type) {

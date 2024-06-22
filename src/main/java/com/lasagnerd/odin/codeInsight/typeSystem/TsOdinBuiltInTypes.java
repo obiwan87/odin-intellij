@@ -1,15 +1,18 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class TsOdinBuiltInTypes {
-    public static final TsOdinBuiltInType BOOL = new TsOdinBuiltInType("bool");
-    public static final TsOdinBuiltInType B8 = new TsOdinBuiltInType("b8");
-    public static final TsOdinBuiltInType B16 = new TsOdinBuiltInType("b16");
-    public static final TsOdinBuiltInType B32 = new TsOdinBuiltInType("b32");
-    public static final TsOdinBuiltInType B64 = new TsOdinBuiltInType("b64");
+    public static final TsOdinBuiltInType BOOL = new TsOdinBoolType("bool", 8);
+    public static final TsOdinBuiltInType B8 = new TsOdinBoolType("b8", 8);
+    public static final TsOdinBuiltInType B16 = new TsOdinBoolType("b16", 16);
+    public static final TsOdinBuiltInType B32 = new TsOdinBoolType("b32", 32);
+    public static final TsOdinBuiltInType B64 = new TsOdinBoolType("b64", 64);
+
+    // TODO this is an alias, and doesn't need to be defined here. Add to symbols 
     public static final TsOdinBuiltInType BYTE = new TsOdinBuiltInType("byte");
 
     public static final TsOdinNumericType INT = new TsOdinNumericType("int", 32, false, true, false, false, true, TsOdinNumericType.Endian.UNSPECIFIED);
@@ -57,19 +60,21 @@ public class TsOdinBuiltInTypes {
     public static final TsOdinNumericType QUATERNION128 = new TsOdinNumericType("quaternion128", 128, true, false, false, true, false, TsOdinNumericType.Endian.UNSPECIFIED);
     public static final TsOdinNumericType QUATERNION256 = new TsOdinNumericType("quaternion256", 256, true, false, false, true, false, TsOdinNumericType.Endian.UNSPECIFIED);
 
-    public static final TsOdinBuiltInType RUNE = new TsOdinBuiltInType("rune");
-    public static final TsOdinBuiltInType STRING = new TsOdinBuiltInType("string");
-    public static final TsOdinBuiltInType CSTRING = new TsOdinBuiltInType("cstring");
-    public static final TsOdinBuiltInType RAWPTR = new TsOdinBuiltInType("rawptr");
+    public static final TsOdinBuiltInType RUNE = new TsOdinRuneType();
+    public static final TsOdinBuiltInType STRING = new TsOdinStringType("string");
+    public static final TsOdinBuiltInType C_STRING = new TsOdinStringType("cstring");
+
+    public static final TsOdinBuiltInType RAW_PTR = new TsOdinRawPointerType();
+
     public static final TsOdinBuiltInType TYPEID = new TsOdinBuiltInType("typeid");
 
-    public static final TsOdinBuiltInType UNTYPED_INT = new TsOdinBuiltInType("untyped int");
-    public static final TsOdinBuiltInType UNTYPED_BOOLEAN = new TsOdinBuiltInType("untyped bool");
-    public static final TsOdinBuiltInType UNTYPED_RUNE = new TsOdinBuiltInType("untyped rune");
-    public static final TsOdinBuiltInType UNTYPED_STRING = new TsOdinBuiltInType("untyped string");
-    public static final TsOdinBuiltInType UNTYPED_FLOAT = new TsOdinBuiltInType("untyped float");
-    public static final TsOdinBuiltInType UNTYPED_COMPLEX = new TsOdinBuiltInType("untyped complex");
-    public static final TsOdinBuiltInType UNTYPED_QUATERNION = new TsOdinBuiltInType("untyped quaternion");
+    public static final TsOdinUntypedType UNTYPED_INT = new TsOdinUntypedType("untyped int", TsOdinMetaType.MetaType.NUMERIC);
+    public static final TsOdinUntypedType UNTYPED_BOOLEAN = new TsOdinUntypedType("untyped bool", TsOdinMetaType.MetaType.BOOL);
+    public static final TsOdinUntypedType UNTYPED_RUNE = new TsOdinUntypedType("untyped rune", TsOdinMetaType.MetaType.RUNE);
+    public static final TsOdinUntypedType UNTYPED_STRING = new TsOdinUntypedType("untyped string", TsOdinMetaType.MetaType.STRING);
+    public static final TsOdinUntypedType UNTYPED_FLOAT = new TsOdinUntypedType("untyped float", TsOdinMetaType.MetaType.NUMERIC);
+    public static final TsOdinUntypedType UNTYPED_COMPLEX = new TsOdinUntypedType("untyped complex", TsOdinMetaType.MetaType.NUMERIC);
+    public static final TsOdinUntypedType UNTYPED_QUATERNION = new TsOdinUntypedType("untyped quaternion", TsOdinMetaType.MetaType.NUMERIC);
 
     public static final List<String> RESERVED_TYPES = List.of(
             "bool",
@@ -133,14 +138,20 @@ public class TsOdinBuiltInTypes {
             "nil"
     );
     private static final Map<String, TsOdinBuiltInType> builtInTypeMap = new HashMap<>();
+    private static List<TsOdinType> integerTypes;
+    private static List<TsOdinType> numericTypes;
+    private static List<TsOdinType> floatingPointTypes;
 
     static {
+        // Boolean types
         builtInTypeMap.put(BOOL.getName(), BOOL);
         builtInTypeMap.put(B8.getName(), B8);
         builtInTypeMap.put(B16.getName(), B16);
         builtInTypeMap.put(B32.getName(), B32);
         builtInTypeMap.put(B64.getName(), B64);
-        builtInTypeMap.put(BYTE.getName(), BYTE);
+
+        // Numeric types
+        builtInTypeMap.put(BYTE.getName(), U8);
         builtInTypeMap.put(INT.getName(), INT);
         builtInTypeMap.put(I8.getName(), I8);
         builtInTypeMap.put(I16.getName(), I16);
@@ -185,14 +196,57 @@ public class TsOdinBuiltInTypes {
         builtInTypeMap.put(QUATERNION64.getName(), QUATERNION64);
         builtInTypeMap.put(QUATERNION128.getName(), QUATERNION128);
         builtInTypeMap.put(QUATERNION256.getName(), QUATERNION256);
+
+        // Rune
         builtInTypeMap.put(RUNE.getName(), RUNE);
+
+        // String types
         builtInTypeMap.put(STRING.getName(), STRING);
-        builtInTypeMap.put(CSTRING.getName(), CSTRING);
-        builtInTypeMap.put(RAWPTR.getName(), RAWPTR);
+        builtInTypeMap.put(C_STRING.getName(), C_STRING);
+
+        // Raw pointer
+        builtInTypeMap.put(RAW_PTR.getName(), RAW_PTR);
+
+        // Type ID
         builtInTypeMap.put(TYPEID.getName(), TYPEID);
     }
 
     public static TsOdinBuiltInType getBuiltInType(String identifierText) {
         return builtInTypeMap.get(identifierText);
+    }
+
+    public static Collection<TsOdinType> getIntegerTypes() {
+        if (integerTypes == null) {
+            integerTypes = builtInTypeMap.values().stream()
+                    .filter(t -> t instanceof TsOdinNumericType)
+                    .map(TsOdinNumericType.class::cast)
+                    .filter(TsOdinNumericType::isInteger)
+                    .map(t -> (TsOdinType) t)
+                    .toList();
+        }
+
+        return integerTypes;
+    }
+
+    public static Collection<TsOdinType> getNumericTypes() {
+        if (numericTypes == null) {
+            numericTypes = builtInTypeMap.values().stream()
+                    .filter(t -> t instanceof TsOdinNumericType)
+                    .map(t -> (TsOdinType) t)
+                    .toList();
+        }
+
+        return numericTypes;
+    }
+
+    public static Collection<TsOdinType> getFloatingPointTypes() {
+        if (floatingPointTypes == null) {
+            floatingPointTypes = builtInTypeMap.values().stream()
+                    .filter(t -> t instanceof TsOdinNumericType)
+                    .map(t -> (TsOdinType) t)
+                    .toList();
+        }
+
+        return floatingPointTypes;
     }
 }

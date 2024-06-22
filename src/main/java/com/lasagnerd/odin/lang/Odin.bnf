@@ -419,7 +419,6 @@ expression                           ::= postfixGroup
 
 
 fake binaryExpression                ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
-
 // Arithmetic
 mulExpression                        ::= expression STAR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
 divExpression                        ::= expression DIV             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}

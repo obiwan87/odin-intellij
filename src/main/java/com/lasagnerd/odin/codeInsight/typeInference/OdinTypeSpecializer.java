@@ -183,14 +183,14 @@ public class OdinTypeSpecializer {
      * @param argumentType  The argument type
      * @return a substitution map
      */
-    private static @NotNull Map<String, TsOdinType> substituteTypes(TsOdinType parameterType, TsOdinType argumentType) {
+    public static @NotNull Map<String, TsOdinType> substituteTypes(TsOdinType parameterType, TsOdinType argumentType) {
         Map<String, TsOdinType> resolvedTypes = new HashMap<>();
         doSubstituteTypes(parameterType, argumentType, resolvedTypes);
         return resolvedTypes;
     }
 
     private static void doSubstituteTypes(@NotNull TsOdinType parameterType, @NotNull TsOdinType argumentType, @NotNull Map<String, TsOdinType> resolvedTypes) {
-        if (parameterType.isPolymorphic() && !argumentType.isPolymorphic()) {
+        if (parameterType.isPolymorphic()) {
             resolvedTypes.put(parameterType.getName(), argumentType);
         } else {
             if (parameterType instanceof TsOdinConstrainedType constrainedType) {

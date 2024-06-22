@@ -56,6 +56,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -897,6 +898,15 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testTypeInference_arrayBinaryOps() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "binary_operators_on_arrays", "test");
+            TsOdinArrayType arrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
+            assertEquals(arrayType.getElementType(), TsOdinBuiltInTypes.F32);
+        }
+    }
+
     private static <T extends TsOdinType> void assertExpressionIsOfTypeWithName(OdinFile odinFile, String procedure, String variableName, Class<T> aClass, String name) {
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, procedure, variableName);
         T structType = assertInstanceOf(tsOdinType, aClass);
@@ -1635,6 +1645,27 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+
+    public void testTypeConversion() {
+        {
+            TsOdinType tsOdinType = OdinTypeConverter.convertTypeOfBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+        }
+        {
+            TsOdinType tsOdinType = OdinTypeConverter.convertTypeOfBinaryExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.STRING);
+        }
+
+        {
+            TsOdinArrayType arrayType = new TsOdinArrayType();
+            arrayType.setElementType(TsOdinBuiltInTypes.I32);
+            TsOdinType tsOdinType = OdinTypeConverter.convertTypeOfBinaryExpression(arrayType, TsOdinBuiltInTypes.UNTYPED_INT);
+            assertEquals(tsOdinType, arrayType);
+        }
+    }
+
+
+    // Helpers
     private static void assertTopMostRefExpressionTextEquals(PsiElement odinStatement, String expected, String identifierName) {
         OdinRefExpression topMostRefExpression = getTopMostRefExpression(odinStatement, identifierName);
         assertNotNull(topMostRefExpression);
@@ -1651,9 +1682,6 @@ public class OdinParsingTest extends UsefulTestCase {
         assertNotNull(topMostRefExpression);
         return topMostRefExpression;
     }
-
-
-    // Helpers
 
     private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         OdinExpression odinExpression = findFirstExpressionOfVariable(odinFile, procedureName, variableName);

@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType.*;
 
@@ -94,12 +96,15 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitBinaryExpression(@NotNull OdinBinaryExpression o) {
-        OdinExpression left = o.getLeft();
-        OdinExpression right = o.getRight();
+        TsOdinType leftType = inferType(this.symbolTable, o.getLeft());
+        TsOdinType rightType = inferType(this.symbolTable, Objects.requireNonNull(o.getRight()));
+
 
         IElementType elementType = PsiUtilCore.getElementType(o.getOperator());
 
-        if (elementType.equals(OdinTypes.PLUS)) {
+        TokenSet tokenSet = TokenSet.create(OdinTypes.PLUS, OdinTypes.STAR, OdinTypes.DIV, OdinTypes.MOD);
+        if (tokenSet.contains(elementType)) {
+            this.type = OdinTypeConverter.convertTypeOfBinaryExpression(leftType, rightType);
         }
     }
 
@@ -201,6 +206,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     TsOdinBuiltInType builtInType = TsOdinBuiltInTypes.getBuiltInType(name);
                     TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(builtInType.getMetaType());
                     tsOdinMetaType.setName(name);
+                    tsOdinMetaType.setRepresentedType(TsOdinBuiltInTypes.getBuiltInType(name));
                     this.type = tsOdinMetaType;
                 }
             }
