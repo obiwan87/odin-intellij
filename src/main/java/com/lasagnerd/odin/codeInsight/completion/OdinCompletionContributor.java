@@ -272,9 +272,9 @@ public class OdinCompletionContributor extends CompletionContributor {
         }
     }
 
-    private static Icon getIcon(OdinSymbolType typeType) {
+    public static Icon getIcon(OdinSymbolType typeType) {
         if (typeType == null)
-            return null;
+            return ExpUiIcons.FileTypes.Unknown;
         return switch (typeType) {
             case STRUCT -> OdinIcons.Types.Struct;
             case SWIZZLE_FIELD, FIELD -> ExpUiIcons.Nodes.Property;

@@ -1,18 +1,24 @@
 package com.lasagnerd.odin.lang.psi;
 
+import com.intellij.icons.ExpUiIcons;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.*;
+import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.impl.OdinBitFieldDeclarationStatementImpl;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.*;
 
 public class OdinPsiUtil {
@@ -417,5 +423,13 @@ public class OdinPsiUtil {
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinSwitchTypeVariableDeclaration typeVariableDeclaration) {
         return Collections.singletonList(typeVariableDeclaration.getDeclaredIdentifier());
+    }
+
+    public static ItemPresentation getPresentation(OdinDeclaredIdentifier declaredIdentifier) {
+        OdinSymbolType symbolType = OdinInsightUtils.classify(declaredIdentifier);
+        Icon icon = OdinCompletionContributor.getIcon(symbolType);
+        if (icon == null)
+            icon = ExpUiIcons.Nodes.Property;
+        return new PresentationData(declaredIdentifier.getName(), "", icon, null);
     }
 }

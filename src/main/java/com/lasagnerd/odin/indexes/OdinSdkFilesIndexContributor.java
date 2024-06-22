@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.indexes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,14 +17,15 @@ import java.util.stream.Collectors;
 
 public class OdinSdkFilesIndexContributor extends IndexableSetContributor {
 
+    static final Logger log = Logger.getInstance(OdinSdkFilesIndexContributor.class);
     @Override
     public @NotNull Set<VirtualFile> getAdditionalRootsToIndex() {
-
         return Set.of();
     }
 
     @NotNull
     public Set<VirtualFile> getAdditionalProjectRootsToIndex(@NotNull Project project) {
+        log.info("Index files contributor called");
         Optional<String> sdkPath = OdinSdkConfigPersistentState.getSdkPath(project);
         if (sdkPath.isPresent()) {
             try {

@@ -107,6 +107,7 @@
                 scheme="Dark"
                 file="colorSchemes/OdinLangDark.xml"/>
         <indexedRootsProvider implementation="com.lasagnerd.odin.indexes.OdinSdkFilesIndexContributor"/>
+        <lang.psiStructureViewFactory language="Odin" implementationClass="com.lasagnerd.odin.structureView.OdinStructureViewFactory"/>
     </extensions>
 
     <actions>
