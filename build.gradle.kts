@@ -4,7 +4,6 @@ plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.8.22"
     id("org.jetbrains.intellij.platform") version "2.0.0"
-//    id("org.jetbrains.intellij.platform.migration") version "2.0.0"
     id("io.freefair.lombok") version "8.6"
 }
 
@@ -22,7 +21,6 @@ intellijPlatform  {
     buildSearchableOptions = true
     instrumentCode = true
     projectName = project.name
-//    sandboxContainer = "..."
 
     pluginConfiguration {
         version = "2024.2"
@@ -43,8 +41,23 @@ intellijPlatform  {
         privateKeyFile.set(File("certificate/private.pem"))
         password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
     }
-//    type.set("IC") // Target IDE Platform
+}
 
+val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
+    task {
+        jvmArgumentProviders += CommandLineArgumentProvider {
+            listOf(
+                "-Drobot-server.port=8082",
+                "-Dide.mac.message.dialogs.as.sheets=false",
+                "-Djb.privacy.policy.text=<!--999.999-->",
+                "-Djb.consents.confirmation.enabled=false",
+            )
+        }
+    }
+
+    plugins {
+        robotServerPlugin()
+    }
 }
 
 
@@ -60,7 +73,6 @@ dependencies {
         testFramework(TestFrameworkType.Platform)
 
         testImplementation("junit:junit:4.13.2")
-        testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.4.0")
         testCompileOnly ("org.junit.jupiter:junit-jupiter-api:5.4.2")
     }
 }
@@ -82,14 +94,4 @@ tasks {
         kotlinOptions.jvmTarget = "17"
     }
 
-//    signPlugin {
-//        certificateChainFile.set(File("certificate/chain.crt"))
-//        privateKeyFile.set(File("certificate/private.pem"))
-//        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
-//    }
-//
-//    publishPlugin {
-//        val myToken = File("certificate/token").readText()
-//        token.set(myToken)
-//    }
 }
