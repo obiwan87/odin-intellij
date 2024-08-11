@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.lang.psi;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
@@ -429,7 +430,7 @@ public class OdinPsiUtil {
         OdinSymbolType symbolType = OdinInsightUtils.classify(declaredIdentifier);
         Icon icon = OdinCompletionContributor.getIcon(symbolType);
         if (icon == null)
-            icon = ExpUiIcons.Nodes.Property;
+            icon = AllIcons.Nodes.Property;
         return new PresentationData(declaredIdentifier.getName(), "", icon, null);
     }
 }
