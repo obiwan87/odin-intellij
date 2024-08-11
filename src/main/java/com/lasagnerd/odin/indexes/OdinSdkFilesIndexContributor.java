@@ -25,7 +25,7 @@ public class OdinSdkFilesIndexContributor extends IndexableSetContributor {
 
     @NotNull
     public Set<VirtualFile> getAdditionalProjectRootsToIndex(@NotNull Project project) {
-        log.info("Index files contributor called");
+        log.debug("File index contributor called");
         Optional<String> sdkPath = OdinSdkConfigPersistentState.getSdkPath(project);
         if (sdkPath.isPresent()) {
             try {
