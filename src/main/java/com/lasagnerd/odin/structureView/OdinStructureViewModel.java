@@ -23,7 +23,9 @@ public class OdinStructureViewModel extends StructureViewModelBase implements St
 
     @Override
     public boolean isAlwaysLeaf(StructureViewTreeElement element) {
-        if(element instanceof OdinStructureViewElement odinStructureViewElement) {
+        if (element instanceof OdinStructureViewElement odinStructureViewElement) {
+            if (odinStructureViewElement.getElement() instanceof OdinFile)
+                return false;
             NavigatablePsiElement navigatablePsiElement = odinStructureViewElement.getElement();
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(navigatablePsiElement, OdinDeclaration.class, false);
             return !(odinDeclaration instanceof OdinStructDeclarationStatement)
