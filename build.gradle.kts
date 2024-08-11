@@ -58,6 +58,10 @@ dependencies {
         instrumentationTools()
 
         testFramework(TestFrameworkType.Platform)
+
+        testImplementation("junit:junit:4.13.2")
+        testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.4.0")
+        testCompileOnly ("org.junit.jupiter:junit-jupiter-api:5.4.2")
     }
 }
 

@@ -66,8 +66,7 @@ public class OdinImportUtils {
         List<OdinFile> odinFiles = new ArrayList<>();
     }
 
-    public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC
-            && s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE;
+    public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC;
 
     @NotNull
     public static String getFileName(@NotNull PsiElement psiElement) {
