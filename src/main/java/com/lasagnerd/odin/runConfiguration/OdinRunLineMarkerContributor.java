@@ -2,6 +2,7 @@ package com.lasagnerd.odin.runConfiguration;
 
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.icons.AllIcons;
 import com.intellij.icons.ExpUiIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.PsiElement;
@@ -30,8 +31,8 @@ public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
             AnAction[] actions = ExecutorAction.getActions(1);
             return new Info(
                     ExpUiIcons.Gutter.Run,
-                    (ignored) -> "Run " + element.getContainingFile().getName(),
-                    actions[0], actions[actions.length - 1]
+                    new AnAction[]{ actions[0], actions[actions.length - 1] },
+                    (ignored) -> "Run " + element.getContainingFile().getName()
             );
 
         }

@@ -2,7 +2,7 @@ package com.lasagnerd.odin.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.icons.ExpUiIcons;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -247,7 +247,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         OdinImportInfo info = odinDeclaration.getImportInfo();
 
                         LookupElementBuilder element = LookupElementBuilder.create(info.packageName())
-                                .withIcon(ExpUiIcons.Nodes.Package)
+                                .withIcon(AllIcons.Nodes.Package)
                                 .withTypeText(info.path());
 
                         if (info.library() != null) {
@@ -274,20 +274,20 @@ public class OdinCompletionContributor extends CompletionContributor {
 
     public static Icon getIcon(OdinSymbolType typeType) {
         if (typeType == null)
-            return ExpUiIcons.FileTypes.Unknown;
+            return AllIcons.FileTypes.Unknown;
         return switch (typeType) {
             case STRUCT -> OdinIcons.Types.Struct;
-            case SWIZZLE_FIELD, FIELD -> ExpUiIcons.Nodes.Property;
+            case SWIZZLE_FIELD, FIELD -> AllIcons.Nodes.Property;
             case ENUM_FIELD, LABEL, FOREIGN_IMPORT, BIT_SET -> null;
-            case ENUM -> ExpUiIcons.Nodes.Enum;
+            case ENUM -> AllIcons.Nodes.Enum;
             case UNION -> OdinIcons.Types.Union;
-            case PROCEDURE, PROCEDURE_OVERLOAD -> ExpUiIcons.Nodes.Function;
-            case VARIABLE -> ExpUiIcons.Nodes.Variable;
-            case CONSTANT -> ExpUiIcons.Nodes.Constant;
-            case PACKAGE_REFERENCE -> ExpUiIcons.Nodes.Package;
-            case PARAMETER -> ExpUiIcons.Nodes.Parameter;
-            case UNKNOWN -> ExpUiIcons.FileTypes.Unknown;
-            case POLYMORPHIC_TYPE -> ExpUiIcons.Nodes.Type;
+            case PROCEDURE, PROCEDURE_OVERLOAD -> AllIcons.Nodes.Function;
+            case VARIABLE -> AllIcons.Nodes.Variable;
+            case CONSTANT -> AllIcons.Nodes.Constant;
+            case PACKAGE_REFERENCE -> AllIcons.Nodes.Package;
+            case PARAMETER -> AllIcons.Nodes.Parameter;
+            case UNKNOWN -> AllIcons.FileTypes.Unknown;
+            case POLYMORPHIC_TYPE -> AllIcons.Nodes.Type;
         };
     }
 
