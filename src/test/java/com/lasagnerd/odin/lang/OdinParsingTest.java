@@ -233,7 +233,7 @@ public class OdinParsingTest extends UsefulTestCase {
     private PluginDescriptor getPluginDescriptor() {
         PluginDescriptor pluginDescriptor = this.pluginDescriptor;
         if (pluginDescriptor == null) {
-            pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId(getClass().getName() + "." + getName()), OdinParsingTest.class.getClassLoader());
+            pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId(getClass().getName() + "." + getTestName()), OdinParsingTest.class.getClassLoader());
             this.pluginDescriptor = pluginDescriptor;
         }
         return pluginDescriptor;
@@ -1555,6 +1555,14 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
             TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
             assertEquals(structType.getName(), "a_ret");
+        }
+    }
+
+    public void testPackageImport_twoHops() throws IOException {
+        OdinFile odinFile = load("src/test/testData/mypackage/two_hops.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "main", "test");
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
     }
 
