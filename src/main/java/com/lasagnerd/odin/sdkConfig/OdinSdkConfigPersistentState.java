@@ -14,7 +14,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Optional;
 
-
 @Setter
 @Getter
 @State(
@@ -23,8 +22,9 @@ import java.util.Optional;
 )
 public class OdinSdkConfigPersistentState implements PersistentStateComponent<OdinSdkConfigPersistentState> {
 
-
     public String sdkPath = "";
+    public String directoryToCompile = "";
+    public String extraBuildFlags = "";
 
     public static OdinSdkConfigPersistentState getInstance(Project project) {
         return project.getService(OdinSdkConfigPersistentState.class);
@@ -42,11 +42,12 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
 
     public static Optional<String> getSdkPath(Project project) {
         OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
-        if(sdkConfig == null)
+        if (sdkConfig == null) {
             return Optional.empty();
-        String sdkPath = sdkConfig.getSdkPath();
-        if(sdkPath == null || sdkPath.isBlank()) {
+        }
 
+        String sdkPath = sdkConfig.getSdkPath();
+        if (sdkPath == null || sdkPath.isBlank()) {
             return Optional.empty();
         }
 
@@ -55,6 +56,8 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
         } catch (InvalidPathException e) {
             return Optional.empty();
         }
+
         return Optional.of(sdkPath);
     }
+
 }

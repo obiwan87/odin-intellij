@@ -16,6 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class OdinSdkType extends SdkType {
+
     public OdinSdkType() {
         super("Odin SDK");
     }

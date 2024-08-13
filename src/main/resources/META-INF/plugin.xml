@@ -56,6 +56,12 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="Odin Notifications"
+                           displayType="BALLOON"
+                           key="notification.odin"/>
+        <externalAnnotator
+                language="Odin"
+                implementationClass="com.lasagnerd.odin.annotater.OdinBuildErrorsExternalAnnotator"/>
         <fileType name="Odin"
                   language="Odin"
                   fieldName="INSTANCE"
