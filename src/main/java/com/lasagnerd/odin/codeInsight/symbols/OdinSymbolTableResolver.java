@@ -173,8 +173,12 @@ public class OdinSymbolTableResolver {
     }
 
     public static OdinSymbol findSymbol(OdinIdentifier identifier) {
-        OdinSymbolTable parentScope = computeSymbolTable(identifier)
-                .with(OdinImportService.getInstance(identifier.getProject()).getPackagePath(identifier));
+        return findSymbol(identifier,  OdinSymbolTableResolver.computeSymbolTable(identifier)
+                .with(OdinImportService.getInstance(identifier.getProject())
+                        .getPackagePath(identifier)));
+    }
+
+    public static OdinSymbol findSymbol(OdinIdentifier identifier, OdinSymbolTable parentScope) {
         PsiElement parent = identifier.getParent();
         OdinSymbolTable symbolTable;
         if (parent instanceof OdinRefExpression refExpression) {

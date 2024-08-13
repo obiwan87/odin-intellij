@@ -23,7 +23,6 @@ import java.util.Optional;
 public class OdinSdkConfigPersistentState implements PersistentStateComponent<OdinSdkConfigPersistentState> {
 
     public String sdkPath = "";
-    public String directoryToCompile = "";
     public String extraBuildFlags = "";
 
     public static OdinSdkConfigPersistentState getInstance(Project project) {

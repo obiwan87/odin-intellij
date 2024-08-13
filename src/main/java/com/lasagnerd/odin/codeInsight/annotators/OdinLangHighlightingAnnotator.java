@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight.annotators;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Key;
@@ -15,7 +16,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
 import com.lasagnerd.odin.lang.OdinSyntaxHighlighter;
 import com.lasagnerd.odin.lang.psi.*;
@@ -24,8 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class OdinLangHighlightingAnnotator implements Annotator {
+import static com.lasagnerd.odin.lang.psi.OdinReference.logStackOverFlowError;
 
+public class OdinLangHighlightingAnnotator implements Annotator {
+    public static Logger LOG = Logger.getInstance(OdinLangHighlightingAnnotator.class);
     public static final List<String> RESERVED_TYPES = List.of(
             "bool",
             "b8",
@@ -232,7 +238,12 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
         PsiElement refExpressionParent = refExpression.getParent();
 
-        OdinSymbol symbol = resolveSymbol(identifierTokenParent);
+        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(identifierTokenParent)
+                .with(OdinImportService.getInstance(identifierTokenParent.getProject())
+                        .getPackagePath(identifierTokenParent));
+
+        OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
+
         if (symbol == null) {
             highlightUnknownReference(annotationHolder, identifierText, textRange);
             annotationSessionState.aborted.add(topMostExpression);
@@ -242,6 +253,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         if(symbol.getPsiType() instanceof OdinPolymorphicType) {
             return;
         }
+
 
         if(symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier declaredIdentifier) {
             if(declaredIdentifier.getDollar() != null)
@@ -331,26 +343,19 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
     }
 
-    private static OdinDeclaration resolveDeclaration(PsiElement psiElement) {
-        if (!(psiElement instanceof OdinIdentifier identifier)) {
-            return null;
-        }
-        PsiReference reference = identifier.getReference();
-        if (reference != null) {
-            PsiElement resolvedReference = reference.resolve();
-            return PsiTreeUtil.getParentOfType(resolvedReference, OdinDeclaration.class, false);
-        }
-        return null;
-    }
-
-    private static OdinSymbol resolveSymbol(PsiElement psiElement) {
+    private static OdinSymbol resolveSymbol(OdinSymbolTable symbolTable, PsiElement psiElement) {
         if (!(psiElement instanceof OdinIdentifier identifier)) {
             return null;
         }
 
         PsiReference reference = identifier.getReference();
         if(reference instanceof OdinReference odinReference) {
-            return odinReference.resolveSymbol();
+            try {
+                return OdinSymbolTableResolver.findSymbol(odinReference.getElement(), symbolTable);
+            } catch (StackOverflowError e) {
+                logStackOverFlowError(odinReference.getElement(), LOG);
+                return null;
+            }
         }
 
         return null;

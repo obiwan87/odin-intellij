@@ -26,15 +26,15 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
     }
 
     @Override
-    public @Nullable OdinBuildErrorResult doAnnotate(PsiFile collectedInfo) {
-        Project project = collectedInfo.getProject();
+    public @Nullable OdinBuildErrorResult doAnnotate(PsiFile file) {
+        Project project = file.getProject();
         if (!OdinBuildProcessRunner.canRunOdinBuild(project)) {
             return null;
         }
         // save all documents for 'odin build .' to work
         ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
-        OdinBuildProcessRunner.getInstance().buildAndUpdateErrors(collectedInfo.getProject());
-        return OdinBuildProcessRunner.getInstance().getErrors();
+        OdinBuildProcessRunner.getInstance().buildAndUpdateErrors(file.getProject(), file);
+        return OdinBuildProcessRunner.getInstance().getBuildErrorResult();
     }
 
     @Override
@@ -42,18 +42,21 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
         if (annotationResult == null) {
             return;
         }
-        if (odinBuildProcessRunner.getErrors() == null) {
+        if (odinBuildProcessRunner.getBuildErrorResult() == null) {
             return;
         }
         String realFilePath = file.getVirtualFile().getPath();
-        List<OdinBuildErrorResult.ErrorDetails> list = odinBuildProcessRunner.getErrors().getErrors()
+        List<OdinBuildErrorResult.ErrorDetails> errorDetails = odinBuildProcessRunner
+                .getBuildErrorResult()
+                .getErrors()
                 .stream()
                 .filter(error -> error.getPos().getFile().equals(realFilePath))
                 .toList();
-        list.forEach(error -> {
+
+        for (OdinBuildErrorResult.ErrorDetails error : errorDetails) {
             int column = error.getPos().getColumn();
             int endColumn = error.getPos().getEndColumn();
-            int lineStartOffset = file.getFileDocument().getLineStartOffset(error.getPos().getLine()-1);
+            int lineStartOffset = file.getFileDocument().getLineStartOffset(error.getPos().getLine() - 1);
 
             TextRange errorRange = new TextRange(lineStartOffset + column - 1, lineStartOffset + endColumn);
 
@@ -73,7 +76,7 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
                     .highlightType(highlightType)
                     .textAttributes(attributes)
                     .create();
-        });
+        }
     }
 
 }

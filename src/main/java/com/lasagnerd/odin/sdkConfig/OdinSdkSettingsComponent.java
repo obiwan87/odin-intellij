@@ -68,17 +68,10 @@ public class OdinSdkSettingsComponent {
                         createSdkPathTextFieldWithBrowseButton(), 1, false)
                 .addVerticalGap(10)
                 .addLabeledComponent(
-                        new JBLabel("Directory to compile: "),
-                        createDirectoryToCompileTextFieldWithBrowseButton(), 1, false)
-                .addComponentToRightColumn(createLabel(
-                        "Optional. If set, 'odin build' is called frequently in the background to report warnings and errors.<br>" +
-                                "In most cases, this is set to the directory where the odin file with the main procedure is located."), 0)
-                .addVerticalGap(10)
-                .addLabeledComponent(
                         new JBLabel("Extra build flags: "),
                         createBuildFlagsTextField(), 1, false)
                 .addComponentToRightColumn(createLabel(
-                        "Optional. Space separated build flags passed to 'odin build'.<br><br>" +
+                        "Optional. Space separated build flags passed to 'odin check'.<br><br>" +
                                 "Useful flags:<ul>" +
                                 "<li>-o:none (for fastest compile times)</li>" +
                                 "<li>-vet -vet-cast -strict-style (for more checks)</li>" +

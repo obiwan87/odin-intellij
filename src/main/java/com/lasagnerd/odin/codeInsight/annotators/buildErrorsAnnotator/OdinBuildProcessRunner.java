@@ -8,7 +8,9 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,24 +20,23 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+
+@Getter
 public class OdinBuildProcessRunner {
     public static Logger LOG = Logger.getInstance(OdinBuildProcessRunner.class);
     private static OdinBuildProcessRunner instance;
 
     @Nullable
-    private OdinBuildErrorResult errors = null;
-    public static boolean running = false;
+    private OdinBuildErrorResult buildErrorResult = null;
 
+    @SuppressWarnings("unused")
     public static void notify(String message) {
         NotificationGroupManager.getInstance()
                 .getNotificationGroup("Odin Notifications")
                 .createNotification(message, NotificationType.INFORMATION)
                 .notify(null);
-    }
-
-    public @Nullable OdinBuildErrorResult getErrors() {
-        return errors;
     }
 
     private OdinBuildProcessRunner() {
@@ -58,15 +59,7 @@ public class OdinBuildProcessRunner {
         if (odinBinaryPath == null)
             return false;
 
-        if (!Path.of(odinBinaryPath).toFile().exists()) {
-            return false;
-        }
-
-        String directoryToCompile = config.getDirectoryToCompile();
-        if (directoryToCompile == null)
-            return false;
-
-        return new File(FileUtil.toSystemDependentName(directoryToCompile)).exists();
+        return Path.of(odinBinaryPath).toFile().exists();
     }
 
     @Nullable
@@ -84,52 +77,68 @@ public class OdinBuildProcessRunner {
         return StringUtils.removeEnd(systemIndependentPath, "/") + "/" + "odin" + (isWindows ? ".exe" : "");
     }
 
-    private static ProcessBuilder launchProcessBuilder(Project project, String odinBinaryPath, String directoryToCompile) {
+    private static ProcessBuilder launchProcessBuilder(String filePath, String odinBinaryPath, String extraBuildFlags) {
+
         List<String> command = new ArrayList<>();
         command.add(odinBinaryPath);
         command.add("check");
-        command.add(".");
+        command.add(filePath);
+        command.add("-file");
         command.add("-json-errors");
-        String extraBuildFlags = OdinSdkConfigPersistentState.getInstance(project).extraBuildFlags;
+        command.add("-no-entry-point");
         if (!extraBuildFlags.isEmpty()) {
             Collections.addAll(command, extraBuildFlags.split(" +"));
         }
-        return new ProcessBuilder(command).directory(new File(directoryToCompile));
+
+        return new ProcessBuilder(command).directory(Path.of(filePath).getParent().toFile());
     }
 
     /**
      * Run {@link #canRunOdinBuild} before calling this method.
      */
-    public void buildAndUpdateErrors(Project project) {
-        if (running || project == null) {
+    public void buildAndUpdateErrors(Project project, PsiFile file) {
+        if (project == null) {
             return;
         }
-        String directoryToCompile = OdinSdkConfigPersistentState.getInstance(project).getDirectoryToCompile();
+
         String odinBinaryPath = getOdinBinaryPath(project);
 
         if (odinBinaryPath == null || !new File(odinBinaryPath).exists()) {
-            errors = null;
+            buildErrorResult = null;
             return;
         }
-        ProcessBuilder pb = launchProcessBuilder(project, odinBinaryPath, directoryToCompile);
+
+        String extraBuildFlags = OdinSdkConfigPersistentState.getInstance(project).extraBuildFlags;
+        String filePath = file.getVirtualFile().getPath();
+
+        ProcessBuilder pb = launchProcessBuilder(filePath, odinBinaryPath, extraBuildFlags);
         try {
             Process p = pb.start();
-            int statusCode = p.waitFor();
-            if (statusCode == 0) {
-                errors = null;
+            boolean exited = p.waitFor(3, TimeUnit.SECONDS);
+
+            if (!exited) {
+                LOG.error("odin check did not complete within 3 seconds for file " + filePath);
+                buildErrorResult = null;
                 return;
             }
+
+            int statusCode = p.exitValue();
+            if (statusCode == 0) {
+                buildErrorResult = null;
+                return;
+            }
+
             String stderr = new String(p.getErrorStream().readAllBytes());
             Gson gson = new GsonBuilder().create();
             try {
-                errors = gson.fromJson(stderr, OdinBuildErrorResult.class);
+                buildErrorResult = gson.fromJson(stderr, OdinBuildErrorResult.class);
             } catch (JsonSyntaxException e) {
-                errors = null;
+                buildErrorResult = null;
                 LOG.error("Failed to parse errors json", e);
             }
-            notify("Done odin build. Found " + errors.getErrors().size() + " errors. " + errors.getErrors().stream().map(OdinBuildErrorResult.ErrorDetails::getMsgs).toList());
+
         } catch (InterruptedException | IOException e) {
-            errors = null;
+            buildErrorResult = null;
             LOG.error(e);
         }
     }

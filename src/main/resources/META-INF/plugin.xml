@@ -5,7 +5,37 @@
     <version>0.5.0</version>
     <name>Odin Support</name>
     <change-notes><![CDATA[
-        <h2>Features</h2>
+        <h2>0.5.0</h2>
+        <h3>Features</h3>
+        <ul>
+            <li>Code Completion
+                <ul>
+                    <li>Support for Specialized/generic types</li>
+                    <li>Support for Generic methods</li>
+                    <li>Support for boolean and comparison operators</li>
+                    <li>Expanded support for "Go to declaration..."</li>
+                    <li>Foreign procedures added to suggestions </li>
+                    <li>Add support for auto-completion of types in other packages</li>
+                </ul>
+            <li>Rename Refactoring</li>
+            <li>Backend</li>
+            <ul>
+                <li>Lots of work on the Inference engine</li>
+                <li>Added type specializer</li>
+            </ul>
+        </ul>
+
+        <h2>Bug Fixes</h2>
+        <ul>
+            <li>Fixed bug where imports wouldn't work</li>
+            <li>Fixed bug where symbols from other files in the same package
+                wouldn't be brought into scope</li>
+            <li>Fixed problem with parsing type asserts</li>
+            <li>Fixed parse problem with argument lists ending on a new line</li>
+        </ul>
+
+        <h2><= v0.4.0</h2>
+        <h3>Features</h3>
         <ul>
             <li>Code Completion
                 <ul>
