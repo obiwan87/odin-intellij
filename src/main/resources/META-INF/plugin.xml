@@ -61,7 +61,7 @@
                            key="notification.odin"/>
         <externalAnnotator
                 language="Odin"
-                implementationClass="com.lasagnerd.odin.annotater.OdinBuildErrorsExternalAnnotator"/>
+                implementationClass="com.lasagnerd.odin.annotator.OdinBuildErrorsExternalAnnotator"/>
         <fileType name="Odin"
                   language="Odin"
                   fieldName="INSTANCE"

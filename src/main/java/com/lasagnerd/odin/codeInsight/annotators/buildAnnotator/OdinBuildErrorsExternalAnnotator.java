@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.annotater;
+package com.lasagnerd.odin.codeInsight.annotators.buildAnnotator;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.AnnotationHolder;
