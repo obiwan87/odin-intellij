@@ -216,7 +216,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
 
 // @require foreign import entry "entryUnixNoCrtAmd64.asm"
 foreignImportDeclarationStatement    ::= (attributeStatement EOS_TOKEN?)* FOREIGN IMPORT
-        ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart DQ_STRING_LITERAL (COMMA DQ_STRING_LITERAL)* COMMA? blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
+        ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart expressionsList COMMA? blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
 
 foreignStatement                     ::= (attributeStatement EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? foreignBlock
 
