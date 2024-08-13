@@ -56,12 +56,7 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <notificationGroup id="Odin Notifications"
-                           displayType="BALLOON"
-                           key="notification.odin"/>
-        <externalAnnotator
-                language="Odin"
-                implementationClass="com.lasagnerd.odin.annotator.OdinBuildErrorsExternalAnnotator"/>
+
         <fileType name="Odin"
                   language="Odin"
                   fieldName="INSTANCE"
@@ -114,6 +109,13 @@
                 file="colorSchemes/OdinLangDark.xml"/>
         <indexedRootsProvider implementation="com.lasagnerd.odin.indexes.OdinSdkFilesIndexContributor"/>
         <lang.psiStructureViewFactory language="Odin" implementationClass="com.lasagnerd.odin.structureView.OdinStructureViewFactory"/>
+        <notificationGroup id="Odin Notifications"
+                           displayType="BALLOON"
+                           key="notification.odin"/>
+        <externalAnnotator
+                language="Odin"
+                implementationClass="com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator.OdinBuildErrorsExternalAnnotator"/>
+
     </extensions>
 
     <actions>

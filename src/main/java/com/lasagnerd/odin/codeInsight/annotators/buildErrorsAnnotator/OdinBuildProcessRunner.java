@@ -1,25 +1,38 @@
-package com.lasagnerd.odin.codeInsight.annotators.buildAnnotator;
+package com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class OdinBuildProcessRunner {
-
+    public static Logger LOG = Logger.getInstance(OdinBuildProcessRunner.class);
     private static OdinBuildProcessRunner instance;
 
     @Nullable
     private OdinBuildErrorResult errors = null;
     public static boolean running = false;
+
+    public static void notify(String message) {
+        NotificationGroupManager.getInstance()
+                .getNotificationGroup("Odin Notifications")
+                .createNotification(message, NotificationType.INFORMATION)
+                .notify(null);
+    }
 
     public @Nullable OdinBuildErrorResult getErrors() {
         return errors;
@@ -41,29 +54,40 @@ public class OdinBuildProcessRunner {
             return false;
         }
         String odinBinaryPath = getOdinBinaryPath(project);
-        if (!new File(odinBinaryPath).exists()) {
+
+        if (odinBinaryPath == null)
+            return false;
+
+        if (!Path.of(odinBinaryPath).toFile().exists()) {
             return false;
         }
-        String directoryToCompile = config.directoryToCompile;
-        return new File(directoryToCompile).exists();
+
+        String directoryToCompile = config.getDirectoryToCompile();
+        if (directoryToCompile == null)
+            return false;
+
+        return new File(FileUtil.toSystemDependentName(directoryToCompile)).exists();
     }
 
+    @Nullable
     private static String getOdinBinaryPath(Project project) {
         if (project == null) {
             return null;
         }
         OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
-        String sdkPath = sdkConfig.sdkPath;
-        if (!sdkPath.endsWith(File.separator)) {
-            sdkPath += File.separator;
-        }
-        return sdkPath + "odin";
+        if (sdkConfig.getSdkPath() == null)
+            return null;
+
+        String systemIndependentPath = FileUtil.toSystemIndependentName(sdkConfig.getSdkPath());
+        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+
+        return StringUtils.removeEnd(systemIndependentPath, "/") + "/" + "odin" + (isWindows ? ".exe" : "");
     }
 
     private static ProcessBuilder launchProcessBuilder(Project project, String odinBinaryPath, String directoryToCompile) {
         List<String> command = new ArrayList<>();
         command.add(odinBinaryPath);
-        command.add("build");
+        command.add("check");
         command.add(".");
         command.add("-json-errors");
         String extraBuildFlags = OdinSdkConfigPersistentState.getInstance(project).extraBuildFlags;
@@ -82,17 +106,16 @@ public class OdinBuildProcessRunner {
         }
         String directoryToCompile = OdinSdkConfigPersistentState.getInstance(project).getDirectoryToCompile();
         String odinBinaryPath = getOdinBinaryPath(project);
-        if (!new File(odinBinaryPath).exists()) {
+
+        if (odinBinaryPath == null || !new File(odinBinaryPath).exists()) {
             errors = null;
             return;
         }
         ProcessBuilder pb = launchProcessBuilder(project, odinBinaryPath, directoryToCompile);
         try {
-            Notifier.notify("Running odin build in " + directoryToCompile);
             Process p = pb.start();
             int statusCode = p.waitFor();
             if (statusCode == 0) {
-                Notifier.notify("Done odin build without any errors.");
                 errors = null;
                 return;
             }
@@ -102,15 +125,12 @@ public class OdinBuildProcessRunner {
                 errors = gson.fromJson(stderr, OdinBuildErrorResult.class);
             } catch (JsonSyntaxException e) {
                 errors = null;
-                Notifier.notify("odin build: JsonSyntaxException on " + directoryToCompile + " : " + e.getMessage());
+                LOG.error("Failed to parse errors json", e);
             }
-            Notifier.notify("Done odin build. Found " + errors.getErrors().size() + " errors. " + errors.getErrors().stream().map(OdinBuildErrorResult.ErrorDetails::getMsgs).toList());
-        } catch (InterruptedException e) {
+            notify("Done odin build. Found " + errors.getErrors().size() + " errors. " + errors.getErrors().stream().map(OdinBuildErrorResult.ErrorDetails::getMsgs).toList());
+        } catch (InterruptedException | IOException e) {
             errors = null;
-            Notifier.notify("odin build: InterruptedException on " + directoryToCompile + " : " + e.getMessage());
-        } catch (IOException e) {
-            errors = null;
-            Notifier.notify("odin build: IOException on " + directoryToCompile + " : " + e.getMessage());
+            LOG.error(e);
         }
     }
 

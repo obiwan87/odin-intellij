@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.codeInsight.annotators.buildAnnotator;
+package com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -28,7 +28,6 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
     @Override
     public @Nullable OdinBuildErrorResult doAnnotate(PsiFile collectedInfo) {
         Project project = collectedInfo.getProject();
-        Notifier.notify("in doAnnotate");
         if (!OdinBuildProcessRunner.canRunOdinBuild(project)) {
             return null;
         }
@@ -54,7 +53,9 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
         list.forEach(error -> {
             int column = error.getPos().getColumn();
             int endColumn = error.getPos().getEndColumn();
-            TextRange errorRange = new TextRange(error.getPos().getOffset(), error.getPos().getOffset() + (endColumn - column));
+            int lineStartOffset = file.getFileDocument().getLineStartOffset(error.getPos().getLine()-1);
+
+            TextRange errorRange = new TextRange(lineStartOffset + column - 1, lineStartOffset + endColumn);
 
             boolean isWarning = error.getType().equals("warning");
             HighlightSeverity severity =

@@ -276,12 +276,14 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
     }
 
+    @SuppressWarnings("unused")
     private static void highlightUnknownReference(@NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange) {
-        annotationHolder
-                .newAnnotation(HighlightSeverity.ERROR, "Unresolved reference '%s'".formatted(identifierText))
-                .range(textRange)
-                .textAttributes(OdinSyntaxHighlighter.BAD_CHARACTER)
-                .create();
+//        annotationHolder
+//                .newAnnotation(HighlightSeverity.ERROR, "Unresolved reference '%s'".formatted(identifierText))
+//                .range(textRange)
+//                .textAttributes(OdinSyntaxHighlighter.BAD_CHARACTER)
+//                .create();
+        // TODO enable when it's done
     }
 
     private void highlightPackageReference(@NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange, OdinIdentifier identifier) {

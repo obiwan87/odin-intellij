@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.codeInsight.annotators.buildAnnotator;
+package com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
