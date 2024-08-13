@@ -8,8 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import org.jetbrains.annotations.NotNull;
@@ -36,15 +35,15 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
             }
             return null;
         } catch (StackOverflowError e) {
-            logStackOverFlowError();
+            logStackOverFlowError(getElement(), LOG);
             return null;
         }
     }
 
-    private void logStackOverFlowError() {
-        String text = getElement().getText();
-        int textOffset = getElement().getTextOffset();
-        PsiFile containingFile = getElement().getContainingFile();
+    public static void logStackOverFlowError(@NotNull OdinIdentifier element, Logger log) {
+        String text = element.getText();
+        int textOffset = element.getTextOffset();
+        PsiFile containingFile = element.getContainingFile();
         String fileName = "UNKNOWN";
         if (containingFile != null) {
             VirtualFile virtualFile = containingFile.getVirtualFile();
@@ -52,21 +51,12 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
                 fileName = virtualFile.getCanonicalPath();
             }
             LineColumn lineColumn = StringUtil.offsetToLineColumn(containingFile.getText(), textOffset);
-            LOG.error("Stack overflow caused by element with text '%s' in %s:%d:%d".formatted(text,
+            log.error("Stack overflow caused by element with text '%s' in %s:%d:%d".formatted(text,
                     fileName,
                     lineColumn.line,
                     lineColumn.column));
         } else {
-            LOG.error("Stack overflow caused by element with text '%s'".formatted(text));
-        }
-    }
-
-    public OdinSymbol resolveSymbol() {
-        try {
-            return OdinSymbolTableResolver.findSymbol(getElement());
-        } catch (StackOverflowError e) {
-            logStackOverFlowError();
-            return null;
+            log.error("Stack overflow caused by element with text '%s'".formatted(text));
         }
     }
 

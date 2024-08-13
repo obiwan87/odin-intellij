@@ -67,6 +67,7 @@ public class TsOdinBuiltInTypes {
     public static final TsOdinBuiltInType RAW_PTR = new TsOdinRawPointerType();
 
     public static final TsOdinBuiltInType TYPEID = new TsOdinBuiltInType("typeid");
+    public static final TsOdinBuiltInType ANY = new TsOdinBuiltInType("any");
 
     public static final TsOdinUntypedType UNTYPED_INT = new TsOdinUntypedType("untyped int", TsOdinMetaType.MetaType.NUMERIC);
     public static final TsOdinUntypedType UNTYPED_BOOLEAN = new TsOdinUntypedType("untyped bool", TsOdinMetaType.MetaType.BOOL);
@@ -209,6 +210,9 @@ public class TsOdinBuiltInTypes {
 
         // Type ID
         builtInTypeMap.put(TYPEID.getName(), TYPEID);
+
+        //Any
+        builtInTypeMap.put(ANY.getName(), ANY);
     }
 
     public static TsOdinBuiltInType getBuiltInType(String identifierText) {

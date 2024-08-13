@@ -32,11 +32,10 @@ public class OdinSdkConfigurable implements Configurable {
     public boolean isModified() {
         boolean sameSdkPath = sdkSettingsComponent.getSdkPath()
                 .equals(OdinSdkConfigPersistentState.getInstance(project).getSdkPath());
-        boolean sameDirectoryToCompile = sdkSettingsComponent.getDirectoryToCompile()
-                .equals(OdinSdkConfigPersistentState.getInstance(project).getDirectoryToCompile());
+
         boolean sameBuildFlags = sdkSettingsComponent.getBuildFlags()
-                .equals(OdinSdkConfigPersistentState.getInstance(project).getDirectoryToCompile());
-        return !sameSdkPath || !sameDirectoryToCompile || !sameBuildFlags;
+                .equals(OdinSdkConfigPersistentState.getInstance(project).getExtraBuildFlags());
+        return !sameSdkPath || !sameBuildFlags;
     }
 
     @Override
@@ -45,17 +44,14 @@ public class OdinSdkConfigurable implements Configurable {
         String sdkPath = sdkSettingsComponent.getSdkPath();
         String directoryToCompile = sdkSettingsComponent.getDirectoryToCompile();
         config.setSdkPath(sdkPath);
-        config.setDirectoryToCompile(directoryToCompile);
         config.setExtraBuildFlags(sdkSettingsComponent.getBuildFlags());
     }
 
     @Override
     public void reset() {
         String sdkPath = OdinSdkConfigPersistentState.getInstance(project).getSdkPath();
-        String directoryToCompile = OdinSdkConfigPersistentState.getInstance(project).getDirectoryToCompile();
         String extraBuildFlags = OdinSdkConfigPersistentState.getInstance(project).getExtraBuildFlags();
         sdkSettingsComponent.setSdkPath(sdkPath);
-        sdkSettingsComponent.setDirectoryToCompile(directoryToCompile);
         sdkSettingsComponent.setBuildFlags(extraBuildFlags);
     }
 

@@ -79,6 +79,7 @@ public class OdinBuiltinSymbolService {
         }
         return runtimeCoreSymbols;
     }
+
     public List<OdinSymbol> getBuiltInSymbols() {
         if(builtInSymbols == null)
             builtInSymbols = doFindBuiltInSymbols();
