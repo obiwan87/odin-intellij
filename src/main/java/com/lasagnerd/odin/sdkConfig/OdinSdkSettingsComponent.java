@@ -2,12 +2,14 @@ package com.lasagnerd.odin.sdkConfig;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,8 +17,14 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class OdinSdkSettingsComponent {
-    class OpenFileChooserAction extends AbstractAction {
-        public OpenFileChooserAction() {
+
+    private final JPanel mainPanel;
+    private JBTextField sdkPathTextField;
+    private JBTextField directoryToCompileTextField;
+    private JBTextField buildFlagsTextField;
+
+    class BrowseToSdkFileChooserAction extends AbstractAction {
+        public BrowseToSdkFileChooserAction() {
             super("Browse");
         }
 
@@ -27,51 +35,115 @@ public class OdinSdkSettingsComponent {
                     null,
                     null
             );
-            if (virtualFile == null) return;
+            if (virtualFile == null) {
+                return;
+            }
             setSdkPath(virtualFile.getPath());
         }
     }
 
-    private final JPanel mainPanel;
-    private JBTextField sdkPathText;
+    class BrowseToDirectoryToCompileFileChooserAction extends AbstractAction {
+        public BrowseToDirectoryToCompileFileChooserAction() {
+            super("Browse");
+        }
 
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            VirtualFile virtualFile = FileChooser.chooseFile(
+                    FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+                    null,
+                    null
+            );
+            if (virtualFile == null) {
+                return;
+            }
+            setDirectoryToCompile(virtualFile.getPath());
+        }
+    }
 
     public OdinSdkSettingsComponent() {
-
-
         mainPanel = FormBuilder.createFormBuilder()
-                .addLabeledComponent(new JBLabel("Path to SDK: "), createTextFieldWithBrowseButton(), 1, false)
+                .addLabeledComponent(
+                        new JBLabel("Path to SDK: "),
+                        createSdkPathTextFieldWithBrowseButton(), 1, false)
+                .addVerticalGap(10)
+                .addLabeledComponent(
+                        new JBLabel("Directory to compile: "),
+                        createDirectoryToCompileTextFieldWithBrowseButton(), 1, false)
+                .addComponentToRightColumn(createLabel(
+                        "Optional. If set, 'odin build' is called frequently in the background to report warnings and errors.<br>" +
+                                "In most cases, this is set to the directory where the odin file with the main procedure is located."), 0)
+                .addVerticalGap(10)
+                .addLabeledComponent(
+                        new JBLabel("Extra build flags: "),
+                        createBuildFlagsTextField(), 1, false)
+                .addComponentToRightColumn(createLabel(
+                        "Optional. Space separated build flags passed to 'odin build'.<br><br>" +
+                                "Useful flags:<ul>" +
+                                "<li>-o:none (for fastest compile times)</li>" +
+                                "<li>-vet -vet-cast -strict-style (for more checks)</li>" +
+                                "<li>-max-error-count:999 (to report more errors)</li>" +
+                                "</ul>"), 0)
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
     }
 
-    private JComponent createTextFieldWithBrowseButton() {
+    private JComponent createLabel(final @NlsContexts.Label String text) {
+        final JBLabel label = new JBLabel(text, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
+        label.setBorder(JBUI.Borders.emptyLeft(3));
+        label.setCopyable(true);
+        label.setAllowAutoWrapping(true);
+        return label;
+    }
+
+    private JComponent createSdkPathTextFieldWithBrowseButton() {
         JPanel panel = new JPanel(new GridBagLayout());
-        // Create GridBagConstraints
+        GridBagConstraints constraints = createGridBagConstraintsForFirstColumn();
+        sdkPathTextField = new JBTextField(20);
+        panel.add(sdkPathTextField, constraints);
+
+        JBOptionButton browseButton = new JBOptionButton(new BrowseToSdkFileChooserAction(), null);
+        panel.add(browseButton, createGridBagConstraintsForSecondColumn());
+
+        return panel;
+    }
+
+    private JComponent createDirectoryToCompileTextFieldWithBrowseButton() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints constraints = createGridBagConstraintsForFirstColumn();
+        directoryToCompileTextField = new JBTextField(20);
+        panel.add(directoryToCompileTextField, constraints);
+
+        JBOptionButton browseButton = new JBOptionButton(new BrowseToDirectoryToCompileFileChooserAction(), null);
+        panel.add(browseButton, createGridBagConstraintsForSecondColumn());
+
+        return panel;
+    }
+
+    private JComponent createBuildFlagsTextField() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        buildFlagsTextField = new JBTextField(20);
+        panel.add(buildFlagsTextField, createGridBagConstraintsForFirstColumn());
+        return panel;
+    }
+
+    private GridBagConstraints createGridBagConstraintsForFirstColumn() {
         GridBagConstraints constraints = new GridBagConstraints();
-
-        // Create the text field
-        sdkPathText = new JBTextField(20);
-
-        // Add the text field to the frame
         constraints.gridx = 0;  // column 0
         constraints.gridy = 0;  // row 0
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.weightx = 1.0;  // allow horizontal expansion
-        panel.add(sdkPathText, constraints);
+        return constraints;
+    }
 
-        // Create the browse button
-        JBOptionButton browseButton = new JBOptionButton(new OpenFileChooserAction(), null);
-
-        // Add the browse button to the frame
+    private GridBagConstraints createGridBagConstraintsForSecondColumn() {
+        GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 1;  // column 1
         constraints.gridy = 0;  // row 0
         constraints.fill = GridBagConstraints.NONE;  // reset to default
         constraints.weightx = 0;  // no expansion
         constraints.insets = JBUI.insetsLeft(5);  // padding
-        panel.add(browseButton, constraints);
-
-        return panel;
+        return constraints;
     }
 
     public JPanel getPanel() {
@@ -80,10 +152,29 @@ public class OdinSdkSettingsComponent {
 
     @NotNull
     public String getSdkPath() {
-        return sdkPathText.getText();
+        return sdkPathTextField.getText();
+    }
+
+    @NotNull
+    public String getDirectoryToCompile() {
+        return directoryToCompileTextField.getText();
+    }
+
+    @NotNull
+    public String getBuildFlags() {
+        return buildFlagsTextField.getText();
     }
 
     public void setSdkPath(@NotNull String newText) {
-        sdkPathText.setText(newText);
+        sdkPathTextField.setText(newText);
     }
+
+    public void setDirectoryToCompile(@NotNull String newText) {
+        directoryToCompileTextField.setText(newText);
+    }
+
+    public void setBuildFlags(@NotNull String newBuildFlags) {
+        buildFlagsTextField.setText(newBuildFlags);
+    }
+
 }

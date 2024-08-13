@@ -34,7 +34,13 @@ public class OdinSdkFilesIndexContributor extends IndexableSetContributor {
                 if (sdkRoot != null) {
                     return VfsUtil.collectChildrenRecursively(sdkRoot)
                             .stream()
-                            .filter(vf -> vf.getFileType() == OdinFileType.INSTANCE)
+                            .filter(vf -> {
+                                try {
+                                 return vf.getFileType() == OdinFileType.INSTANCE;
+                                } catch (Exception e) {
+                                    return false;
+                                }
+                            })
                             .collect(Collectors.toSet());
                 }
             } catch (Exception e) {

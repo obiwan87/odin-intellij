@@ -31,10 +31,10 @@ intellijPlatform  {
         }
     }
 
-    publishing {
-        val myToken = File("certificate/token").readText()
-        token.set(myToken)
-    }
+//    publishing {
+//        val myToken = File("certificate/token").readText()
+//        token.set(myToken)
+//    }
 
     signing {
         certificateChainFile.set(File("certificate/chain.crt"))
