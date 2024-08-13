@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class OdinSdkFilesIndexContributor extends IndexableSetContributor {
 
     static final Logger log = Logger.getInstance(OdinSdkFilesIndexContributor.class);
+
     @Override
     public @NotNull Set<VirtualFile> getAdditionalRootsToIndex() {
         return Set.of();
@@ -36,7 +37,7 @@ public class OdinSdkFilesIndexContributor extends IndexableSetContributor {
                             .stream()
                             .filter(vf -> {
                                 try {
-                                 return vf.getFileType() == OdinFileType.INSTANCE;
+                                    return vf.getFileType() == OdinFileType.INSTANCE;
                                 } catch (Exception e) {
                                     return false;
                                 }
