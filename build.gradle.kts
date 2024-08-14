@@ -23,7 +23,7 @@ intellijPlatform  {
     projectName = project.name
 
     pluginConfiguration {
-        version = "2024.2"
+        version = "0.5.0"
 
         ideaVersion {
             sinceBuild = "242"
@@ -31,10 +31,10 @@ intellijPlatform  {
         }
     }
 
-//    publishing {
-//        val myToken = File("certificate/token").readText()
-//        token.set(myToken)
-//    }
+    publishing {
+        val myToken = File("certificate/token").readText()
+        token.set(myToken)
+    }
 
     signing {
         certificateChainFile.set(File("certificate/chain.crt"))
