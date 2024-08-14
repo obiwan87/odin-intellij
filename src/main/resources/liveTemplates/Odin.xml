@@ -1,0 +1,11 @@
+<templateSet group="Odin">
+    <template
+            name="main"
+            value="main :: proc() {&#10;    $END$ &#10;}"
+            toReformat="true"
+            toShortenFQNames="false" key="live-templates.main" resource-bundle="config">
+        <context>
+            <option name="ODIN" value="true"/>
+        </context>
+    </template>
+</templateSet>

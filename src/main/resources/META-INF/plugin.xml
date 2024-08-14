@@ -24,7 +24,7 @@
             <li>
                 Display of compile errors while coding
                 <ul>
-                    <li>Requires  odin compiler that supports <code>-json-errors</code> (>= <code>dev-2024-04</code>)</li>
+                    <li>Requires odin compiler that supports <code>-json-errors</code> (>= <code>dev-2024-04</code>)</li>
                     <li>Strictness can be customized in the settings panel</li>
                 </ul>
             </li>
@@ -167,6 +167,9 @@
                 implementationClass="com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator.OdinBuildErrorsExternalAnnotator"/>
 
         <extendWordSelectionHandler implementation="com.lasagnerd.odin.selectioner.OdinStringSelectioner"/>
+
+        <defaultLiveTemplates file="/liveTemplates/Odin.xml"/>
+        <liveTemplateContext contextId="ODIN" implementation="com.lasagnerd.odin.liveTemplates.OdinLiveTemplateContextType"/>
     </extensions>
 
     <actions>
