@@ -2,9 +2,13 @@
 
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <version>0.5.0</version>
+    <version>0.5.1</version>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h2>0.5.0</h2>
+        <h3>Bugfix</h3>
+        <li>Fix bug in Odin settings panel. Saving settings now works again</li>
+
         <h2>0.5.0</h2>
         <h3>Features</h3>
         <ul>
