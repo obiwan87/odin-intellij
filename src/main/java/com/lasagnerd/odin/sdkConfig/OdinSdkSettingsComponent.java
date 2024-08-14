@@ -53,7 +53,6 @@ public class OdinSdkSettingsComponent {
                 .addComponentToRightColumn(createLabel(
                         "Optional. Space separated build flags passed to 'odin check'.<br><br>" +
                                 "Useful flags:<ul>" +
-                                "<li>-o:none (for fastest compile times)</li>" +
                                 "<li>-vet -vet-cast -strict-style (for more checks)</li>" +
                                 "<li>-max-error-count:999 (to report more errors)</li>" +
                                 "</ul>"), 0)
