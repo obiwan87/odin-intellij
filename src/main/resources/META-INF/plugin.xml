@@ -146,6 +146,7 @@
                 language="Odin"
                 implementationClass="com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator.OdinBuildErrorsExternalAnnotator"/>
 
+        <extendWordSelectionHandler implementation="com.lasagnerd.odin.selectioner.OdinStringSelectioner"/>
     </extensions>
 
     <actions>
