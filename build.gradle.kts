@@ -32,8 +32,11 @@ intellijPlatform  {
     }
 
     publishing {
-        val myToken = File("certificate/token").readText()
-        token.set(myToken)
+        val tokenFile = File("certificate/token")
+        if (tokenFile.exists()) {
+            val myToken = tokenFile.readText()
+            token.set(myToken)
+        }
     }
 
     signing {
