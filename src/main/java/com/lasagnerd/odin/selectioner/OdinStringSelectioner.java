@@ -64,6 +64,6 @@ public class OdinStringSelectioner extends ExtendWordSelectionHandlerBase {
      * @return True if the character is a quote, false otherwise.
      */
     private static boolean isQuote(char c) {
-        return c == '"' || c == '\'';
+        return c == '"' || c == '\'' || c == '`';
     }
 }

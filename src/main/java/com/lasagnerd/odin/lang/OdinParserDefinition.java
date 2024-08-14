@@ -20,7 +20,7 @@ public class OdinParserDefinition implements ParserDefinition {
 
     public static final IFileElementType FILE = new IFileElementType(OdinLanguage.INSTANCE);
     public static final @NotNull TokenSet COMMENT_TOKENS = TokenSet.create(OdinTypes.LINE_COMMENT, OdinTypes.BLOCK_COMMENT, OdinTypes.MULTILINE_BLOCK_COMMENT);
-    public static final @NotNull TokenSet STRING_LITERAL_ELEMENTS = TokenSet.create(OdinTypes.DQ_STRING_LITERAL, OdinTypes.RAW_STRING_LITERAL);
+    public static final @NotNull TokenSet STRING_LITERAL_ELEMENTS = TokenSet.create(OdinTypes.DQ_STRING_LITERAL, OdinTypes.RAW_STRING_LITERAL, OdinTypes.SQ_STRING_LITERAL);
 
     @Override
     public @NotNull Lexer createLexer(Project project) {
