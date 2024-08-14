@@ -8,33 +8,38 @@
         <h2>0.5.0</h2>
         <h3>Features</h3>
         <ul>
+            <li>Support for IntelliJ 2024.2</li>
             <li>Code Completion
                 <ul>
-                    <li>Support for Specialized/generic types</li>
-                    <li>Support for Generic methods</li>
-                    <li>Support for boolean and comparison operators</li>
-                    <li>Expanded support for "Go to declaration..."</li>
-                    <li>Foreign procedures added to suggestions </li>
-                    <li>Add support for auto-completion of types in other packages</li>
+                    <li>Support for completion of many built-in symbols (context, make, len ...)</li>
+                    <li>Support for completion on constrained polymorphic types</li>
+                    <li>Completion for all available symbols</li>
+                    <li>Completion now respects out of scope symbols</li>
                 </ul>
-            <li>Rename Refactoring</li>
-            <li>Backend</li>
-            <ul>
-                <li>Lots of work on the Inference engine</li>
-                <li>Added type specializer</li>
-            </ul>
+            <li>More support for "Go to declaration"</li>
+            <li>
+                Display of compile errors while coding
+                <ul>
+                    <li>Requires  odin compiler that supports <code>-json-errors</code> (>= <code>dev-2024-04</code>)</li>
+                    <li>Strictness can be customized in the settings panel</li>
+                </ul>
+            </li>
+            <li>Added structure aware navigation (<kbd>Ctrl/Cmd</kbd>+<kbd>F12</kbd>)</li>
+            <li>Added support for <code>bit_field</code></li>
+            <li>
+                Improved syntax highlighting for "Dark" theme
+            </li>
         </ul>
 
         <h2>Bug Fixes</h2>
         <ul>
-            <li>Fixed bug where imports wouldn't work</li>
-            <li>Fixed bug where symbols from other files in the same package
-                wouldn't be brought into scope</li>
-            <li>Fixed problem with parsing type asserts</li>
+            <li>Nested polymorphic types now work properly</li>
+            <li>Code completion doesn't fail for types in other packages</li>
+            <li>Fixed expand/shrink selection behaviour</li>
             <li>Fixed parse problem with argument lists ending on a new line</li>
         </ul>
 
-        <h2><= v0.4.0</h2>
+        <h2><= 0.4.0</h2>
         <h3>Features</h3>
         <ul>
             <li>Code Completion
@@ -43,7 +48,7 @@
                     <li>Support for Generic methods</li>
                     <li>Support for boolean and comparison operators</li>
                     <li>Expanded support for "Go to declaration..."</li>
-                    <li>Foreign procedures added to suggestions </li>
+                    <li>Foreign procedures added to suggestions</li>
                     <li>Add support for auto-completion of types in other packages</li>
                 </ul>
             <li>Rename Refactoring</li>
@@ -58,7 +63,8 @@
         <ul>
             <li>Fixed bug where imports wouldn't work</li>
             <li>Fixed bug where symbols from other files in the same package
-                wouldn't be brought into scope</li>
+                wouldn't be brought into scope
+            </li>
             <li>Fixed problem with parsing type asserts</li>
             <li>Fixed parse problem with argument lists ending on a new line</li>
         </ul>
@@ -67,7 +73,6 @@
         in the near future.
 
         Shout-out and special thanks to @MineBill, for supporting by reporting issues and helping with the testing.
-
         ]]>
     </change-notes>
     <vendor email="simon.distefano@gmx.de" url="https://lasagnerd.com">Lasagnerd</vendor>
@@ -93,9 +98,11 @@
                   extensions="odin"
                   implementationClass="com.lasagnerd.odin.lang.OdinFileType"/>
         <lang.parserDefinition language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinParserDefinition"/>
-        <lang.syntaxHighlighterFactory language="Odin" implementationClass="com.lasagnerd.odin.lang.OdinSyntaxHighlighterFactory"/>
+        <lang.syntaxHighlighterFactory language="Odin"
+                                       implementationClass="com.lasagnerd.odin.lang.OdinSyntaxHighlighterFactory"/>
         <lang.braceMatcher language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinBraceMatcher"/>
-        <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinLangHighlightingAnnotator"/>
+        <annotator language="Odin"
+                   implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinLangHighlightingAnnotator"/>
         <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFormattingBuilder"/>
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinAnnotator"/>
         <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
@@ -107,10 +114,13 @@
         <projectService serviceImplementation="com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState"/>
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
         <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService"/>
-        <projectService serviceInterface="com.lasagnerd.odin.codeInsight.imports.OdinImportService" serviceImplementation="com.lasagnerd.odin.codeInsight.imports.OdinImportServiceImpl"/>
-        <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType" id="OdinRunConfigurationType"/>
+        <projectService serviceInterface="com.lasagnerd.odin.codeInsight.imports.OdinImportService"
+                        serviceImplementation="com.lasagnerd.odin.codeInsight.imports.OdinImportServiceImpl"/>
+        <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType"
+                           id="OdinRunConfigurationType"/>
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
-        <runLineMarkerContributor language="Odin" implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
+        <runLineMarkerContributor language="Odin"
+                                  implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
         <!--        <codeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinCodeStyleSettingsProvider"/>-->
         <!--        <langCodeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinLanguageCodeStyleProvider"/>-->
         <lang.quoteHandler language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinQuoteHandler"/>
@@ -119,18 +129,23 @@
         <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier"
                                  implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinElementManipulators"/>
 
-        <completion.contributor language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor"/>
+        <completion.contributor language="Odin"
+                                implementationClass="com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor"/>
         <sdkType implementation="com.lasagnerd.odin.sdkConfig.OdinSdkType"/>
-        <codeInsight.parameterInfo language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.OdinParameterInfoHandler"/>
+        <codeInsight.parameterInfo language="Odin"
+                                   implementationClass="com.lasagnerd.odin.codeInsight.OdinParameterInfoHandler"/>
         <lang.findUsagesProvider
                 language="Odin"
                 implementationClass="com.lasagnerd.odin.codeInsight.OdinFindUsagesProvider"/>
         <!-- TODO        <usageTypeProvider implementation="com.lasagnerd.odin.codeInsight.OdinUsageTypeProvider"/>-->
-        <lang.refactoringSupport language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinRefactoringSupport"/>
+        <lang.refactoringSupport language="Odin"
+                                 implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinRefactoringSupport"/>
         <consoleFilterProvider implementation="com.lasagnerd.odin.runConfiguration.OdinBuildConsoleFilterProvider"/>
-        <refactoring.safeDeleteProcessor implementation="com.lasagnerd.odin.codeInsight.refactor.OdinSafeDeleteProcessor" />
+        <refactoring.safeDeleteProcessor
+                implementation="com.lasagnerd.odin.codeInsight.refactor.OdinSafeDeleteProcessor"/>
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinUnusedAnnotator"/>
-        <lang.importOptimizer language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinImportOptimizer"/>
+        <lang.importOptimizer language="Odin"
+                              implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinImportOptimizer"/>
         <additionalTextAttributes
                 scheme="Darcula"
                 file="colorSchemes/OdinLangDarcula.xml"/>
@@ -138,7 +153,8 @@
                 scheme="Dark"
                 file="colorSchemes/OdinLangDark.xml"/>
         <indexedRootsProvider implementation="com.lasagnerd.odin.indexes.OdinSdkFilesIndexContributor"/>
-        <lang.psiStructureViewFactory language="Odin" implementationClass="com.lasagnerd.odin.structureView.OdinStructureViewFactory"/>
+        <lang.psiStructureViewFactory language="Odin"
+                                      implementationClass="com.lasagnerd.odin.structureView.OdinStructureViewFactory"/>
         <notificationGroup id="Odin Notifications"
                            displayType="BALLOON"
                            key="notification.odin"/>
