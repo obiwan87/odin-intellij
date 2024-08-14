@@ -42,7 +42,6 @@ public class OdinSdkConfigurable implements Configurable {
     public void apply() {
         OdinSdkConfigPersistentState config = OdinSdkConfigPersistentState.getInstance(project);
         String sdkPath = sdkSettingsComponent.getSdkPath();
-        String directoryToCompile = sdkSettingsComponent.getDirectoryToCompile();
         config.setSdkPath(sdkPath);
         config.setExtraBuildFlags(sdkSettingsComponent.getBuildFlags());
     }
