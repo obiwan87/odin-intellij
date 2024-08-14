@@ -18,10 +18,13 @@ public class OdinFormatterBlock extends AbstractBlock {
     private final SpacingBuilder spacingBuilder;
     static List<IElementType> typesToIndent = List.of(
             OdinTypes.STATEMENT_LIST,
+            OdinTypes.FOREIGN_STATEMENT_LIST,
             OdinTypes.STRUCT_BODY,
             OdinTypes.ENUM_BODY,
             OdinTypes.UNION_BODY,
-            OdinTypes.COMPOUND_VALUE_BODY
+            OdinTypes.COMPOUND_VALUE_BODY,
+            OdinTypes.BLOCK_COMMENT,
+            OdinTypes.LINE_COMMENT
     );
 
     static List<IElementType> typesToSmartIndent = List.of(
