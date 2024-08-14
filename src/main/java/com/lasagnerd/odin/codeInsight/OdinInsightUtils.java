@@ -11,7 +11,7 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
-import org.apache.commons.lang3.StringEscapeUtils;
+import groovy.json.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -265,7 +265,7 @@ public class OdinInsightUtils {
         List<OdinRefExpression> odinRefExpressions = unfoldRefExpressions(element);
         if (odinRefExpressions.isEmpty())
             return null;
-        return odinRefExpressions.get(odinRefExpressions.size() - 1);
+        return odinRefExpressions.getLast();
     }
 
     public static @NotNull List<OdinRefExpression> unfoldRefExpressions(PsiElement element) {

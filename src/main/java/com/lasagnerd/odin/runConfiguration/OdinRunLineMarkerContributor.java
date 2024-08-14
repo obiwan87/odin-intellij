@@ -3,7 +3,6 @@ package com.lasagnerd.odin.runConfiguration;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.PsiElement;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
@@ -30,7 +29,7 @@ public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
         if (element.getText().equals("main")) {
             AnAction[] actions = ExecutorAction.getActions(1);
             return new Info(
-                    ExpUiIcons.Gutter.Run,
+                    AllIcons.RunConfigurations.TestState.Run,
                     new AnAction[]{ actions[0], actions[actions.length - 1] },
                     (ignored) -> "Run " + element.getContainingFile().getName()
             );
