@@ -2,15 +2,21 @@
 
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <version>0.5.1</version>
+    <version>0.5.2</version>
     <name>Odin Support</name>
     <change-notes><![CDATA[
-        <h2>0.5.0</h2>
-        <h3>Bugfix</h3>
+        <h3>0.5.2</h3>
+        <h4>Bugfixes</h4>
+        <li>Fixed bug where odin checker would falsely report errors</li>
+        <li>Fixed bug where odin checker would not terminate</li>
+        <li>Fixed bug where closing parentheses would be wrongly auto-inserted </li>
+
+        <h3>0.5.1</h3>
+        <h4>Bugfix</h4>
         <li>Fix bug in Odin settings panel. Saving settings now works again</li>
 
-        <h2>0.5.0</h2>
-        <h3>Features</h3>
+        <h3>0.5.0</h3>
+        <h4>Features</h4>
         <ul>
             <li>Support for IntelliJ 2024.2</li>
             <li>Code Completion
@@ -35,7 +41,7 @@
             </li>
         </ul>
 
-        <h2>Bug Fixes</h2>
+        <h4>Bug Fixes</h4>
         <ul>
             <li>Nested polymorphic types now work properly</li>
             <li>Code completion doesn't fail for types in other packages</li>
@@ -43,8 +49,8 @@
             <li>Fixed parse problem with argument lists ending on a new line</li>
         </ul>
 
-        <h2><= 0.4.0</h2>
-        <h3>Features</h3>
+        <h3><= 0.4.0</h3>
+        <h4>Features</h4>
         <ul>
             <li>Code Completion
                 <ul>
@@ -63,7 +69,7 @@
             </ul>
         </ul>
 
-        <h2>Bug Fixes</h2>
+        <h4>Bug Fixes</h4>
         <ul>
             <li>Fixed bug where imports wouldn't work</li>
             <li>Fixed bug where symbols from other files in the same package

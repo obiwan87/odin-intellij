@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.lasagnerd"
-version = "0.5.1"
+version = "0.5.2"
 
 repositories {
     mavenCentral()
@@ -23,7 +23,7 @@ intellijPlatform  {
     projectName = project.name
 
     pluginConfiguration {
-        version = "0.5.1"
+        version = "0.5.2"
 
         ideaVersion {
             sinceBuild = "242"
