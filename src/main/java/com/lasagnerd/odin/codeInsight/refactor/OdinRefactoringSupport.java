@@ -15,6 +15,4 @@ public class OdinRefactoringSupport extends RefactoringSupportProvider {
     public boolean isSafeDeleteAvailable(@NotNull PsiElement element) {
         return element instanceof OdinDeclaredIdentifier;
     }
-
-
 }

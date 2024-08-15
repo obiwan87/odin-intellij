@@ -253,7 +253,7 @@ unionBody                            ::= type (COMMA type)* [COMMA|EOS_TOKEN] {i
 
 bitFieldDeclarationStatement         ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitFieldType
 bitFieldType                         ::= BIT_FIELD type bitFieldBlock
-bitFieldBlock                        ::= blockStart bitFieldBody blockEnd
+bitFieldBlock                        ::= blockStart bitFieldBody? blockEnd
 bitFieldBody                         ::= bitFieldFieldDeclaration (COMMA bitFieldFieldDeclaration )*  [COMMA|EOS_TOKEN]
 bitFieldFieldDeclaration             ::= declaredIdentifier COLON type PIPE expression
 

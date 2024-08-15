@@ -653,6 +653,11 @@ public class OdinTypeResolver extends OdinVisitor {
         }
 
         @Override
+        public void visitBitFieldType(@NotNull OdinBitFieldType o) {
+            this.metaType = createMetaType(o.getType(), TsOdinMetaType.MetaType.BIT_FIELD);
+        }
+
+        @Override
         public void visitQualifiedType(@NotNull OdinQualifiedType o) {
 
         }

@@ -125,6 +125,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
                 symbols.addAll(OdinInsightUtils.getTypeElements(o.getType(), symbolTable));
             }
         }
+
     }
 
     @Override
@@ -150,7 +151,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
                 if (o.getType() != null) {
                     symbols.addAll(OdinInsightUtils.getTypeElements(o.getType(), symbolTable));
                 } else {
-                    OdinExpression odinExpression = o.getExpressionsList().getExpressionList().get(0);
+                    OdinExpression odinExpression = o.getExpressionsList().getExpressionList().getFirst();
                     symbols.addAll(OdinInsightUtils.getTypeElements(odinExpression, symbolTable));
                 }
             }

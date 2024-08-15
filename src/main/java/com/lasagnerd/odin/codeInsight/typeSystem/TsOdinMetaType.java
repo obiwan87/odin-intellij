@@ -18,21 +18,27 @@ public class TsOdinMetaType extends TsOdinType {
 
     public enum MetaType {
         ARRAY,
+        BIT_FIELD,
         BIT_SET,
+        BOOL,
         BUILTIN,
         ENUM,
         MAP,
         MATRIX,
         MULTI_POINTER,
+        NUMERIC,
         PACKAGE,
         POINTER,
         POLYMORPHIC,
         PROCEDURE,
+        RAWPTR,
+        RUNE,
         SLICE,
+        STRING,
         STRUCT,
         UNION,
         UNKNOWN,
-        VOID, NUMERIC, BOOL, RUNE, STRING, RAWPTR,
+        VOID,
     }
 
 
