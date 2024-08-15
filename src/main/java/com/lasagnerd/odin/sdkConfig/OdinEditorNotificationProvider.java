@@ -17,7 +17,11 @@ public class OdinEditorNotificationProvider implements EditorNotificationProvide
     @Override
     public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project, @NotNull VirtualFile file) {
         return fileEditor -> {
+            if(!file.getPath().endsWith(".odin"))
+                return null;
+
             Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
+
             if(sdkPath.isPresent())
                 return null;
             EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning);
@@ -29,6 +33,7 @@ public class OdinEditorNotificationProvider implements EditorNotificationProvide
                             OdinSdkConfigurable.class, null);
                 }
             });
+
             return panel;
         };
     }
