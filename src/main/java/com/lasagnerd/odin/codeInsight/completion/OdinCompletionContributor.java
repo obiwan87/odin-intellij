@@ -61,7 +61,13 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 // TODO at some point we should return the type of each symbol
                                 OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, reference.getExpression());
                                 if (completionScope != null) {
-                                    addLookUpElements(result, completionScope.flatten().getSymbols());
+                                    Collection<OdinSymbol> visibleSymbols = completionScope.flatten()
+                                            .getSymbols()
+                                            .stream()
+                                            .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
+                                            .collect(Collectors.toList());
+
+                                    addLookUpElements(result, visibleSymbols);
                                 }
                             }
                         }
