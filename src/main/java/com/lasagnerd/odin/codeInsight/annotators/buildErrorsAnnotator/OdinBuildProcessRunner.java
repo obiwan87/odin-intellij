@@ -70,6 +70,7 @@ public class OdinBuildProcessRunner {
         command.add("check");
         command.add(fileParentDirPath.toString());
         command.add("-json-errors");
+        command.add("-no-entry-point");
 
         if (!extraBuildFlags.isEmpty()) {
             Collections.addAll(command, extraBuildFlags.split(" +"));
