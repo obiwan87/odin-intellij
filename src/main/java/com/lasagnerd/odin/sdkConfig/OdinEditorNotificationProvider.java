@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.sdkConfig;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -18,7 +17,7 @@ public class OdinEditorNotificationProvider implements EditorNotificationProvide
     @Override
     public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project, @NotNull VirtualFile file) {
         return fileEditor -> {
-            Optional<String> sdkPath = OdinSdkConfigPersistentState.getSdkPath(project);
+            Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
             if(sdkPath.isPresent())
                 return null;
             EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning);

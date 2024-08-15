@@ -1,11 +1,12 @@
 package com.lasagnerd.odin.sdkConfig;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
@@ -16,11 +17,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
-public class OdinSdkSettingsComponent {
+public class OdinSdkSettingsComponent implements Disposable {
 
     private final JPanel mainPanel;
-    private JBTextField sdkPathTextField;
+    private TextFieldWithBrowseButton sdkPathTextField;
     private JBTextField buildFlagsTextField;
+
+    @Override
+    public void dispose() {
+
+    }
 
     class BrowseToSdkFileChooserAction extends AbstractAction {
         public BrowseToSdkFileChooserAction() {
@@ -37,7 +43,8 @@ public class OdinSdkSettingsComponent {
             if (virtualFile == null) {
                 return;
             }
-            setSdkPath(virtualFile.getPath());
+            String path = virtualFile.getPath();
+            setSdkPath(path);
         }
     }
 
@@ -72,11 +79,8 @@ public class OdinSdkSettingsComponent {
     private JComponent createSdkPathTextFieldWithBrowseButton() {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = createGridBagConstraintsForFirstColumn();
-        sdkPathTextField = new JBTextField(20);
+        sdkPathTextField = new TextFieldWithBrowseButton(new JBTextField(), new BrowseToSdkFileChooserAction());
         panel.add(sdkPathTextField, constraints);
-
-        JBOptionButton browseButton = new JBOptionButton(new BrowseToSdkFileChooserAction(), null);
-        panel.add(browseButton, createGridBagConstraintsForSecondColumn());
 
         return panel;
     }

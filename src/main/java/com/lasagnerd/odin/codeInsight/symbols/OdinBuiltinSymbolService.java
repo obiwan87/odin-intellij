@@ -11,7 +11,7 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
+import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -66,7 +66,7 @@ public class OdinBuiltinSymbolService {
 
     public List<OdinSymbol>  getRuntimeCoreSymbols() {
         if(runtimeCoreSymbols == null) {
-            Optional<String> sdkPathOptional = OdinSdkConfigPersistentState.getSdkPath(project);
+            Optional<String> sdkPathOptional = OdinSdkUtils.getSdkPath(project);
 
             if (sdkPathOptional.isEmpty()) {
                 return Collections.emptyList();
@@ -141,7 +141,7 @@ public class OdinBuiltinSymbolService {
         // TODO Cache this stuff
         List<OdinSymbol> builtinSymbols = new ArrayList<>();
         // 0. Import built-in symbols
-        Optional<String> sdkPathOptional = OdinSdkConfigPersistentState.getSdkPath(project);
+        Optional<String> sdkPathOptional = OdinSdkUtils.getSdkPath(project);
 
         if (sdkPathOptional.isEmpty())
             return Collections.emptyList();

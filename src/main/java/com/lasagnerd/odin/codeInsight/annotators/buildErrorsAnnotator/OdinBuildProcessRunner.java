@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
+import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
 import lombok.Getter;
 
 import java.io.ByteArrayOutputStream;
@@ -54,7 +55,7 @@ public class OdinBuildProcessRunner {
         if (config.sdkPath.isEmpty()) {
             return false;
         }
-        String odinBinaryPath = OdinSdkConfigPersistentState.getOdinBinaryPath(project);
+        String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(project);
 
         if (odinBinaryPath == null)
             return false;
@@ -88,7 +89,7 @@ public class OdinBuildProcessRunner {
             return null;
         }
 
-        String odinBinaryPath = OdinSdkConfigPersistentState.getOdinBinaryPath(project);
+        String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(project);
 
         if (odinBinaryPath == null || !new File(odinBinaryPath).exists()) {
             return null;

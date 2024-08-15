@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.lasagnerd.odin.lang.OdinFileType;
-import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
+import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -27,7 +27,7 @@ public class OdinSdkFilesIndexContributor extends IndexableSetContributor {
     @NotNull
     public Set<VirtualFile> getAdditionalProjectRootsToIndex(@NotNull Project project) {
         log.debug("File index contributor called");
-        Optional<String> sdkPath = OdinSdkConfigPersistentState.getSdkPath(project);
+        Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
         if (sdkPath.isPresent()) {
             try {
                 Path path = Path.of(sdkPath.get());
