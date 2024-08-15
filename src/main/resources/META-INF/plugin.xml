@@ -141,7 +141,7 @@
 
         <completion.contributor language="Odin"
                                 implementationClass="com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor"/>
-        <sdkType implementation="com.lasagnerd.odin.sdkConfig.OdinSdkType"/>
+<!--        <sdkType implementation="com.lasagnerd.odin.sdkConfig.OdinSdkType"/>-->
         <codeInsight.parameterInfo language="Odin"
                                    implementationClass="com.lasagnerd.odin.codeInsight.OdinParameterInfoHandler"/>
         <lang.findUsagesProvider
@@ -176,6 +176,8 @@
 
         <defaultLiveTemplates file="/liveTemplates/Odin.xml"/>
         <liveTemplateContext contextId="ODIN" implementation="com.lasagnerd.odin.liveTemplates.OdinLiveTemplateContextType"/>
+
+        <editorNotificationProvider implementation="com.lasagnerd.odin.sdkConfig.OdinEditorNotificationProvider"/>
     </extensions>
 
     <actions>
