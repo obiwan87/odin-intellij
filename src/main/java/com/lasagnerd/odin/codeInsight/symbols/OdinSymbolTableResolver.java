@@ -399,7 +399,7 @@ public class OdinSymbolTableResolver {
         }
 
         if (containingScopeBlock instanceof OdinForInBlock forInBlock) {
-            declarations.addAll(forInBlock.getForInParameterDeclarationList());
+            declarations.add(forInBlock.getForInParameterDeclaration());
         }
 
         if (containingScopeBlock instanceof OdinSwitchBlock switchBlock) {

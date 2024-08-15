@@ -2,6 +2,7 @@ package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.*;
@@ -39,7 +40,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         if (odinDeclarationSymbolResolver.symbols.isEmpty()) {
             LOG.debug("No symbols found for declaration with type " + odinDeclaration.getClass().getSimpleName());
             VirtualFile virtualFile = odinDeclaration.getContainingFile().getVirtualFile();
-            if(virtualFile != null) {
+            if (virtualFile != null) {
                 LOG.debug("Containing file: " + virtualFile.getPath());
             }
             LOG.debug("Text: " + odinDeclaration.getText());
@@ -71,8 +72,8 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             symbols.add(odinSymbol);
         }
 
-        if(using && o.getDeclaredIdentifiers().size() == 1) {
-            if(type != null) {
+        if (using && o.getDeclaredIdentifiers().size() == 1) {
+            if (type != null) {
                 symbols.addAll(OdinInsightUtils.getTypeElements(type, symbolTable));
             } else {
                 symbols.addAll(OdinInsightUtils.getTypeElements(o.getExpression(), symbolTable));
@@ -97,9 +98,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             symbols.add(symbol);
         }
 
-        if(hasUsing) {
-            if(o.getParameterList().size() == 1) {
-                if(psiType != null) {
+        if (hasUsing) {
+            if (o.getParameterList().size() == 1) {
+                if (psiType != null) {
                     symbols.addAll(OdinInsightUtils.getTypeElements(psiType, symbolTable));
                 }
             }
@@ -119,8 +120,8 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             symbols.add(odinSymbol);
         }
 
-        if(hasUsing) {
-            if(o.getDeclaredIdentifiers().size() == 1) {
+        if (hasUsing) {
+            if (o.getDeclaredIdentifiers().size() == 1) {
                 symbols.addAll(OdinInsightUtils.getTypeElements(o.getType(), symbolTable));
             }
         }
@@ -144,9 +145,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             symbols.add(odinSymbol);
         }
 
-        if(hasUsing) {
-            if(o.getDeclaredIdentifiers().size() == 1 && o.getExpressionsList().getExpressionList().size() == 1) {
-                if(o.getType() != null) {
+        if (hasUsing) {
+            if (o.getDeclaredIdentifiers().size() == 1 && o.getExpressionsList().getExpressionList().size() == 1) {
+                if (o.getType() != null) {
                     symbols.addAll(OdinInsightUtils.getTypeElements(o.getType(), symbolTable));
                 } else {
                     OdinExpression odinExpression = o.getExpressionsList().getExpressionList().get(0);
@@ -199,9 +200,12 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitForInParameterDeclaration(@NotNull OdinForInParameterDeclaration o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.NONE);
-        odinSymbol.setSymbolType(OdinSymbolType.VARIABLE);
-        symbols.add(odinSymbol);
+        for (OdinForInParameterDeclarator odinForInParameterDeclarator : o.getForInParameterDeclaratorList()) {
+            PsiNamedElement declaredIdentifier = odinForInParameterDeclarator.getDeclaredIdentifier();
+            OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier, OdinSymbol.OdinVisibility.NONE);
+            odinSymbol.setSymbolType(OdinSymbolType.VARIABLE);
+            symbols.add(odinSymbol);
+        }
     }
 
     @Override
@@ -296,7 +300,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 //            odinSymbol.setPackagePath();
             symbols.add(odinSymbol);
         }
-        if(o.getDeclaredIdentifierList().size() == 1 && hasUsing) {
+        if (o.getDeclaredIdentifierList().size() == 1 && hasUsing) {
             OdinInsightUtils.getSymbolsOfFieldWithUsing(symbolTable, o, symbols);
         }
     }

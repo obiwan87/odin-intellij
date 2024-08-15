@@ -300,7 +300,7 @@ return_type_defined_proc :: proc() {
         return e
     }
 
-    caller2 :: proc() -> Error () {
+    caller2 :: proc() -> Error {
         return .None
     }
 

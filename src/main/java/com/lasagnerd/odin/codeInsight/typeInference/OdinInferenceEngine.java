@@ -245,7 +245,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     TsOdinProcedureType specializedType = OdinTypeSpecializer
                             .specializeProcedure(symbolTable, o.getArgumentList(), procedureType);
                     if (specializedType.getReturnTypes().size() == 1) {
-                        this.type = specializedType.getReturnTypes().get(0);
+                        this.type = specializedType.getReturnTypes().getFirst();
                     } else if (specializedType.getReturnTypes().size() > 1) {
                         this.type = new TsOdinTuple(specializedType.getReturnTypes());
                     } else {
@@ -369,9 +369,9 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitOrElseExpression(@NotNull OdinOrElseExpression o) {
         if (!o.getExpressionList().isEmpty()) {
-            TsOdinType tsOdinType = doInferType(symbolTable, createOptionalOkTuple(expectedType), 2, o.getExpressionList().get(0));
+            TsOdinType tsOdinType = doInferType(symbolTable, createOptionalOkTuple(expectedType), 2, o.getExpressionList().getFirst());
             if (isOptionalOkTuple(tsOdinType)) {
-                this.type = ((TsOdinTuple) tsOdinType).getTypes().get(0);
+                this.type = ((TsOdinTuple) tsOdinType).getTypes().getFirst();
             }
         }
     }
@@ -451,13 +451,13 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitRangeInclusiveExpression(@NotNull OdinRangeInclusiveExpression o) {
-        OdinExpression odinExpression = o.getExpressionList().get(0);
+        OdinExpression odinExpression = o.getExpressionList().getFirst();
         this.type = doInferType(symbolTable, odinExpression);
     }
 
     @Override
     public void visitRangeExclusiveExpression(@NotNull OdinRangeExclusiveExpression o) {
-        OdinExpression odinExpression = o.getExpressionList().get(0);
+        OdinExpression odinExpression = o.getExpressionList().getFirst();
         this.type = doInferType(symbolTable, odinExpression);
     }
 
@@ -536,7 +536,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         TsOdinType tsOdinType = doInferType(symbolTable, expression);
         if (tsOdinType instanceof TsOdinUnionType tsOdinUnionType) {
             if (tsOdinUnionType.getVariants().size() == 1) {
-                this.type = createOptionalOkTuple(tsOdinUnionType.getVariants().get(0).getType());
+                this.type = createOptionalOkTuple(tsOdinUnionType.getVariants().getFirst().getType());
             } else if (tsOdinUnionType.getVariants().size() > 1 && !expectedUnionType.isUnknown()) {
                 // Check if expectedType is in union variants
                 this.type = createOptionalOkTuple(expectedUnionType);
@@ -696,10 +696,14 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (odinDeclaration instanceof OdinForInParameterDeclaration forInParameterDeclaration) {
             OdinForInBlock forInBlock = PsiTreeUtil.getParentOfType(forInParameterDeclaration, OdinForInBlock.class);
 
+
             if (forInBlock != null) {
-                int index = forInBlock.getForInParameterDeclarationList().indexOf(forInParameterDeclaration);
-                boolean isReference = forInParameterDeclaration.getAnd() != null;
-                OdinExpression expression = forInBlock.getExpression();
+                List<OdinDeclaredIdentifier> identifiers = forInParameterDeclaration.getForInParameterDeclaratorList().stream().map(OdinForInParameterDeclarator::getDeclaredIdentifier).toList();
+                int index = identifiers.indexOf(declaredIdentifier);
+                var odinDeclaredIdentifier = forInParameterDeclaration.getForInParameterDeclaratorList().get(index);
+                boolean isReference = odinDeclaredIdentifier.getAnd() != null;
+
+                OdinExpression expression = forInBlock.getForInParameterDeclaration().getExpression();
                 TsOdinType tsOdinType = inferType(parentSymbolTable, expression);
                 if (tsOdinType instanceof TsOdinMapType mapType) {
                     if (index == 0) {
@@ -754,7 +758,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     @NotNull List<OdinExpression> expressionList = caseBlock.getExpressionList();
 
                     if (expressionList.size() == 1) {
-                        OdinExpression odinExpression = expressionList.get(0);
+                        OdinExpression odinExpression = expressionList.getFirst();
                         TsOdinType caseType = inferType(parentSymbolTable, odinExpression);
                         if (caseType instanceof TsOdinMetaType metaType) {
                             return OdinTypeResolver.resolveMetaType(parentSymbolTable, metaType);
@@ -839,7 +843,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         TsOdinType tsOdinType = inferType(symbolTable, expression);
         if (tsOdinType instanceof TsOdinTuple tsOdinTuple) {
             if (tsOdinTuple.getTypes().size() > 1) {
-                this.type = tsOdinTuple.getTypes().get(0);
+                this.type = tsOdinTuple.getTypes().getFirst();
             }
         }
     }

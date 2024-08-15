@@ -1,13 +1,12 @@
 package com.lasagnerd.odin.lang.psi;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.*;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
@@ -28,16 +27,16 @@ public class OdinPsiUtil {
     }
 
     public static PsiElement getOperator(OdinBinaryExpression self) {
-        if(self instanceof OdinMulExpression mulExpression)
+        if (self instanceof OdinMulExpression mulExpression)
             return mulExpression.getStar();
 
-        if(self instanceof OdinDivExpression divExpression)
+        if (self instanceof OdinDivExpression divExpression)
             return divExpression.getDiv();
 
-        if(self instanceof OdinAddExpression addExpression)
+        if (self instanceof OdinAddExpression addExpression)
             return addExpression.getPlus();
 
-        if(self instanceof OdinSubExpression subExpression)
+        if (self instanceof OdinSubExpression subExpression)
             return subExpression.getMinus();
 
         return self.getChildren().length > 1 ? self.getChildren()[1] : null;
@@ -259,7 +258,7 @@ public class OdinPsiUtil {
     }
 
     public static OdinType getKeyType(OdinMapType mapType) {
-        return mapType.getTypeList().get(0);
+        return mapType.getTypeList().getFirst();
     }
 
     public static OdinType getValueType(OdinMapType mapType) {
@@ -376,7 +375,7 @@ public class OdinPsiUtil {
 
     public static List<OdinSymbol> getSymbols(OdinForInBlock forInStatement) {
         List<OdinSymbol> symbols = new ArrayList<>();
-        for (var forInParameter : forInStatement.getForInParameterDeclarationList()) {
+        for (var forInParameter : forInStatement.getForInParameterDeclaration().getForInParameterDeclaratorList()) {
             OdinSymbol spec = new OdinSymbol(forInParameter.getDeclaredIdentifier());
             symbols.add(spec);
         }
@@ -419,7 +418,7 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinForInParameterDeclaration forInParameterDeclaration) {
-        return Collections.singletonList(forInParameterDeclaration.getDeclaredIdentifier());
+        return forInParameterDeclaration.getForInParameterDeclaratorList().stream().map(OdinForInParameterDeclarator::getDeclaredIdentifier).toList();
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinSwitchTypeVariableDeclaration typeVariableDeclaration) {

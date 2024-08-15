@@ -691,8 +691,9 @@ forUpdate                            ::= assignmentStatement | callExpression
 
 // For-In
 forInStatement                       ::= [directive] [labelDeclaration] forInBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-forInBlock                           ::= FOR <<enterNoBlockMode>> [forInParameterDeclaration (COMMA forInParameterDeclaration)*] IN expression <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
-forInParameterDeclaration            ::= AND? declaredIdentifier
+forInBlock                           ::= FOR <<enterNoBlockMode>> forInParameterDeclaration <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
+forInParameterDeclaration            ::= [forInParameterDeclarator (COMMA forInParameterDeclarator)*] IN expression
+forInParameterDeclarator            ::= AND? declaredIdentifier
 
 // Conditional statement (=if-elseif-else)
 private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit] SEMICOLON] condition <<exitNoBlockMode>>
