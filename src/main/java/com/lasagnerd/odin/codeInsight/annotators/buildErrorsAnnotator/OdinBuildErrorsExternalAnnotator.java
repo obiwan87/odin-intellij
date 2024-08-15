@@ -66,7 +66,7 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
                     isWarning ? CodeInsightColors.WARNINGS_ATTRIBUTES : CodeInsightColors.ERRORS_ATTRIBUTES;
 
             String message = error.getMsgs().getFirst();
-            String tooltip = String.join("\n", error.getMsgs());
+            String tooltip = String.join("<br>", error.getMsgs());
             holder.newAnnotation(severity, message)
                     .tooltip(tooltip)
                     .range(errorRange)
