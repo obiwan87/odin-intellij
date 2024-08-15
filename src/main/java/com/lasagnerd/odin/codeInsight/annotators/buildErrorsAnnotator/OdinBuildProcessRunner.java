@@ -11,8 +11,11 @@ import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import lombok.Getter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -82,7 +85,6 @@ public class OdinBuildProcessRunner {
         if (project == null) {
             return null;
         }
-        OdinBuildErrorResult buildErrorResult = null;
 
         String odinBinaryPath = OdinSdkConfigPersistentState.getOdinBinaryPath(project);
 
@@ -96,11 +98,23 @@ public class OdinBuildProcessRunner {
         ProcessBuilder pb = launchProcessBuilder(filePath, odinBinaryPath, extraBuildFlags);
         try {
             Process p = pb.start();
-            boolean exited = p.waitFor(TIMEOUT, TimeUnit.SECONDS);
 
-            if (!exited) {
-                LOG.error("odin check did not complete within " + TIMEOUT + " seconds for file " + filePath);
-                return null;
+            // Manually consume the error stream, in order to avoid a deadlock situation when buffers are full
+            byte[] errorBytes = toByteArray(p.getErrorStream());
+
+            consumeStream(p.getInputStream());
+
+            String stderr = new String(errorBytes);
+
+            p.waitFor(TIMEOUT, TimeUnit.SECONDS);
+            if (p.isAlive()) {
+                LOG.error("'odin check' did not complete within " + TIMEOUT + " seconds for file " + filePath);
+                p.destroy();
+            } else {
+                int errorCode = p.exitValue();
+                if (errorCode == 0) {
+                    return null;
+                }
             }
 
             int statusCode = p.exitValue();
@@ -108,7 +122,6 @@ public class OdinBuildProcessRunner {
                 return null;
             }
 
-            String stderr = new String(p.getErrorStream().readAllBytes());
             Gson gson = new GsonBuilder().create();
             try {
                 return gson.fromJson(stderr, OdinBuildErrorResult.class);
@@ -121,6 +134,29 @@ public class OdinBuildProcessRunner {
             LOG.error(e);
             return null;
         }
+    }
+
+    private void consumeStream(InputStream inputStream) {
+        try {
+            while (inputStream.read() != -1) {
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+
+    public static byte[] toByteArray(InputStream input) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] data = new byte[1024]; // buffer size of 1KB
+        int bytesRead;
+
+        while ((bytesRead = input.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, bytesRead);
+        }
+
+        return buffer.toByteArray();
     }
 
 }
