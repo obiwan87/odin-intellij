@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 @Getter
 public class OdinBuildProcessRunner {
+    public static final int TIMEOUT = 10;
     public static Logger LOG = Logger.getInstance(OdinBuildProcessRunner.class);
     private static OdinBuildProcessRunner instance;
 
@@ -79,18 +80,18 @@ public class OdinBuildProcessRunner {
 
     private static ProcessBuilder launchProcessBuilder(String filePath, String odinBinaryPath, String extraBuildFlags) {
 
+        File fileParentDirPath = Path.of(filePath).getParent().toFile();
         List<String> command = new ArrayList<>();
         command.add(odinBinaryPath);
         command.add("check");
-        command.add(filePath);
-        command.add("-file");
+        command.add(fileParentDirPath.toString());
         command.add("-json-errors");
-        command.add("-no-entry-point");
+//        command.add("-no-entry-point");
         if (!extraBuildFlags.isEmpty()) {
             Collections.addAll(command, extraBuildFlags.split(" +"));
         }
 
-        return new ProcessBuilder(command).directory(Path.of(filePath).getParent().toFile());
+        return new ProcessBuilder(command).directory(fileParentDirPath);
     }
 
     /**
@@ -114,10 +115,10 @@ public class OdinBuildProcessRunner {
         ProcessBuilder pb = launchProcessBuilder(filePath, odinBinaryPath, extraBuildFlags);
         try {
             Process p = pb.start();
-            boolean exited = p.waitFor(3, TimeUnit.SECONDS);
+            boolean exited = p.waitFor(TIMEOUT, TimeUnit.SECONDS);
 
             if (!exited) {
-                LOG.error("odin check did not complete within 3 seconds for file " + filePath);
+                LOG.error("odin check did not complete within " + TIMEOUT + " seconds for file " + filePath);
                 buildErrorResult = null;
                 return;
             }

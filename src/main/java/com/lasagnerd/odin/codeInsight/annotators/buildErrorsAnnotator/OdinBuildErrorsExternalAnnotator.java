@@ -34,6 +34,7 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
         // save all documents for 'odin build .' to work
         ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
         OdinBuildProcessRunner.getInstance().buildAndUpdateErrors(file.getProject(), file);
+
         return OdinBuildProcessRunner.getInstance().getBuildErrorResult();
     }
 
@@ -68,7 +69,7 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
             TextAttributesKey attributes =
                     isWarning ? CodeInsightColors.WARNINGS_ATTRIBUTES : CodeInsightColors.ERRORS_ATTRIBUTES;
 
-            String message = error.getMsgs().get(0);
+            String message = error.getMsgs().getFirst();
             String tooltip = String.join("\n", error.getMsgs());
             holder.newAnnotation(severity, message)
                     .tooltip(tooltip)
