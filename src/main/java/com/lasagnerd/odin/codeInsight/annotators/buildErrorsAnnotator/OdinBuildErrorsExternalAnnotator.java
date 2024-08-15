@@ -8,9 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -34,7 +31,7 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
         }
 
         ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
-        return  OdinBuildProcessRunner.getInstance().buildAndUpdateErrors(file.getProject(), file);
+        return OdinBuildProcessRunner.getInstance().buildAndUpdateErrors(file.getProject(), file);
     }
 
     @Override
@@ -66,7 +63,8 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
                     isWarning ? CodeInsightColors.WARNINGS_ATTRIBUTES : CodeInsightColors.ERRORS_ATTRIBUTES;
 
             String message = error.getMsgs().getFirst();
-            String tooltip = String.join("<br>", error.getMsgs());
+            // replace tab with 4 spaces for HTML formatting
+            String tooltip = String.join("<br>", error.getMsgs()).replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
             holder.newAnnotation(severity, message)
                     .tooltip(tooltip)
                     .range(errorRange)

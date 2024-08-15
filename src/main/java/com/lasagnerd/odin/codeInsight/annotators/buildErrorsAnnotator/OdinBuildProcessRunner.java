@@ -137,9 +137,7 @@ public class OdinBuildProcessRunner {
     }
 
     private static void consumeOutputStreamAsync(Process p) {
-        new Thread(() -> {
-            consumeStream(p.getInputStream());
-        }).start();
+        new Thread(() -> consumeStream(p.getInputStream())).start();
     }
 
     private static void consumeErrorStreamAsync(AtomicReference<byte[]> errorBytes, Process p) {
