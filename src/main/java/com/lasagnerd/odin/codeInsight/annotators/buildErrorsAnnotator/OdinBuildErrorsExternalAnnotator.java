@@ -34,19 +34,7 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
         }
 
         ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
-        final OdinBuildErrorResult[] result = {null};
-        ProgressManager.getInstance().run(new Task.Backgroundable(file.getProject(), "Checking file", true) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-                // Your long-running task
-                indicator.setIndeterminate(true);
-                // Do the actual annotation work here
-                result[0] = OdinBuildProcessRunner.getInstance().buildAndUpdateErrors(file.getProject(), file);
-            }
-        });
-
-
-        return result[0];
+        return  OdinBuildProcessRunner.getInstance().buildAndUpdateErrors(file.getProject(), file);
     }
 
     @Override

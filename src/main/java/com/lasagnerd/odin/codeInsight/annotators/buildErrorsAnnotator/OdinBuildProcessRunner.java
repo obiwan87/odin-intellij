@@ -15,17 +15,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 @Getter
 public class OdinBuildProcessRunner {
-    public static final int TIMEOUT = 10;
+    public static final int TIMEOUT = 30;
+    public static final Gson GSON = new GsonBuilder().create();
     public static Logger LOG = Logger.getInstance(OdinBuildProcessRunner.class);
     private static OdinBuildProcessRunner instance;
 
@@ -100,21 +101,18 @@ public class OdinBuildProcessRunner {
             Process p = pb.start();
 
             // Manually consume the error stream, in order to avoid a deadlock situation when buffers are full
-            byte[] errorBytes = toByteArray(p.getErrorStream());
+            AtomicReference<byte[]> errorBytes = new AtomicReference<>(new byte[0]);
 
-            consumeStream(p.getInputStream());
-
-            String stderr = new String(errorBytes);
+            // Start threads to read output and error streams
+            consumeErrorStreamAsync(errorBytes, p);
+            consumeOutputStreamAsync(p);
 
             p.waitFor(TIMEOUT, TimeUnit.SECONDS);
+
             if (p.isAlive()) {
                 LOG.error("'odin check' did not complete within " + TIMEOUT + " seconds for file " + filePath);
                 p.destroy();
-            } else {
-                int errorCode = p.exitValue();
-                if (errorCode == 0) {
-                    return null;
-                }
+                return null;
             }
 
             int statusCode = p.exitValue();
@@ -122,9 +120,9 @@ public class OdinBuildProcessRunner {
                 return null;
             }
 
-            Gson gson = new GsonBuilder().create();
+            String stdErr = new String(errorBytes.get());
             try {
-                return gson.fromJson(stderr, OdinBuildErrorResult.class);
+                return GSON.fromJson(stdErr, OdinBuildErrorResult.class);
             } catch (JsonSyntaxException e) {
                 LOG.error("Failed to parse errors json", e);
                 return null;
@@ -136,7 +134,23 @@ public class OdinBuildProcessRunner {
         }
     }
 
-    private void consumeStream(InputStream inputStream) {
+    private static void consumeOutputStreamAsync(Process p) {
+        new Thread(() -> {
+            consumeStream(p.getInputStream());
+        }).start();
+    }
+
+    private static void consumeErrorStreamAsync(AtomicReference<byte[]> errorBytes, Process p) {
+        new Thread(() -> {
+            try {
+                errorBytes.set(toByteArray(p.getErrorStream()));
+            } catch (IOException e) {
+                LOG.error(e);
+            }
+        }).start();
+    }
+
+    private static void consumeStream(InputStream inputStream) {
         try {
             while (inputStream.read() != -1) {
             }
