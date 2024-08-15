@@ -8,6 +8,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -17,8 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile, OdinBuildErrorResult> {
-
-    private final OdinBuildProcessRunner odinBuildProcessRunner = OdinBuildProcessRunner.getInstance();
 
     @Override
     public @Nullable PsiFile collectInformation(@NotNull PsiFile file) {
@@ -31,24 +32,31 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
         if (!OdinBuildProcessRunner.canRunOdinBuild(project)) {
             return null;
         }
-        // save all documents for 'odin build .' to work
-        ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
-        OdinBuildProcessRunner.getInstance().buildAndUpdateErrors(file.getProject(), file);
 
-        return OdinBuildProcessRunner.getInstance().getBuildErrorResult();
+        ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
+        final OdinBuildErrorResult[] result = {null};
+        ProgressManager.getInstance().run(new Task.Backgroundable(file.getProject(), "Checking file", true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+                // Your long-running task
+                indicator.setIndeterminate(true);
+                // Do the actual annotation work here
+                result[0] = OdinBuildProcessRunner.getInstance().buildAndUpdateErrors(file.getProject(), file);
+            }
+        });
+
+
+        return result[0];
     }
 
     @Override
-    public void apply(@NotNull PsiFile file, @Nullable OdinBuildErrorResult annotationResult, @NotNull AnnotationHolder holder) {
-        if (annotationResult == null) {
+    public void apply(@NotNull PsiFile file, @Nullable OdinBuildErrorResult buildErrorResult, @NotNull AnnotationHolder holder) {
+        if (buildErrorResult == null) {
             return;
         }
-        if (odinBuildProcessRunner.getBuildErrorResult() == null) {
-            return;
-        }
+
         String realFilePath = file.getVirtualFile().getPath();
-        List<OdinBuildErrorResult.ErrorDetails> errorDetails = odinBuildProcessRunner
-                .getBuildErrorResult()
+        List<OdinBuildErrorResult.ErrorDetails> errorDetails = buildErrorResult
                 .getErrors()
                 .stream()
                 .filter(error -> error.getPos().getFile().equals(realFilePath))

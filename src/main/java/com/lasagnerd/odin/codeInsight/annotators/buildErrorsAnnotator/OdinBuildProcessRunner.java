@@ -7,12 +7,9 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,8 +26,6 @@ public class OdinBuildProcessRunner {
     public static Logger LOG = Logger.getInstance(OdinBuildProcessRunner.class);
     private static OdinBuildProcessRunner instance;
 
-    @Nullable
-    private OdinBuildErrorResult buildErrorResult = null;
 
     @SuppressWarnings("unused")
     public static void notify(String message) {
@@ -55,27 +50,12 @@ public class OdinBuildProcessRunner {
         if (config.sdkPath.isEmpty()) {
             return false;
         }
-        String odinBinaryPath = getOdinBinaryPath(project);
+        String odinBinaryPath = OdinSdkConfigPersistentState.getOdinBinaryPath(project);
 
         if (odinBinaryPath == null)
             return false;
 
         return Path.of(odinBinaryPath).toFile().exists();
-    }
-
-    @Nullable
-    private static String getOdinBinaryPath(Project project) {
-        if (project == null) {
-            return null;
-        }
-        OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
-        if (sdkConfig.getSdkPath() == null)
-            return null;
-
-        String systemIndependentPath = FileUtil.toSystemIndependentName(sdkConfig.getSdkPath());
-        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
-
-        return StringUtils.removeEnd(systemIndependentPath, "/") + "/" + "odin" + (isWindows ? ".exe" : "");
     }
 
     private static ProcessBuilder launchProcessBuilder(String filePath, String odinBinaryPath, String extraBuildFlags) {
@@ -86,7 +66,7 @@ public class OdinBuildProcessRunner {
         command.add("check");
         command.add(fileParentDirPath.toString());
         command.add("-json-errors");
-//        command.add("-no-entry-point");
+
         if (!extraBuildFlags.isEmpty()) {
             Collections.addAll(command, extraBuildFlags.split(" +"));
         }
@@ -97,16 +77,17 @@ public class OdinBuildProcessRunner {
     /**
      * Run {@link #canRunOdinBuild} before calling this method.
      */
-    public void buildAndUpdateErrors(Project project, PsiFile file) {
-        if (project == null) {
-            return;
-        }
+    public OdinBuildErrorResult buildAndUpdateErrors(Project project, PsiFile file) {
 
-        String odinBinaryPath = getOdinBinaryPath(project);
+        if (project == null) {
+            return null;
+        }
+        OdinBuildErrorResult buildErrorResult = null;
+
+        String odinBinaryPath = OdinSdkConfigPersistentState.getOdinBinaryPath(project);
 
         if (odinBinaryPath == null || !new File(odinBinaryPath).exists()) {
-            buildErrorResult = null;
-            return;
+            return null;
         }
 
         String extraBuildFlags = OdinSdkConfigPersistentState.getInstance(project).extraBuildFlags;
@@ -119,28 +100,26 @@ public class OdinBuildProcessRunner {
 
             if (!exited) {
                 LOG.error("odin check did not complete within " + TIMEOUT + " seconds for file " + filePath);
-                buildErrorResult = null;
-                return;
+                return null;
             }
 
             int statusCode = p.exitValue();
             if (statusCode == 0) {
-                buildErrorResult = null;
-                return;
+                return null;
             }
 
             String stderr = new String(p.getErrorStream().readAllBytes());
             Gson gson = new GsonBuilder().create();
             try {
-                buildErrorResult = gson.fromJson(stderr, OdinBuildErrorResult.class);
+                return gson.fromJson(stderr, OdinBuildErrorResult.class);
             } catch (JsonSyntaxException e) {
-                buildErrorResult = null;
                 LOG.error("Failed to parse errors json", e);
+                return null;
             }
 
         } catch (InterruptedException | IOException e) {
-            buildErrorResult = null;
             LOG.error(e);
+            return null;
         }
     }
 

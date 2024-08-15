@@ -4,9 +4,11 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +29,21 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
 
     public static OdinSdkConfigPersistentState getInstance(Project project) {
         return project.getService(OdinSdkConfigPersistentState.class);
+    }
+
+    @Nullable
+    public static String getOdinBinaryPath(Project project) {
+        if (project == null) {
+            return null;
+        }
+        OdinSdkConfigPersistentState sdkConfig = getInstance(project);
+        if (sdkConfig.getSdkPath() == null)
+            return null;
+
+        String systemIndependentPath = FileUtil.toSystemIndependentName(sdkConfig.getSdkPath());
+        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+
+        return StringUtils.removeEnd(systemIndependentPath, "/") + "/" + "odin" + (isWindows ? ".exe" : "");
     }
 
     @Override
@@ -58,5 +75,7 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
 
         return Optional.of(sdkPath);
     }
+
+
 
 }
