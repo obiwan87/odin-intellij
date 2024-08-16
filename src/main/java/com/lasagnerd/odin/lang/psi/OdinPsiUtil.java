@@ -47,7 +47,14 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinImportDeclarationStatement> getImportStatements(OdinFileScope self) {
-        List<OdinImportDeclarationStatement> importDeclarationStatementList = new ArrayList<>(self.getImportStatementsContainer().getImportDeclarationStatementList());
+        List<OdinImportDeclarationStatement> imports;
+        if(self.getImportStatementsContainer() != null) {
+            imports = self.getImportStatementsContainer().getImportDeclarationStatementList();
+        } else {
+            imports = Collections.emptyList();
+        }
+
+        List<OdinImportDeclarationStatement> importDeclarationStatementList = new ArrayList<>(imports);
         self.getFileScopeStatementList().getStatementList().stream()
                 .filter(s -> s instanceof OdinImportDeclarationStatement)
                 .map(OdinImportDeclarationStatement.class::cast)

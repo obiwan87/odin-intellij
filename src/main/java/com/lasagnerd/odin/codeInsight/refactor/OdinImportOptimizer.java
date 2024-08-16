@@ -33,19 +33,28 @@ public class OdinImportOptimizer implements ImportOptimizer {
                     .sorted(Comparator.comparing(i -> i.getImportInfo().fullImportPath()))
                     .collect(Collectors.toList());
 
-            // Create new import statements container with sorted imports
-            OdinImportStatementsContainer odinImportStatementsContainer = OdinPsiElementFactory
-                    .getInstance(file.getProject())
-                    .createImports(usedImports);
-
             // Replace old import statements container with new one
-            importStatements.forEach(PsiElement::delete);
-            odinFile.getFileScope().getImportStatementsContainer().replace(odinImportStatementsContainer);
+            OdinImportStatementsContainer importStatementsContainer = odinFile.getFileScope().getImportStatementsContainer();
+            // TODO imports can be all over the place in file scope. Gather all of them and put the
+            if (importStatementsContainer == null)
+                return;
 
-            // Reformat import statements container
-            CodeStyleManager
-                    .getInstance(file.getProject())
-                    .reformat(odinFile.getFileScope().getImportStatementsContainer());
+            if (usedImports.isEmpty()) {
+                importStatementsContainer.delete();
+                CodeStyleManager
+                        .getInstance(file.getProject())
+                        .reformat(odinFile.getFileScope().getPackageDeclaration());
+            } else {
+                // Create new import statements container with sorted imports
+                OdinImportStatementsContainer templateOdinStatementsContainer = OdinPsiElementFactory
+                        .getInstance(file.getProject())
+                        .createImports(usedImports);
+                PsiElement replacement = importStatementsContainer.replace(templateOdinStatementsContainer);
+                // Reformat import statements container
+                CodeStyleManager
+                        .getInstance(file.getProject())
+                        .reformat(replacement);
+            }
         };
     }
 }

@@ -90,13 +90,11 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .between(OdinTypes.IMPORT_DECLARATION_STATEMENT, OdinTypes.IMPORT_DECLARATION_STATEMENT)
                 .spacing(0, 0, 1, false, 0)
 
-                .between(OdinTypes.PACKAGE_DECLARATION, OdinTypes.IMPORT_STATEMENTS_CONTAINER)
-                .spacing(0, 0, 2, false, 1)
+                .withinPair(OdinTypes.PACKAGE_DECLARATION, OdinTypes.IMPORT_DECLARATION_STATEMENT)
+                .spacing(0, 0, 2, false, 0)
 
-                // make sure there is exactly one line break before and after the importsContainer
-                .between(OdinTypes.IMPORT_STATEMENTS_CONTAINER, OdinTypes.FILE_SCOPE_STATEMENT_LIST)
-                .spacing(0, 0, 2, false, 1)
-
+                .withinPair(OdinTypes.IMPORT_DECLARATION_STATEMENT, OdinTypes.FILE_SCOPE_STATEMENT_LIST)
+                .spacing(0, 0, 2, false, 0)
                 ;
     }
 

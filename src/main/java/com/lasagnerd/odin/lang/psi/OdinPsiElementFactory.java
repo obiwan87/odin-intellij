@@ -88,6 +88,7 @@ public class OdinPsiElementFactory {
         return file.getFileScope().getImportStatements().getFirst();
     }
 
+    @NotNull
     public OdinImportStatementsContainer createImports(List<OdinImportDeclarationStatement> imports) {
         String importStatements = imports.stream()
                 .map(OdinImportDeclarationStatement::getText).reduce("", (a, b) -> a + "\n" + b);
@@ -97,6 +98,8 @@ public class OdinPsiElementFactory {
                 %s
                 """.formatted(importStatements);
         OdinFile file = createFile(dummyCode);
-        return file.getFileScope().getImportStatementsContainer();
+        OdinImportStatementsContainer importStatementsContainer = file.getFileScope().getImportStatementsContainer();
+        Objects.requireNonNull(importStatementsContainer);
+        return importStatementsContainer;
     }
 }

@@ -44,7 +44,7 @@ public class OdinSymbolTableResolver {
 
         // do bfs
         statementStack.addAll(fileScope.getFileScopeStatementList().getStatementList());
-        statementStack.addAll(fileScope.getImportStatementsContainer().getImportDeclarationStatementList());
+        statementStack.addAll(fileScope.getImportStatements());
         while (!statementStack.isEmpty()) {
             PsiElement element = statementStack.pop();
             if (element instanceof OdinDeclaration declaration) {

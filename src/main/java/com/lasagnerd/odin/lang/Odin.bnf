@@ -185,12 +185,12 @@ odinFile                             ::= fileScope
 // General recovery rules
 private eos_recover ::= !eos
 
-fileScope                            ::= packageDeclaration eos importStatementsContainer fileScopeStatementList <<eof>> {
+fileScope                            ::= packageDeclaration eos importStatementsContainer? fileScopeStatementList <<eof>> {
     methods=[getImportStatements getSymbolTable]
     mixin= "com.lasagnerd.odin.lang.psi.OdinFileScopeMixin"
     implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
 }
-importStatementsContainer            ::= (importDeclarationStatement eos)*
+importStatementsContainer            ::= (importDeclarationStatement eos)+
 fileScopeStatementList               ::= (fileScopeStatement eos)*
 packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=0 recoverWhile=eos_recover}
 
