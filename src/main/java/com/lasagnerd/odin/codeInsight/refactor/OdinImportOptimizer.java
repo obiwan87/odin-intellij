@@ -35,26 +35,35 @@ public class OdinImportOptimizer implements ImportOptimizer {
 
             // Replace old import statements container with new one
             OdinImportStatementsContainer importStatementsContainer = odinFile.getFileScope().getImportStatementsContainer();
-            // TODO imports can be all over the place in file scope. Gather all of them and put the
-            if (importStatementsContainer == null)
-                return;
 
+            // If there are no used imports remove everything
             if (usedImports.isEmpty()) {
-                importStatementsContainer.delete();
+                importStatements.forEach(PsiElement::delete);
+                if (importStatementsContainer != null)
+                    importStatementsContainer.delete();
                 CodeStyleManager
                         .getInstance(file.getProject())
                         .reformat(odinFile.getFileScope().getPackageDeclaration());
-            } else {
-                // Create new import statements container with sorted imports
-                OdinImportStatementsContainer templateOdinStatementsContainer = OdinPsiElementFactory
-                        .getInstance(file.getProject())
-                        .createImportStatementsContainer(usedImports);
-                PsiElement replacement = importStatementsContainer.replace(templateOdinStatementsContainer);
-                // Reformat import statements container
-                CodeStyleManager
-                        .getInstance(file.getProject())
-                        .reformat(replacement);
+                return;
             }
+
+            // Create new import statements container with sorted imports
+            OdinImportStatementsContainer templateOdinStatementsContainer = OdinPsiElementFactory
+                    .getInstance(file.getProject())
+                    .createImportStatementsContainer(usedImports);
+            PsiElement replacement;
+            if (importStatementsContainer != null) {
+                replacement = importStatementsContainer.replace(templateOdinStatementsContainer);
+            } else {
+                replacement = odinFile.getFileScope().addAfter(templateOdinStatementsContainer, odinFile.getFileScope().getEos());
+            }
+            // At this point we have created an imports container with all the used import. All other imports can be removed
+            importStatements.forEach(PsiElement::delete);
+            
+            // Reformat import statements container
+            CodeStyleManager
+                    .getInstance(file.getProject())
+                    .reformat(replacement);
         };
     }
 }
