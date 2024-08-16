@@ -1,0 +1,4 @@
+package refactoring
+
+y := calculate_value()
+sum := x + y

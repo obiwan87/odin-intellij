@@ -1,0 +1,23 @@
+<html>
+<body>
+<p>Detects repeated expressions that can be replaced with a variable.</p>
+
+<p>
+    This inspection identifies cases where introducing a variable can simplify code by avoiding redundant calculations.
+</p>
+
+<pre><code>
+sum := calculate_total_price() + calculate_total_price()
+</code></pre>
+
+<p>Quick fix result:</p>
+<pre><code>
+total_price := calculate_total_price()
+sum := total_price + total_price
+</code></pre>
+<!-- tooltip end -->
+<p>Text after this comment will only be shown in the settings of the inspection.</p>
+
+<p>To configure this inspection, visit <a href="settings://$">Settings</a>.</p>
+</body>
+</html>

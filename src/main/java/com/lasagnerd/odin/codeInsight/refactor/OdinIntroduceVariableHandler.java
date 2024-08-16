@@ -2,7 +2,6 @@ package com.lasagnerd.odin.codeInsight.refactor;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -10,9 +9,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.IntroduceHandler;
@@ -25,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class OdinIntroduceVariableHandler extends IntroduceHandler<PsiIntroduceTarget<OdinExpression>, PsiElement> {
     private static final Logger LOG = Logger.getInstance(OdinIntroduceVariableHandler.class);
@@ -178,125 +173,8 @@ public class OdinIntroduceVariableHandler extends IntroduceHandler<PsiIntroduceT
                                                                      @NotNull Editor editor,
                                                                      @NotNull Project project) {
 
-        // The chosen expression
-        OdinExpression targetExpression = target.getPlace();
-        Objects.requireNonNull(targetExpression);
-
-        // If there is more than one occurrence find the one that is top-most
-        var sortedUsages = usages.stream().sorted(Comparator.comparing(UsageInfo::getNavigationOffset)).toList();
-        UsageInfo firstUsage = sortedUsages.getFirst();
-        Objects.requireNonNull(firstUsage.getElement());
-
-        // Perform replace of the expression with variable initialization
-        OdinVariableInitializationStatement varInitStatement;
-        OdinExpression[] occurrences;
-        int n;
-
-
-        List<String> nameSuggestions = getNameSuggestions(targetExpression);
-
-        if (firstUsage.getElement().getParent() instanceof OdinExpressionStatement) {
-            // This means we can replace the first occurrence with the variable initialization
-            varInitStatement = performReplace(project, (OdinExpression) firstUsage.getElement(), nameSuggestions.getFirst());
-            n = 1;
-        } else {
-            // When the expression is not directly under an expression statement, we have to create
-            // new local variable before the first usage
-            varInitStatement = performReplaceWithNewStatement(project, firstUsage, targetExpression, nameSuggestions.getFirst());
-            n = 0;
-        }
-
-        OdinDeclaredIdentifier declaredIdentifier = Objects.requireNonNull(varInitStatement)
-                .getDeclaredIdentifiers().getFirst();
-
-
-        // Occurrences are only needed when expression needs to be replaced with newly introduced variable
-        occurrences = sortedUsages.stream()
-                .skip(n)
-                .map(UsageInfo::getElement)
-                .map(e -> (OdinExpression) e)
-                .toList()
-                .toArray(new OdinExpression[0]);
-
-        // AFAIK it is used for the template
-        OdinDeclaredIdentifier templateIdentifier = OdinPsiElementFactory.getInstance(project)
-                .createDeclaredIdentifier(nameSuggestions.getFirst());
-
-        return new OdinVariableIntroducer(project,
-                editor,
-                declaredIdentifier,
-                occurrences,
-                templateIdentifier,
-                replaceChoice.isAll(),
-                nameSuggestions.toArray(new String[0]));
+        return OdinVariableIntroducer.createVariableIntroducer(target, usages, replaceChoice, editor, project);
     }
 
-    private List<String> getNameSuggestions(OdinExpression targetExpression) {
-        List<String> names = new ArrayList<>();
-        if (targetExpression instanceof OdinRefExpression refExpression) {
-
-            OdinIdentifier identifier = refExpression.getIdentifier();
-            if (identifier != null)
-                names.add(identifier.getText());
-        }
-
-        if (names.isEmpty()) {
-            names.add("value");
-        }
-
-        return names;
-    }
-
-    private static @Nullable OdinVariableInitializationStatement performReplaceWithNewStatement(@NotNull Project project, UsageInfo topMostUsage, OdinExpression targetExpression, String name) {
-        OdinVariableInitializationStatement varInitStatement;
-        AtomicReference<SmartPsiElementPointer<OdinVariableInitializationStatement>> newElementRef = new AtomicReference<>();
-
-        WriteCommandAction.runWriteCommandAction(project, () -> {
-            OdinStatement odinStatement = PsiTreeUtil.getParentOfType(topMostUsage.getElement(), OdinStatement.class);
-            if (odinStatement == null)
-                return;
-
-            OdinStatementList statementList = PsiTreeUtil.getParentOfType(odinStatement, OdinStatementList.class);
-            if (statementList == null)
-                return;
-
-            OdinVariableInitializationStatement varInit = OdinPsiElementFactory.getInstance(project)
-                    .createVariableInitializationStatement(name, "1");
-            OdinEos eos = OdinPsiElementFactory.getInstance(project).createEos();
-
-            varInit.getExpressionsList()
-                    .getExpressionList()
-                    .getFirst()
-                    .replace(targetExpression);
-
-            PsiElement psiElement = statementList.addBefore(varInit, odinStatement);
-            statementList.addAfter(eos, psiElement);
-
-            newElementRef.set(SmartPointerManager.createPointer((OdinVariableInitializationStatement) psiElement));
-        });
-        varInitStatement = newElementRef.get().getElement();
-        return varInitStatement;
-    }
-
-    private static @Nullable OdinVariableInitializationStatement performReplace(@NotNull Project project, OdinExpression odinExpression, String name) {
-        AtomicReference<SmartPsiElementPointer<OdinVariableInitializationStatement>> newElementRef = new AtomicReference<>();
-
-        WriteCommandAction.runWriteCommandAction(project, () -> {
-            OdinVariableInitializationStatement refactoringVar = OdinPsiElementFactory
-                    .getInstance(project)
-                    .createVariableInitializationStatement("new_var", "1");
-
-            // Your PSI modification logic here
-            refactoringVar.getExpressionsList()
-                    .getExpressionList().getFirst()
-                    .replace(odinExpression);
-
-            OdinVariableInitializationStatement newElement = (OdinVariableInitializationStatement) odinExpression.replace(refactoringVar);
-            newElementRef.set(SmartPointerManager.createPointer(newElement));
-
-            CodeEditUtil.setNodeGeneratedRecursively(newElement.getNode(), true);
-        });
-        return newElementRef.get().getElement();
-    }
 
 }

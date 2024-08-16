@@ -231,8 +231,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         if (annotationSessionState.aborted.contains(topMostExpression))
             return;
 
-        if(topMostExpression.getIdentifier() == identifierTokenParent) {
-            if(identifierText.equals("_"))
+        if (topMostExpression.getIdentifier() == identifierTokenParent) {
+            if (identifierText.equals("_"))
                 return;
         }
 
@@ -250,17 +250,17 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             return;
         }
 
-        if(symbol.getPsiType() instanceof OdinPolymorphicType) {
+        if (symbol.getPsiType() instanceof OdinPolymorphicType) {
             return;
         }
 
 
-        if(symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier declaredIdentifier) {
-            if(declaredIdentifier.getDollar() != null)
+        if (symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier declaredIdentifier) {
+            if (declaredIdentifier.getDollar() != null)
                 return;
         }
 
-        if(symbol.isImplicitlyDeclared())
+        if (symbol.isImplicitlyDeclared())
             return;
 
         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(symbol.getDeclaredIdentifier(),
@@ -349,7 +349,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
 
         PsiReference reference = identifier.getReference();
-        if(reference instanceof OdinReference odinReference) {
+        if (reference instanceof OdinReference odinReference) {
             try {
                 return OdinSymbolTableResolver.findSymbol(odinReference.getElement(), symbolTable);
             } catch (StackOverflowError e) {
