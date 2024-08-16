@@ -7,6 +7,7 @@ import com.lasagnerd.odin.lang.OdinFileType;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -89,7 +90,12 @@ public class OdinPsiElementFactory {
     }
 
     @NotNull
-    public OdinImportStatementsContainer createImports(List<OdinImportDeclarationStatement> imports) {
+    public OdinImportStatementsContainer createImportStatementsContainer() {
+        return createImportStatementsContainer(Collections.emptyList());
+    }
+
+    @NotNull
+    public OdinImportStatementsContainer createImportStatementsContainer(List<OdinImportDeclarationStatement> imports) {
         String importStatements = imports.stream()
                 .map(OdinImportDeclarationStatement::getText).reduce("", (a, b) -> a + "\n" + b);
         String dummyCode = """

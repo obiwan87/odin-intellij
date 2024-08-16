@@ -11,13 +11,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
-import com.lasagnerd.odin.lang.psi.OdinFile;
-import com.lasagnerd.odin.lang.psi.OdinFileScope;
-import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
-import com.lasagnerd.odin.lang.psi.OdinPsiElementFactory;
+import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
+import java.util.List;
 
 public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
     private final String sourcePackagePath;
@@ -46,8 +44,7 @@ public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
         // Check if package is already imported
         for (OdinImportDeclarationStatement importStatement : sourceFile.getFileScope().getImportStatements()) {
             OdinImportInfo importInfo = importStatement.getImportInfo();
-            if (importInfo.path().equals(relativePath))
-            {
+            if (importInfo.path().equals(relativePath)) {
                 return;
             }
         }
@@ -60,11 +57,15 @@ public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
             PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
             OdinImportDeclarationStatement anImport = OdinPsiElementFactory.getInstance(project)
                     .createImport(relativePath);
-            if (!fileScope.getImportStatements().isEmpty()) {
-                OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatements().get(fileScope.getImportStatements().size() - 1);
-                fileScope.getImportStatementsContainer().addAfter(anImport, odinImportDeclarationStatement);
+
+            OdinImportStatementsContainer importStatementsContainer = fileScope.getImportStatementsContainer();
+            if (importStatementsContainer == null) {
+                OdinImportStatementsContainer templateImportStatementsContainer = OdinPsiElementFactory.getInstance(project)
+                        .createImportStatementsContainer(List.of(anImport));
+              fileScope.addAfter(templateImportStatementsContainer, fileScope.getEos());
             } else {
-                fileScope.getImportStatementsContainer().add(anImport);
+                OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatementsContainer().getImportDeclarationStatementList().getLast();
+                importStatementsContainer.addAfter(anImport, odinImportDeclarationStatement);
             }
             Document document = manager.getDocument(odinFile);
             if (document != null) {

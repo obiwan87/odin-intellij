@@ -48,7 +48,7 @@ public class OdinImportOptimizer implements ImportOptimizer {
                 // Create new import statements container with sorted imports
                 OdinImportStatementsContainer templateOdinStatementsContainer = OdinPsiElementFactory
                         .getInstance(file.getProject())
-                        .createImports(usedImports);
+                        .createImportStatementsContainer(usedImports);
                 PsiElement replacement = importStatementsContainer.replace(templateOdinStatementsContainer);
                 // Reformat import statements container
                 CodeStyleManager
