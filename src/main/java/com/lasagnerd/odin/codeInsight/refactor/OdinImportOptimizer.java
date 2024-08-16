@@ -59,7 +59,7 @@ public class OdinImportOptimizer implements ImportOptimizer {
             }
             // At this point we have created an imports container with all the used import. All other imports can be removed
             importStatements.forEach(PsiElement::delete);
-            
+
             // Reformat import statements container
             CodeStyleManager
                     .getInstance(file.getProject())

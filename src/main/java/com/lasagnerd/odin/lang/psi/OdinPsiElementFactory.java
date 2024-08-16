@@ -3,6 +3,7 @@ package com.lasagnerd.odin.lang.psi;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.OdinFileType;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +82,20 @@ public class OdinPsiElementFactory {
             return variableInitializationStatement;
         }
         throw new RuntimeException("Something went wrong.");
+    }
+
+
+    public OdinEos createEos() {
+
+        String var = """
+                package dummy
+                var1 := 1
+                var2 := 2
+                """;
+        OdinFile file = createFile(var);
+        OdinEos odinEos = PsiTreeUtil.findChildOfType(file.getFileScope().getFileScopeStatementList(), OdinEos.class);
+        Objects.requireNonNull(odinEos);
+        return odinEos;
     }
 
 

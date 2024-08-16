@@ -2,7 +2,14 @@ package com.lasagnerd.odin.sdkConfig;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
+import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

@@ -34,7 +34,6 @@ public class OdinSdkUtils {
         return StringUtils.removeEnd(systemIndependentPath, "/") + "/" + "odin" + (isWindows ? ".exe" : "");
     }
 
-
     public static String getOdinSdkVersion(Project project) {
         Optional<String> sdkPath = getSdkPath(project);
         return sdkPath.map(OdinSdkUtils::getOdinSdkVersion).orElse(null);
@@ -60,7 +59,7 @@ public class OdinSdkUtils {
                 return "Unknown";
             }
 
-            return "Odin version \""+version+"\"";
+            return "Odin version \"" + version + "\"";
         } catch (IOException e) {
             return "Unknown";
         }
