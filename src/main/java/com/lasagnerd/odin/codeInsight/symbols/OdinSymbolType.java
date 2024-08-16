@@ -16,5 +16,6 @@ public enum OdinSymbolType {
     POLYMORPHIC_TYPE,
     LABEL,
     FOREIGN_IMPORT,
-    SWIZZLE_FIELD, BIT_SET
+    SWIZZLE_FIELD,
+    BIT_SET
 }

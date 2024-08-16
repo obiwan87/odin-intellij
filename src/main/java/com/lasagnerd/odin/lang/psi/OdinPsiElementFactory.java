@@ -40,9 +40,9 @@ public class OdinPsiElementFactory {
     public OdinIdentifier createIdentifier(String name) {
         String dummyCode = VARIABLE_DECLARATION.replaceAll("identifier", name);
         OdinFile file = createFile(dummyCode);
-        OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().get(0);
+        OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().getFirst();
         if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            OdinExpression odinExpression = variableInitializationStatement.getExpressionsList().getExpressionList().get(0);
+            OdinExpression odinExpression = variableInitializationStatement.getExpressionsList().getExpressionList().getFirst();
             if (odinExpression instanceof OdinRefExpression refExpression) {
                 return Objects.requireNonNull(refExpression.getIdentifier());
             }
@@ -61,16 +61,31 @@ public class OdinPsiElementFactory {
 
     public OdinDeclaredIdentifier createDeclaredIdentifier(String name) {
         OdinFile file = createFile(VARIABLE_DECLARATION.replaceAll("declaredIdentifier", name));
-        OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().get(0);
+        OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().getFirst();
         if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            return variableInitializationStatement.getDeclaredIdentifiers().get(0);
+            return variableInitializationStatement.getDeclaredIdentifiers().getFirst();
         }
         throw new RuntimeException("Something went wrong.");
     }
 
+    public OdinVariableInitializationStatement createVariableInitializationStatement(String name, String value) {
+
+        String var = """
+                package dummy
+                %s := %s
+                """.formatted(name, value);
+        OdinFile file = createFile(var);
+        OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().getFirst();
+        if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
+            return variableInitializationStatement;
+        }
+        throw new RuntimeException("Something went wrong.");
+    }
+
+
     public OdinImportDeclarationStatement createImport(String relativePath) {
         OdinFile file = createFile(IMPORT.replaceAll("packagePath", relativePath));
-        return file.getFileScope().getImportStatements().get(0);
+        return file.getFileScope().getImportStatements().getFirst();
     }
 
     public OdinImportStatementsContainer createImports(List<OdinImportDeclarationStatement> imports) {

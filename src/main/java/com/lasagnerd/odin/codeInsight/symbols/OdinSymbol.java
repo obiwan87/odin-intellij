@@ -33,6 +33,7 @@ public class OdinSymbol {
         this.declaredIdentifier = declaredIdentifier;
         this.visibility = visibility;
         this.name = declaredIdentifier.getName();
+
     }
 
     public OdinSymbol(PsiNamedElement declaredIdentifier) {
