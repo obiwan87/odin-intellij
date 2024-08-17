@@ -38,7 +38,7 @@ public class TsOdinMetaType extends TsOdinType {
         STRUCT,
         UNION,
         UNKNOWN,
-        VOID,
+        VOID, PROCEDURE_OVERLOAD,
     }
 
 

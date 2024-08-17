@@ -769,6 +769,15 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         }
 
+        if (odinDeclaration instanceof OdinProcedureOverloadDeclarationStatement) {
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(PROCEDURE_OVERLOAD);
+            tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
+            tsOdinMetaType.setName(declaredIdentifier.getName());
+            tsOdinMetaType.setSymbolTable(parentSymbolTable);
+            tsOdinMetaType.setDeclaration(odinDeclaration);
+            return tsOdinMetaType;
+        }
+
         return TsOdinType.UNKNOWN;
     }
 

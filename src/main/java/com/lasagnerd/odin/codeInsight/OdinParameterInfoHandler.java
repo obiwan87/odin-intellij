@@ -8,9 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinProcedureType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallExpression, OdinProcedureDeclarationStatement> {
+public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallExpression, OdinProcedureType> {
 
     private static final String DELIMITER = ", ";
 
@@ -28,7 +29,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
 
         if (callExpression != null) {
 
-            List<PsiElement> matchingDeclarations = findMatchingDeclarations(callExpression.getExpression().getText(), callExpression);
+            List<PsiElement> matchingDeclarations = findMatchingDeclarations(callExpression);
             if (!matchingDeclarations.isEmpty()) {
                 context.setItemsToShow(matchingDeclarations.toArray(new PsiElement[0]));
                 return callExpression;
@@ -48,56 +49,37 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
         return callExpression;
     }
 
-    public static List<PsiElement> findMatchingDeclarations(String name, OdinCallExpression callExpression) {
-        OdinSymbolTable declarations = OdinSymbolTableResolver.computeSymbolTable(callExpression, symbol -> {
-            if (symbol != null && symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier identifier)
-                if (identifier.getParent() instanceof OdinProcedureDeclarationStatement ||
-                        identifier.getParent() instanceof OdinProcedureOverloadDeclarationStatement
-                ) {
-                    return identifier.getText().equals(name);
-                }
-            return false;
-        });
-
-        OdinExpression expression = callExpression.getExpression();
-
-        if (expression instanceof OdinRefExpression) {
-            String refName = expression.getText();
-            String[] parts = refName.split("\\.");
-            if (parts.length > 1) {
-                String importName = parts[0];
-                OdinFile containingFile = (OdinFile) callExpression.getContainingFile();
-                OdinSymbolTable allImportedDeclarations = OdinImportUtils.getSymbolsOfImportedPackage(
-                        OdinImportUtils.getImportStatementsInfo(containingFile.getFileScope()).get(importName), containingFile.getVirtualFile().getPath(),
-                        callExpression.getProject());
-                declarations.addAll(allImportedDeclarations.getSymbolNameMap()
-                        .values()
-                        .stream()
-                        .filter(decl -> decl.getDeclaredIdentifier().getText().equals(parts[1]))
-                        .toList());
-            }
-        }
-
+    public static List<PsiElement> findMatchingDeclarations(OdinCallExpression callExpression) {
         List<PsiElement> procedures = new ArrayList<>();
-        for (PsiElement declaration : declarations.getNamedElements()) {
-            if (declaration instanceof OdinDeclaredIdentifier) {
-                if (declaration.getParent() instanceof OdinProcedureDeclarationStatement proc) {
-                    procedures.add(proc);
-                }
+        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(callExpression.getExpression());
+        if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
 
-                if (declaration.getParent() instanceof OdinProcedureOverloadDeclarationStatement overload) {
-                    for (OdinIdentifier odinIdentifier : overload.getIdentifierList()) {
-                        PsiReference identifierReference = odinIdentifier.getReference();
-                        if (identifierReference != null) {
-                            PsiElement resolve = identifierReference.resolve();
-                            if (resolve != null && resolve.getParent() instanceof OdinProcedureDeclarationStatement proc) {
-                                procedures.add(proc);
-                            }
+            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
+                if(tsOdinMetaType instanceof OdinProcedureDeclarationStatement declaration) {
+                    procedures.add(declaration.getProcedureDefinition().getProcedureType());
+                }
+            }
+
+            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE_OVERLOAD) {
+                OdinDeclaration declaration = tsOdinMetaType.getDeclaration();
+                var overload = (OdinProcedureOverloadDeclarationStatement) declaration;
+                for (OdinIdentifier odinIdentifier : overload.getIdentifierList()) {
+                    PsiReference identifierReference = odinIdentifier.getReference();
+                    if (identifierReference != null) {
+                        PsiElement resolve = identifierReference.resolve();
+                        if (resolve != null && resolve.getParent() instanceof OdinProcedureDeclarationStatement proc) {
+                            procedures.add(proc.getProcedureDefinition().getProcedureType());
                         }
                     }
                 }
             }
         }
+
+        if(tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
+            OdinType procedureType = tsOdinProcedureType.getType();
+            procedures.add(procedureType);
+        }
+
         return procedures;
     }
 
@@ -139,8 +121,8 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
     }
 
     @Override
-    public void updateUI(OdinProcedureDeclarationStatement p, @NotNull ParameterInfoUIContext context) {
-        List<OdinParamEntry> parameters = p.getProcedureDefinition().getProcedureType().getParamEntryList();
+    public void updateUI(OdinProcedureType p, @NotNull ParameterInfoUIContext context) {
+        List<OdinParamEntry> parameters = p.getParamEntryList();
         // Each entry can declare several parameters. In order to make navigation easier we flatten the list.
 
         List<String> params = new ArrayList<>();

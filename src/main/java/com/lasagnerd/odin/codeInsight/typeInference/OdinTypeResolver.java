@@ -661,5 +661,7 @@ public class OdinTypeResolver extends OdinVisitor {
         public void visitQualifiedType(@NotNull OdinQualifiedType o) {
 
         }
+
+
     }
 }
