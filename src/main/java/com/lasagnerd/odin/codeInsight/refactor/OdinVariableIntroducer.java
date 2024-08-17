@@ -1,19 +1,28 @@
 package com.lasagnerd.odin.codeInsight.refactor;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.PsiIntroduceTarget;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.usageView.UsageInfo;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -25,11 +34,17 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclaredIdentifier, OdinExpression> {
+
+    public static final String TYPE_VARIABLE = "TYPE_VARIABLE";
+
     public static @NotNull OdinVariableIntroducer createVariableIntroducer(@NotNull PsiIntroduceTarget<OdinExpression> target,
                                                                            @NotNull List<UsageInfo> usages,
                                                                            OccurrencesChooser.@NotNull ReplaceChoice replaceChoice,
                                                                            @NotNull Editor editor,
                                                                            @NotNull Project project) {
+
+        String originalText = editor.getDocument().getText();
+
         // The chosen expression
         OdinExpression targetExpression = target.getPlace();
         Objects.requireNonNull(targetExpression);
@@ -40,11 +55,10 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         Objects.requireNonNull(firstUsage.getElement());
 
         // Perform replace of the expression with variable initialization
-        OdinVariableInitializationStatement varInitStatement;
+        SmartPsiElementPointer<OdinVariableInitializationStatement> varInitStatement;
         OdinExpression[] occurrences;
 
         List<String> nameSuggestions = OdinNameSuggester.getNameSuggestions(targetExpression);
-
         if (firstUsage.getElement().getParent() instanceof OdinExpressionStatement) {
             // This means we can replace the first occurrence with the variable initialization
             varInitStatement = performReplace(project, (OdinExpression) firstUsage.getElement(), nameSuggestions.getFirst());
@@ -64,7 +78,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
             }
         }
 
-        OdinDeclaredIdentifier declaredIdentifier = Objects.requireNonNull(varInitStatement)
+        OdinDeclaredIdentifier declaredIdentifier = Objects.requireNonNull(varInitStatement.getElement())
                 .getDeclaredIdentifiers().getFirst();
 
         // AFAIK it is used for the template
@@ -74,7 +88,10 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
 
         return new OdinVariableIntroducer(project,
                 editor,
+                originalText,
+                varInitStatement,
                 declaredIdentifier,
+                target,
                 occurrences,
                 templateIdentifier,
                 true,
@@ -93,8 +110,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         return occurrences;
     }
 
-    private static @Nullable OdinVariableInitializationStatement performReplaceWithNewStatement(@NotNull Project project, UsageInfo topMostUsage, OdinExpression targetExpression, String name) {
-        OdinVariableInitializationStatement varInitStatement;
+    private static SmartPsiElementPointer<OdinVariableInitializationStatement> performReplaceWithNewStatement(@NotNull Project project, UsageInfo topMostUsage, OdinExpression targetExpression, String name) {
         AtomicReference<SmartPsiElementPointer<OdinVariableInitializationStatement>> newElementRef = new AtomicReference<>();
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
@@ -118,13 +134,13 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
 
             newElementRef.set(SmartPointerManager.createPointer((OdinVariableInitializationStatement) psiElement));
         });
-        varInitStatement = newElementRef.get().getElement();
-        return varInitStatement;
+
+        return newElementRef.get();
     }
 
-    private static @Nullable OdinVariableInitializationStatement performReplace(@NotNull Project project,
-                                                                                OdinExpression odinExpression,
-                                                                                String name) {
+    private static SmartPsiElementPointer<OdinVariableInitializationStatement> performReplace(@NotNull Project project,
+                                                                                              OdinExpression odinExpression,
+                                                                                              String name) {
         AtomicReference<SmartPsiElementPointer<OdinVariableInitializationStatement>> newElementRef = new AtomicReference<>();
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
@@ -142,24 +158,40 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
 
             CodeEditUtil.setNodeGeneratedRecursively(newElement.getNode(), true);
         });
-        return newElementRef.get().getElement();
+        return newElementRef.get();
     }
 
 
+    private final String originalText;
+    private final SmartPsiElementPointer<OdinVariableInitializationStatement> variableInitializationStatement;
     private final OdinDeclaredIdentifier declaredIdentifier;
+    private final @NotNull PsiIntroduceTarget<OdinExpression> target;
     private final OdinDeclaredIdentifier templateIdentifier;
     private final boolean replaceAllOccurrences;
     private final String[] nameSuggestions;
 
     public OdinVariableIntroducer(@NotNull Project project,
                                   @NotNull Editor editor,
+                                  String originalText,
+                                  SmartPsiElementPointer<OdinVariableInitializationStatement> variableInitializationStatement,
                                   OdinDeclaredIdentifier declaredIdentifier,
+                                  @NotNull PsiIntroduceTarget<OdinExpression> target,
                                   OdinExpression[] occurrences,
                                   OdinDeclaredIdentifier templateIdentifier,
                                   boolean replaceAllOccurrences,
                                   String[] nameSuggestions) {
-        super(project, editor, null, declaredIdentifier, occurrences, null, OdinFileType.INSTANCE);
+        super(project,
+                editor,
+                target.getPlace(),
+                declaredIdentifier,
+                occurrences,
+                "Introduce Variable",
+                OdinFileType.INSTANCE);
+
+        this.originalText = originalText;
+        this.variableInitializationStatement = variableInitializationStatement;
         this.declaredIdentifier = declaredIdentifier;
+        this.target = target;
         this.templateIdentifier = templateIdentifier;
         this.replaceAllOccurrences = replaceAllOccurrences;
         this.nameSuggestions = nameSuggestions;
@@ -219,4 +251,121 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         return null;
     }
 
+    @Override
+    protected String getRefactoringId() {
+        return "Introduce variable";
+    }
+
+    @Override
+    protected void addAdditionalVariables(TemplateBuilderImpl builder) {
+        OdinVariableInitializationStatement varInit = variableInitializationStatement.getElement();
+        if (varInit != null) {
+            int startOffset = varInit.getColonOpening().getTextRange().getStartOffset();
+            TextRange rangeWithinElement = TextRange.create(startOffset + 1, startOffset + 1);
+
+            builder.replaceElement(varInit.getContainingFile(), rangeWithinElement, "");
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private void createTypeVariableWithSuggestions(TemplateBuilderImpl builder, OdinVariableInitializationStatement varInit, TextRange rangeWithinElement) {
+        OdinExpression targetExpression = this.target.getPlace();
+        if (targetExpression != null) {
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(targetExpression);
+
+            if (!tsOdinType.isUnknown()) {
+                LinkedHashSet<String> names = new LinkedHashSet<>();
+                names.add(tsOdinType.getName());
+
+                builder.replaceElement(varInit.getContainingFile(),
+                        rangeWithinElement,
+                        TYPE_VARIABLE,
+                        createLookupExpression(names),
+                        true);
+            } else {
+                builder.replaceElement(varInit.getContainingFile(), rangeWithinElement, "");
+            }
+        } else {
+            builder.replaceElement(varInit.getContainingFile(), rangeWithinElement, "");
+        }
+    }
+
+    private static @NotNull OdinLookupExpression createLookupExpression(LinkedHashSet<String> names) {
+        return new OdinLookupExpression("",
+                names,
+                false,
+                "",
+                TYPE_VARIABLE);
+    }
+
+
+    @Override
+    protected void performCleanup() {
+        // restore document
+        WriteCommandAction.writeCommandAction(myProject).run(() -> myEditor.getDocument().setText(originalText));
+    }
+
+    public static class OdinLookupExpression extends Expression {
+        protected final String myName;
+        protected final LookupElement[] myLookupItems;
+        private final String myAdvertisementText;
+
+        private final String myVariableName;
+
+        public OdinLookupExpression(String name,
+                                    @NotNull LinkedHashSet<String> names,
+                                    boolean shouldSelectAll,
+                                    String advertisement,
+                                    String variableName) {
+            myName = name;
+            myAdvertisementText = advertisement;
+            myVariableName = variableName;
+            myLookupItems = initLookupItems(names, shouldSelectAll);
+        }
+
+        private LookupElement[] initLookupItems(LinkedHashSet<String> names,
+                                                final boolean shouldSelectAll) {
+            final LookupElement[] lookupElements = new LookupElement[names.size()];
+            final Iterator<String> iterator = names.iterator();
+            for (int i = 0; i < lookupElements.length; i++) {
+                final String suggestion = iterator.next();
+                lookupElements[i] = LookupElementBuilder.create(suggestion).withInsertHandler((context, item) -> {
+                    if (shouldSelectAll) return;
+                    final Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(context.getEditor());
+                    final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
+                    if (templateState != null) {
+                        final TextRange range = templateState.getCurrentVariableRange();
+                        if (range != null) {
+                            topLevelEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), suggestion);
+                        }
+                    }
+                });
+            }
+            return lookupElements;
+        }
+
+        @Override
+        public LookupElement[] calculateLookupItems(ExpressionContext context) {
+            return myLookupItems;
+        }
+
+        @Override
+        public Result calculateResult(ExpressionContext context) {
+            final TextResult insertedValue = context.getVariableValue(myVariableName);
+            if (insertedValue != null) {
+                if (!insertedValue.getText().isEmpty()) return insertedValue;
+            }
+            return new TextResult(myName);
+        }
+
+        @Override
+        public boolean requiresCommittedPSI() {
+            return false;
+        }
+
+        @Override
+        public String getAdvertisingText() {
+            return myAdvertisementText;
+        }
+    }
 }
