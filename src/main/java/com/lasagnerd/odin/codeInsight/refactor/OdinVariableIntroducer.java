@@ -4,7 +4,10 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduce.PsiIntroduceTarget;
@@ -18,10 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclaredIdentifier, OdinExpression> {
@@ -42,26 +42,47 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         // Perform replace of the expression with variable initialization
         OdinVariableInitializationStatement varInitStatement;
         OdinExpression[] occurrences;
-        int n;
 
-
-        List<String> nameSuggestions = getNameSuggestions(targetExpression);
+        List<String> nameSuggestions = OdinNameSuggester.getNameSuggestions(targetExpression);
 
         if (firstUsage.getElement().getParent() instanceof OdinExpressionStatement) {
             // This means we can replace the first occurrence with the variable initialization
             varInitStatement = performReplace(project, (OdinExpression) firstUsage.getElement(), nameSuggestions.getFirst());
-            n = 1;
+            if (replaceChoice.isAll()) {
+                occurrences = skipNOccurrences(sortedUsages, 1);
+            } else {
+                occurrences = new OdinExpression[0];
+            }
         } else {
             // When the expression is not directly under an expression statement, we have to create
             // new local variable before the first usage
             varInitStatement = performReplaceWithNewStatement(project, firstUsage, targetExpression, nameSuggestions.getFirst());
-            n = 0;
+            if (!replaceChoice.isAll()) {
+                occurrences = new OdinExpression[]{targetExpression};
+            } else {
+                occurrences = skipNOccurrences(sortedUsages, 0);
+            }
         }
 
         OdinDeclaredIdentifier declaredIdentifier = Objects.requireNonNull(varInitStatement)
                 .getDeclaredIdentifiers().getFirst();
 
+        // AFAIK it is used for the template
+        OdinDeclaredIdentifier templateIdentifier = OdinPsiElementFactory.getInstance(project)
+                .createDeclaredIdentifier(nameSuggestions.getFirst());
 
+
+        return new OdinVariableIntroducer(project,
+                editor,
+                declaredIdentifier,
+                occurrences,
+                templateIdentifier,
+                true,
+                nameSuggestions.toArray(new String[0]));
+    }
+
+    private static OdinExpression @NotNull [] skipNOccurrences(List<UsageInfo> sortedUsages, int n) {
+        OdinExpression[] occurrences;
         // Occurrences are only needed when expression needs to be replaced with newly introduced variable
         occurrences = sortedUsages.stream()
                 .skip(n)
@@ -69,18 +90,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
                 .map(e -> (OdinExpression) e)
                 .toList()
                 .toArray(new OdinExpression[0]);
-
-        // AFAIK it is used for the template
-        OdinDeclaredIdentifier templateIdentifier = OdinPsiElementFactory.getInstance(project)
-                .createDeclaredIdentifier(nameSuggestions.getFirst());
-
-        return new OdinVariableIntroducer(project,
-                editor,
-                declaredIdentifier,
-                occurrences,
-                templateIdentifier,
-                replaceChoice.isAll(),
-                nameSuggestions.toArray(new String[0]));
+        return occurrences;
     }
 
     private static @Nullable OdinVariableInitializationStatement performReplaceWithNewStatement(@NotNull Project project, UsageInfo topMostUsage, OdinExpression targetExpression, String name) {
@@ -112,13 +122,15 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         return varInitStatement;
     }
 
-    private static @Nullable OdinVariableInitializationStatement performReplace(@NotNull Project project, OdinExpression odinExpression, String name) {
+    private static @Nullable OdinVariableInitializationStatement performReplace(@NotNull Project project,
+                                                                                OdinExpression odinExpression,
+                                                                                String name) {
         AtomicReference<SmartPsiElementPointer<OdinVariableInitializationStatement>> newElementRef = new AtomicReference<>();
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
             OdinVariableInitializationStatement refactoringVar = OdinPsiElementFactory
                     .getInstance(project)
-                    .createVariableInitializationStatement("new_var", "1");
+                    .createVariableInitializationStatement(name, "1");
 
             // Your PSI modification logic here
             refactoringVar.getExpressionsList()
@@ -133,21 +145,6 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         return newElementRef.get().getElement();
     }
 
-    private static List<String> getNameSuggestions(OdinExpression targetExpression) {
-        List<String> names = new ArrayList<>();
-        if (targetExpression instanceof OdinRefExpression refExpression) {
-
-            OdinIdentifier identifier = refExpression.getIdentifier();
-            if (identifier != null)
-                names.add(identifier.getText());
-        }
-
-        if (names.isEmpty()) {
-            names.add("value");
-        }
-
-        return names;
-    }
 
     private final OdinDeclaredIdentifier declaredIdentifier;
     private final OdinDeclaredIdentifier templateIdentifier;

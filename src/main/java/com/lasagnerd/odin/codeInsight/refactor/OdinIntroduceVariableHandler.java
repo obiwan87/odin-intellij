@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -16,11 +17,16 @@ import com.intellij.refactoring.introduce.PsiIntroduceTarget;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.usageView.UsageInfo;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPackageReferenceType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class OdinIntroduceVariableHandler extends IntroduceHandler<PsiIntroduceTarget<OdinExpression>, PsiElement> {
     private static final Logger LOG = Logger.getInstance(OdinIntroduceVariableHandler.class);
@@ -92,6 +98,14 @@ public class OdinIntroduceVariableHandler extends IntroduceHandler<PsiIntroduceT
         if (odinExpression != null) {
             List<PsiIntroduceTarget<OdinExpression>> targets = new ArrayList<>();
             PsiTreeUtil.treeWalkUp(odinExpression, null, (scope, prevParent) -> {
+                if(scope instanceof OdinRefExpression refExpression) {
+                    if(refExpression.getExpression() == null) {
+                        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(refExpression);
+                        if(tsOdinType instanceof TsOdinPackageReferenceType) {
+                            return true;
+                        }
+                    }
+                }
                 if (scope instanceof OdinExpression curr) {
                     targets.add(new PsiIntroduceTarget<>(curr));
                     return true;
@@ -124,9 +138,31 @@ public class OdinIntroduceVariableHandler extends IntroduceHandler<PsiIntroduceT
                                                                                @NotNull PsiFile file,
                                                                                @NotNull Editor editor,
                                                                                @NotNull Project project) {
-        if (file instanceof OdinExpression OdinExpression)
-            return new PsiIntroduceTarget<>(OdinExpression);
-        return null;
+        if (start == end - 1) {
+            PsiElement element = file.findElementAt(start);
+            if (element != null) {
+                OdinExpression expression = PsiTreeUtil.getParentOfType(element, OdinExpression.class);
+                if (expression != null)
+                    return new PsiIntroduceTarget<>(expression);
+
+            }
+            return null;
+        }
+        PsiElement startElement = file.findElementAt(start);
+        PsiElement endElement = file.findElementAt(end - 1);
+
+        if (startElement == null || endElement == null)
+            return null;
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(startElement, endElement);
+        if (!(commonParent instanceof OdinExpression parentExpression))
+            return null;
+
+        TextRange textRange = parentExpression.getTextRange();
+        if (!(textRange.getStartOffset() == start && textRange.getEndOffset() == end)) {
+            return null;
+        }
+
+        return new PsiIntroduceTarget<>(parentExpression);
     }
 
     @Override
@@ -136,7 +172,7 @@ public class OdinIntroduceVariableHandler extends IntroduceHandler<PsiIntroduceT
 
     @Override
     protected @NotNull @NlsContexts.DialogTitle String getRefactoringName() {
-        return "";
+        return "Introduce Variable";
     }
 
     @Override
