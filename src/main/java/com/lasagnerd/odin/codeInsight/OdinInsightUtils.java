@@ -157,8 +157,12 @@ public class OdinInsightUtils {
         }
 
         if (structType != null) {
-            List<OdinSymbol> structFields = getStructFields(structType.getSymbolTable(), (OdinStructDeclarationStatement) structType.getDeclaration());
-            symbols.addAll(structFields);
+            OdinDeclaration declaration = structType.getDeclaration();
+            if(declaration != null) {// TODO This fails at models.odin in Engin3
+
+                List<OdinSymbol> structFields = getStructFields(structType.getSymbolTable(), (OdinStructDeclarationStatement) declaration);
+                symbols.addAll(structFields);
+            }
         }
     }
 
@@ -191,7 +195,9 @@ public class OdinInsightUtils {
 
     public static @NotNull List<OdinSymbol> getTypeElements(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
         if (tsOdinType instanceof TsOdinStructType structType) {
-            return getStructFields(symbolTable, (OdinStructDeclarationStatement) structType.getDeclaration());
+            if(structType.getDeclaration() != null) {
+                return getStructFields(symbolTable, (OdinStructDeclarationStatement) structType.getDeclaration());
+            }
         }
 
         if (tsOdinType instanceof TsOdinPointerType pointerType) {

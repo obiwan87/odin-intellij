@@ -69,6 +69,11 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
 
     }
 
+    public static boolean isModeOff(PsiBuilder builder, int level, String mode) {
+        TObjectIntHashMap<String> flags = getParsingModes(builder);
+        return flags.get(mode) <= 0;
+    }
+
     public static boolean exitNoBlockMode(PsiBuilder builder, int level) {
         // Restore all flags from the stack
         TObjectIntHashMap<String> flags = getParsingModes(builder);
@@ -105,11 +110,6 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
         TObjectIntHashMap<String> flags = getParsingModes(builder);
 
         return flags.get(mode) > 0;
-    }
-
-    public static boolean isModeOff(PsiBuilder builder, int level, String mode) {
-        TObjectIntHashMap<String> flags = getParsingModes(builder);
-        return flags.get(mode) <= 0;
     }
 
 

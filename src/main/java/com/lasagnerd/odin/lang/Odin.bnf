@@ -229,7 +229,7 @@ foreignBlockStatement                ::= variableDeclarationStatement
 
 // Attributes
 attributeStatement                   ::= AT IDENTIFIER_TOKEN
-                                         | AT arguments
+                                         | AT LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
 // Struct
 structDeclarationStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? structType
 structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> structBlock {methods=[getParamEntryList] implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
@@ -263,7 +263,7 @@ bitsetDeclarationStatement           ::= (attributeStatement eos?)* declaredIden
 
 // Procedure
 procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureDefinition {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ]}
-procedureDefinition                  ::= procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+procedureDefinition                  ::= <<isModeOff "TYPE_LIST">> procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 procedureType                        ::= directive? PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>> {methods=[getParamEntryList]}
 
 whereClause                          ::= WHERE expression (COMMA expression)*
@@ -310,7 +310,7 @@ type                                 ::= mapType
 relativeType                         ::= directive type
 ellipsisType                         ::= ELLIPSIS
 variadicType                         ::= RANGE type
-callType                             ::= identifier arguments
+callType                             ::= identifier LPAREN <<enterMode "PAR">> <<enterMode "TYPE_LIST">>  argumentList? <<exitMode "TYPE_LIST">> <<exitMode "PAR">> EOS_TOKEN?  RPAREN
 constrainedType                      ::= type DIV type {pin=2}
 polymorphicType                      ::= DOLLAR declaredIdentifier {implements="com.lasagnerd.odin.lang.psi.OdinDeclaration" methods=[getDeclaredIdentifiers]}
 simpleRefType                        ::= identifier
@@ -365,7 +365,7 @@ variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] iden
 // Parameters for procedures and assignments
 private polymorphicParameterList     ::= paramEntries
 
-paramEntries                         ::= paramEntry (COMMA paramEntry)* COMMA? {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+paramEntries                         ::= paramEntry (COMMA paramEntry)* COMMA? EOS_TOKEN? {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 paramEntry                           ::= directive? (
                                              parameterInitialization
                                              | parameterDeclarator
@@ -510,7 +510,7 @@ procedureExpression                  ::= procedureDefinition {implements=["com.l
 dereferenceExpression                ::= expression CARET
 identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference delete]}
 
-callExpression                       ::= expression arguments
+callExpression                       ::= expression LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
 
 private primaryGroup                 ::= simpleRefExpression
                                          | parenthesizedExpression
@@ -528,7 +528,6 @@ compoundLiteralUntyped               ::= compoundValueUntyped            {extend
 
 index                                ::= LBRACKET expression [COMMA expression] RBRACKET
 slice                                ::= LBRACKET expression? COLON expression? RBRACKET
-private arguments                    ::= LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
 
 fake ternaryExpression                    ::= expression 'OP' expression 'OP' expression
 elvisExpression                      ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">> {extends=ternaryExpression}
@@ -679,7 +678,7 @@ controlFlowInit                  ::= assignmentStatement
                                          | variableDeclarationStatement
                                          | callExpression
 
-condition                            ::= expression
+condition                            ::= !compoundLiteralExpression expression
 doStatement                          ::= DO statement {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 statementBody                        ::= block|doStatement
 
