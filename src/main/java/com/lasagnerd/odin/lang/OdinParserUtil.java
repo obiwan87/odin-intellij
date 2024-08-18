@@ -13,6 +13,7 @@ import org.jetbrains.coverage.gnu.trove.TObjectIntHashMap;
 
 import java.util.Stack;
 
+@SuppressWarnings("unused")
 public class OdinParserUtil extends GeneratedParserUtilBase {
 
     private static final Key<TObjectIntHashMap<String>> MODES_KEY = Key.create("MODES_KEY");

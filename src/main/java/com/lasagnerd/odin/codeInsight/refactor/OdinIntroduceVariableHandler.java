@@ -1,8 +1,6 @@
 package com.lasagnerd.odin.codeInsight.refactor;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -31,10 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class OdinIntroduceVariableHandler extends IntroduceHandler<PsiIntroduceTarget<OdinExpression>, PsiElement> {
-    private static final Logger LOG = Logger.getInstance(OdinIntroduceVariableHandler.class);
     PsiElement element;
-
-
 
     public OdinIntroduceVariableHandler(PsiElement element) {
         this.element = element;

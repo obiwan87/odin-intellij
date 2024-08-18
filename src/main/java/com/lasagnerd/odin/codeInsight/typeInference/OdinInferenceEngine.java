@@ -781,6 +781,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         return TsOdinType.UNKNOWN;
     }
 
+    @SuppressWarnings("unused")
     public static TsOdinType createReferenceType(TsOdinType dereferencedType, boolean isReference) {
         return dereferencedType;
     }

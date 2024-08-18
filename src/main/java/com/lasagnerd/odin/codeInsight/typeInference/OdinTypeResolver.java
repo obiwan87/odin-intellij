@@ -467,8 +467,6 @@ public class OdinTypeResolver extends OdinVisitor {
         OdinDeclaredIdentifier nameDeclaredIdentifier;
         OdinType psiType;
 
-        OdinExpression valueExpression;
-
         boolean isValuePolymorphic() {
             return nameDeclaredIdentifier != null && nameDeclaredIdentifier.getDollar() != null;
         }
@@ -478,7 +476,6 @@ public class OdinTypeResolver extends OdinVisitor {
             if (parameterDeclaration instanceof OdinParameterInitialization odinParameterInitialization) {
                 TsOdinParameterSpec tsOdinParameterSpec = new TsOdinParameterSpec();
                 tsOdinParameterSpec.setPsiType(odinParameterInitialization.getTypeDefinition());
-                tsOdinParameterSpec.setValueExpression(odinParameterInitialization.getExpression());
                 tsOdinParameterSpec.setNameDeclaredIdentifier(odinParameterInitialization.getParameter().getDeclaredIdentifier());
                 return List.of(tsOdinParameterSpec);
             }
