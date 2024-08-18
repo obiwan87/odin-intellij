@@ -180,7 +180,7 @@ public class OdinBuiltinSymbolService {
     private void doFindBuiltInSymbols(List<Path> builtinPaths, List<OdinSymbol> builtinSymbols, Predicate<OdinSymbol> odinSymbolPredicate) {
         for (Path builtinPath : builtinPaths) {
             OdinFile odinFile = createOdinFile(project, builtinPath);
-            if (odinFile != null && odinFile.getFileScope() != null) {
+            if (odinFile != null) {
                 OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getSymbolTable();
                 Collection<OdinSymbol> symbols = fileScopeDeclarations
                         .getSymbolNameMap().values()
