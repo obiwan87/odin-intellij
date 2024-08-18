@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
@@ -22,10 +23,15 @@ public class OdinSdkSettingsComponent implements Disposable {
     private final JPanel mainPanel;
     private TextFieldWithBrowseButton sdkPathTextField;
     private JBTextField buildFlagsTextField;
+    private JBCheckBox semanticAnnotatorEnabled;
 
     @Override
     public void dispose() {
 
+    }
+
+    public boolean isSemanticAnnotatorEnabled() {
+        return this.semanticAnnotatorEnabled.isSelected();
     }
 
     class BrowseToSdkFileChooserAction extends AbstractAction {
@@ -62,9 +68,15 @@ public class OdinSdkSettingsComponent implements Disposable {
                                 "Useful flags:<ul>" +
                                 "<li>-vet -vet-cast -strict-style (for more checks)</li>" +
                                 "<li>-max-error-count:999 (to report more errors)</li>" +
-                                "</ul>"), 0)
-                .addComponentFillVertically(new JPanel(), 0)
+                        "</ul>"), 0)
+                .addLabeledComponent(new JBLabel("Semantic annotator"), createCustomAnnotatorCheckbox(), 1)
+                .addComponentFillVertically(new JPanel(), 1)
                 .getPanel();
+    }
+
+    private @NotNull JBCheckBox createCustomAnnotatorCheckbox() {
+        this.semanticAnnotatorEnabled = new JBCheckBox();
+        return semanticAnnotatorEnabled;
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -132,6 +144,10 @@ public class OdinSdkSettingsComponent implements Disposable {
 
     public void setBuildFlags(@NotNull String newBuildFlags) {
         buildFlagsTextField.setText(newBuildFlags);
+    }
+
+    public void setSemanticAnnotatorEnabled(boolean enabled) {
+        semanticAnnotatorEnabled.setSelected(enabled);
     }
 
 }

@@ -24,11 +24,11 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class OdinSymbolTableResolver {
-    public static OdinSymbolTable computeSymbolTable(PsiElement element) {
+    public static OdinSymbolTable computeSymbolTable(@NotNull PsiElement element) {
         return findVisibleSymbols(element, OdinImportService.getInstance(element.getProject()).getPackagePath(element), s -> true);
     }
 
-    public static OdinSymbolTable computeSymbolTable(PsiElement element, Predicate<OdinSymbol> matcher) {
+    public static OdinSymbolTable computeSymbolTable(@NotNull PsiElement element, Predicate<OdinSymbol> matcher) {
         return findVisibleSymbols(element, OdinImportService.getInstance(element.getProject()).getPackagePath(element), matcher);
     }
 
@@ -57,7 +57,7 @@ public class OdinSymbolTableResolver {
         return OdinSymbolTable.from(fileScopeSymbols);
     }
 
-    private static List<OdinStatement> getStatements(PsiElement psiElement) {
+    private static List<OdinStatement> getStatements(@NotNull PsiElement psiElement) {
         if (psiElement instanceof OdinWhenStatement odinWhenStatement) {
             if (odinWhenStatement.getWhenBlock().getStatementBody().getBlock() != null) {
                 OdinStatementList statementList = odinWhenStatement.getWhenBlock().getStatementBody().getBlock().getStatementList();
@@ -89,7 +89,7 @@ public class OdinSymbolTableResolver {
         return Collections.emptyList();
     }
 
-    private static OdinSymbolTable findVisibleSymbols(PsiElement element, String packagePath, Predicate<OdinSymbol> matcher) {
+    private static OdinSymbolTable findVisibleSymbols(@NotNull PsiElement element, String packagePath, Predicate<OdinSymbol> matcher) {
         // TODO: The different scopes (builtin, package, etc.) should be organized in their own SymbolTables for consistency and for correct behaviour
         //  e.g. in Odin it's possible to override built-in symbols
         // TODO: When looking for a specific declaration, this can be optimized:
@@ -143,7 +143,7 @@ public class OdinSymbolTableResolver {
         return odinSymbolTable;
     }
 
-    public static OdinSymbol.OdinVisibility getGlobalFileVisibility(OdinFileScope fileScope) {
+    public static OdinSymbol.OdinVisibility getGlobalFileVisibility(@NotNull OdinFileScope fileScope) {
         PsiElement lineComment = PsiTreeUtil.skipSiblingsBackward(fileScope, PsiWhiteSpace.class);
         if (lineComment != null) {
             IElementType elementType = PsiUtilCore.getElementType(lineComment.getNode());
@@ -172,13 +172,13 @@ public class OdinSymbolTableResolver {
         return OdinImportUtils.getFilesInPackage(project, Path.of(packagePath), virtualFile -> !virtualFile.getName().equals(fileName));
     }
 
-    public static OdinSymbol findSymbol(OdinIdentifier identifier) {
+    public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier) {
         return findSymbol(identifier,  OdinSymbolTableResolver.computeSymbolTable(identifier)
                 .with(OdinImportService.getInstance(identifier.getProject())
                         .getPackagePath(identifier)));
     }
 
-    public static OdinSymbol findSymbol(OdinIdentifier identifier, OdinSymbolTable parentScope) {
+    public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier, OdinSymbolTable parentScope) {
         PsiElement parent = identifier.getParent();
         OdinSymbolTable symbolTable;
         if (parent instanceof OdinRefExpression refExpression) {
@@ -212,16 +212,16 @@ public class OdinSymbolTableResolver {
     }
 
     @TestOnly
-    public static OdinSymbolTable doFindVisibleSymbols(PsiElement position) {
+    public static OdinSymbolTable doFindVisibleSymbols(@NotNull PsiElement position) {
         return doFindVisibleSymbols(position, symbolTable -> false);
     }
 
     @TestOnly
-    public static OdinSymbolTable doFindVisibleSymbols(PsiElement position, StopCondition stopCondition) {
+    public static OdinSymbolTable doFindVisibleSymbols(@NotNull PsiElement position, StopCondition stopCondition) {
         return doFindVisibleSymbols(null, position, stopCondition, false);
     }
 
-    public static OdinSymbolTable doFindVisibleSymbols(String packagePath, PsiElement position, StopCondition stopCondition, boolean constantsOnly) {
+    public static OdinSymbolTable doFindVisibleSymbols(String packagePath, @NotNull PsiElement position, StopCondition stopCondition, boolean constantsOnly) {
         // 1. Find the starting point
         //  = a statement whose parent is a scope block
         // 2. Get the parent and define and get all declarations inside the scope block

@@ -263,7 +263,7 @@ bitsetDeclarationStatement           ::= (attributeStatement eos?)* declaredIden
 
 // Procedure
 procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureDefinition {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ]}
-procedureDefinition                  ::= <<isModeOff "TYPE_LIST">> procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+procedureDefinition                  ::= procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 procedureType                        ::= directive? PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>> {methods=[getParamEntryList]}
 
 whereClause                          ::= WHERE expression (COMMA expression)*
@@ -594,7 +594,7 @@ private compoundType                 ::= sliceType | arrayType | matrixType | bi
 parExpressionType                    ::= parenthesizedExpression
 
 
-compoundValueTyped                   ::= ((<<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
+compoundValueTyped                   ::= (( <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
                                          | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeComma>>) {extends=compoundValue elementType=compoundValue}
 compoundValueStart                   ::= LBRACE
 compoundValueEnd                     ::= RBRACE
@@ -690,7 +690,7 @@ forUpdate                            ::= assignmentStatement | callExpression
 
 // For-In
 forInStatement                       ::= [directive] [labelDeclaration] forInBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-forInBlock                           ::= FOR <<enterNoBlockMode>> forInParameterDeclaration <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
+forInBlock                           ::= FOR &forInParameterDeclaration <<enterNoBlockMode>> forInParameterDeclaration <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 forInParameterDeclaration            ::= [forInParameterDeclarator (COMMA forInParameterDeclarator)*] IN expression
 forInParameterDeclarator            ::= AND? declaredIdentifier
 

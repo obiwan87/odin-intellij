@@ -2,14 +2,7 @@ package com.lasagnerd.odin.sdkConfig;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.jps.entities.LibraryEntity;
-import com.intellij.platform.workspace.jps.entities.LibraryId;
-import com.intellij.platform.workspace.jps.entities.LibraryTableId;
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,11 +31,14 @@ public class OdinSdkConfigurable implements Configurable {
     @Override
     public boolean isModified() {
         boolean sameSdkPath = sdkSettingsComponent.getSdkPath()
-                .equals(OdinSdkConfigPersistentState.getInstance(project).getSdkPath());
+                .equals(OdinSdkConfigPersistentState.getInstance(project).sdkPath);
 
         boolean sameBuildFlags = sdkSettingsComponent.getBuildFlags()
-                .equals(OdinSdkConfigPersistentState.getInstance(project).getExtraBuildFlags());
-        return !sameSdkPath || !sameBuildFlags;
+                .equals(OdinSdkConfigPersistentState.getInstance(project).extraBuildFlags);
+
+        boolean sameSemanticAnnotatorEnabled = sdkSettingsComponent.isSemanticAnnotatorEnabled()
+                == OdinSdkConfigPersistentState.getInstance(project).isSemanticAnnotatorEnabled();
+        return !sameSdkPath || !sameBuildFlags || !sameSemanticAnnotatorEnabled;
     }
 
     @Override
@@ -51,14 +47,17 @@ public class OdinSdkConfigurable implements Configurable {
         String sdkPath = sdkSettingsComponent.getSdkPath();
         config.setSdkPath(sdkPath);
         config.setExtraBuildFlags(sdkSettingsComponent.getBuildFlags());
+        config.setSemanticAnnotatorEnabled(sdkSettingsComponent.isSemanticAnnotatorEnabled() ? "true" : "false");
     }
 
     @Override
     public void reset() {
-        String sdkPath = OdinSdkConfigPersistentState.getInstance(project).getSdkPath();
-        String extraBuildFlags = OdinSdkConfigPersistentState.getInstance(project).getExtraBuildFlags();
+        String sdkPath = OdinSdkConfigPersistentState.getInstance(project).sdkPath;
+        String extraBuildFlags = OdinSdkConfigPersistentState.getInstance(project).extraBuildFlags;
+        boolean semanticAnnotatorEnabled = OdinSdkConfigPersistentState.getInstance(project).isSemanticAnnotatorEnabled();
         sdkSettingsComponent.setSdkPath(sdkPath);
         sdkSettingsComponent.setBuildFlags(extraBuildFlags);
+        sdkSettingsComponent.setSemanticAnnotatorEnabled(semanticAnnotatorEnabled);
     }
 
     @Override

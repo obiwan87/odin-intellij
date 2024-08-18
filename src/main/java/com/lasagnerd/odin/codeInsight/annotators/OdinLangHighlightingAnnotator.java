@@ -23,6 +23,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
 import com.lasagnerd.odin.lang.OdinSyntaxHighlighter;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -135,6 +136,9 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
+        OdinSdkConfigPersistentState persistentState = OdinSdkConfigPersistentState.getInstance(annotationHolder.getCurrentAnnotationSession().getFile().getProject());
+        if(persistentState.getState() != null && !persistentState.getState().isSemanticAnnotatorEnabled())
+            return;
         IElementType elementType = PsiUtilCore.getElementType(psiElement);
         if (elementType == OdinTypes.IDENTIFIER_TOKEN) {
 
@@ -218,7 +222,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         if (topMostExpression == null) {
             List<OdinRefExpression> refExpressions = OdinInsightUtils.unfoldRefExpressions(refExpression);
             if (!refExpressions.isEmpty()) {
-                topMostExpression = refExpressions.get(refExpressions.size() - 1);
+                topMostExpression = refExpressions.getLast();
                 for (OdinRefExpression expression : refExpressions) {
                     annotationSessionState.refExpressionMap.put(expression, topMostExpression);
                 }

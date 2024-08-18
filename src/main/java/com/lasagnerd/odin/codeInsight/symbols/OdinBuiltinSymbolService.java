@@ -65,7 +65,7 @@ public class OdinBuiltinSymbolService {
     }
 
     public List<OdinSymbol>  getRuntimeCoreSymbols() {
-        if(runtimeCoreSymbols == null) {
+        if(runtimeCoreSymbols == null || runtimeCoreSymbols.isEmpty()) {
             Optional<String> sdkPathOptional = OdinSdkUtils.getSdkPath(project);
 
             if (sdkPathOptional.isEmpty()) {
@@ -98,7 +98,10 @@ public class OdinBuiltinSymbolService {
         if(contextStructType == null) {
             OdinSymbol contextStructSymbol = getContextStructSymbol();
             TsOdinStructType contextStructType = new TsOdinStructType();
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(getContextType());
+            OdinStructType contextType = getContextType();
+            if(contextType == null)
+                return null;
+            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(contextType);
             contextStructType.setName("Context");
             contextStructType.setDeclaredIdentifier((OdinDeclaredIdentifier) contextStructSymbol.getDeclaredIdentifier());
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(contextStructSymbol.getDeclaredIdentifier(), OdinDeclaration.class, true);
