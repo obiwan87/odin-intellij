@@ -84,6 +84,32 @@ public class OdinPsiElementFactory {
         throw new RuntimeException("Something went wrong.");
     }
 
+    public OdinVariableInitializationStatement createVariableInitializationStatement(String name, String type, String value) {
+
+        String var = """
+                package dummy
+                %s : %s = %s
+                """.formatted(name, type, value);
+        OdinFile file = createFile(var);
+        OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().getFirst();
+        if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
+            return variableInitializationStatement;
+        }
+        throw new RuntimeException("Something went wrong.");
+    }
+
+    public OdinVariableInitializationStatement createVariableInitializationStatement(String name, OdinExpression valueExpression) {
+        OdinVariableInitializationStatement statement = createVariableInitializationStatement(name, "v");
+        statement.getExpressionsList().getExpressionList().getFirst().replace(valueExpression);
+        return statement;
+    }
+
+    public OdinVariableInitializationStatement createVariableInitializationStatement(String name, String type, OdinExpression valueExpression) {
+        OdinVariableInitializationStatement statement = createVariableInitializationStatement(name, type, "v");
+        statement.getExpressionsList().getExpressionList().getFirst().replace(valueExpression);
+        return statement;
+    }
+
 
     public OdinEos createEos() {
 

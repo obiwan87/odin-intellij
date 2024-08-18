@@ -198,6 +198,11 @@
             <category>Refactor</category>
         </intentionAction>
         <psi.referenceContributor language="Odin" implementation="com.lasagnerd.odin.lang.psi.OdinReferenceContributor"/>
+        <intentionAction>
+            <language>Odin</language>
+            <className>com.lasagnerd.odin.codeInsight.refactor.OdinSpecifyTypeIntention</className>
+            <category>Refactor</category>
+        </intentionAction>
     </extensions>
 
     <actions>

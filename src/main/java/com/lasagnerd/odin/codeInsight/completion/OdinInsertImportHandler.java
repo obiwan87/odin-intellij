@@ -11,11 +11,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.List;
 
 public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
     private final String sourcePackagePath;
@@ -38,8 +38,8 @@ public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
             return;
         }
 
-        String relativePath = FileUtil
-                .toSystemIndependentName(Path.of(sourcePackagePath).relativize(Path.of(targetPackagePath)).toString());
+        String relativePath = FileUtil.toSystemIndependentName(Path.of(sourcePackagePath)
+                .relativize(Path.of(targetPackagePath)).toString());
 
         // Check if package is already imported
         for (OdinImportDeclarationStatement importStatement : sourceFile.getFileScope().getImportStatements()) {
@@ -55,18 +55,7 @@ public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
         Project project = context.getProject();
         ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.runWriteCommandAction(project, () -> {
             PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-            OdinImportDeclarationStatement anImport = OdinPsiElementFactory.getInstance(project)
-                    .createImport(relativePath);
-
-            OdinImportStatementsContainer importStatementsContainer = fileScope.getImportStatementsContainer();
-            if (importStatementsContainer == null) {
-                OdinImportStatementsContainer templateImportStatementsContainer = OdinPsiElementFactory.getInstance(project)
-                        .createImportStatementsContainer(List.of(anImport));
-              fileScope.addAfter(templateImportStatementsContainer, fileScope.getEos());
-            } else {
-                OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatementsContainer().getImportDeclarationStatementList().getLast();
-                importStatementsContainer.addAfter(anImport, odinImportDeclarationStatement);
-            }
+            OdinImportUtils.insertImport(project, relativePath, fileScope);
             Document document = manager.getDocument(odinFile);
             if (document != null) {
                 manager.commitDocument(document);
