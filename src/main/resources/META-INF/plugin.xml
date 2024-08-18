@@ -2,9 +2,22 @@
 
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <version>0.5.2</version>
+    <version>0.5.3</version>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.5.3</h3>
+        <h4>Features</h4>
+        <li>"Introduce variable" refactoring🔥</li>
+        <li>Add notification for missing SDK</li>
+
+        <h4>Improvements</h4>
+        <li>Organizing imports now gathers imports from everywhere in the file</li>
+        <li>File formatting improved</li>
+
+        <h4>Bugfixes</h4>
+        <li>Fix exception where parsing would fail because of missing class♨️</li>
+        <li>Fix tooltip layout for compiler problems</li>
+
         <h3>0.5.2</h3>
         <h4>Bugfixes</h4>
         <li>Fixed bug where odin checker would falsely report errors</li>
