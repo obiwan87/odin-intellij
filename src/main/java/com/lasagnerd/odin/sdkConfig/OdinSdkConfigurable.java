@@ -48,6 +48,8 @@ public class OdinSdkConfigurable implements Configurable {
         config.setSdkPath(sdkPath);
         config.setExtraBuildFlags(sdkSettingsComponent.getBuildFlags());
         config.setSemanticAnnotatorEnabled(sdkSettingsComponent.isSemanticAnnotatorEnabled() ? "true" : "false");
+
+        OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project, sdkPath);
     }
 
     @Override

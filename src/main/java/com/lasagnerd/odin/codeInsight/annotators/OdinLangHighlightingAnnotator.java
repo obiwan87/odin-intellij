@@ -8,14 +8,13 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
@@ -130,34 +129,54 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
     public static final String ALL_ESCAPE_SEQUENCES =
             "\\\\n|\\\\r|\\\\v|\\\\t|\\\\e|\\\\a|\\\\b|\\\\f|\\\\[0-7]{2}|\\\\x[0-9a-fA-F]{2}|\\\\u[0-9a-fA-F]{4}|\\\\U[0-9a-fA-F]{8}|\\\\\"|\\\\\\\\";
-    public static final PsiElementPattern.Capture<PsiElement> IS_CALL_IDENTIFIER = PlatformPatterns.psiElement().withAncestor(2, PlatformPatterns.psiElement(OdinCallExpression.class));
     public static final @NotNull Key<Object> ANNOTATION_SESSION_STATE = Key.create("annotationSessionState");
     public static Pattern ESCAPE_SEQUENCES_PATTERN = Pattern.compile(ALL_ESCAPE_SEQUENCES);
 
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
         OdinSdkConfigPersistentState persistentState = OdinSdkConfigPersistentState.getInstance(annotationHolder.getCurrentAnnotationSession().getFile().getProject());
-        if(persistentState.getState() != null && !persistentState.getState().isSemanticAnnotatorEnabled())
+        if (persistentState.getState() != null && !persistentState.getState().isSemanticAnnotatorEnabled())
             return;
+
         IElementType elementType = PsiUtilCore.getElementType(psiElement);
+
+        TextRange psiElementRange = psiElement.getTextRange();
+
+        if (elementType == OdinTypes.IMPORT_PATH) {
+            OdinImportPath odinImportPath = (OdinImportPath) psiElement;
+            OdinImportDeclarationStatement parent = (OdinImportDeclarationStatement) odinImportPath.getParent();
+            OdinImportInfo importInfo = parent.getImportInfo();
+            if (importInfo.library() != null) {
+                String text = odinImportPath.getText();
+                int indexOfColon = text.indexOf(':');
+                if (indexOfColon > 2) {
+
+                    annotationHolder
+                            .newSilentAnnotation(HighlightSeverity.INFORMATION)
+                            .range(TextRange.from(1 + psiElementRange.getStartOffset(), indexOfColon - 1))
+                            .textAttributes(OdinSyntaxHighlighter.LIBRARY)
+                            .create();
+                }
+            }
+        }
+
         if (elementType == OdinTypes.IDENTIFIER_TOKEN) {
 
             String identifierText = psiElement.getText();
-            TextRange textRange = psiElement.getTextRange();
 
             if (RESERVED_TYPES.contains(identifierText)) {
-                highlight(annotationHolder, textRange, OdinSyntaxHighlighter.BUILTIN_FUNCTION);
+                highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.BUILTIN_FUNCTION);
             } else if (PREDEFINED_SYMBOLS.contains(identifierText)) {
-                highlight(annotationHolder, textRange, OdinSyntaxHighlighter.BUILTIN_FUNCTION);
+                highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.BUILTIN_FUNCTION);
             } else {
                 PsiElement identifierTokenParent = psiElement.getParent();
                 if (identifierTokenParent instanceof OdinDeclaredIdentifier declaredIdentifier) {
                     if (declaredIdentifier.getParent() instanceof OdinImportDeclarationStatement) {
-                        highlight(annotationHolder, textRange, OdinSyntaxHighlighter.PACKAGE);
+                        highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.PACKAGE);
                     } else if (declaredIdentifier.getParent() instanceof OdinProcedureDeclarationStatement) {
-                        highlight(annotationHolder, textRange, OdinSyntaxHighlighter.PROCEDURE_TYPE);
+                        highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.PROCEDURE_TYPE);
                     } else if (declaredIdentifier.getParent() instanceof OdinStructDeclarationStatement) {
-                        highlight(annotationHolder, textRange, OdinSyntaxHighlighter.STRUCT_TYPE);
+                        highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.STRUCT_TYPE);
                     }
                     // Add other types
                 } else if (identifierTokenParent.getParent() instanceof OdinRefExpression refExpression) {
@@ -166,11 +185,11 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                             identifierText,
                             refExpression,
                             identifierTokenParent,
-                            textRange);
+                            psiElementRange);
                 } else if (identifierTokenParent.getParent() instanceof OdinQualifiedType qualifiedType) {
                     OdinIdentifier identifier = qualifiedType.getPackageIdentifier();
                     if (identifier.getIdentifierToken() == psiElement) {
-                        highlightPackageReference(annotationHolder, identifierText, textRange, identifier);
+                        highlightPackageReference(annotationHolder, identifierText, psiElementRange, identifier);
                     }
                 } else if (identifierTokenParent.getParent() instanceof OdinSimpleRefType) {
                     OdinIdentifier identifier = (OdinIdentifier) identifierTokenParent;
@@ -178,9 +197,9 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         PsiElement resolvedReference = identifier.getReference().resolve();
                         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(resolvedReference, OdinDeclaration.class, false);
                         if (declaration == null) {
-                            highlightUnknownReference(annotationHolder, identifierText, textRange);
+                            highlightUnknownReference(annotationHolder, identifierText, psiElementRange);
                         } else if (declaration instanceof OdinStructDeclarationStatement) {
-                            highlight(annotationHolder, textRange, OdinSyntaxHighlighter.STRUCT_REF);
+                            highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.STRUCT_REF);
                         }
                     }
                 }

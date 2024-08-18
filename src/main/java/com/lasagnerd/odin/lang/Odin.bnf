@@ -195,7 +195,8 @@ fileScopeStatementList               ::= (fileScopeStatement eos)*
 packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=0 recoverWhile=eos_recover}
 
 
-importDeclarationStatement           ::= IMPORT declaredIdentifier? DQ_STRING_LITERAL {methods=[alias="/declaredIdentifier" path="/DQ_STRING_LITERAL" getName setName getNameIdentifier getImportInfo] implements="com.intellij.psi.PsiNameIdentifierOwner"}
+importDeclarationStatement           ::= IMPORT declaredIdentifier? importPath {methods=[alias="/declaredIdentifier" path="/importPath" getName setName getNameIdentifier getImportInfo] implements="com.intellij.psi.PsiNameIdentifierOwner"}
+importPath                           ::= DQ_STRING_LITERAL {methods=[getReference]}
 doubleColonOperator                  ::= COLON COLON
 
 fileScopeStatement                   ::= foreignImportDeclarationStatement

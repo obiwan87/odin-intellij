@@ -3,8 +3,6 @@ package com.lasagnerd.odin.lang;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
@@ -28,6 +26,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
 
     public static final TextAttributesKey UNION_TYPE = createTextAttributesKey("ODIN_UNION_TYPE", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey UNION_REF = createTextAttributesKey("ODIN_UNION_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    public static final TextAttributesKey LIBRARY = createTextAttributesKey("ODIN_LIBRARY", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
 
 
     public static final TextAttributesKey BAD_CHARACTER =

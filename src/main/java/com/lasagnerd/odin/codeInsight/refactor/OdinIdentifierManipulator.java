@@ -10,7 +10,7 @@ import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class OdinElementManipulators extends AbstractElementManipulator<OdinIdentifier> {
+public class OdinIdentifierManipulator extends AbstractElementManipulator<OdinIdentifier> {
 
 
     @Override

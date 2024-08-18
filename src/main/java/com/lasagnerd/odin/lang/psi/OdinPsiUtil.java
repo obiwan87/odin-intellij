@@ -26,6 +26,10 @@ public class OdinPsiUtil {
         return new OdinReference(self);
     }
 
+    public static PsiReference getReference(OdinImportPath importPath) {
+        return new OdinImportReference(importPath);
+    }
+
     public static PsiElement getOperator(OdinBinaryExpression self) {
         if (self instanceof OdinMulExpression mulExpression)
             return mulExpression.getStar();

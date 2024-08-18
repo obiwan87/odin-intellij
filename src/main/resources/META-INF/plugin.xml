@@ -150,7 +150,9 @@
         <lang.commenter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinCommenter"/>
         <lang.foldingBuilder language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFoldingBuilder"/>
         <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinIdentifier"
-                                 implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinElementManipulators"/>
+                                 implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinIdentifierManipulator"/>
+        <lang.elementManipulator forClass="com.lasagnerd.odin.lang.psi.OdinImportPath"
+                                 implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinImportPathManipulator"/>
 
         <completion.contributor language="Odin"
                                 implementationClass="com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor"/>
@@ -174,7 +176,7 @@
         <additionalTextAttributes
                 scheme="Dark"
                 file="colorSchemes/OdinLangDark.xml"/>
-        <indexedRootsProvider implementation="com.lasagnerd.odin.indexes.OdinSdkFilesIndexContributor"/>
+
         <lang.psiStructureViewFactory language="Odin"
                                       implementationClass="com.lasagnerd.odin.structureView.OdinStructureViewFactory"/>
         <notificationGroup id="Odin Notifications"
@@ -195,6 +197,7 @@
             <className>com.lasagnerd.odin.codeInsight.refactor.OdinIntroduceVariableQuickFix</className>
             <category>Refactor</category>
         </intentionAction>
+        <psi.referenceContributor language="Odin" implementation="com.lasagnerd.odin.lang.psi.OdinReferenceContributor"/>
     </extensions>
 
     <actions>

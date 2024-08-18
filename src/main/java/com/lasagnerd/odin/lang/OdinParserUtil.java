@@ -114,7 +114,7 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
     public static boolean enterMode(PsiBuilder builder, int level, String mode) {
         Object2IntOpenHashMap<String> flags = getParsingModes(builder);
         log("Switching ON mode " + mode + " at offset " + builder.getCurrentOffset() + ". Current Token: " + builder.getTokenText(), builder, flags);
-        Integer currentCount = flags.getOrDefault(mode, 0);
+        int currentCount = flags.getOrDefault(mode, 0);
         flags.put(mode, currentCount + 1);
         return true;
     }
@@ -127,7 +127,7 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
         flags.put(mode, flags.getOrDefault(mode, 0) - 1);
 
         if (flags.getOrDefault(mode, 0) <= 0) {
-            flags.remove(mode);
+            flags.removeInt(mode);
         }
         return true;
     }
