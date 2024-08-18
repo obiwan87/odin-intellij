@@ -7,17 +7,17 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.coverage.gnu.trove.TObjectIntHashMap;
 
 import java.util.Stack;
 
 @SuppressWarnings("unused")
 public class OdinParserUtil extends GeneratedParserUtilBase {
 
-    private static final Key<TObjectIntHashMap<String>> MODES_KEY = Key.create("MODES_KEY");
-    private static final Key<Stack<TObjectIntHashMap<String>>> MODES_STACK_KEY = Key.create("MODES_STACK_KEY");
+    private static final Key<Object2IntOpenHashMap<String>> MODES_KEY = Key.create("MODES_KEY");
+    private static final Key<Stack<Object2IntOpenHashMap<String>>> MODES_STACK_KEY = Key.create("MODES_STACK_KEY");
 
     public static boolean afterClosingBrace(PsiBuilder builder, int level) {
         IElementType tokenType = lookBehindUntilNoWhitespace(builder);
@@ -52,9 +52,9 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
 
     public static boolean enterNoBlockMode(PsiBuilder builder, int level) {
         // Save all current flags on a stack
-        TObjectIntHashMap<String> flags = getParsingModes(builder);
-        TObjectIntHashMap<String> flagsCopy = new TObjectIntHashMap<>(flags);
-        Stack<TObjectIntHashMap<String>> stack = builder.getUserData(MODES_STACK_KEY);
+        Object2IntOpenHashMap<String> flags = getParsingModes(builder);
+        Object2IntOpenHashMap<String> flagsCopy = new Object2IntOpenHashMap<>(flags);
+        Stack<Object2IntOpenHashMap<String>> stack = builder.getUserData(MODES_STACK_KEY);
 
         if (stack == null) {
             stack = new Stack<>();
@@ -65,59 +65,56 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
         // Clear all flags
         flags.clear();
 
-        flags.put("NO_BLOCK", flags.get("NO_BLOCK") + 1);
+        flags.put("NO_BLOCK", flags.getInt("NO_BLOCK") + 1);
         return true;
 
     }
 
     public static boolean isModeOff(PsiBuilder builder, int level, String mode) {
-        TObjectIntHashMap<String> flags = getParsingModes(builder);
-        return flags.get(mode) <= 0;
+        Object2IntOpenHashMap<String> flags = getParsingModes(builder);
+        return flags.getInt(mode) <= 0;
     }
 
     public static boolean exitNoBlockMode(PsiBuilder builder, int level) {
         // Restore all flags from the stack
-        TObjectIntHashMap<String> flags = getParsingModes(builder);
-        Stack<TObjectIntHashMap<String>> stack = builder.getUserData(MODES_STACK_KEY);
+        Object2IntOpenHashMap<String> flags = getParsingModes(builder);
+        Stack<Object2IntOpenHashMap<String>> stack = builder.getUserData(MODES_STACK_KEY);
         if(stack != null && !stack.isEmpty()) {
-            TObjectIntHashMap<String> flagsCopy = stack.pop();
+            Object2IntOpenHashMap<String> flagsCopy = stack.pop();
             flags.clear();
-            flagsCopy.forEachEntry((key, value) -> {
-                flags.put(key, value);
-                return true;
-            });
+			flags.putAll(flagsCopy);
         }
         return true;
     }
 
     public static boolean enterMode(PsiBuilder builder, int level, String mode) {
-        TObjectIntHashMap<String> flags = getParsingModes(builder);
-        flags.put(mode, flags.get(mode) + 1);
+        Object2IntOpenHashMap<String> flags = getParsingModes(builder);
+        flags.put(mode, flags.getInt(mode) + 1);
         return true;
     }
 
     public static boolean exitMode(PsiBuilder builder, int level, String mode) {
-        TObjectIntHashMap<String> flags = getParsingModes(builder);
+        Object2IntOpenHashMap<String> flags = getParsingModes(builder);
 
-        flags.put(mode, flags.get(mode) - 1);
+        flags.put(mode, flags.getInt(mode) - 1);
 
-        if (flags.get(mode) <= 0) {
-            flags.remove(mode);
+        if (flags.getInt(mode) <= 0) {
+            flags.removeInt(mode);
         }
         return true;
     }
 
     public static boolean isModeOn(PsiBuilder builder, int level, String mode) {
-        TObjectIntHashMap<String> flags = getParsingModes(builder);
+        Object2IntOpenHashMap<String> flags = getParsingModes(builder);
 
-        return flags.get(mode) > 0;
+        return flags.getInt(mode) > 0;
     }
 
 
     @NotNull
-    private static TObjectIntHashMap<String> getParsingModes(@NotNull PsiBuilder builder_) {
-        TObjectIntHashMap<String> flags = builder_.getUserData(MODES_KEY);
-        if (flags == null) builder_.putUserData(MODES_KEY, flags = new TObjectIntHashMap<>());
+    private static Object2IntOpenHashMap<String> getParsingModes(@NotNull PsiBuilder builder_) {
+        Object2IntOpenHashMap<String> flags = builder_.getUserData(MODES_KEY);
+        if (flags == null) builder_.putUserData(MODES_KEY, flags = new Object2IntOpenHashMap<>());
         return flags;
     }
 
