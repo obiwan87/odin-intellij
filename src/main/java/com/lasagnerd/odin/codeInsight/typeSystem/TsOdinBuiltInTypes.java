@@ -133,10 +133,7 @@ public class TsOdinBuiltInTypes {
             "cstring",
             "rawptr",
             "typeid",
-            "any",
-            "true",
-            "false",
-            "nil"
+            "any"
     );
     private static final Map<String, TsOdinBuiltInType> builtInTypeMap = new HashMap<>();
     private static List<TsOdinType> integerTypes;

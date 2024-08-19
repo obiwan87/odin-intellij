@@ -110,3 +110,9 @@ ODIN_NO_RTTI: bool
 
 @builtin
 ODIN_DISABLE_ASSERT: bool
+
+@builtin
+true: bool
+
+@builtin
+false: bool

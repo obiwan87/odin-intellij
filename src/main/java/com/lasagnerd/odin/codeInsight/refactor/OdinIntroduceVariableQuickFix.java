@@ -8,12 +8,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.lasagnerd.odin.lang.psi.OdinEos;
 import com.lasagnerd.odin.lang.psi.OdinExpressionStatement;
-import com.lasagnerd.odin.lang.psi.OdinPsiElementFactory;
-import com.lasagnerd.odin.lang.psi.OdinVariableInitializationStatement;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 public class OdinIntroduceVariableQuickFix extends PsiElementBaseIntentionAction {
 
@@ -23,21 +20,29 @@ public class OdinIntroduceVariableQuickFix extends PsiElementBaseIntentionAction
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-        OdinExpressionStatement odinExpressionStatement = PsiTreeUtil.getParentOfType(element, OdinExpressionStatement.class);
-        if (odinExpressionStatement != null) {
-            OdinVariableInitializationStatement statement = OdinPsiElementFactory
-                    .getInstance(project).createVariableInitializationStatement("value", "1");
+    public boolean startInWriteAction() {
+        return false;
+    }
 
-            statement.getExpressionsList().getExpressionList().getFirst()
-                    .replace(Objects.requireNonNull(odinExpressionStatement.getExpression()));
-            element.replace(statement);
-        }
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+        OdinIntroduceVariableHandler introduceVariableHandler = new OdinIntroduceVariableHandler(element);
+        introduceVariableHandler.invoke(project, editor, element.getContainingFile(), null);
     }
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-        return PsiTreeUtil.getParentOfType(element, OdinExpressionStatement.class) != null;
+        OdinExpressionStatement parent = PsiTreeUtil.getParentOfType(element, OdinExpressionStatement.class);
+        if(parent == null) {
+            OdinEos eos = PsiTreeUtil.getParentOfType(element, false, OdinEos.class);
+            if(eos != null) {
+                PsiElement elementAt = element.getContainingFile().findElementAt(eos.getTextOffset() - 1);
+                if(elementAt != null) {
+                    return isAvailable(project, editor, elementAt);
+                }
+            }
+        }
+        return parent != null;
     }
 
 

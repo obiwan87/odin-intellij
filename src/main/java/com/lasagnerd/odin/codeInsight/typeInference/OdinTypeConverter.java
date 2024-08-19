@@ -40,7 +40,6 @@ public class OdinTypeConverter {
         }
 
 
-        
     }
 
     public static @NotNull TsOdinType convertTypeOfBinaryExpression(@NotNull TsOdinType a, @NotNull TsOdinType b) {
@@ -50,12 +49,12 @@ public class OdinTypeConverter {
         // Easy case: the type kind is the same
         if (a.getMetaType() == b.getMetaType()) {
             if (a instanceof TsOdinBitSetType bitSetA && b instanceof TsOdinBitSetType bitSetB) {
-                if(bitSetA.getElementType() == bitSetB.getElementType())
+                if (bitSetA.getElementType() == bitSetB.getElementType())
                     return bitSetA;
             }
 
             if (a instanceof TsOdinArrayType arrayTypeA && b instanceof TsOdinArrayType arrayTypeB) {
-                if(arrayTypeA.getElementType() == arrayTypeB.getElementType())
+                if (arrayTypeA.getElementType() == arrayTypeB.getElementType())
                     return arrayTypeA;
             }
 
@@ -94,8 +93,8 @@ public class OdinTypeConverter {
 
         // Here we know that b is untyped and a isn't
 
-        TsOdinUntypedType untypedType = null;
-        TsOdinType typed = null;
+        TsOdinUntypedType untypedType;
+        TsOdinType typed;
 
         if (a.isUntyped()) {
             untypedType = (TsOdinUntypedType) a;
@@ -159,6 +158,10 @@ public class OdinTypeConverter {
 
             if (tsOdinType == TsOdinBuiltInTypes.UNTYPED_BOOLEAN) {
                 return TsOdinBuiltInTypes.BOOL;
+            }
+
+            if (tsOdinType == TsOdinBuiltInTypes.UNTYPED_FLOAT) {
+                return TsOdinBuiltInTypes.F64;
             }
         }
 
