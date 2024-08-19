@@ -15,6 +15,7 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinArrayType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -495,6 +496,10 @@ public class OdinSymbolTableResolver {
             return new PositionCheckResult(false, commonParent, declaration);
 
         return new PositionCheckResult(true, commonParent, declaration);
+    }
+
+    public static OdinSymbolTable computeSymbolTable(PsiElement reference, @NonNls @NotNull String originalFilePath) {
+        return computeSymbolTable(reference, e -> true).with(originalFilePath);
     }
 
     @FunctionalInterface

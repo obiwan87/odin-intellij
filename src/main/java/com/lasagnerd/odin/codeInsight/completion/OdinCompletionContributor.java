@@ -55,7 +55,11 @@ public class OdinCompletionContributor extends CompletionContributor {
 
                         // This constitutes our scope
                         if (parent instanceof OdinRefExpression reference) {
-                            OdinSymbolTable symbolTable = createScope(parameters, reference);
+                            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(reference, parameters
+                                    .getOriginalFile()
+                                    .getContainingDirectory()
+                                    .getVirtualFile()
+                                    .getPath());
 
                             if (reference.getExpression() != null) {
                                 // TODO at some point we should return the type of each symbol
@@ -74,7 +78,11 @@ public class OdinCompletionContributor extends CompletionContributor {
 
                         OdinType parentType = PsiTreeUtil.getParentOfType(position, true, OdinType.class);
                         if (parentType instanceof OdinSimpleRefType) {
-                            OdinSymbolTable symbolTable = createScope(parameters, parentType);
+                            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(parentType, parameters
+                                    .getOriginalFile()
+                                    .getContainingDirectory()
+                                    .getVirtualFile()
+                                    .getPath());
                             OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, parentType);
                             if (completionScope != null) {
                                 addLookUpElements(result, completionScope.flatten().getSymbols());
@@ -164,14 +172,6 @@ public class OdinCompletionContributor extends CompletionContributor {
                 }
         );
 
-    }
-
-    private static OdinSymbolTable createScope(@NotNull CompletionParameters parameters, PsiElement reference) {
-        return OdinSymbolTableResolver.computeSymbolTable(reference, e -> true).with(parameters
-                .getOriginalFile()
-                .getContainingDirectory()
-                .getVirtualFile()
-                .getPath());
     }
 
     private static void addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols) {
