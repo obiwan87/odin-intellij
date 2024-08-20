@@ -163,10 +163,9 @@ public class OdinCompletionContributor extends CompletionContributor {
                             }
                         }
 
-                        // 2. Add symbols from SDK (core, vendor, etc.)
-
                         // 3. Add symbols from local scope
-                        OdinSymbolTable flatSymbolTable = OdinSymbolTableResolver.computeSymbolTable(position, e -> true).flatten();
+                        OdinSymbolTable flatSymbolTable = OdinSymbolTableResolver.computeSymbolTable(position)
+                                .flatten();
                         addLookUpElements(result, flatSymbolTable.getSymbols());
                     }
                 }

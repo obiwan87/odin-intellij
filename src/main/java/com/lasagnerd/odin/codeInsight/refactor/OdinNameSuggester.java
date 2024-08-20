@@ -54,23 +54,32 @@ public class OdinNameSuggester {
             }
         }
 
-        if(targetExpression instanceof OdinCompoundLiteralExpression compoundLiteralExpression) {
+        if (targetExpression instanceof OdinCompoundLiteralExpression compoundLiteralExpression) {
             OdinType type = compoundLiteralExpression.getCompoundLiteral().getType();
-            if(type != null) {
-                if(type instanceof OdinQualifiedType qualifiedType) {
+            if (type != null) {
+                if (type instanceof OdinQualifiedType qualifiedType) {
                     String text = qualifiedType.getTypeIdentifier().getText();
                     addName(symbolTable, text, names, blacklist);
                 }
 
-                if(type instanceof OdinSimpleRefType simpleRefType) {
+                if (type instanceof OdinSimpleRefType simpleRefType) {
                     String text = simpleRefType.getIdentifier().getText();
                     addName(symbolTable, text, names, blacklist);
                 }
             }
         }
 
-        if(targetExpression instanceof  OdinCallExpression odinCallExpression) {
-            String text = odinCallExpression.getExpression().getText();
+        if (targetExpression instanceof OdinCallExpression odinCallExpression) {
+            String text = odinCallExpression.getText();
+            if (odinCallExpression.getExpression() instanceof OdinRefExpression odinRefExpression) {
+                if (odinRefExpression.getIdentifier() != null) {
+                    text = odinRefExpression.getIdentifier().getText();
+                }
+
+                if (odinRefExpression.getType() != null) {
+                    text = odinRefExpression.getType().getText();
+                }
+            }
             String name = suggestVariableForProcedure(normalizeName(text));
             addName(symbolTable, name, names, blacklist);
         }
