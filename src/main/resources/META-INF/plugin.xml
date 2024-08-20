@@ -7,8 +7,8 @@
     <change-notes><![CDATA[
         <h3>0.5.3</h3>
         <h4>Features</h4>
-        <li>"Introduce variable" refactoring🔥</li>
-        <li>"Specify type explicitly" refactoring🔥</li>
+        <li>"Introduce variable" refactoring🔥. Use<kbd>Ctrl+Alt+V</kbd> or <a href="https://www.jetbrains.com/help/idea/resolving-problems.html">Quick Fix💡</a>.</li>
+        <li>"Specify type explicitly" refactoring🔥. Use Quick Fix💡 on variable identifier.</li>
         <li>Add notification for missing SDK</li>
 
         <h4>Improvements</h4>
