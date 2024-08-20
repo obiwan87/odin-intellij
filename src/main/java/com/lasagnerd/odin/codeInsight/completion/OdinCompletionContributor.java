@@ -42,54 +42,7 @@ public class OdinCompletionContributor extends CompletionContributor {
         // REFERENCE completion
         extend(CompletionType.BASIC,
                 REFERENCE,
-                new CompletionProvider<>() {
-
-                    @Override
-                    protected void addCompletions(@NotNull CompletionParameters parameters,
-                                                  @NotNull ProcessingContext context,
-                                                  @NotNull CompletionResultSet result) {
-
-                        // Walk up tree until no more ref expressions are found
-                        PsiElement position = parameters.getPosition();
-                        PsiElement parent = PsiTreeUtil.findFirstParent(position, e -> e instanceof OdinRefExpression);
-
-                        // This constitutes our scope
-                        if (parent instanceof OdinRefExpression reference) {
-                            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(reference, parameters
-                                    .getOriginalFile()
-                                    .getContainingDirectory()
-                                    .getVirtualFile()
-                                    .getPath());
-
-                            if (reference.getExpression() != null) {
-                                // TODO at some point we should return the type of each symbol
-                                OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, reference.getExpression());
-                                if (completionScope != null) {
-                                    Collection<OdinSymbol> visibleSymbols = completionScope.flatten()
-                                            .getSymbols()
-                                            .stream()
-                                            .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
-                                            .collect(Collectors.toList());
-
-                                    addLookUpElements(result, visibleSymbols);
-                                }
-                            }
-                        }
-
-                        OdinType parentType = PsiTreeUtil.getParentOfType(position, true, OdinType.class);
-                        if (parentType instanceof OdinSimpleRefType) {
-                            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(parentType, parameters
-                                    .getOriginalFile()
-                                    .getContainingDirectory()
-                                    .getVirtualFile()
-                                    .getPath());
-                            OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, parentType);
-                            if (completionScope != null) {
-                                addLookUpElements(result, completionScope.flatten().getSymbols());
-                            }
-                        }
-                    }
-                }
+                new ReferenceCompletionProvider()
         );
 
         // Basic Completion
@@ -310,5 +263,54 @@ public class OdinCompletionContributor extends CompletionContributor {
             element = element.withTypeText(returnType.getText());
         }
         return element;
+    }
+
+    private static class ReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
+
+        @Override
+        protected void addCompletions(@NotNull CompletionParameters parameters,
+                                      @NotNull ProcessingContext context,
+                                      @NotNull CompletionResultSet result) {
+
+            // Walk up tree until no more ref expressions are found
+            PsiElement position = parameters.getPosition();
+            PsiElement parent = PsiTreeUtil.findFirstParent(position, e -> e instanceof OdinRefExpression);
+
+            // This constitutes our scope
+            if (parent instanceof OdinRefExpression reference) {
+                OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(reference, parameters
+                        .getOriginalFile()
+                        .getContainingDirectory()
+                        .getVirtualFile()
+                        .getPath());
+
+                if (reference.getExpression() != null) {
+                    // TODO at some point we should return the type of each symbol
+                    OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, reference.getExpression());
+                    if (completionScope != null) {
+                        Collection<OdinSymbol> visibleSymbols = completionScope.flatten()
+                                .getSymbols()
+                                .stream()
+                                .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
+                                .collect(Collectors.toList());
+
+                        addLookUpElements(result, visibleSymbols);
+                    }
+                }
+            }
+
+            OdinType parentType = PsiTreeUtil.getParentOfType(position, true, OdinType.class);
+            if (parentType instanceof OdinSimpleRefType) {
+                OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(parentType, parameters
+                        .getOriginalFile()
+                        .getContainingDirectory()
+                        .getVirtualFile()
+                        .getPath());
+                OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, parentType);
+                if (completionScope != null) {
+                    addLookUpElements(result, completionScope.flatten().getSymbols());
+                }
+            }
+        }
     }
 }
