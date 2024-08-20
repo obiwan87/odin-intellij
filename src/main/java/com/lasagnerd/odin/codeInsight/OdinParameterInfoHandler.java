@@ -16,6 +16,7 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.image.AffineTransformOp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,10 +54,12 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
         List<PsiElement> procedures = new ArrayList<>();
         TsOdinType tsOdinType = OdinInferenceEngine.doInferType(callExpression.getExpression());
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-
             if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
-                if(tsOdinMetaType instanceof OdinProcedureDeclarationStatement declaration) {
+                if (tsOdinMetaType.getDeclaration() instanceof OdinProcedureDeclarationStatement declaration) {
+//                    OdinParamEntries paramEntries = declaration.getProcedureDefinition().getProcedureType().getParamEntries();
+//                    if (paramEntries != null && !paramEntries.getParamEntryList().isEmpty()) {
                     procedures.add(declaration.getProcedureDefinition().getProcedureType());
+//                    }
                 }
             }
 
@@ -75,7 +78,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
             }
         }
 
-        if(tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
+        if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
             OdinType procedureType = tsOdinProcedureType.getType();
             procedures.add(procedureType);
         }
@@ -140,6 +143,16 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
                 length += param.length() + DELIMITER.length();
                 lengths.add(length);
             }
+        }
+        if (params.isEmpty()) {
+            context.setupUIComponentPresentation("<no parameters>",
+                    0,
+                    0,
+                    false,
+                    false,
+                    false,
+                    context.getDefaultParameterColor());
+            return;
         }
         String parameterListString = String.join(DELIMITER, params);
         int currentIndexOffset = Math.min(Math.max(context.getCurrentParameterIndex(), 0), params.size() - 1);
