@@ -16,7 +16,7 @@ public class OdinNameSuggester {
             "get", "get_", "retrieve", "retrieve_", "compute", "compute_",
             "fetch", "fetch_", "find", "find_", "calculate", "calculate_",
             "determine", "determine_", "generate", "generate_", "produce",
-            "produce_", "load", "load_"
+            "produce_", "load", "load_", "create", "create_", "new", "new_"
     );
 
     static List<String> getNameSuggestions(OdinExpression targetExpression) {
