@@ -8,6 +8,7 @@
         <h3>0.5.3</h3>
         <h4>Features</h4>
         <li>"Introduce variable" refactoring🔥</li>
+        <li>"Specify type explicitly" refactoring🔥</li>
         <li>Add notification for missing SDK</li>
 
         <h4>Improvements</h4>
