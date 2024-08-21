@@ -1,5 +1,7 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
+val pluginVersion = "0.5.3"
+
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.25"
@@ -8,7 +10,7 @@ plugins {
 }
 
 group = "com.lasagnerd"
-version = "0.5.3"
+version = pluginVersion
 
 repositories {
     mavenCentral()
@@ -23,7 +25,7 @@ intellijPlatform  {
     projectName = project.name
 
     pluginConfiguration {
-        version = "0.5.3"
+        version = pluginVersion
 
         ideaVersion {
             sinceBuild = "242"
@@ -86,15 +88,7 @@ repositories {
     }
 }
 
-tasks {
-    // Set the JVM compatibility versions
-    withType<JavaCompile> {
 
-        sourceCompatibility = "21"
-        targetCompatibility = "21"
-    }
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "21"
-    }
-
+kotlin {
+    jvmToolchain(21)
 }

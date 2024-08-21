@@ -1,8 +1,6 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
-
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <version>0.5.3</version>
     <name>Odin Support</name>
     <change-notes><![CDATA[
         <h3>0.5.3</h3>

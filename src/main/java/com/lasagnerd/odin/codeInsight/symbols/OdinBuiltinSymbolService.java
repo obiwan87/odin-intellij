@@ -139,7 +139,6 @@ public class OdinBuiltinSymbolService {
         return null;
     }
 
-
     private @NotNull List<OdinSymbol> doFindBuiltInSymbols() {
         // TODO Cache this stuff
         List<OdinSymbol> builtinSymbols = new ArrayList<>();
