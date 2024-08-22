@@ -16,11 +16,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
@@ -40,16 +41,20 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
         OdinExpression expression = expressionList.getFirst();
 
         TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
-        if (tsOdinType.isUnknown()) {
+        List<TsOdinType> tsOdinTypes = gatherTypes(tsOdinType);
+        if(tsOdinTypes.size() != 1) {
             showErrorHint(project, editor);
             return;
         }
-
 
         String importPath;
         String packageName;
 
         OdinFile containingFile;
+        if (tsOdinType instanceof TsOdinTuple tsOdinTuple) {
+            tsOdinType = tsOdinTuple.getTypes().getFirst();
+        }
+
         if (tsOdinType instanceof TsOdinBuiltInType) {
             containingFile = null;
             importPath = null;
@@ -165,5 +170,56 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
         return false;
     }
 
+
+    public List<TsOdinType> gatherTypes(TsOdinType tsOdinType) {
+
+        if (tsOdinType instanceof TsOdinTuple tsOdinTuple) {
+            return gatherTypes(tsOdinTuple.getTypes().getFirst());
+        }
+
+        if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+            return gatherTypes(tsOdinArrayType.getElementType());
+        }
+
+        if (tsOdinType instanceof TsOdinSliceType tsOdinSliceType) {
+            return gatherTypes(tsOdinSliceType.getElementType());
+        }
+
+        if (tsOdinType instanceof TsOdinMapType tsOdinMapType) {
+            List<TsOdinType> keyTypes = gatherTypes(tsOdinMapType.getKeyType());
+            List<TsOdinType> valueTypes = gatherTypes(tsOdinMapType.getValueType());
+
+            ArrayList<TsOdinType> tsOdinTypes = new ArrayList<>(keyTypes);
+            tsOdinTypes.addAll(valueTypes);
+            return tsOdinTypes;
+        }
+
+        if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
+            return gatherTypes(tsOdinPointerType.getDereferencedType());
+        }
+
+        if (tsOdinType instanceof TsOdinMultiPointerType tsOdinMultiPointerType) {
+            return gatherTypes(tsOdinMultiPointerType.getDereferencedType());
+        }
+
+        if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
+            List<TsOdinType> tsOdinTypes = new ArrayList<>();
+            for (TsOdinParameter parameter : tsOdinProcedureType.getParameters()) {
+                tsOdinTypes.addAll(gatherTypes(parameter.getType()));
+            }
+
+            for (TsOdinParameter returnParameter : tsOdinProcedureType.getReturnParameters()) {
+                tsOdinTypes.addAll(gatherTypes(returnParameter.getType()));
+            }
+
+            return tsOdinTypes;
+        }
+
+        if (tsOdinType != null && !tsOdinType.isUnknown()) {
+            return List.of(tsOdinType);
+        }
+
+        return Collections.emptyList();
+    }
 
 }
