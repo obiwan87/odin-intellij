@@ -418,14 +418,17 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinUsingStatement usingStatement) {
-        OdinExpression expression = usingStatement.getExpression();
-        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+        List<OdinDeclaredIdentifier> declaredIdentifiers = new ArrayList<>();
+        for (OdinExpression expression : usingStatement.getExpressionsList().getExpressionList()) {
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
 
-        OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(tsOdinType);
+            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(tsOdinType);
+            typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
+                    .map(OdinDeclaredIdentifier.class::cast)
+                    .forEach(declaredIdentifiers::add);
+        }
 
-        return typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
-                .map(OdinDeclaredIdentifier.class::cast)
-                .toList();
+        return declaredIdentifiers;
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinForInParameterDeclaration forInParameterDeclaration) {

@@ -195,8 +195,10 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitUsingStatement(@NotNull OdinUsingStatement o) {
-        List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(o.getExpression(), this.symbolTable);
-        symbols.addAll(typeSymbols);
+        for (OdinExpression expression : o.getExpressionsList().getExpressionList()) {
+            List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(expression, this.symbolTable);
+            symbols.addAll(typeSymbols);
+        }
     }
 
     @Override

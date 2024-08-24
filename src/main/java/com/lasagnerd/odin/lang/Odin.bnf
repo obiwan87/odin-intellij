@@ -219,7 +219,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
 foreignImportDeclarationStatement    ::= (attributeStatement EOS_TOKEN?)* FOREIGN IMPORT
         ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart expressionsList COMMA? blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
 
-foreignStatement                     ::= (attributeStatement EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? foreignBlock
+foreignStatement                     ::= (attributeStatement EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock
 
 foreignBlock                         ::= blockStart foreignStatementList? blockEnd
 
@@ -240,7 +240,7 @@ fieldDeclarationStatement            ::= USING? directiveHead? declaredIdentifie
 
 // Enum
 enumDeclarationStatement             ::= (attributeStatement eos?)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
-enumType                             ::= ENUM [qualifiedType|simpleRefType] enumBlock
+enumType                             ::= ENUM [qualifiedType|simpleRefType] eos? enumBlock
 enumBlock                            ::= blockStart [enumBody] blockEnd
 enumBody                             ::= enumValueDeclaration (COMMA enumValueDeclaration)* [EOS_TOKEN|COMMA]
 enumValueDeclaration                 ::= declaredIdentifier [EQ expression]
@@ -276,7 +276,7 @@ returnParameters                     ::= NOT | LPAREN paramEntries RPAREN | type
 returnStatement                      ::= [directive] RETURN returnArgumentList?
 private returnArgumentList           ::= expression (COMMA expression)* COMMA?
 
-usingStatement                       ::= USING expression
+usingStatement                       ::= USING expressionsList
 directiveStatement                   ::= directive
 
 // Procedure overloading
@@ -312,7 +312,7 @@ relativeType                         ::= directive type
 ellipsisType                         ::= ELLIPSIS
 variadicType                         ::= RANGE type
 callType                             ::= identifier LPAREN <<enterMode "PAR">> <<enterMode "TYPE_LIST">>  argumentList? <<exitMode "TYPE_LIST">> <<exitMode "PAR">> EOS_TOKEN?  RPAREN
-constrainedType                      ::= type DIV type {pin=2}
+constrainedType                      ::= type DIV type {pin=3}
 polymorphicType                      ::= DOLLAR declaredIdentifier {implements="com.lasagnerd.odin.lang.psi.OdinDeclaration" methods=[getDeclaredIdentifiers]}
 simpleRefType                        ::= identifier
 qualifiedType                        ::= identifier DOT (callType | simpleRefType) {methods=[getPackageIdentifier getTypeIdentifier]}
@@ -679,7 +679,7 @@ controlFlowInit                  ::= assignmentStatement
                                          | variableDeclarationStatement
                                          | callExpression
 
-condition                            ::= !compoundLiteralExpression expression
+condition                            ::= expression
 doStatement                          ::= DO statement {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 statementBody                        ::= block|doStatement
 
@@ -700,11 +700,14 @@ private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit]
 
 conditionalStatement                 ::= [directive] [labelDeclaration] ifBlock {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
 
-ifBlock                              ::= if conditionalHead statementBody [sos elseBlock] {
+ifBlock                              ::= if conditionalHead eos? statementBody [sos elseBlock] {
+                                                pin=".*"
+                                                recoverWhile=if_recovery
                                                 implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
                                                 methods = [ getBlockStatements getSymbols ]
                                          }
-elseBlock                            ::= else (ifBlock|statementBody) {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
+private if_recovery                  ::= !(eos | IF_TOKEN)
+elseBlock                            ::= else (statementBody|ifBlock) {pin=1 implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 if                                   ::= IF_TOKEN
 else                                 ::= ELSE_TOKEN
 
