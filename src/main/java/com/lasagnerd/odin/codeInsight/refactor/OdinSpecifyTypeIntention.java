@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
@@ -20,9 +21,8 @@ import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.nio.file.Path;
+import java.util.*;
 
 public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
     @Override
@@ -41,8 +41,8 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
         OdinExpression expression = expressionList.getFirst();
 
         TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
-        List<TsOdinType> tsOdinTypes = gatherTypes(tsOdinType);
-        if(tsOdinTypes.size() != 1) {
+
+        if (tsOdinType.isUnknown()) {
             showErrorHint(project, editor);
             return;
         }
@@ -170,56 +170,111 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
         return false;
     }
 
+    private static class TypePrinter {
+        private final OdinFileScope sourceFileScope;
+        private final Map<String, OdinImportInfo> pathToImportMap;
+        private final List<OdinImportInfo> importsToAdd = new ArrayList<>();
+        private final StringBuilder typePresentation = new StringBuilder();
 
-    public List<TsOdinType> gatherTypes(TsOdinType tsOdinType) {
 
-        if (tsOdinType instanceof TsOdinTuple tsOdinTuple) {
-            return gatherTypes(tsOdinTuple.getTypes().getFirst());
-        }
+        private TypePrinter(OdinFileScope sourceFileScope) {
+            this.sourceFileScope = sourceFileScope;
 
-        if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
-            return gatherTypes(tsOdinArrayType.getElementType());
-        }
-
-        if (tsOdinType instanceof TsOdinSliceType tsOdinSliceType) {
-            return gatherTypes(tsOdinSliceType.getElementType());
-        }
-
-        if (tsOdinType instanceof TsOdinMapType tsOdinMapType) {
-            List<TsOdinType> keyTypes = gatherTypes(tsOdinMapType.getKeyType());
-            List<TsOdinType> valueTypes = gatherTypes(tsOdinMapType.getValueType());
-
-            ArrayList<TsOdinType> tsOdinTypes = new ArrayList<>(keyTypes);
-            tsOdinTypes.addAll(valueTypes);
-            return tsOdinTypes;
-        }
-
-        if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
-            return gatherTypes(tsOdinPointerType.getDereferencedType());
-        }
-
-        if (tsOdinType instanceof TsOdinMultiPointerType tsOdinMultiPointerType) {
-            return gatherTypes(tsOdinMultiPointerType.getDereferencedType());
-        }
-
-        if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
-            List<TsOdinType> tsOdinTypes = new ArrayList<>();
-            for (TsOdinParameter parameter : tsOdinProcedureType.getParameters()) {
-                tsOdinTypes.addAll(gatherTypes(parameter.getType()));
+            pathToImportMap = new HashMap<>();
+            for (OdinImportDeclarationStatement importStatement : sourceFileScope.getImportStatements()) {
+                OdinImportInfo importInfo = importStatement.getImportInfo();
+                Path importPath = OdinImportUtils.getFirstAbsoluteImportPath(importInfo,
+                        sourceFileScope.getContainingFile().getVirtualFile().getPath(),
+                        sourceFileScope.getProject());
+                if (importPath != null) {
+                    pathToImportMap.put(importPath.toAbsolutePath().toString(), importInfo);
+                }
             }
+        }
 
-            for (TsOdinParameter returnParameter : tsOdinProcedureType.getReturnParameters()) {
-                tsOdinTypes.addAll(gatherTypes(returnParameter.getType()));
+        public static void printType(TsOdinType tsOdinType) {
+            OdinType type = tsOdinType.getType();
+            if(type != null) {
+
             }
-
-            return tsOdinTypes;
         }
 
-        if (tsOdinType != null && !tsOdinType.isUnknown()) {
-            return List.of(tsOdinType);
-        }
+//        public void printType(TsOdinType tsOdinType) {
+//            if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+//                typePresentation.append("[");
+//                typePresentation.append(tsOdinArrayType.getPsiSizeElement().getText());
+//                typePresentation.append("]");
+//                printType(tsOdinArrayType.getElementType());
+//            }
+//
+//            if (tsOdinType instanceof TsOdinSliceType tsOdinSliceType) {
+//                typePresentation.append("[]");
+//                printType(tsOdinSliceType.getElementType());
+//            }
+//
+//            if (tsOdinType instanceof TsOdinMapType tsOdinMapType) {
+//                typePresentation.append("map[");
+//                printType(tsOdinMapType.getKeyType());
+//                typePresentation.append("]");
+//                printType(tsOdinMapType.getValueType());
+//            }
+//
+//            if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
+//                typePresentation.append("^");
+//
+//                printType(tsOdinPointerType.getDereferencedType());
+//            }
+//
+//            if (tsOdinType instanceof TsOdinMultiPointerType tsOdinMultiPointerType) {
+//                typePresentation.append("[^]");
+//                printType(tsOdinMultiPointerType.getDereferencedType());
+//            }
+//
+//            if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
+//                List<TsOdinType> tsOdinTypes = new ArrayList<>();
+//                typePresentation.append("proc(");
+//                if (!tsOdinProcedureType.getParameters().isEmpty()) {
+//                    TsOdinParameter last = tsOdinProcedureType.getParameters().getLast();
+//                    for (TsOdinParameter parameter : tsOdinProcedureType.getParameters()) {
+//                        typePresentation.append(parameter.getName());
+//                        typePresentation.append(": ");
+//                        printType(tsOdinType);
+//                        if (last != parameter) {
+//                            typePresentation.append(", ");
+//                        }
+//                    }
+//                }
+//                List<TsOdinParameter> returnParameters = tsOdinProcedureType.getReturnParameters();
+//                if (!returnParameters.isEmpty()) {
+//                    typePresentation.append(" -> ");
+//
+//                    if (tsOdinProcedureType.getReturnTypes().size() > 1) {
+//                        typePresentation.append("(");
+//                    }
+//                    TsOdinParameter last = returnParameters.getLast();
+//                    for (TsOdinParameter returnParameter : returnParameters) {
+//                        printType(returnParameter.getType());
+//                        if(last != returnParameter)
+//                            typePresentation.append(", ");
+//                    }
+//
+//                    if (tsOdinProcedureType.getReturnTypes().size() > 1) {
+//                        typePresentation.append(")");
+//                    }
+//                }
+//            }
+//
+//            if (tsOdinType instanceof TsOdinStructType structType) {
+//                structType.getP
+//            }
+//
+//            if (tsOdinType != null && !tsOdinType.isUnknown()) {
+//                typePresentation.append("unknown");
+//            }
+//
+//
+//        }
 
-        return Collections.emptyList();
     }
 
 }

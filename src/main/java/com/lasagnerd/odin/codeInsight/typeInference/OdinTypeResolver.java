@@ -503,9 +503,9 @@ public class OdinTypeResolver extends OdinVisitor {
 
     private @NotNull TsOdinParameter mapSpecToParameter(OdinSymbolTable symbolTable, TsOdinParameterSpec parameterSpec, int parameterIndex) {
         TsOdinParameter tsOdinParameter = new TsOdinParameter();
-        tsOdinParameter.setValueDeclaredIdentifier(parameterSpec.getNameDeclaredIdentifier());
+        tsOdinParameter.setIdentifier(parameterSpec.getNameDeclaredIdentifier());
         if (parameterSpec.getNameDeclaredIdentifier() != null) {
-            tsOdinParameter.setValueName(parameterSpec.getNameDeclaredIdentifier().getName());
+            tsOdinParameter.setName(parameterSpec.getNameDeclaredIdentifier().getName());
         }
         tsOdinParameter.setExplicitPolymorphicParameter(parameterSpec.isValuePolymorphic());
         tsOdinParameter.setIndex(parameterIndex);

@@ -18,61 +18,17 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import com.lasagnerd.odin.sdkConfig.OdinSdkLibraryManager;
+import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
+import kotlinx.html.I;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 
 public class OdinImportUtils {
-    public static boolean isUnusedImport(OdinImportDeclarationStatement importDeclarationStatement) {
-        PsiFile containingFile = importDeclarationStatement.getContainingFile();
-        if (importDeclarationStatement.getDeclaredIdentifier() == null) {
-            String text = importDeclarationStatement.getImportInfo().packageName();
 
-            if (text.isBlank())
-                return false;
-
-            Project project = importDeclarationStatement.getProject();
-
-            return PsiSearchHelper.getInstance(project).processElementsWithWord(
-                    (element, offsetInElement) -> {
-                        if (element instanceof OdinIdentifier identifier) {
-                            PsiReference reference = identifier.getReference();
-                            if (reference != null) {
-                                PsiElement resolvedReference = reference.resolve();
-                                return resolvedReference != importDeclarationStatement;
-                            }
-                        }
-                        return true;
-                    },
-
-                    new LocalSearchScope(containingFile),
-                    text,
-                    UsageSearchContext.IN_CODE,
-                    true
-            );
-        } else {
-            Query<PsiReference> search = ReferencesSearch.search(importDeclarationStatement.getDeclaredIdentifier(), new LocalSearchScope(containingFile), true);
-            return search.findFirst() == null;
-        }
-    }
-
-    public static void insertImport(Project project, String importPath, OdinFileScope fileScope) {
-
-        OdinImportDeclarationStatement anImport = OdinPsiElementFactory.getInstance(project)
-                .createImport(importPath);
-
-        OdinImportStatementsContainer importStatementsContainer = fileScope.getImportStatementsContainer();
-        if (importStatementsContainer == null) {
-            OdinImportStatementsContainer templateImportStatementsContainer = OdinPsiElementFactory.getInstance(project)
-                    .createImportStatementsContainer(List.of(anImport));
-            fileScope.addAfter(templateImportStatementsContainer, fileScope.getEos());
-        } else {
-            OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatementsContainer().getImportDeclarationStatementList().getLast();
-            importStatementsContainer.addAfter(anImport, odinImportDeclarationStatement);
-        }
-    }
 
     public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC;
 
@@ -111,51 +67,120 @@ public class OdinImportUtils {
     public static OdinSymbolTable getSymbolsOfImportedPackage(OdinImportInfo importInfo, String sourceFilePath, Project project) {
         List<OdinSymbol> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
-            List<Path> dirs = new ArrayList<>();
-            String library = Objects.requireNonNullElse(importInfo.library(), "");
-            Path sdkSourceDir = null;
-            if (!library.isBlank()) {
-                OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
-                if (sdkConfig.getSdkPath() != null) {
-                    sdkSourceDir = Path.of(sdkConfig.getSdkPath(), importInfo.library());
-                    dirs.add(sdkSourceDir);
+            Path packagePath = getFirstAbsoluteImportPath(importInfo, sourceFilePath, project);
+            if (packagePath == null)
+                return OdinSymbolTable.EMPTY;
+
+            List<OdinFile> importedFiles = getFilesInPackage(project, packagePath);
+            for (OdinFile importedFile : importedFiles) {
+                OdinFileScope importedFileScope = importedFile.getFileScope();
+                if (importedFileScope == null) {
+                    System.out.printf("File scope is null for file %s%n", importedFile.getVirtualFile().getPath());
+                    continue;
                 }
+                OdinSymbol.OdinVisibility globalFileVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(importedFileScope);
+                if (globalFileVisibility == OdinSymbol.OdinVisibility.PACKAGE_PRIVATE
+                        || globalFileVisibility == OdinSymbol.OdinVisibility.FILE_PRIVATE)
+                    continue;
+
+                Collection<OdinSymbol> fileScopeDeclarations = importedFileScope
+                        .getSymbolTable()
+                        .getFilteredSymbols(PUBLIC_ELEMENTS_MATCHER);
+
+                packageDeclarations.addAll(fileScopeDeclarations);
             }
-            if (sdkSourceDir != null) {
+
+            if (!importedFiles.isEmpty()) {
+                return OdinSymbolTable.from(packageDeclarations, packagePath.toString());
+            }
+
+        }
+        return OdinSymbolTable.EMPTY;
+    }
+
+    /**
+     * When importing from a collection, there might be competing collection names. This will return
+     * the first path or a collection from the SDK if present.
+     *
+     * @param importInfo     The import to be imported
+     * @param sourceFilePath Path of the file from where the import should be resolved
+     * @param project        The current project
+     * @return The first import path that exists or null if it none exist
+     */
+    public static @Nullable Path getFirstAbsoluteImportPath(OdinImportInfo importInfo,
+                                                            String sourceFilePath,
+                                                            Project project) {
+        List<Path> packagePaths = getAbsoluteImportPaths(importInfo, sourceFilePath, project);
+
+        Path packagePath;
+        if (packagePaths.size() > 1) {
+            Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
+            if (sdkPath.isPresent()) {
+                packagePath = packagePaths.stream()
+                        .filter(p -> p.startsWith(sdkPath.get()))
+                        .findFirst()
+                        .orElseGet(packagePaths::getFirst);
+            } else {
+                packagePath = packagePaths.getFirst();
+            }
+        } else if (!packagePaths.isEmpty()) {
+            packagePath = packagePaths.getFirst();
+        } else {
+            packagePath = null;
+        }
+        return packagePath;
+    }
+
+    public static @NotNull List<Path> getAbsoluteImportPaths(OdinImportInfo importInfo, String sourceFilePath, Project project) {
+        List<Path> dirs = new ArrayList<>();
+        String library = Objects.requireNonNullElse(importInfo.library(), "");
+        Path sdkSourceDir = null;
+        if (!library.isBlank()) {
+            Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
+            if (sdkPath.isPresent()) {
+                sdkSourceDir = Path.of(sdkPath.get(), importInfo.library());
                 dirs.add(sdkSourceDir);
             }
-            Path sourcePath = Path.of(sourceFilePath);
-            Path currentDir = sourcePath.getParent();
+        }
+        if (sdkSourceDir != null) {
+            dirs.add(sdkSourceDir);
+        }
+        Path sourcePath = Path.of(sourceFilePath);
+        Path currentDir = sourcePath.getParent();
 
-            dirs.add(currentDir);
+        dirs.add(currentDir);
 
-            for (Path dir : dirs) {
-                Path packagePath = dir.resolve(importInfo.path()).normalize();
-                List<OdinFile> importedFiles = getFilesInPackage(project, packagePath);
-                for (OdinFile importedFile : importedFiles) {
-                    OdinFileScope importedFileScope = importedFile.getFileScope();
-                    if (importedFileScope == null) {
-                        System.out.printf("File scope is null for file %s%n", importedFile.getVirtualFile().getPath());
-                        continue;
-                    }
-                    OdinSymbol.OdinVisibility globalFileVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(importedFileScope);
-                    if (globalFileVisibility == OdinSymbol.OdinVisibility.PACKAGE_PRIVATE
-                            || globalFileVisibility == OdinSymbol.OdinVisibility.FILE_PRIVATE)
-                        continue;
+        List<Path> packagePaths = new ArrayList<>();
+        for (Path dir : dirs) {
+            Path packagePath = dir.resolve(importInfo.path()).normalize();
+            if (packagePath.toFile().exists()) {
+                packagePaths.add(packagePath);
+            }
+        }
+        return packagePaths;
+    }
 
-                    Collection<OdinSymbol> fileScopeDeclarations = importedFileScope
-                            .getSymbolTable()
-                            .getFilteredSymbols(PUBLIC_ELEMENTS_MATCHER);
+    public static @NotNull OdinImportInfo computeRelativeImport(Project project, String sourceFilePath, String targetFilePath) {
+        Path sourceDir = Path.of(sourceFilePath);
+        Path targetDir = Path.of(targetFilePath).normalize();
 
-                    packageDeclarations.addAll(fileScopeDeclarations);
-                }
-
-                if (!importedFiles.isEmpty()) {
-                    return OdinSymbolTable.from(packageDeclarations, packagePath.toString());
+        Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
+        if (sdkPath.isPresent()) {
+            if (targetDir.startsWith(Path.of(sdkPath.get()))) {
+                Path relativePath = Path.of(sdkPath.get()).relativize(targetDir);
+                if (relativePath.getNameCount() >= 2) {
+                    String library = FileUtil.toSystemIndependentName(relativePath.getName(0).toString());
+                    String subPath = FileUtil.toSystemIndependentName(relativePath.subpath(1, targetDir.getNameCount()).toString());
+                    String packageName = relativePath.getFileName().toString();
+                    String fullImportPath = library +":"+subPath;
+                    return new OdinImportInfo(fullImportPath, packageName, subPath, library);
                 }
             }
         }
-        return OdinSymbolTable.EMPTY;
+
+        String importPath = FileUtil.toSystemIndependentName(sourceDir.relativize(targetDir).toString());
+        String packageName = targetDir.getFileName().toString();
+        return new OdinImportInfo(importPath, packageName, importPath, null);
     }
 
     @NotNull
@@ -207,7 +232,7 @@ public class OdinImportUtils {
                 .getParent()
                 .getPath();
         String targetPath = targetElementFile.getParent().getPath();
-        if(sourcePath.equals(targetPath))
+        if (sourcePath.equals(targetPath))
             return "";
 
         ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
@@ -241,5 +266,54 @@ public class OdinImportUtils {
             return split[split.length - 1];
         }
         return null;
+    }
+
+    public static boolean isUnusedImport(OdinImportDeclarationStatement importDeclarationStatement) {
+        PsiFile containingFile = importDeclarationStatement.getContainingFile();
+        if (importDeclarationStatement.getDeclaredIdentifier() == null) {
+            String text = importDeclarationStatement.getImportInfo().packageName();
+
+            if (text.isBlank())
+                return false;
+
+            Project project = importDeclarationStatement.getProject();
+
+            return PsiSearchHelper.getInstance(project).processElementsWithWord(
+                    (element, offsetInElement) -> {
+                        if (element instanceof OdinIdentifier identifier) {
+                            PsiReference reference = identifier.getReference();
+                            if (reference != null) {
+                                PsiElement resolvedReference = reference.resolve();
+                                return resolvedReference != importDeclarationStatement;
+                            }
+                        }
+                        return true;
+                    },
+
+                    new LocalSearchScope(containingFile),
+                    text,
+                    UsageSearchContext.IN_CODE,
+                    true
+            );
+        } else {
+            Query<PsiReference> search = ReferencesSearch.search(importDeclarationStatement.getDeclaredIdentifier(), new LocalSearchScope(containingFile), true);
+            return search.findFirst() == null;
+        }
+    }
+
+    public static void insertImport(Project project, String importPath, OdinFileScope fileScope) {
+
+        OdinImportDeclarationStatement anImport = OdinPsiElementFactory.getInstance(project)
+                .createImport(importPath);
+
+        OdinImportStatementsContainer importStatementsContainer = fileScope.getImportStatementsContainer();
+        if (importStatementsContainer == null) {
+            OdinImportStatementsContainer templateImportStatementsContainer = OdinPsiElementFactory.getInstance(project)
+                    .createImportStatementsContainer(List.of(anImport));
+            fileScope.addAfter(templateImportStatementsContainer, fileScope.getEos());
+        } else {
+            OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatementsContainer().getImportDeclarationStatementList().getLast();
+            importStatementsContainer.addAfter(anImport, odinImportDeclarationStatement);
+        }
     }
 }

@@ -12,4 +12,9 @@ public class TsOdinMultiPointerType extends TsOdinType {
     public TsOdinMetaType.MetaType getMetaType() {
         return TsOdinMetaType.MetaType.MULTI_POINTER;
     }
+
+    @Override
+    public String getLabel() {
+        return "[^]"+dereferencedType.getLabel();
+    }
 }

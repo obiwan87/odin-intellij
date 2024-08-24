@@ -6,13 +6,13 @@ import lombok.Data;
 
 @Data
 public class TsOdinParameter {
-    String valueName;
-    OdinDeclaredIdentifier valueDeclaredIdentifier;
+    private String name;
+    private OdinDeclaredIdentifier identifier;
 
-    boolean isExplicitPolymorphicParameter;
+    private boolean isExplicitPolymorphicParameter;
 
-    OdinType psiType;
-    TsOdinType type;
+    private OdinType psiType;
+    private TsOdinType type;
 
-    int index;
+    private int index;
 }

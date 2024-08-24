@@ -133,7 +133,7 @@ public class OdinTypeSpecializer {
 
                 if (odinArgument instanceof OdinNamedArgument argument) {
                     tsOdinParameter = parameters.stream()
-                            .filter(p -> argument.getIdentifier().getText().equals(p.getValueName()))
+                            .filter(p -> argument.getIdentifier().getText().equals(p.getName()))
                             .findFirst().orElse(null);
                     argumentExpression = argument.getExpression();
                 }
@@ -143,7 +143,7 @@ public class OdinTypeSpecializer {
 
                 TsOdinType argumentType = resolveArgumentType(argumentExpression, tsOdinParameter, outerScope);
                 if (argumentType.isUnknown()) {
-                    System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n", tsOdinParameter.getValueName(), genericType.getClass().getSimpleName(), genericType.getName());
+                    System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n", tsOdinParameter.getName(), genericType.getClass().getSimpleName(), genericType.getName());
                     continue;
                 }
 
@@ -155,9 +155,9 @@ public class OdinTypeSpecializer {
 
                 if (tsOdinParameter.isExplicitPolymorphicParameter()) {
                     if (specializedType instanceof TsOdinGenericType generalizableType) {
-                        generalizableType.getResolvedPolymorphicParameters().put(tsOdinParameter.getValueName(), argumentType);
+                        generalizableType.getResolvedPolymorphicParameters().put(tsOdinParameter.getName(), argumentType);
                     }
-                    instantiationScope.addType(tsOdinParameter.getValueName(), argumentType);
+                    instantiationScope.addType(tsOdinParameter.getName(), argumentType);
                 }
 
                 Map<String, TsOdinType> resolvedTypes = substituteTypes(parameterType, argumentType);
