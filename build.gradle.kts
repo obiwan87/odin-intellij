@@ -14,6 +14,9 @@ version = pluginVersion
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 // Configure Gradle IntelliJ Plugin
@@ -70,24 +73,21 @@ sourceSets.main.get().java.srcDirs("src/main/gen")
 dependencies {
     implementation("org.projectlombok:lombok:1.18.34")
     intellijPlatform {
-        intellijIdeaCommunity("2024.2")
+        //intellijIdeaCommunity("2024.2")
+        //intellijIdeaUltimate("2024.2")
+        clion("2024.2")
         pluginVerifier()
         zipSigner()
         instrumentationTools()
+
+        plugin("com.intellij.nativeDebug:242.21829.3")
+
         testFramework(TestFrameworkType.Platform)
 
         testImplementation("junit:junit:4.13.2")
         testCompileOnly ("org.junit.jupiter:junit-jupiter-api:5.4.2")
     }
 }
-
-repositories {
-    mavenCentral()
-    intellijPlatform {
-        defaultRepositories()
-    }
-}
-
 
 kotlin {
     jvmToolchain(21)
