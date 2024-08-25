@@ -26,8 +26,9 @@ public class OdinDebugRunParameters extends RunParameters {
 	@Override
 	public @NotNull DebuggerDriverConfiguration getDebuggerDriverConfiguration() {
 		return new GDBDriverConfiguration() {
+
 			@Override
-			public @NotNull @NlsSafe String getDriverName() {
+			public @NotNull String getDriverName() {
 				return "Odin GDB";
 			}
 		};
