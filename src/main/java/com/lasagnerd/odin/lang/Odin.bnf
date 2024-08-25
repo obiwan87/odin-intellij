@@ -217,7 +217,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
 
 // @require foreign import entry "entryUnixNoCrtAmd64.asm"
 foreignImportDeclarationStatement    ::= (attribute EOS_TOKEN?)* FOREIGN IMPORT
-        ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart expressionsList COMMA? blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
+        ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart lhsExpressions COMMA? blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
 
 foreignStatement                     ::= (attribute EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock
 
@@ -335,15 +335,77 @@ colonClosing                         ::= COLON
 private symbolDefinitionHead         ::= (attribute eos?)* [directiveHead] [USING] identifierList colonOpening type?
 colonOpening                         ::= COLON
 
-variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition]}
+variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition] pin=2}
 
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}
 
-assignmentStatement                  ::= [directiveHead] lhsExpressions assignmentOperator rhsExpressions
+assignmentStatement                  ::= [directiveHead] lhsExpressions assignmentOperator rhsExpressions { pin=assignmentOperator }
 lhsExpressions                       ::= expression (COMMA expression)*
-rhsExpressions                       ::= expression (COMMA expression)*
-expressionsList                      ::= expression (COMMA expression)*
+rhsExpressions                       ::= expressionListWithRecover
+expressionsList                      ::= expressionListWithRecover
+
+private expressionListWithRecover ::= expressionWithRecover (COMMA expressionWithRecover)* {pin(".*")=1}
+private expressionWithRecover ::= expression {recoverWhile=expressionListRecover}
+private expressionListRecover ::= !(NOT
+                                    | NEQ
+                                    | MOD
+                                    | MOD_EQ
+                                    | ANDAND
+                                    | AND
+                                    | AND_EQ
+                                    | ANDNOT
+                                    | BITWISE_AND_NOT_EQ
+                                    | LPAREN
+                                    | RPAREN
+                                    | STAR
+                                    | STAR_EQ
+                                    | PLUS
+                                    | PLUS_EQ
+                                    | COMMA
+                                    | MINUS
+                                    | MINUS_EQ
+                                    | DIV
+                                    | DIV_EQ
+                                    | COLON
+                                    | SEMICOLON
+                                    | LT
+                                    | LSHIFT
+                                    | LSHIFT_EQ
+                                    | LTE
+                                    | EOS_TOKEN
+                                    | EQ
+                                    | EQEQ
+                                    | GT
+                                    | GTE
+                                    | RSHIFT
+                                    | RSHIFT_EQ
+                                    | LBRACKET
+                                    | RBRACKET
+                                    | XOR
+                                    | XOR_EQ
+                                    | LBRACE
+                                    | PIPE
+                                    | OR_EQ
+                                    | OROR
+                                    | RBRACE
+                                    | BREAK
+                                    | CASE
+                                    | CONTINUE
+                                    | DEFER
+                                    | ELSE_TOKEN
+                                    | FALLTHROUGH
+                                    | FOR
+                                    | PROC
+                                    | IDENTIFIER_TOKEN
+                                    | IF_TOKEN
+                                    | MAP
+                                    | RETURN
+                                    | SQ_STRING_LITERAL
+                                    | RAW_STRING_LITERAL
+                                    | STRUCT
+                                    | SWITCH)
+
 
 assignmentOperator                   ::= EQ
                                          | PLUS_EQ
