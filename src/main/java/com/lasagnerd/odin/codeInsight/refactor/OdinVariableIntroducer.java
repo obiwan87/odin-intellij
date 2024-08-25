@@ -124,7 +124,9 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
                     .createVariableInitializationStatement(name, "1");
             OdinEos eos = OdinPsiElementFactory.getInstance(project).createEos();
 
-            varInit.getExpressionsList()
+            OdinExpressionsList expressionsList = varInit.getExpressionsList();
+            Objects.requireNonNull(expressionsList);
+            expressionsList
                     .getExpressionList()
                     .getFirst()
                     .replace(targetExpression);
@@ -149,8 +151,9 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
                     .createVariableInitializationStatement(name, "1");
 
             // Your PSI modification logic here
-            refactoringVar.getExpressionsList()
-                    .getExpressionList().getFirst()
+            OdinExpressionsList expressionList = refactoringVar.getExpressionsList();
+            Objects.requireNonNull(expressionList);
+            expressionList.getExpressionList().getFirst()
                     .replace(odinExpression);
 
             OdinVariableInitializationStatement newElement = (OdinVariableInitializationStatement) odinExpression.replace(refactoringVar);

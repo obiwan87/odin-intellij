@@ -217,7 +217,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
 
 // @require foreign import entry "entryUnixNoCrtAmd64.asm"
 foreignImportDeclarationStatement    ::= (attribute EOS_TOKEN?)* FOREIGN IMPORT
-        ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart lhsExpressions COMMA? blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
+        ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart expressionListWithRecover blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
 
 foreignStatement                     ::= (attribute EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock
 
@@ -341,11 +341,11 @@ identifierList                       ::= declaredIdentifier (COMMA declaredIdent
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}
 
 assignmentStatement                  ::= [directiveHead] lhsExpressions assignmentOperator rhsExpressions { pin=assignmentOperator }
-lhsExpressions                       ::= expression (COMMA expression)*
+lhsExpressions                       ::= expression (COMMA (expression))*
 rhsExpressions                       ::= expressionListWithRecover
 expressionsList                      ::= expressionListWithRecover
 
-private expressionListWithRecover ::= expressionWithRecover (COMMA expressionWithRecover)* {pin(".*")=1}
+private expressionListWithRecover ::= expressionWithRecover (COMMA (expressionWithRecover | eos | &LPAREN))* {pin(".*")=1}
 private expressionWithRecover ::= expression {recoverWhile=expressionListRecover}
 private expressionListRecover ::= !(NOT
                                     | NEQ
