@@ -192,10 +192,10 @@ fileScope                            ::= packageDeclaration eos importStatements
 }
 importStatementsContainer            ::= (importDeclarationStatement eos)+
 fileScopeStatementList               ::= (fileScopeStatement eos)*
-packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=0 recoverWhile=eos_recover}
+packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=1 recoverWhile=eos_recover}
 
 
-importDeclarationStatement           ::= IMPORT declaredIdentifier? importPath {methods=[alias="/declaredIdentifier" path="/importPath" getName setName getNameIdentifier getImportInfo] implements="com.intellij.psi.PsiNameIdentifierOwner"}
+importDeclarationStatement           ::= [attribute EOS_TOKEN?] IMPORT declaredIdentifier? importPath {methods=[alias="/declaredIdentifier" path="/importPath" getName setName getNameIdentifier getImportInfo] implements="com.intellij.psi.PsiNameIdentifierOwner"}
 importPath                           ::= DQ_STRING_LITERAL {methods=[getReference]}
 doubleColonOperator                  ::= COLON COLON
 
@@ -216,10 +216,10 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | directiveStatement
 
 // @require foreign import entry "entryUnixNoCrtAmd64.asm"
-foreignImportDeclarationStatement    ::= (attributeStatement EOS_TOKEN?)* FOREIGN IMPORT
+foreignImportDeclarationStatement    ::= (attribute EOS_TOKEN?)* FOREIGN IMPORT
         ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart expressionsList COMMA? blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
 
-foreignStatement                     ::= (attributeStatement EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock
+foreignStatement                     ::= (attribute EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock
 
 foreignBlock                         ::= blockStart foreignStatementList? blockEnd
 
@@ -229,41 +229,41 @@ foreignBlockStatement                ::= variableDeclarationStatement
                                          |whenStatement
 
 // Attributes
-attributeStatement                   ::= AT IDENTIFIER_TOKEN
+attribute                           ::= AT IDENTIFIER_TOKEN
                                          | AT LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
 // Struct
-structDeclarationStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? structType
-structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> structBlock {methods=[getParamEntryList] implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+structDeclarationStatement           ::= (attribute eos?)* declaredIdentifier doubleColonOperator DISTINCT? structType
+structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? structBlock {methods=[getParamEntryList] implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 fieldDeclarationStatement            ::= USING? directiveHead? declaredIdentifier (COMMA declaredIdentifier)* COLON type [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
 
 // Enum
-enumDeclarationStatement             ::= (attributeStatement eos?)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
-enumType                             ::= ENUM [qualifiedType|simpleRefType] eos? enumBlock
+enumDeclarationStatement             ::= (attribute eos?)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
+enumType                             ::= ENUM [qualifiedType|simpleRefType] EOS_TOKEN? enumBlock
 enumBlock                            ::= blockStart [enumBody] blockEnd
 enumBody                             ::= enumValueDeclaration (COMMA enumValueDeclaration)* [EOS_TOKEN|COMMA]
 enumValueDeclaration                 ::= declaredIdentifier [EQ expression]
 
 // Union
-unionDeclarationStatement            ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? unionType
-unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> unionBlock {methods=[getParamEntryList] implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+unionDeclarationStatement            ::= (attribute eos?)* declaredIdentifier doubleColonOperator DISTINCT? unionType
+unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? unionBlock {methods=[getParamEntryList] implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 unionBlock                           ::= blockStart [unionBody] blockEnd
 unionBody                            ::= type (COMMA type)* [COMMA|EOS_TOKEN] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 
 
-bitFieldDeclarationStatement         ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitFieldType
-bitFieldType                         ::= BIT_FIELD type bitFieldBlock
+bitFieldDeclarationStatement         ::= (attribute eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitFieldType
+bitFieldType                         ::= BIT_FIELD type EOS_TOKEN? bitFieldBlock
 bitFieldBlock                        ::= blockStart bitFieldBody? blockEnd
 bitFieldBody                         ::= bitFieldFieldDeclaration (COMMA bitFieldFieldDeclaration )*  [COMMA|EOS_TOKEN]
 bitFieldFieldDeclaration             ::= declaredIdentifier COLON type PIPE expression
 
 
 // Bit Set
-bitsetDeclarationStatement           ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitSetType
+bitsetDeclarationStatement           ::= (attribute eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
-procedureDeclarationStatement        ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator procedureDefinition {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ]}
+procedureDeclarationStatement        ::= (attribute eos?)* declaredIdentifier doubleColonOperator procedureDefinition {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ]}
 procedureDefinition                  ::= procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 procedureType                        ::= directive? PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>> {methods=[getParamEntryList]}
 
@@ -280,7 +280,7 @@ usingStatement                       ::= USING expressionsList
 directiveStatement                   ::= directive
 
 // Procedure overloading
-procedureOverloadDeclarationStatement ::= (attributeStatement eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
+procedureOverloadDeclarationStatement ::= (attribute eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
 
 // TYPES
 
@@ -332,7 +332,7 @@ sliceType                            ::= [directiveHead] LBRACKET RBRACKET type
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList { methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
 
-private symbolDefinitionHead         ::= (attributeStatement eos?)* [directiveHead] [USING] identifierList colonOpening type?
+private symbolDefinitionHead         ::= (attribute eos?)* [directiveHead] [USING] identifierList colonOpening type?
 colonOpening                         ::= COLON
 
 variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition]}
@@ -361,7 +361,7 @@ assignmentOperator                   ::= EQ
                                          | RSHIFT_EQ
                                          | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement         ::= (attributeStatement eos?)* [USING] identifierList COLON type { methods=[getTypeDefinition]}
+variableDeclarationStatement         ::= (attribute eos?)* [USING] identifierList COLON type { methods=[getTypeDefinition]}
 
 // Parameters for procedures and assignments
 private polymorphicParameterList     ::= paramEntries
@@ -494,7 +494,7 @@ private postfixGroup                 ::= orReturnExpression
                                          | orContinueExpression
 
 
-parenthesizedExpression              ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> RPAREN
+parenthesizedExpression              ::= LPAREN <<enterMode "PAR">> expression <<exitMode "PAR">> EOS_TOKEN? RPAREN
 
 // should we define the arrow operator on its own?
 fake refExpression                   ::= expression? refOperator (identifier|typeAssert)
@@ -531,9 +531,9 @@ index                                ::= LBRACKET expression [COMMA expression] 
 slice                                ::= LBRACKET expression? COLON expression? RBRACKET
 
 fake ternaryExpression                    ::= expression 'OP' expression 'OP' expression
-elvisExpression                      ::= expression QUESTION <<enterMode "OPERAND">> expression COLON expression <<exitMode "OPERAND">> {extends=ternaryExpression}
-ternaryIfExpression                  ::= expression IF_TOKEN <<enterMode "OPERAND">> expression ELSE_TOKEN expression  <<exitMode "OPERAND">> {extends=ternaryExpression}
-ternaryWhenExpression                ::= expression WHEN     <<enterMode "OPERAND">> expression ELSE_TOKEN expression  <<exitMode "OPERAND">> {extends=ternaryExpression}
+elvisExpression                      ::= expression QUESTION <<enterMode "OPERAND">> expression EOS_TOKEN? COLON expression <<exitMode "OPERAND">> {extends=ternaryExpression}
+ternaryIfExpression                  ::= expression IF_TOKEN <<enterMode "OPERAND">> expression EOS_TOKEN? ELSE_TOKEN expression  <<exitMode "OPERAND">> {extends=ternaryExpression}
+ternaryWhenExpression                ::= expression WHEN     <<enterMode "OPERAND">> expression EOS_TOKEN? ELSE_TOKEN expression  <<exitMode "OPERAND">> {extends=ternaryExpression}
 
 castExpression                       ::= CAST LPAREN type RPAREN expression
 transmuteExpression                  ::= TRANSMUTE LPAREN type RPAREN expression
@@ -623,6 +623,7 @@ eos                                  ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<mul
 sos                                  ::= SEMICOLON | NEW_LINE | EOS_TOKEN | <<afterClosingBrace>> | <<multilineBlockComment>>
 statementList                        ::= (sos? statement eos)+ {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
 statement                            ::= assignmentStatement
+                                         | forStatement
                                          | procedureDeclarationStatement
                                          | variableInitializationStatement
                                          | structDeclarationStatement
@@ -633,8 +634,6 @@ statement                            ::= assignmentStatement
                                          | variableDeclarationStatement
                                          | bitsetDeclarationStatement
                                          | blockStatement
-                                         | forInStatement
-                                         | forStatement
                                          | conditionalStatement
                                          | whenStatement
                                          | switchStatement
@@ -665,11 +664,11 @@ blockStatement                       ::= [directive eos?] [labelDeclaration] blo
 
 deferStatement                       ::= DEFER deferrableStatement
 private deferrableStatement          ::= assignmentStatement
-                                         | expression
-                                         | conditionalStatement
                                          | forStatement
                                          | switchStatement
+                                         | conditionalStatement
                                          | block
+                                         | expression
 
 // Control Flows
 
@@ -684,16 +683,20 @@ doStatement                          ::= DO statement {implements="com.lasagnerd
 statementBody                        ::= block|doStatement
 
 // For
-forStatement                         ::= [directive] [labelDeclaration] forBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-private forHead                      ::= <<enterNoBlockMode>> [[[controlFlowInit] SEMICOLON] condition? [SEMICOLON [forUpdate]]] <<exitNoBlockMode>>
-forBlock                             ::= FOR forHead statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
+forStatement                         ::= [labelDeclaration] [directive] forBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+//private forHead                      ::= <<enterNoBlockMode>> [[[controlFlowInit] SEMICOLON] condition? [SEMICOLON [forUpdate]]] <<exitNoBlockMode>>
+//forBlock                             ::= FOR forHead statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 forUpdate                            ::= assignmentStatement | callExpression
 
+forBlock                             ::= FOR <<enterNoBlockMode>> (forOrInClause | expression) <<exitNoBlockMode>> statementBody {pin(".*")="FOR|forOrInClause" implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 // For-In
-forInStatement                       ::= [directive] [labelDeclaration] forInBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-forInBlock                           ::= FOR &forInParameterDeclaration <<enterNoBlockMode>> forInParameterDeclaration <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
+//forInStatement                       ::= [directive] [labelDeclaration] forInBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+//forInBlock                           ::= FOR &forInParameterDeclaration <<enterNoBlockMode>> forInParameterDeclaration <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 forInParameterDeclaration            ::= [forInParameterDeclarator (COMMA forInParameterDeclarator)*] IN expression
-forInParameterDeclarator            ::= AND? declaredIdentifier
+forInParameterDeclarator             ::= AND? declaredIdentifier
+
+private forOrInClause                ::= (forClause | forInParameterDeclaration)
+private forClause                            ::= controlFlowInit? SEMICOLON expression? SEMICOLON forUpdate?
 
 // Conditional statement (=if-elseif-else)
 private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit] SEMICOLON] condition <<exitNoBlockMode>>

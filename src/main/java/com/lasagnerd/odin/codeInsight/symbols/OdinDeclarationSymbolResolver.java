@@ -115,7 +115,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
             odinSymbol.setPsiType(o.getType());
             odinSymbol.setHasUsing(hasUsing);
-            odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+            odinSymbol.setAttributeStatements(o.getAttributeList());
             odinSymbol.setSymbolType(OdinSymbolType.VARIABLE);
             symbols.add(odinSymbol);
         }
@@ -169,8 +169,8 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitProcedureDeclarationStatement(@NotNull OdinProcedureDeclarationStatement o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeStatementList(), defaultVisibility));
-        odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeList(), defaultVisibility));
+        odinSymbol.setAttributeStatements(o.getAttributeList());
         odinSymbol.setSymbolType(OdinSymbolType.PROCEDURE);
 
         symbols.add(odinSymbol);
@@ -178,8 +178,8 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitStructDeclarationStatement(@NotNull OdinStructDeclarationStatement o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeStatementList(), defaultVisibility));
-        odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeList(), defaultVisibility));
+        odinSymbol.setAttributeStatements(o.getAttributeList());
         odinSymbol.setSymbolType(OdinSymbolType.STRUCT);
 
         symbols.add(odinSymbol);
@@ -188,7 +188,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     @Override
     public void visitProcedureOverloadDeclarationStatement(@NotNull OdinProcedureOverloadDeclarationStatement o) {
         OdinSymbol symbol = new OdinSymbol(o.getDeclaredIdentifier());
-        symbol.setAttributeStatements(o.getAttributeStatementList());
+        symbol.setAttributeStatements(o.getAttributeList());
         symbol.setSymbolType(OdinSymbolType.PROCEDURE_OVERLOAD);
         this.symbols.add(symbol);
     }
@@ -227,19 +227,19 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitEnumDeclarationStatement(@NotNull OdinEnumDeclarationStatement o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeStatementList(), defaultVisibility));
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeList(), defaultVisibility));
         odinSymbol.setSymbolType(OdinSymbolType.ENUM);
-        odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+        odinSymbol.setAttributeStatements(o.getAttributeList());
         odinSymbol.setPsiType(o.getEnumType());
         symbols.add(odinSymbol);
     }
 
     @Override
     public void visitBitsetDeclarationStatement(@NotNull OdinBitsetDeclarationStatement o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeStatementList(), defaultVisibility));
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeList(), defaultVisibility));
         odinSymbol.setPsiType(o.getBitSetType());
         odinSymbol.setSymbolType(OdinSymbolType.BIT_SET);
-        odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+        odinSymbol.setAttributeStatements(o.getAttributeList());
         symbols.add(odinSymbol);
     }
 
@@ -257,7 +257,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             odinSymbol.setHasUsing(false);
             odinSymbol.setPsiType(typeDefinition);
             odinSymbol.setSymbolType(OdinSymbolType.CONSTANT);
-            odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+            odinSymbol.setAttributeStatements(o.getAttributeList());
             symbols.add(odinSymbol);
         }
 
@@ -265,9 +265,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitUnionDeclarationStatement(@NotNull OdinUnionDeclarationStatement o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeStatementList(), defaultVisibility));
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeList(), defaultVisibility));
         odinSymbol.setPsiType(o.getUnionType());
-        odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+        odinSymbol.setAttributeStatements(o.getAttributeList());
         odinSymbol.setSymbolType(OdinSymbolType.UNION);
         symbols.add(odinSymbol);
     }
@@ -284,7 +284,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         for (OdinDeclaredIdentifier declaredIdentifier : o.getDeclaredIdentifiers()) {
             OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
             odinSymbol.setSymbolType(OdinSymbolType.FOREIGN_IMPORT);
-            odinSymbol.setAttributeStatements(o.getAttributeStatementList());
+            odinSymbol.setAttributeStatements(o.getAttributeList());
             symbols.add(odinSymbol);
         }
     }
@@ -308,7 +308,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         }
     }
 
-    public static @NotNull OdinSymbol.OdinVisibility getVisibility(@NotNull Collection<OdinAttributeStatement> attributeStatementList,
+    public static @NotNull OdinSymbol.OdinVisibility getVisibility(@NotNull Collection<OdinAttribute> attributeStatementList,
                                                                    OdinSymbol.OdinVisibility defaultVisibility) {
         OdinSymbol.OdinVisibility odinVisibility = OdinAttributeUtils.computeVisibility(attributeStatementList);
         return defaultVisibility == null ? odinVisibility : OdinSymbol.min(defaultVisibility, odinVisibility);

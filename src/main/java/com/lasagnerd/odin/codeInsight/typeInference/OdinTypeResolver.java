@@ -180,8 +180,8 @@ public class OdinTypeResolver extends OdinVisitor {
                 }
             }
 
-            List<TsOdinParameterSpec> declarationSpecs = TsOdinParameterSpec.from(parameterDeclaration);
-            for (var declarationSpec : declarationSpecs) {
+            List<TsOdinParameterSpec> parameterSpecs = TsOdinParameterSpec.from(parameterDeclaration);
+            for (var declarationSpec : parameterSpecs) {
                 TsOdinParameter tsOdinParameter = mapSpecToParameter(localScope, declarationSpec, k);
                 typeParameters.add(tsOdinParameter);
                 k++;
@@ -462,6 +462,7 @@ public class OdinTypeResolver extends OdinVisitor {
         this.type = tsOdinStructType;
     }
 
+    // TODO pretty sure we don't need this anymore. This could be just a TsOdinParameter factory
     @Data
     private static class TsOdinParameterSpec {
         OdinDeclaredIdentifier nameDeclaredIdentifier;

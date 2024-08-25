@@ -18,7 +18,7 @@ public class OdinSymbol {
      */
     private OdinExpression valueExpression;
     private OdinType psiType;
-    private List<OdinAttributeStatement> attributeStatements;
+    private List<OdinAttribute> attributeStatements;
 
     private String name;
     private String packagePath;

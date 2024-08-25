@@ -694,10 +694,10 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinForInParameterDeclaration forInParameterDeclaration) {
-            OdinForInBlock forInBlock = PsiTreeUtil.getParentOfType(forInParameterDeclaration, OdinForInBlock.class);
+            OdinForBlock forInBlock = PsiTreeUtil.getParentOfType(forInParameterDeclaration, OdinForBlock.class);
 
 
-            if (forInBlock != null) {
+            if (forInBlock != null && forInBlock.getForInParameterDeclaration() != null) {
                 List<OdinDeclaredIdentifier> identifiers = forInParameterDeclaration.getForInParameterDeclaratorList().stream().map(OdinForInParameterDeclarator::getDeclaredIdentifier).toList();
                 int index = identifiers.indexOf(declaredIdentifier);
                 var odinDeclaredIdentifier = forInParameterDeclaration.getForInParameterDeclaratorList().get(index);

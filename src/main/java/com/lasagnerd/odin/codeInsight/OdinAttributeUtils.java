@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Objects;
 
 public class OdinAttributeUtils {
-    public static boolean containsBuiltin(List<OdinAttributeStatement> attributeStatements) {
+    public static boolean containsBuiltin(List<OdinAttribute> attributeStatements) {
         if(attributeStatements == null)
             return false;
 
-        for (OdinAttributeStatement attributeStatement : attributeStatements) {
+        for (OdinAttribute attributeStatement : attributeStatements) {
             if(attributeStatement.getIdentifierToken() != null) {
                 if(attributeStatement.getIdentifierToken().getText().equals("builtin")) {
                     return true;
@@ -38,8 +38,8 @@ public class OdinAttributeUtils {
         return false;
     }
 
-    public static @NotNull OdinSymbol.OdinVisibility computeVisibility(@NotNull Collection<OdinAttributeStatement> attributeStatements) {
-        for (OdinAttributeStatement attributeStatement : attributeStatements) {
+    public static @NotNull OdinSymbol.OdinVisibility computeVisibility(@NotNull Collection<OdinAttribute> attributeStatements) {
+        for (OdinAttribute attributeStatement : attributeStatements) {
             for (OdinArgument odinArgument : attributeStatement.getArgumentList()) {
                 if (odinArgument instanceof OdinNamedArgument odinNamedArgument) {
                     String text = odinNamedArgument.getIdentifier().getText();

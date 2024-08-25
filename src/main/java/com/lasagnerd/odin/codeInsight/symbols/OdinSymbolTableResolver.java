@@ -174,7 +174,7 @@ public class OdinSymbolTableResolver {
     }
 
     public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier) {
-        return findSymbol(identifier,  OdinSymbolTableResolver.computeSymbolTable(identifier)
+        return findSymbol(identifier, OdinSymbolTableResolver.computeSymbolTable(identifier)
                 .with(OdinImportService.getInstance(identifier.getProject())
                         .getPackagePath(identifier)));
     }
@@ -396,11 +396,12 @@ public class OdinSymbolTableResolver {
         }
 
         if (containingScopeBlock instanceof OdinForBlock forBlock) {
-            addControlFlowInit(forBlock.getControlFlowInit(), declarations);
-        }
-
-        if (containingScopeBlock instanceof OdinForInBlock forInBlock) {
-            declarations.add(forInBlock.getForInParameterDeclaration());
+            if (forBlock.getControlFlowInit() != null) {
+                addControlFlowInit(forBlock.getControlFlowInit(), declarations);
+            }
+            if (forBlock.getForInParameterDeclaration() != null) {
+                declarations.add(forBlock.getForInParameterDeclaration());
+            }
         }
 
         if (containingScopeBlock instanceof OdinSwitchBlock switchBlock) {
@@ -442,12 +443,12 @@ public class OdinSymbolTableResolver {
             }
         }
 
-        if (containingScopeBlock instanceof OdinForInStatement forInStatement) {
-            OdinLabelDeclaration labelDeclaration = forInStatement.getLabelDeclaration();
-            if (labelDeclaration != null) {
-                declarations.add(labelDeclaration);
-            }
-        }
+//        if (containingScopeBlock instanceof OdinForInStatement forInStatement) {
+//            OdinLabelDeclaration labelDeclaration = forInStatement.getLabelDeclaration();
+//            if (labelDeclaration != null) {
+//                declarations.add(labelDeclaration);
+//            }
+//        }
 
         return declarations;
     }

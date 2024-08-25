@@ -1,10 +1,15 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
+import com.intellij.openapi.util.text.LineColumn;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -143,7 +148,12 @@ public class OdinTypeSpecializer {
 
                 TsOdinType argumentType = resolveArgumentType(argumentExpression, tsOdinParameter, outerScope);
                 if (argumentType.isUnknown()) {
-                    System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n", tsOdinParameter.getName(), genericType.getClass().getSimpleName(), genericType.getName());
+                    System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n in %s",
+                            tsOdinParameter.getName(),
+                            genericType.getClass().getSimpleName(),
+                            genericType.getName(),
+                            getLocationWithinFile(argumentExpression)
+                    );
                     continue;
                 }
 
@@ -258,9 +268,13 @@ public class OdinTypeSpecializer {
     private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, TsOdinParameter parameter, OdinSymbolTable symbolTable) {
         TsOdinType parameterType = parameter.getType();
         TsOdinType argumentType = inferType(symbolTable, argumentExpression);
-        if (argumentType instanceof TsOdinMetaType metaType && (parameterType.isTypeId()
-                || parameterType.getMetaType() == metaType.getRepresentedMetaType())) {
-            return OdinTypeResolver.resolveMetaType(symbolTable, metaType);
+        if(parameterType != null) {
+            if (argumentType instanceof TsOdinMetaType metaType && (parameterType.isTypeId()
+                    || parameterType.getMetaType() == metaType.getRepresentedMetaType())) {
+                return OdinTypeResolver.resolveMetaType(symbolTable, metaType);
+            }
+        } else {
+            System.out.printf("Parameter type was null for '%s' in %s", argumentExpression.getText(), getLocationWithinFile(argumentExpression));
         }
 
         // TODO if argumentExpression is a reference to a polymorphic type we need to treat this as a polymorphic type
@@ -282,6 +296,12 @@ public class OdinTypeSpecializer {
         }
         // Case 3: The argument has been resolved to a proper type. Just add the mapping
         return argumentType;
+    }
+
+    public static @NotNull String getLocationWithinFile(PsiElement psiElement) {
+        PsiFile containingFile = psiElement.getContainingFile();
+        LineColumn lineColumn = StringUtil.offsetToLineColumn(containingFile.getText(), psiElement.getTextOffset());
+        return "%s:%d:%d%n".formatted(containingFile.getVirtualFile().getPath(), lineColumn.line, lineColumn.column);
     }
 
     private static @NotNull TsOdinType createPolymorphicType(OdinSymbolTable newScope, OdinPolymorphicType polymorphicType) {

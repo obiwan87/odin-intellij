@@ -313,7 +313,11 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinStatement> getBlockStatements(OdinIfBlock ifBlock) {
-        return doGetBlockStatements(ifBlock.getStatementBody());
+        if(ifBlock.getStatementBody() != null) {
+            return doGetBlockStatements(ifBlock.getStatementBody());
+        }
+
+        return Collections.emptyList();
     }
 
     public static List<OdinStatement> getBlockStatements(OdinElseBlock elseBlock) {
@@ -327,12 +331,13 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinStatement> getBlockStatements(OdinForBlock forBlock) {
-        return doGetBlockStatements(forBlock.getStatementBody());
+        if(forBlock.getStatementBody() != null) {
+            return doGetBlockStatements(forBlock.getStatementBody());
+        }
+
+        return Collections.emptyList();
     }
 
-    public static List<OdinStatement> getBlockStatements(OdinForInBlock forInBlock) {
-        return doGetBlockStatements(forInBlock.getStatementBody());
-    }
 
     // Declaration specs
 
@@ -384,11 +389,13 @@ public class OdinPsiUtil {
 
     // Control flow blocks
 
-    public static List<OdinSymbol> getSymbols(OdinForInBlock forInStatement) {
+    public static List<OdinSymbol> getSymbols(OdinForBlock forInStatement) {
         List<OdinSymbol> symbols = new ArrayList<>();
-        for (var forInParameter : forInStatement.getForInParameterDeclaration().getForInParameterDeclaratorList()) {
-            OdinSymbol spec = new OdinSymbol(forInParameter.getDeclaredIdentifier());
-            symbols.add(spec);
+        if(forInStatement.getForInParameterDeclaration() != null) {
+            for (var forInParameter : forInStatement.getForInParameterDeclaration().getForInParameterDeclaratorList()) {
+                OdinSymbol spec = new OdinSymbol(forInParameter.getDeclaredIdentifier());
+                symbols.add(spec);
+            }
         }
         return symbols;
     }

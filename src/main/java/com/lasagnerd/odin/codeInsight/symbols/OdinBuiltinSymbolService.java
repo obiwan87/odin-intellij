@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.xdebugger.XDebugProcess;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
