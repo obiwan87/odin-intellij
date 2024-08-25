@@ -111,7 +111,6 @@ public class OdinInsightUtils {
             OdinSymbol odinSymbol = new OdinSymbol(identifier);
             odinSymbol.setSymbolType(ENUM_FIELD);
             odinSymbol.setPsiType(enumType);
-            odinSymbol.setValueExpression(odinEnumValueDeclaration.getExpression());
             symbols.add(odinSymbol);
         }
         return symbols;

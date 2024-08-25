@@ -156,7 +156,7 @@ public class OdinBuiltinSymbolService {
         Path coreBuiltinSoaPath = Path.of(sdkPath, "base", "runtime", "core_builtin_soa.odin");
 
         List<Path> builtinPaths = List.of(coreBuiltinPath, coreBuiltinSoaPath);
-        doFindBuiltInSymbols(builtinPaths, builtinSymbols, odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributeStatements()));
+        doFindBuiltInSymbols(builtinPaths, builtinSymbols, odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributes()));
 
         List<String> resources = List.of("odin/builtin.odin", "odin/annotations.odin");
         for (String resource : resources) {
@@ -166,7 +166,7 @@ public class OdinBuiltinSymbolService {
                 Collection<OdinSymbol> symbols = fileScopeDeclarations
                         .getSymbolNameMap().values()
                         .stream()
-                        .filter(odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributeStatements()))
+                        .filter(odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributes()))
                         .toList();
                 builtinSymbols.addAll(symbols);
             }

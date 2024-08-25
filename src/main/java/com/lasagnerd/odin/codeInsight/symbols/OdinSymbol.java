@@ -13,12 +13,8 @@ import java.util.List;
 public class OdinSymbol {
 //    private OdinDeclaration declaration;
     private PsiNamedElement declaredIdentifier;
-    /**
-     * Used for symbols with initialization. Don't know if it actually belongs here
-     */
-    private OdinExpression valueExpression;
     private OdinType psiType;
-    private List<OdinAttribute> attributeStatements;
+    private List<OdinAttribute> attributes;
 
     private String name;
     private String packagePath;
