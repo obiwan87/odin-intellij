@@ -688,7 +688,14 @@ forStatement                         ::= [labelDeclaration] [directive] forBlock
 //forBlock                             ::= FOR forHead statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 forUpdate                            ::= assignmentStatement | callExpression
 
-forBlock                             ::= FOR <<enterNoBlockMode>> (forOrInClause | expression) <<exitNoBlockMode>> statementBody {pin(".*")="FOR|forOrInClause" implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
+forBlock                             ::= FOR <<enterNoBlockMode>> [forOrInClause | expression] <<exitNoBlockMode>> statementBody
+                                                    {
+                                                        pin(".*")="FOR|forOrInClause"
+                                                        recoverWhile=forRecovery
+                                                        implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
+                                                        methods = [ getBlockStatements getSymbols ]
+                                                    }
+private forRecovery                  ::= !(eos | FOR)
 // For-In
 //forInStatement                       ::= [directive] [labelDeclaration] forInBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 //forInBlock                           ::= FOR &forInParameterDeclaration <<enterNoBlockMode>> forInParameterDeclaration <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
@@ -705,11 +712,11 @@ conditionalStatement                 ::= [directive] [labelDeclaration] ifBlock 
 
 ifBlock                              ::= if conditionalHead eos? statementBody [sos elseBlock] {
                                                 pin=".*"
-                                                recoverWhile=if_recovery
+                                                recoverWhile=ifRecovery
                                                 implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
                                                 methods = [ getBlockStatements getSymbols ]
                                          }
-private if_recovery                  ::= !(eos | IF_TOKEN)
+private ifRecovery                   ::= !(eos | IF_TOKEN)
 elseBlock                            ::= else (statementBody|ifBlock) {pin=1 implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 if                                   ::= IF_TOKEN
 else                                 ::= ELSE_TOKEN
