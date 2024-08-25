@@ -1,6 +1,6 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
-val pluginVersion = "0.5.3"
+val pluginVersion = "0.5.4"
 
 plugins {
     id("java")

@@ -3,6 +3,11 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.5.4</h3>
+        <h4>Improvements</h4>
+        <li>Better support for incomplete expressions and statements</li>
+        <li>Minor improvements in grammar</li>
+
         <h3>0.5.3</h3>
         <h4>Features</h4>
         <li>"Introduce variable" refactoring🔥. Use<kbd>Ctrl+Alt+V</kbd> or <a href="https://www.jetbrains.com/help/idea/resolving-problems.html">Quick Fix💡</a>.</li>
