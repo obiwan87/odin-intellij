@@ -116,6 +116,7 @@
   ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends optional="true" config-file="native-debug-support.xml">com.intellij.nativeDebug</depends>
 
     <extensions defaultExtensionNs="com.intellij">
 
@@ -145,6 +146,9 @@
                         serviceImplementation="com.lasagnerd.odin.codeInsight.imports.OdinImportServiceImpl"/>
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType"
                            id="OdinRunConfigurationType"/>
+        <!--debug-->
+        <programRunner implementation="com.lasagnerd.odin.debugger.OdinNativeDebugProgramRunner"/>
+
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
         <runLineMarkerContributor language="Odin"
                                   implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
@@ -207,6 +211,12 @@
             <className>com.lasagnerd.odin.codeInsight.refactor.OdinSpecifyTypeIntention</className>
             <category>Refactor</category>
         </intentionAction>
+    </extensions>
+
+    <extensions defaultExtensionNs="cidr.debugger">
+        <languageSupport language="Odin" implementationClass="com.lasagnerd.odin.debugger.OdinDebuggerLanguageSupport"/>
+        <editorsExtension language="Odin" implementationClass="com.lasagnerd.odin.debugger.OdinDebuggerEditorsExtension" />
+        <lineBreakpointFileTypesProvider implementation="com.lasagnerd.odin.debugger.OdinLineBreakpointFileTypesProvider"/>
     </extensions>
 
     <actions>
