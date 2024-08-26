@@ -12,7 +12,8 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.project.Project;
-import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
+import com.intellij.openapi.util.io.FileUtil;
+import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import java.util.Objects;
 @Getter
 public class OdinRunCommandLineState extends CommandLineState {
     private final OdinRunConfigurationOptions options;
-    boolean debug;
+    private boolean debug;
 
     public OdinRunCommandLineState(@NotNull ExecutionEnvironment environment,
                                    @NotNull OdinRunConfigurationOptions options) {
@@ -56,9 +57,12 @@ public class OdinRunCommandLineState extends CommandLineState {
         OdinRunConfigurationOptions options = getOptions();
 
         List<String> command = new ArrayList<>();
-        String sdkPath = OdinSdkConfigPersistentState.getInstance(getEnvironment().getProject()).getSdkPath();
         String projectDirectoryPath = options.getProjectDirectoryPath();
-        String compilerPath = sdkPath + "/odin";
+        String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(getEnvironment().getProject());
+        if(odinBinaryPath == null) {
+            throw new ExecutionException("'odin' executable not found. Please setup SDK.");
+        }
+        String compilerPath = FileUtil.toSystemIndependentName(odinBinaryPath);
         String compilerOptions = Objects.requireNonNullElse(options.getCompilerOptions(), "");
         String outputPathString = Objects.requireNonNullElse(options.getOutputPath(), "");
 

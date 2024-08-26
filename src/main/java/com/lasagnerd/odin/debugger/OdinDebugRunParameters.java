@@ -1,7 +1,6 @@
 package com.lasagnerd.odin.debugger;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.cidr.execution.Installer;
 import com.jetbrains.cidr.execution.RunParameters;
 import com.jetbrains.cidr.execution.TrivialInstaller;
