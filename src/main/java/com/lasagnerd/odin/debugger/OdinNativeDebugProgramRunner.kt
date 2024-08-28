@@ -49,39 +49,54 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         if (state !is OdinRunCommandLineState || runProfile !is OdinRunConfiguration) {
             return resolvedPromise()
         }
+
         FileDocumentManager.getInstance().saveAllDocuments()
 
-
-        val promise = AsyncPromise<RunContentDescriptor?>()
+        // This will be set from the EDT thread
+        val runContentDescriptorPromise = AsyncPromise<RunContentDescriptor?>()
 
         // Switch to BGT for long-running and blocking calls
         AppExecutorUtil.getAppExecutorService().execute {
             val runExecutable = GeneralCommandLine(runProfile.outputPath)
             runExecutable.setWorkDirectory(runProfile.options.workingDirectory)
+
             val runParameters = OdinDebugRunParameters(runProfile, runExecutable)
-            val debuggerManager = XDebuggerManager.getInstance(environment.project)
+
+            // This is the console to be shared with the debug process
             val console = state.consoleBuilder.console
+
+            // Since the debug process only accepts a console builder, give a console builder that will return that
+            // shared console
             val textConsoleBuilder: TextConsoleBuilder = SharedConsoleBuilder(console)
+
+            // Create the build command line with debug parameters
             val processHandler = ProcessHandlerFactory.getInstance().createProcessHandler(
                 state.createCommandLine(true)
             )
+
+            // Attach the process to the console
             console.attachToProcess(processHandler)
 
+            // Listen to the build process and check if the build was successful
             val buildProcessListener = BuildProcessListener(console)
             processHandler.addProcessListener(buildProcessListener)
             processHandler.startNotify()
             processHandler.waitFor()
-            // If build fails return RunContentDescriptor here
+
+            // If build fails do not start debugging, but create a standard run tab instead
             if (buildProcessListener.buildFailed) {
                 val executionResult = DefaultExecutionResult(console, processHandler)
+
+                // Switch back to EDT to create standard run tab
                 ApplicationManager.getApplication().invokeLater {
                     val runContentBuilder = RunContentBuilder(executionResult, environment)
                     val runContentDescriptor = runContentBuilder.showRunContent(null)
-                    promise.setResult(runContentDescriptor);
+                    runContentDescriptorPromise.setResult(runContentDescriptor);
                 }
             } else {
                 // Switch back to EDT to start debug process
                 ApplicationManager.getApplication().invokeLater {
+                    val debuggerManager = XDebuggerManager.getInstance(environment.project)
                     val xDebugSession = debuggerManager.startSession(environment, object : XDebugProcessStarter() {
                         @Throws(ExecutionException::class)
                         override fun start(session: XDebugSession): XDebugProcess {
@@ -92,13 +107,12 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
                             return debugProcess
                         }
                     })
-                    promise.setResult(xDebugSession.runContentDescriptor)
+                    runContentDescriptorPromise.setResult(xDebugSession.runContentDescriptor)
                 }
             }
         }
 
-
-        return promise
+        return runContentDescriptorPromise
     }
 
 
