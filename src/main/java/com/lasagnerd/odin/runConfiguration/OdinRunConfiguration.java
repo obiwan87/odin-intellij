@@ -13,8 +13,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class OdinRunConfiguration extends RunConfigurationBase<OdinRunConfigurationOptions> {
-    protected OdinRunConfiguration(@NotNull Project project, @Nullable ConfigurationFactory factory, @Nullable String name) {
+public class OdinRunConfiguration extends LocatableConfigurationBase<OdinRunConfigurationOptions>
+        implements RunProfileWithCompileBeforeLaunchOption{
+    protected OdinRunConfiguration(@NotNull Project project,
+                                   @NotNull ConfigurationFactory factory,
+                                   @Nullable String name) {
         super(project, factory, name);
     }
 
@@ -47,7 +50,7 @@ public class OdinRunConfiguration extends RunConfigurationBase<OdinRunConfigurat
 
     @Override
     @NotNull
-    protected OdinRunConfigurationOptions getOptions() {
+    public OdinRunConfigurationOptions getOptions() {
         return (OdinRunConfigurationOptions) super.getOptions();
     }
 
@@ -61,5 +64,12 @@ public class OdinRunConfiguration extends RunConfigurationBase<OdinRunConfigurat
         return new OdinRunCommandLineState(environment, getOptions());
     }
 
+    public @NotNull String getOutputPath() {
+        return getOptions().getOutputPath();
+    }
 
+//    @Override
+//    public @NotNull List<BeforeRunTask<?>> getBeforeRunTasks() {
+//        return List.of(new OdinBuildBeforeRunTask(OdinBuildBeforeRunTaskProvider.ID));
+//    }
 }

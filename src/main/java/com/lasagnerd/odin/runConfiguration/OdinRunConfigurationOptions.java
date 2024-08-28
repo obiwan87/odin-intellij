@@ -1,9 +1,10 @@
 package com.lasagnerd.odin.runConfiguration;
 
+import com.intellij.execution.configurations.LocatableRunConfigurationOptions;
 import com.intellij.execution.configurations.RunConfigurationOptions;
 import com.intellij.openapi.components.StoredProperty;
 
-public class OdinRunConfigurationOptions extends RunConfigurationOptions {
+public class OdinRunConfigurationOptions extends LocatableRunConfigurationOptions {
     private static final String outputPathDefault;
 
     static {

@@ -13,4 +13,6 @@ public class OdinRunConfigurationType extends ConfigurationTypeBase {
                 NotNullLazyValue.createValue(() -> OdinIcons.OdinRunConfiguration));
         addFactory(new OdinRunConfigurationFactory(this));
     }
+
+
 }

@@ -18,4 +18,5 @@ public class OdinLocalDebugProcess extends CidrLocalDebugProcess {
 	public boolean isLibraryFrameFilterSupported() {
 		return false;
 	}
+
 }
