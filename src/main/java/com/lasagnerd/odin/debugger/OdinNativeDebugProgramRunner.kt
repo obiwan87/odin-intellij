@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.debugger
 
+import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunProfile
@@ -14,6 +15,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
@@ -24,13 +26,10 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
-import com.jetbrains.cidr.execution.CidrRunner
 import com.lasagnerd.odin.runConfiguration.OdinRunCommandLineState
 import com.lasagnerd.odin.runConfiguration.OdinRunConfiguration
-import com.lasagnerd.odin.utils.ApplicationUtil
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.concurrency.resolvedPromise
 
 
@@ -55,6 +54,7 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
         val promise = AsyncPromise<RunContentDescriptor?>()
 
+        // Switch to BGT for long-running and blocking calls
         AppExecutorUtil.getAppExecutorService().execute {
             val runExecutable = GeneralCommandLine(runProfile.outputPath)
             runExecutable.setWorkDirectory(runProfile.options.workingDirectory)
@@ -77,25 +77,34 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             )
             console.attachToProcess(processHandler)
 
-            val failedToBuild = BuildProcessListener(console)
-            processHandler.addProcessListener(failedToBuild)
+            val buildProcessListener = BuildProcessListener(console)
+            processHandler.addProcessListener(buildProcessListener)
             processHandler.startNotify()
-            processHandler.waitFor() // This causes EDT-Error -> maybe use AsyncRunner with Kotlin which is made for return a Promise to a content descriptor
-
-            ApplicationManager.getApplication().invokeLater {
-                val xDebugSession = debuggerManager.startSession(environment, object : XDebugProcessStarter() {
-                    @Throws(ExecutionException::class)
-                    override fun start(session: XDebugSession): XDebugProcess {
-                        val project = session.project
-                        val debugProcess = OdinLocalDebugProcess(runParameters, session, textConsoleBuilder)
-                        ProcessTerminatedListener.attach(debugProcess.processHandler, project)
-                        debugProcess.start()
-                        return debugProcess
-                    }
-                })
-                promise.setResult(xDebugSession.runContentDescriptor)
+            processHandler.waitFor()
+            // If build fails return RunContentDescriptor here
+            if (buildProcessListener.buildFailed) {
+                val executionResult = DefaultExecutionResult(console, processHandler)
+                ApplicationManager.getApplication().invokeLater {
+                    val runContentBuilder = RunContentBuilder(executionResult, environment)
+                    val runContentDescriptor = runContentBuilder.showRunContent(null)
+                    promise.setResult(runContentDescriptor);
+                }
+            } else {
+                // Switch back to EDT to start debug process
+                ApplicationManager.getApplication().invokeLater {
+                    val xDebugSession = debuggerManager.startSession(environment, object : XDebugProcessStarter() {
+                        @Throws(ExecutionException::class)
+                        override fun start(session: XDebugSession): XDebugProcess {
+                            val project = session.project
+                            val debugProcess = OdinLocalDebugProcess(runParameters, session, textConsoleBuilder)
+                            ProcessTerminatedListener.attach(debugProcess.processHandler, project)
+                            debugProcess.start()
+                            return debugProcess
+                        }
+                    })
+                    promise.setResult(xDebugSession.runContentDescriptor)
+                }
             }
-
         }
 
 
@@ -104,14 +113,17 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
 
     private class BuildProcessListener(private val console: ConsoleView) : ProcessListener {
+        var buildFailed = false
         override fun processTerminated(event: ProcessEvent) {
             if (event.exitCode != 0) {
                 console.print(
-                    "Build failed. Starting debug session with previously built executable if any exists. \n",
-                    ConsoleViewContentType.ERROR_OUTPUT
+                    "Process finished with exit code " + event.exitCode,
+                    ConsoleViewContentType.NORMAL_OUTPUT
                 )
+                buildFailed = true
             } else {
-                console.print("Build Successful. Starting debug session. \n", ConsoleViewContentType.ERROR_OUTPUT)
+                buildFailed = false
+                console.print("Build Successful. Starting debug session. \n", ConsoleViewContentType.NORMAL_OUTPUT)
             }
         }
     }
