@@ -61,17 +61,7 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             val runParameters = OdinDebugRunParameters(runProfile, runExecutable)
             val debuggerManager = XDebuggerManager.getInstance(environment.project)
             val console = state.consoleBuilder.console
-            val textConsoleBuilder: TextConsoleBuilder = object : TextConsoleBuilder() {
-                override fun getConsole(): ConsoleView {
-                    return console
-                }
-
-                override fun addFilter(filter: Filter) {
-                }
-
-                override fun setViewer(isViewer: Boolean) {
-                }
-            }
+            val textConsoleBuilder: TextConsoleBuilder = SharedConsoleBuilder(console)
             val processHandler = ProcessHandlerFactory.getInstance().createProcessHandler(
                 state.createCommandLine(true)
             )
@@ -125,6 +115,18 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
                 buildFailed = false
                 console.print("Build Successful. Starting debug session. \n", ConsoleViewContentType.NORMAL_OUTPUT)
             }
+        }
+    }
+
+    private class SharedConsoleBuilder(private val console: ConsoleView) : TextConsoleBuilder() {
+        override fun getConsole(): ConsoleView {
+            return this.console
+        }
+
+        override fun addFilter(filter: Filter) {
+        }
+
+        override fun setViewer(isViewer: Boolean) {
         }
     }
 }
