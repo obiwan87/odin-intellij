@@ -11,9 +11,13 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessHandlerFactory;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.project.Project;
+import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 @Setter
 @Getter
@@ -40,7 +44,33 @@ public class OdinRunCommandLineState extends CommandLineState {
     }
 
     public @NotNull GeneralCommandLine createCommandLine(boolean debug) {
-        return OdinBuildBeforeRunTaskProvider.createCommandLine(debug, getEnvironment(), options);
+        return createCommandLine(debug, getEnvironment(), options);
+    }
+
+    public static @NotNull GeneralCommandLine createCommandLine(boolean debug,
+                                                                ExecutionEnvironment environment,
+                                                                OdinRunConfigurationOptions options) {
+        Project project = environment.getProject();
+        String mode = debug ? "build" : "run";
+        String projectDirectoryPath = options.getProjectDirectoryPath();
+        String programArguments = options.getProgramArguments();
+        String compilerOptions = Objects.requireNonNullElse(options.getCompilerOptions(), "");
+        String outputPathString = Objects.requireNonNullElse(options.getOutputPath(), "");
+        String basePath = project.getBasePath();
+        String workingDirectory;
+        if (options.getWorkingDirectory() != null) {
+            workingDirectory = options.getWorkingDirectory();
+        } else {
+            workingDirectory = basePath;
+        }
+
+        return OdinSdkUtils.createCommandLine(project, debug,
+                mode,
+                compilerOptions,
+                outputPathString,
+                projectDirectoryPath,
+                programArguments,
+                workingDirectory);
     }
 
     private void addMyConsoleFilters() {
