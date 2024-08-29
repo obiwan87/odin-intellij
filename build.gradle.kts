@@ -73,8 +73,6 @@ sourceSets.main.get().java.srcDirs("src/main/gen")
 dependencies {
     implementation("org.projectlombok:lombok:1.18.34")
     intellijPlatform {
-        //intellijIdeaCommunity("2024.2")
-        //intellijIdeaUltimate("2024.2")
         clion("2024.2")
         pluginVerifier()
         zipSigner()

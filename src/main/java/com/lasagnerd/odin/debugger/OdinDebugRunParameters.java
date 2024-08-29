@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.util.Key;
 import com.jetbrains.cidr.ArchitectureType;
+import com.intellij.util.system.CpuArch;
 import com.jetbrains.cidr.execution.Installer;
 import com.jetbrains.cidr.execution.RunParameters;
 import com.jetbrains.cidr.execution.TrivialInstaller;
@@ -15,17 +16,14 @@ import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriver;
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration;
 import com.lasagnerd.odin.debugger.dap.lldb.LldbDapDriverConfiguration;
-import com.lasagnerd.odin.runConfiguration.OdinRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class OdinDebugRunParameters extends RunParameters {
 
-    private final OdinRunConfiguration runProfile;
     GeneralCommandLine commandLine;
 
-	public OdinDebugRunParameters(@NotNull OdinRunConfiguration runProfile, GeneralCommandLine commandLine) {
-        this.runProfile = runProfile;
+	public OdinDebugRunParameters(GeneralCommandLine commandLine) {
         this.commandLine = commandLine;
 	}
 
@@ -41,7 +39,7 @@ public class OdinDebugRunParameters extends RunParameters {
 
 	@Override
 	public @Nullable String getArchitectureId() {
-		return "x86_64";
+		return CpuArch.CURRENT.name();
 	}
 
 	private static class MyLLDBDriver extends LLDBDriver {

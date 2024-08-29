@@ -60,12 +60,10 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             val runExecutable = GeneralCommandLine(runProfile.outputPath)
             runExecutable.setWorkDirectory(runProfile.options.workingDirectory)
 
-            val debugCompiledExeRunParameters = OdinDebugRunParameters(runProfile, runExecutable)
+            val debugCompiledExeRunParameters = OdinDebugRunParameters(runExecutable)
 
             // This is the console to be shared with the debug process
             val console = state.consoleBuilder.console
-
-
 
             // Create the build command line with debug parameters: "odin build <path> -debug ..."
             val buildProcessHandler = ProcessHandlerFactory.getInstance().createProcessHandler(
