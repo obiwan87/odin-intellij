@@ -87,6 +87,11 @@ dependencies {
         testImplementation("junit:junit:4.13.2")
         testCompileOnly ("org.junit.jupiter:junit-jupiter-api:5.4.2")
     }
+    implementation("org.eclipse.lsp4j:org.eclipse.lsp4j.debug:0.21.1") {
+        exclude("org.eclipse.lsp4j", "org.eclipse.lsp4j")
+        exclude("org.eclipse.lsp4j", "org.eclipse.lsp4j.jsonrpc")
+        exclude("com.google.code.gson", "gson")
+    }
 }
 
 kotlin {
