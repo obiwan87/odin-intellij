@@ -1,13 +1,7 @@
-import de.undercouch.gradle.tasks.download.Download
 import groovy.xml.XmlParser
-import org.jetbrains.changelog.Changelog
-import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.tasks.PatchPluginXmlTask
-import org.jetbrains.intellij.platform.gradle.tasks.PublishPluginTask
-import org.jetbrains.intellij.platform.gradle.utils.extensionProvider
-import java.nio.file.Path
 
 fun properties(key: String) = providers.gradleProperty(key)
 fun environment(key: String) = providers.environmentVariable(key)
@@ -136,35 +130,11 @@ allprojects {
             main {
                 java {
                     srcDirs(
-                        "${grammarKitGenDir}",
+                        grammarKitGenDir,
                     )
                 }
             }
         }
-//        tasks {
-//
-//            generateLexer {
-//                enabled = true
-//                purgeOldFiles = true
-//            }
-//
-//            generateParser {
-//                enabled = true
-//                targetRootOutputDir = file("${grammarKitGenDir}/parser")
-//            }
-//
-//
-//            register<DefaultTask>("generateGrammars") {
-//                description = "Generate source code from parser/lexer definitions"
-//                group = "build setup"
-//                dependsOn("generateLexer")
-//                dependsOn("generateParser")
-//            }
-//
-//            compileJava {
-//                dependsOn("generateGrammars")
-//            }
-//        }
     }
 
     configure<JavaPluginExtension> {
@@ -181,7 +151,7 @@ allprojects {
     }
 
     group = properties("pluginGroup").get()
-    version = pluginVersionFull().get()
+    version = properties("pluginVersion").get()
 }
 
 project(":debugger") {
@@ -260,19 +230,16 @@ project(":plugin") {
             privateKeyFile = rootProject.file("secrets/private.pem")
             password = environment("PRIVATE_KEY_PASSWORD")
         }
-        verifyPlugin {
+
+        publishing {
+
+        }
+
+        pluginVerification {
             ides {
                 ide(IntelliJPlatformType.IntellijIdeaCommunity, ideaVersion)
                 ide(IntelliJPlatformType.IntellijIdeaUltimate, ideaVersion)
                 ide(IntelliJPlatformType.CLion, clionVersion)
-            }
-        }
-        publishing {
-
-            val tokenFile = File("secrets/token")
-            if (tokenFile.exists()) {
-                val myToken = tokenFile.readText()
-                token.set(myToken)
             }
         }
     }
@@ -305,9 +272,15 @@ project(":plugin") {
         buildPlugin {
             enabled = true
         }
-
         publishPlugin {
-            archiveFile.set(Path.of("plugin/build/distributions/odin-intellij-0.5.4-242.zip").toFile())
+            val tokenFile = File("../../secrets/token")
+            if (tokenFile.exists()) {
+                val myToken = tokenFile.readText()
+                token.set(myToken)
+                enabled = true
+            } else {
+                enabled = false
+            }
         }
     }
 }
