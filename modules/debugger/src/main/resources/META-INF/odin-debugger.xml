@@ -18,12 +18,18 @@
     <depends>com.intellij.modules.cidr.debugger</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <programRunner implementation="com.lasagnerd.odin.debugger.OdinNativeDebugProgramRunner"/>
+        <programRunner implementation="com.lasagnerd.odin.debugger.runner.OdinNativeDebugProgramRunner"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.debugger.OdinDebuggerService"/>
     </extensions>
 
     <extensions defaultExtensionNs="cidr.debugger">
         <languageSupport language="Odin" implementationClass="com.lasagnerd.odin.debugger.OdinDebuggerLanguageSupport"/>
         <editorsExtension language="Odin" implementationClass="com.lasagnerd.odin.debugger.OdinDebuggerEditorsExtension" />
         <lineBreakpointFileTypesProvider implementation="com.lasagnerd.odin.debugger.OdinLineBreakpointFileTypesProvider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.lasagnerd.odin">
+        <debuggerToolchain implementation="com.lasagnerd.odin.debugger.toolchains.LLDBDapToolchain"/>
+        <debuggerToolchain implementation="com.lasagnerd.odin.debugger.toolchains.WinDAPToolchain"/>
     </extensions>
 </idea-plugin>

@@ -1,17 +1,16 @@
-package com.lasagnerd.odin.debugger.dap.lldb;
+package com.lasagnerd.odin.debugger.drivers.lldbdap;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.util.system.CpuArch;
 import com.jetbrains.cidr.ArchitectureType;
-import com.lasagnerd.odin.debugger.dap.DAPDebuggerDriverConfiguration;
-import com.lasagnerd.odin.debugger.dap.DAPDriver;
-import com.lasagnerd.odin.debugger.dap.WrappedDebugServer;
+import com.lasagnerd.odin.debugger.drivers.dap.DAPDebuggerDriverConfiguration;
+import com.lasagnerd.odin.debugger.drivers.dap.DAPDriver;
+import com.lasagnerd.odin.debugger.drivers.dap.WrappedDebugServer;
 import org.eclipse.lsp4j.debug.Capabilities;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
 public class LldbDapDriver extends DAPDriver<
@@ -27,7 +26,7 @@ public class LldbDapDriver extends DAPDriver<
         int beginIndex = name.indexOf(".");
         if (beginIndex >= 0)
             return name.substring(beginIndex);
-        return "<unknown function name>";
+        return "<unknown function label>";
     }
 
     @Override

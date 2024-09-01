@@ -211,6 +211,12 @@
         </intentionAction>
     </extensions>
 
+    <extensionPoints>
+        <extensionPoint
+                interface="com.lasagnerd.odin.extensions.OdinDebuggerToolchain" dynamic="true"
+                name="debuggerToolchain"/>
+    </extensionPoints>
+
 
     <actions>
         <action id="com.lasagnerd.odin.actions.NewOdinFileAction"
@@ -224,4 +230,5 @@
 
     <depends optional="true" config-file="odin-debugger.xml">com.intellij.modules.cidr.debugger</depends>
     <depends optional="true" config-file="odin-clion.xml">com.intellij.modules.clion</depends>
+
 </idea-plugin>

@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.debugger.dap;
+package com.lasagnerd.odin.debugger.drivers.dap;
 
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lasagnerd.odin.debugger.dap;
+package com.lasagnerd.odin.debugger.drivers.dap;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;

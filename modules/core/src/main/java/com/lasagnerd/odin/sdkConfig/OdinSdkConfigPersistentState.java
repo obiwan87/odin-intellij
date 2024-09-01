@@ -20,6 +20,8 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
     public String sdkPath = "";
     public String extraBuildFlags = "";
     public String semanticAnnotatorEnabled = "";
+    public String debuggerId = "";
+    public String debuggerPath = "";
 
     public static OdinSdkConfigPersistentState getInstance(Project project) {
         return project.getService(OdinSdkConfigPersistentState.class);

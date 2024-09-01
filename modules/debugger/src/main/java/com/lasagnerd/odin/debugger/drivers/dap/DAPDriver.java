@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.debugger.dap;/*
+package com.lasagnerd.odin.debugger.drivers.dap;/*
  * Copyright 2023-2024 FalsePattern
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -285,7 +285,7 @@ public abstract class DAPDriver<
 
     @Override
     public @NotNull Inferior loadForAttach(@NotNull String name, boolean wait) throws ExecutionException {
-        throw new ExecutionException("Attaching by name is not supported");
+        throw new ExecutionException("Attaching by label is not supported");
     }
 
 

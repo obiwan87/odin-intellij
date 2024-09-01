@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lasagnerd.odin.debugger.dap;
+package com.lasagnerd.odin.debugger.drivers.dap;
 
 import com.intellij.execution.ExecutionException;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import static com.lasagnerd.odin.debugger.dap.Util.get;
+import static com.lasagnerd.odin.debugger.drivers.dap.Util.get;
 
 @SuppressWarnings("unused")
 @RequiredArgsConstructor

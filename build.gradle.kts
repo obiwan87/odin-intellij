@@ -163,8 +163,6 @@ project(":debugger") {
         }
         intellijPlatform {
             clion(clionVersion, useInstaller = false)
-            print(clionVersion)
-            print(clionPlugins)
             for (p in clionPlugins) {
                 bundledPlugin(p)
             }

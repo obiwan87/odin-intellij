@@ -3,6 +3,7 @@ package com.lasagnerd.odin.sdkConfig;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.lasagnerd.odin.extensions.OdinDebuggerToolchain;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,22 +24,31 @@ public class OdinSdkConfigurable implements Configurable {
 
     @Override
     public @Nullable JComponent createComponent() {
-        OdinSdkSettingsComponent odinSdkSettingsComponent = new OdinSdkSettingsComponent();
+        OdinDebuggerToolchain[] extensions = OdinDebuggerToolchain.DEBUGGER_TOOLCHAIN.getExtensions();
+        OdinSdkSettingsComponent odinSdkSettingsComponent = new OdinSdkSettingsComponent(extensions, project);
         this.sdkSettingsComponent = odinSdkSettingsComponent;
         return odinSdkSettingsComponent.getPanel();
     }
 
     @Override
     public boolean isModified() {
+        OdinSdkConfigPersistentState state = OdinSdkConfigPersistentState.getInstance(project);
         boolean sameSdkPath = sdkSettingsComponent.getSdkPath()
-                .equals(OdinSdkConfigPersistentState.getInstance(project).sdkPath);
+                .equals(state.sdkPath);
 
         boolean sameBuildFlags = sdkSettingsComponent.getBuildFlags()
-                .equals(OdinSdkConfigPersistentState.getInstance(project).extraBuildFlags);
+                .equals(state.extraBuildFlags);
 
         boolean sameSemanticAnnotatorEnabled = sdkSettingsComponent.isSemanticAnnotatorEnabled()
-                == OdinSdkConfigPersistentState.getInstance(project).isSemanticAnnotatorEnabled();
-        return !sameSdkPath || !sameBuildFlags || !sameSemanticAnnotatorEnabled;
+                == state.isSemanticAnnotatorEnabled();
+
+        boolean debuggerIdModified = !sdkSettingsComponent.getDebuggerId().equals(state.getDebuggerId());
+        boolean debuggerPathModified = !sdkSettingsComponent.getDebuggerPath().equals(state.getDebuggerPath());
+        return !sameSdkPath
+                || !sameBuildFlags
+                || !sameSemanticAnnotatorEnabled
+                || debuggerIdModified
+                || debuggerPathModified;
     }
 
     @Override
@@ -48,18 +58,23 @@ public class OdinSdkConfigurable implements Configurable {
         config.setSdkPath(sdkPath);
         config.setExtraBuildFlags(sdkSettingsComponent.getBuildFlags());
         config.setSemanticAnnotatorEnabled(sdkSettingsComponent.isSemanticAnnotatorEnabled() ? "true" : "false");
+        config.setDebuggerId(sdkSettingsComponent.getDebuggerId());
+        config.setDebuggerPath(sdkSettingsComponent.getDebuggerPath());
 
         OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project, sdkPath);
     }
 
     @Override
     public void reset() {
-        String sdkPath = OdinSdkConfigPersistentState.getInstance(project).sdkPath;
-        String extraBuildFlags = OdinSdkConfigPersistentState.getInstance(project).extraBuildFlags;
-        boolean semanticAnnotatorEnabled = OdinSdkConfigPersistentState.getInstance(project).isSemanticAnnotatorEnabled();
+        OdinSdkConfigPersistentState state = OdinSdkConfigPersistentState.getInstance(project);
+        String sdkPath = state.sdkPath;
+        String extraBuildFlags = state.extraBuildFlags;
+        boolean semanticAnnotatorEnabled = state.isSemanticAnnotatorEnabled();
         sdkSettingsComponent.setSdkPath(sdkPath);
         sdkSettingsComponent.setBuildFlags(extraBuildFlags);
         sdkSettingsComponent.setSemanticAnnotatorEnabled(semanticAnnotatorEnabled);
+        sdkSettingsComponent.setDebuggerPath(state.getDebuggerPath());
+        sdkSettingsComponent.setDebuggerId(state.getDebuggerId());
     }
 
     @Override

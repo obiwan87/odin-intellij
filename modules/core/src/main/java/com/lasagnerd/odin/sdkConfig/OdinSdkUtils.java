@@ -3,6 +3,7 @@ package com.lasagnerd.odin.sdkConfig;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +35,8 @@ public class OdinSdkUtils {
 
     public static @NotNull String getOdinBinaryPath(String sdkPath) {
         String systemIndependentPath = FileUtil.toSystemIndependentName(sdkPath);
-        boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
 
-        return StringUtils.removeEnd(systemIndependentPath, "/") + "/" + "odin" + (isWindows ? ".exe" : "");
+        return StringUtils.removeEnd(systemIndependentPath, "/") + "/" + "odin" + (SystemInfo.isWindows ? ".exe" : "");
     }
 
     public static String getOdinSdkVersion(Project project) {
@@ -70,6 +70,12 @@ public class OdinSdkUtils {
         }
     }
 
+    public static @Nullable OdinDebuggerSettings getDebuggerSettings(Project project) {
+        OdinSdkConfigPersistentState state = OdinSdkConfigPersistentState.getInstance(project);
+        if(StringUtils.isBlank(state.debuggerId) || StringUtils.isBlank(state.debuggerPath))
+            return null;
+        return new OdinDebuggerSettings(state.debuggerId, state.debuggerPath);
+    }
 
     public static Optional<String> getSdkPath(Project project) {
         OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);

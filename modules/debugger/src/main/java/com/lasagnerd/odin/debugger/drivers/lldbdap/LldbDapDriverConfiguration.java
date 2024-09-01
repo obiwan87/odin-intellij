@@ -1,11 +1,10 @@
-package com.lasagnerd.odin.debugger.dap.lldb;
+package com.lasagnerd.odin.debugger.drivers.lldbdap;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.jetbrains.cidr.ArchitectureType;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
-import com.lasagnerd.odin.debugger.dap.DAPDebuggerDriverConfiguration;
-import lombok.val;
+import com.lasagnerd.odin.debugger.drivers.dap.DAPDebuggerDriverConfiguration;
 import org.eclipse.lsp4j.debug.InitializeRequestArguments;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +12,13 @@ import java.nio.file.Path;
 import java.util.Map;
 
 public class LldbDapDriverConfiguration extends DAPDebuggerDriverConfiguration {
+
+    private final Path path;
+
+    public LldbDapDriverConfiguration(Path path) {
+        this.path = path;
+    }
+
     @Override
     public @NotNull String getDriverName() {
         return "LLDB Odin Debugger";
@@ -20,7 +26,7 @@ public class LldbDapDriverConfiguration extends DAPDebuggerDriverConfiguration {
 
     protected Path getDebuggerExecutable() {
         // TODO get from settings
-        return Path.of("D:\\opt\\clang+llvm-18.1.8-x86_64-pc-windows-msvc\\bin\\lldb-dap.exe");
+        return path;
     }
 
     @Override

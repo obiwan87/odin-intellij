@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.debugger
+package com.lasagnerd.odin.debugger.runner
 
 import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
@@ -19,6 +19,9 @@ import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -26,6 +29,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
+import com.lasagnerd.odin.debugger.OdinDebuggerService
 import com.lasagnerd.odin.runConfiguration.OdinRunCommandLineState
 import com.lasagnerd.odin.runConfiguration.OdinRunConfiguration
 import org.jetbrains.concurrency.AsyncPromise
@@ -40,13 +44,23 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
-        return DefaultDebugExecutor.EXECUTOR_ID == executorId && profile is OdinRunConfiguration
+        return DefaultDebugExecutor.EXECUTOR_ID == executorId
+                && profile is OdinRunConfiguration
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
         // The state is passed through OdinRunCommandLineState which is provided OdinRunConfiguration
         val runProfile = environment.runProfile
         if (state !is OdinRunCommandLineState || runProfile !is OdinRunConfiguration) {
+            return resolvedPromise()
+        }
+
+        val debuggerDriverConfiguration = OdinDebuggerService.getInstance(environment.project).debuggerDriverConfiguration
+        if (debuggerDriverConfiguration == null) {
+            NotificationsManager.getNotificationsManager().showNotification(
+                Notification("Odin Notifications", "Setup the debugger in the settings panel", NotificationType.ERROR),
+                environment.project
+            );
             return resolvedPromise()
         }
 
@@ -59,8 +73,7 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         AppExecutorUtil.getAppExecutorService().execute {
             val runExecutable = GeneralCommandLine(runProfile.outputPath)
             runExecutable.setWorkDirectory(runProfile.options.workingDirectory)
-
-            val debugCompiledExeRunParameters = OdinDebugRunParameters(runExecutable)
+            val debugCompiledExeRunParameters = OdinDebugRunParameters(runExecutable, debuggerDriverConfiguration)
 
             // This is the console to be shared with the debug process
             val console = state.consoleBuilder.console

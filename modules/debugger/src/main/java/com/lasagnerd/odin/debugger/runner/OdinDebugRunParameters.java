@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.debugger;
+package com.lasagnerd.odin.debugger.runner;
 
 import com.google.protobuf.Message;
 import com.intellij.execution.ExecutionException;
@@ -15,17 +15,19 @@ import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriver;
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration;
-import com.lasagnerd.odin.debugger.dap.lldb.LldbDapDriverConfiguration;
+import com.lasagnerd.odin.debugger.drivers.lldbdap.LldbDapDriverConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class OdinDebugRunParameters extends RunParameters {
 
     GeneralCommandLine commandLine;
+    private final DebuggerDriverConfiguration debuggerDriverConfiguration;
 
-	public OdinDebugRunParameters(GeneralCommandLine commandLine) {
+    public OdinDebugRunParameters(GeneralCommandLine commandLine, DebuggerDriverConfiguration debuggerDriverConfiguration) {
         this.commandLine = commandLine;
-	}
+        this.debuggerDriverConfiguration = debuggerDriverConfiguration;
+    }
 
 	@Override
 	public @NotNull Installer getInstaller() {
@@ -34,7 +36,7 @@ public class OdinDebugRunParameters extends RunParameters {
 
 	@Override
 	public @NotNull DebuggerDriverConfiguration getDebuggerDriverConfiguration() {
-		return new LldbDapDriverConfiguration();
+		return debuggerDriverConfiguration;
 	}
 
 	@Override

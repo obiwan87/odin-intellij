@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lasagnerd.odin.debugger.dap;
+package com.lasagnerd.odin.debugger.drivers.dap;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.lang.Language;
