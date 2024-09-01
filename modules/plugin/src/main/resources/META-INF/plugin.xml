@@ -116,7 +116,6 @@
   ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
-    <depends optional="true" config-file="native-debug-support.xml">com.intellij.nativeDebug</depends>
 
     <extensions defaultExtensionNs="com.intellij">
 
@@ -147,7 +146,6 @@
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType"
                            id="OdinRunConfigurationType"/>
         <!--debug-->
-        <programRunner implementation="com.lasagnerd.odin.debugger.OdinNativeDebugProgramRunner"/>
 
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
         <runLineMarkerContributor language="Odin"
@@ -213,11 +211,6 @@
         </intentionAction>
     </extensions>
 
-    <extensions defaultExtensionNs="cidr.debugger">
-        <languageSupport language="Odin" implementationClass="com.lasagnerd.odin.debugger.OdinDebuggerLanguageSupport"/>
-        <editorsExtension language="Odin" implementationClass="com.lasagnerd.odin.debugger.OdinDebuggerEditorsExtension" />
-        <lineBreakpointFileTypesProvider implementation="com.lasagnerd.odin.debugger.OdinLineBreakpointFileTypesProvider"/>
-    </extensions>
 
     <actions>
         <action id="com.lasagnerd.odin.actions.NewOdinFileAction"
@@ -228,4 +221,7 @@
             <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
         </action>
     </actions>
+
+    <depends optional="true" config-file="odin-debugger.xml">com.intellij.modules.cidr.debugger</depends>
+    <depends optional="true" config-file="odin-clion.xml">com.intellij.modules.clion</depends>
 </idea-plugin>

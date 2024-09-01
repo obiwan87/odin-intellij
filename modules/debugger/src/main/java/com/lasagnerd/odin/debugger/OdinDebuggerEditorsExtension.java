@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.jetbrains.cidr.execution.debugger.CidrDebuggerEditorsExtensionBase;
-import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.lang.psi.OdinStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
