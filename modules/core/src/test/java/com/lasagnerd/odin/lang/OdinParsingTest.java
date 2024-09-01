@@ -49,6 +49,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
@@ -56,6 +57,8 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
+import com.lasagnerd.odin.codeInsight.typeSystem.*;
+import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
@@ -613,7 +616,7 @@ public class OdinParsingTest extends UsefulTestCase {
         Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(), OdinProcedureDeclarationStatement.class);
 
         {
-            var type = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference");
+            TsOdinType type = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference");
 
             assertNotNull(type);
             assertEquals(type.getName(), "Point");
@@ -1567,7 +1570,7 @@ public class OdinParsingTest extends UsefulTestCase {
         @org.intellij.lang.annotations.Language("Odin")
         String fileContent = """
                 package main;
-                                
+                
                 main :: proc() {
                    a.b.c.d().e.f()
                    a.?.b.c.d().e.f()
