@@ -32,6 +32,7 @@ import com.jetbrains.cidr.execution.debugger.memory.Address;
 import com.jetbrains.cidr.execution.debugger.memory.AddressRange;
 import com.jetbrains.cidr.system.HostMachine;
 import com.jetbrains.cidr.system.LocalHost;
+import com.lasagnerd.odin.debugger.OdinDebuggerLanguage;
 import lombok.val;
 import org.eclipse.lsp4j.debug.Module;
 import org.eclipse.lsp4j.debug.Thread;
@@ -73,13 +74,15 @@ public abstract class DAPDriver<
     protected volatile Capabilities capabilities;
     private final LazyInitializer.LazyValue<CompletableFuture<?>> lazy$initializeFuture;
     private CompletableFuture<?> initializeFuture;
+    private final DebuggerDriver.DebuggerLanguage language;
 
-    public DAPDriver(@NotNull DebuggerDriver.Handler handler, DAPDebuggerDriverConfiguration config)
+    public DAPDriver(@NotNull DebuggerDriver.Handler handler, DAPDebuggerDriverConfiguration config, DebuggerLanguage language)
             throws ExecutionException {
         super(handler);
         driverName = config.getDriverName();
         processHandler = createDebugProcessHandler(config.createDriverCommandLine(this, ArchitectureType.forVmCpuArch(
                 CpuArch.CURRENT)), config);
+        this.language = language;
         val pipeOutput = new PipedOutputStream();
         PipedInputStream pipeInput;
         try {
@@ -107,7 +110,7 @@ public abstract class DAPDriver<
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                } else if(ProcessOutputType.isStderr(outputType)){
+                } else if (ProcessOutputType.isStderr(outputType)) {
                     System.out.println("!> " + text);
                 }
             }
@@ -144,7 +147,6 @@ public abstract class DAPDriver<
                 })));
         DAPDriver$postConstructor$invoke();
     }
-
 
 
     protected abstract @NotNull String functionParser(String name);
@@ -188,7 +190,7 @@ public abstract class DAPDriver<
             throw new DebuggerCommandException("Memory write is not supported");
 
         val args = new WriteMemoryArguments();
-        args.setMemoryReference(Util.stringifyAddress(address.getUnsignedLongValue()));
+        args.setMemoryReference(DAPDriverUtils.stringifyAddress(address.getUnsignedLongValue()));
         args.setData(Base64.getEncoder().encodeToString(bytes));
         server.writeMemoryNow(args);
     }
@@ -245,7 +247,7 @@ public abstract class DAPDriver<
         }
         val cli = installer.install();
         val args = new HashMap<String, Object>();
-        args.put("program", Util.toWinPath(cli.getExePath()));
+        args.put("program", DAPDriverUtils.toWinPath(cli.getExePath()));
         args.put("cwd", cli.getWorkDirectory().toString());
         args.put("name", "CPP Debug");
         args.put("type", getType());
@@ -256,11 +258,13 @@ public abstract class DAPDriver<
             args.put("args", params);
         }
         server.launchNow(args);
-        Util.get(initializeFuture);
+        DAPDriverUtils.get(initializeFuture);
         return new DAPInferior();
     }
 
-    protected void addArgsForLaunch(Map<String, Object> args) {}
+    protected void addArgsForLaunch(Map<String, Object> args) {
+    }
+
     protected abstract @NotNull String getType();
 
     @Override
@@ -365,7 +369,7 @@ public abstract class DAPDriver<
     @Override
     public void runTo(@NotNull String path, int line) {
         val targetArgs = new GotoTargetsArguments();
-        val src = Util.toSource(path);
+        val src = DAPDriverUtils.toSource(path);
         targetArgs.setSource(src);
         targetArgs.setLine(line);
         server.gotoTargets(targetArgs).thenAccept(locations -> {
@@ -466,7 +470,7 @@ public abstract class DAPDriver<
     public record MappedBreakpoint(int id, LLBreakpoint java, @Nullable LLBreakpointLocation loc, Breakpoint dap,
                                    Either3<PathedSourceBreakpoint, FunctionBreakpoint, InstructionBreakpoint> ref) {
         public MappedBreakpoint(Breakpoint dap, Either3<PathedSourceBreakpoint, FunctionBreakpoint, InstructionBreakpoint> ref) {
-            this(dap.getId(), Util.breakpointJBFromDAP(dap), Util.getLocation(dap), dap, ref);
+            this(dap.getId(), DAPDriverUtils.breakpointJBFromDAP(dap), DAPDriverUtils.getLocation(dap), dap, ref);
         }
     }
 
@@ -474,7 +478,7 @@ public abstract class DAPDriver<
 
     public record MappedModule(LLModule java, Module dap) {
         public static MappedModule of(Module dap) {
-            return new MappedModule(Util.moduleJBFromDAP(dap), dap);
+            return new MappedModule(DAPDriverUtils.moduleJBFromDAP(dap), dap);
         }
     }
 
@@ -510,7 +514,7 @@ public abstract class DAPDriver<
 
     public Breakpoint[] updateSourceBreakpoints(String path, List<SourceBreakpoint> bps) throws ExecutionException {
         val args = new SetBreakpointsArguments();
-        val src = Util.toSource(path);
+        val src = DAPDriverUtils.toSource(path);
         args.setSource(src);
         args.setBreakpoints(bps.toArray(SourceBreakpoint[]::new));
         args.setSourceModified(false);
@@ -563,7 +567,7 @@ public abstract class DAPDriver<
         if (!capabilities.getSupportsInstructionBreakpoints())
             throw new DebuggerCommandException("Server doesn't support instruction breakpoints!");
         val ibp = new InstructionBreakpoint();
-        ibp.setInstructionReference(Util.stringifyAddress(address.getUnsignedLongValue()));
+        ibp.setInstructionReference(DAPDriverUtils.stringifyAddress(address.getUnsignedLongValue()));
         ibp.setCondition(condition);
         val bps = new ArrayList<>(breakpoints.values()
                 .stream()
@@ -631,7 +635,7 @@ public abstract class DAPDriver<
         } catch (java.util.concurrent.ExecutionException e) {
             throw new ExecutionException(e.getCause());
         }
-        return Arrays.stream(threads).map(Util::threadJBFromDAP).collect(Collectors.toList());
+        return Arrays.stream(threads).map(DAPDriverUtils::threadJBFromDAP).collect(Collectors.toList());
     }
 
     @Override
@@ -653,7 +657,7 @@ public abstract class DAPDriver<
         val stackFrames = stackTrace.getStackFrames();
         val resultList = new ArrayList<LLFrame>(stackFrames.length);
         for (val stackFrame : stackFrames) {
-            resultList.add(Util.frameJBFromDAP(stackFrame, null, modules, this::functionParser));
+            resultList.add(DAPDriverUtils.frameJBFromDAP(stackFrame, null, modules, this::functionParser, language));
         }
         return ResultList.create(resultList, false);
     }
@@ -783,11 +787,11 @@ public abstract class DAPDriver<
         variableArgs.setCount(null);
         val variables = server.variablesNow(variableArgs);
         for (val variable : variables.getVariables()) {
-            val address = Util.parseAddressNullable(variable.getMemoryReference());
-            val type = Util.emptyIfNull(variable.getType());
+            val address = DAPDriverUtils.parseAddressNullable(variable.getMemoryReference());
+            val type = DAPDriverUtils.emptyIfNull(variable.getType());
             val truncated = type.replaceAll("error\\{.*?}", "error{}");
             val name = variable.getName();
-            val evalName = Util.emptyIfNull(variable.getEvaluateName());
+            val evalName = DAPDriverUtils.emptyIfNull(variable.getEvaluateName());
             val childRef = variable.getVariablesReference();
             val knownValue = variable.getValue();
 
@@ -912,7 +916,7 @@ public abstract class DAPDriver<
         var type = res.getType();
         type = type == null ? "unknown" : type;
         val mRef = res.getMemoryReference();
-        Long addr = mRef == null ? null : Util.parseAddress(mRef);
+        Long addr = mRef == null ? null : DAPDriverUtils.parseAddress(mRef);
         val result = new LLValue("result", type, addr, null, "");
         result.putUserData(LLVALUE_DATA, new LLValueData(res.getResult(), null, false, false, false));
         result.putUserData(LLVALUE_FRAME, frameIndex);
@@ -952,7 +956,7 @@ public abstract class DAPDriver<
             val dapStartLine = dapInstruction.getLine();
             val dapEndLine = dapInstruction.getEndLine();
             val dapSymbol = dapInstruction.getSymbol();
-            val dapAddr = Util.parseAddress(dapInstruction.getAddress());
+            val dapAddr = DAPDriverUtils.parseAddress(dapInstruction.getAddress());
             boolean uniq = true;
             if (dapLoc != null) {
                 loc = dapLoc;
@@ -971,7 +975,7 @@ public abstract class DAPDriver<
 
             val llSymbol = symbol == null ? null : new LLSymbolOffset(symbol, dapAddr - baseOffset);
 
-            jbInstructions.add(Util.instructionJBFromDAP(dapInstruction, loc, startLine, endLine, uniq, llSymbol));
+            jbInstructions.add(DAPDriverUtils.instructionJBFromDAP(dapInstruction, loc, startLine, endLine, uniq, llSymbol));
         }
         return jbInstructions;
     }
@@ -986,9 +990,9 @@ public abstract class DAPDriver<
         for (long offset = 0; offset < length; offset += Integer.MAX_VALUE) {
             val blockLength = Math.toIntExact(Math.min(Integer.MAX_VALUE, length - offset));
             val args = new ReadMemoryArguments();
-            args.setMemoryReference(Util.stringifyAddress(start + offset));
+            args.setMemoryReference(DAPDriverUtils.stringifyAddress(start + offset));
             args.setCount(blockLength);
-            hunks.add(Util.memoryJBFromDAP(server.readMemoryNow(args)));
+            hunks.add(DAPDriverUtils.memoryJBFromDAP(server.readMemoryNow(args)));
         }
         return hunks;
     }
@@ -1003,7 +1007,7 @@ public abstract class DAPDriver<
         val modules = modulesResponse.getModules();
         val javaModules = new ArrayList<LLModule>(modules.length);
         for (val module : modules) {
-            javaModules.add(Util.moduleJBFromDAP(module));
+            javaModules.add(DAPDriverUtils.moduleJBFromDAP(module));
         }
         return javaModules;
     }
@@ -1155,7 +1159,7 @@ public abstract class DAPDriver<
                         try {
                             processInput.write(dummyOutput.toByteArray());
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            LOG.error(e);
                         }
                         dummyOutput = null;
                     });
@@ -1227,7 +1231,7 @@ public abstract class DAPDriver<
                 } else {
                     thread = Arrays.stream(threads).min(Comparator.comparingInt(Thread::getId)).orElseThrow();
                 }
-                val jbThread = Util.threadJBFromDAP(thread);
+                val jbThread = DAPDriverUtils.threadJBFromDAP(thread);
                 val stArgs = new StackTraceArguments();
                 stArgs.setThreadId(thread.getId());
                 stArgs.setStartFrame(0);
@@ -1238,10 +1242,10 @@ public abstract class DAPDriver<
                     if (isBreakpoint) {
                         helperBreakpoint = breakpoints.get(args.getHitBreakpointIds()[0]);
                     }
-                    val frame = Util.frameJBFromDAP(st.getStackFrames()[0],
+                    val frame = DAPDriverUtils.frameJBFromDAP(st.getStackFrames()[0],
                             helperBreakpoint,
                             modules,
-                            DAPDriver.this::functionParser);
+                            DAPDriver.this::functionParser, OdinDebuggerLanguage.INSTANCE);
 
                     val stopPlace = new StopPlace(jbThread, frame);
                     if (isBreakpoint) {

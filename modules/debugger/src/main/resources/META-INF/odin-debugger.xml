@@ -19,7 +19,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <programRunner implementation="com.lasagnerd.odin.debugger.runner.OdinNativeDebugProgramRunner"/>
-        <projectService serviceImplementation="com.lasagnerd.odin.debugger.OdinDebuggerService"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.debugger.OdinDebuggerToolchainService"/>
     </extensions>
 
     <extensions defaultExtensionNs="cidr.debugger">

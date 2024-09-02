@@ -41,7 +41,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-public class Util {
+public class DAPDriverUtils {
     public static LLThread threadJBFromDAP(Thread DAPThread) {
         return new LLThread(DAPThread.getId(), null, null, DAPThread.getName(), null);
     }
@@ -83,64 +83,12 @@ public class Util {
         return DAPBreakpoint;
     }
 
-    public static LLModule moduleJBFromDAP(Module DAPModule) {
-        return new LLModule(toJBPath(DAPModule.getPath()));
-    }
-
     public static Module moduleDAPFromJB(LLModule JBModule) {
         val DAPModule = new Module();
         DAPModule.setPath(toJBPath(JBModule.getPath()));
         DAPModule.setName(JBModule.getName());
         return DAPModule;
     }
-
-    public static LLFrame frameJBFromDAP(StackFrame DAPFrame,
-                                         @Nullable DAPDriver.MappedBreakpoint helperBreakpoint,
-                                         Map<Integer, DAPDriver.MappedModule> modules,
-                                         Function<String, String> functionParser) {
-        val ptr = parseAddress(DAPFrame.getInstructionPointerReference());
-        val name = DAPFrame.getName();
-        boolean inline = name.startsWith("[Inline Frame] ");
-        val function = functionParser.apply(name);
-        val moduleID = DAPFrame.getModuleId();
-        String moduleName = null;
-        if (moduleID != null) {
-            if (moduleID.isRight()) {
-                moduleName = moduleID.getRight();
-            } else {
-                val module = modules.get(moduleID.getLeft());
-                moduleName = module.java().getName();
-            }
-        }
-        var line = DAPFrame.getLine();
-        String sourcePath;
-        {
-            val src = DAPFrame.getSource();
-            sourcePath = src == null ? null : toJBPath(src.getPath());
-        }
-        if (helperBreakpoint != null) {
-            if (line == 0) {
-                line = helperBreakpoint.dap().getLine();
-            }
-            if (sourcePath == null) {
-                val src = helperBreakpoint.dap().getSource();
-                if (src != null) {
-                    sourcePath = toJBPath(src.getPath());
-                }
-            }
-        }
-        return new LLFrame(DAPFrame.getId(),
-                function,
-                sourcePath,
-                null,
-                line - 1,
-                ptr,
-                OdinDebuggerLanguage.INSTANCE,
-                false,
-                inline,
-                moduleName);
-    }
-
 
     public static Source toSource(String path) {
         val src = new Source();
@@ -154,12 +102,6 @@ public class Util {
         if (path == null)
             return null;
         return path.replace('/', '\\');
-    }
-
-    public static String toJBPath(String path) {
-        if (path == null)
-            return null;
-        return path.replace('\\', '/');
     }
 
     public static Long parseAddressNullable(String address) {
@@ -193,7 +135,7 @@ public class Util {
         String comment = null;
         blk:
         if (loc != null && startLine != null && endLine != null && uniq) {
-            val pathStr = Util.toJBPath(loc.getPath());
+            val pathStr = toJBPath(loc.getPath());
             Path path;
             try {
                 path = Path.of(pathStr);
@@ -237,7 +179,7 @@ public class Util {
     }
 
     public static LLMemoryHunk memoryJBFromDAP(ReadMemoryResponse DAPMemory) {
-        val address = Util.parseAddress(DAPMemory.getAddress());
+        val address = DAPDriverUtils.parseAddress(DAPMemory.getAddress());
         val bytes = Base64.getDecoder().decode(DAPMemory.getData());
         val range = new AddressRange(Address.fromUnsignedLong(address), Address.fromUnsignedLong(address + bytes.length - 1));
         return new LLMemoryHunk(range, bytes);
@@ -255,5 +197,62 @@ public class Util {
 
     public static @NotNull String emptyIfNull(@Nullable String str) {
         return str == null ? "" : str;
+    }
+
+    public static LLFrame frameJBFromDAP(StackFrame DAPFrame,
+                                         @Nullable DAPDriver.MappedBreakpoint helperBreakpoint,
+                                         Map<Integer, DAPDriver.MappedModule> modules,
+                                         Function<String, String> functionParser, DebuggerDriver.DebuggerLanguage instance) {
+        val ptr = parseAddress(DAPFrame.getInstructionPointerReference());
+        val name = DAPFrame.getName();
+        boolean inline = name.startsWith("[Inline Frame] ");
+        val function = functionParser.apply(name);
+        val moduleID = DAPFrame.getModuleId();
+        String moduleName = null;
+        if (moduleID != null) {
+            if (moduleID.isRight()) {
+                moduleName = moduleID.getRight();
+            } else {
+                val module = modules.get(moduleID.getLeft());
+                moduleName = module.java().getName();
+            }
+        }
+        var line = DAPFrame.getLine();
+        String sourcePath;
+        {
+            val src = DAPFrame.getSource();
+            sourcePath = src == null ? null : toJBPath(src.getPath());
+        }
+        if (helperBreakpoint != null) {
+            if (line == 0) {
+                line = helperBreakpoint.dap().getLine();
+            }
+            if (sourcePath == null) {
+                val src = helperBreakpoint.dap().getSource();
+                if (src != null) {
+                    sourcePath = toJBPath(src.getPath());
+                }
+            }
+        }
+        return new LLFrame(DAPFrame.getId(),
+                function,
+                sourcePath,
+                null,
+                line - 1,
+                ptr,
+                instance,
+                false,
+                inline,
+                moduleName);
+    }
+
+    public static LLModule moduleJBFromDAP(Module DAPModule) {
+        return new LLModule(toJBPath(DAPModule.getPath()));
+    }
+
+    public static String toJBPath(String path) {
+        if (path == null)
+            return null;
+        return path.replace('\\', '/');
     }
 }

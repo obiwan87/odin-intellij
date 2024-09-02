@@ -25,7 +25,7 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import static com.lasagnerd.odin.debugger.drivers.dap.Util.get;
+import static com.lasagnerd.odin.debugger.drivers.dap.DAPDriverUtils.get;
 
 @SuppressWarnings("unused")
 @RequiredArgsConstructor

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.lasagnerd.odin.debugger.drivers.windap;
+package com.lasagnerd.odin.debugger.drivers;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.util.system.CpuArch;
@@ -46,8 +46,11 @@ public class WinDAPDriver extends DAPDriver<
     private final CompletableFuture<HandshakeResponse> handshakeFuture = new CompletableFuture<>();
     private final HandshakeStrategy handshakeStrategy;
 
-    public WinDAPDriver(HandshakeStrategy handshakeStrategy, @NotNull Handler handler, DAPDebuggerDriverConfiguration config) throws ExecutionException {
-        super(handler, config);
+    public WinDAPDriver(HandshakeStrategy handshakeStrategy,
+                        @NotNull Handler handler,
+                        DAPDebuggerDriverConfiguration config,
+                        DebuggerLanguage language) throws ExecutionException {
+        super(handler, config, language);
         this.handshakeStrategy = handshakeStrategy;
         DAPDriver$postConstructor();
     }

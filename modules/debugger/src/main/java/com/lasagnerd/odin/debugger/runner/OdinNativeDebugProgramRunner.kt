@@ -29,7 +29,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
-import com.lasagnerd.odin.debugger.OdinDebuggerService
+import com.lasagnerd.odin.debugger.OdinDebuggerToolchainService
 import com.lasagnerd.odin.runConfiguration.OdinRunCommandLineState
 import com.lasagnerd.odin.runConfiguration.OdinRunConfiguration
 import org.jetbrains.concurrency.AsyncPromise
@@ -55,7 +55,7 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             return resolvedPromise()
         }
 
-        val debuggerDriverConfiguration = OdinDebuggerService.getInstance(environment.project).debuggerDriverConfiguration
+        val debuggerDriverConfiguration = OdinDebuggerToolchainService.getInstance(environment.project).debuggerDriverConfiguration
         if (debuggerDriverConfiguration == null) {
             NotificationsManager.getNotificationsManager().showNotification(
                 Notification("Odin Notifications", "Setup the debugger in the settings panel", NotificationType.ERROR),

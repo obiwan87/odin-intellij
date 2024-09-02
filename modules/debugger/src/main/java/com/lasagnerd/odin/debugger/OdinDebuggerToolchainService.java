@@ -8,15 +8,15 @@ import com.lasagnerd.odin.sdkConfig.OdinDebuggerSettings;
 import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
 import org.jetbrains.annotations.Nullable;
 
-public class OdinDebuggerService {
+public class OdinDebuggerToolchainService {
     private final Project project;
 
-    public OdinDebuggerService(Project project) {
+    public OdinDebuggerToolchainService(Project project) {
         this.project = project;
     }
 
-    public static OdinDebuggerService getInstance(Project project) {
-        return project.getService(OdinDebuggerService.class);
+    public static OdinDebuggerToolchainService getInstance(Project project) {
+        return project.getService(OdinDebuggerToolchainService.class);
     }
 
     public DebuggerDriverConfiguration getDebuggerDriverConfiguration() {
@@ -24,7 +24,7 @@ public class OdinDebuggerService {
         if (debuggerSettings != null) {
             var debuggerToolchain = getDebuggerToolchain(debuggerSettings);
             if (debuggerToolchain instanceof DebuggerDriverConfigurationProvider debuggerDriverConfigurationProvider) {
-                return debuggerDriverConfigurationProvider.getDebuggerDriverConfiguration(debuggerSettings.path());
+                return debuggerDriverConfigurationProvider.createDebuggerDriverConfiguration(debuggerSettings.path());
             }
         }
         return null;

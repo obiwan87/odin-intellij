@@ -15,7 +15,6 @@ import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriver;
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration;
-import com.lasagnerd.odin.debugger.drivers.lldbdap.LldbDapDriverConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

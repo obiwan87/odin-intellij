@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.debugger.drivers.lldbdap;
+package com.lasagnerd.odin.debugger.drivers;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.util.system.CpuArch;
@@ -13,12 +13,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
 
-public class LldbDapDriver extends DAPDriver<
+public class LLDBDAPDriver extends DAPDriver<
         IDebugProtocolServer, WrappedDebugServer<IDebugProtocolServer>,
-        LldbDapDriver.LldbDapClient
+        LLDBDAPDriver.LldbDapClient
         > {
-    public LldbDapDriver(@NotNull Handler handler, DAPDebuggerDriverConfiguration config) throws ExecutionException {
-        super(handler, config);
+    public LLDBDAPDriver(@NotNull Handler handler, DAPDebuggerDriverConfiguration config, DebuggerLanguage language) throws ExecutionException {
+        super(handler, config, language);
     }
 
     @Override

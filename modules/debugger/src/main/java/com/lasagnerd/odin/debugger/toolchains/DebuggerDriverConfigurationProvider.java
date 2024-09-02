@@ -19,5 +19,5 @@ package com.lasagnerd.odin.debugger.toolchains;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 
 public interface DebuggerDriverConfigurationProvider {
-    DebuggerDriverConfiguration getDebuggerDriverConfiguration(String path);
+    DebuggerDriverConfiguration createDebuggerDriverConfiguration(String path);
 }
