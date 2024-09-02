@@ -19,8 +19,14 @@ import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.XDebugProcess
@@ -31,6 +37,7 @@ import com.lasagnerd.odin.OdinBundle
 import com.lasagnerd.odin.debugger.OdinDebuggerToolchainService
 import com.lasagnerd.odin.runConfiguration.OdinRunCommandLineState
 import com.lasagnerd.odin.runConfiguration.OdinRunConfiguration
+import com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -56,11 +63,18 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
         val debuggerDriverConfiguration = OdinDebuggerToolchainService.getInstance(environment.project).debuggerDriverConfiguration
         if (debuggerDriverConfiguration == null) {
-            Messages.showErrorDialog(
-                environment.project,
-                OdinBundle.message("odin.no-debugger-error"),
-                "No Debugger Configured"
-            )
+            val notification = Notification("Odin Notifications", "No debugger has been configured.", NotificationType.ERROR)
+                .addAction(object : NotificationAction("Open Odin settings") {
+                    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                        ShowSettingsUtil.getInstance().showSettingsDialog(
+                            environment.project,
+                            OdinSdkConfigurable::class.java,
+                            null
+                        )
+                    }
+
+                })
+            Notifications.Bus.notify(notification, environment.project)
             return resolvedPromise()
         }
 
