@@ -83,7 +83,7 @@ public class LLDBDapToolchain implements OdinDebuggerToolchain, DebuggerDriverCo
         }
 
         @Override
-        public @NotNull GeneralCommandLine createDriverCommandLine(@NotNull DebuggerDriver debuggerDriver, @NotNull ArchitectureType architectureType) throws ExecutionException {
+        public @NotNull GeneralCommandLine createDriverCommandLine(@NotNull DebuggerDriver debuggerDriver, @NotNull ArchitectureType architectureType) {
             Path path = getDebuggerExecutable();
             GeneralCommandLine cli = new GeneralCommandLine();
             cli.setExePath(path.toString());

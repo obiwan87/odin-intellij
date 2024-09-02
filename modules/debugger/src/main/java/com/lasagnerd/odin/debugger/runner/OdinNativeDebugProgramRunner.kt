@@ -19,16 +19,15 @@ import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.ui.Messages
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
+import com.lasagnerd.odin.OdinBundle
 import com.lasagnerd.odin.debugger.OdinDebuggerToolchainService
 import com.lasagnerd.odin.runConfiguration.OdinRunCommandLineState
 import com.lasagnerd.odin.runConfiguration.OdinRunConfiguration
@@ -57,10 +56,11 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
         val debuggerDriverConfiguration = OdinDebuggerToolchainService.getInstance(environment.project).debuggerDriverConfiguration
         if (debuggerDriverConfiguration == null) {
-            NotificationsManager.getNotificationsManager().showNotification(
-                Notification("Odin Notifications", "Setup the debugger in the settings panel", NotificationType.ERROR),
-                environment.project
-            );
+            Messages.showErrorDialog(
+                environment.project,
+                OdinBundle.message("odin.no-debugger-error"),
+                "No Debugger Configured"
+            )
             return resolvedPromise()
         }
 
@@ -156,3 +156,4 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         }
     }
 }
+

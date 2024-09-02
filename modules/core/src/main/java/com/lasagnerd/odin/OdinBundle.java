@@ -2,7 +2,6 @@ package com.lasagnerd.odin;
 
 import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class OdinBundle extends DynamicBundle {
