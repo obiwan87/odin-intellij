@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.ui.Messages
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
@@ -63,7 +62,7 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
         val debuggerDriverConfiguration = OdinDebuggerToolchainService.getInstance(environment.project).debuggerDriverConfiguration
         if (debuggerDriverConfiguration == null) {
-            val notification = Notification("Odin Notifications", "No debugger has been configured.", NotificationType.ERROR)
+            val notification = Notification("Odin Notifications", OdinBundle.message("odin.no-debugger-error"), NotificationType.ERROR)
                 .addAction(object : NotificationAction("Open Odin settings") {
                     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                         ShowSettingsUtil.getInstance().showSettingsDialog(
@@ -74,6 +73,7 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
                     }
 
                 })
+
             Notifications.Bus.notify(notification, environment.project)
             return resolvedPromise()
         }
