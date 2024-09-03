@@ -3,6 +3,10 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.6.0</h3>
+        <h4>Improvements</h4>
+        <li>Added debugging support 🔥</li>
+
         <h3>0.5.4</h3>
         <h4>Improvements</h4>
         <li>Better support for incomplete expressions and statements</li>
