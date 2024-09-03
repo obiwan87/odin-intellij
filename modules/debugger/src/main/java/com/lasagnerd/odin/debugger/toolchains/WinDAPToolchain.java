@@ -2,6 +2,8 @@ package com.lasagnerd.odin.debugger.toolchains;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.util.download.DownloadableFileDescription;
+import com.intellij.util.download.DownloadableFileService;
 import com.jetbrains.cidr.ArchitectureType;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
@@ -46,7 +48,7 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
 
     @Override
     public boolean isDownloadable() {
-        return false;
+        return true;
     }
 
     @Override
@@ -56,10 +58,10 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
 
     @Override
     public DebuggerDriverConfiguration createDebuggerDriverConfiguration(String path) {
-        return new WinDAPDriverConfiguration(Path.of(path), this::handshakeAlgorithm);
+        return new WinDAPDriverConfiguration(Path.of(path), this::handshake);
     }
 
-    private @NotNull WinDAPDriver.HandshakeResponse handshakeAlgorithm(WinDAPDriver.HandshakeRequest handshake) {
+    private @NotNull WinDAPDriver.HandshakeResponse handshake(WinDAPDriver.HandshakeRequest handshake) {
         try {
             final MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.update(handshake.getValue().getBytes(StandardCharsets.UTF_8));
@@ -132,5 +134,14 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
             initArgs.setPathFormat("path");
             initArgs.setAdapterID("cppvsdbg");
         }
+    }
+
+    @Override
+    public DownloadableFileDescription getDownloadableFileDescription() {
+        return DownloadableFileService.getInstance().createFileDescription(getDownloadUrl(), "cpptools.vsix");
+    }
+
+    private static @NotNull String getDownloadUrl() {
+        return "https://github.com/microsoft/vscode-cpptools/releases/download/v1.21.6/cpptools-windows-x64.vsix";
     }
 }

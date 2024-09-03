@@ -44,7 +44,6 @@ public class OdinSdkUtils {
         return sdkPath.map(OdinSdkUtils::getOdinSdkVersion).orElse(null);
     }
 
-
     public static @NotNull String getOdinSdkVersion(@NotNull String sdkHome) {
         ProcessBuilder processBuilder = new ProcessBuilder("odin", "version");
         processBuilder.directory(Path.of(sdkHome).toFile());
