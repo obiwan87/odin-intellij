@@ -7,12 +7,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.cidr.ArchitectureType;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
@@ -60,7 +62,7 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
 
     @Override
     public boolean isDownloadable() {
-        return true;
+        return CpuArch.isArm64() && SystemInfo.isWindows;
     }
 
     @Override
@@ -149,8 +151,7 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
     }
 
     private static @NotNull String getDownloadUrl() {
-        String x64 = "x64";
-        return "https://github.com/microsoft/vscode-cpptools/releases/download/v1.21.6/cpptools-windows-" + x64 + ".vsix";
+        return "https://github.com/microsoft/vscode-cpptools/releases/download/v1.21.6/cpptools-windows-x64.vsix";
     }
 
     @Override
