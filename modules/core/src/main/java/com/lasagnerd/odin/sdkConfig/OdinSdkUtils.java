@@ -71,7 +71,7 @@ public class OdinSdkUtils {
 
     public static @Nullable OdinDebuggerSettings getDebuggerSettings(Project project) {
         OdinSdkConfigPersistentState state = OdinSdkConfigPersistentState.getInstance(project);
-        if(StringUtils.isBlank(state.debuggerId) || StringUtils.isBlank(state.debuggerPath))
+        if(StringUtils.isBlank(state.debuggerId))
             return null;
         return new OdinDebuggerSettings(state.debuggerId, state.debuggerPath);
     }

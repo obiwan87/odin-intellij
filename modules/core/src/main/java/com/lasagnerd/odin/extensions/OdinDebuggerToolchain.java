@@ -1,7 +1,7 @@
 package com.lasagnerd.odin.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.util.download.DownloadableFileDescription;
+import com.intellij.openapi.project.Project;
 
 public interface OdinDebuggerToolchain {
     ExtensionPointName<OdinDebuggerToolchain> DEBUGGER_TOOLCHAIN =
@@ -21,7 +21,11 @@ public interface OdinDebuggerToolchain {
 
     String getVersion();
 
-    default DownloadableFileDescription getDownloadableFileDescription() {
+    default String detect() {
+        return null;
+    }
+
+    default String download(Project project) {
         return null;
     }
 }

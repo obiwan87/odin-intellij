@@ -1,7 +1,6 @@
 package com.lasagnerd.odin.sdkConfig;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -10,17 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.util.download.DownloadableFileDescription;
-import com.intellij.util.download.DownloadableFileService;
-import com.intellij.util.download.FileDownloader;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -31,11 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 public class OdinSdkConfigurable implements Configurable {
@@ -121,6 +112,7 @@ public class OdinSdkConfigurable implements Configurable {
         private JBCheckBox semanticAnnotatorEnabled;
         private ComboBox<Item> debuggerCombobox;
         private TextFieldWithBrowseButton debuggerPathField;
+        private JButton downloadButton;
 
         @Override
         public void dispose() {
@@ -131,18 +123,6 @@ public class OdinSdkConfigurable implements Configurable {
             return this.semanticAnnotatorEnabled.isSelected();
         }
 
-        public void setDebuggerId(String debuggerId) {
-            OdinDebuggerToolchain toolchainProvider = getToolchain(debuggerId);
-            if (toolchainProvider != null) {
-                debuggerCombobox.setSelectedItem(
-                        new Item(debuggerId, toolchainProvider.getLabel())
-                );
-            }
-        }
-
-        public void setDebuggerPath(String debuggerPath) {
-            debuggerPathField.setText(debuggerPath);
-        }
 
         class BrowseToSdkFileChooserAction extends AbstractAction {
             public BrowseToSdkFileChooserAction() {
@@ -162,6 +142,8 @@ public class OdinSdkConfigurable implements Configurable {
                 String path = virtualFile.getPath();
                 setSdkPath(path);
             }
+
+
         }
 
         public OdinSdkSettingsComponent(OdinDebuggerToolchain[] extensions) {
@@ -194,46 +176,8 @@ public class OdinSdkConfigurable implements Configurable {
         }
 
         private @NotNull JButton createDownloadButton() {
-            return new JButton(new AbstractAction("Download") {
-
-                //            @Override
-                //            public boolean isEnabled() {
-                //                return getSelectedToolchain() != null && getSelectedToolchain().isDownloadable();
-                //            }
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    OdinDebuggerToolchain selectedToolchain = getSelectedToolchain();
-                    if (selectedToolchain != null) {
-                        if (selectedToolchain.isDownloadable()) {
-                            DownloadableFileDescription downloadableFileDescription = selectedToolchain.getDownloadableFileDescription();
-                            FileDownloader fileDownloader = DownloadableFileService
-                                    .getInstance()
-                                    .createDownloader(List.of(downloadableFileDescription), "Debugger");
-
-                            Path downloadDir = Path.of(PathManager.getTempPath())
-                                    .resolve("odin/debuggers/" + selectedToolchain.getId());
-                            try {
-                                FileUtil.deleteRecursively(downloadDir);
-                            } catch (IOException ex) {
-                                throw new RuntimeException(ex);
-                            }
-                            boolean result = downloadDir.toFile().mkdirs();
-                            if (!result)
-                                throw new RuntimeException("Could not create temp dirs");
-
-                            @Nullable List<Pair<VirtualFile, DownloadableFileDescription>> downloads = fileDownloader
-                                    .downloadWithProgress(downloadDir.toString(), project, mainPanel);
-                            if (downloads == null)
-                                return;
-                            for (Pair<VirtualFile, DownloadableFileDescription> download : downloads) {
-                                var file = download.getFirst();
-                                debuggerPathField.setText(file.getPath());
-                            }
-                        }
-                    }
-                }
-            });
+            downloadButton = new JButton(new DownloadDebuggerAction());
+            return downloadButton;
         }
 
         private @NotNull JComponent createDebuggerPathField() {
@@ -264,8 +208,20 @@ public class OdinSdkConfigurable implements Configurable {
             for (OdinDebuggerToolchain extension : extensions) {
                 comboBox.addItem(new Item(extension.getId(), extension.getLabel()));
             }
+            comboBox.addItemListener(e -> {
+                updateDownloadButton();
+                setDetectedDebuggerPath();
+            });
             this.debuggerCombobox = comboBox;
+
             return comboBox;
+        }
+
+        private void updateDownloadButton() {
+            Action action = downloadButton.getAction();
+            if (action instanceof DownloadDebuggerAction downloadDebuggerAction) {
+                action.setEnabled(downloadDebuggerAction.enabledCondition());
+            }
         }
 
         private @NotNull JBCheckBox createCustomAnnotatorCheckbox() {
@@ -340,6 +296,33 @@ public class OdinSdkConfigurable implements Configurable {
 
         public void setBuildFlags(@NotNull String newBuildFlags) {
             buildFlagsTextField.setText(newBuildFlags);
+        }
+
+        public void setDebuggerId(String debuggerId) {
+            OdinDebuggerToolchain toolchainProvider = getToolchain(debuggerId);
+            if (toolchainProvider != null) {
+                debuggerCombobox.setSelectedItem(
+                        new Item(debuggerId, toolchainProvider.getLabel())
+                );
+            }
+
+            updateDownloadButton();
+        }
+
+        public void setDebuggerPath(String debuggerPath) {
+            setDetectedDebuggerPath();
+            debuggerPathField.setText(debuggerPath);
+        }
+
+        private void setDetectedDebuggerPath() {
+            JBTextField textField = (JBTextField) debuggerPathField.getTextField();
+            OdinDebuggerToolchain selectedToolchain = getSelectedToolchain();
+            if (selectedToolchain != null) {
+                String detected = selectedToolchain.detect();
+                textField.getEmptyText().setText(Objects.requireNonNullElse(detected, ""));
+            } else {
+                textField.getEmptyText().setText("");
+            }
         }
 
         public void setSemanticAnnotatorEnabled(boolean enabled) {
@@ -418,6 +401,31 @@ public class OdinSdkConfigurable implements Configurable {
                 }
                 String path = virtualFile.getPath();
                 OdinSdkSettingsComponent.this.debuggerPathField.setText(path);
+            }
+        }
+
+        private class DownloadDebuggerAction extends AbstractAction {
+
+            public DownloadDebuggerAction() {
+                super("Download");
+            }
+
+            boolean enabledCondition() {
+                OdinDebuggerToolchain selectedToolchain = getSelectedToolchain();
+                return selectedToolchain != null && selectedToolchain.isDownloadable();
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                OdinDebuggerToolchain selectedToolchain = getSelectedToolchain();
+                if (selectedToolchain != null) {
+                    if (selectedToolchain.isDownloadable()) {
+                        String debuggerExecutablePath = selectedToolchain.download(project);
+                        if (debuggerExecutablePath != null) {
+                            debuggerPathField.setText(debuggerExecutablePath);
+                        }
+                    }
+                }
             }
         }
     }
