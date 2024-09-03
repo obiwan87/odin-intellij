@@ -24,7 +24,13 @@ public class OdinDebuggerToolchainService {
         if (debuggerSettings != null) {
             var debuggerToolchain = getDebuggerToolchain(debuggerSettings);
             if (debuggerToolchain instanceof DebuggerDriverConfigurationProvider debuggerDriverConfigurationProvider) {
-                return debuggerDriverConfigurationProvider.createDebuggerDriverConfiguration(debuggerSettings.path());
+                String path = debuggerSettings.path();
+                if(path == null || path.isBlank()) {
+                    path = debuggerToolchain.detect();
+                }
+                if(path != null) {
+                    return debuggerDriverConfigurationProvider.createDebuggerDriverConfiguration(path);
+                }
             }
         }
         return null;

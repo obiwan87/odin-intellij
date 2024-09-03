@@ -2,8 +2,18 @@ package com.lasagnerd.odin.debugger.toolchains;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
+import com.intellij.util.download.FileDownloader;
+import com.intellij.util.io.Decompressor;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.cidr.ArchitectureType;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
@@ -14,6 +24,7 @@ import com.lasagnerd.odin.extensions.OdinDebuggerToolchain;
 import lombok.val;
 import org.eclipse.lsp4j.debug.InitializeRequestArguments;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Base64;
+import java.util.List;
 import java.util.zip.Inflater;
 
 public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverConfigurationProvider {
@@ -136,12 +148,88 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
         }
     }
 
-    @Override
-    public DownloadableFileDescription getDownloadableFileDescription() {
-        return DownloadableFileService.getInstance().createFileDescription(getDownloadUrl(), "cpptools.vsix");
+    private static @NotNull String getDownloadUrl() {
+        String x64 = "x64";
+        return "https://github.com/microsoft/vscode-cpptools/releases/download/v1.21.6/cpptools-windows-" + x64 + ".vsix";
     }
 
-    private static @NotNull String getDownloadUrl() {
-        return "https://github.com/microsoft/vscode-cpptools/releases/download/v1.21.6/cpptools-windows-x64.vsix";
+    @Override
+    public String detect() {
+        Path debuggerPath = PathManager.getSystemDir().resolve("odin/debuggers/" + getId() + "/extension/debugAdapters/vsdbg/bin/vsdbg.exe");
+        if(debuggerPath.toFile().exists())
+            return debuggerPath.toAbsolutePath().toString();
+        return null;
     }
+
+    @Override
+    public String download(Project project) {
+        String debuggerExecutablePath = null;
+
+        String detectedPath = detect();
+        if(detectedPath != null) {
+            int answer = Messages.showOkCancelDialog("A windows debugger was detected on your system. Would you like to use that instead?",
+                    "Debugger Detected",
+                    "Yes",
+                    "No, Download Again",
+                    UIUtil.getInformationIcon());
+
+            if(answer == Messages.OK) {
+                return detectedPath;
+            }
+        }
+
+        DownloadableFileDescription downloadableFileDescription = DownloadableFileService
+                .getInstance()
+                .createFileDescription(getDownloadUrl(), "cpptools.vsix");
+
+        FileDownloader fileDownloader = DownloadableFileService
+                .getInstance()
+                .createDownloader(List.of(downloadableFileDescription), "Debugger");
+
+        Path downloadDir = Path.of(PathManager.getTempPath())
+                .resolve("odin/debuggers/" + getId());
+        try {
+            FileUtil.deleteRecursively(downloadDir);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        boolean result = downloadDir.toFile().mkdirs();
+        if (!result)
+            throw new RuntimeException("Could not create temp dirs");
+
+        @Nullable List<Pair<VirtualFile, DownloadableFileDescription>> downloads = fileDownloader
+                .downloadWithProgress(downloadDir.toString(), project, null);
+        if (downloads != null) {
+            for (Pair<VirtualFile, DownloadableFileDescription> download : downloads) {
+                var file = download.getFirst();
+                Decompressor.Zip zip = new Decompressor.Zip(file.toNioPath());
+                Path extractionTargetPath = PathManager.getSystemDir().resolve("odin/debuggers/" + getId());
+                boolean extraction = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                        () -> {
+                            try {
+
+                                zip.extract(extractionTargetPath);
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        },
+                        "Extracting Downloaded Contents",
+                        true,
+                        project
+                );
+                if (extraction) {
+                    debuggerExecutablePath = extractionTargetPath.resolve("extension/debugAdapters/vsdbg/bin/vsdbg.exe").toString();
+                }
+
+            }
+            try {
+                FileUtil.deleteRecursively(downloadDir);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+
+        }
+        return debuggerExecutablePath;
+    }
+
 }
