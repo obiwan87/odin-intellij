@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyWithDefaultValue;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.system.CpuArch;
 import com.jetbrains.cidr.ArchitectureType;
@@ -247,7 +248,8 @@ public abstract class DAPDriver<
         }
         val cli = installer.install();
         val args = new HashMap<String, Object>();
-        args.put("program", DAPDriverUtils.toWinPath(cli.getExePath()));
+        String exePath = FileUtil.toSystemDependentName(cli.getExePath());
+        args.put("program", exePath);
         args.put("cwd", cli.getWorkDirectory().toString());
         args.put("name", "CPP Debug");
         args.put("type", getType());
