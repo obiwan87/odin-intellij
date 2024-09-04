@@ -2,7 +2,8 @@
   parserImports="static com.intellij.lang.parser.GeneratedParserUtilBase.*"
   parserClass="com.lasagnerd.odin.lang.OdinParser"
 
-  extends="com.lasagnerd.odin.lang.psi.OdinPsiElement"
+  extends="com.lasagnerd.odin.lang.psi.impl.OdinPsiElementImpl"
+  implements="com.lasagnerd.odin.lang.psi.OdinPsiElement"
 
 
   psiClassPrefix="Odin"
@@ -15,6 +16,9 @@
   elementTypeClass="com.lasagnerd.odin.lang.psi.OdinElementType"
   tokenTypeClass="com.lasagnerd.odin.lang.psi.OdinTokenType"
   parserUtilClass="com.lasagnerd.odin.lang.OdinParserUtil"
+
+  extends('variableInitializationStatement|procedureDeclarationStatement')="com.lasagnerd.odin.lang.psi.impl.OdinStubbedElementImpl<?>"
+  elementTypeFactory('variableInitializationStatement|procedureDeclarationStatement')="com.lasagnerd.odin.lang.stubs.OdinStubElementTypeFactory.create"
 
   tokens=[
         LINE_COMMENT='regexp://[^\r\n]*'
@@ -263,7 +267,7 @@ bitFieldFieldDeclaration             ::= declaredIdentifier COLON type PIPE expr
 bitsetDeclarationStatement           ::= (attribute eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
-procedureDeclarationStatement        ::= (attribute eos?)* declaredIdentifier doubleColonOperator procedureDefinition {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ]}
+procedureDeclarationStatement        ::= (attribute eos?)* declaredIdentifier doubleColonOperator procedureDefinition {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ] stubClass="com.lasagnerd.odin.lang.stubs.OdinProcedureDeclarationStub"}
 procedureDefinition                  ::= procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 procedureType                        ::= directive? PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>> {methods=[getParamEntryList]}
 
@@ -335,7 +339,7 @@ colonClosing                         ::= COLON
 private symbolDefinitionHead         ::= (attribute eos?)* [directiveHead] [USING] identifierList colonOpening type?
 colonOpening                         ::= COLON
 
-variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition] pin=2}
+variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition] pin=2 stubClass="com.lasagnerd.odin.lang.stubs.OdinVariableInitializationStub"}
 
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}
