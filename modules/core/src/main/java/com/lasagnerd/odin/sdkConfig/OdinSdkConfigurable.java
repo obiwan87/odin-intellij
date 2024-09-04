@@ -206,16 +206,19 @@ public class OdinSdkConfigurable implements Configurable {
             ComboBox<Item> comboBox = new ComboBox<>();
 
             for (OdinDebuggerToolchain extension : extensions) {
-                comboBox.addItem(new Item(extension.getId(), extension.getLabel()));
+                if (extension.isAvailable()) {
+                    comboBox.addItem(new Item(extension.getId(), extension.getLabel()));
+                }
             }
             comboBox.addItemListener(e -> {
                 updateDownloadButton();
-                setDetectedDebuggerPath();
+                updateDebuggerPath();
             });
             this.debuggerCombobox = comboBox;
 
             return comboBox;
         }
+
 
         private void updateDownloadButton() {
             Action action = downloadButton.getAction();
@@ -310,17 +313,30 @@ public class OdinSdkConfigurable implements Configurable {
         }
 
         public void setDebuggerPath(String debuggerPath) {
-            setDetectedDebuggerPath();
+            updateDebuggerPath();
             debuggerPathField.setText(debuggerPath);
         }
 
-        private void setDetectedDebuggerPath() {
+        private void updateDebuggerPath() {
             JBTextField textField = (JBTextField) debuggerPathField.getTextField();
             OdinDebuggerToolchain selectedToolchain = getSelectedToolchain();
             if (selectedToolchain != null) {
-                String detected = selectedToolchain.detect();
-                textField.getEmptyText().setText(Objects.requireNonNullElse(detected, ""));
+                if (selectedToolchain.isBundled()) {
+                    debuggerPathField.setEditable(false);
+                    debuggerPathField.setEnabled(false);
+                } else {
+                    debuggerPathField.setEditable(true);
+                    debuggerPathField.setEnabled(true);
+                    if (selectedToolchain.isAvailable()) {
+                        String detected = selectedToolchain.detect();
+                        textField.getEmptyText().setText(Objects.requireNonNullElse(detected, ""));
+                    } else {
+                        textField.getEmptyText().setText("");
+                    }
+                }
             } else {
+                debuggerPathField.setEditable(true);
+                debuggerPathField.setEnabled(true);
                 textField.getEmptyText().setText("");
             }
         }

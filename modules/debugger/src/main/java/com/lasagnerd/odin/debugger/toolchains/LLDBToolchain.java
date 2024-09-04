@@ -23,7 +23,7 @@ public class LLDBToolchain implements OdinDebuggerToolchain, DebuggerDriverConfi
 
     @Override
     public boolean isAvailable() {
-        return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux;
+        return SystemInfo.isMac || SystemInfo.isLinux;
     }
 
     @Override
@@ -34,5 +34,10 @@ public class LLDBToolchain implements OdinDebuggerToolchain, DebuggerDriverConfi
     @Override
     public DebuggerDriverConfiguration createDebuggerDriverConfiguration(String path) {
         return new LLDBDriverConfiguration();
+    }
+
+    @Override
+    public boolean isBundled() {
+        return true;
     }
 }

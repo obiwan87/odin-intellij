@@ -57,12 +57,12 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
 
     @Override
     public boolean isAvailable() {
-        return true;
+        return CpuArch.isIntel64() && SystemInfo.isWindows;
     }
 
     @Override
     public boolean isDownloadable() {
-        return CpuArch.isIntel64() && SystemInfo.isWindows;
+        return isAvailable();
     }
 
     @Override
