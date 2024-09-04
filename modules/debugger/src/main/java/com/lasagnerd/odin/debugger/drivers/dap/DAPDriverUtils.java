@@ -17,6 +17,7 @@
 package com.lasagnerd.odin.debugger.drivers.dap;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.jetbrains.cidr.execution.debugger.backend.*;
@@ -93,15 +94,9 @@ public class DAPDriverUtils {
     public static Source toSource(String path) {
         val src = new Source();
         val absolute = Path.of(path).toAbsolutePath();
-        src.setName(absolute.getFileName().toString());
-        src.setPath(toWinPath(absolute.toString()));
+        src.setName(FileUtil.toSystemDependentName(absolute.getFileName().toString()));
+        src.setPath(FileUtil.toSystemDependentName(absolute.toString()));
         return src;
-    }
-
-    public static String toWinPath(String path) {
-        if (path == null)
-            return null;
-        return path.replace('/', '\\');
     }
 
     public static Long parseAddressNullable(String address) {

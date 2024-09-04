@@ -31,5 +31,6 @@
     <extensions defaultExtensionNs="com.lasagnerd.odin">
         <debuggerToolchain implementation="com.lasagnerd.odin.debugger.toolchains.LLDBDapToolchain"/>
         <debuggerToolchain implementation="com.lasagnerd.odin.debugger.toolchains.WinDAPToolchain"/>
+        <debuggerToolchain implementation="com.lasagnerd.odin.debugger.toolchains.LLDBToolchain"/>
     </extensions>
 </idea-plugin>

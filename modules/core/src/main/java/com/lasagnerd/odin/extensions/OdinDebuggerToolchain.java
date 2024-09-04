@@ -28,4 +28,8 @@ public interface OdinDebuggerToolchain {
     default String download(Project project) {
         return null;
     }
+
+    default boolean isBundled() {
+        return false;
+    }
 }
