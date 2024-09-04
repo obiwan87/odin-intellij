@@ -6,8 +6,8 @@ import com.jetbrains.cidr.ArchitectureType;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 import com.lasagnerd.odin.debugger.OdinDebuggerLanguage;
-import com.lasagnerd.odin.debugger.drivers.dap.DAPDebuggerDriverConfiguration;
 import com.lasagnerd.odin.debugger.drivers.LLDBDAPDriver;
+import com.lasagnerd.odin.debugger.drivers.dap.DAPDebuggerDriverConfiguration;
 import com.lasagnerd.odin.extensions.OdinDebuggerToolchain;
 import org.eclipse.lsp4j.debug.InitializeRequestArguments;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +16,6 @@ import java.nio.file.Path;
 import java.util.Map;
 
 public class LLDBDapToolchain implements OdinDebuggerToolchain, DebuggerDriverConfigurationProvider {
-    public static LLDBDapToolchain INSTANCE = new LLDBDapToolchain();
-
     private LLDBDapToolchain() {
 
     }
@@ -42,11 +40,6 @@ public class LLDBDapToolchain implements OdinDebuggerToolchain, DebuggerDriverCo
     @Override
     public boolean isAvailable() {
         return true;
-    }
-
-    @Override
-    public boolean isDownloadable() {
-        return false;
     }
 
     @Override
