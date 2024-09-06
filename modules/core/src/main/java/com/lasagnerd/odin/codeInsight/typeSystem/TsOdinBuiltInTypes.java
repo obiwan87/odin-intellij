@@ -1,9 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TsOdinBuiltInTypes {
     public static final TsOdinBuiltInType BOOL = new TsOdinBoolType("bool", 8);
@@ -249,5 +246,9 @@ public class TsOdinBuiltInTypes {
         }
 
         return floatingPointTypes;
+    }
+
+    public static Collection<TsOdinType> getBuiltInTypes() {
+        return new ArrayList<>(builtInTypeMap.values());
     }
 }

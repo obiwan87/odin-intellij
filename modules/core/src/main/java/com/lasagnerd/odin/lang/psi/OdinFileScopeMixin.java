@@ -22,7 +22,7 @@ public abstract class OdinFileScopeMixin extends ASTWrapperPsiElement {
     public OdinSymbolTable getSymbolTable() {
         if (this instanceof OdinFileScope odinFileScope) {
             if (symbolTable == null) {
-                symbolTable = OdinSymbolTableResolver.getFileScopeDeclarations(
+                symbolTable = OdinSymbolTableResolver.getFileScopeSymbols(
                         odinFileScope,
                         OdinSymbolTableResolver.getGlobalFileVisibility(odinFileScope)
                 );

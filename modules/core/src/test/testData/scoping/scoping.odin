@@ -306,3 +306,5 @@ return_type_defined_proc :: proc() {
 
     test2 := caller2()
 }
+
+g_point : i32

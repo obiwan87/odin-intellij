@@ -53,6 +53,7 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
     private String getHumanReadableName(@NotNull OdinSymbolType symbolType) {
         return switch (symbolType) {
             case UNKNOWN -> "Unknown";
+            case BUILTIN_TYPE -> "Built-In type";
             case PARAMETER -> "Parameter";
             case FIELD -> "Field";
             case PROCEDURE -> "Procedure";

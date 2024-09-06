@@ -151,7 +151,7 @@
                 displayName="Odin"/>
         <projectService serviceImplementation="com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState"/>
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
-        <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolServiceImpl" serviceInterface="com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService"/>
         <projectService serviceInterface="com.lasagnerd.odin.codeInsight.imports.OdinImportService"
                         serviceImplementation="com.lasagnerd.odin.codeInsight.imports.OdinImportServiceImpl"/>
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType"

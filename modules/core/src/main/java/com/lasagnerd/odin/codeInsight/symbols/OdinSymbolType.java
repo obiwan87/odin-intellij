@@ -2,6 +2,7 @@ package com.lasagnerd.odin.codeInsight.symbols;
 
 public enum OdinSymbolType {
     UNKNOWN,
+    BUILTIN_TYPE,
     PARAMETER,
     FIELD,
     PROCEDURE,

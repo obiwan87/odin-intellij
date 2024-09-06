@@ -51,10 +51,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -139,6 +136,7 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(project, new PsiCachedValuesFactory(project)));
         project.registerService(StartupManager.class, new StartupManagerImpl(project, project.getCoroutineScope()));
         project.registerService(OdinImportService.class, new MockOdinImportService(myFileFactory));
+        project.registerService(OdinBuiltinSymbolService.class, new MockBuiltinSymbolsService(project, myFileFactory));
         registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
         registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 
@@ -990,7 +988,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinFile odinFile = load("src/test/testData/mypackage/visibility_annotations.odin");
             OdinProcedureDeclarationStatement proc = PsiTreeUtil.findChildOfType(odinFile, OdinProcedureDeclarationStatement.class);
             OdinFileScope odinFileScope = odinFile.getFileScope();
-            List<OdinSymbol> symbols = new ArrayList<>(OdinSymbolTableResolver.getFileScopeDeclarations(odinFileScope, OdinSymbolTableResolver.getGlobalFileVisibility(odinFileScope))
+            List<OdinSymbol> symbols = new ArrayList<>(OdinSymbolTableResolver.getFileScopeSymbols(odinFileScope, OdinSymbolTableResolver.getGlobalFileVisibility(odinFileScope))
                     .getFilteredSymbols(e -> true));
             symbols.sort(Comparator.comparing(OdinSymbol::getName));
             assertEquals(4, symbols.size());
@@ -1169,6 +1167,7 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(odinSymbolTable.getSymbol("file_scope"));
             assertNotNull(odinSymbolTable.getSymbol("fmt"));
             assertNotNull(odinSymbolTable.getSymbol("MyStruct"));
+            assertNotNull(odinSymbolTable.getSymbol("g_point"));
         }
 
 
@@ -1672,14 +1671,10 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testCircularReference() throws IOException {
-        OdinFile odinFile = load("src/test/testData/r/my_code.odin");
-        PsiElement element = odinFile.findElementAt(2000);
-        if(element != null) {
-            OdinRefExpression refExpression = OdinInsightUtils.findTopMostRefExpression(element);
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(refExpression);
-            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(refExpression);
-            System.out.println(tsOdinType.getLabel());
-        }
+        OdinFile odinFile = load("src/test/testData/r/circular_ref.odin");
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "circular_ref", "r");
+        TsOdinNumericType tsOdinNumericType = assertInstanceOf(tsOdinType, TsOdinNumericType.class);
+        assertEquals("f32", tsOdinNumericType.getName());
     }
 
     // Helpers

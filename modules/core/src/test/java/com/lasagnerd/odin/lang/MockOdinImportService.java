@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -74,7 +71,7 @@ public class MockOdinImportService implements OdinImportService {
             Path filePath = Path.of(entry.getValue());
             Path parent = filePath.getParent();
             if (parent.equals(absolutePath) && filePath.toString().endsWith(".odin") && filePath.toFile().isFile()) {
-                virtualFiles.add(createVirtualFile(filePath));
+                virtualFiles.add(MockFileUtils.createVirtualFile(filePath));
             }
         }
         return virtualFiles.toArray(new VirtualFile[0]);
@@ -88,12 +85,4 @@ public class MockOdinImportService implements OdinImportService {
         return null;
     }
 
-    private static VirtualFile createVirtualFile(Path path) {
-        try {
-            String content = Files.readString(path, StandardCharsets.UTF_8);
-            return new LightVirtualFile(path.toFile().getName(), OdinFileType.INSTANCE, content);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

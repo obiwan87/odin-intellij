@@ -194,6 +194,9 @@ public class OdinInferenceEngine extends OdinVisitor {
                             this.type = tsOdinArrayType.getElementType();
                         }
                     }
+                    else if(symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
+                        this.type = createBuiltinMetaType(name);
+                    }
                 }
             } else {
                 TsOdinType polyParameter = symbolTable.getType(name);
@@ -206,11 +209,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     tsOdinMetaType.setName(name);
                     this.type = tsOdinMetaType;
                 } else if (TsOdinBuiltInTypes.RESERVED_TYPES.contains(name)) {
-                    TsOdinBuiltInType builtInType = TsOdinBuiltInTypes.getBuiltInType(name);
-                    TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(builtInType.getMetaType());
-                    tsOdinMetaType.setName(name);
-                    tsOdinMetaType.setRepresentedType(TsOdinBuiltInTypes.getBuiltInType(name));
-                    this.type = tsOdinMetaType;
+                    this.type = createBuiltinMetaType(name);
                 }
             }
             /* TODO: rand.odin causes stack overflow these being the end and the start of the overflow error respectively
@@ -227,6 +226,14 @@ public class OdinInferenceEngine extends OdinVisitor {
                 this.type = tsOdinType;
             }
         }
+    }
+
+    private static @NotNull TsOdinMetaType createBuiltinMetaType(String name) {
+        TsOdinBuiltInType builtInType = TsOdinBuiltInTypes.getBuiltInType(name);
+        TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(builtInType.getMetaType());
+        tsOdinMetaType.setName(name);
+        tsOdinMetaType.setRepresentedType(TsOdinBuiltInTypes.getBuiltInType(name));
+        return tsOdinMetaType;
     }
 
     @Override
@@ -601,7 +608,8 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
             for (OdinExpression odinExpression : expressionList) {
-                TsOdinType tsOdinType = doInferType(parentSymbolTable, odinExpression);
+                OdinSymbolTable nextSymbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
+                TsOdinType tsOdinType = doInferType(nextSymbolTable, odinExpression);
                 if (tsOdinType instanceof TsOdinTuple tuple) {
                     tsOdinTypes.addAll(tuple.getTypes());
                 } else {
