@@ -20,6 +20,7 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
     public String sdkPath = "";
     public String extraBuildFlags = "";
     public String semanticAnnotatorEnabled = "";
+    public String odinCheckerEnabled = "";
     public String debuggerId = "";
     public String debuggerPath = "";
 
@@ -44,6 +45,17 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
                 return true;
             }
             return semanticAnnotatorEnabled.equals("true");
+        }
+        return false;
+    }
+
+    public boolean isOdinCheckerEnabled() {
+        if(odinCheckerEnabled != null) {
+            // Annotator enabled by default
+            if(odinCheckerEnabled.isEmpty()) {
+                return true;
+            }
+            return odinCheckerEnabled.equals("true");
         }
         return false;
     }

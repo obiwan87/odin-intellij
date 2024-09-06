@@ -65,11 +65,13 @@ public class OdinSdkConfigurable implements Configurable {
 
         boolean debuggerIdModified = !sdkSettingsComponent.getDebuggerId().equals(state.getDebuggerId());
         boolean debuggerPathModified = !sdkSettingsComponent.getDebuggerPath().equals(state.getDebuggerPath());
+        boolean odinCheckerEnabledModified = sdkSettingsComponent.isOdinCheckerEnabled() != state.isOdinCheckerEnabled();
         return !sameSdkPath
                 || !sameBuildFlags
                 || !sameSemanticAnnotatorEnabled
                 || debuggerIdModified
-                || debuggerPathModified;
+                || debuggerPathModified
+                || odinCheckerEnabledModified;
     }
 
     @Override
@@ -81,6 +83,7 @@ public class OdinSdkConfigurable implements Configurable {
         config.setSemanticAnnotatorEnabled(sdkSettingsComponent.isSemanticAnnotatorEnabled() ? "true" : "false");
         config.setDebuggerId(sdkSettingsComponent.getDebuggerId());
         config.setDebuggerPath(sdkSettingsComponent.getDebuggerPath());
+        config.setOdinCheckerEnabled(sdkSettingsComponent.isOdinCheckerEnabled() ? "true" : "false");
 
         OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project, sdkPath);
     }
@@ -90,12 +93,12 @@ public class OdinSdkConfigurable implements Configurable {
         OdinSdkConfigPersistentState state = OdinSdkConfigPersistentState.getInstance(project);
         String sdkPath = state.sdkPath;
         String extraBuildFlags = state.extraBuildFlags;
-        boolean semanticAnnotatorEnabled = state.isSemanticAnnotatorEnabled();
         sdkSettingsComponent.setSdkPath(sdkPath);
         sdkSettingsComponent.setBuildFlags(extraBuildFlags);
-        sdkSettingsComponent.setSemanticAnnotatorEnabled(semanticAnnotatorEnabled);
+        sdkSettingsComponent.setSemanticAnnotatorEnabled(state.isSemanticAnnotatorEnabled());
         sdkSettingsComponent.setDebuggerPath(state.getDebuggerPath());
         sdkSettingsComponent.setDebuggerId(state.getDebuggerId());
+        sdkSettingsComponent.setOdinCheckerEnabled(state.isOdinCheckerEnabled());
     }
 
     @Override
@@ -110,8 +113,12 @@ public class OdinSdkConfigurable implements Configurable {
         private TextFieldWithBrowseButton sdkPathTextField;
         private JBTextField buildFlagsTextField;
         private JBCheckBox semanticAnnotatorEnabled;
+        private JBCheckBox odinCheckerCheckbox;
+        @Nullable
         private ComboBox<Item> debuggerCombobox;
+        @Nullable
         private TextFieldWithBrowseButton debuggerPathField;
+        @Nullable
         private JButton downloadButton;
 
         @Override
@@ -123,6 +130,13 @@ public class OdinSdkConfigurable implements Configurable {
             return this.semanticAnnotatorEnabled.isSelected();
         }
 
+        public void setOdinCheckerEnabled(boolean enabled) {
+            odinCheckerCheckbox.setSelected(enabled);
+        }
+
+        public boolean isOdinCheckerEnabled() {
+            return odinCheckerCheckbox.isSelected();
+        }
 
         class BrowseToSdkFileChooserAction extends AbstractAction {
             public BrowseToSdkFileChooserAction() {
@@ -142,8 +156,6 @@ public class OdinSdkConfigurable implements Configurable {
                 String path = virtualFile.getPath();
                 setSdkPath(path);
             }
-
-
         }
 
         public OdinSdkSettingsComponent(OdinDebuggerToolchain[] extensions) {
@@ -156,7 +168,7 @@ public class OdinSdkConfigurable implements Configurable {
                     .addLabeledComponent(
                             new JBLabel("Extra build flags: "),
                             createBuildFlagsTextField(), 1, false)
-                    .addComponentToRightColumn(createLabel(
+                    .addComponentToRightColumn(createComment(
                             "Optional. Space separated build flags passed to 'odin check'.<br><br>" +
                                     "Useful flags:<ul>" +
                                     "<li>-vet -vet-cast -strict-style (for more checks)</li>" +
@@ -170,7 +182,14 @@ public class OdinSdkConfigurable implements Configurable {
                         .addComponentToRightColumn(createDownloadButton());
             }
             mainPanel = formBuilder
+                    .addComponent(new TitledSeparator("Miscellaneous"))
                     .addLabeledComponent(new JBLabel("Semantic annotator"), createCustomAnnotatorCheckbox(), 1)
+                    .addComponentToRightColumn(createComment(
+                            """
+                            <html><p>Turn this off if you get StackOverflowError's or when the <br>'Analyzing...' message on the top right corner won't disappear</p></html>
+                            """.stripIndent()), 0)
+                    .addLabeledComponent(new JBLabel("Odin checker"), createOdinCheckerCheckbox(), 1)
+                    .addComponentToRightColumn(createComment("Enable/Disable the odin checker and the respective error messages"))
                     .addComponentFillVertically(new JPanel(), 1)
                     .getPanel();
         }
@@ -221,6 +240,8 @@ public class OdinSdkConfigurable implements Configurable {
 
 
         private void updateDownloadButton() {
+            if(downloadButton == null)
+                return;
             Action action = downloadButton.getAction();
             if (action instanceof DownloadDebuggerAction downloadDebuggerAction) {
                 action.setEnabled(downloadDebuggerAction.enabledCondition());
@@ -232,12 +253,17 @@ public class OdinSdkConfigurable implements Configurable {
             return semanticAnnotatorEnabled;
         }
 
-        @SuppressWarnings("SameParameterValue")
-        private JComponent createLabel(final @NlsContexts.Label String text) {
+        private @NotNull JBCheckBox createOdinCheckerCheckbox() {
+            this.odinCheckerCheckbox = new JBCheckBox();
+            return odinCheckerCheckbox;
+        }
+
+        private JComponent createComment(final @NlsContexts.Label String text) {
             final JBLabel label = new JBLabel(text, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
             label.setBorder(JBUI.Borders.emptyLeft(3));
             label.setCopyable(true);
             label.setAllowAutoWrapping(true);
+
             return label;
         }
 
@@ -282,6 +308,8 @@ public class OdinSdkConfigurable implements Configurable {
 
         @NotNull
         public String getDebuggerId() {
+            if(debuggerCombobox == null)
+                return "";
             Object selectedItem = debuggerCombobox.getSelectedItem();
             if (selectedItem instanceof Item item) {
                 return item.id;
@@ -290,6 +318,8 @@ public class OdinSdkConfigurable implements Configurable {
         }
 
         public String getDebuggerPath() {
+            if(debuggerPathField == null)
+                return "";
             return debuggerPathField.getText();
         }
 
@@ -302,6 +332,8 @@ public class OdinSdkConfigurable implements Configurable {
         }
 
         public void setDebuggerId(String debuggerId) {
+            if(debuggerCombobox == null)
+                return;
             OdinDebuggerToolchain toolchainProvider = getToolchain(debuggerId);
             if (toolchainProvider != null) {
                 debuggerCombobox.setSelectedItem(
@@ -313,11 +345,16 @@ public class OdinSdkConfigurable implements Configurable {
         }
 
         public void setDebuggerPath(String debuggerPath) {
+            if(debuggerPathField == null)
+                return;
             updateDebuggerPath();
             debuggerPathField.setText(debuggerPath);
         }
 
         private void updateDebuggerPath() {
+            if(debuggerPathField == null)
+                return;
+
             JBTextField textField = (JBTextField) debuggerPathField.getTextField();
             OdinDebuggerToolchain selectedToolchain = getSelectedToolchain();
             if (selectedToolchain != null) {
@@ -368,6 +405,9 @@ public class OdinSdkConfigurable implements Configurable {
         private class DebugExecutableSelector extends AbstractAction {
             @Override
             public void actionPerformed(ActionEvent e) {
+
+                if(debuggerCombobox == null || debuggerPathField == null)
+                    return;
                 Item selectedItem = (Item) debuggerCombobox.getSelectedItem();
                 if (selectedItem == null) {
                     return;
@@ -433,6 +473,8 @@ public class OdinSdkConfigurable implements Configurable {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                if(debuggerPathField == null)
+                    return;
                 OdinDebuggerToolchain selectedToolchain = getSelectedToolchain();
                 if (selectedToolchain != null) {
                     if (selectedToolchain.isDownloadable()) {

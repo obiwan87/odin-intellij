@@ -252,13 +252,9 @@ public class OdinPsiUtil {
     }
 
     public static OdinIdentifier getTypeIdentifier(OdinQualifiedType qualifiedType) {
-        OdinType typeExpression = qualifiedType.getType();
+        OdinType typeExpression = qualifiedType.getSimpleRefType();
         if (typeExpression instanceof OdinSimpleRefType refType) {
             return refType.getIdentifier();
-        }
-
-        if (typeExpression instanceof OdinCallType callType) {
-            return callType.getIdentifier();
         }
 
         return null;

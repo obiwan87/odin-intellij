@@ -302,8 +302,8 @@ type                                 ::= mapType
                                          | polymorphicType
                                          | constrainedType
                                          | parExpressionType
-                                         | qualifiedType
                                          | callType
+                                         | qualifiedType
                                          | ellipsisType
                                          | variadicType
                                          | simpleRefType
@@ -311,11 +311,11 @@ type                                 ::= mapType
 relativeType                         ::= directive type
 ellipsisType                         ::= ELLIPSIS
 variadicType                         ::= RANGE type
-callType                             ::= identifier LPAREN <<enterMode "PAR">> <<enterMode "TYPE_LIST">>  argumentList? <<exitMode "TYPE_LIST">> <<exitMode "PAR">> EOS_TOKEN?  RPAREN
+callType                             ::= type LPAREN <<enterMode "PAR">> <<enterMode "TYPE_LIST">>  argumentList? <<exitMode "TYPE_LIST">> <<exitMode "PAR">> EOS_TOKEN?  RPAREN
 constrainedType                      ::= type DIV type {pin=3}
 polymorphicType                      ::= DOLLAR declaredIdentifier {implements="com.lasagnerd.odin.lang.psi.OdinDeclaration" methods=[getDeclaredIdentifiers]}
 simpleRefType                        ::= identifier
-qualifiedType                        ::= identifier DOT (callType | simpleRefType) {methods=[getPackageIdentifier getTypeIdentifier]}
+qualifiedType                        ::= identifier DOT simpleRefType {methods=[getPackageIdentifier getTypeIdentifier]}
 
 
 pointerType                          ::= CARET type

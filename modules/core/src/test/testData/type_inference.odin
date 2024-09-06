@@ -250,3 +250,18 @@ binary_operators_on_arrays :: proc() {
     c := (a * b)/2 + 1
     test := c
 }
+
+ClayArray :: struct($type: typeid){
+    internalArray: [^]type,
+}
+
+RenderCommand :: struct {
+    config: int
+}
+
+RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: int) -> ^RenderCommand ---
+
+circular_reference_test :: proc(render_commands: ^ClaryArray(RenderCommand)) {
+    command := RenderCommandArray_Get(render_commands, 1)
+    x := command.config
+}

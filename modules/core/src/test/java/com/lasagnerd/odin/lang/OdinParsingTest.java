@@ -1671,6 +1671,17 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testCircularReference() throws IOException {
+        OdinFile odinFile = load("src/test/testData/r/my_code.odin");
+        PsiElement element = odinFile.findElementAt(2000);
+        if(element != null) {
+            OdinRefExpression refExpression = OdinInsightUtils.findTopMostRefExpression(element);
+            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(refExpression);
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(refExpression);
+            System.out.println(tsOdinType.getLabel());
+        }
+    }
+
     // Helpers
     private static void assertTopMostRefExpressionTextEquals(PsiElement odinStatement, String expected, String identifierName) {
         OdinRefExpression topMostRefExpression = getTopMostRefExpression(odinStatement, identifierName);

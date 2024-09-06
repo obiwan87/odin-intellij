@@ -279,7 +279,10 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitQualifiedType(@NotNull OdinQualifiedType qualifiedType) {
         OdinSymbolTable packageScope = symbolTable.getScopeOfImport(qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
-        this.type = doResolveType(packageScope, qualifiedType.getType());
+        OdinSimpleRefType simpleRefType = qualifiedType.getSimpleRefType();
+        if(simpleRefType != null) {
+            this.type = doResolveType(packageScope, simpleRefType);
+        }
     }
 
     @Override
@@ -290,8 +293,8 @@ public class OdinTypeResolver extends OdinVisitor {
 
     @Override
     public void visitCallType(@NotNull OdinCallType o) {
-        OdinIdentifier identifier = o.getIdentifier();
-        resolveIdentifier(identifier);
+        OdinType type = o.getType();
+        this.type = doResolveType(symbolTable, type);
 
         if (this.type instanceof TsOdinStructType structType) {
             // This should not be called again if type is already been visited

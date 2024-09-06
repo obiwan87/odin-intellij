@@ -53,8 +53,8 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
             LineColumn lineColumn = StringUtil.offsetToLineColumn(containingFile.getText(), textOffset);
             log.error("Stack overflow caused by element with text '%s' in %s:%d:%d".formatted(text,
                     fileName,
-                    lineColumn.line,
-                    lineColumn.column));
+                    lineColumn.line + 1,
+                    lineColumn.column + 1));
         } else {
             log.error("Stack overflow caused by element with text '%s'".formatted(text));
         }

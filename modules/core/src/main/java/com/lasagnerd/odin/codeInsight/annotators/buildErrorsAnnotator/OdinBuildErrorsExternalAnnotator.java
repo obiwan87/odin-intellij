@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,9 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
 
     @Override
     public @Nullable OdinBuildErrorResult doAnnotate(PsiFile file) {
+        if(!OdinSdkConfigPersistentState.getInstance(file.getProject()).isOdinCheckerEnabled())
+            return null;
+
         Project project = file.getProject();
         if (!OdinBuildProcessRunner.canRunOdinBuild(project)) {
             return null;

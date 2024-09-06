@@ -8,10 +8,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -136,23 +133,23 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
         OdinSymbolTable localScope;
         OdinSymbolTable globalScope;
+        TsOdinType tsOdinRefExpressionType = TsOdinType.UNKNOWN;
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
             // extract symbol table
+            tsOdinRefExpressionType = doInferType(symbolTable, refExpression.getExpression());
+            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(tsOdinRefExpressionType);
 
-            TsOdinType tsOdinType = doInferType(symbolTable, refExpression.getExpression());
-            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(tsOdinType);
-
-            if (tsOdinType instanceof TsOdinPackageReferenceType) {
+            if (tsOdinRefExpressionType instanceof TsOdinPackageReferenceType) {
                 localScope = typeSymbols;
                 globalScope = typeSymbols;
-            } else if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+            } else if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
                 List<OdinSymbol> swizzleFields = OdinInsightUtils.getSwizzleFields(tsOdinArrayType);
                 localScope = OdinSymbolTable.from(swizzleFields);
-                globalScope = tsOdinType.getSymbolTable();
+                globalScope = tsOdinRefExpressionType.getSymbolTable();
             } else {
                 // TODO do we need to set symbol for every type?
-                globalScope = tsOdinType.getSymbolTable();
+                globalScope = tsOdinRefExpressionType.getSymbolTable();
                 localScope = typeSymbols;
             }
 //            localScope.putAll(tsOdinType.getSymbolTable().flatten());
@@ -189,6 +186,12 @@ public class OdinInferenceEngine extends OdinVisitor {
                         OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(project);
                         if (builtinSymbolService != null) {
                             this.type = builtinSymbolService.getContextStructType();
+                        }
+                    }
+                    // Accept only swizzle fields of length one
+                    else if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD && symbol.getName().length() == 1) {
+                        if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
+                            this.type = tsOdinArrayType.getElementType();
                         }
                     }
                 }
@@ -703,6 +706,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 var odinDeclaredIdentifier = forInParameterDeclaration.getForInParameterDeclaratorList().get(index);
                 boolean isReference = odinDeclaredIdentifier.getAnd() != null;
 
+                // TODO Range expression should be treated differently. For now, just take the type the expression resolves to
                 OdinExpression expression = forInBlock.getForInParameterDeclaration().getExpression();
                 TsOdinType tsOdinType = inferType(parentSymbolTable, expression);
                 if (tsOdinType instanceof TsOdinMapType mapType) {
@@ -743,7 +747,10 @@ public class OdinInferenceEngine extends OdinVisitor {
                         return TsOdinBuiltInTypes.INT;
                     }
                 }
-
+                if (expression instanceof OdinRangeExclusiveExpression || expression instanceof OdinRangeInclusiveExpression) {
+                    return tsOdinType;
+                }
+                return TsOdinType.UNKNOWN;
             }
 
         }
