@@ -23,6 +23,7 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
     public String odinCheckerEnabled = "";
     public String debuggerId = "";
     public String debuggerPath = "";
+    public String highlightUnknownReferencesEnabled = "";
 
     public static OdinSdkConfigPersistentState getInstance(Project project) {
         return project.getService(OdinSdkConfigPersistentState.class);
@@ -39,9 +40,9 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
     }
 
     public boolean isSemanticAnnotatorEnabled() {
-        if(semanticAnnotatorEnabled != null) {
+        if (semanticAnnotatorEnabled != null) {
             // Annotator enabled by default
-            if(semanticAnnotatorEnabled.isEmpty()) {
+            if (semanticAnnotatorEnabled.isEmpty()) {
                 return true;
             }
             return semanticAnnotatorEnabled.equals("true");
@@ -50,12 +51,23 @@ public class OdinSdkConfigPersistentState implements PersistentStateComponent<Od
     }
 
     public boolean isOdinCheckerEnabled() {
-        if(odinCheckerEnabled != null) {
+        if (odinCheckerEnabled != null) {
             // Annotator enabled by default
-            if(odinCheckerEnabled.isEmpty()) {
+            if (odinCheckerEnabled.isEmpty()) {
                 return true;
             }
             return odinCheckerEnabled.equals("true");
+        }
+        return false;
+    }
+
+    public boolean isHighlightUnknownReferencesEnabled() {
+        if (highlightUnknownReferencesEnabled != null) {
+            // Annotator enabled by default
+            if (highlightUnknownReferencesEnabled.isEmpty()) {
+                return false;
+            }
+            return highlightUnknownReferencesEnabled.equals("true");
         }
         return false;
     }

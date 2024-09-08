@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -197,7 +198,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         PsiElement resolvedReference = identifier.getReference().resolve();
                         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(resolvedReference, OdinDeclaration.class, false);
                         if (declaration == null) {
-                            highlightUnknownReference(annotationHolder, identifierText, psiElementRange);
+                            highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, psiElementRange);
                         } else if (declaration instanceof OdinStructDeclarationStatement) {
                             highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.STRUCT_REF);
                         }
@@ -268,7 +269,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
 
         if (symbol == null) {
-            highlightUnknownReference(annotationHolder, identifierText, textRange);
+            highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange);
             annotationSessionState.aborted.add(topMostExpression);
             return;
         }
@@ -312,22 +313,26 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     }
 
     @SuppressWarnings("unused")
-    private static void highlightUnknownReference(@NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange) {
-//        annotationHolder
-//                .newAnnotation(HighlightSeverity.ERROR, "Unresolved reference '%s'".formatted(identifierText))
-//                .range(textRange)
-//                .textAttributes(OdinSyntaxHighlighter.BAD_CHARACTER)
-//                .create();
-        // TODO enable when it's done
+    private static void highlightUnknownReference(Project project, @NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange) {
+        OdinSdkConfigPersistentState state = OdinSdkConfigPersistentState.getInstance(project);
+        if (state.isHighlightUnknownReferencesEnabled()) {
+            annotationHolder
+                    .newAnnotation(HighlightSeverity.ERROR, "Unresolved reference '%s'".formatted(identifierText))
+                    .range(textRange)
+                    .textAttributes(OdinSyntaxHighlighter.BAD_CHARACTER)
+                    .create();
+            // TODO enable when it's done}
+        }
     }
 
-    private void highlightPackageReference(@NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange, OdinIdentifier identifier) {
+    private void highlightPackageReference(@NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange, OdinIdentifier
+            identifier) {
         PsiReference reference = identifier.getReference();
         if (reference != null) {
             PsiElement resolveReference = reference.resolve();
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
             if (odinDeclaration == null) {
-                highlightUnknownReference(annotationHolder, identifierText, textRange);
+                highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, textRange);
             } else if (odinDeclaration instanceof OdinImportDeclarationStatement) {
                 highlight(annotationHolder, textRange, OdinSyntaxHighlighter.PACKAGE);
             }

@@ -66,12 +66,15 @@ public class OdinSdkConfigurable implements Configurable {
         boolean debuggerIdModified = !sdkSettingsComponent.getDebuggerId().equals(state.getDebuggerId());
         boolean debuggerPathModified = !sdkSettingsComponent.getDebuggerPath().equals(state.getDebuggerPath());
         boolean odinCheckerEnabledModified = sdkSettingsComponent.isOdinCheckerEnabled() != state.isOdinCheckerEnabled();
+        boolean highlightUnknownReferencesEnabledModified = sdkSettingsComponent.isHighlightUnknownReferencesEnabled() != state.isHighlightUnknownReferencesEnabled();
+
         return !sameSdkPath
                 || !sameBuildFlags
                 || !sameSemanticAnnotatorEnabled
                 || debuggerIdModified
                 || debuggerPathModified
-                || odinCheckerEnabledModified;
+                || odinCheckerEnabledModified
+                || highlightUnknownReferencesEnabledModified;
     }
 
     @Override
@@ -99,6 +102,7 @@ public class OdinSdkConfigurable implements Configurable {
         sdkSettingsComponent.setDebuggerPath(state.getDebuggerPath());
         sdkSettingsComponent.setDebuggerId(state.getDebuggerId());
         sdkSettingsComponent.setOdinCheckerEnabled(state.isOdinCheckerEnabled());
+        sdkSettingsComponent.setHighlightUnknownReferences(state.isHighlightUnknownReferencesEnabled());
     }
 
     @Override
@@ -120,6 +124,7 @@ public class OdinSdkConfigurable implements Configurable {
         private TextFieldWithBrowseButton debuggerPathField;
         @Nullable
         private JButton downloadButton;
+        private JBCheckBox highlightUnknownReferencesEnabledCheckbox;
 
         @Override
         public void dispose() {
@@ -136,6 +141,14 @@ public class OdinSdkConfigurable implements Configurable {
 
         public boolean isOdinCheckerEnabled() {
             return odinCheckerCheckbox.isSelected();
+        }
+
+        public boolean isHighlightUnknownReferencesEnabled() {
+            return highlightUnknownReferencesEnabledCheckbox.isSelected();
+        }
+
+        public void setHighlightUnknownReferences(boolean highlightUnknownReferencesEnabled) {
+            this.highlightUnknownReferencesEnabledCheckbox.setSelected(highlightUnknownReferencesEnabled);
         }
 
         class BrowseToSdkFileChooserAction extends AbstractAction {
@@ -186,12 +199,19 @@ public class OdinSdkConfigurable implements Configurable {
                     .addLabeledComponent(new JBLabel("Semantic annotator"), createCustomAnnotatorCheckbox(), 1)
                     .addComponentToRightColumn(createComment(
                             """
-                            <html><p>Turn this off if you get StackOverflowError's or when the <br>'Analyzing...' message on the top right corner won't disappear</p></html>
-                            """.stripIndent()), 0)
+                                    <html><p>Turn this off if you get StackOverflowError's or when the <br>'Analyzing...' message on the top right corner won't disappear</p></html>
+                                    """.stripIndent()), 0)
                     .addLabeledComponent(new JBLabel("Odin checker"), createOdinCheckerCheckbox(), 1)
                     .addComponentToRightColumn(createComment("Enable/Disable the odin checker and the respective error messages"))
+                    .addLabeledComponent(new JBLabel("Highlight unknown References"), createHighlightUnknownReferencesCheckbox(), 1)
+                    .addComponentToRightColumn(createComment("Enable/Disable highlighting of unknown references"))
                     .addComponentFillVertically(new JPanel(), 1)
                     .getPanel();
+        }
+
+        private @NotNull JComponent createHighlightUnknownReferencesCheckbox() {
+            highlightUnknownReferencesEnabledCheckbox = new JBCheckBox();
+            return highlightUnknownReferencesEnabledCheckbox;
         }
 
         private @NotNull JButton createDownloadButton() {
@@ -240,7 +260,7 @@ public class OdinSdkConfigurable implements Configurable {
 
 
         private void updateDownloadButton() {
-            if(downloadButton == null)
+            if (downloadButton == null)
                 return;
             Action action = downloadButton.getAction();
             if (action instanceof DownloadDebuggerAction downloadDebuggerAction) {
@@ -308,7 +328,7 @@ public class OdinSdkConfigurable implements Configurable {
 
         @NotNull
         public String getDebuggerId() {
-            if(debuggerCombobox == null)
+            if (debuggerCombobox == null)
                 return "";
             Object selectedItem = debuggerCombobox.getSelectedItem();
             if (selectedItem instanceof Item item) {
@@ -318,7 +338,7 @@ public class OdinSdkConfigurable implements Configurable {
         }
 
         public String getDebuggerPath() {
-            if(debuggerPathField == null)
+            if (debuggerPathField == null)
                 return "";
             return debuggerPathField.getText();
         }
@@ -332,7 +352,7 @@ public class OdinSdkConfigurable implements Configurable {
         }
 
         public void setDebuggerId(String debuggerId) {
-            if(debuggerCombobox == null)
+            if (debuggerCombobox == null)
                 return;
             OdinDebuggerToolchain toolchainProvider = getToolchain(debuggerId);
             if (toolchainProvider != null) {
@@ -345,14 +365,14 @@ public class OdinSdkConfigurable implements Configurable {
         }
 
         public void setDebuggerPath(String debuggerPath) {
-            if(debuggerPathField == null)
+            if (debuggerPathField == null)
                 return;
             updateDebuggerPath();
             debuggerPathField.setText(debuggerPath);
         }
 
         private void updateDebuggerPath() {
-            if(debuggerPathField == null)
+            if (debuggerPathField == null)
                 return;
 
             JBTextField textField = (JBTextField) debuggerPathField.getTextField();
@@ -406,7 +426,7 @@ public class OdinSdkConfigurable implements Configurable {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                if(debuggerCombobox == null || debuggerPathField == null)
+                if (debuggerCombobox == null || debuggerPathField == null)
                     return;
                 Item selectedItem = (Item) debuggerCombobox.getSelectedItem();
                 if (selectedItem == null) {
@@ -473,7 +493,7 @@ public class OdinSdkConfigurable implements Configurable {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(debuggerPathField == null)
+                if (debuggerPathField == null)
                     return;
                 OdinDebuggerToolchain selectedToolchain = getSelectedToolchain();
                 if (selectedToolchain != null) {
