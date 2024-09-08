@@ -3,6 +3,12 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.6.2</h3>
+        <h4>Bug Fixes</h4>
+        <li>Fix a bug in the type inference engine, where a stackoverflow was caused by circular references</li>
+        <li>Fix bug in Settings panel, where a NullPointerException, would cause the panel to never finish loading.
+        This affected IDEs without "Native Debugging Support"</li>
+
         <h3>0.6.1</h3>
         <h4>Improvements</h4>
         <li>Added bundled LLDB debugger, which is supported on MacOs (and probably Linux)🔥</li>
@@ -220,6 +226,8 @@
             <className>com.lasagnerd.odin.codeInsight.refactor.OdinSpecifyTypeIntention</className>
             <category>Refactor</category>
         </intentionAction>
+
+<!--        <lang.documentationProvider language="Odin" implementationClass="com.lasagnerd.odin.documentation.OdinDocumentationProvider"/>-->
     </extensions>
 
     <extensionPoints>

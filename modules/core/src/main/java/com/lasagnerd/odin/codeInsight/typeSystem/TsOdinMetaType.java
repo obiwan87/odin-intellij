@@ -17,6 +17,7 @@ public class TsOdinMetaType extends TsOdinType {
     }
 
     public enum MetaType {
+        ALIAS,
         ARRAY,
         BIT_FIELD,
         BIT_SET,

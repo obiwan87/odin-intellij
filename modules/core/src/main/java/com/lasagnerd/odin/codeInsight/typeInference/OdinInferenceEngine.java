@@ -133,6 +133,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
         OdinSymbolTable localScope;
         OdinSymbolTable globalScope;
+
         TsOdinType tsOdinRefExpressionType = TsOdinType.UNKNOWN;
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
@@ -152,10 +153,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                 globalScope = tsOdinRefExpressionType.getSymbolTable();
                 localScope = typeSymbols;
             }
-//            localScope.putAll(tsOdinType.getSymbolTable().flatten());
             // The resolved polymorphic types must be taken over from type scope
             this.symbolTable.addTypes(localScope);
-//            this.symbolTable.putAll(tsOdinType.getSymbolTable());
         } else {
             localScope = this.symbolTable;
             globalScope = this.symbolTable;
@@ -571,7 +570,10 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
-            List<OdinExpression> expressionList = initializationStatement.getExpressionsList().getExpressionList();
+            List<OdinExpression> expressionList = Objects
+                    .requireNonNull(initializationStatement.getExpressionsList())
+                    .getExpressionList();
+
             int lhsValuesCount = initializationStatement.getIdentifierList().getDeclaredIdentifierList().size();
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
@@ -593,11 +595,13 @@ public class OdinInferenceEngine extends OdinVisitor {
             return TsOdinType.UNKNOWN;
         }
 
+        // If we get a type here, then it's an alias
         if (odinDeclaration instanceof OdinConstantInitializationStatement initializationStatement) {
             if (initializationStatement.getType() != null) {
                 OdinType mainType = initializationStatement.getType();
                 return OdinTypeResolver.resolveType(parentSymbolTable, mainType);
             }
+
             int index = initializationStatement.getIdentifierList()
                     .getDeclaredIdentifierList()
                     .indexOf(declaredIdentifier);
@@ -618,11 +622,17 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             if (tsOdinTypes.size() > index) {
-                return tsOdinTypes.get(index);
+                TsOdinType tsOdinType = tsOdinTypes.get(index);
+                if(tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
+                    if(tsOdinMetaType.getRepresentedType() != null) {
+
+                        System.out.println("Type alias detected from "+identifier.getText() + " -> " + ((TsOdinMetaType) tsOdinType).getRepresentedType().getLabel());
+                    }
+                }
+                return tsOdinType;
             }
             return TsOdinType.UNKNOWN;
         }
-
         if (odinDeclaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
             return OdinTypeResolver.resolveType(parentSymbolTable, fieldDeclarationStatement.getType());
         }

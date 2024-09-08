@@ -1677,6 +1677,12 @@ public class OdinParsingTest extends UsefulTestCase {
         assertEquals("f32", tsOdinNumericType.getName());
     }
 
+    public void testAliases() throws IOException {
+        OdinFile odinFile = load("src/test/testData/typeAliases/type_aliases.odin");
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "type_aliases", "x");
+        System.out.println(tsOdinType.getClass().getSimpleName());
+        System.out.println(tsOdinType.getLabel());
+    }
     // Helpers
     private static void assertTopMostRefExpressionTextEquals(PsiElement odinStatement, String expected, String identifierName) {
         OdinRefExpression topMostRefExpression = getTopMostRefExpression(odinStatement, identifierName);

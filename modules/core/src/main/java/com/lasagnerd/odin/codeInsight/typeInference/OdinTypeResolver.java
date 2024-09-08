@@ -261,7 +261,6 @@ public class OdinTypeResolver extends OdinVisitor {
                 OdinExpression odinExpression = expressionList.get(index);
                 TsOdinType tsOdinType = doInferType(symbolTable, odinExpression);
                 if (tsOdinType instanceof TsOdinMetaType metaType) {
-
                     return doResolveMetaType(symbolTable, metaType);
                 }
                 return TsOdinType.UNKNOWN;
@@ -280,7 +279,7 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitQualifiedType(@NotNull OdinQualifiedType qualifiedType) {
         OdinSymbolTable packageScope = symbolTable.getScopeOfImport(qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
         OdinSimpleRefType simpleRefType = qualifiedType.getSimpleRefType();
-        if(simpleRefType != null) {
+        if (simpleRefType != null) {
             this.type = doResolveType(packageScope, simpleRefType);
         }
     }
