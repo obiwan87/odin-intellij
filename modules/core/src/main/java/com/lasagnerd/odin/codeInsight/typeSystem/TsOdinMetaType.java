@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import com.lasagnerd.odin.lang.psi.OdinExpression;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -39,11 +40,13 @@ public class TsOdinMetaType extends TsOdinType {
         STRUCT,
         UNION,
         UNKNOWN,
-        VOID, PROCEDURE_OVERLOAD,
+        VOID, PROCEDURE_OVERLOAD, DISTINCT_TYPE,
     }
 
-
-    private final MetaType representedMetaType;
     private TsOdinType representedType;
+    private final MetaType representedMetaType;
+
+    private TsOdinMetaType aliasedMetaType;
+    private OdinExpression typeExpression;
 
 }

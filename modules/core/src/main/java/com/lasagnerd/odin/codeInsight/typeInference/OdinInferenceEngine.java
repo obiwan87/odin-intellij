@@ -567,7 +567,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                                                       OdinDeclaration odinDeclaration) {
         if (odinDeclaration instanceof OdinVariableDeclarationStatement declarationStatement) {
             var mainType = declarationStatement.getType();
-            //return getDeclaredIdentifierQualifiedType(parentScope, mainType);
             return OdinTypeResolver.resolveType(parentSymbolTable, mainType);
         }
 
@@ -630,16 +629,21 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             if (tsOdinTypes.size() > index) {
                 TsOdinType tsOdinType = tsOdinTypes.get(index);
-                if(tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-                    if(tsOdinMetaType.getRepresentedType() != null) {
-
-                        System.out.println("Type alias detected from "+identifier.getText() + " -> " + ((TsOdinMetaType) tsOdinType).getRepresentedType().getLabel());
-                    }
+                if(tsOdinType instanceof TsOdinMetaType aliasedMetaType) {
+                    TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(ALIAS);
+                    tsOdinMetaType.setSymbolTable(parentSymbolTable);
+                    tsOdinMetaType.setDeclaration(odinDeclaration);
+                    tsOdinMetaType.setTypeExpression(expressionList.get(index));
+                    tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
+                    tsOdinMetaType.setName(declaredIdentifier.getName());
+                    tsOdinMetaType.setAliasedMetaType(aliasedMetaType);
+                    return tsOdinMetaType;
                 }
                 return tsOdinType;
             }
             return TsOdinType.UNKNOWN;
         }
+
         if (odinDeclaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
             return OdinTypeResolver.resolveType(parentSymbolTable, fieldDeclarationStatement.getType());
         }

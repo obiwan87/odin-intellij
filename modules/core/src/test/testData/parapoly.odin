@@ -42,14 +42,33 @@ testParapoly_proc :: proc() {
 }
 
 Dict :: struct($Key, $Value: typeid) {
-
+    entries: map[Key]Value
 }
+
 testParapoly_specializedStruct :: proc() {
     PointDict :: Dict(int, Point)
-
-    x := PointDict { }
+    x := PointDict {}
 }
 
+testParapoly_typeAliasAsParam :: proc() {
+    PointAlias :: Point
+    PointDict :: Dict(int, PointAlias)
+
+    d := PointDict{}
+    point := d.entries[1]
+}
+
+testParapoly_distinctAlias :: proc() {
+    PointsAlias    :: []Point
+    PointsDistinct :: distinct []Point
+    get_first :: proc(arr: []$T) -> T {
+        return arr[0]
+    }
+
+    x := get_first(PointsAlias{});
+    // should fail
+    y := get_first(PointsDistinct{});
+}
 
 testTypeInference_withRecursivePolyPara :: proc() {
     Parent :: struct($T: typeid) {

@@ -91,6 +91,18 @@ public class OdinTypeResolver extends OdinVisitor {
                 }
                 tsOdinType.getSymbolTable().putAll(symbolTable);
                 return tsOdinType;
+            } else if(metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
+                boolean isDistinct = metaType.getTypeExpression() instanceof OdinTypeDefinitionExpression typeDefinitionExpression
+                        && typeDefinitionExpression.getDistinct() != null;
+
+                TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
+                TsOdinType aliasedType = resolveMetaType(level + 1, symbolTable, metaType.getAliasedMetaType());
+                typeAlias.setDeclaration(metaType.getDeclaration());
+                typeAlias.setName(metaType.getName());
+                typeAlias.setDistinct(isDistinct);
+                typeAlias.setAliasedType(aliasedType);
+                typeAlias.setSymbolTable(aliasedType.getSymbolTable());
+                return typeAlias;
             }
         }
         return TsOdinType.UNKNOWN;
@@ -262,17 +274,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 TsOdinType tsOdinType = doInferType(symbolTable, odinExpression);
                 if (tsOdinType instanceof TsOdinMetaType metaType) {
                     TsOdinType resolvedMetaType = doResolveMetaType(symbolTable, metaType);
-                    TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
-                    typeAlias.setAliasedType(resolvedMetaType);
-                    typeAlias.setDeclaration(odinDeclaration);
-                    typeAlias.setDeclaredIdentifier(identifier);
-                    typeAlias.setName(identifier.getName());
-
-                    if(odinExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
-                        typeAlias.setDistinct(typeDefinitionExpression.getDistinct() != null);
-                    }
-                    typeAlias.setSymbolTable(resolvedMetaType.getSymbolTable());
-                    return typeAlias;
+                    return createTypeAliasFromMetaType(identifier, resolvedMetaType, odinDeclaration, odinExpression);
                 }
                 return TsOdinType.UNKNOWN;
             }
@@ -283,6 +285,23 @@ public class OdinTypeResolver extends OdinVisitor {
         }
 
         return TsOdinType.UNKNOWN;
+    }
+
+    public static @NotNull TsOdinTypeAlias createTypeAliasFromMetaType(OdinDeclaredIdentifier identifier,
+                                                                        TsOdinType resolvedMetaType,
+                                                                        OdinDeclaration odinDeclaration,
+                                                                        OdinExpression odinExpression) {
+        TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
+        typeAlias.setAliasedType(resolvedMetaType);
+        typeAlias.setDeclaration(odinDeclaration);
+        typeAlias.setDeclaredIdentifier(identifier);
+        typeAlias.setName(identifier.getName());
+
+        if(odinExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+            typeAlias.setDistinct(typeDefinitionExpression.getDistinct() != null);
+        }
+        typeAlias.setSymbolTable(resolvedMetaType.getSymbolTable());
+        return typeAlias;
     }
 
     // Visitor methods

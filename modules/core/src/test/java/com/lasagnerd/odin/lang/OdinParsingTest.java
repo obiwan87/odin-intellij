@@ -982,8 +982,39 @@ public class OdinParsingTest extends UsefulTestCase {
 
         }
     }
-    // Visibility tests
 
+    public void testParapoly_typeAliasAsParam() throws IOException {
+        OdinFile odinFile = load("src/test/testData/parapoly.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testParapoly_typeAliasAsParam", "point");
+            TsOdinTypeAlias typeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+            assertEquals("PointAlias", typeAlias.getName());
+            TsOdinStructType tsOdinStructType = assertInstanceOf(typeAlias.getBaseType(), TsOdinStructType.class);
+            assertEquals("Point", tsOdinStructType.getName());
+        }
+
+    }
+
+    public void testParapoly_distinctAlias1() throws IOException {
+        OdinFile odinFile = load("src/test/testData/parapoly.odin");
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testParapoly_distinctAlias", "x");
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Point", tsOdinStructType.getName());
+        }
+    }
+
+    public void testParapoly_distinctAlias2() throws IOException {
+        OdinFile odinFile = load("src/test/testData/parapoly.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testParapoly_distinctAlias", "y");
+            assertTrue(tsOdinType.isPolymorphic());
+        }
+    }
+
+
+    // Visibility tests
     public void testVisibility() throws IOException {
         {
             OdinFile odinFile = load("src/test/testData/mypackage/visibility_annotations.odin");
@@ -1685,6 +1716,7 @@ public class OdinParsingTest extends UsefulTestCase {
         System.out.println(tsOdinType.getClass().getSimpleName());
         System.out.println(tsOdinType.getLabel());
     }
+
     // Helpers
     private static void assertTopMostRefExpressionTextEquals(PsiElement odinStatement, String expected, String identifierName) {
         OdinRefExpression topMostRefExpression = getTopMostRefExpression(odinStatement, identifierName);

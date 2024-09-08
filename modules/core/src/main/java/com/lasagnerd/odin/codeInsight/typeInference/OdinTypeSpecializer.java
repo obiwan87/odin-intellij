@@ -198,6 +198,11 @@ public class OdinTypeSpecializer {
     }
 
     private static void doSubstituteTypes(@NotNull TsOdinType parameterType, @NotNull TsOdinType argumentType, @NotNull Map<String, TsOdinType> resolvedTypes) {
+        if(argumentType instanceof TsOdinTypeAlias typeAlias && !typeAlias.isDistinct()) {
+            doSubstituteTypes(parameterType, typeAlias.getBaseType(), resolvedTypes);
+            return;
+        }
+
         if (parameterType.isPolymorphic()) {
             resolvedTypes.put(parameterType.getName(), argumentType);
         } else {
