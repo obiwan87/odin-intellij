@@ -20,4 +20,13 @@ public class TsOdinTypeAlias extends TsOdinType{
         }
         return aliasedType;
     }
+
+    public TsOdinType getDistinctBaseType () {
+        if(!isDistinct()) {
+            if(aliasedType instanceof TsOdinTypeAlias typeAlias) {
+                return typeAlias.getDistinctBaseType();
+            }
+        }
+        return aliasedType;
+    }
 }

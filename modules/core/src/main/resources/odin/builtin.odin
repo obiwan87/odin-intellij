@@ -116,3 +116,59 @@ true: bool
 
 @builtin
 false: bool
+
+@builtin
+ODIN_VERSION : string
+
+@builtin
+ODIN_OS_STRING : string
+
+@builtin
+ODIN_ENDIAN_STRING : string
+
+@builtin
+ODIN_ARCH_STRING: string
+
+Error_Pos_Style :: enum {
+    Default,
+    Unix
+}
+
+@builtin
+ODIN_ERROR_POS_STYLE : Error_Pos_Style
+
+@builtin
+ODIN_DEFAULT_TO_NIL_ALLOCATOR: bool
+
+@builtin
+ODIN_NO_DYNAMIC_LITERALS: bool
+
+@builtin
+ODIN_NO_CRT: bool
+
+@builtin
+ODIN_USE_SEPARATE_MODULES: bool
+
+@builtin
+ODIN_TEST: bool
+
+@builtin
+ODIN_NO_ENTRY_POINT: bool
+
+@builtin
+ODIN_FOREIGN_ERROR_PROCEDURES: bool
+
+@builtin
+ODIN_NO_RTTI: bool
+
+@builtin
+ODIN_ROOT: string
+
+@builtin
+ODIN_BUILD_PROJECT_NAME: string
+
+@builtin
+ODIN_VENDOR:  string
+
+@builtin
+ODIN_VALGRIND_SUPPORT: bool
