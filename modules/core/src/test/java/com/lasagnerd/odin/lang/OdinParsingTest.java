@@ -950,7 +950,8 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = load("src/test/testData/parapoly.odin");
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testParapoly_specializedStruct", "x");
-            TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            TsOdinTypeAlias typeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+            TsOdinStructType structType = assertInstanceOf(typeAlias.getBaseType(), TsOdinStructType.class);
             assertTrue(structType.isSpecialized());
             assertFalse(structType.isGeneric());
             assertNotSame(structType.getGenericType(), TsOdinGenericType.NO_GENERIC_TYPE);
@@ -1561,7 +1562,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = load("src/test/testData/mypackage/two_hops.odin");
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "main", "test");
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
         }
     }
 
@@ -1673,7 +1674,8 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testCircularReference() throws IOException {
         OdinFile odinFile = load("src/test/testData/r/circular_ref.odin");
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "circular_ref", "r");
-        TsOdinNumericType tsOdinNumericType = assertInstanceOf(tsOdinType, TsOdinNumericType.class);
+        TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+        TsOdinNumericType tsOdinNumericType = assertInstanceOf(tsOdinTypeAlias.getBaseType(), TsOdinNumericType.class);
         assertEquals("f32", tsOdinNumericType.getName());
     }
 

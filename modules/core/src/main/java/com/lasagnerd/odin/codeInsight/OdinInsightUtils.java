@@ -60,6 +60,9 @@ public class OdinInsightUtils {
     }
 
     public static OdinSymbolTable getTypeElements(TsOdinType type, boolean includeReferenceableSymbols) {
+        if(type instanceof TsOdinTypeAlias tsOdinTypeAlias) {
+            type = tsOdinTypeAlias.getBaseType();
+        }
         if (type instanceof TsOdinPackageReferenceType packageType) {
             return OdinImportUtils
                     .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),

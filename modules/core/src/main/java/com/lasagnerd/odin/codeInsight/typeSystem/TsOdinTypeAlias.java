@@ -14,5 +14,10 @@ public class TsOdinTypeAlias extends TsOdinType{
         return TsOdinMetaType.MetaType.ALIAS;
     }
 
-
+    public TsOdinType getBaseType() {
+        if(aliasedType instanceof TsOdinTypeAlias typeAlias) {
+            return typeAlias.getBaseType();
+        }
+        return aliasedType;
+    }
 }

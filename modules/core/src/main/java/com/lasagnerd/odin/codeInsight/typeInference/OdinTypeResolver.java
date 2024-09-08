@@ -261,7 +261,18 @@ public class OdinTypeResolver extends OdinVisitor {
                 OdinExpression odinExpression = expressionList.get(index);
                 TsOdinType tsOdinType = doInferType(symbolTable, odinExpression);
                 if (tsOdinType instanceof TsOdinMetaType metaType) {
-                    return doResolveMetaType(symbolTable, metaType);
+                    TsOdinType resolvedMetaType = doResolveMetaType(symbolTable, metaType);
+                    TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
+                    typeAlias.setAliasedType(resolvedMetaType);
+                    typeAlias.setDeclaration(odinDeclaration);
+                    typeAlias.setDeclaredIdentifier(identifier);
+                    typeAlias.setName(identifier.getName());
+
+                    if(odinExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+                        typeAlias.setDistinct(typeDefinitionExpression.getDistinct() != null);
+                    }
+                    typeAlias.setSymbolTable(resolvedMetaType.getSymbolTable());
+                    return typeAlias;
                 }
                 return TsOdinType.UNKNOWN;
             }

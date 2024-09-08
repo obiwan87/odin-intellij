@@ -139,6 +139,9 @@ public class OdinInferenceEngine extends OdinVisitor {
             // solve for expression first. This defines the scope
             // extract symbol table
             tsOdinRefExpressionType = doInferType(symbolTable, refExpression.getExpression());
+            if(tsOdinRefExpressionType instanceof TsOdinTypeAlias typeAlias) {
+                tsOdinRefExpressionType = typeAlias.getBaseType();
+            }
             OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(tsOdinRefExpressionType);
 
             if (tsOdinRefExpressionType instanceof TsOdinPackageReferenceType) {
@@ -288,6 +291,10 @@ public class OdinInferenceEngine extends OdinVisitor {
         // get type of expression. IF it is indexable (array, matrix, bitset, map), retrieve the indexed type and set that as result
         OdinExpression expression = o.getExpression();
         TsOdinType tsOdinType = doInferType(symbolTable, expression);
+
+        if(tsOdinType instanceof TsOdinTypeAlias tsOdinTypeAlias) {
+            tsOdinType = tsOdinTypeAlias.getBaseType();
+        }
 
         if (tsOdinType instanceof TsOdinArrayType arrayType) {
             this.type = arrayType.getElementType();
