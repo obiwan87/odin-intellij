@@ -17,6 +17,7 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.impl.OdinBitFieldDeclarationStatementImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -52,7 +53,7 @@ public class OdinPsiUtil {
 
     public static List<OdinImportDeclarationStatement> getImportStatements(OdinFileScope self) {
         List<OdinImportDeclarationStatement> imports;
-        if(self.getImportStatementsContainer() != null) {
+        if (self.getImportStatementsContainer() != null) {
             imports = self.getImportStatementsContainer().getImportDeclarationStatementList();
         } else {
             imports = Collections.emptyList();
@@ -309,7 +310,7 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinStatement> getBlockStatements(OdinIfBlock ifBlock) {
-        if(ifBlock.getStatementBody() != null) {
+        if (ifBlock.getStatementBody() != null) {
             return doGetBlockStatements(ifBlock.getStatementBody());
         }
 
@@ -327,7 +328,7 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinStatement> getBlockStatements(OdinForBlock forBlock) {
-        if(forBlock.getStatementBody() != null) {
+        if (forBlock.getStatementBody() != null) {
             return doGetBlockStatements(forBlock.getStatementBody());
         }
 
@@ -387,7 +388,7 @@ public class OdinPsiUtil {
 
     public static List<OdinSymbol> getSymbols(OdinForBlock forInStatement) {
         List<OdinSymbol> symbols = new ArrayList<>();
-        if(forInStatement.getForInParameterDeclaration() != null) {
+        if (forInStatement.getForInParameterDeclaration() != null) {
             for (var forInParameter : forInStatement.getForInParameterDeclaration().getForInParameterDeclaratorList()) {
                 OdinSymbol spec = new OdinSymbol(forInParameter.getDeclaredIdentifier());
                 symbols.add(spec);
@@ -448,5 +449,18 @@ public class OdinPsiUtil {
         if (icon == null)
             icon = AllIcons.Nodes.Property;
         return new PresentationData(declaredIdentifier.getName(), "", icon, null);
+    }
+
+    public static @Nullable OdinIdentifier getIdentifier(OdinProcedureRef procedureRef) {
+        OdinType type = procedureRef.getType();
+        OdinIdentifier odinIdentifier;
+        if (type instanceof OdinSimpleRefType refType) {
+            odinIdentifier = refType.getIdentifier();
+        } else if (type instanceof OdinQualifiedType qualifiedType) {
+            odinIdentifier = qualifiedType.getIdentifier();
+        } else {
+            odinIdentifier = null;
+        }
+        return odinIdentifier;
     }
 }

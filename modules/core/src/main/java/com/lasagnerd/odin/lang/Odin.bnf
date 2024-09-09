@@ -280,7 +280,9 @@ usingStatement                       ::= USING expressionsList
 directiveStatement                   ::= directive
 
 // Procedure overloading
-procedureOverloadDeclarationStatement ::= (attribute eos?)* declaredIdentifier doubleColonOperator PROC LBRACE identifier (COMMA identifier)* COMMA? RBRACE
+procedureOverloadDeclarationStatement ::= (attribute eos?)* declaredIdentifier doubleColonOperator procedureOverloadType
+procedureOverloadType                 ::= PROC LBRACE procedureRef (COMMA procedureRef)* COMMA? RBRACE
+procedureRef                          ::= qualifiedType | simpleRefType
 
 // TYPES
 

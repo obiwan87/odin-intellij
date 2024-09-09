@@ -11,6 +11,7 @@ import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.OdinIcons;
@@ -174,8 +175,13 @@ public class OdinCompletionContributor extends CompletionContributor {
                     if (procedureOverloadStatement == null)
                         break;
 
-                    for (OdinIdentifier odinIdentifier : procedureOverloadStatement.getIdentifierList()) {
-                        var resolvedReference = odinIdentifier.getReference();
+                    for (var procedureRef : procedureOverloadStatement.getProcedureOverloadType().getProcedureRefList()) {
+                        OdinIdentifier odinIdentifier = OdinPsiUtil.getIdentifier(procedureRef);
+
+                        if (odinIdentifier == null)
+                            continue;
+
+                        PsiReference resolvedReference = odinIdentifier.getReference();
 
                         if (resolvedReference != null) {
                             PsiElement resolved = resolvedReference.resolve();

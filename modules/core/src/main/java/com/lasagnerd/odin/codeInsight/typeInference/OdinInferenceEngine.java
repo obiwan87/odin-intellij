@@ -231,11 +231,11 @@ public class OdinInferenceEngine extends OdinVisitor {
             return getReferenceableType(typeAlias.getBaseType());
         }
 
-        if(tsOdinRefExpressionType instanceof TsOdinPointerType pointerType) {
+        if (tsOdinRefExpressionType instanceof TsOdinPointerType pointerType) {
             return getReferenceableType(pointerType.getDereferencedType());
         }
 
-        if(tsOdinRefExpressionType instanceof TsOdinMultiPointerType multiPointerType) {
+        if (tsOdinRefExpressionType instanceof TsOdinMultiPointerType multiPointerType) {
             return getReferenceableType(multiPointerType.getDereferencedType());
         }
 
@@ -262,27 +262,24 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitCallExpression(@NotNull OdinCallExpression o) {
         // Get type of expression. If it is callable, retrieve the return type and set that as result
         TsOdinType tsOdinType = doInferType(symbolTable, o.getExpression());
-        if (o.getExpression() instanceof OdinParenthesizedExpression parenthesizedExpression) {
+
+        // Casting: (type_expr)(expr)
+
+        if (o.getExpression() instanceof OdinParenthesizedExpression) {
             if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
                 this.type = OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType);
             }
-        } else if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
+        }
+
+        // Calling: expr(args)
+        else if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             if (tsOdinMetaType.getRepresentedMetaType() == ALIAS) {
                 tsOdinMetaType = tsOdinMetaType.getAliasedMetaType();
             }
+
             if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE) {
                 TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
-                if (!procedureType.getReturnTypes().isEmpty()) {
-                    TsOdinProcedureType specializedType = OdinTypeSpecializer
-                            .specializeProcedure(symbolTable, o.getArgumentList(), procedureType);
-                    if (specializedType.getReturnTypes().size() == 1) {
-                        this.type = specializedType.getReturnTypes().getFirst();
-                    } else if (specializedType.getReturnTypes().size() > 1) {
-                        this.type = new TsOdinTuple(specializedType.getReturnTypes());
-                    } else {
-                        this.type = TsOdinType.VOID;
-                    }
-                }
+                inferTypeOfProcedureCall(o, procedureType);
             }
 
             if (tsOdinMetaType.getRepresentedMetaType() == STRUCT) {
@@ -299,6 +296,28 @@ public class OdinInferenceEngine extends OdinVisitor {
                 TsOdinMetaType resultType = new TsOdinMetaType(UNION);
                 resultType.setRepresentedType(specializedUnion);
                 this.type = resultType;
+            }
+
+            if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE_OVERLOAD) {
+                TsOdinProcedureOverloadType procedureOverloadType = (TsOdinProcedureOverloadType) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
+                for (TsOdinProcedureType targetProcedure : procedureOverloadType.getTargetProcedures()) {
+                    inferTypeOfProcedureCall(o, targetProcedure);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void inferTypeOfProcedureCall(@NotNull OdinCallExpression o, TsOdinProcedureType procedureType) {
+        if (!procedureType.getReturnTypes().isEmpty()) {
+            TsOdinProcedureType specializedType = OdinTypeSpecializer
+                    .specializeProcedure(symbolTable, o.getArgumentList(), procedureType);
+            if (specializedType.getReturnTypes().size() == 1) {
+                this.type = specializedType.getReturnTypes().getFirst();
+            } else if (specializedType.getReturnTypes().size() > 1) {
+                this.type = new TsOdinTuple(specializedType.getReturnTypes());
+            } else {
+                this.type = TsOdinType.VOID;
             }
         }
     }
@@ -740,6 +759,16 @@ public class OdinInferenceEngine extends OdinVisitor {
             return tsOdinMetaType;
         }
 
+        if (odinDeclaration instanceof OdinProcedureOverloadDeclarationStatement procedureOverloadDeclarationStatement) {
+            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(PROCEDURE_OVERLOAD);
+            tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
+            tsOdinMetaType.setName(declaredIdentifier.getName());
+            tsOdinMetaType.setSymbolTable(parentSymbolTable);
+            tsOdinMetaType.setDeclaration(odinDeclaration);
+            tsOdinMetaType.setType(procedureOverloadDeclarationStatement.getProcedureOverloadType());
+            return tsOdinMetaType;
+        }
+
         if (odinDeclaration instanceof OdinEnumValueDeclaration odinEnumValueDeclaration) {
             OdinEnumType enumType = PsiTreeUtil.getParentOfType(odinEnumValueDeclaration, true, OdinEnumType.class);
             OdinEnumDeclarationStatement enumDeclarationStatement = PsiTreeUtil.getParentOfType(enumType, true, OdinEnumDeclarationStatement.class);
@@ -821,7 +850,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                         ancestors.add(odinSwitchCase);
                     }
                 }
-                if(ancestors.size() != 1)
+                if (ancestors.size() != 1)
                     return TsOdinType.UNKNOWN;
 
                 OdinSwitchCase caseBlock = ancestors.getFirst();
@@ -840,14 +869,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         }
 
-        if (odinDeclaration instanceof OdinProcedureOverloadDeclarationStatement) {
-            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(PROCEDURE_OVERLOAD);
-            tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
-            tsOdinMetaType.setName(declaredIdentifier.getName());
-            tsOdinMetaType.setSymbolTable(parentSymbolTable);
-            tsOdinMetaType.setDeclaration(odinDeclaration);
-            return tsOdinMetaType;
-        }
+
 
         return TsOdinType.UNKNOWN;
     }

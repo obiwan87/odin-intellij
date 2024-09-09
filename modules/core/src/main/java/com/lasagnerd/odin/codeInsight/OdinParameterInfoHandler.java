@@ -66,7 +66,10 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
             if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE_OVERLOAD) {
                 OdinDeclaration declaration = tsOdinMetaType.getDeclaration();
                 var overload = (OdinProcedureOverloadDeclarationStatement) declaration;
-                for (OdinIdentifier odinIdentifier : overload.getIdentifierList()) {
+                for (var procedureRef : overload.getProcedureOverloadType().getProcedureRefList()) {
+                    OdinIdentifier odinIdentifier = OdinPsiUtil.getIdentifier(procedureRef);
+                    if (odinIdentifier == null)
+                        continue;
                     PsiReference identifierReference = odinIdentifier.getReference();
                     if (identifierReference != null) {
                         PsiElement resolve = identifierReference.resolve();

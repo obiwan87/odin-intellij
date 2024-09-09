@@ -91,7 +91,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 }
                 tsOdinType.getSymbolTable().putAll(symbolTable);
                 return tsOdinType;
-            } else if(metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
+            } else if (metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
                 boolean isDistinct = metaType.getTypeExpression() instanceof OdinTypeDefinitionExpression typeDefinitionExpression
                         && typeDefinitionExpression.getDistinct() != null;
 
@@ -217,30 +217,30 @@ public class OdinTypeResolver extends OdinVisitor {
         log("Initialized " + tsOdinType.getClass().getSimpleName() + " with name " + name);
     }
 
-    private void resolveIdentifier(OdinIdentifier typeIdentifier) {
+    private TsOdinType resolveIdentifier(OdinIdentifier typeIdentifier, OdinSymbolTable symbolTable) {
         PsiNamedElement declaration;
         String identifierText = typeIdentifier.getText();
 
         // TODO reserved types should be checked last
         //  in Odin you can define int :: struct {x,y: f32}
         if (RESERVED_TYPES.contains(identifierText)) {
-            type = TsOdinBuiltInTypes.getBuiltInType(identifierText);
+            return TsOdinBuiltInTypes.getBuiltInType(identifierText);
 
         } else {
             TsOdinType scopeType = symbolTable.getType(typeIdentifier.getIdentifierToken().getText());
             if (scopeType != null) {
-                type = scopeType;
+                return scopeType;
             } else {
                 declaration = symbolTable.getNamedElement(typeIdentifier.getIdentifierToken().getText());
                 if (!(declaration instanceof OdinDeclaredIdentifier declaredIdentifier)) {
-                    return;
+                    return TsOdinType.UNKNOWN;
                 }
                 var knownType = symbolTable.getKnownTypes().get(declaredIdentifier);
                 if (knownType != null) {
                     log("Cache hit for type: " + knownType.getLabel());
-                    this.type = knownType;
+                    return knownType;
                 } else {
-                    type = resolveTypeFromDeclaredIdentifier(symbolTable, declaredIdentifier);
+                    return resolveTypeFromDeclaredIdentifier(symbolTable, declaredIdentifier);
                 }
             }
         }
@@ -291,10 +291,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 return doResolveType(symbolTable, odinBitsetDeclarationStatement.getBitSetType());
             }
             case OdinProcedureOverloadDeclarationStatement procedureOverloadDeclarationStatement -> {
-
-                for (OdinIdentifier odinIdentifier : procedureOverloadDeclarationStatement.getIdentifierList()) {
-//                resolveTypeFromDeclaredIdentifier(symbolTable, odinIdentifier);
-                }
+                return doResolveType(symbolTable, procedureOverloadDeclarationStatement.getProcedureOverloadType());
             }
 
             case OdinBitFieldDeclarationStatement bitFieldDeclarationStatement -> {
@@ -308,16 +305,16 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     public static @NotNull TsOdinTypeAlias createTypeAliasFromMetaType(OdinDeclaredIdentifier identifier,
-                                                                        TsOdinType resolvedMetaType,
-                                                                        OdinDeclaration odinDeclaration,
-                                                                        OdinExpression odinExpression) {
+                                                                       TsOdinType resolvedMetaType,
+                                                                       OdinDeclaration odinDeclaration,
+                                                                       OdinExpression odinExpression) {
         TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
         typeAlias.setAliasedType(resolvedMetaType);
         typeAlias.setDeclaration(odinDeclaration);
         typeAlias.setDeclaredIdentifier(identifier);
         typeAlias.setName(identifier.getName());
 
-        if(odinExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+        if (odinExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
             typeAlias.setDistinct(typeDefinitionExpression.getDistinct() != null);
         }
         typeAlias.setSymbolTable(resolvedMetaType.getSymbolTable());
@@ -337,7 +334,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitSimpleRefType(@NotNull OdinSimpleRefType o) {
         OdinIdentifier identifier = o.getIdentifier();
-        resolveIdentifier(identifier);
+        this.type = resolveIdentifier(identifier, symbolTable);
     }
 
     @Override
@@ -509,7 +506,6 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
 
-
     @Override
     public void visitStructType(@NotNull OdinStructType structType) {
         TsOdinStructType tsOdinStructType = new TsOdinStructType();
@@ -630,6 +626,21 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinConstrainedType.setSpecializedType(tsOdinSpecializedType);
 
         this.type = tsOdinConstrainedType;
+    }
+
+    @Override
+    public void visitProcedureOverloadType(@NotNull OdinProcedureOverloadType o) {
+        TsOdinProcedureOverloadType tsOdinProcedureOverloadType = new TsOdinProcedureOverloadType();
+        initializeNamedType(tsOdinProcedureOverloadType);
+
+        for (OdinProcedureRef procedureRef : o.getProcedureRefList()) {
+            TsOdinType tsOdinType = resolveType(symbolTable, procedureRef.getType());
+            if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
+                tsOdinProcedureOverloadType.getTargetProcedures().add(tsOdinProcedureType);
+            }
+        }
+
+        this.type = tsOdinProcedureOverloadType;
     }
 
     private static class OdinMetaTypeResolver extends OdinVisitor {

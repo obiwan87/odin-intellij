@@ -1720,7 +1720,7 @@ public class OdinParsingTest extends UsefulTestCase {
     public void test_typeInference_procedureOverload() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "p_slice");
+
         }
     }
 
@@ -1740,6 +1740,34 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testProcedureOverload() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "x");
+            System.out.println(tsOdinType);
+        }
+    }
+
+    public void testParapolyWithAliases() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference_withParaPolyAlias", "first");
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Point", tsOdinStructType.getName());
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference_withParaPolyAlias", "first2");
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Point", tsOdinStructType.getName());
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference_withParaPolyAlias", "first_dist");
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Point", tsOdinStructType.getName());
+        }
+    }
     // Helpers
     private static void assertTopMostRefExpressionTextEquals(PsiElement odinStatement, String expected, String identifierName) {
         OdinRefExpression topMostRefExpression = getTopMostRefExpression(odinStatement, identifierName);
