@@ -212,6 +212,9 @@ public class OdinTypeSpecializer {
                 doSubstituteTypes(constrainedType.getMainType(), argumentType, resolvedTypes);
                 TsOdinType resolvedMainType = resolvedTypes.get(constrainedType.getMainType().getName());
                 if (resolvedMainType != null) {
+                    if(resolvedMainType instanceof TsOdinTypeAlias typeAlias) {
+                        resolvedMainType = typeAlias.getBaseType();
+                    }
                     doSubstituteTypes(constrainedType.getSpecializedType(), resolvedMainType, resolvedTypes);
                 }
             }

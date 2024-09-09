@@ -269,6 +269,8 @@ circular_reference_test :: proc(render_commands: ^ClaryArray(RenderCommand)) {
 }
 
 
+
+
 typeInference_procedureOverload :: proc() {
 /*
 make_slice,
@@ -284,8 +286,9 @@ make_soa_dynamic_array_len,
 make_soa_dynamic_array_len_cap,
 */
 // Slice
-    p_slice := make([]Point)
-    p_dyn = make([dynamic]Point)
+    overload :: proc { circular_reference_test, typeInference_procedureOverload, }
+
+    x := overload()
 }
 
 testTypeInference_anyType :: proc(x : any) {
@@ -302,4 +305,22 @@ testTwoHopsInferenceWithPointer :: proc() {
     case o.S1:
         y := v.s2.i
     }
+}
+
+testTypeInference_withParaPolyAlias :: proc() {
+    PointListDistinct :: distinct []Point
+    PointListDistinct2 :: distinct PointListDistinct
+    PointList :: []Point
+    get_first_element :: proc(arr: []$T) -> T {
+        return arr[0]
+    }
+
+    get_first_element_2 :: proc(arr: $S/[]$T) -> T {
+        return arr[0]
+    }
+
+    first  := get_first_element_2(PointList { Point { } } )
+    first2 := get_first_element  (PointList { Point { } } )
+
+    first_dist := get_first_element_2(PointListDistinct2 { Point { } } )
 }
