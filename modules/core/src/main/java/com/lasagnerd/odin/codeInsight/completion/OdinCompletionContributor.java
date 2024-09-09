@@ -236,7 +236,7 @@ public class OdinCompletionContributor extends CompletionContributor {
         return switch (typeType) {
             case STRUCT -> OdinIcons.Types.Struct;
             case SWIZZLE_FIELD, FIELD -> AllIcons.Nodes.Property;
-            case ENUM_FIELD, LABEL, FOREIGN_IMPORT, BIT_SET, BUILTIN_TYPE -> null;
+            case BIT_FIELD, ENUM_FIELD, LABEL, FOREIGN_IMPORT, BIT_SET, BUILTIN_TYPE -> null;
             case ENUM -> AllIcons.Nodes.Enum;
             case UNION -> OdinIcons.Types.Union;
             case PROCEDURE, PROCEDURE_OVERLOAD -> AllIcons.Nodes.Function;

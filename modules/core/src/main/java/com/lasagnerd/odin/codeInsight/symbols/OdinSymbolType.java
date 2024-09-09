@@ -18,5 +18,6 @@ public enum OdinSymbolType {
     LABEL,
     FOREIGN_IMPORT,
     SWIZZLE_FIELD,
+    BIT_FIELD,
     BIT_SET
 }

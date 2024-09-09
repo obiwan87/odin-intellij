@@ -10,10 +10,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.lang.OdinLexerAdapter;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
 import com.lasagnerd.odin.lang.psi.*;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 public class OdinFindUsagesProvider implements FindUsagesProvider {
 
@@ -50,7 +47,8 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
         return symbolType != null ? getHumanReadableName(symbolType) : getHumanReadableName(OdinSymbolType.UNKNOWN);
     }
 
-    private String getHumanReadableName(@NotNull OdinSymbolType symbolType) {
+    @Contract(pure = true)
+    private @NotNull String getHumanReadableName(@NotNull OdinSymbolType symbolType) {
         return switch (symbolType) {
             case UNKNOWN -> "Unknown";
             case BUILTIN_TYPE -> "Built-In type";
@@ -69,6 +67,7 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
             case LABEL -> "Label";
             case FOREIGN_IMPORT -> "Foreign Import";
             case SWIZZLE_FIELD -> "Swizzle Field";
+            case BIT_FIELD -> "Bit Field";
             case BIT_SET -> "Bit set";
         };
     }

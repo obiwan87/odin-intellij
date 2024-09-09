@@ -114,7 +114,7 @@ public class OdinImportUtils {
 
         Path packagePath;
         if (packagePaths.size() > 1) {
-            Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
+            Optional<String> sdkPath = OdinImportService.getInstance(project).getSdkPath();
             if (sdkPath.isPresent()) {
                 packagePath = packagePaths.stream()
                         .filter(p -> p.startsWith(sdkPath.get()))
@@ -136,7 +136,7 @@ public class OdinImportUtils {
         String library = Objects.requireNonNullElse(importInfo.library(), "");
         Path sdkSourceDir = null;
         if (!library.isBlank()) {
-            Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
+            Optional<String> sdkPath = OdinImportService.getInstance(project).getSdkPath();
             if (sdkPath.isPresent()) {
                 sdkSourceDir = Path.of(sdkPath.get(), importInfo.library());
                 dirs.add(sdkSourceDir);
@@ -164,7 +164,7 @@ public class OdinImportUtils {
         Path sourceDir = Path.of(sourceFilePath);
         Path targetDir = Path.of(targetFilePath).normalize();
 
-        Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
+        Optional<String> sdkPath = OdinImportService.getInstance(project).getSdkPath();
         if (sdkPath.isPresent()) {
             if (targetDir.startsWith(Path.of(sdkPath.get()))) {
                 Path relativePath = Path.of(sdkPath.get()).relativize(targetDir);

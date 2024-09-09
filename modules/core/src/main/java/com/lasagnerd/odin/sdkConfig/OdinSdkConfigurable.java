@@ -87,6 +87,7 @@ public class OdinSdkConfigurable implements Configurable {
         config.setDebuggerId(sdkSettingsComponent.getDebuggerId());
         config.setDebuggerPath(sdkSettingsComponent.getDebuggerPath());
         config.setOdinCheckerEnabled(sdkSettingsComponent.isOdinCheckerEnabled() ? "true" : "false");
+        config.setHighlightUnknownReferencesEnabled(sdkSettingsComponent.isHighlightUnknownReferencesEnabled() ? "true" : "false");
 
         OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project, sdkPath);
     }

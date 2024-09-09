@@ -181,6 +181,15 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     @Override
+    public void visitBitFieldDeclarationStatement(@NotNull OdinBitFieldDeclarationStatement o) {
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), getVisibility(o.getAttributeList(), defaultVisibility));
+        odinSymbol.setAttributes(o.getAttributeList());
+        odinSymbol.setSymbolType(OdinSymbolType.BIT_FIELD);
+
+        symbols.add(odinSymbol);
+    }
+
+    @Override
     public void visitProcedureOverloadDeclarationStatement(@NotNull OdinProcedureOverloadDeclarationStatement o) {
         OdinSymbol symbol = new OdinSymbol(o.getDeclaredIdentifier());
         symbol.setAttributes(o.getAttributeList());

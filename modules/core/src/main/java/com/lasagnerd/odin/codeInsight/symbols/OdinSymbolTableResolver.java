@@ -149,7 +149,7 @@ public class OdinSymbolTableResolver {
         }
 
         // 3. Import symbols from the scope tree
-        OdinSymbolTable odinSymbolTable = doFindVisibleSymbols(packagePath, element, s -> false, false);
+        OdinSymbolTable odinSymbolTable = doFindVisibleSymbols(packagePath, element, s -> false, false, symbolTable);
         odinSymbolTable.setPackagePath(packagePath);
         odinSymbolTable.setRoot(symbolTable);
 
@@ -231,18 +231,20 @@ public class OdinSymbolTableResolver {
 
     @TestOnly
     public static OdinSymbolTable doFindVisibleSymbols(@NotNull PsiElement position, StopCondition stopCondition) {
-        return doFindVisibleSymbols(null, position, stopCondition, false);
+        return doFindVisibleSymbols(null, position, stopCondition, false, null);
     }
 
     private static class OdinStatefulSymbolTableResolver {
         private final PsiElement originalPosition;
         private final String packagePath;
         private final StopCondition stopCondition;
+        private final OdinSymbolTable initialSymbolTable;
 
-        public OdinStatefulSymbolTableResolver(PsiElement originalPosition, String packagePath, StopCondition stopCondition) {
+        public OdinStatefulSymbolTableResolver(PsiElement originalPosition, String packagePath, StopCondition stopCondition, OdinSymbolTable initialSymbolTable) {
             this.originalPosition = originalPosition;
             this.packagePath = packagePath;
             this.stopCondition = stopCondition;
+            this.initialSymbolTable = initialSymbolTable;
         }
 
         private OdinSymbolTable findSymbols() {
@@ -260,8 +262,9 @@ public class OdinSymbolTableResolver {
             OdinScopeArea containingScopeBlock = PsiTreeUtil.getParentOfType(position, OdinScopeArea.class);
             boolean fileScope = containingScopeBlock instanceof OdinFileScope;
 
-            if (containingScopeBlock == null)
-                return new OdinSymbolTable(packagePath);
+            if (containingScopeBlock == null) {
+                return Objects.requireNonNullElseGet(initialSymbolTable, () -> new OdinSymbolTable(packagePath));
+            }
 
 
             OdinSymbolTable symbolTable = new OdinSymbolTable(packagePath);
@@ -362,10 +365,16 @@ public class OdinSymbolTableResolver {
         }
     }
 
-    public static OdinSymbolTable doFindVisibleSymbols(String packagePath, @NotNull PsiElement position, StopCondition stopCondition, boolean constantsOnly) {
+    public static OdinSymbolTable doFindVisibleSymbols(String packagePath,
+                                                       @NotNull PsiElement position,
+                                                       StopCondition stopCondition,
+                                                       boolean constantsOnly,
+                                                       OdinSymbolTable root) {
         return new OdinStatefulSymbolTableResolver(
-                position, packagePath, stopCondition
-        ).findSymbols();
+                position,
+                packagePath,
+                stopCondition,
+                root).findSymbols();
     }
 
     private static void addElementSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {

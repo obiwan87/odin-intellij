@@ -8,10 +8,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.lasagnerd.odin.lang.psi.OdinFile;
+import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 public class OdinImportServiceImpl implements OdinImportService {
     private final Project project;
@@ -52,5 +54,10 @@ public class OdinImportServiceImpl implements OdinImportService {
     @Override
     public PsiFile createPsiFile(VirtualFile virtualFile) {
         return this.project.getService(PsiManager.class).findFile(virtualFile);
+    }
+
+    @Override
+    public Optional<String> getSdkPath() {
+        return OdinSdkUtils.getSdkPath(project);
     }
 }

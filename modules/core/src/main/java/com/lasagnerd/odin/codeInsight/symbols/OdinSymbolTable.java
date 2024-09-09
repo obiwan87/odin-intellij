@@ -227,7 +227,9 @@ public class OdinSymbolTable {
         if(parentSymbolTable != null) {
             parentSymbolTable.setRoot(symbolTable);
         } else {
-            parentSymbolTable = symbolTable;
+            if(symbolTable != this) {
+                parentSymbolTable = symbolTable;
+            }
         }
     }
 }

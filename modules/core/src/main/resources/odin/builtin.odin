@@ -1,6 +1,7 @@
 package ols_builtin
 
 // Procedures
+
 @builtin len :: proc(array: Array_Type) -> int ---
 @builtin cap :: proc(array: Array_Type) -> int ---
 
@@ -172,3 +173,30 @@ ODIN_VENDOR:  string
 
 @builtin
 ODIN_VALGRIND_SUPPORT: bool
+
+@builtin
+Any_Type :: struct {
+    data: rawptr,
+    id: typeid
+}
+
+@builtin
+any :: distinct Any_Type
+
+@builtin
+unreachable :: proc() -> ! ---
+
+@builtin
+Odin_Optimization_Mode :: enum int {
+    None       = -1,
+    Minimal    =  0,
+    Size       =  1,
+    Speed      =  2,
+    Aggressive =  3,
+}
+
+@builtin
+ODIN_OPTIMIZATION_MODE : Odin_Optimization_Mode
+
+@builtin
+ODIN_DEFAULT_TO_PANIC_ALLOCATOR : bool

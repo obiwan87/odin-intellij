@@ -9,10 +9,8 @@ import java.util.*;
 @Data
 public class TsOdinStructType extends TsOdinGenericType {
 
-    List<TsOdinParameter> parameters = new ArrayList<>();
-    Map<String, TsOdinType> fields = new HashMap<>();
-
-
+    private List<TsOdinParameter> parameters = new ArrayList<>();
+    private Map<String, TsOdinType> fields = new HashMap<>();
 
     @Override
     public TsOdinMetaType.MetaType getMetaType() {

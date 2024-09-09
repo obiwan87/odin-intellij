@@ -59,6 +59,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.ELSE_TOKEN,
             OdinTypes.DO,
             OdinTypes.STRUCT,
+            OdinTypes.BIT_FIELD,
             OdinTypes.IN,
             OdinTypes.FOR,
             OdinTypes.RETURN,

@@ -1540,7 +1540,7 @@ public class OdinParsingTest extends UsefulTestCase {
         String packagePath = OdinImportService.getInstance(project).getPackagePath(odinFile);
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_import", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(packagePath, expression, scope -> false, false);
+            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(packagePath, expression, scope -> false, false, OdinSymbolTable.EMPTY);
             assertNotNull(odinSymbolTable.getSymbol("a_mypublic_proc"));
             assertNotNull(odinSymbolTable.getSymbol("a_ret"));
         }
@@ -1715,6 +1715,29 @@ public class OdinParsingTest extends UsefulTestCase {
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "type_aliases", "x");
         System.out.println(tsOdinType.getClass().getSimpleName());
         System.out.println(tsOdinType.getLabel());
+    }
+
+    public void test_typeInference_procedureOverload() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "p_slice");
+        }
+    }
+
+    public void test_typeInference_anyType() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference_anyType", "y");
+            System.out.println(tsOdinType);
+        }
+    }
+
+    public void testTwoHopsInferenceWithPointer() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTwoHopsInferenceWithPointer", "y");
+            System.out.println(tsOdinType);
+        }
     }
 
     // Helpers

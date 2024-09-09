@@ -12,22 +12,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MockOdinImportService implements OdinImportService {
 
-    private final String rootPath;
     private Map<String, String> nameToPathMap = new HashMap<>();
     private Map<String, VirtualFile> virtualFileMap = new HashMap<>();
     private final PsiFileFactoryImpl fileFactory;
 
     public MockOdinImportService(@NotNull PsiFileFactoryImpl fileFactory) {
         this.fileFactory = fileFactory;
-        rootPath = "src/test/testData/";
-        scanDirectories(rootPath);
+        var rootPaths = List.of(
+                "src/test/testData/"
+//                "src/test/sdk/"
+        );
+        for (String rootPath : rootPaths) {
+            scanDirectories(rootPath);
+        }
     }
 
     private void scanDirectories(String rootPath) {
@@ -83,6 +84,12 @@ public class MockOdinImportService implements OdinImportService {
             return fileFactory.trySetupPsiForFile(lightVirtualFile, OdinLanguage.INSTANCE, true, false);
         }
         return null;
+    }
+
+    @Override
+    public Optional<String> getSdkPath() {
+//        return Optional.of("src/test/sdk");
+        return Optional.empty();
     }
 
 }

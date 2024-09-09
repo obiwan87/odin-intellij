@@ -8,11 +8,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 public interface OdinImportService {
     static OdinImportService getInstance(Project project) {
         return project.getService(OdinImportService.class);
     }
+
     String getPackagePath(PsiElement psiElement);
 
     // Move to OdinImportService
@@ -21,4 +23,6 @@ public interface OdinImportService {
     VirtualFile @NotNull [] getFilesInPath(Path importPath);
 
     PsiFile createPsiFile(VirtualFile virtualFile);
+
+    Optional<String> getSdkPath();
 }

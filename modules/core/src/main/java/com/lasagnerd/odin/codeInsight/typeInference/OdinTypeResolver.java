@@ -251,37 +251,57 @@ public class OdinTypeResolver extends OdinVisitor {
                 false,
                 OdinDeclaration.class);
 
-        if (odinDeclaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-            return doResolveType(symbolTable, identifier, odinDeclaration, structDeclarationStatement.getStructType());
-        } else if (odinDeclaration instanceof OdinEnumDeclarationStatement enumDeclarationStatement) {
-            return doResolveType(symbolTable, identifier, odinDeclaration, enumDeclarationStatement.getEnumType());
-        } else if (odinDeclaration instanceof OdinUnionDeclarationStatement unionDeclarationStatement) {
-            return doResolveType(symbolTable, identifier, odinDeclaration, unionDeclarationStatement.getUnionType());
-        } else if (odinDeclaration instanceof OdinProcedureDeclarationStatement procedureDeclarationStatement) {
-            return doResolveType(symbolTable, identifier, odinDeclaration, procedureDeclarationStatement.getProcedureDefinition().getProcedureType());
-        } else if (odinDeclaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
-            List<OdinExpression> expressionList = constantInitializationStatement.getExpressionsList().getExpressionList();
-            if (!expressionList.isEmpty()) {
-                int index = constantInitializationStatement.getDeclaredIdentifiers().indexOf(identifier);
-                if (index == -1) {
-                    return TsOdinType.UNKNOWN;
-                }
-                if (expressionList.size() <= index) {
-                    return TsOdinType.UNKNOWN;
-                }
-
-                OdinExpression odinExpression = expressionList.get(index);
-                TsOdinType tsOdinType = doInferType(symbolTable, odinExpression);
-                if (tsOdinType instanceof TsOdinMetaType metaType) {
-                    TsOdinType resolvedMetaType = doResolveMetaType(symbolTable, metaType);
-                    return createTypeAliasFromMetaType(identifier, resolvedMetaType, odinDeclaration, odinExpression);
-                }
-                return TsOdinType.UNKNOWN;
+        switch (odinDeclaration) {
+            case OdinStructDeclarationStatement structDeclarationStatement -> {
+                return doResolveType(symbolTable, identifier, odinDeclaration, structDeclarationStatement.getStructType());
             }
-        } else if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
-            return doResolveType(symbolTable, identifier, odinDeclaration, polymorphicType);
-        } else if (odinDeclaration instanceof OdinBitsetDeclarationStatement odinBitsetDeclarationStatement) {
-            return doResolveType(symbolTable, odinBitsetDeclarationStatement.getBitSetType());
+            case OdinEnumDeclarationStatement enumDeclarationStatement -> {
+                return doResolveType(symbolTable, identifier, odinDeclaration, enumDeclarationStatement.getEnumType());
+            }
+            case OdinUnionDeclarationStatement unionDeclarationStatement -> {
+                return doResolveType(symbolTable, identifier, odinDeclaration, unionDeclarationStatement.getUnionType());
+            }
+            case OdinProcedureDeclarationStatement procedureDeclarationStatement -> {
+                return doResolveType(symbolTable, identifier, odinDeclaration, procedureDeclarationStatement.getProcedureDefinition().getProcedureType());
+            }
+            case OdinConstantInitializationStatement constantInitializationStatement -> {
+                List<OdinExpression> expressionList = constantInitializationStatement.getExpressionsList().getExpressionList();
+                if (!expressionList.isEmpty()) {
+                    int index = constantInitializationStatement.getDeclaredIdentifiers().indexOf(identifier);
+                    if (index == -1) {
+                        return TsOdinType.UNKNOWN;
+                    }
+                    if (expressionList.size() <= index) {
+                        return TsOdinType.UNKNOWN;
+                    }
+
+                    OdinExpression odinExpression = expressionList.get(index);
+                    TsOdinType tsOdinType = doInferType(symbolTable, odinExpression);
+                    if (tsOdinType instanceof TsOdinMetaType metaType) {
+                        TsOdinType resolvedMetaType = doResolveMetaType(symbolTable, metaType);
+                        return createTypeAliasFromMetaType(identifier, resolvedMetaType, odinDeclaration, odinExpression);
+                    }
+                    return TsOdinType.UNKNOWN;
+                }
+            }
+            case OdinPolymorphicType polymorphicType -> {
+                return doResolveType(symbolTable, identifier, odinDeclaration, polymorphicType);
+            }
+            case OdinBitsetDeclarationStatement odinBitsetDeclarationStatement -> {
+                return doResolveType(symbolTable, odinBitsetDeclarationStatement.getBitSetType());
+            }
+            case OdinProcedureOverloadDeclarationStatement procedureOverloadDeclarationStatement -> {
+
+                for (OdinIdentifier odinIdentifier : procedureOverloadDeclarationStatement.getIdentifierList()) {
+//                resolveTypeFromDeclaredIdentifier(symbolTable, odinIdentifier);
+                }
+            }
+
+            case OdinBitFieldDeclarationStatement bitFieldDeclarationStatement -> {
+                return doResolveType(symbolTable, identifier, odinDeclaration, bitFieldDeclarationStatement.getBitFieldType());
+            }
+            case null, default -> {
+            }
         }
 
         return TsOdinType.UNKNOWN;
@@ -318,6 +338,14 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitSimpleRefType(@NotNull OdinSimpleRefType o) {
         OdinIdentifier identifier = o.getIdentifier();
         resolveIdentifier(identifier);
+    }
+
+    @Override
+    public void visitBitFieldType(@NotNull OdinBitFieldType o) {
+        TsOdinBitFieldType tsOdinBitFieldType = new TsOdinBitFieldType();
+        tsOdinBitFieldType.setType(o);
+        initializeNamedType(tsOdinBitFieldType);
+        this.type = tsOdinBitFieldType;
     }
 
     @Override
@@ -479,6 +507,8 @@ public class OdinTypeResolver extends OdinVisitor {
 
         this.type = tsOdinProcedureType;
     }
+
+
 
     @Override
     public void visitStructType(@NotNull OdinStructType structType) {

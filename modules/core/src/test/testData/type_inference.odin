@@ -1,6 +1,8 @@
 package main
 
 import "core:fmt"
+import "base:runtime"
+import o "otherpackage"
 
 Weapon :: struct {
     strength: f32,
@@ -245,9 +247,9 @@ testTypeSwitch :: proc() {
 }
 
 binary_operators_on_arrays :: proc() {
-    a := [3]f32{1, 2, 3}
-    b := [3]f32{5, 6, 7}
-    c := (a * b)/2 + 1
+    a := [3]f32{ 1, 2, 3 }
+    b := [3]f32{ 5, 6, 7 }
+    c := (a * b) / 2 + 1
     test := c
 }
 
@@ -264,4 +266,40 @@ RenderCommandArray_Get :: proc(array: ^ClayArray(RenderCommand), index: int) -> 
 circular_reference_test :: proc(render_commands: ^ClaryArray(RenderCommand)) {
     command := RenderCommandArray_Get(render_commands, 1)
     x := command.config
+}
+
+
+typeInference_procedureOverload :: proc() {
+/*
+make_slice,
+make_dynamic_array,
+make_dynamic_array_len,
+make_dynamic_array_len_cap,
+make_map,
+make_multi_pointer,
+
+make_soa_slice,
+make_soa_dynamic_array,
+make_soa_dynamic_array_len,
+make_soa_dynamic_array_len_cap,
+*/
+// Slice
+    p_slice := make([]Point)
+    p_dyn = make([dynamic]Point)
+}
+
+testTypeInference_anyType :: proc(x : any) {
+    y := x
+}
+
+testTwoHopsInferenceWithPointer :: proc() {
+    U :: union {
+        o.S1,
+        o.S2
+    }
+    u : U
+    switch v in u {
+    case o.S1:
+        y := v.s2.i
+    }
 }
