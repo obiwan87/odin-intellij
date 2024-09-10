@@ -16,7 +16,6 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.image.AffineTransformOp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,7 +81,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
         }
 
         if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
-            OdinType procedureType = tsOdinProcedureType.getType();
+            OdinType procedureType = tsOdinProcedureType.getPsiType();
             procedures.add(procedureType);
         }
 

@@ -77,7 +77,7 @@ public class OdinInsightUtils {
         if(type instanceof TsOdinConstrainedType constrainedType) {
             return getTypeElements(constrainedType.getSpecializedType(), includeReferenceableSymbols);
         }
-        OdinType odinDeclaration = type.getType();
+        OdinType odinDeclaration = type.getPsiType();
         OdinDeclaration declaration = type.getDeclaration();
         if (declaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
             var structFields = OdinInsightUtils.getStructFields(type.getSymbolTable(), structDeclarationStatement);
@@ -248,7 +248,7 @@ public class OdinInsightUtils {
             odinSymbol.setImplicitlyDeclared(true);
             TsOdinType elementType = arrayType.getElementType();
             if (elementType != null) {
-                odinSymbol.setPsiType(elementType.getType());
+                odinSymbol.setPsiType(elementType.getPsiType());
             }
             symbols.add(odinSymbol);
         }

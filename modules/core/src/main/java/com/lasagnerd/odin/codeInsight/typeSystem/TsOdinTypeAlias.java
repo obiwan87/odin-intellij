@@ -26,7 +26,8 @@ public class TsOdinTypeAlias extends TsOdinType{
             if(aliasedType instanceof TsOdinTypeAlias typeAlias) {
                 return typeAlias.getDistinctBaseType();
             }
+            return aliasedType;
         }
-        return aliasedType;
+        return this;
     }
 }

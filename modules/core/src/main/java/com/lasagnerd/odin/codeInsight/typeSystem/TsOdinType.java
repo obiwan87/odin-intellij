@@ -1,9 +1,7 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.lang.psi.OdinDeclaration;
-import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
-import com.lasagnerd.odin.lang.psi.OdinType;
+import com.lasagnerd.odin.lang.psi.*;
 import lombok.Data;
 
 @Data
@@ -11,11 +9,13 @@ public abstract class TsOdinType {
     String name;
 
     // Connections to PSI tree
-    OdinDeclaration declaration;
-    OdinDeclaredIdentifier declaredIdentifier;
+    private OdinDeclaration declaration;
+    private OdinDeclaredIdentifier declaredIdentifier;
+    private OdinType psiType;
+    private OdinExpression psiTypeExpression;
 
     /**
-     * Maintains the scope visible from where the type is declared.
+     * The symbols visible from where the type is declared.
      * <p>
      * Example:
      * <p>
@@ -35,8 +35,6 @@ public abstract class TsOdinType {
     OdinSymbolTable symbolTable = new OdinSymbolTable();
 
 
-
-    public OdinType type;
 
     public static final TsOdinType UNKNOWN = new TsOdinType() {
         {
@@ -85,7 +83,7 @@ public abstract class TsOdinType {
     }
 
     public <T extends OdinType> T type() {
-        return (T) type;
+        return (T) psiType;
     }
 
     public boolean isTypeId() {

@@ -392,7 +392,7 @@ public class OdinSymbolTableResolver {
 
                 TsOdinType elementType = tsOdinArrayType.getElementType();
                 if (elementType != null) {
-                    odinSymbol.setPsiType(elementType.getType());
+                    odinSymbol.setPsiType(elementType.getPsiType());
                 }
                 odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
                 odinSymbol.setImplicitlyDeclared(true);

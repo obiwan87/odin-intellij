@@ -1720,7 +1720,36 @@ public class OdinParsingTest extends UsefulTestCase {
     public void test_typeInference_procedureOverload() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "v");
+            assertInstanceOf(tsOdinType, TsOdinNumericType.class);
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "u");
+            assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals(tsOdinType.getName(), "Point");
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "z");
+            assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals(tsOdinType.getName(), "Point");
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "w");
+            assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+            assertEquals(tsOdinType.getName(), "PointDistinctAlias");
+        }
 
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "x");
+            assertInstanceOf(tsOdinType, TsOdinNumericType.class);
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "y");
+            assertInstanceOf(tsOdinType, TsOdinStringType.class);
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.STRING);
         }
     }
 
@@ -1768,6 +1797,7 @@ public class OdinParsingTest extends UsefulTestCase {
             assertEquals("Point", tsOdinStructType.getName());
         }
     }
+
     // Helpers
     private static void assertTopMostRefExpressionTextEquals(PsiElement odinStatement, String expected, String identifierName) {
         OdinRefExpression topMostRefExpression = getTopMostRefExpression(odinStatement, identifierName);

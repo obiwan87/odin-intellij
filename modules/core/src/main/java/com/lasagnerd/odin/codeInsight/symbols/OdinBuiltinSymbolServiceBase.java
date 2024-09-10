@@ -2,10 +2,7 @@ package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes;
@@ -13,7 +10,6 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -108,7 +104,7 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(contextStructSymbol.getDeclaredIdentifier(), OdinDeclaration.class, true);
             contextStructType.setDeclaration(odinDeclaration);
             contextStructType.setSymbolTable(odinSymbolTable);
-            contextStructType.setType(getContextType());
+            contextStructType.setPsiType(getContextType());
             this.contextStructType = contextStructType;
         }
         return contextStructType;

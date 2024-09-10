@@ -272,6 +272,8 @@ circular_reference_test :: proc(render_commands: ^ClaryArray(RenderCommand)) {
 
 
 typeInference_procedureOverload :: proc() {
+    PointDistinctAlias :: distinct Point
+    PointAlias :: Point
 
     add_one_string :: proc(s: string) -> string {
         return s + "1"
@@ -281,14 +283,35 @@ typeInference_procedureOverload :: proc() {
         return i + 1
     }
 
+    add_one_struct :: proc(p: Point) -> Point {
+        p.x += 1
+        return p
+    }
+
+    add_one_distinct_alias :: proc(p: PointDistinctAlias) -> PointDistinctAlias {
+        return 1
+    }
+
+    add_one_alias :: proc(p: PointAlias, i: i32) -> i32 {
+        return i32
+    }
+
     add_one :: proc {
         add_one_string,
         add_one_integer,
+        add_one_struct,
+        add_one_distinct_alias,
+        add_one_alias,
     }
 
+    u := add_one(PointAlias {})
+    v := add_one(Point {}, 1)
+    w := add_one(PointDistinctAlias {})
     x := add_one(1)
     y := add_one("1")
+    z := add_one(Point {})
 }
+
 
 testTypeInference_anyType :: proc(x : any) {
     y := x

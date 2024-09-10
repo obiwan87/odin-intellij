@@ -75,13 +75,13 @@ public class OdinTypeResolver extends OdinVisitor {
             TsOdinType tsOdinType;
             if (metaType.getRepresentedType() != null) {
                 return metaType.getRepresentedType();
-            } else if (metaType.getType() != null) {
+            } else if (metaType.getPsiType() != null) {
                 OdinDeclaredIdentifier declaredIdentifier = metaType.getDeclaredIdentifier();
                 tsOdinType = resolveType(level,
                         symbolTable,
                         declaredIdentifier,
                         metaType.getDeclaration(),
-                        metaType.getType());
+                        metaType.getPsiType());
                 tsOdinType.setDeclaration(metaType.getDeclaration());
                 tsOdinType.setDeclaredIdentifier(declaredIdentifier);
                 symbolTable.addKnownType(declaredIdentifier, tsOdinType);
@@ -91,16 +91,20 @@ public class OdinTypeResolver extends OdinVisitor {
                 tsOdinType.getSymbolTable().putAll(symbolTable);
                 return tsOdinType;
             } else if (metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
-                boolean isDistinct = metaType.getTypeExpression() instanceof OdinTypeDefinitionExpression typeDefinitionExpression
-                        && typeDefinitionExpression.getDistinct() != null;
 
                 TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
+                if (metaType.getTypeExpression() instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+                    typeAlias.setDistinct(typeDefinitionExpression.getDistinct() != null);
+                    typeAlias.setPsiType(typeDefinitionExpression.getType());
+                } else {
+                    typeAlias.setPsiTypeExpression(metaType.getTypeExpression());
+                }
                 TsOdinType aliasedType = resolveMetaType(level + 1, symbolTable, metaType.getAliasedMetaType());
                 typeAlias.setDeclaration(metaType.getDeclaration());
                 typeAlias.setName(metaType.getName());
-                typeAlias.setDistinct(isDistinct);
                 typeAlias.setAliasedType(aliasedType);
                 typeAlias.setSymbolTable(aliasedType.getSymbolTable());
+
                 return typeAlias;
             }
         }
@@ -297,7 +301,6 @@ public class OdinTypeResolver extends OdinVisitor {
             case OdinProcedureOverloadDeclarationStatement procedureOverloadDeclarationStatement -> {
                 return doResolveType(symbolTable, procedureOverloadDeclarationStatement.getProcedureOverloadType());
             }
-
             case OdinBitFieldDeclarationStatement bitFieldDeclarationStatement -> {
                 return doResolveType(symbolTable, identifier, odinDeclaration, bitFieldDeclarationStatement.getBitFieldType());
             }
@@ -317,9 +320,11 @@ public class OdinTypeResolver extends OdinVisitor {
         typeAlias.setDeclaration(odinDeclaration);
         typeAlias.setDeclaredIdentifier(identifier);
         typeAlias.setName(identifier.getName());
+        typeAlias.setPsiTypeExpression(resolvedMetaType.getPsiTypeExpression());
 
         if (odinExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
             typeAlias.setDistinct(typeDefinitionExpression.getDistinct() != null);
+            typeAlias.setPsiType(typeDefinitionExpression.getType());
         }
         typeAlias.setSymbolTable(resolvedMetaType.getSymbolTable());
         return typeAlias;
@@ -344,7 +349,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitBitFieldType(@NotNull OdinBitFieldType o) {
         TsOdinBitFieldType tsOdinBitFieldType = new TsOdinBitFieldType();
-        tsOdinBitFieldType.setType(o);
+        tsOdinBitFieldType.setPsiType(o);
         initializeNamedType(tsOdinBitFieldType);
         this.type = tsOdinBitFieldType;
     }
@@ -387,7 +392,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitMultiPointerType(@NotNull OdinMultiPointerType o) {
         TsOdinMultiPointerType tsOdinMultiPointerType = new TsOdinMultiPointerType();
-        tsOdinMultiPointerType.setType(o);
+        tsOdinMultiPointerType.setPsiType(o);
         TsOdinType dereferencedType = resolveType(symbolTable, Objects.requireNonNull(o.getType()));
         tsOdinMultiPointerType.setDereferencedType(dereferencedType);
 
@@ -412,7 +417,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitUnionType(@NotNull OdinUnionType unionType) {
         TsOdinUnionType tsOdinUnionType = new TsOdinUnionType();
-        tsOdinUnionType.setType(unionType);
+        tsOdinUnionType.setPsiType(unionType);
         initializeNamedType(tsOdinUnionType);
 
         List<TsOdinParameter> parameters = createParameters(tsOdinUnionType, unionType.getParamEntryList());
@@ -437,7 +442,7 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitArrayType(@NotNull OdinArrayType arrayType) {
         TsOdinArrayType tsOdinArrayType = new TsOdinArrayType();
         tsOdinArrayType.setPsiSizeElement(arrayType.getArraySize());
-        tsOdinArrayType.setType(arrayType);
+        tsOdinArrayType.setPsiType(arrayType);
         TsOdinType elementType = resolveType(symbolTable, arrayType.getTypeDefinition());
         tsOdinArrayType.setElementType(elementType);
 
@@ -448,7 +453,7 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitMapType(@NotNull OdinMapType mapType) {
         TsOdinMapType tsOdinMapType = new TsOdinMapType();
         tsOdinMapType.setSymbolTable(symbolTable);
-        tsOdinMapType.setType(mapType);
+        tsOdinMapType.setPsiType(mapType);
         TsOdinType keyType = doResolveType(symbolTable, mapType.getKeyType());
         tsOdinMapType.setKeyType(keyType);
 
@@ -460,7 +465,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitPointerType(@NotNull OdinPointerType odinPointerType) {
         TsOdinPointerType tsOdinPointerType = new TsOdinPointerType();
-        tsOdinPointerType.setType(odinPointerType);
+        tsOdinPointerType.setPsiType(odinPointerType);
 
         TsOdinType elementType = doResolveType(symbolTable, Objects.requireNonNull(odinPointerType.getType()));
         tsOdinPointerType.setDereferencedType(elementType);
@@ -472,7 +477,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitProcedureType(@NotNull OdinProcedureType procedureType) {
         TsOdinProcedureType tsOdinProcedureType = new TsOdinProcedureType();
-        tsOdinProcedureType.setType(procedureType);
+        tsOdinProcedureType.setPsiType(procedureType);
         initializeNamedType(tsOdinProcedureType);
 
         List<TsOdinParameter> parameters = createParameters(tsOdinProcedureType, procedureType.getParamEntryList());
@@ -513,7 +518,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitStructType(@NotNull OdinStructType structType) {
         TsOdinStructType tsOdinStructType = new TsOdinStructType();
-        tsOdinStructType.setType(structType);
+        tsOdinStructType.setPsiType(structType);
         initializeNamedType(tsOdinStructType);
 
         List<OdinParamEntry> paramEntries = structType.getParamEntryList();
@@ -583,7 +588,7 @@ public class OdinTypeResolver extends OdinVisitor {
             }
         }
 
-        tsOdinEnumType.setType(o);
+        tsOdinEnumType.setPsiType(o);
 
         // TODO Set fields
         this.type = tsOdinEnumType;
@@ -599,7 +604,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
         tsOdinPolymorphicType.setSymbolTable(symbolTable);
 
-        tsOdinPolymorphicType.setType(polymorphicType);
+        tsOdinPolymorphicType.setPsiType(polymorphicType);
         this.type = tsOdinPolymorphicType;
     }
 
@@ -608,7 +613,7 @@ public class OdinTypeResolver extends OdinVisitor {
         OdinType mainType = constrainedType.getTypeList().get(0);
         OdinType specializedType = constrainedType.getTypeList().get(1);
         TsOdinConstrainedType tsOdinConstrainedType = new TsOdinConstrainedType();
-        tsOdinConstrainedType.setType(constrainedType);
+        tsOdinConstrainedType.setPsiType(constrainedType);
         initializeNamedType(tsOdinConstrainedType);
 
         TsOdinType tsOdinMainType = doResolveType(tsOdinConstrainedType.getSymbolTable(), mainType);
@@ -650,7 +655,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
         TsOdinMetaType createMetaType(OdinType type, TsOdinMetaType.MetaType metaType) {
             TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(metaType);
-            tsOdinMetaType.setType(type);
+            tsOdinMetaType.setPsiType(type);
 
             return tsOdinMetaType;
         }

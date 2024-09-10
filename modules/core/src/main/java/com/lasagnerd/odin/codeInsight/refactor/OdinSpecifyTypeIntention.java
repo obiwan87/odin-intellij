@@ -193,7 +193,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
         }
 
         public static void printType(TsOdinType tsOdinType) {
-            OdinType type = tsOdinType.getType();
+            OdinType type = tsOdinType.getPsiType();
             if(type != null) {
 
             }

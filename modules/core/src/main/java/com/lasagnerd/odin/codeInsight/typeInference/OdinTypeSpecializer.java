@@ -32,7 +32,7 @@ public class OdinTypeSpecializer {
                 genericType.getParameters(),
                 specializedType,
                 arguments);
-        specializedType.setType(genericType.getType());
+        specializedType.setPsiType(genericType.getPsiType());
         specializedType.setName(genericType.getName());
         specializedType.setDeclaration(genericType.getDeclaration());
         specializedType.setDeclaredIdentifier(genericType.getDeclaredIdentifier());
@@ -61,7 +61,7 @@ public class OdinTypeSpecializer {
         TsOdinProcedureType specializedType = new TsOdinProcedureType();
         specializedType.getSymbolTable().setPackagePath(genericType.getSymbolTable().getPackagePath());
         specializedType.getSymbolTable().putAll(genericType.getSymbolTable());
-        specializedType.setType(genericType.getType());
+        specializedType.setPsiType(genericType.getPsiType());
         specializedType.setName(genericType.getName());
         specializedType.setDeclaration(genericType.getDeclaration());
         specializedType.setDeclaredIdentifier(genericType.getDeclaredIdentifier());
@@ -88,7 +88,7 @@ public class OdinTypeSpecializer {
         specializedType.getSymbolTable().setPackagePath(genericType.getSymbolTable().getPackagePath());
         specializedType.setGenericType(genericType);
         specializedType.getSymbolTable().putAll(genericType.getSymbolTable());
-        specializedType.setType(genericType.getType());
+        specializedType.setPsiType(genericType.getPsiType());
         specializedType.setName(genericType.getName());
         specializedType.setDeclaration(genericType.getDeclaration());
         specializedType.setDeclaredIdentifier(genericType.getDeclaredIdentifier());
@@ -179,28 +179,33 @@ public class OdinTypeSpecializer {
         }
     }
 
+    // @formatter:off
     /**
+     *
      * The method substituteTypes maps $T -> Point as shown in the example below
      * declared type:         List($Item) { items: []$Item }
      * polymorphic parameter: List($T):       $Item -> $T
-     * |                   |
-     * v                   v
+     *                          |                   |
+     *                          v                   v
      * argument:              List(Point)   : $Item  -> Point
      *
      * @param parameterType The parameter type
      * @param argumentType  The argument type
      * @return a substitution map
      */
+    // @formatter:on
     public static @NotNull Map<String, TsOdinType> substituteTypes(TsOdinType parameterType, TsOdinType argumentType) {
         Map<String, TsOdinType> resolvedTypes = new HashMap<>();
         doSubstituteTypes(parameterType, argumentType, resolvedTypes);
         return resolvedTypes;
     }
 
-    private static void doSubstituteTypes(@NotNull TsOdinType parameterType, @NotNull TsOdinType argumentType, @NotNull Map<String, TsOdinType> resolvedTypes) {
+    private static void doSubstituteTypes(@NotNull TsOdinType parameterType,
+                                          @NotNull TsOdinType argumentType,
+                                          @NotNull Map<String, TsOdinType> resolvedTypes) {
         // When dealing with non-distinct type aliases, we substitute the alias with its base type
         // However, distinct types shall not be substituted. This behaviour has been tested using the odin compiler
-        if(argumentType instanceof TsOdinTypeAlias typeAlias && !typeAlias.isDistinct()) {
+        if (argumentType instanceof TsOdinTypeAlias typeAlias && !typeAlias.isDistinct()) {
             doSubstituteTypes(parameterType, typeAlias.getBaseType(), resolvedTypes);
             return;
         }
@@ -212,7 +217,7 @@ public class OdinTypeSpecializer {
                 doSubstituteTypes(constrainedType.getMainType(), argumentType, resolvedTypes);
                 TsOdinType resolvedMainType = resolvedTypes.get(constrainedType.getMainType().getName());
                 if (resolvedMainType != null) {
-                    if(resolvedMainType instanceof TsOdinTypeAlias typeAlias) {
+                    if (resolvedMainType instanceof TsOdinTypeAlias typeAlias) {
                         resolvedMainType = typeAlias.getBaseType();
                     }
                     doSubstituteTypes(constrainedType.getSpecializedType(), resolvedMainType, resolvedTypes);
@@ -276,7 +281,7 @@ public class OdinTypeSpecializer {
     private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, TsOdinParameter parameter, OdinSymbolTable symbolTable) {
         TsOdinType parameterType = parameter.getType();
         TsOdinType argumentType = inferType(symbolTable, argumentExpression);
-        if(parameterType != null) {
+        if (parameterType != null) {
             if (argumentType instanceof TsOdinMetaType metaType && (parameterType.isTypeId()
                     || parameterType.getMetaType() == metaType.getRepresentedMetaType())) {
                 return OdinTypeResolver.resolveMetaType(symbolTable, metaType);
@@ -286,9 +291,9 @@ public class OdinTypeSpecializer {
         }
 
         // TODO if argumentExpression is a reference to a polymorphic type we need to treat this as a polymorphic type
-        if(argumentExpression instanceof OdinRefExpression refExpression && argumentType == TsOdinBuiltInTypes.TYPEID) {
+        if (argumentExpression instanceof OdinRefExpression refExpression && argumentType == TsOdinBuiltInTypes.TYPEID) {
             OdinIdentifier identifier = refExpression.getIdentifier();
-            if(identifier != null) {
+            if (identifier != null) {
                 TsOdinType tsOdinType = symbolTable.getType(identifier.getText());
                 return Objects.requireNonNullElse(tsOdinType, TsOdinType.UNKNOWN);
             }
@@ -321,7 +326,9 @@ public class OdinTypeSpecializer {
     }
 
 
-    public static @NotNull TsOdinStructType specializeAndCacheStruct(OdinSymbolTable symbolTable, TsOdinStructType structType, @NotNull List<OdinArgument> argumentList) {
+    public static @NotNull TsOdinStructType specializeAndCacheStruct(OdinSymbolTable symbolTable,
+                                                                     TsOdinStructType structType,
+                                                                     @NotNull List<OdinArgument> argumentList) {
         TsOdinStructType specializedType = new TsOdinStructType();
         ArrayList<PsiElement> arguments = new ArrayList<>(argumentList);
         structType.getSymbolTable().addSpecializedType(structType, specializedType, arguments);
@@ -337,7 +344,9 @@ public class OdinTypeSpecializer {
         return specializedType;
     }
 
-    public static @NotNull TsOdinUnionType specializeAndCacheUnion(OdinSymbolTable symbolTable, TsOdinUnionType unionType, @NotNull List<OdinArgument> argumentList) {
+    public static @NotNull TsOdinUnionType specializeAndCacheUnion(OdinSymbolTable symbolTable,
+                                                                   TsOdinUnionType unionType,
+                                                                   @NotNull List<OdinArgument> argumentList) {
         TsOdinUnionType specializedType = new TsOdinUnionType();
         ArrayList<PsiElement> arguments = new ArrayList<>(argumentList);
         unionType.getSymbolTable().addSpecializedType(unionType, specializedType, arguments);
@@ -352,7 +361,9 @@ public class OdinTypeSpecializer {
         return specializedType;
     }
 
-    public static @NotNull TsOdinType specializeUnionOrGetCached(OdinSymbolTable symbolTable, TsOdinUnionType unionType, @NotNull List<OdinArgument> argumentList) {
+    public static @NotNull TsOdinType specializeUnionOrGetCached(OdinSymbolTable symbolTable,
+                                                                 TsOdinUnionType unionType,
+                                                                 @NotNull List<OdinArgument> argumentList) {
         TsOdinType specializedType = symbolTable.getSpecializedType(unionType, new ArrayList<>(argumentList));
         if (specializedType == null) {
             specializedType = specializeAndCacheUnion(symbolTable, unionType, argumentList);
@@ -360,7 +371,9 @@ public class OdinTypeSpecializer {
         return specializedType;
     }
 
-    public static @NotNull TsOdinStructType specializeStructOrGetCached(OdinSymbolTable symbolTable, TsOdinStructType structType, @NotNull List<OdinArgument> argumentList) {
+    public static @NotNull TsOdinStructType specializeStructOrGetCached(OdinSymbolTable symbolTable,
+                                                                        TsOdinStructType structType,
+                                                                        @NotNull List<OdinArgument> argumentList) {
         TsOdinType specializedType = symbolTable.getSpecializedType(structType, new ArrayList<>(argumentList));
         if (specializedType == null) {
             specializedType = specializeAndCacheStruct(symbolTable, structType, argumentList);
