@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
+import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinType;
 import lombok.Data;
 
@@ -11,6 +12,7 @@ public class TsOdinParameter {
 
     private boolean isExplicitPolymorphicParameter;
 
+    private OdinExpression defaultValueExpression;
     private OdinType psiType;
     private TsOdinType type;
 

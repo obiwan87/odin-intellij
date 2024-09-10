@@ -42,7 +42,7 @@ public class OdinTypeConverter {
 
     }
 
-    public static @NotNull TsOdinType convertTypeOfBinaryExpression(@NotNull TsOdinType a, @NotNull TsOdinType b) {
+    public static @NotNull TsOdinType findCompatibleType(@NotNull TsOdinType a, @NotNull TsOdinType b) {
         if (a.isUnknown() || b.isUnknown())
             return TsOdinType.UNKNOWN;
 
@@ -85,8 +85,9 @@ public class OdinTypeConverter {
     }
 
     private static TsOdinType doConvertTypes(TsOdinType a, TsOdinType b) {
-        if (a.isUntyped() && b.isUntyped())
+        if (a.isUntyped() && b.isUntyped()) {
             return convertUntypedTypes((TsOdinUntypedType) a, (TsOdinUntypedType) b);
+        }
 
         if (a == b)
             return a;

@@ -1686,18 +1686,18 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testTypeConversion() {
         {
-            TsOdinType tsOdinType = OdinTypeConverter.convertTypeOfBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
+            TsOdinType tsOdinType = OdinTypeConverter.findCompatibleType(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
         {
-            TsOdinType tsOdinType = OdinTypeConverter.convertTypeOfBinaryExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
+            TsOdinType tsOdinType = OdinTypeConverter.findCompatibleType(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.STRING);
         }
 
         {
             TsOdinArrayType arrayType = new TsOdinArrayType();
             arrayType.setElementType(TsOdinBuiltInTypes.I32);
-            TsOdinType tsOdinType = OdinTypeConverter.convertTypeOfBinaryExpression(arrayType, TsOdinBuiltInTypes.UNTYPED_INT);
+            TsOdinType tsOdinType = OdinTypeConverter.findCompatibleType(arrayType, TsOdinBuiltInTypes.UNTYPED_INT);
             assertEquals(tsOdinType, arrayType);
         }
     }

@@ -35,7 +35,7 @@ public abstract class TsOdinGenericType extends TsOdinType {
      * K -> TsOdinPolymorphicType,
      * V -> TsOdinPolymorphicType
      */
-    Map<String, TsOdinType> polymorphicParameters = new HashMap<>();
+    private Map<String, TsOdinType> polymorphicParameters = new HashMap<>();
 
     /**
      * For specialized types, this represents a mapping of a polymorphic
@@ -50,7 +50,7 @@ public abstract class TsOdinGenericType extends TsOdinType {
      * If a type only contains polymorphic parameters but no resolved ones, then it is considered
      * a generic type. Otherwise, it is considered a specialized type.
      */
-    Map<String, TsOdinType> resolvedPolymorphicParameters = new HashMap<>();
+    private Map<String, TsOdinType> resolvedPolymorphicParameters = new HashMap<>();
 
     public boolean isGeneric() {
         return !isSpecialized();

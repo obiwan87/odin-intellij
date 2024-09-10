@@ -272,23 +272,22 @@ circular_reference_test :: proc(render_commands: ^ClaryArray(RenderCommand)) {
 
 
 typeInference_procedureOverload :: proc() {
-/*
-make_slice,
-make_dynamic_array,
-make_dynamic_array_len,
-make_dynamic_array_len_cap,
-make_map,
-make_multi_pointer,
 
-make_soa_slice,
-make_soa_dynamic_array,
-make_soa_dynamic_array_len,
-make_soa_dynamic_array_len_cap,
-*/
-// Slice
-    overload :: proc { circular_reference_test, typeInference_procedureOverload, }
+    add_one_string :: proc(s: string) -> string {
+        return s + "1"
+    }
 
-    x := overload()
+    add_one_integer :: proc(i: i32) -> i32 {
+        return i + 1
+    }
+
+    add_one :: proc {
+        add_one_string,
+        add_one_integer,
+    }
+
+    x := add_one(1)
+    y := add_one("1")
 }
 
 testTypeInference_anyType :: proc(x : any) {
@@ -319,7 +318,7 @@ testTypeInference_withParaPolyAlias :: proc() {
         return arr[0]
     }
 
-    first  := get_first_element_2(PointList { Point { } } )
+    first := get_first_element_2(PointList { Point { } } )
     first2 := get_first_element  (PointList { Point { } } )
 
     first_dist := get_first_element_2(PointListDistinct2 { Point { } } )

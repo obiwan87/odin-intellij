@@ -5,7 +5,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
 
@@ -158,7 +157,8 @@ public class OdinTypeResolver extends OdinVisitor {
 //        System.out.println("\t".repeat(level) + message);
     }
 
-    private List<TsOdinParameter> createParameters(TsOdinType baseType, List<OdinParamEntry> paramEntries, OdinSymbolTable localScope) {
+    private List<TsOdinParameter> createParameters(TsOdinType baseType, List<OdinParamEntry> paramEntries) {
+        OdinSymbolTable localSymbolTable = baseType.getSymbolTable();
         List<TsOdinParameter> typeParameters = new ArrayList<>();
         int k = 0;
         for (var paramEntry : paramEntries) {
@@ -166,38 +166,42 @@ public class OdinTypeResolver extends OdinVisitor {
 
             // First, add all $Identifier expressions we encounter in this parameter to the current scope
 
-            // Implicit polymorphism
+            // Value polymorphism
             for (OdinPolymorphicType odinPolymorphicType : PsiTreeUtil.findChildrenOfType(paramEntry, OdinPolymorphicType.class)) {
-                TsOdinType tsOdinType = doResolveType(localScope, odinPolymorphicType);
-                localScope.addType(tsOdinType.getName(), tsOdinType);
-                localScope.add(odinPolymorphicType.getDeclaredIdentifier());
+                TsOdinType tsOdinType = doResolveType(localSymbolTable, odinPolymorphicType);
+                localSymbolTable.addType(tsOdinType.getName(), tsOdinType);
+                localSymbolTable.add(odinPolymorphicType.getDeclaredIdentifier());
                 if (baseType instanceof TsOdinGenericType tsOdinGenericType) {
                     tsOdinGenericType.getPolymorphicParameters().put(tsOdinType.getName(), tsOdinType);
                 }
             }
 
-            // Explicit polymorphism
-            // TODO this will also find the polymorphic types of above, but they will filtered out by the declaredIdentifier.getDollar() != null check
+            // Type polymorphism
+            // TODO Get rid of dollar in OdinDeclaredIdentifier
             for (OdinDeclaredIdentifier declaredIdentifier : PsiTreeUtil.findChildrenOfType(paramEntry, OdinDeclaredIdentifier.class)) {
                 if (declaredIdentifier.getDollar() != null) {
                     TsOdinPolymorphicType valuePolymorphicType = new TsOdinPolymorphicType();
                     String name = declaredIdentifier.getName();
                     valuePolymorphicType.setName(name);
                     valuePolymorphicType.setDeclaredIdentifier(declaredIdentifier);
-                    localScope.addType(valuePolymorphicType.getName(), valuePolymorphicType);
-                    localScope.add(declaredIdentifier);
+                    localSymbolTable.addType(valuePolymorphicType.getName(), valuePolymorphicType);
+                    localSymbolTable.add(declaredIdentifier);
                     if (baseType instanceof TsOdinGenericType tsOdinGenericType) {
                         tsOdinGenericType.getPolymorphicParameters().put(valuePolymorphicType.getName(), valuePolymorphicType);
                     }
                 }
             }
 
-            List<TsOdinParameterSpec> parameterSpecs = TsOdinParameterSpec.from(parameterDeclaration);
-            for (var declarationSpec : parameterSpecs) {
-                TsOdinParameter tsOdinParameter = mapSpecToParameter(localScope, declarationSpec, k);
+            List<TsOdinParameter> parameters = createParameters(parameterDeclaration, k);
+            for (var tsOdinParameter : parameters) {
+                if (tsOdinParameter.getPsiType() != null) {
+                    TsOdinType tsOdinType = doResolveType(symbolTable, tsOdinParameter.getPsiType());
+                    tsOdinParameter.setType(tsOdinType);
+                }
                 typeParameters.add(tsOdinParameter);
-                k++;
             }
+
+            k += parameters.size();
         }
 
         return typeParameters;
@@ -411,7 +415,7 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinUnionType.setType(unionType);
         initializeNamedType(tsOdinUnionType);
 
-        List<TsOdinParameter> parameters = createParameters(tsOdinUnionType, unionType.getParamEntryList(), tsOdinUnionType.getSymbolTable());
+        List<TsOdinParameter> parameters = createParameters(tsOdinUnionType, unionType.getParamEntryList());
         tsOdinUnionType.setParameters(parameters);
 
         OdinUnionBody unionBody = unionType.getUnionBlock().getUnionBody();
@@ -471,7 +475,7 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinProcedureType.setType(procedureType);
         initializeNamedType(tsOdinProcedureType);
 
-        List<TsOdinParameter> parameters = createParameters(tsOdinProcedureType, procedureType.getParamEntryList(), tsOdinProcedureType.getSymbolTable());
+        List<TsOdinParameter> parameters = createParameters(tsOdinProcedureType, procedureType.getParamEntryList());
         tsOdinProcedureType.setParameters(parameters);
 
         OdinReturnParameters returnParameters = procedureType.getReturnParameters();
@@ -494,7 +498,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 }
             } else {
                 List<OdinParamEntry> returnParameterEntries = returnParameters.getParamEntryList();
-                List<TsOdinParameter> tsOdinReturnParameters = createParameters(tsOdinProcedureType, returnParameterEntries, tsOdinProcedureType.getSymbolTable());
+                List<TsOdinParameter> tsOdinReturnParameters = createParameters(tsOdinProcedureType, returnParameterEntries);
                 for (TsOdinParameter tsOdinReturnParameter : tsOdinReturnParameters) {
                     tsOdinProcedureType.getReturnTypes().add(tsOdinReturnParameter.getType());
                 }
@@ -514,68 +518,56 @@ public class OdinTypeResolver extends OdinVisitor {
 
         List<OdinParamEntry> paramEntries = structType.getParamEntryList();
 
-        List<TsOdinParameter> parameters = createParameters(tsOdinStructType, paramEntries, tsOdinStructType.getSymbolTable());
+        List<TsOdinParameter> parameters = createParameters(tsOdinStructType, paramEntries);
         tsOdinStructType.setParameters(parameters);
 
         this.type = tsOdinStructType;
     }
 
-    // TODO pretty sure we don't need this anymore. This could be just a TsOdinParameter factory
-    @Data
-    private static class TsOdinParameterSpec {
-        OdinDeclaredIdentifier nameDeclaredIdentifier;
-        OdinType psiType;
-
-        boolean isValuePolymorphic() {
-            return nameDeclaredIdentifier != null && nameDeclaredIdentifier.getDollar() != null;
-        }
-
-        static List<TsOdinParameterSpec> from(OdinParameterDeclaration parameterDeclaration) {
-
-            if (parameterDeclaration instanceof OdinParameterInitialization odinParameterInitialization) {
-                TsOdinParameterSpec tsOdinParameterSpec = new TsOdinParameterSpec();
-                tsOdinParameterSpec.setPsiType(odinParameterInitialization.getTypeDefinition());
-                tsOdinParameterSpec.setNameDeclaredIdentifier(odinParameterInitialization.getParameter().getDeclaredIdentifier());
-                return List.of(tsOdinParameterSpec);
-            }
-
-            if (parameterDeclaration instanceof OdinParameterDeclarator odinParameterDeclarator) {
-                List<TsOdinParameterSpec> parameterSpecs = new ArrayList<>();
-                for (OdinParameter odinParameter : parameterDeclaration.getParameterList()) {
-                    TsOdinParameterSpec tsOdinParameterSpec = new TsOdinParameterSpec();
-                    tsOdinParameterSpec.setPsiType(odinParameterDeclarator.getTypeDefinition());
-                    tsOdinParameterSpec.setNameDeclaredIdentifier(odinParameter.getDeclaredIdentifier());
-                    parameterSpecs.add(tsOdinParameterSpec);
-                }
-                return parameterSpecs;
-            }
-
-            if (parameterDeclaration instanceof OdinUnnamedParameter unnamedParameter) {
-                TsOdinParameterSpec tsOdinParameterSpec = new TsOdinParameterSpec();
-                tsOdinParameterSpec.setPsiType(unnamedParameter.getTypeDefinition());
-                return Collections.singletonList(tsOdinParameterSpec);
-            }
-
-            return Collections.emptyList();
-        }
+    static boolean isValuePolymorphic(OdinDeclaredIdentifier nameDeclaredIdentifier) {
+        return nameDeclaredIdentifier != null && nameDeclaredIdentifier.getDollar() != null;
     }
 
-    private @NotNull TsOdinParameter mapSpecToParameter(OdinSymbolTable symbolTable, TsOdinParameterSpec parameterSpec, int parameterIndex) {
-        TsOdinParameter tsOdinParameter = new TsOdinParameter();
-        tsOdinParameter.setIdentifier(parameterSpec.getNameDeclaredIdentifier());
-        if (parameterSpec.getNameDeclaredIdentifier() != null) {
-            tsOdinParameter.setName(parameterSpec.getNameDeclaredIdentifier().getName());
-        }
-        tsOdinParameter.setExplicitPolymorphicParameter(parameterSpec.isValuePolymorphic());
-        tsOdinParameter.setIndex(parameterIndex);
-        if (parameterSpec.getPsiType() != null) {
-            TsOdinType tsOdinType = doResolveType(symbolTable, parameterSpec.getPsiType());
-            tsOdinParameter.setType(tsOdinType);
-        }
-        tsOdinParameter.setPsiType(parameterSpec.psiType);
+    static List<TsOdinParameter> createParameters(OdinParameterDeclaration parameterDeclaration, int k) {
 
+        if (parameterDeclaration instanceof OdinParameterInitialization odinParameterInitialization) {
+            OdinDeclaredIdentifier declaredIdentifier = odinParameterInitialization.getParameter().getDeclaredIdentifier();
 
-        return tsOdinParameter;
+            TsOdinParameter tsOdinParameter = new TsOdinParameter();
+            tsOdinParameter.setPsiType(odinParameterInitialization.getTypeDefinition());
+            tsOdinParameter.setIdentifier(declaredIdentifier);
+            tsOdinParameter.setExplicitPolymorphicParameter(isValuePolymorphic(declaredIdentifier));
+            tsOdinParameter.setDefaultValueExpression(odinParameterInitialization.getExpression());
+            tsOdinParameter.setName(declaredIdentifier.getText());
+            tsOdinParameter.setIndex(k);
+
+            return List.of(tsOdinParameter);
+        }
+
+        if (parameterDeclaration instanceof OdinParameterDeclarator odinParameterDeclarator) {
+            List<TsOdinParameter> parameterSpecs = new ArrayList<>();
+            for (OdinParameter odinParameter : parameterDeclaration.getParameterList()) {
+                OdinDeclaredIdentifier declaredIdentifier = odinParameter.getDeclaredIdentifier();
+                TsOdinParameter tsOdinParameterSpec = new TsOdinParameter();
+                tsOdinParameterSpec.setPsiType(odinParameterDeclarator.getTypeDefinition());
+                tsOdinParameterSpec.setIdentifier(declaredIdentifier);
+                tsOdinParameterSpec.setExplicitPolymorphicParameter(isValuePolymorphic(declaredIdentifier));
+                tsOdinParameterSpec.setName(declaredIdentifier.getName());
+                tsOdinParameterSpec.setIndex(k++);
+                parameterSpecs.add(tsOdinParameterSpec);
+            }
+            return parameterSpecs;
+        }
+
+        if (parameterDeclaration instanceof OdinUnnamedParameter unnamedParameter) {
+            TsOdinParameter tsOdinParameterSpec = new TsOdinParameter();
+            tsOdinParameterSpec.setPsiType(unnamedParameter.getTypeDefinition());
+            tsOdinParameterSpec.setIndex(k);
+
+            return Collections.singletonList(tsOdinParameterSpec);
+        }
+
+        return Collections.emptyList();
     }
 
     @Override
