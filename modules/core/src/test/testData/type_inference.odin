@@ -276,7 +276,7 @@ typeInference_procedureOverload :: proc() {
     PointAlias :: Point
 
     add_one_string :: proc(s: string) -> string {
-        return s + "1"
+        return "1"
     }
 
     add_one_integer :: proc(i: i32) -> i32 {
@@ -284,32 +284,49 @@ typeInference_procedureOverload :: proc() {
     }
 
     add_one_struct :: proc(p: Point) -> Point {
-        p.x += 1
         return p
     }
 
     add_one_distinct_alias :: proc(p: PointDistinctAlias) -> PointDistinctAlias {
         return 1
     }
-
-    add_one_alias :: proc(p: PointAlias, i: i32) -> i32 {
-        return i32
+    add_one_alias :: proc(p: PointAlias, k: i32) -> i32 {
+        return 1
     }
+
+    add_one_alias_2 :: proc(i: i32, p: PointAlias) -> f64 {
+        return 1.0
+    }
+
+    add_one_arr :: proc(arr: [2]i32) -> Point {
+        return Point { arr[0], arr[1] }
+    }
+
+    add_one_arr_2 :: proc(arr: [2]i64) -> Point {
+        return Point { arr[0], arr[1] }
+    }
+
 
     add_one :: proc {
-        add_one_string,
-        add_one_integer,
-        add_one_struct,
-        add_one_distinct_alias,
-        add_one_alias,
+    add_one_string,
+    add_one_integer,
+    add_one_struct,
+    add_one_distinct_alias,
+    add_one_alias,
+    add_one_alias_2,
+    add_one_arr,
+    add_one_arr_2,
     }
 
-    u := add_one(PointAlias {})
-    v := add_one(Point {}, 1)
-    w := add_one(PointDistinctAlias {})
+    r := add_one([2]i32{ 1, 2 })
+    s := add_one(12, PointAlias{ }) // ret f64
+    t := add_one(k=12, p=PointAlias{ }) // ret i32
+    u := add_one(PointAlias { })
+    v := add_one(Point { }, 1)
+    w := add_one(PointDistinctAlias { })
     x := add_one(1)
     y := add_one("1")
-    z := add_one(Point {})
+    z := add_one(Point { })
 }
 
 

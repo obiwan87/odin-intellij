@@ -1720,7 +1720,19 @@ public class OdinParsingTest extends UsefulTestCase {
     public void test_typeInference_procedureOverload() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "v");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "x");
+            assertInstanceOf(tsOdinType, TsOdinNumericType.class);
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+        }
+
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "s");
+            assertInstanceOf(tsOdinType, TsOdinNumericType.class);
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.F64);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "t");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
@@ -1728,6 +1740,11 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "u");
             assertInstanceOf(tsOdinType, TsOdinStructType.class);
             assertEquals(tsOdinType.getName(), "Point");
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "v");
+            assertInstanceOf(tsOdinType, TsOdinNumericType.class);
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "z");
@@ -1740,11 +1757,6 @@ public class OdinParsingTest extends UsefulTestCase {
             assertEquals(tsOdinType.getName(), "PointDistinctAlias");
         }
 
-        {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "x");
-            assertInstanceOf(tsOdinType, TsOdinNumericType.class);
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
-        }
 
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "y");

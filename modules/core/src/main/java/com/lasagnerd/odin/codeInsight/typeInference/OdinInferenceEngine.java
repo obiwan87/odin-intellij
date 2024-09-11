@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
@@ -300,7 +301,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 TsOdinProcedureOverloadType procedureOverloadType = (TsOdinProcedureOverloadType) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
 
 
-                List<TsOdinProcedureType> compatibleProcedures = new ArrayList<>();
+                List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, CompatibilityResult>>>> compatibleProcedures = new ArrayList<>();
                 for (TsOdinProcedureType targetProcedure : procedureOverloadType.getTargetProcedures()) {
                     Map<String, TsOdinParameter> parametersByName = targetProcedure.getParameters().stream().collect(Collectors.toMap(
                             TsOdinParameter::getName,
@@ -363,30 +364,105 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                     boolean allParametersCompatible = true;
 
+                    // Gather all compatible procedures along with their original argument
+                    List<Pair<TsOdinType, CompatibilityResult>> compatibilityResults = new ArrayList<>();
                     for (Map.Entry<TsOdinParameter, OdinExpression> entry : argumentExpressions.entrySet()) {
                         TsOdinParameter tsOdinParameter = entry.getKey();
 
                         TsOdinType parameterType = getBaseType(tsOdinParameter.getType());
                         TsOdinType argumentType = getBaseType(inferType(symbolTable, entry.getValue()));
 
-                        if (!areTypesCompatible(argumentType, parameterType)) {
+                        CompatibilityResult compatibilityResult = areTypesCompatible(argumentType, parameterType);
+                        if (!compatibilityResult.compatible) {
                             allParametersCompatible = false;
                             break;
                         }
+                        compatibilityResults.add(Pair.create(argumentType, compatibilityResult));
                     }
                     if (allParametersCompatible) {
-                        compatibleProcedures.add(targetProcedure);
+                        compatibleProcedures.add(Pair.create(targetProcedure, compatibilityResults));
                     }
                 }
 
                 if (compatibleProcedures.size() == 1) {
-                    this.type = inferTypeOfProcedureCall(o, compatibleProcedures.getFirst());
+                    this.type = inferTypeOfProcedureCall(o, compatibleProcedures.getFirst().getFirst());
+                } else if(!compatibleProcedures.isEmpty()) {
+                    TsOdinProcedureType bestProcedure = breakTie(compatibleProcedures);
+                    if(bestProcedure != null) {
+                        this.type = inferTypeOfProcedureCall(o, bestProcedure);
+                    }
                 }
             }
         }
     }
 
-    private static boolean areTypesCompatible(TsOdinType argumentType, TsOdinType parameterType) {
+    private static @Nullable TsOdinProcedureType breakTie(List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, CompatibilityResult>>>> compatibleProcedures) {
+        // tie-breaker if possible
+
+        // strict > both primitive >  (one array, one primitive: element type: strict > converted)
+        List<Pair<TsOdinProcedureType, Integer>> scores = new ArrayList<>();
+        for (Pair<TsOdinProcedureType, List<Pair<TsOdinType, CompatibilityResult>>> compatibleProcedure : compatibleProcedures) {
+            int score = 0;
+            TsOdinProcedureType tsOdinProcedureType = compatibleProcedure.getFirst();
+            for (Pair<TsOdinType, CompatibilityResult> compatibilityResult : compatibleProcedure.getSecond()) {
+                TsOdinType argumentType = compatibilityResult.getFirst();
+                CompatibilityResult result = compatibilityResult.getSecond();
+                if(result.strict) {
+                    score += 50;
+                } else {
+                    TsOdinType compatibleType = result.compatibleType();
+                    if(argumentType.getMetaType() != compatibleType.getMetaType()) {
+                        if(compatibleType.getMetaType() == ARRAY) {
+                            TsOdinArrayType tsOdinArrayType = (TsOdinArrayType) compatibleType;
+                            if(tsOdinArrayType.getElementType() == argumentType) {
+                                score += 30;
+                            } else {
+                                score += 20;
+                            }
+                        }
+                    } else {
+                        score += 40;
+                    }
+                }
+            }
+            scores.add(Pair.create(tsOdinProcedureType, score));
+        }
+
+        Integer maxScore = scores.stream().mapToInt(p -> p.getSecond()).max().orElseThrow();
+        List<Pair<TsOdinProcedureType, Integer>> maxScores = scores.stream().filter(p -> p.getSecond().equals(maxScore)).toList();
+        TsOdinProcedureType bestProcedure;
+        if(maxScores.size() == 1) {
+            bestProcedure = maxScores.getFirst().getFirst();
+        } else {
+            bestProcedure = null;
+        }
+        return bestProcedure;
+    }
+
+    record CompatibilityResult(boolean strict, boolean compatible, TsOdinType compatibleType) {
+
+    }
+
+    private static CompatibilityResult areTypesCompatible(TsOdinType argumentType, TsOdinType parameterType) {
+        boolean compatible = checkTypesStrictly(argumentType, parameterType);
+        if (compatible) {
+            return new CompatibilityResult(true, true, parameterType);
+        }
+
+
+        TsOdinType compatibleType = OdinTypeConverter.findCompatibleType(argumentType, parameterType);
+        if(compatibleType.isUnknown()) {
+            return new CompatibilityResult(false, false, null);
+        }
+
+        return new CompatibilityResult(false, true, compatibleType);
+    }
+
+    private static boolean checkTypesStrictly(TsOdinType argumentType, TsOdinType parameterType) {
+        if(argumentType == parameterType) {
+            return true;
+        }
+
         if (argumentType.getPsiType() != null && parameterType.getPsiType() != null) {
             return argumentType.getPsiType() == parameterType.getPsiType();
         }
@@ -395,8 +471,11 @@ public class OdinInferenceEngine extends OdinVisitor {
             return argumentType.getPsiType() == parameterType.getPsiType();
         }
 
-        TsOdinType compatibleType = OdinTypeConverter.findCompatibleType(argumentType, parameterType);
-        return compatibleType == parameterType;
+        if (argumentType.getMetaType() == ARRAY && parameterType.getMetaType() == ARRAY) {
+            return checkTypesStrictly(((TsOdinArrayType) argumentType).getElementType(), ((TsOdinArrayType) parameterType).getElementType());
+        }
+
+        return false;
     }
 
     private static TsOdinType getBaseType(TsOdinType t) {

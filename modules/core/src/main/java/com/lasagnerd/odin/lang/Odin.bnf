@@ -281,7 +281,7 @@ directiveStatement                   ::= directive
 
 // Procedure overloading
 procedureOverloadDeclarationStatement ::= (attribute eos?)* declaredIdentifier doubleColonOperator procedureOverloadType
-procedureOverloadType                 ::= PROC LBRACE procedureRef (COMMA procedureRef)* COMMA? RBRACE
+procedureOverloadType                 ::= PROC EOS_TOKEN? blockStart procedureRef (COMMA procedureRef)* (COMMA | EOS_TOKEN)? blockEnd
 procedureRef                          ::= qualifiedType | simpleRefType
 
 // TYPES
