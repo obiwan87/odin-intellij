@@ -24,7 +24,7 @@ public class MockFileUtils {
 
     public static @Nullable OdinFile createOdinFile(Project project, Path path) {
         LightVirtualFile virtualFile = MockFileUtils.createVirtualFile(path);
-        PsiFileFactory instance = PsiFileFactory.getInstance(project);
+        PsiFileFactory instance = project.getService(PsiFileFactory.class);
         if(instance instanceof PsiFileFactoryImpl fileFactory) {
             return (OdinFile) fileFactory.trySetupPsiForFile(virtualFile, OdinLanguage.INSTANCE, true, false);
         }

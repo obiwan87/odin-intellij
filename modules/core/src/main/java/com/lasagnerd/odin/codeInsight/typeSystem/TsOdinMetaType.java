@@ -40,7 +40,10 @@ public class TsOdinMetaType extends TsOdinType {
         STRUCT,
         UNION,
         UNKNOWN,
-        VOID, PROCEDURE_OVERLOAD, DISTINCT_TYPE,
+        VOID,
+        PROCEDURE_OVERLOAD,
+        DISTINCT_TYPE,
+        DYNAMIC_ARRAY,
     }
 
     private TsOdinType representedType;

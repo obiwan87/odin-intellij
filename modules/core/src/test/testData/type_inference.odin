@@ -268,9 +268,6 @@ circular_reference_test :: proc(render_commands: ^ClaryArray(RenderCommand)) {
     x := command.config
 }
 
-
-
-
 typeInference_procedureOverload :: proc() {
     PointDistinctAlias :: distinct Point
     PointAlias :: Point
@@ -338,7 +335,9 @@ typeInference_polyProcedureOverload :: proc() {
         return 1
     }
 
-    my_make :: proc { my_make_slice, my_make_dyn_array, }
+    my_make :: proc {
+    my_make_slice, my_make_dyn_array,
+    }
 
     x := my_make([]Point)
     y := my_make([dynamic]Point)
@@ -377,3 +376,81 @@ testTypeInference_withParaPolyAlias :: proc() {
 
     first_dist := get_first_element_2(PointListDistinct2 { Point { } } )
 }
+
+test_polyOverloadWithMake :: proc() {
+    
+    make_slice :: proc($T: typeid/[]$E, #any_int len: int, allocator := context.allocator, loc := #caller_location) -> (T, Allocator_Error) #optional_allocator_error {
+        return make_aligned(T, len, align_of(E), allocator, loc)
+    }
+
+    make_dynamic_array :: proc($T: typeid/[dynamic]$E, allocator := context.allocator, loc := #caller_location) -> (T, Allocator_Error) #optional_allocator_error {
+        return make_dynamic_array_len_cap(T, 0, 0, allocator, loc)
+    }
+
+    make_dynamic_array_len :: proc($T: typeid/[dynamic]$E, #any_int len: int, allocator := context.allocator, loc := #caller_location) -> (T, Allocator_Error) #optional_allocator_error {
+        return make_dynamic_array_len_cap(T, len, len, allocator, loc)
+    }
+
+    make_dynamic_array_len_cap :: proc($T: typeid/[dynamic]$E, #any_int len: int, #any_int cap: int, allocator := context.allocator, loc := #caller_location) -> (array: T, err: Allocator_Error) #optional_allocator_error {
+        err = _make_dynamic_array_len_cap((^Raw_Dynamic_Array)(&array), size_of(E), align_of(E), len, cap, allocator, loc)
+        return
+    }
+
+    make_map :: proc($T: typeid/map[$K]$E, #any_int capacity: int = 1 << MAP_MIN_LOG2_CAPACITY, allocator := context.allocator, loc := #caller_location) -> (m: T, err: Allocator_Error) #optional_allocator_error {
+        make_map_expr_error_loc(loc, capacity)
+        context.allocator = allocator
+
+        err = reserve_map(&m, capacity, loc)
+        return
+    }
+
+    make_multi_pointer :: proc($T: typeid/[^]$E, #any_int len: int, allocator := context.allocator, loc := #caller_location) -> (mp: T, err: Allocator_Error) #optional_allocator_error {
+        make_slice_error_loc(loc, len)
+        data := mem_alloc_bytes(size_of(E) * len, align_of(E), allocator, loc) or_return
+        if data == nil && size_of(E) != 0 {
+            return
+        }
+        mp = cast(T)raw_data(data)
+        return
+    }
+
+    make_soa_slice :: proc($T: typeid/#soa[]$E, length: int, allocator := context.allocator, loc := #caller_location) -> (array: T, err: Allocator_Error) #optional_allocator_error {
+        return make_soa_aligned(T, length, align_of(E), allocator, loc)
+    }
+
+    make_soa_dynamic_array :: proc($T: typeid/#soa[dynamic]$E, allocator := context.allocator, loc := #caller_location) -> (array: T, err: Allocator_Error) #optional_allocator_error {
+        context.allocator = allocator
+        reserve_soa(&array, 0, loc) or_return
+        return array, nil
+    }
+
+    make_soa_dynamic_array_len :: proc($T: typeid/#soa[dynamic]$E, #any_int length: int, allocator := context.allocator, loc := #caller_location) -> (array: T, err: Allocator_Error) #optional_allocator_error {
+        context.allocator = allocator
+        resize_soa(&array, length, loc) or_return
+        return array, nil
+    }
+
+    make_soa_dynamic_array_len_cap :: proc($T: typeid/#soa[dynamic]$E, #any_int length, capacity: int, allocator := context.allocator, loc := #caller_location) -> (array: T, err: Allocator_Error) #optional_allocator_error {
+        context.allocator = allocator
+        reserve_soa(&array, capacity, loc) or_return
+        resize_soa(&array, length, loc) or_return
+        return array, nil
+    }
+
+    make :: proc{
+    make_slice,
+    make_dynamic_array,
+    make_dynamic_array_len,
+    make_dynamic_array_len_cap,
+    make_map,
+    make_multi_pointer,
+
+    make_soa_slice,
+    make_soa_dynamic_array,
+    make_soa_dynamic_array_len,
+    make_soa_dynamic_array_len_cap,
+    }
+
+    x := make([]Point, 1)
+}
+

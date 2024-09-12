@@ -1,7 +1,10 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -11,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.doInferType;
+import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.inferType;
 import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes.RESERVED_TYPES;
 
 @EqualsAndHashCode(callSuper = true)
@@ -193,8 +197,12 @@ public class OdinTypeResolver extends OdinVisitor {
             List<TsOdinParameter> parameters = createParameters(parameterDeclaration, k);
             for (var tsOdinParameter : parameters) {
                 if (tsOdinParameter.getPsiType() != null) {
-                    TsOdinType tsOdinType = doResolveType(symbolTable, tsOdinParameter.getPsiType());
+                    TsOdinType tsOdinType = doResolveType(localSymbolTable, tsOdinParameter.getPsiType());
                     tsOdinParameter.setType(tsOdinType);
+                } else if(tsOdinParameter.getDefaultValueExpression() != null) {
+                    TsOdinType tsOdinType = inferType(localSymbolTable, tsOdinParameter.getDefaultValueExpression());
+                    tsOdinParameter.setType(tsOdinType);
+                    tsOdinParameter.setPsiType(tsOdinType.getPsiType());
                 }
                 typeParameters.add(tsOdinParameter);
             }
@@ -381,7 +389,25 @@ public class OdinTypeResolver extends OdinVisitor {
             tsOdinSliceType.setElementType(tsOdinElementType);
             tsOdinSliceType.setSymbolTable(symbolTable);
             tsOdinSliceType.setPsiType(o);
+            OdinDirectiveHead directiveHead = o.getDirectiveHead();
+            if(directiveHead != null) {
+                tsOdinSliceType.setSoa(directiveHead.getText().equals("#soa"));
+            }
+
             this.type = tsOdinSliceType;
+        }
+    }
+
+    @Override
+    public void visitDynamicArrayType(@NotNull OdinDynamicArrayType o) {
+        OdinType elementPsiType = o.getType();
+        TsOdinDynamicArray tsOdinDynamicArray = new TsOdinDynamicArray();
+        if (elementPsiType != null) {
+            TsOdinType tsOdinElementType = OdinTypeResolver.resolveType(symbolTable, elementPsiType);
+            tsOdinDynamicArray.setElementType(tsOdinElementType);
+            tsOdinDynamicArray.setSymbolTable(symbolTable);
+            tsOdinDynamicArray.setPsiType(o);
+            this.type = tsOdinDynamicArray;
         }
     }
 
@@ -477,6 +503,7 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinProcedureType tsOdinProcedureType = new TsOdinProcedureType();
         tsOdinProcedureType.setPsiType(procedureType);
         initializeNamedType(tsOdinProcedureType);
+//        addContextSymbol(procedureType.getProject(), tsOdinProcedureType);
 
         List<TsOdinParameter> parameters = createParameters(tsOdinProcedureType, procedureType.getParamEntryList());
         tsOdinProcedureType.setParameters(parameters);
@@ -510,6 +537,15 @@ public class OdinTypeResolver extends OdinVisitor {
         }
 
         this.type = tsOdinProcedureType;
+    }
+
+    private static void addContextSymbol(@NotNull Project project, TsOdinProcedureType tsOdinProcedureType) {
+        OdinSymbol contextSymbol = OdinBuiltinSymbolService.getInstance(project).createNewContextParameterSymbol();
+        OdinSymbolTable procSymbolTable = new OdinSymbolTable();
+        procSymbolTable.add(contextSymbol);
+        OdinSymbolTable symbolTable1 = tsOdinProcedureType.getSymbolTable();
+        procSymbolTable.setParentSymbolTable(symbolTable1);
+        tsOdinProcedureType.setSymbolTable(procSymbolTable);
     }
 
 
@@ -666,6 +702,11 @@ public class OdinTypeResolver extends OdinVisitor {
         @Override
         public void visitSliceType(@NotNull OdinSliceType o) {
             this.metaType = createMetaType(o, TsOdinMetaType.MetaType.SLICE);
+        }
+
+        @Override
+        public void visitDynamicArrayType(@NotNull OdinDynamicArrayType o) {
+            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.DYNAMIC_ARRAY);
         }
 
         @Override

@@ -10,6 +10,7 @@ import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType.
 @Data
 public class TsOdinSliceType extends TsOdinType {
     TsOdinType elementType;
+    boolean soa;
 
     @Override
     public TsOdinMetaType.MetaType getMetaType() {

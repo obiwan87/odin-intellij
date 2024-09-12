@@ -351,7 +351,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     for (int i = usedParameters.size() - 1; i >= 0; i--) {
                         TsOdinParameter tsOdinParameter = usedParameters.get(i);
                         if (tsOdinParameter.getDefaultValueExpression() != null) {
-                            argumentExpressions.put(tsOdinParameter, tsOdinParameter.getDefaultValueExpression());
+//                            argumentExpressions.put(tsOdinParameter, tsOdinParameter.getDefaultValueExpression());
                             usedParameters.remove(tsOdinParameter);
                         } else {
                             invalidArguments = true;
@@ -463,6 +463,10 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         if (tsOdinType instanceof TsOdinMultiPointerType multiPointerType) {
             this.type = multiPointerType.getDereferencedType();
+        }
+
+        if(tsOdinType instanceof TsOdinDynamicArray dynamicArray) {
+            this.type = dynamicArray.getElementType();
         }
     }
 
@@ -940,6 +944,16 @@ public class OdinInferenceEngine extends OdinVisitor {
                 if (tsOdinType instanceof TsOdinSliceType sliceType) {
                     if (index == 0) {
                         return createReferenceType(sliceType.getElementType(), isReference);
+                    }
+
+                    if (index == 1) {
+                        return TsOdinBuiltInTypes.INT;
+                    }
+                }
+
+                if(tsOdinType instanceof TsOdinDynamicArray dynamicArray) {
+                    if (index == 0) {
+                        return createReferenceType(dynamicArray.getElementType(), isReference);
                     }
 
                     if (index == 1) {

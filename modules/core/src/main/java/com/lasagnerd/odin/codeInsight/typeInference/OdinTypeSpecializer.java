@@ -231,6 +231,9 @@ public class OdinTypeSpecializer {
             if (parameterType instanceof TsOdinArrayType parameterArrayType
                     && argumentType instanceof TsOdinArrayType argumentArrayType) {
                 doSubstituteTypes(argumentArrayType.getElementType(), parameterArrayType.getElementType(), resolvedTypes);
+            } else if(parameterType instanceof TsOdinDynamicArray parDynamicArray
+                    && argumentType instanceof TsOdinDynamicArray argDynamicArray) {
+                doSubstituteTypes(argDynamicArray.getElementType(), parDynamicArray.getElementType(), resolvedTypes);
             } else if (parameterType instanceof TsOdinSliceType sliceType
                     && argumentType instanceof TsOdinSliceType sliceType1) {
                 doSubstituteTypes(sliceType1.getElementType(), sliceType.getElementType(), resolvedTypes);

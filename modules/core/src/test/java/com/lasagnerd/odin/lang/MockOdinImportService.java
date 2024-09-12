@@ -56,6 +56,10 @@ public class MockOdinImportService implements OdinImportService {
     public String getPackagePath(PsiElement psiElement) {
         String name = psiElement.getContainingFile().getVirtualFile().getName();
         String path = nameToPathMap.get(name);
+        if(path == null) {
+            System.out.println("Could not resolve path for " + name);
+            return null;
+        }
         return FileUtil.toSystemIndependentName(Path.of(path).getParent().toString());
     }
 

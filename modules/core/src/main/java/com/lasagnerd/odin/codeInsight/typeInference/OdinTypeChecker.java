@@ -41,12 +41,20 @@ public class OdinTypeChecker {
 
         if(argumentBaseType instanceof TsOdinSliceType argSliceType
                 && parameterBaseType instanceof TsOdinSliceType parSliceType) {
-            return checkTypesStrictly(argSliceType.getElementType(), parSliceType.getElementType());
+            if(argSliceType.isSoa() == parSliceType.isSoa()) {
+                return checkTypesStrictly(argSliceType.getElementType(), parSliceType.getElementType());
+            }
+            return false;
         }
 
         if(argumentBaseType instanceof TsOdinMatrixType argMatrixType
                 && parameterBaseType instanceof TsOdinMatrixType parMatrixType) {
             return checkTypesStrictly(argMatrixType.getElementType(), parMatrixType.getElementType());
+        }
+
+        if(argumentBaseType instanceof TsOdinDynamicArray argDynArray
+                && parameterBaseType instanceof TsOdinDynamicArray parDynArray) {
+            return checkTypesStrictly(argDynArray.getElementType(), parDynArray.getElementType());
         }
 
         return false;

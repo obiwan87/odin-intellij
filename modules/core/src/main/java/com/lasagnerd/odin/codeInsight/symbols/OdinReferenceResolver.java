@@ -3,11 +3,9 @@ package com.lasagnerd.odin.codeInsight.symbols;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinArrayType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 
-import static com.lasagnerd.odin.codeInsight.OdinInsightUtils.getSwizzleFields;
 import static com.lasagnerd.odin.codeInsight.imports.OdinImportUtils.getSymbolsOfImportedPackage;
 
 public class OdinReferenceResolver {

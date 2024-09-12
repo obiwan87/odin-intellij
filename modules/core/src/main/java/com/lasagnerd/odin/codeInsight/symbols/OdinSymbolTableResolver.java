@@ -26,11 +26,13 @@ import java.util.function.Predicate;
 
 public class OdinSymbolTableResolver {
     public static OdinSymbolTable computeSymbolTable(@NotNull PsiElement element) {
-        return findVisibleSymbols(element, OdinImportService.getInstance(element.getProject()).getPackagePath(element), s -> true);
+        return findVisibleSymbols(element, OdinImportService.getInstance(element.getProject())
+                .getPackagePath(element), s -> true);
     }
 
     public static OdinSymbolTable computeSymbolTable(@NotNull PsiElement element, Predicate<OdinSymbol> matcher) {
-        return findVisibleSymbols(element, OdinImportService.getInstance(element.getProject()).getPackagePath(element), matcher);
+        return findVisibleSymbols(element, OdinImportService.getInstance(element.getProject())
+                .getPackagePath(element), matcher);
     }
 
     public static OdinSymbolTable getFileScopeSymbols(@NotNull OdinFileScope fileScope) {

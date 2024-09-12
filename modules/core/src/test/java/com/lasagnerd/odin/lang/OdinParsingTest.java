@@ -133,6 +133,7 @@ public class OdinParsingTest extends UsefulTestCase {
         app.registerService(ReferenceProvidersRegistry.class, new ReferenceProvidersRegistryImpl());
         project.registerService(PsiDocumentManager.class, new MockPsiDocumentManager());
         project.registerService(PsiManager.class, myPsiManager);
+        project.registerService(PsiFileFactory.class, myFileFactory);
         project.registerService(TreeAspect.class, new TreeAspect());
         project.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(project, new PsiCachedValuesFactory(project)));
         project.registerService(StartupManager.class, new StartupManagerImpl(project, project.getCoroutineScope()));
@@ -1780,6 +1781,17 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_polyProcedureOverload", "y");
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I64);
+        }
+    }
+
+    public void test_typeInference_polyProcedureOverloadWithMake() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_polyOverloadWithMake", "x");
+            TsOdinTuple tsOdinTuple = assertInstanceOf(tsOdinType, TsOdinTuple.class);
+            TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinTuple.get(0), TsOdinSliceType.class);
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinSliceType.getElementType(), TsOdinStructType.class);
+            assertEquals("Point", tsOdinStructType.getName());
         }
     }
     public void test_typeInference_anyType() throws IOException {
