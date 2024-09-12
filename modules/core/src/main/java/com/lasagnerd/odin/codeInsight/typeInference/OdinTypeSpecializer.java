@@ -168,7 +168,7 @@ public class OdinTypeSpecializer {
                     instantiationScope.addType(tsOdinParameter.getName(), argumentType);
                 }
 
-                Map<String, TsOdinType> resolvedTypes = substituteTypes(parameterType, argumentType);
+                Map<String, TsOdinType> resolvedTypes = substituteTypes(argumentType, parameterType);
                 if (specializedType instanceof TsOdinGenericType generalizableType) {
                     generalizableType.getResolvedPolymorphicParameters().putAll(resolvedTypes);
                 }
@@ -181,32 +181,31 @@ public class OdinTypeSpecializer {
 
     // @formatter:off
     /**
-     *
      * The method substituteTypes maps $T -> Point as shown in the example below
      * declared type:         List($Item) { items: []$Item }
      * polymorphic parameter: List($T):       $Item -> $T
-     *                          |                   |
-     *                          v                   v
+     * |                   |
+     * v                   v
      * argument:              List(Point)   : $Item  -> Point
      *
-     * @param parameterType The parameter type
      * @param argumentType  The argument type
+     * @param parameterType The parameter type
      * @return a substitution map
      */
     // @formatter:on
-    public static @NotNull Map<String, TsOdinType> substituteTypes(TsOdinType parameterType, TsOdinType argumentType) {
+    public static @NotNull Map<String, TsOdinType> substituteTypes(TsOdinType argumentType, TsOdinType parameterType) {
         Map<String, TsOdinType> resolvedTypes = new HashMap<>();
-        doSubstituteTypes(parameterType, argumentType, resolvedTypes);
+        doSubstituteTypes(argumentType, parameterType, resolvedTypes);
         return resolvedTypes;
     }
 
-    private static void doSubstituteTypes(@NotNull TsOdinType parameterType,
-                                          @NotNull TsOdinType argumentType,
+    private static void doSubstituteTypes(@NotNull TsOdinType argumentType,
+                                          @NotNull TsOdinType parameterType,
                                           @NotNull Map<String, TsOdinType> resolvedTypes) {
         // When dealing with non-distinct type aliases, we substitute the alias with its base type
         // However, distinct types shall not be substituted. This behaviour has been tested using the odin compiler
         if (argumentType instanceof TsOdinTypeAlias typeAlias && !typeAlias.isDistinct()) {
-            doSubstituteTypes(parameterType, typeAlias.getBaseType(), resolvedTypes);
+            doSubstituteTypes(typeAlias.getBaseType(), parameterType, resolvedTypes);
             return;
         }
 
@@ -214,37 +213,43 @@ public class OdinTypeSpecializer {
             resolvedTypes.put(parameterType.getName(), argumentType);
         } else {
             if (parameterType instanceof TsOdinConstrainedType constrainedType) {
-                doSubstituteTypes(constrainedType.getMainType(), argumentType, resolvedTypes);
-                TsOdinType resolvedMainType = resolvedTypes.get(constrainedType.getMainType().getName());
+                TsOdinType resolvedMainType;
+                if (constrainedType.getMainType().isTypeId()) {
+                    resolvedMainType = argumentType;
+                } else {
+                    doSubstituteTypes(argumentType, constrainedType.getMainType(), resolvedTypes);
+
+                    resolvedMainType = resolvedTypes.get(constrainedType.getMainType().getName());
+                }
                 if (resolvedMainType != null) {
                     if (resolvedMainType instanceof TsOdinTypeAlias typeAlias) {
                         resolvedMainType = typeAlias.getBaseType();
                     }
-                    doSubstituteTypes(constrainedType.getSpecializedType(), resolvedMainType, resolvedTypes);
+                    doSubstituteTypes(resolvedMainType, constrainedType.getSpecializedType(), resolvedTypes);
                 }
             }
             if (parameterType instanceof TsOdinArrayType parameterArrayType
                     && argumentType instanceof TsOdinArrayType argumentArrayType) {
-                doSubstituteTypes(parameterArrayType.getElementType(), argumentArrayType.getElementType(), resolvedTypes);
+                doSubstituteTypes(argumentArrayType.getElementType(), parameterArrayType.getElementType(), resolvedTypes);
             } else if (parameterType instanceof TsOdinSliceType sliceType
                     && argumentType instanceof TsOdinSliceType sliceType1) {
-                doSubstituteTypes(sliceType.getElementType(), sliceType1.getElementType(), resolvedTypes);
+                doSubstituteTypes(sliceType1.getElementType(), sliceType.getElementType(), resolvedTypes);
             } else if (parameterType instanceof TsOdinPointerType pointerType
                     && argumentType instanceof TsOdinPointerType pointerType1) {
-                doSubstituteTypes(pointerType.getDereferencedType(), pointerType1.getDereferencedType(), resolvedTypes);
+                doSubstituteTypes(pointerType1.getDereferencedType(), pointerType.getDereferencedType(), resolvedTypes);
             } else if (parameterType instanceof TsOdinMultiPointerType pointerType
                     && argumentType instanceof TsOdinMultiPointerType pointerType1) {
-                doSubstituteTypes(pointerType.getDereferencedType(), pointerType1.getDereferencedType(), resolvedTypes);
+                doSubstituteTypes(pointerType1.getDereferencedType(), pointerType.getDereferencedType(), resolvedTypes);
             } else if (parameterType instanceof TsOdinMapType mapType
                     && argumentType instanceof TsOdinMapType mapType1) {
-                doSubstituteTypes(mapType.getKeyType(), mapType1.getKeyType(), resolvedTypes);
-                doSubstituteTypes(mapType.getValueType(), mapType1.getValueType(), resolvedTypes);
+                doSubstituteTypes(mapType1.getKeyType(), mapType.getKeyType(), resolvedTypes);
+                doSubstituteTypes(mapType1.getValueType(), mapType.getValueType(), resolvedTypes);
             } else if (parameterType instanceof TsOdinMatrixType matrixType &&
                     argumentType instanceof TsOdinMatrixType matrixType1) {
-                doSubstituteTypes(matrixType.getElementType(), matrixType1.getElementType(), resolvedTypes);
+                doSubstituteTypes(matrixType1.getElementType(), matrixType.getElementType(), resolvedTypes);
             } else if (parameterType instanceof TsOdinBitSetType bitSetType &&
                     argumentType instanceof TsOdinBitSetType bitSetType1) {
-                doSubstituteTypes(bitSetType.getElementType(), bitSetType1.getElementType(), resolvedTypes);
+                doSubstituteTypes(bitSetType1.getElementType(), bitSetType.getElementType(), resolvedTypes);
             } else if (parameterType instanceof TsOdinProcedureType procedureType &&
                     argumentType instanceof TsOdinProcedureType procedureType1) {
                 if (procedureType.getParameters().size() == procedureType1.getParameters().size()) {
@@ -254,14 +259,14 @@ public class OdinTypeSpecializer {
                     for (int i = 0; i < procedureType.getParameters().size(); i++) {
                         TsOdinParameter parameterParameter = procedureType.getParameters().get(i);
                         TsOdinParameter argumentParameter = procedureType1.getParameters().get(i);
-                        doSubstituteTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
+                        doSubstituteTypes(argumentParameter.getType(), parameterParameter.getType(), resolvedTypes);
                     }
                 }
                 if (procedureType.getReturnParameters().size() == procedureType1.getReturnParameters().size()) {
                     for (int i = 0; i < procedureType.getReturnParameters().size(); i++) {
                         TsOdinParameter parameterParameter = procedureType.getReturnParameters().get(i);
                         TsOdinParameter argumentParameter = procedureType1.getReturnParameters().get(i);
-                        doSubstituteTypes(parameterParameter.getType(), argumentParameter.getType(), resolvedTypes);
+                        doSubstituteTypes(argumentParameter.getType(), parameterParameter.getType(), resolvedTypes);
                     }
                 }
             } // This should be working only structs, unions and procedures
@@ -270,7 +275,7 @@ public class OdinTypeSpecializer {
                     for (Map.Entry<String, TsOdinType> entry : generalizableType.getResolvedPolymorphicParameters().entrySet()) {
                         TsOdinType nextArgumentType = generalizableType1.getResolvedPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinType.UNKNOWN);
                         TsOdinType nextParameterType = entry.getValue();
-                        doSubstituteTypes(nextParameterType, nextArgumentType, resolvedTypes);
+                        doSubstituteTypes(nextArgumentType, nextParameterType, resolvedTypes);
                     }
                 }
             }
@@ -282,8 +287,10 @@ public class OdinTypeSpecializer {
         TsOdinType parameterType = parameter.getType();
         TsOdinType argumentType = inferType(symbolTable, argumentExpression);
         if (parameterType != null) {
-            if (argumentType instanceof TsOdinMetaType metaType && (parameterType.isTypeId()
-                    || parameterType.getMetaType() == metaType.getRepresentedMetaType())) {
+            if (argumentType instanceof TsOdinMetaType metaType && (
+                    parameterType.isTypeId() || parameterType.getMetaType() == metaType.getRepresentedMetaType() ||
+                            (parameterType instanceof TsOdinConstrainedType constrainedType && constrainedType.getMainType().isTypeId()))
+            ) {
                 return OdinTypeResolver.resolveMetaType(symbolTable, metaType);
             }
         } else {

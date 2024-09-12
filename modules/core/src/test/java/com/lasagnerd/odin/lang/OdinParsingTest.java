@@ -914,6 +914,13 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testParapoly() throws IOException {
         OdinFile odinFile = load("src/test/testData/parapoly.odin");
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testParapoly_typeIdConstrained", "x");
+            TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinType, TsOdinSliceType.class);
+            assertEquals("Point", tsOdinSliceType.getElementType().getName());
+        }
+
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testParapoly_slice", "x");
             assertEquals("i32", tsOdinType.getName());

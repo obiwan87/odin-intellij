@@ -1,8 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinArrayType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeAlias;
+import com.lasagnerd.odin.codeInsight.typeSystem.*;
 
 import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType.ARRAY;
 
@@ -25,6 +23,14 @@ public class OdinTypeUtils {
 
         if (argumentType.getMetaType() == ARRAY && parameterType.getMetaType() == ARRAY) {
             return checkTypesStrictly(((TsOdinArrayType) argumentType).getElementType(), ((TsOdinArrayType) parameterType).getElementType());
+        }
+
+        if(argumentType instanceof TsOdinSliceType argSliceType && parameterType instanceof TsOdinSliceType parSliceType) {
+            return checkTypesStrictly(argSliceType.getElementType(), parSliceType.getElementType());
+        }
+
+        if(argumentType instanceof TsOdinMatrixType argMatrixType && parameterType instanceof TsOdinMatrixType parMatrixType) {
+            return checkTypesStrictly(argMatrixType.getElementType(), parMatrixType.getElementType());
         }
 
         return false;

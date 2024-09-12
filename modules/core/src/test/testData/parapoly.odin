@@ -35,6 +35,14 @@ testParapoly_slice_constrained :: proc() {
     x := parapoly_slice_constrained([]i32 { })
 }
 
+testParapoly_typeIdConstrained :: proc() {
+    my_poly :: proc($T: typeid/[]$E) -> T {
+
+    }
+
+    x := my_poly([]Point)
+}
+
 testParapoly_proc :: proc() {
     x := poly_proc(proc(x: i32) -> i32 {
         return 1
