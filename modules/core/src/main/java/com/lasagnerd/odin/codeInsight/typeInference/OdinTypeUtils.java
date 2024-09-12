@@ -13,6 +13,10 @@ public class OdinTypeUtils {
             return true;
         }
 
+        if(parameterType instanceof TsOdinPolymorphicType) {
+            return true;
+        }
+
         if (argumentType.getPsiType() != null && parameterType.getPsiType() != null) {
             return argumentType.getPsiType() == parameterType.getPsiType();
         }
@@ -20,6 +24,8 @@ public class OdinTypeUtils {
         if (argumentType.getPsiTypeExpression() != null && parameterType.getPsiTypeExpression() != null) {
             return argumentType.getPsiType() == parameterType.getPsiType();
         }
+
+
 
         if (argumentType.getMetaType() == ARRAY && parameterType.getMetaType() == ARRAY) {
             return checkTypesStrictly(((TsOdinArrayType) argumentType).getElementType(), ((TsOdinArrayType) parameterType).getElementType());

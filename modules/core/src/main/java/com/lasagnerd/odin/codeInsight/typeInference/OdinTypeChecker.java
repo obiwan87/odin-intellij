@@ -2,8 +2,8 @@ package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.OdinFieldDeclarationStatement;
+import com.lasagnerd.odin.lang.psi.OdinStructBody;
 import com.lasagnerd.odin.lang.psi.OdinStructType;
-import com.lasagnerd.odin.lang.psi.OdinType;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +26,7 @@ public class OdinTypeChecker {
     @Data
     public static class TypeCheckResult {
         private boolean compatible;
+        private boolean polymorphic;
         private List<ConversionAction> conversionActionList = new ArrayList<>();
     }
 
@@ -39,10 +40,27 @@ public class OdinTypeChecker {
     }
 
     public void doCheckTypes(TsOdinType type, TsOdinType expectedType) {
+
         type = convertToTyped(type, expectedType);
 
         if (OdinTypeUtils.checkTypesStrictly(type, expectedType)) {
             typeCheckResult.setCompatible(true);
+            return;
+        }
+
+        if(expectedType instanceof TsOdinPolymorphicType polymorphicType) {
+            typeCheckResult.setPolymorphic(true);
+            typeCheckResult.setCompatible(true);
+            return;
+        }
+
+        if(expectedType instanceof TsOdinConstrainedType constrainedType) {
+            if(type instanceof TsOdinMetaType metaType) {
+                if(metaType.getRepresentedType() == null) {
+                    OdinTypeResolver.resolveMetaType(metaType.getSymbolTable(), metaType);
+                }
+                doCheckTypes(metaType.getRepresentedType(), constrainedType.getSpecializedType());
+            }
             return;
         }
 
@@ -94,14 +112,17 @@ public class OdinTypeChecker {
                 type instanceof TsOdinStructType structType) {
             OdinStructType psiStructType = (OdinStructType) structType.getPsiType();
             // Check if there is a field "using" the expected struct
-            for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : psiStructType.getStructBlock().getStructBody().getFieldDeclarationStatementList()) {
-                if (odinFieldDeclarationStatement.getUsing() != null) {
-                    TsOdinType usingStructType = OdinTypeResolver
-                            .resolveType(structType.getSymbolTable(), odinFieldDeclarationStatement.getType());
+            OdinStructBody structBody = psiStructType.getStructBlock().getStructBody();
+            if(structBody != null) {
+                for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : structBody.getFieldDeclarationStatementList()) {
+                    if (odinFieldDeclarationStatement.getUsing() != null) {
+                        TsOdinType usingStructType = OdinTypeResolver
+                                .resolveType(structType.getSymbolTable(), odinFieldDeclarationStatement.getType());
 
-                    if (OdinTypeUtils.checkTypesStrictly(usingStructType, expectedType)) {
-                        addActionAndSetCompatible(ConversionAction.USING_SUBTYPE);
-                        return;
+                        if (OdinTypeUtils.checkTypesStrictly(usingStructType, expectedType)) {
+                            addActionAndSetCompatible(ConversionAction.USING_SUBTYPE);
+                            return;
+                        }
                     }
                 }
             }

@@ -1771,6 +1771,17 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void test_typeInference_polyProcedureOverload() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_polyProcedureOverload", "y");
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I64);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_polyProcedureOverload", "x");
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+        }
+    }
     public void test_typeInference_anyType() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         {

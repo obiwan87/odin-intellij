@@ -46,21 +46,14 @@ public class OdinTypeResolver extends OdinVisitor {
                                                        OdinDeclaredIdentifier declaredIdentifier,
                                                        OdinDeclaration declaration,
                                                        @NotNull OdinType type) {
-        if (type instanceof OdinQualifiedType || type instanceof OdinSimpleRefType) {
-            TsOdinType tsOdinType = resolveType(symbolTable, declaredIdentifier, declaration, type);
-            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(tsOdinType.getMetaType());
-            tsOdinMetaType.setName(tsOdinType.getName());
-            tsOdinMetaType.setDeclaredIdentifier(tsOdinMetaType.getDeclaredIdentifier());
-            tsOdinMetaType.setDeclaration(tsOdinType.getDeclaration());
-            tsOdinMetaType.setSymbolTable(tsOdinType.getSymbolTable());
-            tsOdinMetaType.setRepresentedType(tsOdinType);
-            return tsOdinMetaType;
-        }
 
-        TsOdinMetaType tsOdinMetaType = OdinMetaTypeResolver.resolveMetaType(type);
-        tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
-        tsOdinMetaType.setDeclaration(declaration);
-        tsOdinMetaType.setName(declaredIdentifier != null ? declaredIdentifier.getName() : null);
+        TsOdinType tsOdinType = resolveType(symbolTable, declaredIdentifier, declaration, type);
+        TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(tsOdinType.getMetaType());
+        tsOdinMetaType.setName(tsOdinType.getName());
+        tsOdinMetaType.setDeclaredIdentifier(tsOdinMetaType.getDeclaredIdentifier());
+        tsOdinMetaType.setDeclaration(tsOdinType.getDeclaration());
+        tsOdinMetaType.setSymbolTable(tsOdinType.getSymbolTable());
+        tsOdinMetaType.setRepresentedType(tsOdinType);
         return tsOdinMetaType;
     }
 
@@ -89,6 +82,7 @@ public class OdinTypeResolver extends OdinVisitor {
                     tsOdinType.setName(declaredIdentifier.getName());
                 }
                 tsOdinType.getSymbolTable().putAll(symbolTable);
+                metaType.setRepresentedType(tsOdinType);
                 return tsOdinType;
             } else if (metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
 
@@ -385,6 +379,8 @@ public class OdinTypeResolver extends OdinVisitor {
         if (elementPsiType != null) {
             TsOdinType tsOdinElementType = OdinTypeResolver.resolveType(symbolTable, elementPsiType);
             tsOdinSliceType.setElementType(tsOdinElementType);
+            tsOdinSliceType.setSymbolTable(symbolTable);
+            tsOdinSliceType.setPsiType(o);
             this.type = tsOdinSliceType;
         }
     }
@@ -441,10 +437,12 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitArrayType(@NotNull OdinArrayType arrayType) {
         TsOdinArrayType tsOdinArrayType = new TsOdinArrayType();
+        tsOdinArrayType.setSymbolTable(symbolTable);
         tsOdinArrayType.setPsiSizeElement(arrayType.getArraySize());
         tsOdinArrayType.setPsiType(arrayType);
         TsOdinType elementType = resolveType(symbolTable, arrayType.getTypeDefinition());
         tsOdinArrayType.setElementType(elementType);
+
 
         this.type = tsOdinArrayType;
     }

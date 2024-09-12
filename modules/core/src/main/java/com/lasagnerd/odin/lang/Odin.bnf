@@ -293,6 +293,7 @@ type                                 ::= mapType
                                          | bitSetType
                                          | multiPointerType
                                          | sliceType
+                                         | dynamicArrayType
                                          | arrayType
                                          | relativeType
                                          | procedureType
@@ -329,7 +330,10 @@ bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON 
 mapType                              ::= MAP LBRACKET type RBRACKET type {methods=[getKeyType getValueType]}
 matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET type
 arrayType                            ::= [directiveHead] LBRACKET arraySize RBRACKET type {methods=[getTypeDefinition]}
-arraySize                            ::= QUESTION|DYNAMIC|expression
+arraySize                            ::= QUESTION|expression
+
+dynamicArrayType                     ::= [directiveHead] LBRACKET DYNAMIC RBRACKET type {methods=[getTypeDefinition]}
+
 sliceType                            ::= [directiveHead] LBRACKET RBRACKET type
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList { methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
@@ -655,7 +659,19 @@ numericLiteral                       ::= INTEGER_DEC_LITERAL
 basicLiteral                         ::= stringLiteral
                                          | numericLiteral
 
-private compoundType                 ::= sliceType | arrayType | matrixType | bitSetType  | mapType | structType | bitFieldType | qualifiedType | callType | simpleRefType | parExpressionType
+private compoundType                 ::= sliceType
+                                        | dynamicArrayType
+                                        | arrayType
+                                        | matrixType
+                                        | bitSetType
+                                        | mapType
+                                        | structType
+                                        | bitFieldType
+                                        | qualifiedType
+                                        | callType
+                                        | simpleRefType
+                                        | parExpressionType
+
 parExpressionType                    ::= parenthesizedExpression
 
 

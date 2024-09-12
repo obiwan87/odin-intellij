@@ -7,8 +7,8 @@ import lombok.EqualsAndHashCode;
 @Data
 public class TsOdinConstrainedType extends TsOdinType {
 
-    TsOdinType mainType;
-    TsOdinType specializedType;
+    private TsOdinType mainType;
+    private TsOdinType specializedType;
 
     @Override
     public TsOdinMetaType.MetaType getMetaType() {

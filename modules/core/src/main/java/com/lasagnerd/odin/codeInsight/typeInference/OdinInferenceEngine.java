@@ -404,6 +404,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             int conversionCost = 0;
             TsOdinProcedureType tsOdinProcedureType = compatibleProcedure.getFirst();
             for (var compatibilityResult : compatibleProcedure.getSecond()) {
+
                 var result = compatibilityResult.getSecond();
                 conversionCost += result.getConversionActionList().size();
             }

@@ -329,7 +329,21 @@ typeInference_procedureOverload :: proc() {
     z := add_one(Point { })
 }
 
+typeInference_polyProcedureOverload :: proc() {
+    my_make_slice :: proc($K: typeid/[]$E) -> i32 {
+        return 1
+    }
 
+    my_make_dyn_array :: proc($K: typeid/[dynamic]$E) -> i64 {
+        return 1
+    }
+
+    my_make :: proc { my_make_slice, my_make_dyn_array, }
+
+    x := my_make([]Point)
+    y := my_make([dynamic]Point)
+
+}
 testTypeInference_anyType :: proc(x : any) {
     y := x
 }
