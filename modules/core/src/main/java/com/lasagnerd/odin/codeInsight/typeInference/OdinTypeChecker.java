@@ -39,12 +39,12 @@ public class OdinTypeChecker {
     }
 
     public void doCheckTypes(TsOdinType type, TsOdinType expectedType) {
+        type = convertToTyped(type, expectedType);
+
         if (OdinTypeUtils.checkTypesStrictly(type, expectedType)) {
             typeCheckResult.setCompatible(true);
             return;
         }
-
-        type = convertToTyped(type, expectedType);
 
         if (expectedType instanceof TsOdinArrayType tsOdinArrayType) {
             type = convertToTyped(type, tsOdinArrayType.getElementType());
@@ -111,7 +111,7 @@ public class OdinTypeChecker {
     private @NotNull TsOdinType convertToTyped(TsOdinType type, TsOdinType expectedType) {
         if (type.isUntyped()) {
             TsOdinType tsOdinType = OdinTypeConverter.convertToTyped(type, expectedType);
-            if (tsOdinType.isUnknown()) {
+            if (!tsOdinType.isUnknown()) {
                 typeCheckResult.conversionActionList.add(ConversionAction.PRIMITIVE_TYPE);
                 type = tsOdinType;
             }
