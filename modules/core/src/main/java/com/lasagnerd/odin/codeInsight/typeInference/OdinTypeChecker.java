@@ -12,6 +12,56 @@ import java.util.List;
 
 public class OdinTypeChecker {
 
+    static boolean checkTypesStrictly(TsOdinType argumentType, TsOdinType parameterType) {
+        final TsOdinType argumentBaseType = getBaseType(argumentType);
+        final TsOdinType parameterBaseType = getBaseType(parameterType);
+
+        if(argumentBaseType == parameterBaseType) {
+            return true;
+        }
+
+        if(parameterBaseType instanceof TsOdinPolymorphicType) {
+            return true;
+        }
+
+        if (argumentBaseType.getPsiType() != null && parameterBaseType.getPsiType() != null) {
+            if(argumentBaseType.getPsiType() == parameterBaseType.getPsiType())
+                return true;
+        }
+
+        if (argumentBaseType.getPsiTypeExpression() != null && parameterBaseType.getPsiTypeExpression() != null) {
+            if(argumentBaseType.getPsiType() == parameterBaseType.getPsiType())
+                return true;
+        }
+
+        if(argumentBaseType instanceof TsOdinArrayType argArrayType
+                && parameterBaseType instanceof TsOdinArrayType parArrayType) {
+            return checkTypesStrictly(argArrayType.getElementType(), parArrayType.getElementType());
+        }
+
+        if(argumentBaseType instanceof TsOdinSliceType argSliceType
+                && parameterBaseType instanceof TsOdinSliceType parSliceType) {
+            return checkTypesStrictly(argSliceType.getElementType(), parSliceType.getElementType());
+        }
+
+        if(argumentBaseType instanceof TsOdinMatrixType argMatrixType
+                && parameterBaseType instanceof TsOdinMatrixType parMatrixType) {
+            return checkTypesStrictly(argMatrixType.getElementType(), parMatrixType.getElementType());
+        }
+
+        return false;
+    }
+
+    public static TsOdinType getBaseType(TsOdinType t) {
+        if (t instanceof TsOdinTypeAlias alias) {
+            if (alias.isDistinct()) {
+                return alias;
+            }
+            return alias.getDistinctBaseType();
+        }
+        return t;
+    }
+
     public enum ConversionAction {
         PRIMITIVE_TYPE,
         TO_ARRAY,
@@ -43,12 +93,12 @@ public class OdinTypeChecker {
 
         type = convertToTyped(type, expectedType);
 
-        if (OdinTypeUtils.checkTypesStrictly(type, expectedType)) {
+        if (checkTypesStrictly(type, expectedType)) {
             typeCheckResult.setCompatible(true);
             return;
         }
 
-        if(expectedType instanceof TsOdinPolymorphicType polymorphicType) {
+        if(expectedType instanceof TsOdinPolymorphicType) {
             typeCheckResult.setPolymorphic(true);
             typeCheckResult.setCompatible(true);
             return;
@@ -66,7 +116,7 @@ public class OdinTypeChecker {
 
         if (expectedType instanceof TsOdinArrayType tsOdinArrayType) {
             type = convertToTyped(type, tsOdinArrayType.getElementType());
-            if (OdinTypeUtils.checkTypesStrictly(type, tsOdinArrayType.getElementType())) {
+            if (checkTypesStrictly(type, tsOdinArrayType.getElementType())) {
                 addActionAndSetCompatible(ConversionAction.TO_ARRAY);
                 return;
             }
@@ -74,7 +124,7 @@ public class OdinTypeChecker {
 
         if (expectedType instanceof TsOdinMatrixType tsOdinMatrixType) {
             type = convertToTyped(type, tsOdinMatrixType.getElementType());
-            if (OdinTypeUtils.checkTypesStrictly(type, tsOdinMatrixType.getElementType())) {
+            if (checkTypesStrictly(type, tsOdinMatrixType.getElementType())) {
                 addActionAndSetCompatible(ConversionAction.TO_MATRIX);
                 return;
             }
@@ -87,7 +137,7 @@ public class OdinTypeChecker {
             }
 
             if (expectedType instanceof TsOdinMultiPointerType tsOdinMultiPointerType) {
-                if (OdinTypeUtils.checkTypesStrictly(tsOdinPointerType.getDereferencedType(), tsOdinMultiPointerType.getDereferencedType())) {
+                if (checkTypesStrictly(tsOdinPointerType.getDereferencedType(), tsOdinMultiPointerType.getDereferencedType())) {
                     addActionAndSetCompatible(ConversionAction.MP_TO_POINTER);
                 }
             }
@@ -95,7 +145,7 @@ public class OdinTypeChecker {
 
         if (type instanceof TsOdinMultiPointerType tsOdinMultiPointerType) {
             if (expectedType instanceof TsOdinPointerType expectedPointerType) {
-                if (OdinTypeUtils.checkTypesStrictly(tsOdinMultiPointerType.getDereferencedType(), expectedPointerType.getDereferencedType())) {
+                if (checkTypesStrictly(tsOdinMultiPointerType.getDereferencedType(), expectedPointerType.getDereferencedType())) {
                     addActionAndSetCompatible(ConversionAction.POINTER_TO_MP);
                     return;
                 }
@@ -119,7 +169,7 @@ public class OdinTypeChecker {
                         TsOdinType usingStructType = OdinTypeResolver
                                 .resolveType(structType.getSymbolTable(), odinFieldDeclarationStatement.getType());
 
-                        if (OdinTypeUtils.checkTypesStrictly(usingStructType, expectedType)) {
+                        if (checkTypesStrictly(usingStructType, expectedType)) {
                             addActionAndSetCompatible(ConversionAction.USING_SUBTYPE);
                             return;
                         }

@@ -369,8 +369,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                     for (Map.Entry<TsOdinParameter, OdinExpression> entry : argumentExpressions.entrySet()) {
                         TsOdinParameter tsOdinParameter = entry.getKey();
 
-                        TsOdinType parameterType = OdinTypeUtils.getBaseType(tsOdinParameter.getType());
-                        TsOdinType argumentType = OdinTypeUtils.getBaseType(inferType(symbolTable, entry.getValue()));
+                        TsOdinType parameterType = OdinTypeChecker.getBaseType(tsOdinParameter.getType());
+                        TsOdinType argumentType = OdinTypeChecker.getBaseType(inferType(symbolTable, entry.getValue()));
 
                         OdinTypeChecker.TypeCheckResult compatibilityResult = OdinTypeChecker.checkTypes(argumentType, parameterType);
                         if (!compatibilityResult.isCompatible()) {
