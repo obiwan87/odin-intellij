@@ -32,7 +32,13 @@ public class OdinTypeChecker {
 
     TypeCheckResult typeCheckResult = new TypeCheckResult();
 
-    public void checkTypes(TsOdinType type, TsOdinType expectedType) {
+    public static TypeCheckResult checkTypes(TsOdinType type, TsOdinType expectedType) {
+        OdinTypeChecker odinTypeChecker = new OdinTypeChecker();
+        odinTypeChecker.doCheckTypes(type, expectedType);
+        return odinTypeChecker.typeCheckResult;
+    }
+
+    public void doCheckTypes(TsOdinType type, TsOdinType expectedType) {
         if (OdinTypeUtils.checkTypesStrictly(type, expectedType)) {
             typeCheckResult.setCompatible(true);
             return;

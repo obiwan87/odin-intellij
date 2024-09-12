@@ -53,6 +53,7 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeChecker;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -1724,8 +1725,6 @@ public class OdinParsingTest extends UsefulTestCase {
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
-
-
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "s");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
@@ -1781,14 +1780,6 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    public void testProcedureOverload() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
-        {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "x");
-            System.out.println(tsOdinType);
-        }
-    }
-
     public void testParapolyWithAliases() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         {
@@ -1811,12 +1802,45 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testTypeChecker_conversionToExpectedType() throws IOException{
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = load("src/test/testData/type_checker.odin");
         {
+            OdinProcedureDeclarationStatement testTypeConversion = findFirstProcedure(file, "testTypeConversion");
+            List<OdinBlockStatement> blocks = getProcedureBlocks(testTypeConversion);
+
+            OdinBlockStatement firstBlock = blocks.getFirst();
+            OdinVariableDeclarationStatement varType = findFirstVariableDeclaration(firstBlock, "type");
+            TsOdinType tsOdinType = inferTypeOfDeclaration(varType);
+            OdinVariableDeclarationStatement varExpectedType = findFirstVariableDeclaration(firstBlock, "expected_type");
+            TsOdinType tsOdinExpectedType = inferTypeOfDeclaration(varExpectedType);
+
+            OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(tsOdinType, tsOdinExpectedType);
+            assertTrue(typeCheckResult.isCompatible());
+            assertEquals(typeCheckResult.getConversionActionList().size(), 1);
+
         }
     }
 
+
+    private static @NotNull List<OdinBlockStatement> getProcedureBlocks(OdinProcedureDeclarationStatement testTypeConversion) {
+        OdinStatementList statementList = testTypeConversion.getProcedureDefinition().getProcedureBody().getBlock().getStatementList();
+        List<OdinBlockStatement> blocks = new ArrayList<>();
+        for (OdinStatement odinStatement : Objects.requireNonNull(statementList).getStatementList()) {
+            if(odinStatement instanceof OdinBlockStatement blockStatement) {
+                blocks.add(blockStatement);
+            }
+        }
+        return blocks;
+    }
+
     // Helpers
+
+    private static TsOdinType inferTypeOfDeclaration(OdinDeclaration declaration) {
+        return OdinInferenceEngine.resolveTypeOfDeclaration(null,
+                OdinSymbolTableResolver.computeSymbolTable(declaration),
+                declaration.getDeclaredIdentifiers().getFirst(),
+                declaration);
+    }
+
     private static void assertTopMostRefExpressionTextEquals(PsiElement odinStatement, String expected, String identifierName) {
         OdinRefExpression topMostRefExpression = getTopMostRefExpression(odinStatement, identifierName);
         assertNotNull(topMostRefExpression);
@@ -1864,6 +1888,16 @@ public class OdinParsingTest extends UsefulTestCase {
         Collection<OdinVariableInitializationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinVariableInitializationStatement.class);
 
         OdinVariableInitializationStatement variable = vars.stream()
+                .filter(v -> v.getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
+                .findFirst().orElse(null);
+        assertNotNull(variable);
+
+        return variable;
+    }
+    private static @NotNull OdinVariableDeclarationStatement findFirstVariableDeclaration(PsiElement parent, String variableName) {
+        Collection<OdinVariableDeclarationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinVariableDeclarationStatement.class);
+
+        OdinVariableDeclarationStatement variable = vars.stream()
                 .filter(v -> v.getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
                 .findFirst().orElse(null);
         assertNotNull(variable);

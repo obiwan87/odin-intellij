@@ -746,7 +746,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     }
 
-    public static TsOdinType resolveTypeOfDeclaration(@NotNull OdinIdentifier identifier,
+    public static TsOdinType resolveTypeOfDeclaration(@Nullable OdinIdentifier identifier,
                                                       OdinSymbolTable parentSymbolTable,
                                                       OdinDeclaredIdentifier declaredIdentifier,
                                                       OdinDeclaration odinDeclaration) {
@@ -990,7 +990,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         }
 
-        if (odinDeclaration instanceof OdinSwitchTypeVariableDeclaration) {
+        if (odinDeclaration instanceof OdinSwitchTypeVariableDeclaration && identifier != null) {
             OdinSwitchInBlock switchInBlock = PsiTreeUtil.getParentOfType(odinDeclaration, OdinSwitchInBlock.class, true);
             if (switchInBlock != null) {
                 TsOdinType tsOdinType = inferType(parentSymbolTable, switchInBlock.getExpression());
