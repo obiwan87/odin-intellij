@@ -101,7 +101,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         TokenSet tokenSet = TokenSet.create(OdinTypes.PLUS, OdinTypes.STAR, OdinTypes.DIV, OdinTypes.MOD);
         if (tokenSet.contains(elementType)) {
-            this.type = OdinTypeConverter.findCompatibleType(leftType, rightType);
+            this.type = OdinTypeConverter.inferTypeOfBinaryExpression(leftType, rightType);
         }
     }
 
@@ -369,8 +369,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                     for (Map.Entry<TsOdinParameter, OdinExpression> entry : argumentExpressions.entrySet()) {
                         TsOdinParameter tsOdinParameter = entry.getKey();
 
-                        TsOdinType parameterType = getBaseType(tsOdinParameter.getType());
-                        TsOdinType argumentType = getBaseType(inferType(symbolTable, entry.getValue()));
+                        TsOdinType parameterType = OdinTypeUtils.getBaseType(tsOdinParameter.getType());
+                        TsOdinType argumentType = OdinTypeUtils.getBaseType(inferType(symbolTable, entry.getValue()));
 
                         CompatibilityResult compatibilityResult = areTypesCompatible(argumentType, parameterType);
                         if (!compatibilityResult.compatible) {
@@ -444,48 +444,18 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     private static CompatibilityResult areTypesCompatible(TsOdinType argumentType, TsOdinType parameterType) {
-        boolean compatible = checkTypesStrictly(argumentType, parameterType);
+        boolean compatible = OdinTypeUtils.checkTypesStrictly(argumentType, parameterType);
         if (compatible) {
             return new CompatibilityResult(true, true, parameterType);
         }
 
 
-        TsOdinType compatibleType = OdinTypeConverter.findCompatibleType(argumentType, parameterType);
+        TsOdinType compatibleType = OdinTypeConverter.inferTypeOfBinaryExpression(argumentType, parameterType);
         if(compatibleType.isUnknown()) {
             return new CompatibilityResult(false, false, null);
         }
 
         return new CompatibilityResult(false, true, compatibleType);
-    }
-
-    private static boolean checkTypesStrictly(TsOdinType argumentType, TsOdinType parameterType) {
-        if(argumentType == parameterType) {
-            return true;
-        }
-
-        if (argumentType.getPsiType() != null && parameterType.getPsiType() != null) {
-            return argumentType.getPsiType() == parameterType.getPsiType();
-        }
-
-        if (argumentType.getPsiTypeExpression() != null && parameterType.getPsiTypeExpression() != null) {
-            return argumentType.getPsiType() == parameterType.getPsiType();
-        }
-
-        if (argumentType.getMetaType() == ARRAY && parameterType.getMetaType() == ARRAY) {
-            return checkTypesStrictly(((TsOdinArrayType) argumentType).getElementType(), ((TsOdinArrayType) parameterType).getElementType());
-        }
-
-        return false;
-    }
-
-    private static TsOdinType getBaseType(TsOdinType t) {
-        if (t instanceof TsOdinTypeAlias alias) {
-            if (alias.isDistinct()) {
-                return alias;
-            }
-            return alias.getDistinctBaseType();
-        }
-        return t;
     }
 
     private TsOdinType inferTypeOfProcedureCall(@NotNull OdinCallExpression o, TsOdinProcedureType procedureType) {

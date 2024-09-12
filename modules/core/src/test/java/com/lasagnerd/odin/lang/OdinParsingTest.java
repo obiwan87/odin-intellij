@@ -1686,18 +1686,18 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testTypeConversion() {
         {
-            TsOdinType tsOdinType = OdinTypeConverter.findCompatibleType(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
         {
-            TsOdinType tsOdinType = OdinTypeConverter.findCompatibleType(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfBinaryExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.STRING);
         }
 
         {
             TsOdinArrayType arrayType = new TsOdinArrayType();
             arrayType.setElementType(TsOdinBuiltInTypes.I32);
-            TsOdinType tsOdinType = OdinTypeConverter.findCompatibleType(arrayType, TsOdinBuiltInTypes.UNTYPED_INT);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfBinaryExpression(arrayType, TsOdinBuiltInTypes.UNTYPED_INT);
             assertEquals(tsOdinType, arrayType);
         }
     }
@@ -1807,6 +1807,12 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference_withParaPolyAlias", "first_dist");
             TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
             assertEquals("Point", tsOdinStructType.getName());
+        }
+    }
+
+    public void testTypeChecker_conversionToExpectedType() throws IOException{
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
         }
     }
 

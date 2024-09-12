@@ -42,7 +42,7 @@ public class OdinTypeConverter {
 
     }
 
-    public static @NotNull TsOdinType findCompatibleType(@NotNull TsOdinType a, @NotNull TsOdinType b) {
+    public static @NotNull TsOdinType inferTypeOfBinaryExpression(@NotNull TsOdinType a, @NotNull TsOdinType b) {
         if (a.isUnknown() || b.isUnknown())
             return TsOdinType.UNKNOWN;
 
@@ -58,7 +58,7 @@ public class OdinTypeConverter {
                     return arrayTypeA;
             }
 
-            return doConvertTypes(a, b);
+            return convertToTyped(a, b);
         }
 
         // Give arrays the precedence
@@ -76,7 +76,7 @@ public class OdinTypeConverter {
 
     private static TsOdinType convertToArrayType(TsOdinArrayType arrayType, TsOdinType builtInType) {
         if (arrayType.getElementType() instanceof TsOdinBuiltInType) {
-            TsOdinType tsOdinType = doConvertTypes(arrayType.getElementType(), builtInType);
+            TsOdinType tsOdinType = convertToTyped(arrayType.getElementType(), builtInType);
             if (!tsOdinType.isUnknown()) {
                 return arrayType;
             }
@@ -84,7 +84,7 @@ public class OdinTypeConverter {
         return TsOdinType.UNKNOWN;
     }
 
-    private static TsOdinType doConvertTypes(TsOdinType a, TsOdinType b) {
+    public static TsOdinType convertToTyped(TsOdinType a, TsOdinType b) {
         if (a.isUntyped() && b.isUntyped()) {
             return convertUntypedTypes((TsOdinUntypedType) a, (TsOdinUntypedType) b);
         }
@@ -92,8 +92,7 @@ public class OdinTypeConverter {
         if (a == b)
             return a;
 
-        // Here we know that b is untyped and a isn't
-
+        // Here we know that 'b' is untyped and 'a' isn't
         TsOdinUntypedType untypedType;
         TsOdinType typed;
 
@@ -120,6 +119,7 @@ public class OdinTypeConverter {
         TsOdinType typedA = convertToTyped(untypedA);
         TsOdinType typedB = convertToTyped(untypedB);
 
+        // In case of string vs rune vs numeric
         if (typedA.getMetaType() != typedB.getMetaType())
             return TsOdinType.UNKNOWN;
 
