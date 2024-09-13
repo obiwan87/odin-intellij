@@ -44,7 +44,7 @@ public class OdinPsiElementFactory {
         OdinFile file = createFile(dummyCode);
         OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().getFirst();
         if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            OdinExpression odinExpression = variableInitializationStatement.getExpressionsList().getExpressionList().getFirst();
+            OdinExpression odinExpression = variableInitializationStatement.getRhsExpressions().getExpressionList().getFirst();
             if (odinExpression instanceof OdinRefExpression refExpression) {
                 return Objects.requireNonNull(refExpression.getIdentifier());
             }
@@ -100,13 +100,13 @@ public class OdinPsiElementFactory {
 
     public OdinVariableInitializationStatement createVariableInitializationStatement(String name, OdinExpression valueExpression) {
         OdinVariableInitializationStatement statement = createVariableInitializationStatement(name, "v");
-        statement.getExpressionsList().getExpressionList().getFirst().replace(valueExpression);
+        statement.getRhsExpressions().getExpressionList().getFirst().replace(valueExpression);
         return statement;
     }
 
     public OdinVariableInitializationStatement createVariableInitializationStatement(String name, String type, OdinExpression valueExpression) {
         OdinVariableInitializationStatement statement = createVariableInitializationStatement(name, type, "v");
-        statement.getExpressionsList().getExpressionList().getFirst().replace(valueExpression);
+        statement.getRhsExpressions().getExpressionList().getFirst().replace(valueExpression);
         return statement;
     }
 

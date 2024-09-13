@@ -378,7 +378,8 @@ testTypeInference_withParaPolyAlias :: proc() {
 }
 
 test_polyOverloadWithMake :: proc() {
-    Allocator_Error :: struct {}
+    Allocator_Error :: struct {
+    }
     make_slice :: proc($T: typeid/[]$E, #any_int len: int, allocator := context.allocator, loc := #caller_location) -> (T, Allocator_Error) #optional_allocator_error {
         return make_aligned(T, len, align_of(E), allocator, loc)
     }
@@ -468,4 +469,37 @@ test_procedureContext :: proc() {
     y := context.allocator.data
 }
 
+test_structField :: proc() {
 
+    x : Point = {
+        x = 1,
+        y = 2
+    }
+
+    MyStruct :: struct {
+        p1, p2: Point,
+        a: struct {
+            alpha, beta, gamma: f64
+        }
+    }
+
+    l : MyStruct = {
+        p1 = { x = 1, y = 1 },
+        p2 = { x = 2, y = 2 },
+        a = {
+            alpha = 12,
+            beta = 14,
+            gamma = 15
+        }
+    }
+}
+
+testNamelessStruct :: proc() {
+    MyStruct :: struct {
+        a: struct {x,y: i32}
+    }
+
+    s := MyStruct{}
+    x := s.a.x
+    y := s.a
+}

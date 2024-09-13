@@ -341,7 +341,7 @@ colonClosing                         ::= COLON
 private symbolDefinitionHead         ::= (attribute eos?)* [directiveHead] [USING] identifierList colonOpening type?
 colonOpening                         ::= COLON
 
-variableInitializationStatement      ::= symbolDefinitionHead EQ expressionsList { methods=[getTypeDefinition] pin=2}
+variableInitializationStatement      ::= symbolDefinitionHead EQ rhsExpressions { methods=[getTypeDefinition] pin=2}
 
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}

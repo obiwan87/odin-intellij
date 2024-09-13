@@ -308,3 +308,5 @@ return_type_defined_proc :: proc() {
 }
 
 g_point : i32
+
+

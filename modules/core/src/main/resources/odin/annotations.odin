@@ -119,3 +119,6 @@ test :: any
 
 @builtin
 thread_local :: any
+
+@builtin
+rodata :: any

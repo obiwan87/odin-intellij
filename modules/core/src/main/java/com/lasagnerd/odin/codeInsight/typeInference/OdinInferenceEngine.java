@@ -220,7 +220,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
     }
 
-    private TsOdinType getReferenceableType(TsOdinType tsOdinRefExpressionType) {
+    private static TsOdinType getReferenceableType(TsOdinType tsOdinRefExpressionType) {
         if (tsOdinRefExpressionType instanceof TsOdinTypeAlias typeAlias) {
             return getReferenceableType(typeAlias.getBaseType());
         }
@@ -724,7 +724,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
             List<OdinExpression> expressionList = Objects
-                    .requireNonNull(initializationStatement.getExpressionsList())
+                    .requireNonNull(initializationStatement.getRhsExpressions())
                     .getExpressionList();
 
             int lhsValuesCount = initializationStatement.getIdentifierList().getDeclaredIdentifierList().size();
@@ -897,7 +897,6 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (odinDeclaration instanceof OdinForInParameterDeclaration forInParameterDeclaration) {
             OdinForBlock forInBlock = PsiTreeUtil.getParentOfType(forInParameterDeclaration, OdinForBlock.class);
 
-
             if (forInBlock != null && forInBlock.getForInParameterDeclaration() != null) {
                 List<OdinDeclaredIdentifier> identifiers = forInParameterDeclaration.getForInParameterDeclaratorList().stream().map(OdinForInParameterDeclarator::getDeclaredIdentifier).toList();
                 int index = identifiers.indexOf(declaredIdentifier);
@@ -906,7 +905,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 // TODO Range expression should be treated differently. For now, just take the type the expression resolves to
                 OdinExpression expression = forInBlock.getForInParameterDeclaration().getExpression();
-                TsOdinType tsOdinType = inferType(parentSymbolTable, expression);
+                TsOdinType tsOdinType = getReferenceableType(inferType(parentSymbolTable, expression));
                 if (tsOdinType instanceof TsOdinMapType mapType) {
                     if (index == 0) {
                         return createReferenceType(mapType.getKeyType(), isReference);
@@ -955,6 +954,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                         return TsOdinBuiltInTypes.INT;
                     }
                 }
+
                 if (expression instanceof OdinRangeExclusiveExpression || expression instanceof OdinRangeInclusiveExpression) {
                     return tsOdinType;
                 }
@@ -1045,6 +1045,37 @@ public class OdinInferenceEngine extends OdinVisitor {
                     return OdinInferenceEngine.inferType(symbolTable, rhsExpression);
                 }
             }
+
+            if (grandParent instanceof OdinVariableInitializationStatement odinVariableInitializationStatement) {
+                OdinType psiType = odinVariableInitializationStatement.getType();
+                if (psiType != null) {
+                    return OdinTypeResolver.resolveType(symbolTable, psiType);
+                }
+            }
+
+        }
+
+        if (parent instanceof OdinRhs rhs) {
+            OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(rhs, OdinCompoundLiteral.class);
+            OdinElementEntry elemEntry = (OdinElementEntry) rhs.getParent();
+            if (elemEntry.getLhs() != null) {
+                TsOdinType tsOdinType = null;
+                if (compoundLiteral instanceof OdinCompoundLiteralUntyped compoundLiteralUntyped) {
+                    tsOdinType = OdinInferenceEngine.inferExpectedType(symbolTable, (OdinExpression) compoundLiteralUntyped.getParent());
+
+                }
+                if (compoundLiteral instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
+                    tsOdinType = OdinTypeResolver.resolveType(symbolTable, compoundLiteralTyped.getType());
+                }
+
+                if (tsOdinType != null) {
+                    OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(expression.getProject(), tsOdinType);
+                    OdinSymbol symbol = typeElements.getSymbol(elemEntry.getLhs().getText());
+                    if (symbol != null && symbol.getPsiType() != null) {
+                        return OdinTypeResolver.resolveType(tsOdinType.getSymbolTable(), symbol.getPsiType());
+                    }
+                }
+            }
         }
 
         return TsOdinType.VOID;
@@ -1072,29 +1103,4 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         }
     }
-
-    // v.?
-    // union(T) -> (T, bool)
-
-    // v.? and target of v=T_k known
-    // union(T1, T2, T3, ... , T_k, ..., Tn) -> (T_k, bool)
-
-    // v.(T)
-    // if not two values (1, or >2) expected
-    // union(T0, ..., T, .., Tn) -> T
-
-    // if two values expected
-    // union(T0, ..., T, .., Tn) -> (T, bool)
-
-    // cast(T)x, transmute(T)x
-    // type(x) -> T
-
-    // x : T := auto_cast y, and for known T
-    // T -> type(y)
-
-    // x or_else y
-    // ((T, Union(bool)), T) -> T
-
-    // caller() or_return
-    // (T1, ..., Tn) -> (T1, ..., Tn-1)
 }

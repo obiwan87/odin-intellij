@@ -81,17 +81,15 @@ public class OdinInsightUtils {
             return getTypeElements(project, constrainedType.getSpecializedType(), includeReferenceableSymbols);
         }
 
-        OdinType odinDeclaration = type.getPsiType();
-        OdinDeclaration declaration = type.getDeclaration();
-        if (declaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-            var structFields = OdinInsightUtils.getStructFields(type.getSymbolTable(), structDeclarationStatement);
+        if (type.getPsiType() instanceof OdinStructType structType) {
+            var structFields = OdinInsightUtils.getStructFields(type.getSymbolTable(), structType);
 
             symbolTable.addAll(structFields);
             symbolTable.addTypes(typeScope);
             return symbolTable;
         }
 
-        if (odinDeclaration instanceof OdinEnumType enumType) {
+        if (type.getPsiType() instanceof OdinEnumType enumType) {
             return symbolTable.with(getEnumFields(enumType));
         }
 
@@ -99,7 +97,7 @@ public class OdinInsightUtils {
             return OdinSymbolTable.from(getSwizzleFields(arrayType));
         }
 
-        if(includeReferenceableSymbols && type instanceof TsOdinDynamicArray) {
+        if (includeReferenceableSymbols && type instanceof TsOdinDynamicArray) {
             OdinSymbol implicitStructSymbol = OdinBuiltinSymbolService.getInstance(project).createImplicitStructSymbol("allocator", "Allocator");
             return OdinSymbolTable.from(Collections.singletonList(implicitStructSymbol));
         }
@@ -109,10 +107,21 @@ public class OdinInsightUtils {
     @Nullable
     public static String getTypeName(OdinType type) {
         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(type, OdinDeclaration.class);
-        if(declaration != null) {
-            if(!declaration.getDeclaredIdentifiers().isEmpty()) {
+        if (declaration != null) {
+            if (!declaration.getDeclaredIdentifiers().isEmpty()) {
                 OdinDeclaredIdentifier declaredIdentifier = declaration.getDeclaredIdentifiers().getFirst();
                 return declaredIdentifier.getText();
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    public static OdinDeclaration getTypeDeclaration(OdinType type) {
+        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(type, OdinDeclaration.class);
+        if (declaration != null) {
+            if (!declaration.getDeclaredIdentifiers().isEmpty()) {
+                return declaration;
             }
         }
         return null;
@@ -139,9 +148,7 @@ public class OdinInsightUtils {
         return symbols;
     }
 
-    public static List<OdinSymbol> getStructFields(OdinSymbolTable symbolTable, OdinStructDeclarationStatement structDeclarationStatement) {
-        OdinStructType structType = structDeclarationStatement
-                .getStructType();
+    public static List<OdinSymbol> getStructFields(OdinSymbolTable symbolTable, @NotNull OdinStructType structType) {
         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structType);
 
         List<OdinSymbol> symbols = new ArrayList<>();
@@ -178,10 +185,10 @@ public class OdinInsightUtils {
         }
 
         if (structType != null) {
-            OdinDeclaration declaration = structType.getDeclaration();
-            if (declaration != null) {// TODO This fails at models.odin in Engin3
+            OdinType psiType = structType.getPsiType();
+            if (psiType instanceof OdinStructType psiStructType) {// TODO This fails at models.odin in Engin3
 
-                List<OdinSymbol> structFields = getStructFields(structType.getSymbolTable(), (OdinStructDeclarationStatement) declaration);
+                List<OdinSymbol> structFields = getStructFields(structType.getSymbolTable(), psiStructType);
                 symbols.addAll(structFields);
             }
         }
@@ -216,8 +223,8 @@ public class OdinInsightUtils {
 
     public static @NotNull List<OdinSymbol> getTypeElements(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
         if (tsOdinType instanceof TsOdinStructType structType) {
-            if (structType.getDeclaration() != null) {
-                return getStructFields(symbolTable, (OdinStructDeclarationStatement) structType.getDeclaration());
+            if (structType.getPsiType() instanceof OdinStructType psiStructType) {
+                return getStructFields(symbolTable, psiStructType);
             }
         }
 
