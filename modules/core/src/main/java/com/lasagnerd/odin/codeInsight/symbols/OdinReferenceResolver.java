@@ -12,7 +12,7 @@ public class OdinReferenceResolver {
     public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinExpression valueExpression) {
         // Add filter for referenceable elements
         TsOdinType type = OdinInferenceEngine.inferType(symbolTable, valueExpression);
-        return OdinInsightUtils.getTypeElements(type, true);
+        return OdinInsightUtils.getTypeElements(valueExpression.getProject(), type, true);
     }
 
     public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinType type) {

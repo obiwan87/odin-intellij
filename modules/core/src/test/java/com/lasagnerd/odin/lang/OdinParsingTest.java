@@ -1787,13 +1787,35 @@ public class OdinParsingTest extends UsefulTestCase {
     public void test_typeInference_polyProcedureOverloadWithMake() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_polyOverloadWithMake", "z");
+            TsOdinTuple tsOdinTuple = assertInstanceOf(tsOdinType, TsOdinTuple.class);
+            TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinTuple.get(0), TsOdinTypeAlias.class);
+            assertTrue(tsOdinTypeAlias.isDistinct());
+            TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinTypeAlias.getBaseType(), TsOdinSliceType.class);
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinSliceType.getElementType(), TsOdinStructType.class);
+            assertEquals("Point", tsOdinStructType.getName());
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_polyOverloadWithMake", "y");
+            TsOdinTuple tsOdinTuple = assertInstanceOf(tsOdinType, TsOdinTuple.class);
+            TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinTuple.get(0), TsOdinTypeAlias.class);
+            assertFalse(tsOdinTypeAlias.isDistinct());
+            TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinTypeAlias.getBaseType(), TsOdinSliceType.class);
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinSliceType.getElementType(), TsOdinStructType.class);
+            assertEquals("Point", tsOdinStructType.getName());
+        }
+
+        {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_polyOverloadWithMake", "x");
             TsOdinTuple tsOdinTuple = assertInstanceOf(tsOdinType, TsOdinTuple.class);
             TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinTuple.get(0), TsOdinSliceType.class);
             TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinSliceType.getElementType(), TsOdinStructType.class);
             assertEquals("Point", tsOdinStructType.getName());
         }
+
     }
+
     public void test_typeInference_anyType() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         {
@@ -1850,6 +1872,21 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testProcedureContext() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "test_procedureContext", "y");
+            assertInstanceOf(tsOdinType, TsOdinRawPointerType.class);
+        }
+    }
+    public void testDynamicArrayAllocator() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "test_dynamicArrayAllocatorSymbol", "y");
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Allocator", tsOdinStructType.getName());
+        }
+    }
 
     private static @NotNull List<OdinBlockStatement> getProcedureBlocks(OdinProcedureDeclarationStatement testTypeConversion) {
         OdinStatementList statementList = testTypeConversion.getProcedureDefinition().getProcedureBody().getBlock().getStatementList();

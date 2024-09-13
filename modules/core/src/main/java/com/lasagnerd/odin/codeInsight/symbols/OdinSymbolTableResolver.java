@@ -10,8 +10,10 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeChecker;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinArrayType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinDynamicArray;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -299,9 +301,9 @@ public class OdinSymbolTableResolver {
 //                    if (stringLiteralValue == null && ) {
 //                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
 //                    }
-                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
+                        symbolTable.add(builtinSymbolService.createImplicitStructSymbol("context", "Context"));
                     } else {
-                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
+                        symbolTable.add(builtinSymbolService.createImplicitStructSymbol("context", "Context"));
                     }
                 }
             }
@@ -352,6 +354,33 @@ public class OdinSymbolTableResolver {
             return symbolTable;
         }
 
+        private void addElementSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
+            tsOdinType = OdinTypeChecker.getBaseType(tsOdinType, true);
+            if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
+                // TODO will this work with aliases?
+                List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(tsOdinStructType, symbolTable);
+                symbolTable.addAll(typeSymbols);
+            }
+
+            if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+                List<String> swizzleSymbols = List.of("r", "g", "b", "a", "x", "y", "z", "w");
+                for (String swizzleSymbol : swizzleSymbols) {
+                    OdinSymbol odinSymbol = new OdinSymbol();
+                    odinSymbol.setName(swizzleSymbol);
+
+                    TsOdinType elementType = tsOdinArrayType.getElementType();
+                    if (elementType != null) {
+                        odinSymbol.setPsiType(elementType.getPsiType());
+                    }
+                    odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
+                    odinSymbol.setImplicitlyDeclared(true);
+                    odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+                    odinSymbol.setSymbolType(OdinSymbolType.FIELD);
+                    symbolTable.add(odinSymbol);
+                }
+            }
+        }
+
         private boolean isStrictlyBefore(OdinDeclaration declaration, PositionCheckResult positionCheckResult) {
             PsiElement commonParent = positionCheckResult.commonParent();
             PsiElement containerOfSymbol = declaration != commonParent ? PsiTreeUtil.findPrevParent(commonParent, declaration) : declaration;
@@ -379,31 +408,6 @@ public class OdinSymbolTableResolver {
                 root).findSymbols();
     }
 
-    private static void addElementSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
-        if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
-            // TODO will this work with aliases?
-            List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(tsOdinStructType, symbolTable);
-            symbolTable.addAll(typeSymbols);
-        }
-
-        if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
-            List<String> swizzleSymbols = List.of("r", "g", "b", "a", "x", "y", "z", "w");
-            for (String swizzleSymbol : swizzleSymbols) {
-                OdinSymbol odinSymbol = new OdinSymbol();
-                odinSymbol.setName(swizzleSymbol);
-
-                TsOdinType elementType = tsOdinArrayType.getElementType();
-                if (elementType != null) {
-                    odinSymbol.setPsiType(elementType.getPsiType());
-                }
-                odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
-                odinSymbol.setImplicitlyDeclared(true);
-                odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
-                odinSymbol.setSymbolType(OdinSymbolType.FIELD);
-                symbolTable.add(odinSymbol);
-            }
-        }
-    }
 
     private static @NotNull List<OdinDeclaration> getDeclarations(PsiElement containingScopeBlock) {
         List<OdinDeclaration> declarations = new ArrayList<>();

@@ -426,7 +426,7 @@ public class OdinPsiUtil {
         for (OdinExpression expression : usingStatement.getExpressionsList().getExpressionList()) {
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
 
-            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(tsOdinType);
+            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(usingStatement.getProject(), tsOdinType);
             typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
                     .map(OdinDeclaredIdentifier.class::cast)
                     .forEach(declaredIdentifiers::add);

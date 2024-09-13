@@ -378,7 +378,7 @@ testTypeInference_withParaPolyAlias :: proc() {
 }
 
 test_polyOverloadWithMake :: proc() {
-    
+    Allocator_Error :: struct {}
     make_slice :: proc($T: typeid/[]$E, #any_int len: int, allocator := context.allocator, loc := #caller_location) -> (T, Allocator_Error) #optional_allocator_error {
         return make_aligned(T, len, align_of(E), allocator, loc)
     }
@@ -452,5 +452,20 @@ test_polyOverloadWithMake :: proc() {
     }
 
     x := make([]Point, 1)
+    Points :: []Point
+    y := make(Points, 1)
+    PointsDistinct :: distinct []Point
+    z := make(PointsDistinct, 1)
 }
+
+test_dynamicArrayAllocatorSymbol :: proc() {
+    x : [dynamic]i32
+
+    y := x.allocator
+}
+
+test_procedureContext :: proc() {
+    y := context.allocator.data
+}
+
 

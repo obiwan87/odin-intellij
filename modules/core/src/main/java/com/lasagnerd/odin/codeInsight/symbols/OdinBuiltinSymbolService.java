@@ -14,7 +14,9 @@ public interface OdinBuiltinSymbolService {
 
     List<OdinSymbol> getBuiltInSymbols();
 
-    TsOdinType getContextStructType();
+    OdinSymbol getSymbol(String symbolName);
 
-    OdinSymbol createNewContextParameterSymbol();
+    TsOdinType getType(String typeName);
+
+    OdinSymbol createImplicitStructSymbol(String symbolName, String structTypeName);
 }

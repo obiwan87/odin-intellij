@@ -10,6 +10,7 @@ import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -102,6 +103,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 typeAlias.setName(metaType.getName());
                 typeAlias.setAliasedType(aliasedType);
                 typeAlias.setSymbolTable(aliasedType.getSymbolTable());
+                metaType.setRepresentedType(typeAlias);
 
                 return typeAlias;
             }
@@ -199,7 +201,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 if (tsOdinParameter.getPsiType() != null) {
                     TsOdinType tsOdinType = doResolveType(localSymbolTable, tsOdinParameter.getPsiType());
                     tsOdinParameter.setType(tsOdinType);
-                } else if(tsOdinParameter.getDefaultValueExpression() != null) {
+                } else if (tsOdinParameter.getDefaultValueExpression() != null) {
                     TsOdinType tsOdinType = inferType(localSymbolTable, tsOdinParameter.getDefaultValueExpression());
                     tsOdinParameter.setType(tsOdinType);
                     tsOdinParameter.setPsiType(tsOdinType.getPsiType());
@@ -231,20 +233,17 @@ public class OdinTypeResolver extends OdinVisitor {
         PsiNamedElement declaration;
         String identifierText = typeIdentifier.getText();
 
-        // TODO reserved types should be checked last
-        //  in Odin you can define int :: struct {x,y: f32}
-        if (RESERVED_TYPES.contains(identifierText)) {
-            return TsOdinBuiltInTypes.getBuiltInType(identifierText);
-
+        TsOdinType scopeType = symbolTable.getType(typeIdentifier.getIdentifierToken().getText());
+        if (scopeType != null) {
+            return scopeType;
         } else {
-            TsOdinType scopeType = symbolTable.getType(typeIdentifier.getIdentifierToken().getText());
-            if (scopeType != null) {
-                return scopeType;
-            } else {
-                declaration = symbolTable.getNamedElement(typeIdentifier.getIdentifierToken().getText());
-                if (!(declaration instanceof OdinDeclaredIdentifier declaredIdentifier)) {
-                    return TsOdinType.UNKNOWN;
+            declaration = symbolTable.getNamedElement(typeIdentifier.getIdentifierToken().getText());
+            if (!(declaration instanceof OdinDeclaredIdentifier declaredIdentifier)) {
+                if (RESERVED_TYPES.contains(identifierText)) {
+                    return TsOdinBuiltInTypes.getBuiltInType(identifierText);
                 }
+                return TsOdinType.UNKNOWN;
+            } else {
                 var knownType = symbolTable.getKnownTypes().get(declaredIdentifier);
                 if (knownType != null) {
                     log("Cache hit for type: " + knownType.getLabel());
@@ -254,6 +253,12 @@ public class OdinTypeResolver extends OdinVisitor {
                 }
             }
         }
+    }
+
+    public static TsOdinType resolveType(OdinSymbolTable symbolTable, OdinDeclaredIdentifier identifier) {
+        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(identifier, OdinDeclaration.class);
+        OdinTypeResolver typeResolver = new OdinTypeResolver(0, symbolTable, declaration, identifier);
+        return typeResolver.resolveTypeFromDeclaredIdentifier(symbolTable, identifier);
     }
 
     private TsOdinType resolveTypeFromDeclaredIdentifier(OdinSymbolTable symbolTable, OdinDeclaredIdentifier identifier) {
@@ -389,13 +394,18 @@ public class OdinTypeResolver extends OdinVisitor {
             tsOdinSliceType.setElementType(tsOdinElementType);
             tsOdinSliceType.setSymbolTable(symbolTable);
             tsOdinSliceType.setPsiType(o);
-            OdinDirectiveHead directiveHead = o.getDirectiveHead();
-            if(directiveHead != null) {
-                tsOdinSliceType.setSoa(directiveHead.getText().equals("#soa"));
-            }
+            tsOdinSliceType.setSoa(checkDirective(o.getDirectiveHead(), "#soa"));
 
             this.type = tsOdinSliceType;
         }
+    }
+
+    private static boolean checkDirective(@Nullable OdinDirectiveHead directiveHead, String hashtag) {
+        boolean equals = false;
+        if (directiveHead != null) {
+            equals = directiveHead.getText().equals(hashtag);
+        }
+        return equals;
     }
 
     @Override
@@ -466,6 +476,10 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinArrayType.setSymbolTable(symbolTable);
         tsOdinArrayType.setPsiSizeElement(arrayType.getArraySize());
         tsOdinArrayType.setPsiType(arrayType);
+
+        tsOdinArrayType.setSoa(checkDirective(arrayType.getDirectiveHead(), "#soa"));
+        tsOdinArrayType.setSimd(checkDirective(arrayType.getDirectiveHead(), "#simd"));
+
         TsOdinType elementType = resolveType(symbolTable, arrayType.getTypeDefinition());
         tsOdinArrayType.setElementType(elementType);
 
@@ -540,7 +554,7 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     private static void addContextSymbol(@NotNull Project project, TsOdinProcedureType tsOdinProcedureType) {
-        OdinSymbol contextSymbol = OdinBuiltinSymbolService.getInstance(project).createNewContextParameterSymbol();
+        OdinSymbol contextSymbol = OdinBuiltinSymbolService.getInstance(project).createImplicitStructSymbol("context", "Context");
         OdinSymbolTable procSymbolTable = new OdinSymbolTable();
         procSymbolTable.add(contextSymbol);
         OdinSymbolTable symbolTable1 = tsOdinProcedureType.getSymbolTable();

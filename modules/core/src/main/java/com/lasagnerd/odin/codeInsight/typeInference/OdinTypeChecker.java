@@ -16,43 +16,46 @@ public class OdinTypeChecker {
         final TsOdinType argumentBaseType = getBaseType(argumentType);
         final TsOdinType parameterBaseType = getBaseType(parameterType);
 
-        if(argumentBaseType == parameterBaseType) {
+        if (argumentBaseType == parameterBaseType) {
             return true;
         }
 
-        if(parameterBaseType instanceof TsOdinPolymorphicType) {
+        if (parameterBaseType instanceof TsOdinPolymorphicType) {
             return true;
         }
 
         if (argumentBaseType.getPsiType() != null && parameterBaseType.getPsiType() != null) {
-            if(argumentBaseType.getPsiType() == parameterBaseType.getPsiType())
+            if (argumentBaseType.getPsiType() == parameterBaseType.getPsiType())
                 return true;
         }
 
         if (argumentBaseType.getPsiTypeExpression() != null && parameterBaseType.getPsiTypeExpression() != null) {
-            if(argumentBaseType.getPsiType() == parameterBaseType.getPsiType())
+            if (argumentBaseType.getPsiType() == parameterBaseType.getPsiType())
                 return true;
         }
 
-        if(argumentBaseType instanceof TsOdinArrayType argArrayType
+        if (argumentBaseType instanceof TsOdinArrayType argArrayType
                 && parameterBaseType instanceof TsOdinArrayType parArrayType) {
-            return checkTypesStrictly(argArrayType.getElementType(), parArrayType.getElementType());
+            if (argArrayType.isSoa() == parArrayType.isSoa() && argArrayType.isSimd() == parArrayType.isSimd()) {
+                return checkTypesStrictly(argArrayType.getElementType(), parArrayType.getElementType());
+            }
+            return true;
         }
 
-        if(argumentBaseType instanceof TsOdinSliceType argSliceType
+        if (argumentBaseType instanceof TsOdinSliceType argSliceType
                 && parameterBaseType instanceof TsOdinSliceType parSliceType) {
-            if(argSliceType.isSoa() == parSliceType.isSoa()) {
+            if (argSliceType.isSoa() == parSliceType.isSoa()) {
                 return checkTypesStrictly(argSliceType.getElementType(), parSliceType.getElementType());
             }
             return false;
         }
 
-        if(argumentBaseType instanceof TsOdinMatrixType argMatrixType
+        if (argumentBaseType instanceof TsOdinMatrixType argMatrixType
                 && parameterBaseType instanceof TsOdinMatrixType parMatrixType) {
             return checkTypesStrictly(argMatrixType.getElementType(), parMatrixType.getElementType());
         }
 
-        if(argumentBaseType instanceof TsOdinDynamicArray argDynArray
+        if (argumentBaseType instanceof TsOdinDynamicArray argDynArray
                 && parameterBaseType instanceof TsOdinDynamicArray parDynArray) {
             return checkTypesStrictly(argDynArray.getElementType(), parDynArray.getElementType());
         }
@@ -61,7 +64,15 @@ public class OdinTypeChecker {
     }
 
     public static TsOdinType getBaseType(TsOdinType t) {
+        return getBaseType(t, false);
+    }
+
+    public static TsOdinType getBaseType(TsOdinType t, boolean ignoreDistinct) {
         if (t instanceof TsOdinTypeAlias alias) {
+            if (ignoreDistinct) {
+                return alias.getBaseType();
+            }
+
             if (alias.isDistinct()) {
                 return alias;
             }
@@ -106,18 +117,20 @@ public class OdinTypeChecker {
             return;
         }
 
-        if(expectedType instanceof TsOdinPolymorphicType) {
+        if (expectedType instanceof TsOdinPolymorphicType) {
             typeCheckResult.setPolymorphic(true);
             typeCheckResult.setCompatible(true);
             return;
         }
 
-        if(expectedType instanceof TsOdinConstrainedType constrainedType) {
-            if(type instanceof TsOdinMetaType metaType) {
-                if(metaType.getRepresentedType() == null) {
-                    OdinTypeResolver.resolveMetaType(metaType.getSymbolTable(), metaType);
+        if (expectedType instanceof TsOdinConstrainedType constrainedType) {
+            if (type instanceof TsOdinMetaType metaType) {
+                TsOdinType representedType = metaType.getRepresentedType();
+                if (representedType == null) {
+                    representedType = OdinTypeResolver.resolveMetaType(metaType.getSymbolTable(), metaType);
                 }
-                doCheckTypes(metaType.getRepresentedType(), constrainedType.getSpecializedType());
+
+                doCheckTypes(getBaseType(representedType, true), constrainedType.getSpecializedType());
             }
             return;
         }
@@ -171,7 +184,7 @@ public class OdinTypeChecker {
             OdinStructType psiStructType = (OdinStructType) structType.getPsiType();
             // Check if there is a field "using" the expected struct
             OdinStructBody structBody = psiStructType.getStructBlock().getStructBody();
-            if(structBody != null) {
+            if (structBody != null) {
                 for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : structBody.getFieldDeclarationStatementList()) {
                     if (odinFieldDeclarationStatement.getUsing() != null) {
                         TsOdinType usingStructType = OdinTypeResolver

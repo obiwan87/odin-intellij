@@ -9,6 +9,8 @@ import lombok.EqualsAndHashCode;
 public class TsOdinArrayType extends TsOdinType {
     TsOdinType elementType;
     PsiElement psiSizeElement;
+    boolean soa;
+    boolean simd;
 
     @Override
     public String getLabel() {

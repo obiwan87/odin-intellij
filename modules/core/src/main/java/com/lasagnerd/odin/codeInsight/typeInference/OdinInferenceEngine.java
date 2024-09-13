@@ -139,17 +139,12 @@ public class OdinInferenceEngine extends OdinVisitor {
             // solve for expression first. This defines the scope
             // extract symbol table
             tsOdinRefExpressionType = getReferenceableType(doInferType(symbolTable, refExpression.getExpression()));
-            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(tsOdinRefExpressionType);
+            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(refExpression.getProject(), tsOdinRefExpressionType, true);
 
             if (tsOdinRefExpressionType instanceof TsOdinPackageReferenceType) {
                 localSymbolTable = typeSymbols;
                 globalScope = typeSymbols;
-            } else if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
-                List<OdinSymbol> swizzleFields = OdinInsightUtils.getSwizzleFields(tsOdinArrayType);
-                localSymbolTable = OdinSymbolTable.from(swizzleFields);
-                globalScope = tsOdinRefExpressionType.getSymbolTable();
             } else {
-                // TODO do we need to set symbol for every type?
                 globalScope = tsOdinRefExpressionType.getSymbolTable();
                 localSymbolTable = typeSymbols;
             }
@@ -180,20 +175,19 @@ public class OdinInferenceEngine extends OdinVisitor {
                     }
                 } else if (symbol.isImplicitlyDeclared()) {
                     // TODO make this a bit less hard coded
-                    if (symbol.getName().equals("context")) {
-                        Project project = refExpression.getProject();
-                        OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(project);
-                        if (builtinSymbolService != null) {
-                            this.type = builtinSymbolService.getContextStructType();
-                        }
-                    }
-                    // Accept only swizzle fields of length one
-                    else if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD && symbol.getName().length() == 1) {
+                    if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD && symbol.getName().length() == 1) {
                         if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
                             this.type = tsOdinArrayType.getElementType();
                         }
                     } else if (symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
                         this.type = createBuiltinMetaType(name);
+                    } else {
+                        Project project = refExpression.getProject();
+                        OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(project);
+                        if (symbol.getPsiType() != null && builtinSymbolService != null) {
+                            String typeName = OdinInsightUtils.getTypeName(symbol.getPsiType());
+                            this.type = builtinSymbolService.getType(typeName);
+                        }
                     }
                 }
             } else {
@@ -386,9 +380,9 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 if (compatibleProcedures.size() == 1) {
                     this.type = inferTypeOfProcedureCall(o, compatibleProcedures.getFirst().getFirst());
-                } else if(!compatibleProcedures.isEmpty()) {
+                } else if (!compatibleProcedures.isEmpty()) {
                     TsOdinProcedureType bestProcedure = breakTie(compatibleProcedures);
-                    if(bestProcedure != null) {
+                    if (bestProcedure != null) {
                         this.type = inferTypeOfProcedureCall(o, bestProcedure);
                     }
                 }
@@ -414,7 +408,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         Integer minConversionCost = scores.stream().mapToInt(p -> p.getSecond()).min().orElseThrow();
         List<Pair<TsOdinProcedureType, Integer>> minConversionCosts = scores.stream().filter(p -> p.getSecond().equals(minConversionCost)).toList();
         TsOdinProcedureType bestProcedure;
-        if(minConversionCosts.size() == 1) {
+        if (minConversionCosts.size() == 1) {
             bestProcedure = minConversionCosts.getFirst().getFirst();
         } else {
             bestProcedure = null;
@@ -465,7 +459,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             this.type = multiPointerType.getDereferencedType();
         }
 
-        if(tsOdinType instanceof TsOdinDynamicArray dynamicArray) {
+        if (tsOdinType instanceof TsOdinDynamicArray dynamicArray) {
             this.type = dynamicArray.getElementType();
         }
     }
@@ -802,6 +796,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             return OdinTypeResolver.resolveType(parentSymbolTable, fieldDeclarationStatement.getType());
         }
 
+        // TODO add support for #any_int
         if (odinDeclaration instanceof OdinParameterDeclarator parameterDeclaration) {
             return OdinTypeResolver.resolveType(parentSymbolTable, parameterDeclaration.getTypeDefinitionContainer().getType());
         }
@@ -951,7 +946,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     }
                 }
 
-                if(tsOdinType instanceof TsOdinDynamicArray dynamicArray) {
+                if (tsOdinType instanceof TsOdinDynamicArray dynamicArray) {
                     if (index == 0) {
                         return createReferenceType(dynamicArray.getElementType(), isReference);
                     }

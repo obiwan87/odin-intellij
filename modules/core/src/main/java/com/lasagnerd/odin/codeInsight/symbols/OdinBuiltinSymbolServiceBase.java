@@ -3,10 +3,10 @@ package com.lasagnerd.odin.codeInsight.symbols;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -32,8 +32,8 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
      */
     private List<OdinSymbol> runtimeCoreSymbols;
 
-    private OdinSymbol context;
-    private TsOdinStructType contextStructType;
+    private final Map<String, OdinSymbol> cachedSymbols = new HashMap<>();
+    private final Map<String, TsOdinType> cachedTypes = new HashMap<>();
 
     public OdinBuiltinSymbolServiceBase(Project project) {
         this.project = project;
@@ -82,40 +82,43 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
         return builtInSymbols;
     }
 
-    private OdinSymbol getContextStructSymbol() {
-        if (context == null) {
+    @Override
+    public OdinSymbol getSymbol(String symbolName) {
+        if (cachedSymbols.get(symbolName) == null) {
             List<OdinSymbol> builtInSymbols = getRuntimeCoreSymbols();
-            context = builtInSymbols.stream().filter(s -> s.getName().equals("Context")).findFirst().orElse(null);
+            var symbol = builtInSymbols.stream().filter(s -> s.getName().equals(symbolName)).findFirst().orElse(null);
+            cachedSymbols.put(symbolName, symbol);
         }
-        return context;
+        return cachedSymbols.get(symbolName);
     }
 
     @Override
-    public TsOdinType getContextStructType() {
-        if (contextStructType == null) {
-            OdinSymbol contextStructSymbol = getContextStructSymbol();
-            TsOdinStructType contextStructType = new TsOdinStructType();
-            OdinStructType contextType = getContextType();
-            if (contextType == null)
-                return null;
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(contextType);
-            contextStructType.setName("Context");
-            contextStructType.setDeclaredIdentifier((OdinDeclaredIdentifier) contextStructSymbol.getDeclaredIdentifier());
-            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(contextStructSymbol.getDeclaredIdentifier(), OdinDeclaration.class, true);
-            contextStructType.setDeclaration(odinDeclaration);
-            contextStructType.setSymbolTable(odinSymbolTable);
-            contextStructType.setPsiType(getContextType());
-            this.contextStructType = contextStructType;
+    public TsOdinType getType(String typeName) {
+        if (cachedTypes.get(typeName) == null) {
+            OdinSymbol symbol = getSymbol(typeName);
+
+
+            PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
+            if(declaredIdentifier instanceof OdinDeclaredIdentifier odinDeclaredIdentifier) {
+                OdinSymbolTable builtinSymbols = OdinSymbolTable.from(getBuiltInSymbols());
+                OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(declaredIdentifier);
+                symbolTable.setParentSymbolTable(builtinSymbols);
+
+                TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, odinDeclaredIdentifier);
+                if(tsOdinType != null) {
+                    cachedTypes.put(typeName, tsOdinType);
+                }
+            }
         }
-        return contextStructType;
+        return cachedTypes.getOrDefault(typeName, TsOdinType.UNKNOWN);
     }
 
     @Override
-    public OdinSymbol createNewContextParameterSymbol() {
+    public OdinSymbol createImplicitStructSymbol(String symbolName, String structTypeName) {
         OdinSymbol odinSymbol = new OdinSymbol();
         odinSymbol.setImplicitlyDeclared(true);
-        odinSymbol.setPsiType(getContextType());
-        odinSymbol.setName("context");
+        odinSymbol.setPsiType(findStructType(structTypeName));
+        odinSymbol.setName(symbolName);
         odinSymbol.setSymbolType(OdinSymbolType.PARAMETER);
         odinSymbol.setScope(OdinSymbol.OdinScope.LOCAL);
         odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
@@ -125,12 +128,12 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
         return odinSymbol;
     }
 
-    private OdinStructType getContextType() {
-        OdinSymbol contextStructSymbol = getContextStructSymbol();
-        if (contextStructSymbol == null)
+    private OdinStructType findStructType(String typeName) {
+        OdinSymbol symbol = getSymbol(typeName);
+        if (symbol == null)
             return null;
 
-        OdinDeclaration declaration = contextStructSymbol.getDeclaration();
+        OdinDeclaration declaration = symbol.getDeclaration();
         if (declaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
             return structDeclarationStatement.getStructType();
         }
