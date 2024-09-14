@@ -242,7 +242,7 @@ fieldDeclarationStatement            ::= USING? directiveHead? declaredIdentifie
 enumDeclarationStatement             ::= (attribute eos?)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
 enumType                             ::= ENUM [qualifiedType|simpleRefType] EOS_TOKEN? enumBlock
 enumBlock                            ::= blockStart [enumBody] blockEnd
-enumBody                             ::= enumValueDeclaration (COMMA enumValueDeclaration)* [EOS_TOKEN|COMMA]
+enumBody                             ::= enumValueDeclaration (COMMA enumValueDeclaration)* [EOS_TOKEN|COMMA] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 enumValueDeclaration                 ::= declaredIdentifier [EQ expression]
 
 // Union

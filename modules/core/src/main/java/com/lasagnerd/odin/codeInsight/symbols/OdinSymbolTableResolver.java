@@ -258,7 +258,7 @@ public class OdinSymbolTableResolver {
         private OdinSymbolTable findSymbols(PsiElement position, boolean constantsOnly) {
             // 1. Find the starting point
             //  = a statement whose parent is a scope block
-            // 2. Get the parent and define and get all declarations inside the scope block
+            // 2. Get the parent and get all declarations inside the scope block
             // 3. Add all constant declarations as they are not dependent on the position within the scope block
             // 4. Add all non-constant declarations, depending on whether the position is before or after
             //    the declared symbol
@@ -391,8 +391,7 @@ public class OdinSymbolTableResolver {
             int indexOfSymbol = childrenList.indexOf(containerOfSymbol);
             int indexOfPosition = childrenList.indexOf(containerOfPosition);
 
-            boolean strictlyBefore = indexOfPosition > indexOfSymbol;
-            return strictlyBefore;
+            return indexOfPosition > indexOfSymbol;
         }
     }
 
@@ -503,6 +502,10 @@ public class OdinSymbolTableResolver {
 
         if (containingScopeBlock instanceof OdinFileScope fileScope) {
             declarations.addAll(getFileScopeDeclarations(fileScope));
+        }
+
+        if(containingScopeBlock instanceof OdinEnumBody enumBody) {
+            declarations.addAll(enumBody.getEnumValueDeclarationList());
         }
 
         return declarations;

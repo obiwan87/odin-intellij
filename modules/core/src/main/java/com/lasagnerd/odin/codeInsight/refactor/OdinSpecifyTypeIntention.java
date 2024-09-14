@@ -35,7 +35,11 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
             return;
 
         OdinDeclaredIdentifier declaredIdentifier = varInit.getIdentifierList().getDeclaredIdentifierList().getFirst();
-        List<OdinExpression> expressionList = varInit.getRhsExpressions().getExpressionList();
+        OdinRhsExpressions rhsExpressions = varInit.getRhsExpressions();
+        if(rhsExpressions == null)
+            return;
+
+        List<OdinExpression> expressionList = rhsExpressions.getExpressionList();
         if (expressionList.size() > 1)
             return;
         OdinExpression expression = expressionList.getFirst();

@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight.symbols;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.*;
@@ -285,6 +286,19 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             odinSymbol.setAttributes(o.getAttributeList());
             symbols.add(odinSymbol);
         }
+    }
+
+    @Override
+    public void visitEnumValueDeclaration(@NotNull OdinEnumValueDeclaration o) {
+        OdinSymbol odinSymbol = new OdinSymbol();
+        odinSymbol.setName(o.getDeclaredIdentifier().getName());
+        odinSymbol.setDeclaredIdentifier(o.getDeclaredIdentifier());
+        odinSymbol.setImplicitlyDeclared(false);
+        odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+        odinSymbol.setSymbolType(OdinSymbolType.ENUM_FIELD);
+        OdinEnumType enumType = PsiTreeUtil.getParentOfType(o, OdinEnumType.class);
+        odinSymbol.setPsiType(enumType);
+        symbols.add(odinSymbol);
     }
 
     @Override
