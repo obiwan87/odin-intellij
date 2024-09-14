@@ -250,4 +250,12 @@ public class TsOdinBuiltInTypes {
     public static Collection<TsOdinType> getBuiltInTypes() {
         return new ArrayList<>(builtInTypeMap.values());
     }
+
+    public static Collection<TsOdinType> getComplexTypes() {
+        return List.of(COMPLEX32, COMPLEX64, COMPLEX64);
+    }
+
+    public static Collection<TsOdinType> getQuaternionTypes() {
+        return List.of(QUATERNION64, QUATERNION128, QUATERNION256);
+    }
 }
