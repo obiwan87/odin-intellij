@@ -175,7 +175,7 @@ public class OdinInsightUtils {
         return null;
     }
 
-    private static @NotNull List<OdinSymbol> getEnumFields(OdinEnumType enumType) {
+    public static @NotNull List<OdinSymbol> getEnumFields(OdinEnumType enumType) {
         OdinEnumBody enumBody = enumType
                 .getEnumBlock()
                 .getEnumBody();

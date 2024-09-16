@@ -2007,6 +2007,19 @@ public class OdinParsingTest extends UsefulTestCase {
             assertEquals("Direction", tsOdinEnumType.getName());
         }
     }
+
+    public void testEnumeratedArrays() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            var proc = findFirstProcedure(file, "testEnumeratedArrays");
+            OdinImplicitSelectorExpression implicitExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
+            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(Objects.requireNonNull(implicitExpression));
+            assertNotNull(odinSymbolTable.getSymbol("North"));
+            assertNotNull(odinSymbolTable.getSymbol("South"));
+            assertNotNull(odinSymbolTable.getSymbol("East"));
+            assertNotNull(odinSymbolTable.getSymbol("West"));
+        }
+    }
     // Helpers
     private static @NotNull List<OdinBlockStatement> getProcedureBlocks(OdinProcedureDeclarationStatement testTypeConversion) {
         OdinStatementList statementList = Objects

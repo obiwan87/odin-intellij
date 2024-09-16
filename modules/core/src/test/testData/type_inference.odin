@@ -571,9 +571,18 @@ testBitSetOperations :: proc() {
     x := operation
 }
 
-testEnumAliases :: proc() {
-    DirectionAlias :: Direction
+testEnumeratedArrays :: proc() {
+    x := [Direction][]i32 {
+        .North = {
+            100,
+            200
+        },
+    }
 
-    x = DirectionAlias.North
-
+    y := [Direction][Direction]i32 {
+        .North = {
+            100,
+            200
+        },
+    }
 }

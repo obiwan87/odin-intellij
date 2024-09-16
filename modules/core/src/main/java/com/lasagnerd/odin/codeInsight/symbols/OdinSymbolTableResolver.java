@@ -11,9 +11,7 @@ import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinArrayType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +31,6 @@ public class OdinSymbolTableResolver {
     public static OdinSymbolTable computeSymbolTable(@NotNull PsiElement element, Predicate<OdinSymbol> matcher) {
         return findVisibleSymbols(element, OdinImportService.getInstance(element.getProject())
                 .getPackagePath(element), matcher);
-    }
-
-    public static OdinSymbolTable getFileScopeSymbols(@NotNull OdinFileScope fileScope) {
-        return getFileScopeSymbols(fileScope, getGlobalFileVisibility(fileScope));
     }
 
     public static OdinSymbolTable getFileScopeSymbols(@NotNull OdinFileScope fileScope, @NotNull OdinSymbol.OdinVisibility globalVisibility) {
@@ -279,14 +273,15 @@ public class OdinSymbolTableResolver {
             // Bring field declarations and swizzle into scope
             OdinLhs lhs = PsiTreeUtil.getParentOfType(position, OdinLhs.class, false);
             if (lhs != null) {
+                TsOdinType tsOdinType;
                 if (containingScopeBlock instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
-                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, compoundLiteralTyped.getType());
-                    addElementSymbols(tsOdinType, symbolTable);
+                    tsOdinType = OdinTypeResolver.resolveType(symbolTable, compoundLiteralTyped.getType());
+                } else if (containingScopeBlock.getParent() instanceof OdinExpression odinExpression) {
+                    tsOdinType = OdinInferenceEngine.inferExpectedType(symbolTable, odinExpression);
+                } else {
+                    tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
                 }
-                if (containingScopeBlock instanceof OdinCompoundLiteralUntyped untyped) {
-                    TsOdinType tsOdinType = OdinInferenceEngine.inferExpectedType(symbolTable, (OdinExpression) untyped.getParent());
-                    addElementSymbols(tsOdinType, symbolTable);
-                }
+                addElementSymbols(tsOdinType, symbolTable);
             }
 
             if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
@@ -355,12 +350,23 @@ public class OdinSymbolTableResolver {
         private void addElementSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
             tsOdinType = tsOdinType.baseType(true);
             if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
-                // TODO will this work with aliases?
                 List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(tsOdinStructType, symbolTable);
                 symbolTable.addAll(typeSymbols);
             }
 
             if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+                var psiSizeElement = tsOdinArrayType.getPsiSizeElement();
+                OdinExpression expression = psiSizeElement.getExpression();
+
+                if (expression != null) {
+                    TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, expression);
+                    if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
+                        List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields((OdinEnumType) sizeType.getPsiType());
+                        symbolTable.addAll(enumFields);
+                        return;
+                    }
+                }
+
                 List<String> swizzleSymbols = List.of("r", "g", "b", "a", "x", "y", "z", "w");
                 for (String swizzleSymbol : swizzleSymbols) {
                     OdinSymbol odinSymbol = new OdinSymbol();

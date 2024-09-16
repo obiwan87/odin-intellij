@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import com.intellij.psi.PsiElement;
+import com.lasagnerd.odin.lang.psi.OdinArraySize;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +11,7 @@ import lombok.Setter;
 @Setter
 public class TsOdinArrayType extends TsOdinType {
     TsOdinType elementType;
-    PsiElement psiSizeElement;
+    OdinArraySize psiSizeElement;
     boolean soa;
     boolean simd;
 

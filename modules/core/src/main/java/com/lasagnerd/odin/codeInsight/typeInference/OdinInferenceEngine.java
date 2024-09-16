@@ -1080,9 +1080,9 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         }
 
-        if (parent instanceof OdinRhs rhs) {
-            OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(rhs, OdinCompoundLiteral.class);
-            OdinElementEntry elemEntry = (OdinElementEntry) rhs.getParent();
+        if (parent instanceof OdinRhs) {
+            OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(parent, OdinCompoundLiteral.class);
+            OdinElementEntry elemEntry = (OdinElementEntry) parent.getParent();
             if (elemEntry.getLhs() != null) {
                 TsOdinType tsOdinType = null;
                 if (compoundLiteral instanceof OdinCompoundLiteralUntyped compoundLiteralUntyped) {
