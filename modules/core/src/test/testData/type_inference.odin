@@ -574,6 +574,6 @@ testBitSetOperations :: proc() {
 testEnumAliases :: proc() {
     DirectionAlias :: Direction
 
-    x = DirectionAlias.
+    x = DirectionAlias.North
 
 }

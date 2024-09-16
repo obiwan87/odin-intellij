@@ -1131,18 +1131,22 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitOrBreakExpression(@NotNull OdinOrBreakExpression o) {
         OdinExpression expression = o.getExpression();
-        this.type = inferType(symbolTable, expression);
+        inferTypeOfOrStatements(expression);
     }
 
     @Override
     public void visitOrContinueExpression(@NotNull OdinOrContinueExpression o) {
         OdinExpression expression = o.getExpression();
-        this.type = inferType(symbolTable, expression);
+        inferTypeOfOrStatements(expression);
     }
 
     @Override
     public void visitOrReturnExpression(@NotNull OdinOrReturnExpression o) {
         OdinExpression expression = o.getExpression();
+        inferTypeOfOrStatements(expression);
+    }
+
+    private void inferTypeOfOrStatements(OdinExpression expression) {
         TsOdinType tsOdinType = doInferType(symbolTable, TsOdinBuiltInTypes.UNKNOWN, 2, expression);
         if (tsOdinType instanceof TsOdinTuple tsOdinTuple) {
             if (tsOdinTuple.getTypes().size() > 1) {
