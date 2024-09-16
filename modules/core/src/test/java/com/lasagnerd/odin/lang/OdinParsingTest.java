@@ -2000,6 +2000,15 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testBitSetOperations() throws IOException {
         OdinFile file = load("src/test/testData/type_inference.odin");
         {
+            OdinExpression expression = findFirstExpressionOfVariable(file, "testBitSetOperations", "operation");
+            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            Objects.requireNonNull(implicitSelectorExpression);
+
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("Direction", tsOdinEnumType.getName());
+        }
+        {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testBitSetOperations", "x");
             TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
             TsOdinBitSetType tsOdinBitSetType = assertInstanceOf(tsOdinTypeAlias.getBaseType(), TsOdinBitSetType.class);
@@ -2013,11 +2022,18 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             var proc = findFirstProcedure(file, "testEnumeratedArrays");
             OdinImplicitSelectorExpression implicitExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(Objects.requireNonNull(implicitExpression));
-            assertNotNull(odinSymbolTable.getSymbol("North"));
-            assertNotNull(odinSymbolTable.getSymbol("South"));
-            assertNotNull(odinSymbolTable.getSymbol("East"));
-            assertNotNull(odinSymbolTable.getSymbol("West"));
+            {
+                TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitExpression);
+                assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            }
+            {
+                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(Objects.requireNonNull(implicitExpression));
+                assertNotNull(odinSymbolTable.getSymbol("North"));
+                assertNotNull(odinSymbolTable.getSymbol("South"));
+                assertNotNull(odinSymbolTable.getSymbol("East"));
+                assertNotNull(odinSymbolTable.getSymbol("West"));
+            }
+
         }
     }
     // Helpers

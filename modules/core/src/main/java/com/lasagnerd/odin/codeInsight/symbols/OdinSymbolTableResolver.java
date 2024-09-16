@@ -10,7 +10,6 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NonNls;
@@ -272,32 +271,21 @@ public class OdinSymbolTableResolver {
 
             // Bring field declarations and swizzle into scope
             OdinLhs lhs = PsiTreeUtil.getParentOfType(position, OdinLhs.class, false);
-            if (lhs != null) {
-                TsOdinType tsOdinType;
-                if (containingScopeBlock instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
-                    tsOdinType = OdinTypeResolver.resolveType(symbolTable, compoundLiteralTyped.getType());
-                } else if (containingScopeBlock.getParent() instanceof OdinExpression odinExpression) {
-                    tsOdinType = OdinInferenceEngine.inferExpectedType(symbolTable, odinExpression);
-                } else {
-                    tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
-                }
+            if (lhs != null && containingScopeBlock instanceof OdinCompoundLiteral compoundLiteral) {
+                TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(symbolTable, compoundLiteral);
                 addElementSymbols(tsOdinType, symbolTable);
             }
 
             if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
                 OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(procedureDefinition.getProject());
                 if (builtinSymbolService != null) {
-                    OdinStringLiteral callConvention = procedureDefinition.getProcedureType().getStringLiteral();
-                    if (callConvention != null) {
-                        // TODO it is unclear what "contextless" means in core.odin
-//                    String stringLiteralValue = OdinInsightUtils.getStringLiteralValue(callConvention);
-//                    if (stringLiteralValue == null && ) {
-//                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
-//                    }
-                        symbolTable.add(builtinSymbolService.createImplicitStructSymbol("context", "Context"));
-                    } else {
-                        symbolTable.add(builtinSymbolService.createImplicitStructSymbol("context", "Context"));
-                    }
+                    // TODO check logic of "contextless"
+                    //OdinStringLiteral callConvention = procedureDefinition.getProcedureType().getStringLiteral();
+                    //                    String stringLiteralValue = OdinInsightUtils.getStringLiteralValue(callConvention);
+                    //                    if (stringLiteralValue == null && ) {
+                    //                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
+                    //                    }
+                    symbolTable.add(builtinSymbolService.createImplicitStructSymbol("context", "Context"));
                 }
             }
 
@@ -355,17 +343,7 @@ public class OdinSymbolTableResolver {
             }
 
             if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
-                var psiSizeElement = tsOdinArrayType.getPsiSizeElement();
-                OdinExpression expression = psiSizeElement.getExpression();
-
-                if (expression != null) {
-                    TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, expression);
-                    if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
-                        List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields((OdinEnumType) sizeType.getPsiType());
-                        symbolTable.addAll(enumFields);
-                        return;
-                    }
-                }
+                if (OdinInsightUtils.getEnumeratedArraySymbols(symbolTable, tsOdinArrayType)) return;
 
                 List<String> swizzleSymbols = List.of("r", "g", "b", "a", "x", "y", "z", "w");
                 for (String swizzleSymbol : swizzleSymbols) {

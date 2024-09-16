@@ -432,4 +432,19 @@ public class OdinInsightUtils {
         }
         return "<unknown>:<unknown>";
     }
+
+    public static boolean getEnumeratedArraySymbols(OdinSymbolTable symbolTable, TsOdinArrayType tsOdinArrayType) {
+        var psiSizeElement = tsOdinArrayType.getPsiSizeElement();
+        OdinExpression expression = psiSizeElement.getExpression();
+
+        if (expression != null) {
+            TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, expression);
+            if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
+                List<OdinSymbol> enumFields = getEnumFields((OdinEnumType) sizeType.getPsiType());
+                symbolTable.addAll(enumFields);
+                return true;
+            }
+        }
+        return false;
+    }
 }
