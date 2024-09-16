@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
+import com.lasagnerd.odin.lang.psi.OdinFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ public class MockOdinImportService implements OdinImportService {
     private Map<String, String> nameToPathMap = new HashMap<>();
     private Map<String, VirtualFile> virtualFileMap = new HashMap<>();
     private final PsiFileFactoryImpl fileFactory;
-
+    private final Map<String, OdinFile> pathToOdinFile = new HashMap<>();
     public MockOdinImportService(@NotNull PsiFileFactoryImpl fileFactory) {
         this.fileFactory = fileFactory;
         var rootPaths = List.of(
@@ -85,7 +86,13 @@ public class MockOdinImportService implements OdinImportService {
     @Override
     public PsiFile createPsiFile(VirtualFile virtualFile) {
         if (virtualFile instanceof LightVirtualFile lightVirtualFile) {
-            return fileFactory.trySetupPsiForFile(lightVirtualFile, OdinLanguage.INSTANCE, true, false);
+            OdinFile odinFile = pathToOdinFile.get(virtualFile.getPath());
+            if(odinFile == null) {
+                odinFile = (OdinFile) fileFactory.trySetupPsiForFile(lightVirtualFile, OdinLanguage.INSTANCE, true, false);
+                pathToOdinFile.put(virtualFile.getPath(), odinFile);
+            }
+
+            return odinFile;
         }
         return null;
     }

@@ -44,6 +44,14 @@ public class OdinPsiUtil {
         if (self instanceof OdinSubExpression subExpression)
             return subExpression.getMinus();
 
+        if(self instanceof OdinBitwiseOrExpression bitwiseOrExpression)
+            return bitwiseOrExpression.getPipe();
+
+        if(self instanceof OdinBitwiseAndExpression bitwiseAndExpression) {
+            return bitwiseAndExpression.getAnd();
+        }
+        // TODO continue
+
         return self.getChildren().length > 1 ? self.getChildren()[1] : null;
     }
 

@@ -1,12 +1,14 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 // TODO make abstract
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 public class TsOdinBuiltInType extends TsOdinType implements Comparable<TsOdinBuiltInType> {
 
 

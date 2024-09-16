@@ -48,6 +48,7 @@ public class OdinBuildErrorsExternalAnnotator extends ExternalAnnotator<PsiFile,
         List<OdinBuildErrorResult.ErrorDetails> errorDetails = buildErrorResult
                 .getErrors()
                 .stream()
+                .filter(error -> error.getPos() != null)
                 .filter(error -> error.getPos().getFile().equals(realFilePath))
                 .toList();
 

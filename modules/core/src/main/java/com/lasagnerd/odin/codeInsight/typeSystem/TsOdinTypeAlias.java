@@ -1,10 +1,12 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 public class TsOdinTypeAlias extends TsOdinType{
     private TsOdinType aliasedType;
     private boolean distinct;

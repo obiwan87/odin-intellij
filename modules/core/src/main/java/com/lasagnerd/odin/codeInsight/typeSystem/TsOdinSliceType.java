@@ -1,13 +1,15 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType.SLICE;
 
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 public class TsOdinSliceType extends TsOdinType {
     TsOdinType elementType;
     boolean soa;

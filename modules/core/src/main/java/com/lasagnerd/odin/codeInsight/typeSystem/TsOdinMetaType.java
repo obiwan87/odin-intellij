@@ -1,16 +1,22 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * The type that is yielded by an identifier that is a type name.
  */
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 public class TsOdinMetaType extends TsOdinType {
 
+    public TsOdinMetaType(MetaType representedMetaType) {
+        this.representedMetaType = representedMetaType;
+    }
 
     @Override
     public MetaType getMetaType() {
@@ -52,4 +58,10 @@ public class TsOdinMetaType extends TsOdinType {
     private TsOdinMetaType aliasedMetaType;
     private OdinExpression typeExpression;
 
+    public TsOdinType representedType() {
+        if(representedType == null) {
+            representedType = OdinTypeResolver.resolveMetaType(symbolTable, this);
+        }
+        return representedType;
+    }
 }

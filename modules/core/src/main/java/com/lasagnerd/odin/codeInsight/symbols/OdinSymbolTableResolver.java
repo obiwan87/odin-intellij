@@ -10,10 +10,8 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeChecker;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinArrayType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinDynamicArray;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -355,7 +353,7 @@ public class OdinSymbolTableResolver {
         }
 
         private void addElementSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
-            tsOdinType = OdinTypeChecker.getBaseType(tsOdinType, true);
+            tsOdinType = tsOdinType.baseType(true);
             if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
                 // TODO will this work with aliases?
                 List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(tsOdinStructType, symbolTable);
@@ -504,7 +502,7 @@ public class OdinSymbolTableResolver {
             declarations.addAll(getFileScopeDeclarations(fileScope));
         }
 
-        if(containingScopeBlock instanceof OdinEnumBody enumBody) {
+        if (containingScopeBlock instanceof OdinEnumBody enumBody) {
             declarations.addAll(enumBody.getEnumValueDeclarationList());
         }
 

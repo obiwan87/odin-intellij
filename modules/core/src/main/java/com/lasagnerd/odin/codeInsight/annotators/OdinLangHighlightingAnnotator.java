@@ -275,9 +275,16 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
 
         if (symbol.getPsiType() instanceof OdinPolymorphicType) {
+            annotationSessionState.aborted.add(topMostExpression);
             return;
         }
 
+        if(symbol.getPsiType() instanceof OdinPointerType pointerType) {
+            if(pointerType.getType() instanceof OdinPolymorphicType) {
+                annotationSessionState.aborted.add(topMostExpression);
+                return;
+            }
+        }
 
         if (symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier declaredIdentifier) {
             if (declaredIdentifier.getDollar() != null)

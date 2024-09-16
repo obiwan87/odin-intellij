@@ -13,8 +13,8 @@ import java.util.List;
 public class OdinTypeChecker {
 
     static boolean checkTypesStrictly(TsOdinType argumentType, TsOdinType parameterType) {
-        final TsOdinType argumentBaseType = getBaseType(argumentType);
-        final TsOdinType parameterBaseType = getBaseType(parameterType);
+        final TsOdinType argumentBaseType = argumentType.baseType();
+        final TsOdinType parameterBaseType = parameterType.baseType();
 
         if (argumentBaseType == parameterBaseType) {
             return true;
@@ -32,6 +32,10 @@ public class OdinTypeChecker {
         if (argumentBaseType.getPsiTypeExpression() != null && parameterBaseType.getPsiTypeExpression() != null) {
             if (argumentBaseType.getPsiType() == parameterBaseType.getPsiType())
                 return true;
+        }
+
+        if(parameterBaseType.isTypeId() && argumentType instanceof TsOdinMetaType) {
+            return true;
         }
 
         if (argumentBaseType instanceof TsOdinArrayType argArrayType
@@ -57,28 +61,13 @@ public class OdinTypeChecker {
 
         if (argumentBaseType instanceof TsOdinDynamicArray argDynArray
                 && parameterBaseType instanceof TsOdinDynamicArray parDynArray) {
-            return checkTypesStrictly(argDynArray.getElementType(), parDynArray.getElementType());
+            if(argDynArray.isSoa() == parDynArray.isSoa()) {
+                return checkTypesStrictly(argDynArray.getElementType(), parDynArray.getElementType());
+            }
+            return false;
         }
 
         return false;
-    }
-
-    public static TsOdinType getBaseType(TsOdinType t) {
-        return getBaseType(t, false);
-    }
-
-    public static TsOdinType getBaseType(TsOdinType t, boolean ignoreDistinct) {
-        if (t instanceof TsOdinTypeAlias alias) {
-            if (ignoreDistinct) {
-                return alias.getBaseType();
-            }
-
-            if (alias.isDistinct()) {
-                return alias;
-            }
-            return alias.getDistinctBaseType();
-        }
-        return t;
     }
 
     public enum ConversionAction {
@@ -112,6 +101,11 @@ public class OdinTypeChecker {
 
         type = convertToTyped(type, expectedType);
 
+        if(type instanceof TsOdinPointerType pointerType && expectedType instanceof TsOdinPointerType expectedPointerType) {
+            doCheckTypes(pointerType.getDereferencedType(), expectedPointerType.getDereferencedType());
+            return;
+        }
+
         if (checkTypesStrictly(type, expectedType)) {
             typeCheckResult.setCompatible(true);
             return;
@@ -130,7 +124,7 @@ public class OdinTypeChecker {
                     representedType = OdinTypeResolver.resolveMetaType(metaType.getSymbolTable(), metaType);
                 }
 
-                doCheckTypes(getBaseType(representedType, true), constrainedType.getSpecializedType());
+                doCheckTypes(representedType.baseType(true), constrainedType.getSpecializedType());
             }
             return;
         }
@@ -179,6 +173,11 @@ public class OdinTypeChecker {
 
         }
 
+        if(type == TsOdinBuiltInTypes.NIL && expectedType.isNillable()) {
+            typeCheckResult.setCompatible(true);
+            return;
+        }
+
         if (expectedType instanceof TsOdinStructType &&
                 type instanceof TsOdinStructType structType) {
             OdinStructType psiStructType = (OdinStructType) structType.getPsiType();
@@ -187,12 +186,25 @@ public class OdinTypeChecker {
             if (structBody != null) {
                 for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : structBody.getFieldDeclarationStatementList()) {
                     if (odinFieldDeclarationStatement.getUsing() != null) {
-                        TsOdinType usingStructType = OdinTypeResolver
-                                .resolveType(structType.getSymbolTable(), odinFieldDeclarationStatement.getType());
+                        TsOdinType usedType = OdinTypeResolver
+                                .resolveType(structType.getSymbolTable(),
+                                        odinFieldDeclarationStatement.getType());
 
-                        if (checkTypesStrictly(usingStructType, expectedType)) {
+                        if(usedType instanceof TsOdinPointerType pointerType) {
+                            usedType = pointerType.getDereferencedType();
+                        }
+
+                        if (checkTypesStrictly(usedType, expectedType)) {
                             addActionAndSetCompatible(ConversionAction.USING_SUBTYPE);
                             return;
+                        } else if(usedType instanceof TsOdinStructType) {
+                            TypeCheckResult typeCheckResult = checkTypes(usedType, expectedType);
+                            if(typeCheckResult.isCompatible()) {
+                                this.typeCheckResult.getConversionActionList().add(ConversionAction.USING_SUBTYPE);
+                                this.typeCheckResult.getConversionActionList().addAll(typeCheckResult.getConversionActionList());
+                                this.typeCheckResult.setCompatible(true);
+                                return;
+                            }
                         }
                     }
                 }

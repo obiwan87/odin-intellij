@@ -1,14 +1,16 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 public class TsOdinProcedureType extends TsOdinType {
     List<TsOdinType> returnTypes = new ArrayList<>();
     List<TsOdinParameter> parameters = new ArrayList<>();

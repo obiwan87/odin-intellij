@@ -1,7 +1,10 @@
 package com.lasagnerd.odin.codeInsight;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.LineColumn;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
@@ -69,9 +72,8 @@ public class OdinInsightUtils {
     }
 
     public static OdinSymbolTable getTypeElements(Project project, TsOdinType type, boolean includeReferenceableSymbols) {
-        if (type instanceof TsOdinTypeAlias tsOdinTypeAlias) {
-            type = tsOdinTypeAlias.getBaseType();
-        }
+        type = type.baseType(true);
+
         if (type instanceof TsOdinPackageReferenceType packageType) {
             return OdinImportUtils
                     .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
@@ -184,7 +186,6 @@ public class OdinInsightUtils {
         List<OdinSymbol> symbols = new ArrayList<>();
         for (OdinEnumValueDeclaration odinEnumValueDeclaration : enumBody
                 .getEnumValueDeclarationList()) {
-            // TODO move to SymbolResolver
             OdinDeclaredIdentifier identifier = odinEnumValueDeclaration.getDeclaredIdentifier();
             OdinSymbol odinSymbol = new OdinSymbol(identifier);
             odinSymbol.setSymbolType(ENUM_FIELD);
@@ -421,5 +422,14 @@ public class OdinInsightUtils {
 
     public static boolean isParameterDeclaration(PsiElement element) {
         return PsiTreeUtil.getParentOfType(element, true, OdinDeclaration.class) instanceof OdinParameterDeclaration;
+    }
+
+    public static String getLineColumn(@NotNull PsiElement element) {
+        PsiFile containingFile = element.getContainingFile();
+        if(containingFile != null) {
+            LineColumn lineColumn = StringUtil.offsetToLineColumn(containingFile.getText(), element.getTextOffset());
+            return (lineColumn.line+1) + ":" + (lineColumn.column+1);
+        }
+        return "<unknown>:<unknown>";
     }
 }

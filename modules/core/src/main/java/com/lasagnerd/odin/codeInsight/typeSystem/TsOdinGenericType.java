@@ -1,8 +1,8 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.jetbrains.annotations.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,13 +13,19 @@ import java.util.Map;
  * specialized type. It is therefore not part of this hierarchy.
  */
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 public abstract class TsOdinGenericType extends TsOdinType {
 
     public static TsOdinGenericType NO_GENERIC_TYPE = new TsOdinGenericType() {
         @Override
         public TsOdinMetaType.MetaType getMetaType() {
             return TsOdinMetaType.MetaType.UNKNOWN;
+        }
+
+        @Override
+        public String getLabel() {
+            return "<no type>";
         }
     };
 

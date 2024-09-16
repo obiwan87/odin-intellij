@@ -457,6 +457,50 @@ test_polyOverloadWithMake :: proc() {
     y := make(Points, 1)
     PointsDistinct :: distinct []Point
     z := make(PointsDistinct, 1)
+// TODO test all the other variants
+}
+
+test_astNew :: proc() {
+    ConcreteAstNode :: struct {
+        base: i32
+    }
+    Pos :: struct {
+    }
+    Node :: struct {
+        a: i32
+    }
+    ConcreteNode :: struct {
+        using n: Node,
+        b: i32
+    }
+    ConcreteNode2 :: struct {
+        using cn: ConcreteNode,
+        c: i32
+    }
+    new_from_positions :: proc($T: typeid, pos, end: Pos) -> ^T {
+
+    }
+
+    new_from_pos_and_end_node :: proc($T: typeid, pos: Pos, end: ^Node) -> ^T {
+
+    }
+
+    new_from_pos_and_end_node_2 :: proc($T: typeid, pos: Pos, end: ^o.Node) -> ^T {
+
+    }
+
+    new :: proc {
+    new_from_pos_and_end_node_2,
+    new_from_positions,
+    new_from_pos_and_end_node,
+
+    }
+
+    x := new(ConcreteAstNode, Pos{ }, Pos{ })
+    y := new(ConcreteNode, Pos{ }, &ConcreteNode{ })
+    z := new(ConcreteNode2, Pos{ }, &ConcreteNode2{ })
+    a := new(o.Stmt, Pos{ }, &o.Stmt{ })
+
 }
 
 test_dynamicArrayAllocatorSymbol :: proc() {
@@ -496,10 +540,40 @@ test_structField :: proc() {
 
 testNamelessStruct :: proc() {
     MyStruct :: struct {
-        a: struct {x,y: i32}
+        a: struct {
+            x, y: i32
+        }
     }
 
-    s := MyStruct{}
+    s := MyStruct{ }
     x := s.a.x
     y := s.a
+}
+
+testImplicitEnumExpression :: proc() {
+
+    p :: proc(t: Direction) {
+
+    }
+
+    x := p(.North) // expecting direction from .North
+}
+
+testBitSetOperations :: proc() {
+    Direction :: enum {
+        N, S, O, E
+    }
+    DirectionSet :: distinct bit_set[Direction]
+
+    Directions :: DirectionSet{ .N, .S }
+    operation := Directions | { .E }
+
+    x := operation
+}
+
+testEnumAliases :: proc() {
+    DirectionAlias :: Direction
+
+    x = DirectionAlias.
+
 }

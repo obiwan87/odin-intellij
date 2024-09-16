@@ -44,20 +44,24 @@ public class OdinTypeConverter {
 
     public static @NotNull TsOdinType inferTypeOfBinaryExpression(@NotNull TsOdinType a, @NotNull TsOdinType b) {
         if (a.isUnknown() || b.isUnknown())
-            return TsOdinType.UNKNOWN;
+            return TsOdinBuiltInTypes.UNKNOWN;
+
+        a = a.baseType();
+        b = b.baseType();
 
         // Easy case: the type kind is the same
         if (a.getMetaType() == b.getMetaType()) {
-            if (a instanceof TsOdinBitSetType bitSetA && b instanceof TsOdinBitSetType bitSetB) {
-                if (bitSetA.getElementType() == bitSetB.getElementType())
-                    return bitSetA;
-            }
+            if (OdinTypeChecker.checkTypesStrictly(a, b)) {
+                TsOdinType baseTypeA = a.baseType(true);
+                TsOdinType baseTypeB = b.baseType(true);
+                if (baseTypeA instanceof TsOdinBitSetType && baseTypeB instanceof TsOdinBitSetType) {
+                    return a;
+                }
 
-            if (a instanceof TsOdinArrayType arrayTypeA && b instanceof TsOdinArrayType arrayTypeB) {
-                if (arrayTypeA.getElementType() == arrayTypeB.getElementType())
-                    return arrayTypeA;
+                if (baseTypeA instanceof TsOdinArrayType && baseTypeB instanceof TsOdinArrayType) {
+                    return a;
+                }
             }
-
             return convertToTyped(a, b);
         }
 
@@ -71,7 +75,7 @@ public class OdinTypeConverter {
         }
 
 
-        return TsOdinType.UNKNOWN;
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     private static TsOdinType convertToArrayType(TsOdinArrayType arrayType, TsOdinType builtInType) {
@@ -81,7 +85,7 @@ public class OdinTypeConverter {
                 return arrayType;
             }
         }
-        return TsOdinType.UNKNOWN;
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     public static TsOdinType convertToTyped(TsOdinType a, TsOdinType b) {
@@ -103,7 +107,7 @@ public class OdinTypeConverter {
             untypedType = (TsOdinUntypedType) b;
             typed = a;
         } else {
-            return TsOdinType.UNKNOWN;
+            return TsOdinBuiltInTypes.UNKNOWN;
         }
 
         if (a.isUntyped() || b.isUntyped())
@@ -112,7 +116,7 @@ public class OdinTypeConverter {
                 return typed;
             }
 
-        return TsOdinType.UNKNOWN;
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     private static TsOdinType convertUntypedTypes(TsOdinUntypedType untypedA, TsOdinUntypedType untypedB) {
@@ -121,14 +125,14 @@ public class OdinTypeConverter {
 
         // In case of string vs rune vs numeric
         if (typedA.getMetaType() != typedB.getMetaType())
-            return TsOdinType.UNKNOWN;
+            return TsOdinBuiltInTypes.UNKNOWN;
 
         if (typedA.isNumeric()) {
             return max((TsOdinNumericType) typedA, (TsOdinNumericType) typedB);
         }
 
 
-        return TsOdinType.UNKNOWN;
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     private static TsOdinType max(TsOdinNumericType typedA, TsOdinNumericType typedB) {

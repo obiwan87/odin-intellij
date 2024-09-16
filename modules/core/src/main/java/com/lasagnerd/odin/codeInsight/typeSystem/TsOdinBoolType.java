@@ -1,6 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
-public class TsOdinBoolType extends TsOdinBuiltInType{
+public class TsOdinBoolType extends TsOdinBuiltInType {
     int length;
 
     TsOdinBoolType(String name, int length) {

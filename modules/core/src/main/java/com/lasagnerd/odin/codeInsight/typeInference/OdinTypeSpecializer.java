@@ -231,7 +231,7 @@ public class OdinTypeSpecializer {
             if (parameterType instanceof TsOdinArrayType parameterArrayType
                     && argumentType instanceof TsOdinArrayType argumentArrayType) {
                 doSubstituteTypes(argumentArrayType.getElementType(), parameterArrayType.getElementType(), resolvedTypes);
-            } else if(parameterType instanceof TsOdinDynamicArray parDynamicArray
+            } else if (parameterType instanceof TsOdinDynamicArray parDynamicArray
                     && argumentType instanceof TsOdinDynamicArray argDynamicArray) {
                 doSubstituteTypes(argDynamicArray.getElementType(), parDynamicArray.getElementType(), resolvedTypes);
             } else if (parameterType instanceof TsOdinSliceType sliceType
@@ -276,7 +276,7 @@ public class OdinTypeSpecializer {
             else if (parameterType instanceof TsOdinGenericType generalizableType && argumentType instanceof TsOdinGenericType generalizableType1) {
                 if (generalizableType1.getClass().equals(generalizableType.getClass())) {
                     for (Map.Entry<String, TsOdinType> entry : generalizableType.getResolvedPolymorphicParameters().entrySet()) {
-                        TsOdinType nextArgumentType = generalizableType1.getResolvedPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinType.UNKNOWN);
+                        TsOdinType nextArgumentType = generalizableType1.getResolvedPolymorphicParameters().getOrDefault(entry.getKey(), TsOdinBuiltInTypes.UNKNOWN);
                         TsOdinType nextParameterType = entry.getValue();
                         doSubstituteTypes(nextArgumentType, nextParameterType, resolvedTypes);
                     }
@@ -294,7 +294,7 @@ public class OdinTypeSpecializer {
                     parameterType.isTypeId() || parameterType.getMetaType() == metaType.getRepresentedMetaType() ||
                             (parameterType instanceof TsOdinConstrainedType constrainedType && constrainedType.getMainType().isTypeId()))
             ) {
-                return OdinTypeResolver.resolveMetaType(symbolTable, metaType);
+                return OdinTypeResolver.resolveMetaType(metaType.getSymbolTable(), metaType);
             }
         } else {
             System.out.printf("Parameter type was null for '%s' in %s", argumentExpression.getText(), getLocationWithinFile(argumentExpression));
@@ -305,7 +305,7 @@ public class OdinTypeSpecializer {
             OdinIdentifier identifier = refExpression.getIdentifier();
             if (identifier != null) {
                 TsOdinType tsOdinType = symbolTable.getType(identifier.getText());
-                return Objects.requireNonNullElse(tsOdinType, TsOdinType.UNKNOWN);
+                return Objects.requireNonNullElse(tsOdinType, TsOdinBuiltInTypes.UNKNOWN);
             }
         }
 
@@ -315,7 +315,7 @@ public class OdinTypeSpecializer {
             if (typeDefinitionExpression.getType() instanceof OdinPolymorphicType polymorphicType) {
                 return createPolymorphicType(symbolTable, polymorphicType);
             }
-            return TsOdinType.UNKNOWN;
+            return TsOdinBuiltInTypes.UNKNOWN;
         }
         // Case 3: The argument has been resolved to a proper type. Just add the mapping
         return argumentType;
@@ -323,8 +323,12 @@ public class OdinTypeSpecializer {
 
     public static @NotNull String getLocationWithinFile(PsiElement psiElement) {
         PsiFile containingFile = psiElement.getContainingFile();
-        LineColumn lineColumn = StringUtil.offsetToLineColumn(containingFile.getText(), psiElement.getTextOffset());
-        return "%s:%d:%d%n".formatted(containingFile.getVirtualFile().getPath(), lineColumn.line, lineColumn.column);
+        if (containingFile != null && containingFile.getVirtualFile() != null) {
+            LineColumn lineColumn = StringUtil.offsetToLineColumn(containingFile.getText(), psiElement.getTextOffset());
+
+            return "%s:%d:%d%n".formatted(containingFile.getVirtualFile().getPath(), lineColumn.line, lineColumn.column);
+        }
+        return "<unknown location>";
     }
 
     private static @NotNull TsOdinType createPolymorphicType(OdinSymbolTable newScope, OdinPolymorphicType polymorphicType) {

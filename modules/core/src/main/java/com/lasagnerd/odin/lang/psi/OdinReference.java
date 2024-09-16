@@ -8,9 +8,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceBase;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +32,16 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public @Nullable PsiElement resolve() {
+        if(getElement().getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
+            OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(getElement().getProject(), tsOdinType);
+            OdinSymbol symbol = typeElements.getSymbol(getElement().getText());
+            if(symbol != null) {
+                return symbol.getDeclaredIdentifier();
+            }
+            return null;
+        }
+
         try {
             OdinSymbol firstDeclaration = OdinSymbolTableResolver.findSymbol(getElement());
             if (firstDeclaration != null) {

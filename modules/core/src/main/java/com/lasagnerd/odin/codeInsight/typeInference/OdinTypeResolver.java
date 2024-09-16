@@ -39,7 +39,7 @@ public class OdinTypeResolver extends OdinVisitor {
                                                   OdinType type) {
         OdinTypeResolver typeResolver = new OdinTypeResolver(level, symbolTable, declaration, declaredIdentifier);
         type.accept(typeResolver);
-        return Objects.requireNonNullElse(typeResolver.type, TsOdinType.UNKNOWN);
+        return Objects.requireNonNullElse(typeResolver.type, TsOdinBuiltInTypes.UNKNOWN);
     }
 
     public static @NotNull TsOdinMetaType findMetaType(OdinSymbolTable symbolTable,
@@ -108,7 +108,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 return typeAlias;
             }
         }
-        return TsOdinType.UNKNOWN;
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     // Result
@@ -242,7 +242,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 if (RESERVED_TYPES.contains(identifierText)) {
                     return TsOdinBuiltInTypes.getBuiltInType(identifierText);
                 }
-                return TsOdinType.UNKNOWN;
+                return TsOdinBuiltInTypes.UNKNOWN;
             } else {
                 var knownType = symbolTable.getKnownTypes().get(declaredIdentifier);
                 if (knownType != null) {
@@ -284,10 +284,10 @@ public class OdinTypeResolver extends OdinVisitor {
                 if (!expressionList.isEmpty()) {
                     int index = constantInitializationStatement.getDeclaredIdentifiers().indexOf(identifier);
                     if (index == -1) {
-                        return TsOdinType.UNKNOWN;
+                        return TsOdinBuiltInTypes.UNKNOWN;
                     }
                     if (expressionList.size() <= index) {
-                        return TsOdinType.UNKNOWN;
+                        return TsOdinBuiltInTypes.UNKNOWN;
                     }
 
                     OdinExpression odinExpression = expressionList.get(index);
@@ -296,7 +296,7 @@ public class OdinTypeResolver extends OdinVisitor {
                         TsOdinType resolvedMetaType = doResolveMetaType(symbolTable, metaType);
                         return createTypeAliasFromMetaType(identifier, resolvedMetaType, odinDeclaration, odinExpression);
                     }
-                    return TsOdinType.UNKNOWN;
+                    return TsOdinBuiltInTypes.UNKNOWN;
                 }
             }
             case OdinPolymorphicType polymorphicType -> {
@@ -315,7 +315,7 @@ public class OdinTypeResolver extends OdinVisitor {
             }
         }
 
-        return TsOdinType.UNKNOWN;
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     public static @NotNull TsOdinTypeAlias createTypeAliasFromMetaType(OdinDeclaredIdentifier identifier,
@@ -417,6 +417,7 @@ public class OdinTypeResolver extends OdinVisitor {
             tsOdinDynamicArray.setElementType(tsOdinElementType);
             tsOdinDynamicArray.setSymbolTable(symbolTable);
             tsOdinDynamicArray.setPsiType(o);
+            tsOdinDynamicArray.setSoa(checkDirective(o.getDirectiveHead(), "#soa"));
             this.type = tsOdinDynamicArray;
         }
     }

@@ -1,10 +1,12 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 public class TsOdinConstrainedType extends TsOdinType {
 
     private TsOdinType mainType;
@@ -13,5 +15,11 @@ public class TsOdinConstrainedType extends TsOdinType {
     @Override
     public TsOdinMetaType.MetaType getMetaType() {
         return TsOdinMetaType.MetaType.UNKNOWN;
+    }
+
+    @Override
+    public String getLabel() {
+
+        return label(mainType) + "/" + label(specializedType);
     }
 }

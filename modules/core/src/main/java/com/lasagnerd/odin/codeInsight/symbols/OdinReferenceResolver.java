@@ -3,6 +3,8 @@ package com.lasagnerd.odin.codeInsight.symbols;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 
@@ -12,6 +14,12 @@ public class OdinReferenceResolver {
     public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinExpression valueExpression) {
         // Add filter for referenceable elements
         TsOdinType type = OdinInferenceEngine.inferType(symbolTable, valueExpression);
+        if(type instanceof TsOdinMetaType metaType) {
+            TsOdinType tsOdinType = metaType.representedType().baseType(true);
+            if(tsOdinType instanceof TsOdinEnumType) {
+                return OdinInsightUtils.getTypeElements(valueExpression.getProject(), tsOdinType);
+            }
+        }
         return OdinInsightUtils.getTypeElements(valueExpression.getProject(), type, true);
     }
 

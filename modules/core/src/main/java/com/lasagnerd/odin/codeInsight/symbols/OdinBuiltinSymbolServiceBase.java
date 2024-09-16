@@ -110,7 +110,7 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
                 }
             }
         }
-        return cachedTypes.getOrDefault(typeName, TsOdinType.UNKNOWN);
+        return cachedTypes.getOrDefault(typeName, TsOdinBuiltInTypes.UNKNOWN);
     }
 
     @Override

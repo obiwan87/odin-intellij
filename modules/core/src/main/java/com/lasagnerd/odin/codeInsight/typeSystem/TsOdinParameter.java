@@ -3,9 +3,11 @@ package com.lasagnerd.odin.codeInsight.typeSystem;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinType;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class TsOdinParameter {
     private String name;
     private OdinDeclaredIdentifier identifier;

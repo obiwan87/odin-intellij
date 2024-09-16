@@ -1,11 +1,13 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import com.intellij.psi.PsiElement;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 public class TsOdinArrayType extends TsOdinType {
     TsOdinType elementType;
     PsiElement psiSizeElement;

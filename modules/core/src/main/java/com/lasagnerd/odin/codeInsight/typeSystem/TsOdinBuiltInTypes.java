@@ -1,5 +1,7 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+
 import java.util.*;
 
 public class TsOdinBuiltInTypes {
@@ -64,7 +66,7 @@ public class TsOdinBuiltInTypes {
     public static final TsOdinBuiltInType RAW_PTR = new TsOdinRawPointerType();
 
     public static final TsOdinBuiltInType TYPEID = new TsOdinBuiltInType("typeid");
-//    public static final TsOdinBuiltInType ANY = new TsOdinBuiltInType("any");
+    public static final TsOdinBuiltInType NIL = new TsOdinBuiltInType("nil");
 
     public static final TsOdinUntypedType UNTYPED_INT = new TsOdinUntypedType("untyped int", TsOdinMetaType.MetaType.NUMERIC);
     public static final TsOdinUntypedType UNTYPED_BOOLEAN = new TsOdinUntypedType("untyped bool", TsOdinMetaType.MetaType.BOOL);
@@ -129,8 +131,12 @@ public class TsOdinBuiltInTypes {
             "string",
             "cstring",
             "rawptr",
-            "typeid"
+            "typeid",
+            "nil"
     );
+    public static final TsOdinType UNKNOWN = new TsOdinUnknownType();
+    public static final TsOdinType VOID = new TsOdinVoidType();
+    
     private static final Map<String, TsOdinBuiltInType> builtInTypeMap = new HashMap<>();
     private static List<TsOdinType> integerTypes;
     private static List<TsOdinType> numericTypes;
@@ -204,6 +210,9 @@ public class TsOdinBuiltInTypes {
         // Type ID
         builtInTypeMap.put(TYPEID.getName(), TYPEID);
 
+        // Nil "type"
+        builtInTypeMap.put(NIL.getName(), NIL);
+
         //Any
 //        builtInTypeMap.put(ANY.getName(), ANY);
     }
@@ -257,5 +266,47 @@ public class TsOdinBuiltInTypes {
 
     public static Collection<TsOdinType> getQuaternionTypes() {
         return List.of(QUATERNION64, QUATERNION128, QUATERNION256);
+    }
+
+    private static class TsOdinUnknownType extends TsOdinType {
+        {
+            this.symbolTable = OdinSymbolTable.EMPTY;
+        }
+
+        @Override
+        public String getLabel() {
+            return "UNKNOWN";
+        }
+
+        @Override
+        public TsOdinMetaType.MetaType getMetaType() {
+            return TsOdinMetaType.MetaType.UNKNOWN;
+        }
+
+        @Override
+        public String getName() {
+            return "UNKNOWN";
+        }
+    }
+
+    private static class TsOdinVoidType extends TsOdinType {
+        {
+            this.symbolTable = OdinSymbolTable.EMPTY;
+        }
+
+        @Override
+        public String getName() {
+            return "VOID";
+        }
+
+        @Override
+        public String getLabel() {
+            return "VOID";
+        }
+
+        @Override
+        public TsOdinMetaType.MetaType getMetaType() {
+            return TsOdinMetaType.MetaType.VOID;
+        }
     }
 }

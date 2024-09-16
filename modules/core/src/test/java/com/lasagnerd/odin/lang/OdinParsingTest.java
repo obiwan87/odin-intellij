@@ -58,7 +58,6 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 
@@ -567,9 +566,15 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
 
+    Map<String, OdinFile> fileCache = new HashMap<>();
     protected OdinFile load(String path) throws IOException {
-        String fileContent = FileUtil.loadFile(new File(path), CharsetToolkit.UTF8, true).trim();
-        return ((OdinFile) parseFile(Path.of(path).toFile().getName(), fileContent));
+        OdinFile odinFile = fileCache.get(path);
+        if(odinFile == null) {
+            String fileContent = FileUtil.loadFile(new File(path), CharsetToolkit.UTF8, true).trim();
+            odinFile = ((OdinFile) parseFile(Path.of(path).toFile().getName(), fileContent));
+            fileCache.put(path, odinFile);
+        }
+        return odinFile;
     }
 
 
@@ -1785,6 +1790,34 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void test_astNew_procedureOverload() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_astNew", "a");
+            TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinStructType.class);
+            assertEquals("Stmt", tsOdinStructType.getName());
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_astNew", "z");
+            TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinStructType.class);
+            assertEquals("ConcreteNode2", tsOdinStructType.getName());
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_astNew", "y");
+            TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinStructType.class);
+            assertEquals("ConcreteNode", tsOdinStructType.getName());
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_astNew", "x");
+            TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinStructType.class);
+            assertEquals("ConcreteAstNode", tsOdinStructType.getName());
+        }
+    }
+
     public void test_typeInference_polyProcedureOverloadWithMake() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         {
@@ -1815,6 +1848,18 @@ public class OdinParsingTest extends UsefulTestCase {
             assertEquals("Point", tsOdinStructType.getName());
         }
 
+    }
+
+    public void test_implicitExpression() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinProcedureDeclarationStatement proc = findFirstProcedure(file, "testImplicitEnumExpression");
+        {
+            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
+            Objects.requireNonNull(implicitSelectorExpression);
+            TsOdinType tsOdinType = OdinInferenceEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(implicitSelectorExpression), implicitSelectorExpression);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("Direction", tsOdinEnumType.getName());
+        }
     }
 
     public void test_typeInference_anyType() throws IOException {
@@ -1951,9 +1996,22 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(tsOdinStructType.getPsiType());
         }
     }
+
+    public void testBitSetOperations() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testBitSetOperations", "x");
+            TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+            TsOdinBitSetType tsOdinBitSetType = assertInstanceOf(tsOdinTypeAlias.getBaseType(), TsOdinBitSetType.class);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinBitSetType.getElementType(), TsOdinEnumType.class);
+            assertEquals("Direction", tsOdinEnumType.getName());
+        }
+    }
     // Helpers
     private static @NotNull List<OdinBlockStatement> getProcedureBlocks(OdinProcedureDeclarationStatement testTypeConversion) {
-        OdinStatementList statementList = testTypeConversion.getProcedureDefinition().getProcedureBody().getBlock().getStatementList();
+        OdinStatementList statementList = Objects
+                .requireNonNull(testTypeConversion.getProcedureDefinition().getProcedureBody().getBlock())
+                .getStatementList();
         List<OdinBlockStatement> blocks = new ArrayList<>();
         for (OdinStatement odinStatement : Objects.requireNonNull(statementList).getStatementList()) {
             if (odinStatement instanceof OdinBlockStatement blockStatement) {

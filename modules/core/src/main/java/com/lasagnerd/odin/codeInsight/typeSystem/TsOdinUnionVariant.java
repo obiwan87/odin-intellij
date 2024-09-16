@@ -1,10 +1,12 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import com.lasagnerd.odin.lang.psi.OdinType;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class TsOdinUnionVariant {
-    TsOdinType type;
-    OdinType psiType;
+    private TsOdinType type;
+    private OdinType psiType;
 }

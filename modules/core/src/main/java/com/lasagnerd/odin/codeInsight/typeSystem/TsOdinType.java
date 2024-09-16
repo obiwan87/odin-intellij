@@ -1,10 +1,16 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.lang.psi.*;
-import lombok.Data;
+import com.lasagnerd.odin.lang.psi.OdinDeclaration;
+import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
+import com.lasagnerd.odin.lang.psi.OdinExpression;
+import com.lasagnerd.odin.lang.psi.OdinType;
+import lombok.Getter;
+import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
-@Data
+@Getter
+@Setter
 public abstract class TsOdinType {
     String name;
 
@@ -35,53 +41,11 @@ public abstract class TsOdinType {
     OdinSymbolTable symbolTable = new OdinSymbolTable();
 
 
-
-    public static final TsOdinType UNKNOWN = new TsOdinType() {
-        {
-            this.symbolTable = OdinSymbolTable.EMPTY;
-        }
-
-        @Override
-        public String getLabel() {
-            return "UNKNOWN";
-        }
-
-        @Override
-        public TsOdinMetaType.MetaType getMetaType() {
-            return TsOdinMetaType.MetaType.UNKNOWN;
-        }
-
-        @Override
-        public String getName() {
-            return "UNKNOWN";
-        }
-    };
-
-    public static final TsOdinType VOID = new TsOdinType() {
-        {
-            this.symbolTable = OdinSymbolTable.EMPTY;
-        }
-
-        @Override
-        public String getName() {
-            return "VOID";
-        }
-
-        @Override
-        public String getLabel() {
-            return "VOID";
-        }
-
-        @Override
-        public TsOdinMetaType.MetaType getMetaType() {
-            return TsOdinMetaType.MetaType.VOID;
-        }
-    };
-
     public boolean isUnknown() {
-        return UNKNOWN == this;
+        return TsOdinBuiltInTypes.UNKNOWN == this;
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends OdinType> T type() {
         return (T) psiType;
     }
@@ -96,7 +60,28 @@ public abstract class TsOdinType {
 
     public boolean isNillable() {
         // TODO continue list
-        return this instanceof TsOdinUnionType || this instanceof TsOdinEnumType;
+        return this instanceof TsOdinUnionType
+                || this instanceof TsOdinEnumType
+                || this instanceof TsOdinPointerType
+                || this instanceof TsOdinMultiPointerType;
+    }
+
+    public TsOdinType baseType() {
+        return baseType(false);
+    }
+
+    public TsOdinType baseType(boolean ignoreDistinct) {
+        if (this instanceof TsOdinTypeAlias alias) {
+            if (ignoreDistinct) {
+                return alias.getBaseType();
+            }
+
+            if (alias.isDistinct()) {
+                return alias;
+            }
+            return alias.getDistinctBaseType();
+        }
+        return this;
     }
 
     public boolean isNumeric() {
@@ -113,5 +98,16 @@ public abstract class TsOdinType {
 
     public abstract TsOdinMetaType.MetaType getMetaType();
 
+    @Override
+    public String toString() {
+        return getLabel();
+    }
+
+    protected static String label(@Nullable TsOdinType type) {
+        if(type != null) {
+            return type.getLabel();
+        }
+        return "<undefined>";
+    }
 }
 
