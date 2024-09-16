@@ -6,6 +6,7 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.lasagnerd.odin.lang.psi.OdinPsiElement;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import com.lasagnerd.odin.lang.psi.OdinVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ public class OdinFoldingBuilder extends FoldingBuilderEx {
         OdinVisitor odinVisitor = new OdinVisitor() {
 
             @Override
-            public void visitPsiElement(@NotNull PsiElement psiElement) {
+            public void visitPsiElement(@NotNull OdinPsiElement psiElement) {
                 if (psiElement.getChildren().length >= 2) {
                     if (psiElement.getFirstChild().getNode().getElementType() == OdinTypes.BLOCK_START) {
                         if (psiElement.getLastChild().getNode().getElementType() == OdinTypes.BLOCK_END) {

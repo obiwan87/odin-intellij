@@ -1,12 +1,11 @@
 package com.lasagnerd.odin.lang.psi;
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class OdinFileScopeMixin extends ASTWrapperPsiElement {
+public abstract class OdinFileScopeMixin extends OdinPsiElementImpl {
 
     protected OdinSymbolTable symbolTable;
 

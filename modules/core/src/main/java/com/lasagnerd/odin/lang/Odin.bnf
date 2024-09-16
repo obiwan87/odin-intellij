@@ -2,8 +2,8 @@
   parserImports="static com.intellij.lang.parser.GeneratedParserUtilBase.*"
   parserClass="com.lasagnerd.odin.lang.OdinParser"
 
-  extends="com.lasagnerd.odin.lang.psi.OdinPsiElement"
-
+  extends="com.lasagnerd.odin.lang.psi.OdinPsiElementImpl"
+  implements="com.lasagnerd.odin.lang.psi.OdinPsiElement"
 
   psiClassPrefix="Odin"
   psiImplClassSuffix="Impl"
@@ -612,8 +612,8 @@ uninitializedExpression              ::= TRIPLE_DASH
 
 // TODO this is a duplicate of compoundLiteralValue but without the non-consuming <<>>-rules
 // --> fix this
-compoundValueUntyped                 ::= ((<<isModeOn "OPERAND">> | <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
-                                         | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeOperator>>) {extends=compoundValue elementType=compoundValue}
+compoundValueUntyped                 ::= ((<<isModeOn "OPERAND">> | <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) blockStart [compoundValueBody] blockEnd)
+                                         | (blockStart [compoundValueBody] blockEnd <<beforeOperator>>) {extends=compoundValue elementType=compoundValue}
 maybeExpression                      ::= expression DOT_QUESTION
 
 private unaryGroup                   ::= unaryPlusExpression
@@ -675,11 +675,10 @@ private compoundType                 ::= sliceType
 parExpressionType                    ::= parenthesizedExpression
 
 
-compoundValueTyped                   ::= (( <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
-                                         | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeComma>>) {extends=compoundValue elementType=compoundValue}
-compoundValueStart                   ::= LBRACE
-compoundValueEnd                     ::= RBRACE
-compoundValueBody                    ::= elementEntry (COMMA elementEntry)* [EOS_TOKEN|COMMA]
+compoundValueTyped                   ::= (( <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) blockStart compoundValueBody blockEnd)
+                                         | (blockStart compoundValueBody blockEnd <<beforeComma>>) {extends=compoundValue elementType=compoundValue}
+
+compoundValueBody                    ::= [elementEntry (COMMA elementEntry)*] (EOS_TOKEN|COMMA|&RBRACE)
 elementEntry                         ::= [lhs EQ] rhs
 lhs                                  ::= expression
 rhs                                  ::= expression

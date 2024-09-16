@@ -78,10 +78,10 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .aroundInside(OdinTypes.EQ, OdinTypes.ENUM_BODY)
                 .spaces(1)
 
-                .afterInside(OdinTypes.COMPOUND_VALUE_START, OdinTypes.COMPOUND_VALUE)
+                .afterInside(OdinTypes.BLOCK_START, OdinTypes.COMPOUND_VALUE)
                 .spaces(1)
 
-                .beforeInside(OdinTypes.COMPOUND_VALUE_END, OdinTypes.COMPOUND_VALUE)
+                .beforeInside(OdinTypes.BLOCK_END, OdinTypes.COMPOUND_VALUE)
                 .spaces(1)
 
                 .aroundInside(BINARY_OPERATORS, BINARY_EXPRESSIONS)

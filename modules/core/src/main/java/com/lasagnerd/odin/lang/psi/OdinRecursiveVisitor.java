@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class OdinRecursiveVisitor extends OdinVisitor implements PsiRecursiveVisitor {
     @Override
-    public void visitPsiElement(@NotNull PsiElement o) {
+    public void visitPsiElement(@NotNull OdinPsiElement o) {
         o.acceptChildren(this);
     }
 }

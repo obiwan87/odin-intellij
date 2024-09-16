@@ -97,7 +97,8 @@ public class OdinFormatterBlock extends AbstractBlock {
 
     @Override
     public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
-        if (endOfBlockIsNewLine(child1, child2)) return Spacing.createSpacing(0, 0, 0, false, 0);
+        if (endOfBlockIsNewLine(child1, child2))
+            return Spacing.createSpacing(0, 0, 0, false, 0);
         return spacingBuilder.getSpacing(this, child1, child2);
     }
 
