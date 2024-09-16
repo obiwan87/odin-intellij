@@ -320,6 +320,16 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         }
     }
 
+    @Override
+    public void visitForeignStatement(@NotNull OdinForeignStatement o) {
+        OdinForeignStatementList foreignStatementList = o.getForeignBlock().getForeignStatementList();
+        if(foreignStatementList != null) {
+            for (OdinStatement odinStatement : foreignStatementList.getStatementList()) {
+                odinStatement.accept(this);
+            }
+        }
+    }
+
     public static @NotNull OdinSymbol.OdinVisibility getVisibility(@NotNull Collection<OdinAttribute> attributeStatementList,
                                                                    OdinSymbol.OdinVisibility defaultVisibility) {
         OdinSymbol.OdinVisibility odinVisibility = OdinAttributeUtils.computeVisibility(attributeStatementList);
