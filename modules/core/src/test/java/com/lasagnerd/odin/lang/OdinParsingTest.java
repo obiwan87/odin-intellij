@@ -58,6 +58,7 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 
@@ -2021,17 +2022,32 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = load("src/test/testData/type_inference.odin");
         {
             var proc = findFirstProcedure(file, "testEnumeratedArrays");
-            OdinImplicitSelectorExpression implicitExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
             {
-                TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitExpression);
-                assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+                Collection<OdinImplicitSelectorExpression> implicitSelectorExpressions = PsiTreeUtil.findChildrenOfType(
+                        proc, OdinImplicitSelectorExpression.class
+                );
+                OdinImplicitSelectorExpression implicitSelectorExpression =
+                        implicitSelectorExpressions.stream()
+                                .filter(s -> s.getText().equals(".East"))
+                                .findFirst()
+                                .orElseThrow();
+                TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
+                TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+                assertEquals("Direction", tsOdinEnumType.getName());
             }
             {
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(Objects.requireNonNull(implicitExpression));
-                assertNotNull(odinSymbolTable.getSymbol("North"));
-                assertNotNull(odinSymbolTable.getSymbol("South"));
-                assertNotNull(odinSymbolTable.getSymbol("East"));
-                assertNotNull(odinSymbolTable.getSymbol("West"));
+                OdinImplicitSelectorExpression implicitExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
+                {
+                    TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitExpression);
+                    assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+                }
+                {
+                    OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(Objects.requireNonNull(implicitExpression));
+                    assertNotNull(odinSymbolTable.getSymbol("North"));
+                    assertNotNull(odinSymbolTable.getSymbol("South"));
+                    assertNotNull(odinSymbolTable.getSymbol("East"));
+                    assertNotNull(odinSymbolTable.getSymbol("West"));
+                }
             }
 
         }

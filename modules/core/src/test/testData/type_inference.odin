@@ -580,9 +580,7 @@ testEnumeratedArrays :: proc() {
     }
 
     y := [Direction][Direction]i32 {
-        .North = {
-            100,
-            200
-        },
+        .North = { .East = 100 }
     }
 }
+

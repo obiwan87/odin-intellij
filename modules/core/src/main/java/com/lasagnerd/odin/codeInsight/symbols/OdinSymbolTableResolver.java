@@ -273,7 +273,8 @@ public class OdinSymbolTableResolver {
             OdinLhs lhs = PsiTreeUtil.getParentOfType(position, OdinLhs.class, false);
             if (lhs != null && containingScopeBlock instanceof OdinCompoundLiteral compoundLiteral) {
                 TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(symbolTable, compoundLiteral);
-                addElementSymbols(tsOdinType, symbolTable);
+                List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, symbolTable);
+                symbolTable.addAll(elementSymbols);
             }
 
             if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
@@ -335,34 +336,6 @@ public class OdinSymbolTableResolver {
             return symbolTable;
         }
 
-        private void addElementSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
-            tsOdinType = tsOdinType.baseType(true);
-            if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
-                List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(tsOdinStructType, symbolTable);
-                symbolTable.addAll(typeSymbols);
-            }
-
-            if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
-                if (OdinInsightUtils.getEnumeratedArraySymbols(symbolTable, tsOdinArrayType)) return;
-
-                List<String> swizzleSymbols = List.of("r", "g", "b", "a", "x", "y", "z", "w");
-                for (String swizzleSymbol : swizzleSymbols) {
-                    OdinSymbol odinSymbol = new OdinSymbol();
-                    odinSymbol.setName(swizzleSymbol);
-
-                    TsOdinType elementType = tsOdinArrayType.getElementType();
-                    if (elementType != null) {
-                        odinSymbol.setPsiType(elementType.getPsiType());
-                    }
-                    odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
-                    odinSymbol.setImplicitlyDeclared(true);
-                    odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
-                    odinSymbol.setSymbolType(OdinSymbolType.FIELD);
-                    symbolTable.add(odinSymbol);
-                }
-            }
-        }
-
         private boolean isStrictlyBefore(OdinDeclaration declaration, PositionCheckResult positionCheckResult) {
             PsiElement commonParent = positionCheckResult.commonParent();
             PsiElement containerOfSymbol = declaration != commonParent ? PsiTreeUtil.findPrevParent(commonParent, declaration) : declaration;
@@ -409,7 +382,6 @@ public class OdinSymbolTableResolver {
 
             addParamEntries(procedureType.getParamEntries(), declarations);
             addPolymorphicDeclarations(procedureType.getParamEntries(), declarations);
-
 
             if (procedureType.getReturnParameters() != null) {
                 OdinParamEntries returnParamEntries = procedureType.getReturnParameters().getParamEntries();

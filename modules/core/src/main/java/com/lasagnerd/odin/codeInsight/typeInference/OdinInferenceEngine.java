@@ -1117,25 +1117,34 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (parent instanceof OdinRhs) {
             OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(parent, OdinCompoundLiteral.class);
             OdinElementEntry elemEntry = (OdinElementEntry) parent.getParent();
-            if (elemEntry.getLhs() != null) {
-                TsOdinType tsOdinType = null;
-                if (compoundLiteral instanceof OdinCompoundLiteralUntyped compoundLiteralUntyped) {
-                    tsOdinType = OdinInferenceEngine.inferExpectedType(symbolTable, (OdinExpression) compoundLiteralUntyped.getParent());
 
-                }
-                if (compoundLiteral instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
-                    tsOdinType = OdinTypeResolver.resolveType(symbolTable, compoundLiteralTyped.getType());
-                }
+            TsOdinType tsOdinType = null;
+            if (compoundLiteral instanceof OdinCompoundLiteralUntyped compoundLiteralUntyped) {
+                tsOdinType = OdinInferenceEngine.inferExpectedType(symbolTable, (OdinExpression) compoundLiteralUntyped.getParent());
 
-                if (tsOdinType != null) {
+            }
+            if (compoundLiteral instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
+                tsOdinType = OdinTypeResolver.resolveType(symbolTable, compoundLiteralTyped.getType());
+            }
+
+            if (tsOdinType != null) {
+                if (tsOdinType instanceof TsOdinStructType) {
                     OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(expression.getProject(), tsOdinType);
-                    OdinSymbol symbol = typeElements.getSymbol(elemEntry.getLhs().getText());
-                    if (symbol != null && symbol.getPsiType() != null) {
-                        return OdinTypeResolver.resolveType(tsOdinType.getSymbolTable(), symbol.getPsiType());
+                    // Named element entry
+                    if (elemEntry.getLhs() != null) {
+                        OdinSymbol symbol = typeElements.getSymbol(elemEntry.getLhs().getText());
+                        if (symbol != null && symbol.getPsiType() != null) {
+                            return OdinTypeResolver.resolveType(tsOdinType.getSymbolTable(), symbol.getPsiType());
+                        }
                     }
+
+                    // TODO: unnamed element entry. solve via index
+                } else if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+                    return tsOdinArrayType.getElementType();
                 }
             }
         }
+
 
         if (parent instanceof OdinArgument argument) {
             OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class);

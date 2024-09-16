@@ -104,10 +104,21 @@ public abstract class TsOdinType {
     }
 
     protected static String label(@Nullable TsOdinType type) {
+        return label(type, "<undefined>");
+    }
+
+    protected  static String labelOrEmpty(TsOdinType type) {
+        if(type != null) {
+            return " " + type.getLabel();
+        }
+        return "";
+    }
+    protected static String label(@Nullable TsOdinType type, String defaultValue) {
         if(type != null) {
             return type.getLabel();
         }
-        return "<undefined>";
+        return defaultValue;
     }
+
 }
 

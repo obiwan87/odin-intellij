@@ -12,7 +12,7 @@ public class TsOdinEnumType extends TsOdinType {
 
     @Override
     public String getLabel() {
-        return "enum " + getName() + (backingType != null ? " " + backingType.getLabel() : "");
+        return "enum " + getName() + labelOrEmpty(backingType);
     }
 
     @Override

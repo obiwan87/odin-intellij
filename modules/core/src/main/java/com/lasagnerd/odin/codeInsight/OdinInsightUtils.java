@@ -426,25 +426,80 @@ public class OdinInsightUtils {
 
     public static String getLineColumn(@NotNull PsiElement element) {
         PsiFile containingFile = element.getContainingFile();
-        if(containingFile != null) {
+        if (containingFile != null) {
             LineColumn lineColumn = StringUtil.offsetToLineColumn(containingFile.getText(), element.getTextOffset());
-            return (lineColumn.line+1) + ":" + (lineColumn.column+1);
+            return (lineColumn.line + 1) + ":" + (lineColumn.column + 1);
         }
         return "<unknown>:<unknown>";
     }
 
     public static boolean getEnumeratedArraySymbols(OdinSymbolTable symbolTable, TsOdinArrayType tsOdinArrayType) {
+        OdinEnumType psiType = getEnumTypeOfArray(symbolTable, tsOdinArrayType);
+        if(psiType != null) {
+            List<OdinSymbol> enumFields = getEnumFields(psiType);
+            symbolTable.addAll(enumFields);
+            return true;
+        }
+        return false;
+    }
+
+    public static @Nullable OdinEnumType getEnumTypeOfArray(OdinSymbolTable symbolTable, TsOdinArrayType tsOdinArrayType) {
         var psiSizeElement = tsOdinArrayType.getPsiSizeElement();
         OdinExpression expression = psiSizeElement.getExpression();
 
+        OdinEnumType psiType;
         if (expression != null) {
             TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, expression);
             if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
-                List<OdinSymbol> enumFields = getEnumFields((OdinEnumType) sizeType.getPsiType());
-                symbolTable.addAll(enumFields);
-                return true;
+                psiType = (OdinEnumType) sizeType.getPsiType();
+            } else {
+                psiType = null;
+            }
+        } else {
+            psiType = null;
+        }
+        return psiType;
+    }
+
+    public static @NotNull List<OdinSymbol> getElementSwizzleFields(TsOdinArrayType tsOdinArrayType) {
+        List<OdinSymbol> swizzleSymbols = new ArrayList<>();
+        List<String> swizzleSymbolsNames = List.of("r", "g", "b", "a", "x", "y", "z", "w");
+        for (String swizzleSymbol : swizzleSymbolsNames) {
+            OdinSymbol odinSymbol = new OdinSymbol();
+            odinSymbol.setName(swizzleSymbol);
+
+            TsOdinType elementType = tsOdinArrayType.getElementType();
+            if (elementType != null) {
+                odinSymbol.setPsiType(elementType.getPsiType());
+            }
+            odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
+            odinSymbol.setImplicitlyDeclared(true);
+            odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+            odinSymbol.setSymbolType(SWIZZLE_FIELD);
+            swizzleSymbols.add(odinSymbol);
+        }
+        return swizzleSymbols;
+    }
+
+    public static List<OdinSymbol> getElementSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
+        List<OdinSymbol> elementSymbols = new ArrayList<>();
+        tsOdinType = tsOdinType.baseType(true);
+        if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
+            List<OdinSymbol> typeSymbols = getTypeElements(tsOdinStructType, symbolTable);
+            elementSymbols.addAll(typeSymbols);
+        }
+
+        if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+            OdinEnumType enumTypeOfArray = getEnumTypeOfArray(symbolTable, tsOdinArrayType);
+            if(enumTypeOfArray != null) {
+                elementSymbols.addAll(getEnumFields(enumTypeOfArray));
+
+            } else {
+                List<OdinSymbol> swizzleSymbols = getElementSwizzleFields(tsOdinArrayType);
+                elementSymbols.addAll(swizzleSymbols);
             }
         }
-        return false;
+
+        return elementSymbols;
     }
 }
