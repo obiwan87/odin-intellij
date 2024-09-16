@@ -163,8 +163,10 @@ public class OdinInferenceEngine extends OdinVisitor {
             OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(elementEntry, OdinCompoundLiteral.class);
             TsOdinType tsOdinType = inferTypeOfCompoundLiteral(symbolTable, compoundLiteral).baseType(true);
 
+            PsiElement expressionContainer = PsiTreeUtil.getParentOfType(o, true, OdinLhs.class, OdinRhs.class);
+
             // for arrays this is only acceptable if it is the lhs
-            if (tsOdinType instanceof TsOdinArrayType arrayType) {
+            if (tsOdinType instanceof TsOdinArrayType arrayType && expressionContainer instanceof OdinLhs) {
                 OdinExpression psiTypeExpression = arrayType.getPsiSizeElement().getExpression();
                 if (psiTypeExpression != null) {
                     TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, psiTypeExpression);
@@ -172,7 +174,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                         this.type = metaType.representedType();
                     }
                 }
-            } else if (tsOdinType instanceof TsOdinBitSetType bitSetType) {
+            } else if (tsOdinType instanceof TsOdinBitSetType bitSetType && expressionContainer instanceof OdinRhs) {
                 this.type = bitSetType.getElementType();
             }
         } else {
