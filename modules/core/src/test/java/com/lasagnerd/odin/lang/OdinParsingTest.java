@@ -10,7 +10,6 @@ import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.mock.*;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -21,15 +20,12 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
@@ -38,7 +34,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
-import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValuesManager;
@@ -47,9 +42,7 @@ import com.intellij.testFramework.*;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -58,7 +51,6 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 
@@ -69,6 +61,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+
+import static com.lasagnerd.odin.lang.OdinPsiTestHelpers.*;
 
 /**
  * @noinspection unused, UnstableApiUsage, deprecation
@@ -258,10 +252,6 @@ public class OdinParsingTest extends UsefulTestCase {
         super.tearDown();
     }
 
-    protected String getTestDataPath() {
-        return PathManagerEx.getTestDataPath();
-    }
-
     @NotNull
     public final String getTestName() {
         return getTestName(myLowercaseFirstLetter);
@@ -281,27 +271,6 @@ public class OdinParsingTest extends UsefulTestCase {
 
     /* Sanity check against thoughtlessly copy-pasting actual test results as the expected test data. */
 
-    protected void doTest(boolean checkResult) {
-        doTest(checkResult, false);
-    }
-
-    protected void doTest(boolean checkResult, @SuppressWarnings("SameParameterValue") boolean ensureNoErrorElements) {
-        String name = getTestName();
-        try {
-            parseFile(name, loadFile(name + "." + myFileExt));
-            if (checkResult) {
-                checkResult(name, myFile);
-                if (ensureNoErrorElements) {
-                    ensureNoErrors(myFile);
-                }
-            } else {
-                toParseTreeText(myFile, skipSpaces(), includeRanges());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     protected PsiFile parseFile(String name, String text) {
         myFile = createPsiFile(name, text);
         assertEquals("light virtual file text mismatch", text, ((LightVirtualFile) myFile.getVirtualFile()).getContent().toString());
@@ -315,94 +284,6 @@ public class OdinParsingTest extends UsefulTestCase {
             doSanityChecks(myFile);
         }
         return myFile;
-    }
-
-    private static void doSanityChecks(PsiFile root) {
-        assertEquals("psi text mismatch", root.getViewProvider().getContents().toString(), root.getText());
-        ensureParsed(root);
-        ensureCorrectReparse(root);
-        checkRangeConsistency(root);
-    }
-
-    private static void checkRangeConsistency(PsiFile file) {
-        file.accept(new PsiRecursiveElementWalkingVisitor() {
-            @Override
-            public void visitElement(@NotNull PsiElement element) {
-                if (element instanceof ForeignLeafPsiElement) return;
-
-                try {
-                    ensureNodeRangeConsistency(element, file);
-                } catch (Throwable e) {
-                    throw new AssertionError("In " + element + " of " + element.getClass(), e);
-                }
-                super.visitElement(element);
-            }
-
-            private void ensureNodeRangeConsistency(PsiElement parent, PsiFile file) {
-                int parentOffset = parent.getTextRange().getStartOffset();
-                int childOffset = 0;
-                ASTNode child = parent.getNode().getFirstChildNode();
-                if (child != null) {
-                    while (child != null) {
-                        int childLength = checkChildRangeConsistency(file, parentOffset, childOffset, child);
-                        childOffset += childLength;
-                        child = child.getTreeNext();
-                    }
-                    assertEquals(childOffset, parent.getTextLength());
-                }
-            }
-
-            private int checkChildRangeConsistency(PsiFile file, int parentOffset, int childOffset, ASTNode child) {
-                assertEquals(child.getStartOffsetInParent(), childOffset);
-                assertEquals(child.getStartOffset(), childOffset + parentOffset);
-                int childLength = child.getTextLength();
-                assertEquals(TextRange.from(childOffset + parentOffset, childLength), child.getTextRange());
-                if (!(child.getPsi() instanceof ForeignLeafPsiElement)) {
-                    assertEquals(child.getTextRange().substring(file.getText()), child.getText());
-                }
-                return childLength;
-            }
-        });
-    }
-
-    protected void doTest(String suffix) throws IOException {
-        String name = getTestName();
-        String text = loadFile(name + "." + myFileExt);
-        myFile = createPsiFile(name, text);
-        ensureParsed(myFile);
-        assertEquals(text, myFile.getText());
-        checkResult(name + suffix, myFile);
-    }
-
-    protected void doCodeTest(@NotNull String code) throws IOException {
-        String name = getTestName();
-        myFile = createPsiFile("a", code);
-        ensureParsed(myFile);
-        assertEquals(code, myFile.getText());
-        checkResult(myFilePrefix + name, myFile);
-    }
-
-    protected void doReparseTest(String textBefore, String textAfter) {
-        var file = createFile("test." + myFileExt, textBefore, myLanguage);
-        var fileAfter = createFile("test." + myFileExt, textAfter, myLanguage);
-
-        var rangeStart = StringUtil.commonPrefixLength(textBefore, textAfter);
-        var rangeEnd = textBefore.length() - StringUtil.commonSuffixLength(textBefore, textAfter);
-
-        var range = new TextRange(Math.min(rangeStart, rangeEnd), Math.max(rangeStart, rangeEnd));
-
-        var psiToStringDefault = DebugUtil.psiToString(fileAfter, true);
-        DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
-            new BlockSupportImpl().reparseRange(
-                    file,
-                    file.getNode(),
-                    range,
-                    fileAfter.getText(),
-                    new EmptyProgressIndicator(),
-                    file.getText()
-            ).performActualPsiChange(file);
-        });
-        assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true));
     }
 
     protected PsiFile createPsiFile(@NotNull String name, @NotNull String text) {
@@ -430,7 +311,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
     private void printAstTypeNamesTree(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) {
         StringBuffer buffer = new StringBuffer();
-        Arrays.stream(file.getNode().getChildren(TokenSet.ANY)).forEach(it -> printAstTypeNamesTree(it, buffer, 0));
+        Arrays.stream(file.getNode().getChildren(TokenSet.ANY)).forEach(it -> OdinPsiTestHelpers.printAstTypeNamesTree(it, buffer, 0));
         try {
             Files.writeString(Paths.get(myFullDataPath, targetDataName + ".fleet.txt"), buffer);
         } catch (IOException e) {
@@ -438,65 +319,8 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    private static void printAstTypeNamesTree(ASTNode node, StringBuffer buffer, int indent) {
-        buffer.append(" ".repeat(indent));
-        buffer.append(node.getElementType()).append("\n");
-        indent += 2;
-        ASTNode childNode = node.getFirstChildNode();
-
-        while (childNode != null) {
-            printAstTypeNamesTree(childNode, buffer, indent);
-            childNode = childNode.getTreeNext();
-        }
-    }
-
     protected boolean allTreesInSingleFile() {
         return false;
-    }
-
-    public static void doCheckResult(@NotNull String testDataDir,
-                                     @NotNull PsiFile file,
-                                     boolean checkAllPsiRoots,
-                                     @NotNull String targetDataName,
-                                     boolean skipSpaces,
-                                     boolean printRanges) {
-        doCheckResult(testDataDir, file, checkAllPsiRoots, targetDataName, skipSpaces, printRanges, false);
-    }
-
-    public static void doCheckResult(@NotNull String testDataDir,
-                                     @NotNull PsiFile file,
-                                     boolean checkAllPsiRoots,
-                                     @NotNull String targetDataName,
-                                     boolean skipSpaces,
-                                     boolean printRanges,
-                                     boolean allTreesInSingleFile) {
-        FileViewProvider provider = file.getViewProvider();
-        Set<Language> languages = provider.getLanguages();
-
-        if (!checkAllPsiRoots || languages.size() == 1) {
-            doCheckResult(testDataDir, targetDataName + ".txt", toParseTreeText(file, skipSpaces, printRanges).trim());
-            return;
-        }
-
-        if (allTreesInSingleFile) {
-            String expectedName = targetDataName + ".txt";
-            StringBuilder sb = new StringBuilder();
-            List<Language> languagesList = new ArrayList<>(languages);
-            ContainerUtil.sort(languagesList, Comparator.comparing(Language::getID));
-            for (Language language : languagesList) {
-                sb.append("Subtree: ").append(language.getDisplayName()).append(" (").append(language.getID()).append(")").append("\n")
-                        .append(toParseTreeText(provider.getPsi(language), skipSpaces, printRanges).trim())
-                        .append("\n").append(StringUtil.repeat("-", 80)).append("\n");
-            }
-            doCheckResult(testDataDir, expectedName, sb.toString());
-        } else {
-            for (Language language : languages) {
-                PsiFile root = provider.getPsi(language);
-                assertNotNull("FileViewProvider " + provider + " didn't return PSI root for language " + language.getID(), root);
-                String expectedName = targetDataName + "." + language.getID() + ".txt";
-                doCheckResult(testDataDir, expectedName, toParseTreeText(root, skipSpaces, printRanges).trim());
-            }
-        }
     }
 
     protected void checkResult(@NotNull String actual) {
@@ -508,43 +332,8 @@ public class OdinParsingTest extends UsefulTestCase {
         doCheckResult(myFullDataPath, targetDataName, actual);
     }
 
-    public static void doCheckResult(@NotNull String fullPath, @NotNull String targetDataName, @NotNull String actual) {
-        String expectedFileName = fullPath + File.separatorChar + targetDataName;
-        UsefulTestCase.assertSameLinesWithFile(expectedFileName, actual);
-    }
-
-    protected static String toParseTreeText(@NotNull PsiElement file, boolean skipSpaces, boolean printRanges) {
-        return DebugUtil.psiToString(file, !skipSpaces, printRanges);
-    }
-
     protected String loadFile(@NotNull @TestDataFile String name) throws IOException {
         return loadFileDefault(myFullDataPath, name);
-    }
-
-    public static String loadFileDefault(@NotNull String dir, @NotNull String name) throws IOException {
-        return FileUtil.loadFile(new File(dir, name), CharsetToolkit.UTF8, true).trim();
-    }
-
-    public static void ensureParsed(@NotNull PsiFile file) {
-        file.accept(new PsiElementVisitor() {
-            @Override
-            public void visitElement(@NotNull PsiElement element) {
-                element.acceptChildren(this);
-            }
-        });
-    }
-
-    public static void ensureCorrectReparse(@NotNull final PsiFile file) {
-        final String psiToStringDefault = DebugUtil.psiToString(file, true, false);
-
-        DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
-            final String fileText = file.getText();
-            final DiffLog diffLog = new BlockSupportImpl().reparseRange(
-                    file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
-            diffLog.performActualPsiChange(file);
-        });
-
-        assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
     }
 
     public void registerMockInjectedLanguageManager() {
@@ -808,16 +597,38 @@ public class OdinParsingTest extends UsefulTestCase {
         assertEquals("untyped string", s.getName());
     }
 
-    public void testBitSetsAndEnums() throws IOException {
+    public void testBitsetsAndEnums() throws IOException {
         OdinFile odinFile = load("src/test/testData/type_inference.odin");
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference17", "b");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testBitsetsAndEnums", "d");
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("Direction", tsOdinEnumType.getName());
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testBitsetsAndEnums", "b");
             assertEquals("bit_set[enum Direction i32; u8]", tsOdinType.getLabel());
         }
 
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference17", "c");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testBitsetsAndEnums", "c");
             assertEquals("enum Direction i32", tsOdinType.getLabel());
+        }
+    }
+
+
+    public void testPrimitiveTypeCasting() throws IOException {
+        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testPrimitiveTypeCasting", "a");
+            System.out.println(tsOdinType.getLabel());
+            tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testPrimitiveTypeCasting", "bg");
+            System.out.println(tsOdinType.getLabel());
+            tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testPrimitiveTypeCasting", "rgb");
+            System.out.println(tsOdinType.getLabel());
+            tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testPrimitiveTypeCasting", "c");
+            System.out.println(tsOdinType.getLabel());
+
         }
     }
 
@@ -912,12 +723,6 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinArrayType arrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
             assertEquals(arrayType.getElementType(), TsOdinBuiltInTypes.F32);
         }
-    }
-
-    private static <T extends TsOdinType> void assertExpressionIsOfTypeWithName(OdinFile odinFile, String procedure, String variableName, Class<T> aClass, String name) {
-        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, procedure, variableName);
-        T structType = assertInstanceOf(tsOdinType, aClass);
-        assertEquals(name, structType.getName());
     }
 
     public void testParapoly() throws IOException {
@@ -2052,104 +1857,29 @@ public class OdinParsingTest extends UsefulTestCase {
 
         }
     }
-    // Helpers
-    private static @NotNull List<OdinBlockStatement> getProcedureBlocks(OdinProcedureDeclarationStatement testTypeConversion) {
-        OdinStatementList statementList = Objects
-                .requireNonNull(testTypeConversion.getProcedureDefinition().getProcedureBody().getBlock())
-                .getStatementList();
-        List<OdinBlockStatement> blocks = new ArrayList<>();
-        for (OdinStatement odinStatement : Objects.requireNonNull(statementList).getStatementList()) {
-            if (odinStatement instanceof OdinBlockStatement blockStatement) {
-                blocks.add(blockStatement);
-            }
+
+    public void testArraysAndSwizzleFields() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testSwizzleFieldsAndArrays", "d");
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.F32);
         }
-        return blocks;
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testSwizzleFieldsAndArrays", "c");
+            TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+            TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinTypeAlias.baseType(true), TsOdinArrayType.class);
+            assertEquals(tsOdinArrayType.getElementType(), TsOdinBuiltInTypes.F32);
+        }
     }
 
-    private static TsOdinType inferTypeOfDeclaration(OdinDeclaration declaration) {
-        return OdinInferenceEngine.resolveTypeOfDeclaration(null,
-                OdinSymbolTableResolver.computeSymbolTable(declaration),
-                declaration.getDeclaredIdentifiers().getFirst(),
-                declaration);
+    public void testStringBuilder() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testStringBuilder", "x");
+            TsOdinTuple tsOdinTuple = assertInstanceOf(tsOdinType, TsOdinTuple.class);
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinTuple.get(0), TsOdinStructType.class);
+            assertEquals("Builder", tsOdinStructType.getName());
+        }
     }
-
-    private static void assertTopMostRefExpressionTextEquals(PsiElement odinStatement, String expected, String identifierName) {
-        OdinRefExpression topMostRefExpression = getTopMostRefExpression(odinStatement, identifierName);
-        assertNotNull(topMostRefExpression);
-        assertEquals(expected, topMostRefExpression.getText());
-    }
-
-    private static @NotNull OdinRefExpression getTopMostRefExpression(PsiElement odinStatement, String identifierName) {
-        Collection<OdinIdentifier> odinIdentifiers = PsiTreeUtil.findChildrenOfType(odinStatement, OdinIdentifier.class);
-        OdinIdentifier identifier = odinIdentifiers.stream().filter(s -> s.getIdentifierToken().getText().equals(identifierName)).findFirst().orElseThrow();
-        assertNotNull(identifier);
-        OdinRefExpression odinRefExpression = assertInstanceOf(identifier.getParent(), OdinRefExpression.class);
-
-        OdinRefExpression topMostRefExpression = OdinInsightUtils.findTopMostRefExpression(odinRefExpression);
-        assertNotNull(topMostRefExpression);
-        return topMostRefExpression;
-    }
-
-    private static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
-        OdinExpression odinExpression = findFirstExpressionOfVariable(odinFile, procedureName, variableName);
-        return OdinInferenceEngine.doInferType(odinExpression);
-    }
-
-    private static OdinExpression findFirstExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
-        var shapeVariable = findFirstVariableDeclarationStatement(odinFile, procedureName,
-                variableName);
-        return Objects.requireNonNull(shapeVariable.getRhsExpressions()).getExpressionList().getFirst();
-    }
-
-    private static @NotNull OdinProcedureDeclarationStatement findFirstProcedure(@NotNull OdinFile odinFile, String procedureName) {
-        Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
-                OdinProcedureDeclarationStatement.class);
-
-        return procedureDeclarationStatements.stream()
-                .filter(p -> Objects.equals(p.getDeclaredIdentifier().getName(), procedureName))
-                .findFirst().orElseThrow();
-    }
-
-    private static @NotNull OdinVariableInitializationStatement findFirstVariableDeclarationStatement(OdinFile odinFile, String procedureName, String variableName) {
-        OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, procedureName);
-        assertNotNull(procedure);
-        return findFirstVariable(procedure, variableName);
-    }
-
-    private static @NotNull OdinVariableInitializationStatement findFirstVariable(PsiElement parent, String variableName) {
-        Collection<OdinVariableInitializationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinVariableInitializationStatement.class);
-
-        OdinVariableInitializationStatement variable = vars.stream()
-                .filter(v -> v.getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
-                .findFirst().orElse(null);
-        assertNotNull(variable);
-
-        return variable;
-    }
-
-    private static @NotNull OdinVariableDeclarationStatement findFirstVariableDeclaration(PsiElement parent, String variableName) {
-        Collection<OdinVariableDeclarationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinVariableDeclarationStatement.class);
-
-        OdinVariableDeclarationStatement variable = vars.stream()
-                .filter(v -> v.getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
-                .findFirst().orElse(null);
-        assertNotNull(variable);
-
-        return variable;
-    }
-
-    private static @NotNull TsOdinType inferTypeOfFirstExpressionInProcedure(OdinFile odinFile, String procedureName) {
-        OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, procedureName);
-        OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) Objects.requireNonNull(procedure.
-                        getProcedureDefinition()
-                        .getProcedureBody().getBlock()).getStatements()
-                .stream().filter(s -> s instanceof OdinExpressionStatement)
-                .findFirst().orElseThrow();
-
-        OdinExpression expression = odinExpressionStatement.getExpression();
-        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(Objects.requireNonNull(expression));
-        return OdinInferenceEngine.inferType(symbolTable, expression);
-    }
-
-
 }

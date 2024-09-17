@@ -75,16 +75,8 @@ public class OdinSymbolTableResolver {
 
     private static List<OdinStatement> getStatements(@NotNull PsiElement psiElement) {
         if (psiElement instanceof OdinWhenStatement odinWhenStatement) {
-            if (odinWhenStatement.getWhenBlock().getStatementBody().getBlock() != null) {
-                OdinStatementList statementList = odinWhenStatement.getWhenBlock().getStatementBody().getBlock().getStatementList();
-                if (statementList != null) {
-                    return statementList.getStatementList();
-                }
-            }
-
-            if (odinWhenStatement.getWhenBlock().getStatementBody().getDoStatement() != null) {
-                return List.of(odinWhenStatement.getWhenBlock().getStatementBody().getDoStatement());
-            }
+            OdinWhenBlock whenBlock = odinWhenStatement.getWhenBlock();
+            return getWhenBlockStatements(whenBlock);
         }
 
         if (psiElement instanceof OdinForeignStatement foreignStatement) {
@@ -96,6 +88,39 @@ public class OdinSymbolTableResolver {
         }
 
         return Collections.emptyList();
+    }
+
+    private static @NotNull List<OdinStatement> getWhenBlockStatements(OdinWhenBlock whenBlock) {
+        List<OdinStatement> statements = new ArrayList<>();
+        OdinStatementBody statementBody = whenBlock.getStatementBody();
+
+        addStatementsOfStatementBody(statementBody, statements);
+
+        OdinElseWhenBlock elseWhenBlock = whenBlock.getElseWhenBlock();
+        if(elseWhenBlock != null) {
+            OdinWhenBlock nextWhenBlock = elseWhenBlock.getWhenBlock();
+            OdinStatementBody elseStatementBody = elseWhenBlock.getStatementBody();
+            if(elseStatementBody != null) {
+                addStatementsOfStatementBody(elseStatementBody, statements);
+            }
+            if(nextWhenBlock != null) {
+                statements.addAll(getWhenBlockStatements(nextWhenBlock));
+            }
+        }
+        return statements;
+    }
+
+    private static void addStatementsOfStatementBody(OdinStatementBody statementBody, List<OdinStatement> statements) {
+        if (statementBody.getBlock() != null) {
+            OdinStatementList statementList = statementBody.getBlock().getStatementList();
+            if (statementList != null) {
+                statements.addAll(statementList.getStatementList());
+            }
+        }
+
+        if (statementBody.getDoStatement() != null) {
+            statements.add(statementBody.getDoStatement());
+        }
     }
 
     private static List<OdinSymbol> getBuiltInSymbols(Project project) {
@@ -366,11 +391,8 @@ public class OdinSymbolTableResolver {
     private static @NotNull List<OdinDeclaration> getDeclarations(PsiElement containingScopeBlock) {
         List<OdinDeclaration> declarations = new ArrayList<>();
         if (containingScopeBlock instanceof OdinStatementList statementList) {
-            for (OdinStatement odinStatement : statementList.getStatementList()) {
-                if (odinStatement instanceof OdinDeclaration declaration) {
-                    declarations.add(declaration);
-                }
-            }
+            List<OdinStatement> statements = statementList.getStatementList();
+            addDeclarationsFromStatements(statements, declarations);
         }
 
         if (containingScopeBlock instanceof OdinIfBlock odinIfBlock) {
@@ -462,7 +484,22 @@ public class OdinSymbolTableResolver {
             declarations.addAll(enumBody.getEnumValueDeclarationList());
         }
 
+        if(containingScopeBlock instanceof OdinForeignBlock foreignBlock) {
+            OdinForeignStatementList foreignStatementList = foreignBlock.getForeignStatementList();
+            if(foreignStatementList != null) {
+                addDeclarationsFromStatements(foreignStatementList.getStatementList(), declarations);
+            }
+        }
+
         return declarations;
+    }
+
+    private static void addDeclarationsFromStatements(List<OdinStatement> statements, List<OdinDeclaration> declarations) {
+        for (OdinStatement odinStatement : statements) {
+            if (odinStatement instanceof OdinDeclaration declaration) {
+                declarations.add(declaration);
+            }
+        }
     }
 
     private static void addPolymorphicDeclarations(OdinParamEntries paramEntries, List<OdinDeclaration> declarations) {

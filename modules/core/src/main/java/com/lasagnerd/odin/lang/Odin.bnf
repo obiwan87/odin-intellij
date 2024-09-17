@@ -219,9 +219,9 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
 foreignImportDeclarationStatement    ::= (attribute EOS_TOKEN?)* FOREIGN IMPORT
         ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart expressionListWithRecover blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
 
-foreignStatement                     ::= (attribute EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock {implements="com.lasagnerd.odin.lang.psi.OdinDeclaration"}
+foreignStatement                     ::= (attribute EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock {implements=["com.lasagnerd.odin.lang.psi.OdinDeclaration"]}
 
-foreignBlock                         ::= blockStart foreignStatementList? blockEnd
+foreignBlock                         ::= blockStart foreignStatementList? blockEnd {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 
 foreignStatementList                 ::= (sos? foreignBlockStatement eos)+
 foreignBlockStatement                ::= variableDeclarationStatement
@@ -236,7 +236,7 @@ structDeclarationStatement           ::= (attribute eos?)* declaredIdentifier do
 structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? structBlock {methods=[getParamEntryList] implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-fieldDeclarationStatement            ::= USING? directiveHead? declaredIdentifier (COMMA declaredIdentifier)* COLON type [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
+fieldDeclarationStatement            ::= USING? directiveIdentifier? declaredIdentifier (COMMA declaredIdentifier)* COLON type [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
 
 // Enum
 enumDeclarationStatement             ::= (attribute eos?)* USING? declaredIdentifier doubleColonOperator DISTINCT? enumType
@@ -329,16 +329,16 @@ bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON 
 
 mapType                              ::= MAP LBRACKET type RBRACKET type {methods=[getKeyType getValueType]}
 matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET type
-arrayType                            ::= [directiveHead] LBRACKET arraySize RBRACKET type {methods=[getTypeDefinition]}
+arrayType                            ::= [directiveIdentifier] LBRACKET arraySize RBRACKET type {methods=[getTypeDefinition]}
 arraySize                            ::= QUESTION|expression
 
-dynamicArrayType                     ::= [directiveHead] LBRACKET DYNAMIC RBRACKET type {methods=[getTypeDefinition]}
+dynamicArrayType                     ::= [directiveIdentifier] LBRACKET DYNAMIC RBRACKET type {methods=[getTypeDefinition]}
 
-sliceType                            ::= [directiveHead] LBRACKET RBRACKET type
+sliceType                            ::= [directiveIdentifier] LBRACKET RBRACKET type
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList { methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
 
-private symbolDefinitionHead         ::= (attribute eos?)* [directiveHead] [USING] identifierList colonOpening type?
+private symbolDefinitionHead         ::= (attribute eos?)* [directiveIdentifier] [USING] identifierList colonOpening type?
 colonOpening                         ::= COLON
 
 variableInitializationStatement      ::= symbolDefinitionHead EQ rhsExpressions { methods=[getTypeDefinition] pin=2}
@@ -346,7 +346,7 @@ variableInitializationStatement      ::= symbolDefinitionHead EQ rhsExpressions 
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}
 
-assignmentStatement                  ::= [directiveHead] lhsExpressions assignmentOperator rhsExpressions { pin=assignmentOperator }
+assignmentStatement                  ::= [directiveIdentifier] lhsExpressions assignmentOperator rhsExpressions { pin=assignmentOperator }
 lhsExpressions                       ::= expression (COMMA (expression))*
 rhsExpressions                       ::= expressionListWithRecover
 expressionsList                      ::= expressionListWithRecover
@@ -481,9 +481,9 @@ expression                           ::= postfixGroup
                                          | sliceExpression
                                          | dereferenceExpression
                                          | procedureExpression
-                                         | transmuteExpression
                                          | compoundLiteralExpression
                                          | primaryGroup
+
 
 
 
@@ -582,6 +582,7 @@ identifier                           ::= IDENTIFIER_TOKEN { methods = [getRefere
 callExpression                       ::= expression LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
 
 private primaryGroup                 ::= simpleRefExpression
+                                         | transmuteExpression
                                          | parenthesizedExpression
                                          | typeDefinitionExpression
                                          | directiveExpression
@@ -684,9 +685,9 @@ elementEntry                         ::= [lhs EQ] rhs
 lhs                                  ::= expression
 rhs                                  ::= expression
 
-directiveExpression                  ::= directive
-directive                            ::= directiveHead [basicLiteral | (LPAREN expressionsList? RPAREN)]
-directiveHead                        ::= HASH IDENTIFIER_TOKEN
+directiveExpression                  ::= directiveIdentifier
+directive                            ::= directiveIdentifier [(LPAREN argumentList? RPAREN)]
+directiveIdentifier                  ::= HASH IDENTIFIER_TOKEN
 
 
 
@@ -814,7 +815,7 @@ switchCase                           ::= CASE [expression (COMMA expression)*] c
 caseBlock                            ::= COLON statementList?
 
 // When statement (compile time, which means it does not support an init block)
-whenStatement                        ::= [directive] [labelDeclaration] whenBlock
+whenStatement                        ::= [directive] [labelDeclaration] whenBlock {implements="com.lasagnerd.odin.lang.psi.OdinDeclaration"}
 whenBlock                            ::= WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody [sos elseWhenBlock]
 elseWhenBlock                        ::= else (whenBlock|statementBody)
 

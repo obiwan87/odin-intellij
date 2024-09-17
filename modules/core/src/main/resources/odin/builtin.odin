@@ -200,3 +200,6 @@ ODIN_OPTIMIZATION_MODE : Odin_Optimization_Mode
 
 @builtin
 ODIN_DEFAULT_TO_PANIC_ALLOCATOR : bool
+
+@builtin
+ODIN_NO_BOUNDS_CHECK: bool

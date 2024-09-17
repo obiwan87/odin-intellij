@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import lombok.EqualsAndHashCode;
@@ -92,18 +93,23 @@ public class OdinTypeResolver extends OdinVisitor {
             } else if (metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
 
                 TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
+                metaType.setRepresentedType(typeAlias);
+
                 if (metaType.getTypeExpression() instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
                     typeAlias.setDistinct(typeDefinitionExpression.getDistinct() != null);
                     typeAlias.setPsiType(typeDefinitionExpression.getType());
                 } else {
                     typeAlias.setPsiTypeExpression(metaType.getTypeExpression());
                 }
-                TsOdinType aliasedType = resolveMetaType(level + 1, symbolTable, metaType.getAliasedMetaType());
+
                 typeAlias.setDeclaration(metaType.getDeclaration());
                 typeAlias.setName(metaType.getName());
+                typeAlias.setSymbolTable(metaType.getSymbolTable());
+
+                TsOdinType aliasedType = resolveMetaType(level + 1,
+                        metaType.getAliasedMetaType().getSymbolTable(),
+                        metaType.getAliasedMetaType());
                 typeAlias.setAliasedType(aliasedType);
-                typeAlias.setSymbolTable(aliasedType.getSymbolTable());
-                metaType.setRepresentedType(typeAlias);
 
                 return typeAlias;
             }
@@ -202,7 +208,8 @@ public class OdinTypeResolver extends OdinVisitor {
                     TsOdinType tsOdinType = doResolveType(localSymbolTable, tsOdinParameter.getPsiType());
                     tsOdinParameter.setType(tsOdinType);
                 } else if (tsOdinParameter.getDefaultValueExpression() != null) {
-                    TsOdinType tsOdinType = inferType(localSymbolTable, tsOdinParameter.getDefaultValueExpression());
+                    OdinSymbolTable paramSymbolTable = OdinSymbolTableResolver.computeSymbolTable(tsOdinParameter.getDefaultValueExpression());
+                    TsOdinType tsOdinType = inferType(paramSymbolTable, tsOdinParameter.getDefaultValueExpression());
                     tsOdinParameter.setType(tsOdinType);
                     tsOdinParameter.setPsiType(tsOdinType.getPsiType());
                 }
@@ -293,7 +300,7 @@ public class OdinTypeResolver extends OdinVisitor {
                     OdinExpression odinExpression = expressionList.get(index);
                     TsOdinType tsOdinType = doInferType(symbolTable, odinExpression);
                     if (tsOdinType instanceof TsOdinMetaType metaType) {
-                        TsOdinType resolvedMetaType = doResolveMetaType(symbolTable, metaType);
+                        TsOdinType resolvedMetaType = doResolveMetaType(metaType.getSymbolTable(), metaType);
                         return createTypeAliasFromMetaType(identifier, resolvedMetaType, odinDeclaration, odinExpression);
                     }
                     return TsOdinBuiltInTypes.UNKNOWN;
@@ -394,13 +401,13 @@ public class OdinTypeResolver extends OdinVisitor {
             tsOdinSliceType.setElementType(tsOdinElementType);
             tsOdinSliceType.setSymbolTable(symbolTable);
             tsOdinSliceType.setPsiType(o);
-            tsOdinSliceType.setSoa(checkDirective(o.getDirectiveHead(), "#soa"));
+            tsOdinSliceType.setSoa(checkDirective(o.getDirectiveIdentifier(), "#soa"));
 
             this.type = tsOdinSliceType;
         }
     }
 
-    private static boolean checkDirective(@Nullable OdinDirectiveHead directiveHead, String hashtag) {
+    private static boolean checkDirective(@Nullable OdinDirectiveIdentifier directiveHead, String hashtag) {
         boolean equals = false;
         if (directiveHead != null) {
             equals = directiveHead.getText().equals(hashtag);
@@ -417,7 +424,7 @@ public class OdinTypeResolver extends OdinVisitor {
             tsOdinDynamicArray.setElementType(tsOdinElementType);
             tsOdinDynamicArray.setSymbolTable(symbolTable);
             tsOdinDynamicArray.setPsiType(o);
-            tsOdinDynamicArray.setSoa(checkDirective(o.getDirectiveHead(), "#soa"));
+            tsOdinDynamicArray.setSoa(checkDirective(o.getDirectiveIdentifier(), "#soa"));
             this.type = tsOdinDynamicArray;
         }
     }
@@ -428,7 +435,7 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinMultiPointerType.setPsiType(o);
         TsOdinType dereferencedType = resolveType(symbolTable, Objects.requireNonNull(o.getType()));
         tsOdinMultiPointerType.setDereferencedType(dereferencedType);
-
+        tsOdinMultiPointerType.setSymbolTable(symbolTable);
         this.type = tsOdinMultiPointerType;
     }
 
@@ -478,8 +485,8 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinArrayType.setPsiSizeElement(arrayType.getArraySize());
         tsOdinArrayType.setPsiType(arrayType);
 
-        tsOdinArrayType.setSoa(checkDirective(arrayType.getDirectiveHead(), "#soa"));
-        tsOdinArrayType.setSimd(checkDirective(arrayType.getDirectiveHead(), "#simd"));
+        tsOdinArrayType.setSoa(checkDirective(arrayType.getDirectiveIdentifier(), "#soa"));
+        tsOdinArrayType.setSimd(checkDirective(arrayType.getDirectiveIdentifier(), "#simd"));
 
         TsOdinType elementType = resolveType(symbolTable, arrayType.getTypeDefinition());
         tsOdinArrayType.setElementType(elementType);
@@ -781,7 +788,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
         @Override
         public void visitQualifiedType(@NotNull OdinQualifiedType o) {
-
+            System.out.println("qualified type visited");
         }
 
 

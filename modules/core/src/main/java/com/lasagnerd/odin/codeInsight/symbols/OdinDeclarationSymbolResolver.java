@@ -8,6 +8,7 @@ import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,8 +62,6 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         if (o.getTypeDefinitionContainer() != null) {
             type = o.getTypeDefinitionContainer().getType();
         }
-
-        OdinExpression valueExpression = o.getExpression();
 
         for (var declaredIdentifier : o.getDeclaredIdentifiers()) {
             OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
@@ -134,7 +133,6 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         OdinType typeDefinition = o.getType();
         for (int i = 0; i < o.getDeclaredIdentifiers().size(); i++) {
             OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifiers().get(i));
-            var expressionsList = o.getRhsExpressions();
             odinSymbol.setSymbolType(OdinSymbolType.VARIABLE);
             odinSymbol.setHasUsing(hasUsing);
             odinSymbol.setPsiType(typeDefinition);
@@ -237,6 +235,11 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         odinSymbol.setAttributes(o.getAttributeList());
         odinSymbol.setPsiType(o.getEnumType());
         symbols.add(odinSymbol);
+
+        if(o.getUsing() != null) {
+            List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields(o.getEnumType());
+            symbols.addAll(enumFields);
+        }
     }
 
     @Override
@@ -326,6 +329,42 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         if(foreignStatementList != null) {
             for (OdinStatement odinStatement : foreignStatementList.getStatementList()) {
                 odinStatement.accept(this);
+            }
+        }
+    }
+
+    @Override
+    public void visitWhenStatement(@NotNull OdinWhenStatement o) {
+        OdinWhenBlock whenBlock = o.getWhenBlock();
+        addWhenBlockDeclarations(whenBlock);
+    }
+
+    private void addWhenBlockDeclarations(OdinWhenBlock whenBlock) {
+        OdinStatementBody statementBody = whenBlock.getStatementBody();
+
+        addStatementBodySymbols(statementBody);
+
+        OdinElseWhenBlock elseWhenBlock = whenBlock.getElseWhenBlock();
+        if(elseWhenBlock != null) {
+            OdinWhenBlock nextWhenBlock = elseWhenBlock.getWhenBlock();
+            if(nextWhenBlock != null) {
+                addWhenBlockDeclarations(nextWhenBlock);
+            }
+            if(elseWhenBlock.getStatementBody() != null) {
+                addStatementBodySymbols(elseWhenBlock.getStatementBody());
+            }
+        }
+    }
+
+    private void addStatementBodySymbols(OdinStatementBody statementBody) {
+        OdinDoStatement doStatement = statementBody.getDoStatement();
+        @Nullable OdinBlock block = statementBody.getBlock();
+
+        if(doStatement != null) {
+            doStatement.accept(this);
+        } else if(block != null){
+            for (OdinStatement statement : block.getStatements()) {
+                statement.accept(this);
             }
         }
     }

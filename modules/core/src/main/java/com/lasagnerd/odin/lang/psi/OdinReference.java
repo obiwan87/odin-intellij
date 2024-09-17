@@ -10,9 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceBase;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +30,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public @Nullable PsiElement resolve() {
+
         if(getElement().getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
             OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(getElement().getProject(), tsOdinType);

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
@@ -26,5 +27,15 @@ public class TsOdinTuple extends TsOdinType {
     @Override
     public TsOdinMetaType.MetaType getMetaType() {
         return TsOdinMetaType.MetaType.UNKNOWN;
+    }
+
+    @Override
+    public String getLabel() {
+        if(types != null) {
+            String typeLabels = types.stream().map(TsOdinType::getLabel).collect(Collectors.joining(", "));
+            return "(%s)".formatted(typeLabels);
+        }
+
+        return "()";
     }
 }

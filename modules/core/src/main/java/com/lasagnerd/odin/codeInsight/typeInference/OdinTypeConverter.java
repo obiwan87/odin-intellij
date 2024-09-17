@@ -66,12 +66,20 @@ public class OdinTypeConverter {
         }
 
         // Give arrays the precedence
-        if (a.getMetaType() == MetaType.ARRAY) {
-            return convertToArrayType((TsOdinArrayType) a, b);
+        TsOdinType baseTypeA = a.baseType(true);
+        if (baseTypeA.getMetaType() == MetaType.ARRAY) {
+            TsOdinType tsOdinType = convertToArrayType((TsOdinArrayType) baseTypeA, b);
+            if(!tsOdinType.isUnknown()) {
+                return a;
+            }
         }
 
-        if (b.getMetaType() == MetaType.ARRAY) {
-            return convertToArrayType((TsOdinArrayType) b, a);
+        TsOdinType baseTypeB = b.baseType(true);
+        if (baseTypeB.getMetaType() == MetaType.ARRAY) {
+            TsOdinType tsOdinType = convertToArrayType((TsOdinArrayType) baseTypeB, a);
+            if(!tsOdinType.isUnknown()) {
+                return b;
+            }
         }
 
 

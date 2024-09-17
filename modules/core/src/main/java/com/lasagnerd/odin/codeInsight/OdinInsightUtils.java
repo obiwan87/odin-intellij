@@ -8,10 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -75,9 +72,13 @@ public class OdinInsightUtils {
         type = type.baseType(true);
 
         if (type instanceof TsOdinPackageReferenceType packageType) {
-            return OdinImportUtils
+            List<OdinSymbol> builtInSymbols = OdinBuiltinSymbolService.getInstance(project).getBuiltInSymbols();
+            OdinSymbolTable odinBuiltinSymbolsTable = OdinSymbolTable.from(builtInSymbols);
+            OdinSymbolTable symbolsOfImportedPackage = OdinImportUtils
                     .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
                             (OdinImportDeclarationStatement) packageType.getDeclaration());
+            symbolsOfImportedPackage.setRoot(odinBuiltinSymbolsTable);
+            return symbolsOfImportedPackage;
         }
         OdinSymbolTable typeScope = type.getSymbolTable();
         OdinSymbolTable symbolTable = new OdinSymbolTable();
@@ -101,12 +102,18 @@ public class OdinInsightUtils {
             return symbolTable.with(getEnumFields(enumType));
         }
 
+        if(type instanceof TsOdinMetaType metaType && metaType.representedType() instanceof TsOdinBitSetType tsOdinBitSetType) {
+            if(tsOdinBitSetType.getElementType() instanceof TsOdinEnumType tsOdinEnumType) {
+                return symbolTable.with(getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType()));
+            }
+        }
+
         if (includeReferenceableSymbols && type instanceof TsOdinArrayType arrayType) {
             return OdinSymbolTable.from(getSwizzleFields(arrayType));
         }
 
-        if (includeReferenceableSymbols && type instanceof TsOdinDynamicArray) {
-            OdinSymbol implicitStructSymbol = OdinBuiltinSymbolService.getInstance(project).createImplicitStructSymbol("allocator", "Allocator");
+        if (includeReferenceableSymbols && (type instanceof TsOdinDynamicArray || type instanceof TsOdinMapType)) {
+            OdinSymbol implicitStructSymbol = OdinBuiltinSymbolService.createAllocatorSymbol(project);
             return OdinSymbolTable.from(Collections.singletonList(implicitStructSymbol));
         }
 
@@ -197,7 +204,7 @@ public class OdinInsightUtils {
 
     public static List<OdinSymbol> getStructFields(OdinSymbolTable symbolTable, @NotNull OdinStructType structType) {
         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structType);
-
+//        symbolTable = OdinSymbolTableResolver.computeSymbolTable(structType);
         List<OdinSymbol> symbols = new ArrayList<>();
         for (OdinFieldDeclarationStatement field : fieldDeclarationStatementList) {
             for (OdinDeclaredIdentifier odinDeclaredIdentifier : field.getDeclaredIdentifiers()) {
@@ -216,8 +223,10 @@ public class OdinInsightUtils {
         return symbols;
     }
 
-    public static void getSymbolsOfFieldWithUsing(OdinSymbolTable symbolTable, OdinFieldDeclarationStatement x, List<OdinSymbol> symbols) {
-        TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, x.getType());
+    public static void getSymbolsOfFieldWithUsing(OdinSymbolTable symbolTable,
+                                                  OdinFieldDeclarationStatement field,
+                                                  List<OdinSymbol> symbols) {
+        TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, field.getType());
         TsOdinStructType structType;
         if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
             if (tsOdinPointerType.getDereferencedType() instanceof TsOdinStructType) {

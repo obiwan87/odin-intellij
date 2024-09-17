@@ -10,6 +10,10 @@ public interface OdinBuiltinSymbolService {
         return project.getService(OdinBuiltinSymbolService.class);
     }
 
+    static OdinSymbol createAllocatorSymbol(Project project) {
+        return getInstance(project).createImplicitStructSymbol("allocator", "Allocator");
+    }
+
     List<OdinSymbol> getRuntimeCoreSymbols();
 
     List<OdinSymbol> getBuiltInSymbols();

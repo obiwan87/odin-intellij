@@ -189,9 +189,10 @@ Direction :: enum i32 {
 
 DirectionSet :: bit_set[Direction; u8]
 
-testTypeInference17 :: proc() {
+testBitsetsAndEnums :: proc() {
     b := DirectionSet { .South, .East }
     c := Direction.East
+    d := DirectionSet.East
 }
 
 Point2D :: Point
@@ -584,3 +585,23 @@ testEnumeratedArrays :: proc() {
     }
 }
 
+testSwizzleFieldsAndArrays :: proc() {
+    Vector3 :: distinct [3]f32
+    a := Vector3{ 1, 2, 3 }
+    b := Vector3{ 5, 6, 7 }
+    c := (a * b) / 2 + 1
+    d := c.x + c.y + c.z
+}
+
+testStringBuilder :: proc(allocator := context.allocator, loc := #caller_location) {
+    x := o.builder_make(1, 1, allocator, loc)
+}
+
+testPrimitiveTypeCasting :: proc() {
+    bg := [3]f32{}
+    a   := f32(2) / 255.0
+    rgb := [3]f32{f32(1), f32(2), f32(3)}
+    c   := ((1.0 - a) * bg + a * rgb)
+
+    x := c.x
+}

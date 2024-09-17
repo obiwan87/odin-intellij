@@ -209,8 +209,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
         highlightEscapeSequences(psiElement, annotationHolder);
 
-        if (psiElement instanceof OdinDirectiveHead tagHead) {
-            highlightTagHead(tagHead, annotationHolder);
+        if (psiElement instanceof OdinDirectiveIdentifier tagHead) {
+            highlightDirectiveIdentifier(tagHead, annotationHolder);
         }
     }
 
@@ -266,8 +266,24 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 .with(OdinImportService.getInstance(identifierTokenParent.getProject())
                         .getPackagePath(identifierTokenParent));
 
-        OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
 
+        if (refExpression == topMostExpression) {
+            if (refExpression.getParent() instanceof OdinArgument argument) {
+                OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class);
+                if (callExpression != null && callExpression.getExpression() instanceof OdinDirectiveExpression directiveExpression) {
+                    if (directiveExpression.getText().equals("#config")) {
+                        callExpression.getArgumentList();
+                        if (!callExpression.getArgumentList().isEmpty()) {
+                            if (callExpression.getArgumentList().getFirst() == argument) {
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
         if (symbol == null) {
             highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange);
             annotationSessionState.aborted.add(topMostExpression);
@@ -279,8 +295,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             return;
         }
 
-        if(symbol.getPsiType() instanceof OdinPointerType pointerType) {
-            if(pointerType.getType() instanceof OdinPolymorphicType) {
+        if (symbol.getPsiType() instanceof OdinPointerType pointerType) {
+            if (pointerType.getType() instanceof OdinPolymorphicType) {
                 annotationSessionState.aborted.add(topMostExpression);
                 return;
             }
@@ -353,7 +369,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 .create();
     }
 
-    private static void highlightTagHead(OdinDirectiveHead tagHead, @NotNull AnnotationHolder annotationHolder) {
+    private static void highlightDirectiveIdentifier(OdinDirectiveIdentifier tagHead, @NotNull AnnotationHolder annotationHolder) {
 
         var matchRange = tagHead.getTextRange();
         highlight(annotationHolder, matchRange, DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);

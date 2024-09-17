@@ -50,6 +50,10 @@ public class OdinPsiUtil {
         if(self instanceof OdinBitwiseAndExpression bitwiseAndExpression) {
             return bitwiseAndExpression.getAnd();
         }
+
+        if(self instanceof OdinUnaryMinusExpression minusExpression) {
+            return minusExpression.getMinus();
+        }
         // TODO continue
 
         return self.getChildren().length > 1 ? self.getChildren()[1] : null;
