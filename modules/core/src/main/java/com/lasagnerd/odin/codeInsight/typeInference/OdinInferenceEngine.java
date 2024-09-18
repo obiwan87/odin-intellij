@@ -23,8 +23,6 @@ import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType.
 public class OdinInferenceEngine extends OdinVisitor {
     // Result fields
     TsOdinType type;
-    OdinImportDeclarationStatement importDeclarationStatement;
-    boolean isImport;
 
     // Input fields
     final OdinSymbolTable symbolTable;
@@ -48,11 +46,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public static TsOdinType inferType(OdinSymbolTable symbolTable, OdinExpression expression) {
         OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable);
         expression.accept(odinInferenceEngine);
-        if (odinInferenceEngine.isImport) {
-            return createPackageReferenceType(symbolTable.getPackagePath(), odinInferenceEngine.importDeclarationStatement);
-        } else {
-            return odinInferenceEngine.type != null ? odinInferenceEngine.type : TsOdinBuiltInTypes.UNKNOWN;
-        }
+        return odinInferenceEngine.type != null ? odinInferenceEngine.type : TsOdinBuiltInTypes.UNKNOWN;
     }
 
     public static TsOdinType doInferType(OdinSymbolTable symbolTable, @NotNull OdinExpression expression) {
@@ -62,11 +56,6 @@ public class OdinInferenceEngine extends OdinVisitor {
     public static TsOdinType doInferType(OdinSymbolTable symbolTable, TsOdinType expectedType, int lhsValuesCount, @NotNull OdinExpression expression) {
         OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable, expectedType, lhsValuesCount);
         expression.accept(odinInferenceEngine);
-
-        if (odinInferenceEngine.isImport) {
-            OdinImportDeclarationStatement importDeclarationStatement = odinInferenceEngine.importDeclarationStatement;
-            return createPackageReferenceType(symbolTable.getPackagePath(), importDeclarationStatement);
-        }
         TsOdinType type = odinInferenceEngine.type;
         if (type == null) {
             return TsOdinBuiltInTypes.UNKNOWN;
@@ -216,20 +205,15 @@ public class OdinInferenceEngine extends OdinVisitor {
             OdinSymbol symbol = localSymbolTable.getSymbol(name);
             if (symbol != null) {
                 PsiNamedElement namedElement = symbol.getDeclaredIdentifier();
-                if (namedElement instanceof OdinImportDeclarationStatement) {
-                    isImport = true;
-                    importDeclarationStatement = (OdinImportDeclarationStatement) namedElement;
-                } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
-                    OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinDeclaration.class);
-                    if (odinDeclaration instanceof OdinImportDeclarationStatement) {
-                        isImport = true;
-                        importDeclarationStatement = (OdinImportDeclarationStatement) odinDeclaration;
-                    } else {
-                        this.type = OdinTypeConverter.convertToTyped(resolveTypeOfDeclaration(refExpression.getIdentifier(), globalScope, declaredIdentifier, odinDeclaration));
 
-                    }
+                OdinImportDeclarationStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
+                if (importDeclarationStatement != null) {
+                    this.type = createPackageReferenceType(symbolTable.getPackagePath(), importDeclarationStatement);
+                } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
+                    OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
+                    TsOdinType tsOdinType = resolveTypeOfDeclaration(refExpression.getIdentifier(), globalScope, declaredIdentifier, odinDeclaration);
+                    this.type = OdinTypeConverter.convertToTyped(tsOdinType);
                 } else if (symbol.isImplicitlyDeclared()) {
-                    // TODO make this a bit less hard coded
                     if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD && symbol.getName().length() == 1) {
                         if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
                             this.type = tsOdinArrayType.getElementType();
@@ -259,10 +243,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                     this.type = createBuiltinMetaType(name);
                 }
             }
-            /* TODO: rand.odin causes stack overflow these being the end and the start of the overflow error respectively
-             * .resolveTypeOfDeclaration(OdinInferenceEngine.java:498)
-             * 	at com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.visitRefExpression(OdinInferenceEngine.java:128)
-             */
         }
 
         if (refExpression.getType() != null) {
@@ -273,6 +253,21 @@ public class OdinInferenceEngine extends OdinVisitor {
                 this.type = tsOdinType;
             }
         }
+    }
+
+    private static OdinImportDeclarationStatement getImportDeclarationStatement(PsiNamedElement namedElement) {
+        if (namedElement == null)
+            return null;
+        if (namedElement instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+            return importDeclarationStatement;
+        }
+        if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
+            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(namedElement, true, OdinDeclaration.class);
+            if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+                return importDeclarationStatement;
+            }
+        }
+        return null;
     }
 
     private static TsOdinType getReferenceableType(TsOdinType tsOdinRefExpressionType) {
@@ -325,26 +320,19 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE) {
                 TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
                 this.type = inferTypeOfProcedureCall(o, procedureType);
-            }
-
-
-            else if (tsOdinMetaType.getRepresentedMetaType() == STRUCT) {
+            } else if (tsOdinMetaType.getRepresentedMetaType() == STRUCT) {
                 TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType);
                 TsOdinStructType specializedStructType = OdinTypeSpecializer.specializeStructOrGetCached(symbolTable, structType, o.getArgumentList());
                 TsOdinMetaType resultType = new TsOdinMetaType(STRUCT);
                 resultType.setRepresentedType(specializedStructType);
                 this.type = resultType;
-            }
-
-            else if (tsOdinMetaType.getRepresentedMetaType() == UNION) {
+            } else if (tsOdinMetaType.getRepresentedMetaType() == UNION) {
                 TsOdinUnionType unionType = (TsOdinUnionType) OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType);
                 TsOdinType specializedUnion = OdinTypeSpecializer.specializeUnionOrGetCached(symbolTable, unionType, o.getArgumentList());
                 TsOdinMetaType resultType = new TsOdinMetaType(UNION);
                 resultType.setRepresentedType(specializedUnion);
                 this.type = resultType;
-            }
-
-            else if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE_OVERLOAD) {
+            } else if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE_OVERLOAD) {
                 TsOdinProcedureOverloadType procedureOverloadType = (TsOdinProcedureOverloadType) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
                 List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>>>> compatibleProcedures = new ArrayList<>();
                 for (TsOdinProcedureType targetProcedure : procedureOverloadType.getTargetProcedures()) {
@@ -386,9 +374,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 } else {
                     System.out.println("Could not find any compatible candidate for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
                 }
-            }
-
-            else if(tsOdinMetaType.representedType() instanceof TsOdinBuiltInType builtInType) {
+            } else if (tsOdinMetaType.representedType() instanceof TsOdinBuiltInType builtInType) {
                 // builtin type casting
                 this.type = builtInType;
             }
@@ -928,7 +914,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             return tsOdinMetaType;
         }
 
-        if(odinDeclaration instanceof OdinBitsetDeclarationStatement bitsetDeclarationStatement) {
+        if (odinDeclaration instanceof OdinBitsetDeclarationStatement bitsetDeclarationStatement) {
             TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(BIT_SET);
             tsOdinMetaType.setSymbolTable(parentSymbolTable);
             tsOdinMetaType.setDeclaration(bitsetDeclarationStatement);
@@ -1211,8 +1197,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (tsOdinType instanceof TsOdinTuple tsOdinTuple) {
             if (tsOdinTuple.getTypes().size() == 2) {
                 this.type = tsOdinTuple.getTypes().getFirst();
-            }
-            else if (tsOdinTuple.getTypes().size() > 2) {
+            } else if (tsOdinTuple.getTypes().size() > 2) {
                 List<TsOdinType> tsOdinTypes = tsOdinTuple.getTypes().subList(0, tsOdinTuple.getTypes().size() - 1);
                 this.type = new TsOdinTuple(tsOdinTypes);
             }

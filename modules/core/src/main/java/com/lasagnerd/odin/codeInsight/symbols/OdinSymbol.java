@@ -21,9 +21,9 @@ public class OdinSymbol {
     private OdinSymbolType symbolType;
     private OdinVisibility visibility;
     private OdinScope scope;
-    boolean hasUsing;
-    boolean implicitlyDeclared;
-    boolean builtinBaseType;
+    private boolean hasUsing;
+    private boolean implicitlyDeclared;
+    private boolean builtin;
 
     public OdinSymbol(PsiNamedElement declaredIdentifier, @NotNull OdinVisibility visibility) {
         this.declaredIdentifier = declaredIdentifier;

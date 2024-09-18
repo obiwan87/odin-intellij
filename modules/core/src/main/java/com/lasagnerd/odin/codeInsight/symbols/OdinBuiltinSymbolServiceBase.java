@@ -99,13 +99,13 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
 
 
             PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
-            if(declaredIdentifier instanceof OdinDeclaredIdentifier odinDeclaredIdentifier) {
+            if (declaredIdentifier instanceof OdinDeclaredIdentifier odinDeclaredIdentifier) {
                 OdinSymbolTable builtinSymbols = OdinSymbolTable.from(getBuiltInSymbols());
                 OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(declaredIdentifier);
                 symbolTable.setParentSymbolTable(builtinSymbols);
 
                 TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, odinDeclaredIdentifier);
-                if(tsOdinType != null) {
+                if (tsOdinType != null) {
                     cachedTypes.put(typeName, tsOdinType);
                 }
             }
@@ -149,7 +149,7 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
             odinSymbol.setName(builtInType.getName());
             odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
             odinSymbol.setSymbolType(OdinSymbolType.BUILTIN_TYPE);
-            odinSymbol.setBuiltinBaseType(true);
+            odinSymbol.setBuiltin(true);
             odinSymbol.setVisibility(OdinSymbol.OdinVisibility.PUBLIC);
             odinSymbol.setImplicitlyDeclared(true);
             builtinSymbols.add(odinSymbol);
@@ -166,19 +166,23 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
         Path coreBuiltinSoaPath = Path.of(sdkPath, "base", "runtime", "core_builtin_soa.odin");
 
         List<Path> builtinPaths = List.of(coreBuiltinPath, coreBuiltinSoaPath);
-        doFindBuiltInSymbols(builtinPaths, builtinSymbols, odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributes()));
+        doFindBuiltInSymbols(builtinPaths,
+                builtinSymbols,
+                odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributes()));
 
         List<String> resources = List.of("odin/builtin.odin", "odin/annotations.odin");
         for (String resource : resources) {
             OdinFile odinFile = createOdinFileFromResource(project, resource);
             if (odinFile != null) {
                 OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getSymbolTable();
-                Collection<OdinSymbol> symbols = fileScopeDeclarations
+                fileScopeDeclarations
                         .getSymbolNameMap().values()
                         .stream()
                         .filter(odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributes()))
-                        .toList();
-                builtinSymbols.addAll(symbols);
+                        .forEach(symbol -> {
+                            symbol.setBuiltin(true);
+                            builtinSymbols.add(symbol);
+                        });
             }
         }
         return builtinSymbols;
@@ -197,12 +201,14 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
                     log.error("File scope is null for file %s".formatted(odinFile.getVirtualFile().getPath()));
                 } else {
                     OdinSymbolTable fileScopeDeclarations = fileScope.getSymbolTable();
-                    Collection<OdinSymbol> symbols = fileScopeDeclarations
+                    fileScopeDeclarations
                             .getSymbolNameMap().values()
                             .stream()
                             .filter(odinSymbolPredicate)
-                            .toList();
-                    builtinSymbols.addAll(symbols);
+                            .forEach(symbol -> {
+                                symbol.setBuiltin(true);
+                                builtinSymbols.add(symbol);
+                            });
                 }
             }
         }
