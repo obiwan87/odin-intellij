@@ -17,79 +17,60 @@ import java.util.*;
 
 public class MockOdinImportService implements OdinImportService {
 
-    private Map<String, String> nameToPathMap = new HashMap<>();
-    private Map<String, VirtualFile> virtualFileMap = new HashMap<>();
+    private final Map<String, LightVirtualFile> virtualFileMap = new HashMap<>();
     private final PsiFileFactoryImpl fileFactory;
     private final Map<String, OdinFile> pathToOdinFile = new HashMap<>();
+
     public MockOdinImportService(@NotNull PsiFileFactoryImpl fileFactory) {
         this.fileFactory = fileFactory;
-        var rootPaths = List.of(
-                "src/test/testData/"
-//                "src/test/sdk/"
-        );
-        for (String rootPath : rootPaths) {
-            scanDirectories(rootPath);
-        }
-    }
-
-    private void scanDirectories(String rootPath) {
-        File root = new File(rootPath);
-        if (root.exists() && root.isDirectory()) {
-            recursiveScan(root);
-        }
-    }
-
-    private void recursiveScan(File directory) {
-        File[] files = directory.listFiles();
-        if (files == null) return;
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                nameToPathMap.put(file.getName(), file.getAbsolutePath());
-                recursiveScan(file);  // Recursively scan if it's a directory
-            } else if (file.isFile() && file.getName().endsWith(".odin")) {
-                nameToPathMap.put(file.getName(), file.getAbsolutePath());
-            }
-        }
     }
 
     @Override
     public String getPackagePath(PsiElement psiElement) {
-        String name = psiElement.getContainingFile().getVirtualFile().getName();
-        String path = nameToPathMap.get(name);
-        if(path == null) {
-            System.out.println("Could not resolve path for " + name);
-            return null;
-        }
+        String path = psiElement.getContainingFile().getVirtualFile().getPath();
         return FileUtil.toSystemIndependentName(Path.of(path).getParent().toString());
     }
 
     @Override
     public @Nullable String getCanonicalPath(VirtualFile virtualFile) {
-        return nameToPathMap.get(virtualFile.getName());
+        return virtualFile.getPath();
     }
 
     @Override
     public VirtualFile @NotNull [] getFilesInPath(Path importPath) {
         List<VirtualFile> virtualFiles = new ArrayList<>();
-        Path absolutePath = importPath.toAbsolutePath();
-        for (Map.Entry<String, String> entry : nameToPathMap.entrySet()) {
-            Path filePath = Path.of(entry.getValue());
-            Path parent = filePath.getParent();
-            if (parent.equals(absolutePath) && filePath.toString().endsWith(".odin") && filePath.toFile().isFile()) {
-                virtualFiles.add(MockFileUtils.createVirtualFile(filePath));
+
+        File file = importPath.toFile();
+        if (file.exists() && file.isDirectory()) {
+            var files = file.listFiles((dir, name) -> name.endsWith(".odin"));
+            if (files != null) {
+                for (File odinFile : files) {
+                    virtualFiles.add(getVirtualFile(odinFile.toPath()));
+                }
             }
         }
         return virtualFiles.toArray(new VirtualFile[0]);
     }
 
+    private @NotNull LightVirtualFile getVirtualFile(Path filePath) {
+        String absolutePath = FileUtil.toSystemIndependentName(filePath.toAbsolutePath().toString());
+        LightVirtualFile virtualFile = virtualFileMap.get(absolutePath);
+
+        if (virtualFile == null) {
+            virtualFile = MockFileUtils.createVirtualFile(filePath);
+            virtualFileMap.put(absolutePath, virtualFile);
+        }
+        return Objects.requireNonNull(virtualFile);
+    }
+
     @Override
     public PsiFile createPsiFile(VirtualFile virtualFile) {
         if (virtualFile instanceof LightVirtualFile lightVirtualFile) {
-            OdinFile odinFile = pathToOdinFile.get(virtualFile.getPath());
-            if(odinFile == null) {
+            String absolutePath = FileUtil.toSystemIndependentName(virtualFile.getPath());
+            OdinFile odinFile = pathToOdinFile.get(absolutePath);
+            if (odinFile == null) {
                 odinFile = (OdinFile) fileFactory.trySetupPsiForFile(lightVirtualFile, OdinLanguage.INSTANCE, true, false);
-                pathToOdinFile.put(virtualFile.getPath(), odinFile);
+                pathToOdinFile.put(absolutePath, odinFile);
             }
 
             return odinFile;
@@ -99,8 +80,6 @@ public class MockOdinImportService implements OdinImportService {
 
     @Override
     public Optional<String> getSdkPath() {
-//        return Optional.of("src/test/sdk");
-        return Optional.empty();
+        return Optional.of("src/test/sdk");
     }
-
 }

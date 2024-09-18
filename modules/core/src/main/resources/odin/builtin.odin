@@ -1,5 +1,6 @@
 package ols_builtin
 
+import "base:runtime"
 // Procedures
 
 @builtin len :: proc(array: Array_Type) -> int ---

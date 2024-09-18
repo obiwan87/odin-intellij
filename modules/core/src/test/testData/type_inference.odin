@@ -605,3 +605,7 @@ testPrimitiveTypeCasting :: proc() {
 
     x := c.x
 }
+
+testTypeInfoOf :: proc() {
+    x := type_info_of(y)
+}

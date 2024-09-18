@@ -176,7 +176,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
         OdinSymbolTable localSymbolTable;
-        OdinSymbolTable globalScope;
+        OdinSymbolTable globalSymbolTable;
 
         TsOdinType tsOdinRefExpressionType = TsOdinBuiltInTypes.UNKNOWN;
         if (refExpression.getExpression() != null) {
@@ -187,16 +187,16 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             if (tsOdinRefExpressionType instanceof TsOdinPackageReferenceType) {
                 localSymbolTable = typeSymbols;
-                globalScope = typeSymbols;
+                globalSymbolTable = typeSymbols;
             } else {
-                globalScope = tsOdinRefExpressionType.getSymbolTable();
+                globalSymbolTable = tsOdinRefExpressionType.getSymbolTable();
                 localSymbolTable = typeSymbols;
             }
             // The resolved polymorphic types must be taken over from type scope
             this.symbolTable.addTypes(localSymbolTable);
         } else {
             localSymbolTable = this.symbolTable;
-            globalScope = this.symbolTable;
+            globalSymbolTable = this.symbolTable;
         }
 
         if (refExpression.getIdentifier() != null) {
@@ -204,16 +204,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             String name = refExpression.getIdentifier().getText();
             OdinSymbol symbol = localSymbolTable.getSymbol(name);
             if (symbol != null) {
-                PsiNamedElement namedElement = symbol.getDeclaredIdentifier();
-
-                OdinImportDeclarationStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
-                if (importDeclarationStatement != null) {
-                    this.type = createPackageReferenceType(symbolTable.getPackagePath(), importDeclarationStatement);
-                } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
-                    OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
-                    TsOdinType tsOdinType = resolveTypeOfDeclaration(refExpression.getIdentifier(), globalScope, declaredIdentifier, odinDeclaration);
-                    this.type = OdinTypeConverter.convertToTyped(tsOdinType);
-                } else if (symbol.isImplicitlyDeclared()) {
+                if (symbol.isImplicitlyDeclared()) {
                     if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD && symbol.getName().length() == 1) {
                         if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
                             this.type = tsOdinArrayType.getElementType();
@@ -228,8 +219,15 @@ public class OdinInferenceEngine extends OdinVisitor {
                             this.type = builtinSymbolService.getType(typeName);
                         }
                     }
+                } else {
+                    this.type = inferTypeOfDeclaredIdentifier(
+                            globalSymbolTable,
+                            symbol.getDeclaredIdentifier(),
+                            refExpression.getIdentifier()
+                    );
                 }
             } else {
+                // TODO Add poly paras as symbols
                 TsOdinType polyParameter = symbolTable.getType(name);
                 if (polyParameter != null) {
                     TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(POLYMORPHIC);
@@ -245,6 +243,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         }
 
+        // Type conversion
         if (refExpression.getType() != null) {
             TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, refExpression.getType());
             if (this.lhsValuesCount == 2) {
@@ -255,13 +254,34 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
     }
 
+    private static @Nullable TsOdinType inferTypeOfDeclaredIdentifier(
+            OdinSymbolTable globalSymbolTable,
+            PsiNamedElement namedElement,
+            @NotNull OdinIdentifier identifier) {
+        TsOdinType tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
+        OdinImportDeclarationStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
+        if (importDeclarationStatement != null) {
+            tsOdinType = createPackageReferenceType(globalSymbolTable.getPackagePath(), importDeclarationStatement);
+        } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
+            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(namedElement,
+                    false,
+                    OdinDeclaration.class);
+
+            tsOdinType = resolveTypeOfDeclaration(identifier,
+                    globalSymbolTable,
+                    declaredIdentifier,
+                    odinDeclaration
+            );
+            tsOdinType = OdinTypeConverter.convertToTyped(tsOdinType);
+        }
+        return tsOdinType;
+    }
+
     private static OdinImportDeclarationStatement getImportDeclarationStatement(PsiNamedElement namedElement) {
-        if (namedElement == null)
-            return null;
         if (namedElement instanceof OdinImportDeclarationStatement importDeclarationStatement) {
             return importDeclarationStatement;
         }
-        if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
+        if (namedElement instanceof OdinDeclaredIdentifier) {
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(namedElement, true, OdinDeclaration.class);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
                 return importDeclarationStatement;

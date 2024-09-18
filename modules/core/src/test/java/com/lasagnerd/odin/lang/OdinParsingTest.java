@@ -31,7 +31,8 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.PsiCachedValuesFactory;
+import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -272,7 +273,11 @@ public class OdinParsingTest extends UsefulTestCase {
     /* Sanity check against thoughtlessly copy-pasting actual test results as the expected test data. */
 
     protected PsiFile parseFile(String name, String text) {
-        myFile = createPsiFile(name, text);
+        return parseFile(name, name, text);
+    }
+
+    protected PsiFile parseFile(String path, String name, String text) {
+        myFile = createPsiFile(path, name, text);
         assertEquals("light virtual file text mismatch", text, ((LightVirtualFile) myFile.getVirtualFile()).getContent().toString());
         assertEquals("virtual file text mismatch", text, LoadTextUtil.loadText(myFile.getVirtualFile()));
         assertEquals("doc text mismatch", text, Objects.requireNonNull(myFile.getViewProvider().getDocument()).getText());
@@ -286,18 +291,10 @@ public class OdinParsingTest extends UsefulTestCase {
         return myFile;
     }
 
-    protected PsiFile createPsiFile(@NotNull String name, @NotNull String text) {
+    protected PsiFile createPsiFile(String path, @NotNull String name, @NotNull String text) {
         String name1 = name.endsWith("." + myFileExt) ? name : name + "." + myFileExt;
-        return createFile(name1, text, myLanguage);
-    }
-
-    protected PsiFile createFile(@NotNull String name, @NotNull String text, Language language) {
-        LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
+        LightVirtualFile virtualFile = new LightVirtualFileWithPath(name1, path, myLanguage.getAssociatedFileType(), text);
         virtualFile.setCharset(StandardCharsets.UTF_8);
-        return createFile(virtualFile);
-    }
-
-    protected PsiFile createFile(@NotNull LightVirtualFile virtualFile) {
         return myFileFactory.trySetupPsiForFile(virtualFile, myLanguage, true, false);
     }
 
@@ -357,11 +354,15 @@ public class OdinParsingTest extends UsefulTestCase {
 
 
     Map<String, OdinFile> fileCache = new HashMap<>();
+
     protected OdinFile load(String path) throws IOException {
         OdinFile odinFile = fileCache.get(path);
-        if(odinFile == null) {
+        if (odinFile == null) {
             String fileContent = FileUtil.loadFile(new File(path), CharsetToolkit.UTF8, true).trim();
-            odinFile = ((OdinFile) parseFile(Path.of(path).toFile().getName(), fileContent));
+
+            PsiFile psiFile = parseFile(path, Path.of(path).toFile().getName(), fileContent);
+
+            odinFile = (OdinFile) psiFile;
             fileCache.put(path, odinFile);
         }
         return odinFile;
@@ -1432,7 +1433,7 @@ public class OdinParsingTest extends UsefulTestCase {
                 """;
 
 
-        OdinFile odinFile = (OdinFile) createPsiFile("refs", fileContent);
+        OdinFile odinFile = (OdinFile) createPsiFile("refs", "refs", fileContent);
         OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, "main");
         {
             OdinStatement odinStatement = procedure.getBlockStatements().getFirst();
@@ -1880,6 +1881,16 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinTuple tsOdinTuple = assertInstanceOf(tsOdinType, TsOdinTuple.class);
             TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinTuple.get(0), TsOdinStructType.class);
             assertEquals("Builder", tsOdinStructType.getName());
+        }
+    }
+
+    public void testTypeInfoOf() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testTypeInfoOf", "x");
+            TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinStructType.class);
+            assertEquals("Type_Info", tsOdinStructType.getName());
         }
     }
 }

@@ -22,6 +22,19 @@ import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes.RESER
 @EqualsAndHashCode(callSuper = true)
 public class OdinTypeResolver extends OdinVisitor {
 
+    public static @NotNull TsOdinType resolveType(OdinSymbolTable symbolTable, OdinSymbol symbol) {
+        OdinType type = symbol.getPsiType();
+        OdinDeclaration declaration = symbol.getDeclaration();
+        OdinDeclaredIdentifier declaredIdentifier;
+        if (symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier) {
+            declaredIdentifier = (OdinDeclaredIdentifier) symbol.getDeclaredIdentifier();
+        } else {
+            declaredIdentifier = null;
+        }
+
+        return resolveType(0, symbolTable, declaredIdentifier, declaration, type);
+    }
+
     public static @NotNull TsOdinType resolveType(OdinSymbolTable symbolTable, @NotNull OdinType type) {
         return resolveType(0, symbolTable, null, null, type);
     }

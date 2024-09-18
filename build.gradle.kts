@@ -182,6 +182,7 @@ project(":core") {
             testFramework(TestFrameworkType.Platform)
 
             testImplementation("junit:junit:4.13.2")
+            testCompileOnly("org.projectlombok:lombok:1.18.34")
             testCompileOnly("org.junit.jupiter:junit-jupiter-api:5.4.2")
         }
     }

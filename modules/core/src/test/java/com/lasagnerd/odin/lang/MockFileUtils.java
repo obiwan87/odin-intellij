@@ -16,7 +16,7 @@ public class MockFileUtils {
     public static LightVirtualFile createVirtualFile(Path path) {
         try {
             String content = Files.readString(path, StandardCharsets.UTF_8);
-            return new LightVirtualFile(path.toFile().getName(), OdinFileType.INSTANCE, content);
+            return new LightVirtualFileWithPath(path.toFile().getName(), path.toAbsolutePath().toString(), OdinFileType.INSTANCE, content);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
