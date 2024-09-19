@@ -40,7 +40,13 @@ public class OdinTypeChecker {
         if (argumentBaseType instanceof TsOdinArrayType argArrayType
                 && parameterBaseType instanceof TsOdinArrayType parArrayType) {
             if (argArrayType.isSoa() == parArrayType.isSoa() && argArrayType.isSimd() == parArrayType.isSimd()) {
-                if(argArrayType.getPsiSizeElement().getExpression() instanceof OdinLiteralExpression && parArrayType.getPsiSizeElement().getExpression() instanceof OdinLiteralExpression) {
+               OdinArraySize argSizeElement = argArrayType.getPsiSizeElement();
+                OdinArraySize parSizeElement = parArrayType.getPsiSizeElement();
+                if(parSizeElement != null
+                        && argSizeElement != null
+                        && parSizeElement.getExpression() instanceof OdinLiteralExpression
+                        && argSizeElement.getExpression() instanceof OdinLiteralExpression) {
+
                     if(PsiEquivalenceUtil.areElementsEquivalent(argArrayType.getPsiSizeElement(), parArrayType.getPsiSizeElement())) {
                         return checkTypesStrictly(argArrayType.getElementType(), parArrayType.getElementType());
                     }

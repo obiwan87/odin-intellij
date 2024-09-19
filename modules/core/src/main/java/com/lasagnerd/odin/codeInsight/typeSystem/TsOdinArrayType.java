@@ -12,12 +12,14 @@ import lombok.Setter;
 public class TsOdinArrayType extends TsOdinType {
     TsOdinType elementType;
     OdinArraySize psiSizeElement;
+    Integer size;
     boolean soa;
     boolean simd;
 
     @Override
     public String getLabel() {
-        return "[" + psiSizeElement.getText() + "]" + (elementType != null ? elementType.getLabel() : "<undefined>");
+        String text = psiSizeElement != null? psiSizeElement.getText() : (size != null? String.valueOf(size) : "undefined");
+        return "[" + text + "]" + (elementType != null ? elementType.getLabel() : "<undefined>");
     }
 
     @Override

@@ -201,17 +201,19 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (symbol != null) {
                 if (symbol.isImplicitlyDeclared()) {
                     if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD) {
+                        int swizzleArraySize = symbol.getName().length();
                         if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
-                            if(symbol.getName().length() == 1) {
+                            if(swizzleArraySize == 1) {
                                 this.type = tsOdinArrayType.getElementType();
                             } else {
                                 TsOdinArrayType swizzleArray = new TsOdinArrayType();
-                                tsOdinArrayType.setSymbolTable(tsOdinArrayType.getSymbolTable());
-                                tsOdinArrayType.setElementType(tsOdinArrayType.getElementType());
+                                swizzleArray.setSymbolTable(tsOdinArrayType.getSymbolTable());
+                                swizzleArray.setElementType(tsOdinArrayType.getElementType());
+                                swizzleArray.setSize(swizzleArraySize);
                                 this.type = swizzleArray;
                             }
                         }
-                        else if(symbol.getName().length() == 1) {
+                        else if(swizzleArraySize == 1) {
                             // TODO complex, quaternion
                             if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX32) {
                                 this.type = TsOdinBuiltInTypes.F16;
