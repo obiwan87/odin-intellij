@@ -211,8 +211,28 @@ public class OdinInferenceEngine extends OdinVisitor {
                                 this.type = swizzleArray;
                             }
                         }
+                        if(symbol.getName().length() == 1) {
+                            // TODO complex, quaternion
+                            if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX32) {
+                                this.type = TsOdinBuiltInTypes.F16;
+                            }
+                            else if(tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX64) {
+                                this.type = TsOdinBuiltInTypes.F32;
+                            }
+                            else if(tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX128) {
+                                this.type = TsOdinBuiltInTypes.F64;
+                            }
+                            else if(tsOdinRefExpressionType == TsOdinBuiltInTypes.QUATERNION64) {
+                                this.type = TsOdinBuiltInTypes.F16;
+                            }
+                            else if(tsOdinRefExpressionType == TsOdinBuiltInTypes.QUATERNION128) {
+                                this.type = TsOdinBuiltInTypes.F32;
+                            }
+                            else if(tsOdinRefExpressionType == TsOdinBuiltInTypes.QUATERNION256) {
+                                this.type = TsOdinBuiltInTypes.F64;
+                            }
+                        }
 
-                        // TODO complex, quaternion
                     } else if (symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
                         this.type = createBuiltinMetaType(name);
                     } else {
