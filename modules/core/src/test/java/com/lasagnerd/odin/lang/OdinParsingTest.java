@@ -1066,15 +1066,6 @@ public class OdinParsingTest extends UsefulTestCase {
 
             // proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val)
             {
-                OdinParamEntry paramEntry = parameters.getFirst(); // param "t"
-                OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(paramEntry);
-                assertNull(visibleSymbols.getSymbol("T"));
-                assertNull(visibleSymbols.getSymbol("Key"));
-                assertNull(visibleSymbols.getSymbol("Val"));
-            }
-
-            // proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val)
-            {
                 OdinParamEntry paramEntry = parameters.get(1); // param "t"
                 {
                     OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(paramEntry);
@@ -1094,7 +1085,18 @@ public class OdinParsingTest extends UsefulTestCase {
 
             // proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val)
             {
-                OdinParamEntry paramEntry = parameters.get(2); // param "t"
+                OdinParamEntry paramEntry = parameters.getFirst(); // param "$T"
+                OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(paramEntry);
+                assertNull(visibleSymbols.getSymbol("T"));
+                assertNull(visibleSymbols.getSymbol("Key"));
+                assertNull(visibleSymbols.getSymbol("Val"));
+            }
+
+
+
+            // proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val)
+            {
+                OdinParamEntry paramEntry = parameters.get(2); // param "k"
                 OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(paramEntry);
                 assertNotNull(visibleSymbols.getSymbol("T"));
                 assertNotNull(visibleSymbols.getSymbol("Key"));
@@ -1975,6 +1977,18 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(lhs);
             assertNotNull(symbolTable.getSymbol("x"));
             assertNotNull(symbolTable.getSymbol("y"));
+        }
+    }
+
+    public void testQoiOdin() throws IOException {
+        int offset = 3079;
+        OdinFile file = load("src/test/sdk/core/image/qoi/qoi.odin");
+        {
+            PsiElement psiElement = file.findElementAt(offset);
+            OdinBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(psiElement, OdinBinaryExpression.class);
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(binaryExpression);
+            System.out.println(tsOdinType.getLabel());
+
         }
     }
 }

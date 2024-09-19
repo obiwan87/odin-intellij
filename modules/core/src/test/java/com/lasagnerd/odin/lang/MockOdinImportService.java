@@ -27,8 +27,13 @@ public class MockOdinImportService implements OdinImportService {
 
     @Override
     public String getPackagePath(PsiElement psiElement) {
-        String path = psiElement.getContainingFile().getVirtualFile().getPath();
+        VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
+        if(virtualFile != null) {
+            String path = virtualFile.getPath();
+
         return FileUtil.toSystemIndependentName(Path.of(path).getParent().toString());
+        }
+        return null;
     }
 
     @Override

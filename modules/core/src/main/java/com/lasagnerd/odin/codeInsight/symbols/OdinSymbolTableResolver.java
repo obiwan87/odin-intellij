@@ -98,13 +98,13 @@ public class OdinSymbolTableResolver {
         addStatementsOfStatementBody(statementBody, statements);
 
         OdinElseWhenBlock elseWhenBlock = whenBlock.getElseWhenBlock();
-        if(elseWhenBlock != null) {
+        if (elseWhenBlock != null) {
             OdinWhenBlock nextWhenBlock = elseWhenBlock.getWhenBlock();
             OdinStatementBody elseStatementBody = elseWhenBlock.getStatementBody();
-            if(elseStatementBody != null) {
+            if (elseStatementBody != null) {
                 addStatementsOfStatementBody(elseStatementBody, statements);
             }
-            if(nextWhenBlock != null) {
+            if (nextWhenBlock != null) {
                 statements.addAll(getWhenBlockStatements(nextWhenBlock));
             }
         }
@@ -363,20 +363,20 @@ public class OdinSymbolTableResolver {
         }
 
         private boolean isPolymorphicParameter(OdinDeclaration declaration) {
-            if(declaration instanceof OdinPolymorphicType)
+            if (declaration instanceof OdinPolymorphicType)
                 return true;
-            if(declaration instanceof OdinParameterDeclaration parameterDeclaration) {
+            if (declaration instanceof OdinParameterDeclaration parameterDeclaration) {
                 return parameterDeclaration.getDeclaredIdentifiers().stream().anyMatch(i -> i.getDollar() != null);
             }
             return false;
         }
 
         private boolean isStatic(OdinDeclaration declaration) {
-            if(declaration instanceof OdinVariableInitializationStatement variableInitializationStatement) {
+            if (declaration instanceof OdinVariableInitializationStatement variableInitializationStatement) {
                 return OdinAttributeUtils.containsAttribute(variableInitializationStatement.getAttributeList(), "static");
             }
 
-            if(declaration instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
+            if (declaration instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
                 return OdinAttributeUtils.containsAttribute(variableDeclarationStatement.getAttributeList(), "static");
             }
             return false;
@@ -505,9 +505,9 @@ public class OdinSymbolTableResolver {
             declarations.addAll(enumBody.getEnumValueDeclarationList());
         }
 
-        if(containingScopeBlock instanceof OdinForeignBlock foreignBlock) {
+        if (containingScopeBlock instanceof OdinForeignBlock foreignBlock) {
             OdinForeignStatementList foreignStatementList = foreignBlock.getForeignStatementList();
-            if(foreignStatementList != null) {
+            if (foreignStatementList != null) {
                 addDeclarationsFromStatements(foreignStatementList.getStatementList(), declarations);
             }
         }
@@ -557,8 +557,6 @@ public class OdinSymbolTableResolver {
         // to use in structs, and procedures. In union and constants using the declaration is not legal.
         boolean usageInsideDeclaration = declaration == commonParent;
         if (usageInsideDeclaration) {
-            // TODO check if we are inside a procedure body or a struct body. In these cases,
-            //  the name of the declaration will be available.
             if (declaration instanceof OdinProcedureDeclarationStatement procedureDeclarationStatement) {
                 OdinProcedureBody declarationBody = procedureDeclarationStatement.getProcedureDefinition().getProcedureBody();
                 OdinProcedureBody procedureBody = PsiTreeUtil.getParentOfType(position, OdinProcedureBody.class, false);
@@ -580,6 +578,18 @@ public class OdinSymbolTableResolver {
             return new PositionCheckResult(false, commonParent, declaration);
         }
 
+        // Within param entries, polymorphic parameters and other constant declaration are not visible
+        // from earlier parameters
+        if(commonParent instanceof OdinParamEntries paramEntries) {
+            OdinParamEntry paramEntryPosition = PsiTreeUtil.getParentOfType(position, false, OdinParamEntry.class);
+            OdinParamEntry paramEntryDeclaration = PsiTreeUtil.getParentOfType(declaration, OdinParamEntry.class);
+
+            int indexPosition = paramEntries.getParamEntryList().indexOf(paramEntryPosition);
+            int indexDeclaration = paramEntries.getParamEntryList().indexOf(paramEntryDeclaration);
+            if(indexPosition < indexDeclaration) {
+                return new PositionCheckResult(false, commonParent, declaration);
+            }
+        }
         // When the declaration is queried from above of where the declaration is in the tree,
         // by definition, we do not add the symbol
         boolean positionIsAboveDeclaration = PsiTreeUtil.isAncestor(position, declaration, false);
