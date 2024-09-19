@@ -12,8 +12,8 @@ size_of      :: proc($T: typeid) -> int ---
 @builtin type_info_of :: proc($T: typeid) -> ^runtime.Type_Info ---
 @builtin typeid_of    :: proc($T: typeid) -> typeid ---
 
-offset_of_selector :: proc(selector: $T) -> uintptr ---
-offset_of_member   :: proc($T: typeid, member: $M) -> uintptr ---
+@builtin offset_of_selector :: proc(selector: $T) -> uintptr ---
+@builtin offset_of_member   :: proc($T: typeid, #member member: $M) -> uintptr ---
 
 @builtin offset_of :: proc{offset_of_selector, offset_of_member}
 
@@ -175,7 +175,7 @@ ODIN_VENDOR:  string
 @builtin
 ODIN_VALGRIND_SUPPORT: bool
 
-@builtin
+@(private, builtin)
 Any_Type :: struct {
     data: rawptr,
     id: typeid
