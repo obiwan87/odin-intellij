@@ -693,9 +693,9 @@ gmatch :: proc(
 		if length != 0 && err == .OK {
 			ok = true
 			first := length > 1 ? 1 : 0
-			cap := captures[first]
-			res = haystack[cap.byte_start:cap.byte_end]
-			haystack^ = haystack[cap.byte_end:]
+			cap1 := captures[first]
+			res = haystack[cap1.byte_start:cap1.byte_end]
+			haystack^ = haystack[cap1.byte_end:]
 		}
 	} 
 

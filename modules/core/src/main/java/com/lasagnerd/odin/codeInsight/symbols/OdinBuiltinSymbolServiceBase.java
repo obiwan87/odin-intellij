@@ -166,7 +166,7 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
         List<Path> builtinPaths = List.of(coreBuiltinPath, coreBuiltinSoaPath);
         doFindBuiltInSymbols(builtinPaths,
                 builtinSymbols,
-                odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributes()));
+                odinSymbol -> OdinAttributeUtils.containsAttribute(odinSymbol.getAttributes(), "builtin"));
 
         List<String> resources = List.of("odin/builtin.odin", "odin/annotations.odin");
         for (String resource : resources) {
@@ -176,7 +176,8 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
                 fileScopeDeclarations
                         .getSymbolNameMap().values()
                         .stream()
-                        .filter(odinSymbol -> OdinAttributeUtils.containsBuiltin(odinSymbol.getAttributes()))
+                        .filter(odinSymbol -> OdinAttributeUtils.containsAttribute(odinSymbol.getAttributes(), "builtin")
+                                || odinSymbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE)
                         .forEach(symbol -> {
                             symbol.setBuiltin(true);
                             builtinSymbols.add(symbol);
@@ -191,7 +192,7 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
     private void createBuiltinProcedures(List<OdinSymbol> builtinSymbols) {
         OdinSymbolTable symbolTable = OdinSymbolTable.from(builtinSymbols);
         OdinSymbol typeInfoSymbol = symbolTable.getSymbol("TypeInfo");
-        if(typeInfoSymbol != null) {
+        if (typeInfoSymbol != null) {
 
             TsOdinType typeInfoStruct = OdinTypeResolver.resolveType(
                     symbolTable,
@@ -203,7 +204,7 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
 
 
             OdinSymbol typeInfoOf = symbolTable.getSymbol("type_info_of");
-            if(typeInfoOf != null) {
+            if (typeInfoOf != null) {
                 TsOdinProcedureType typeInfoOfProcedure = (TsOdinProcedureType) OdinTypeResolver.resolveType(symbolTable, typeInfoOf);
                 TsOdinParameter tsOdinParameter = typeInfoOfProcedure.getReturnParameters().getFirst();
                 tsOdinParameter.setType(tsOdinPointerType);

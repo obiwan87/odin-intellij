@@ -9,25 +9,25 @@ import java.util.List;
 import java.util.Objects;
 
 public class OdinAttributeUtils {
-    public static boolean containsBuiltin(List<OdinAttribute> attributeStatements) {
+    public static boolean containsAttribute(List<OdinAttribute> attributeStatements, String attributeName) {
         if(attributeStatements == null)
             return false;
 
         for (OdinAttribute attributeStatement : attributeStatements) {
             if(attributeStatement.getIdentifierToken() != null) {
-                if(attributeStatement.getIdentifierToken().getText().equals("builtin")) {
+                if(attributeStatement.getIdentifierToken().getText().equals(attributeName)) {
                     return true;
                 }
             } else {
                 for (OdinArgument odinArgument : attributeStatement.getArgumentList()) {
                     if(odinArgument instanceof OdinUnnamedArgument) {
-                        if(odinArgument.getText().equals("builtin")) {
+                        if(odinArgument.getText().equals(attributeName)) {
                             return true;
                         }
                     }
 
                     if(odinArgument instanceof OdinNamedArgument) {
-                        if(((OdinNamedArgument) odinArgument).getIdentifier().getText().equals("builtin")) {
+                        if(((OdinNamedArgument) odinArgument).getIdentifier().getText().equals(attributeName)) {
                             return true;
                         }
                     }

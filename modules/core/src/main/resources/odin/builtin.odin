@@ -1,4 +1,4 @@
-package ols_builtin
+package builtin
 
 import "base:runtime"
 // Procedures
@@ -204,3 +204,6 @@ ODIN_DEFAULT_TO_PANIC_ALLOCATOR : bool
 
 @builtin
 ODIN_NO_BOUNDS_CHECK: bool
+
+@builtin
+ODIN_MINIMUM_OS_VERSION : int

@@ -298,7 +298,7 @@ public class OdinParsingTest extends UsefulTestCase {
         return myFileFactory.trySetupPsiForFile(virtualFile, myLanguage, true, false);
     }
 
-    protected void checkResult(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
+    protected void checkResult(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) {
         doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
         if (SystemProperties.getBooleanProperty("dumpAstTypeNames", false)) {
             printAstTypeNamesTree(targetDataName, file);
@@ -1718,7 +1718,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinVariableDeclarationStatement varExpectedType = findFirstVariableDeclaration(firstBlock, "expected_type");
             TsOdinType tsOdinExpectedType = inferTypeOfDeclaration(varExpectedType);
 
-            OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(tsOdinType, tsOdinExpectedType);
+            OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(tsOdinType, tsOdinExpectedType, false);
             assertTrue(typeCheckResult.isCompatible());
             assertEquals(typeCheckResult.getConversionActionList().size(), 1);
 
@@ -1891,6 +1891,67 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
             TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinStructType.class);
             assertEquals("Type_Info", tsOdinStructType.getName());
+        }
+    }
+
+    public void testRefractVec2() throws IOException {
+
+        {
+            OdinFile file = load("src/test/sdk/core/math/linalg/hlsl/linalg_hlsl.odin");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_double4", "cost2");
+            @NotNull TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+            assertEquals("double4", tsOdinTypeAlias.getName());
+        }
+        {
+            OdinFile file = load("src/test/sdk/core/math/linalg/glsl/linalg_glsl.odin");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_vec2", "cost2");
+            @NotNull TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+            assertEquals("vec2", tsOdinTypeAlias.getName());
+        }
+    }
+
+    public void testMatrixType() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testMatrixType", "x");
+            TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinArrayType.getElementType());
+        }
+    }
+
+    public void testStackOverflowErrors() throws IOException {
+        OdinFile file = load("src/test/sdk/core/image/netpbm/netpbm.odin");
+        {
+            PsiElement element = file.findElementAt(3119);
+            OdinIdentifier identifier = PsiTreeUtil.getParentOfType(element, OdinIdentifier.class);
+
+
+            PsiElement resolvedReference = Objects.requireNonNull(
+                            Objects.requireNonNull(identifier).getReference()
+                    )
+                    .resolve();
+
+        }
+    }
+
+    public void testNestedWhenStatements() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(file, "testNestedWhenStatements", "x");
+            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(var);
+            assertNotNull(symbolTable.getSymbol("CONST"));
+        }
+    }
+
+    public void testArrayOfStructs() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            var proc = findFirstProcedure(file, "testArrayOfStructs");
+            OdinLhs lhs = PsiTreeUtil.findChildOfType(proc, OdinLhs.class);
+            Objects.requireNonNull(lhs);
+            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(lhs);
+            assertNotNull(symbolTable.getSymbol("x"));
+            assertNotNull(symbolTable.getSymbol("y"));
         }
     }
 }

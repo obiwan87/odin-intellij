@@ -9,6 +9,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TsOdinParameter {
+    enum ParameterFlags {
+        ANY_INT
+    }
     private String name;
     private OdinDeclaredIdentifier identifier;
 
@@ -18,5 +21,8 @@ public class TsOdinParameter {
     private OdinType psiType;
     private TsOdinType type;
 
+    boolean anyInt;
+
     private int index;
+
 }

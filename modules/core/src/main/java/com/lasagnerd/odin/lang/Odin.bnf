@@ -219,7 +219,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
 foreignImportDeclarationStatement    ::= (attribute EOS_TOKEN?)* FOREIGN IMPORT
         ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart expressionListWithRecover blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
 
-foreignStatement                     ::= (attribute EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock {implements=["com.lasagnerd.odin.lang.psi.OdinDeclaration"]}
+foreignStatement                     ::= (attribute EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock {implements=["com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"]}
 
 foreignBlock                         ::= blockStart foreignStatementList? blockEnd {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 
@@ -328,7 +328,7 @@ multiPointerType                     ::= LBRACKET CARET RBRACKET type
 bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON type] RBRACKET
 
 mapType                              ::= MAP LBRACKET type RBRACKET type {methods=[getKeyType getValueType]}
-matrixType                           ::= MATRIX LBRACKET expression COMMA expression RBRACKET type
+matrixType                           ::= MATRIX LBRACKET arraySize COMMA arraySize RBRACKET type
 arrayType                            ::= [directiveIdentifier] LBRACKET arraySize RBRACKET type {methods=[getTypeDefinition]}
 arraySize                            ::= QUESTION|expression
 
@@ -815,7 +815,7 @@ switchCase                           ::= CASE [expression (COMMA expression)*] c
 caseBlock                            ::= COLON statementList?
 
 // When statement (compile time, which means it does not support an init block)
-whenStatement                        ::= [directive] [labelDeclaration] whenBlock {implements="com.lasagnerd.odin.lang.psi.OdinDeclaration"}
+whenStatement                        ::= [directive] [labelDeclaration] whenBlock {implements="com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"}
 whenBlock                            ::= WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody [sos elseWhenBlock]
 elseWhenBlock                        ::= else (whenBlock|statementBody)
 

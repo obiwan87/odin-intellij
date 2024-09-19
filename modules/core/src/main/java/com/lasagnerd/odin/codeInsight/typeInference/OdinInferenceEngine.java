@@ -4,10 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -97,6 +94,14 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     @Override
+    public void visitUnaryExpression(@NotNull OdinUnaryExpression o) {
+        PsiElement operator = OdinPsiUtil.getOperator(o);
+        if(operator != null) {
+            this.type = inferType(symbolTable, o.getExpression());
+        }
+    }
+
+    @Override
     public void visitBinaryExpression(@NotNull OdinBinaryExpression o) {
         TsOdinType leftType = inferType(this.symbolTable, o.getLeft());
         TsOdinType rightType;
@@ -107,18 +112,8 @@ public class OdinInferenceEngine extends OdinVisitor {
             rightType = inferType(this.symbolTable, Objects.requireNonNull(o.getRight()));
         }
 
-        IElementType elementType = PsiUtilCore.getElementType(o.getOperator());
-
-        TokenSet tokenSet = TokenSet.create(
-                OdinTypes.PLUS,
-                OdinTypes.MINUS,
-                OdinTypes.STAR,
-                OdinTypes.DIV,
-                OdinTypes.MOD,
-                OdinTypes.PIPE,
-                OdinTypes.AND
-        );
-        if (tokenSet.contains(elementType)) {
+        PsiElement operator = o.getOperator();
+        if (operator != null) {
             this.type = OdinTypeConverter.inferTypeOfBinaryExpression(leftType, rightType);
         }
     }
@@ -205,10 +200,19 @@ public class OdinInferenceEngine extends OdinVisitor {
             OdinSymbol symbol = localSymbolTable.getSymbol(name);
             if (symbol != null) {
                 if (symbol.isImplicitlyDeclared()) {
-                    if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD && symbol.getName().length() == 1) {
+                    if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD) {
                         if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
-                            this.type = tsOdinArrayType.getElementType();
+                            if(symbol.getName().length() == 1) {
+                                this.type = tsOdinArrayType.getElementType();
+                            } else {
+                                TsOdinArrayType swizzleArray = new TsOdinArrayType();
+                                tsOdinArrayType.setSymbolTable(tsOdinArrayType.getSymbolTable());
+                                tsOdinArrayType.setElementType(tsOdinArrayType.getElementType());
+                                this.type = swizzleArray;
+                            }
                         }
+
+                        // TODO complex, quaternion
                     } else if (symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
                         this.type = createBuiltinMetaType(name);
                     } else {
@@ -220,8 +224,14 @@ public class OdinInferenceEngine extends OdinVisitor {
                         }
                     }
                 } else {
+                    OdinSymbolTable symbolTableForTypeResolution;
+                    if(symbol.isVisibleThroughUsing()) {
+                        symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
+                    } else {
+                        symbolTableForTypeResolution = globalSymbolTable;
+                    }
                     this.type = inferTypeOfDeclaredIdentifier(
-                            globalSymbolTable,
+                            symbolTableForTypeResolution,
                             symbol.getDeclaredIdentifier(),
                             refExpression.getIdentifier()
                     );
@@ -299,10 +309,6 @@ public class OdinInferenceEngine extends OdinVisitor {
             return getReferenceableType(pointerType.getDereferencedType());
         }
 
-        if (tsOdinRefExpressionType instanceof TsOdinMultiPointerType multiPointerType) {
-            return getReferenceableType(multiPointerType.getDereferencedType());
-        }
-
         return tsOdinRefExpressionType;
     }
 
@@ -370,7 +376,10 @@ public class OdinInferenceEngine extends OdinVisitor {
                         TsOdinType parameterType = tsOdinParameter.getType().baseType();
                         TsOdinType argumentType = inferType(symbolTable, argumentExpression).baseType();
 
-                        OdinTypeChecker.TypeCheckResult compatibilityResult = OdinTypeChecker.checkTypes(argumentType, parameterType);
+                        OdinTypeChecker.TypeCheckResult compatibilityResult = OdinTypeChecker.checkTypes(argumentType,
+                                parameterType,
+                                tsOdinParameter.isAnyInt());
+
                         if (!compatibilityResult.isCompatible()) {
                             allParametersCompatible = false;
                             break;
@@ -509,7 +518,11 @@ public class OdinInferenceEngine extends OdinVisitor {
         OdinExpression expression = o.getExpression();
         TsOdinType tsOdinType = doInferType(symbolTable, expression);
 
-        tsOdinType = tsOdinType.baseType(true);
+        tsOdinType = getReferenceableType(tsOdinType);
+
+        if(tsOdinType instanceof TsOdinPointerType pointerType) {
+            tsOdinType = pointerType.getDereferencedType();
+        }
 
         if (tsOdinType instanceof TsOdinArrayType arrayType) {
             this.type = arrayType.getElementType();
@@ -524,7 +537,17 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (tsOdinType instanceof TsOdinMatrixType matrixType) {
-            this.type = matrixType.getElementType();
+            if(o.getIndex().getExpressionList().size() == 2) {
+                this.type = matrixType.getElementType();
+            } else {
+                TsOdinArrayType tsOdinArrayType = new TsOdinArrayType();
+                tsOdinArrayType.setElementType(matrixType.getElementType());
+                if(matrixType.getPsiType() instanceof OdinMatrixType psiMatrixType) {
+                    tsOdinArrayType.setPsiSizeElement(psiMatrixType.getArraySizeList().getFirst());
+                }
+                tsOdinArrayType.setSymbolTable(matrixType.getSymbolTable());
+                this.type = tsOdinArrayType;
+            }
         }
 
         if (tsOdinType instanceof TsOdinMultiPointerType multiPointerType) {
@@ -1037,6 +1060,20 @@ public class OdinInferenceEngine extends OdinVisitor {
                     }
                 }
 
+                if(tsOdinType instanceof TsOdinMultiPointerType multiPointerType) {
+                    if (index == 0) {
+                        return createReferenceType(multiPointerType.getDereferencedType(), isReference);
+                    }
+
+                    if (index == 1) {
+                        return TsOdinBuiltInTypes.INT;
+                    }
+                }
+
+                if(tsOdinType instanceof TsOdinTuple tuple) {
+                    return tuple.get(index);
+                }
+
                 if (expression instanceof OdinRangeExclusiveExpression || expression instanceof OdinRangeInclusiveExpression) {
                     return tsOdinType;
                 }
@@ -1134,7 +1171,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                     return OdinTypeResolver.resolveType(symbolTable, psiType);
                 }
             }
-
         }
 
         if (parent instanceof OdinRhs) {
@@ -1151,8 +1187,9 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             if (tsOdinType != null) {
-                if (tsOdinType instanceof TsOdinStructType) {
-                    OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(expression.getProject(), tsOdinType);
+                TsOdinType tsOdinBaseType = tsOdinType.baseType(true);
+                if (tsOdinBaseType instanceof TsOdinStructType) {
+                    OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(expression.getProject(), tsOdinBaseType);
                     // Named element entry
                     if (elemEntry.getLhs() != null) {
                         OdinSymbol symbol = typeElements.getSymbol(elemEntry.getLhs().getText());
@@ -1160,10 +1197,10 @@ public class OdinInferenceEngine extends OdinVisitor {
                             return OdinTypeResolver.resolveType(tsOdinType.getSymbolTable(), symbol.getPsiType());
                         }
                     }
-
-                    // TODO: unnamed element entry. solve via index
-                } else if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+                } else if (tsOdinBaseType instanceof TsOdinArrayType tsOdinArrayType) {
                     return tsOdinArrayType.getElementType();
+                } else if(tsOdinBaseType instanceof TsOdinSliceType tsOdinSliceType) {
+                    return tsOdinSliceType.getElementType();
                 }
             }
         }

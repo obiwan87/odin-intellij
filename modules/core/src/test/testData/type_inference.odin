@@ -598,14 +598,37 @@ testStringBuilder :: proc(allocator := context.allocator, loc := #caller_locatio
 }
 
 testPrimitiveTypeCasting :: proc() {
-    bg := [3]f32{}
-    a   := f32(2) / 255.0
-    rgb := [3]f32{f32(1), f32(2), f32(3)}
-    c   := ((1.0 - a) * bg + a * rgb)
+    bg := [3]f32{ }
+    a := f32(2) / 255.0
+    rgb := [3]f32{ f32(1), f32(2), f32(3) }
+    c := ((1.0 - a) * bg + a * rgb)
 
     x := c.x
 }
 
 testTypeInfoOf :: proc() {
     x := type_info_of(y)
+}
+
+mat4 :: matrix[4, 4]i32
+testMatrixType :: proc() ->  (m: mat4) {
+    x := m[3]
+}
+
+testNestedWhenStatements :: proc() {
+    when 0 == 0 {
+        when 1 == 1 {
+            CONST :: 1
+        }
+    }
+
+    p :: proc () {
+        x := CONST
+    }
+}
+
+testArrayOfStructs :: proc() {
+    arr := []Point {
+        { x = 1, y = 2},
+    }
 }

@@ -1433,6 +1433,9 @@ mat4Rotate :: proc "c" (v: vec3, radians: f32) -> (rot: mat4) {
 mat4Translate :: proc "c" (v: vec3) -> (m: mat4) {
 	m = 1
 	m[3].xyz = v.xyz
+
+	y := m[3]
+	x := y
 	return
 }
 @(require_results)

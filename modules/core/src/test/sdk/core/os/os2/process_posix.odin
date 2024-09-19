@@ -259,7 +259,7 @@ _process_wait :: proc(process: Process, timeout: time.Duration) -> (process_stat
 
 		for {
 			start := time.tick_now()
-			n, kerr := kq.kevent(queue, changelist[:], eventlist[:], &{
+			n, kerr := kq.kevent(queue, changelist[:], eventlist[:], {
 				tv_sec  = posix.time_t(timeout / time.Second),
 				tv_nsec = i64(timeout % time.Second),
 			})

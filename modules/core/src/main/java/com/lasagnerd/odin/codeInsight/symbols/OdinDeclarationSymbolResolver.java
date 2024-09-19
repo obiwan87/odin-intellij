@@ -73,11 +73,21 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
         if (using && o.getDeclaredIdentifiers().size() == 1) {
             if (type != null) {
-                symbols.addAll(OdinInsightUtils.getTypeElements(type, symbolTable));
+                List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(type, symbolTable);
+                setVisibleThroughUsing(typeElements);
+                symbols.addAll(typeElements);
             } else {
-                symbols.addAll(OdinInsightUtils.getTypeElements(o.getExpression(), symbolTable));
+                List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(o.getExpression(), symbolTable);
+                setVisibleThroughUsing(typeElements);
+                symbols.addAll(typeElements);
             }
         }
+    }
+
+    private static void setVisibleThroughUsing(List<OdinSymbol> symbols) {
+        symbols.forEach(
+                s -> s.setVisibleThroughUsing(true)
+        );
     }
 
     @Override
@@ -100,7 +110,10 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         if (hasUsing) {
             if (o.getParameterList().size() == 1) {
                 if (psiType != null) {
-                    symbols.addAll(OdinInsightUtils.getTypeElements(psiType, symbolTable));
+                    List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(psiType, symbolTable);
+                    setVisibleThroughUsing(typeElements);
+
+                    symbols.addAll(typeElements);
                 }
             }
         }
@@ -121,7 +134,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
         if (hasUsing) {
             if (o.getDeclaredIdentifiers().size() == 1) {
-                symbols.addAll(OdinInsightUtils.getTypeElements(o.getType(), symbolTable));
+                List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(o.getType(), symbolTable);
+                setVisibleThroughUsing(typeElements);
+                symbols.addAll(typeElements);
             }
         }
 
@@ -141,12 +156,16 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         }
 
         if (hasUsing) {
-            if (o.getDeclaredIdentifiers().size() == 1 && o.getRhsExpressions().getExpressionList().size() == 1) {
+            if (o.getDeclaredIdentifiers().size() == 1 && Objects.requireNonNull(o.getRhsExpressions()).getExpressionList().size() == 1) {
                 if (o.getType() != null) {
-                    symbols.addAll(OdinInsightUtils.getTypeElements(o.getType(), symbolTable));
+                    List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(o.getType(), symbolTable);
+                    setVisibleThroughUsing(typeElements);
+                    symbols.addAll(typeElements);
                 } else {
                     OdinExpression odinExpression = o.getRhsExpressions().getExpressionList().getFirst();
-                    symbols.addAll(OdinInsightUtils.getTypeElements(odinExpression, symbolTable));
+                    List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(odinExpression, symbolTable);
+                    setVisibleThroughUsing(typeElements);
+                    symbols.addAll(typeElements);
                 }
             }
         }
@@ -200,6 +219,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     public void visitUsingStatement(@NotNull OdinUsingStatement o) {
         for (OdinExpression expression : o.getExpressionsList().getExpressionList()) {
             List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(expression, this.symbolTable);
+            setVisibleThroughUsing(typeSymbols);
             symbols.addAll(typeSymbols);
         }
     }
@@ -315,11 +335,13 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
             odinSymbol.setImplicitlyDeclared(false);
             odinSymbol.setHasUsing(hasUsing);
-//            odinSymbol.setPackagePath();
             symbols.add(odinSymbol);
         }
         if (o.getDeclaredIdentifierList().size() == 1 && hasUsing) {
-            OdinInsightUtils.getSymbolsOfFieldWithUsing(symbolTable, o, symbols);
+            ArrayList<OdinSymbol> symbolsVisibleThroughUsing = new ArrayList<>();
+            OdinInsightUtils.getSymbolsOfFieldWithUsing(symbolTable, o, symbolsVisibleThroughUsing);
+            setVisibleThroughUsing(symbolsVisibleThroughUsing);
+            symbols.addAll(symbolsVisibleThroughUsing);
         }
     }
 

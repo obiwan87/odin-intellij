@@ -2,10 +2,14 @@ package com.lasagnerd.odin.lang.psi;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
@@ -23,6 +27,41 @@ import javax.swing.*;
 import java.util.*;
 
 public class OdinPsiUtil {
+
+    public static final TokenSet UNARY_OPERATORS = TokenSet.create(
+            OdinTypes.PLUS,
+            OdinTypes.MINUS,
+            OdinTypes.TILDE,
+            OdinTypes.AND,
+            OdinTypes.NOT,
+            OdinTypes.RANGE
+            );
+    public static final @NotNull TokenSet BINARY_OPERATORS = TokenSet.create(OdinTypes.STAR,
+            OdinTypes.DIV,
+            OdinTypes.MOD,
+            OdinTypes.REMAINDER,
+            OdinTypes.PLUS,
+            OdinTypes.MINUS,
+            OdinTypes.AND,
+            OdinTypes.PIPE,
+            OdinTypes.TILDE,
+            OdinTypes.ANDNOT,
+            OdinTypes.LSHIFT,
+            OdinTypes.RSHIFT,
+            OdinTypes.OR_ELSE,
+            OdinTypes.RANGE_INCLUSIVE,
+            OdinTypes.RANGE_EXCLUSIVE,
+            OdinTypes.IN,
+            OdinTypes.NOT_IN,
+            OdinTypes.LT,
+            OdinTypes.GT,
+            OdinTypes.LTE,
+            OdinTypes.GTE,
+            OdinTypes.EQEQ,
+            OdinTypes.NEQ,
+            OdinTypes.OROR,
+            OdinTypes.ANDAND);
+
     public static PsiReference getReference(OdinIdentifier self) {
         return new OdinReference(self);
     }
@@ -32,33 +71,18 @@ public class OdinPsiUtil {
     }
 
     public static PsiElement getOperator(OdinBinaryExpression self) {
-        if (self instanceof OdinMulExpression mulExpression)
-            return mulExpression.getStar();
-
-        if (self instanceof OdinDivExpression divExpression)
-            return divExpression.getDiv();
-
-        if (self instanceof OdinAddExpression addExpression)
-            return addExpression.getPlus();
-
-        if (self instanceof OdinSubExpression subExpression)
-            return subExpression.getMinus();
-
-        if(self instanceof OdinBitwiseOrExpression bitwiseOrExpression)
-            return bitwiseOrExpression.getPipe();
-
-        if(self instanceof OdinBitwiseAndExpression bitwiseAndExpression) {
-            return bitwiseAndExpression.getAnd();
-        }
-
-        if(self instanceof OdinUnaryMinusExpression minusExpression) {
-            return minusExpression.getMinus();
-        }
-        // TODO continue
-
-        return self.getChildren().length > 1 ? self.getChildren()[1] : null;
+        ASTNode[] children = self.getNode().getChildren(BINARY_OPERATORS);
+        if(children.length > 0)
+            return children[0].getPsi();
+        return null;
     }
 
+    public static PsiElement getOperator(OdinUnaryExpression unaryExpression) {
+        ASTNode[] children = unaryExpression.getNode().getChildren(UNARY_OPERATORS);
+        if(children.length > 0)
+            return children[0].getPsi();
+        return null;
+    }
     public static OdinCompoundValueBody getCompoundValueBody(OdinCompoundValue self) {
         return PsiTreeUtil.findChildOfType(self, OdinCompoundValueBody.class);
     }

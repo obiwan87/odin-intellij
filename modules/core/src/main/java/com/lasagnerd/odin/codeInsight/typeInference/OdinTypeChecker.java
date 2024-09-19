@@ -34,7 +34,7 @@ public class OdinTypeChecker {
                 return true;
         }
 
-        if(parameterBaseType.isTypeId() && argumentType instanceof TsOdinMetaType) {
+        if (parameterBaseType.isTypeId() && argumentType instanceof TsOdinMetaType) {
             return true;
         }
 
@@ -61,7 +61,7 @@ public class OdinTypeChecker {
 
         if (argumentBaseType instanceof TsOdinDynamicArray argDynArray
                 && parameterBaseType instanceof TsOdinDynamicArray parDynArray) {
-            if(argDynArray.isSoa() == parDynArray.isSoa()) {
+            if (argDynArray.isSoa() == parDynArray.isSoa()) {
                 return checkTypesStrictly(argDynArray.getElementType(), parDynArray.getElementType());
             }
             return false;
@@ -92,16 +92,28 @@ public class OdinTypeChecker {
     TypeCheckResult typeCheckResult = new TypeCheckResult();
 
     public static TypeCheckResult checkTypes(TsOdinType type, TsOdinType expectedType) {
+        return checkTypes(type, expectedType, false);
+    }
+
+    public static TypeCheckResult checkTypes(TsOdinType type, TsOdinType expectedType, boolean expectAnyInt) {
         OdinTypeChecker odinTypeChecker = new OdinTypeChecker();
-        odinTypeChecker.doCheckTypes(type, expectedType);
+        odinTypeChecker.doCheckTypes(type, expectedType, expectAnyInt);
         return odinTypeChecker.typeCheckResult;
     }
 
     public void doCheckTypes(TsOdinType type, TsOdinType expectedType) {
+        doCheckTypes(type, expectedType, false);
+    }
+
+    public void doCheckTypes(TsOdinType type, TsOdinType expectedType, boolean expectAnyInt) {
 
         type = convertToTyped(type, expectedType);
 
-        if(type instanceof TsOdinPointerType pointerType && expectedType instanceof TsOdinPointerType expectedPointerType) {
+        if (TsOdinBuiltInTypes.getIntegerTypes().contains(type) && TsOdinBuiltInTypes.getIntegerTypes().contains(expectedType) && expectAnyInt) {
+            typeCheckResult.setCompatible(true);
+            return;
+        }
+        if (type instanceof TsOdinPointerType pointerType && expectedType instanceof TsOdinPointerType expectedPointerType) {
             doCheckTypes(pointerType.getDereferencedType(), expectedPointerType.getDereferencedType());
             return;
         }
@@ -173,7 +185,7 @@ public class OdinTypeChecker {
 
         }
 
-        if(type == TsOdinBuiltInTypes.NIL && expectedType.isNillable()) {
+        if (type == TsOdinBuiltInTypes.NIL && expectedType.isNillable()) {
             typeCheckResult.setCompatible(true);
             return;
         }
@@ -190,16 +202,16 @@ public class OdinTypeChecker {
                                 .resolveType(structType.getSymbolTable(),
                                         odinFieldDeclarationStatement.getType());
 
-                        if(usedType instanceof TsOdinPointerType pointerType) {
+                        if (usedType instanceof TsOdinPointerType pointerType) {
                             usedType = pointerType.getDereferencedType();
                         }
 
                         if (checkTypesStrictly(usedType, expectedType)) {
                             addActionAndSetCompatible(ConversionAction.USING_SUBTYPE);
                             return;
-                        } else if(usedType instanceof TsOdinStructType) {
-                            TypeCheckResult typeCheckResult = checkTypes(usedType, expectedType);
-                            if(typeCheckResult.isCompatible()) {
+                        } else if (usedType instanceof TsOdinStructType) {
+                            TypeCheckResult typeCheckResult = checkTypes(usedType, expectedType, false);
+                            if (typeCheckResult.isCompatible()) {
                                 this.typeCheckResult.getConversionActionList().add(ConversionAction.USING_SUBTYPE);
                                 this.typeCheckResult.getConversionActionList().addAll(typeCheckResult.getConversionActionList());
                                 this.typeCheckResult.setCompatible(true);

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
@@ -319,13 +320,13 @@ public class OdinSymbolTableResolver {
             // to be != null
             List<OdinDeclaration> declarations = getDeclarations(containingScopeBlock);
             for (OdinDeclaration declaration : declarations) {
-                if (!(declaration instanceof OdinConstantDeclaration constantDeclaration))
+                if (!(declaration instanceof OdinConstantDeclaration) && !isPolymorphicParameter(declaration) && !isStatic(declaration))
                     continue;
                 PositionCheckResult positionCheckResult = checkPosition(originalPosition, declaration);
                 if (!positionCheckResult.validPosition)
                     continue;
 
-                List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getLocalSymbols(constantDeclaration, symbolTable);
+                List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getLocalSymbols(declaration, symbolTable);
                 symbolTable.addAll(localSymbols);
 
                 if (stopCondition.match(symbolTable))
@@ -359,6 +360,26 @@ public class OdinSymbolTableResolver {
             }
 
             return symbolTable;
+        }
+
+        private boolean isPolymorphicParameter(OdinDeclaration declaration) {
+            if(declaration instanceof OdinPolymorphicType)
+                return true;
+            if(declaration instanceof OdinParameterDeclaration parameterDeclaration) {
+                return parameterDeclaration.getDeclaredIdentifiers().stream().anyMatch(i -> i.getDollar() != null);
+            }
+            return false;
+        }
+
+        private boolean isStatic(OdinDeclaration declaration) {
+            if(declaration instanceof OdinVariableInitializationStatement variableInitializationStatement) {
+                return OdinAttributeUtils.containsAttribute(variableInitializationStatement.getAttributeList(), "static");
+            }
+
+            if(declaration instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
+                return OdinAttributeUtils.containsAttribute(variableDeclarationStatement.getAttributeList(), "static");
+            }
+            return false;
         }
 
         private boolean isStrictlyBefore(OdinDeclaration declaration, PositionCheckResult positionCheckResult) {

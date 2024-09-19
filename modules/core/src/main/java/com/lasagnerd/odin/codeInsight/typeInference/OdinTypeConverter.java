@@ -87,8 +87,8 @@ public class OdinTypeConverter {
     }
 
     private static TsOdinType convertToArrayType(TsOdinArrayType arrayType, TsOdinType builtInType) {
-        if (arrayType.getElementType() instanceof TsOdinBuiltInType) {
-            TsOdinType tsOdinType = convertToTyped(arrayType.getElementType(), builtInType);
+        if (arrayType.getElementType().baseType() instanceof TsOdinBuiltInType) {
+            TsOdinType tsOdinType = convertToTyped(arrayType.getElementType().baseType(), builtInType);
             if (!tsOdinType.isUnknown()) {
                 return arrayType;
             }

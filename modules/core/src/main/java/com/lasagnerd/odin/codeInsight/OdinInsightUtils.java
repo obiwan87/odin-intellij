@@ -267,9 +267,10 @@ public class OdinInsightUtils {
     public static List<OdinSymbol> getTypeElements(OdinExpression expression, OdinSymbolTable symbolTable) {
         TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, expression);
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            return getTypeElements(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType), symbolTable);
+            return getTypeElements(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType)
+                    .baseType(true), symbolTable);
         }
-        return getTypeElements(tsOdinType, symbolTable);
+        return getTypeElements(tsOdinType.baseType(true), symbolTable);
     }
 
     public static List<OdinSymbol> getTypeElements(OdinType type, OdinSymbolTable symbolTable) {
