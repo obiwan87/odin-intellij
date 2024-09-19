@@ -211,7 +211,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                                 this.type = swizzleArray;
                             }
                         }
-                        if(symbol.getName().length() == 1) {
+                        else if(symbol.getName().length() == 1) {
                             // TODO complex, quaternion
                             if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX32) {
                                 this.type = TsOdinBuiltInTypes.F16;

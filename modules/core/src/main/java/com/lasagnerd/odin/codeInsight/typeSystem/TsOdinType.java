@@ -113,6 +113,7 @@ public abstract class TsOdinType {
         }
         return "";
     }
+
     protected static String label(@Nullable TsOdinType type, String defaultValue) {
         if(type != null) {
             return type.getLabel();

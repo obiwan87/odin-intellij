@@ -1067,6 +1067,7 @@ refract :: proc{
 	cosi := dot(-i, n)
 	cost2 := 1 - eta*eta*(1 - cosi*cosi)
 	t := eta*i + ((eta*cosi - sqrt(abs(cost2))) * n)
+	x := cost2.x
 	return t * dvec2{f64(i32(cost2.x > 0)), f64(i32(cost2.y > 0))}
 }
 @(require_results) refract_dvec3  :: proc "c" (i, n, eta: dvec3) -> dvec3 {

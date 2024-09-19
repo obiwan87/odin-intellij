@@ -185,34 +185,7 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
             }
         }
 
-//        createBuiltinProcedures(builtinSymbols);
         return builtinSymbols;
-    }
-
-    private void createBuiltinProcedures(List<OdinSymbol> builtinSymbols) {
-        OdinSymbolTable symbolTable = OdinSymbolTable.from(builtinSymbols);
-        OdinSymbol typeInfoSymbol = symbolTable.getSymbol("TypeInfo");
-        if (typeInfoSymbol != null) {
-
-            TsOdinType typeInfoStruct = OdinTypeResolver.resolveType(
-                    symbolTable,
-                    typeInfoSymbol
-            );
-            TsOdinPointerType tsOdinPointerType = new TsOdinPointerType();
-            tsOdinPointerType.setDereferencedType(typeInfoStruct);
-            tsOdinPointerType.setSymbolTable(symbolTable);
-
-
-            OdinSymbol typeInfoOf = symbolTable.getSymbol("type_info_of");
-            if (typeInfoOf != null) {
-                TsOdinProcedureType typeInfoOfProcedure = (TsOdinProcedureType) OdinTypeResolver.resolveType(symbolTable, typeInfoOf);
-                TsOdinParameter tsOdinParameter = typeInfoOfProcedure.getReturnParameters().getFirst();
-                tsOdinParameter.setType(tsOdinPointerType);
-                tsOdinParameter.setPsiType(null);
-
-                typeInfoOfProcedure.getReturnTypes().set(0, tsOdinPointerType);
-            }
-        }
     }
 
     private void doFindBuiltInSymbols(List<Path> builtinPaths, List<OdinSymbol> builtinSymbols) {

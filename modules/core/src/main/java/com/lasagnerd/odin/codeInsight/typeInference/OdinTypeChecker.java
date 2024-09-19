@@ -1,9 +1,8 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
-import com.lasagnerd.odin.lang.psi.OdinFieldDeclarationStatement;
-import com.lasagnerd.odin.lang.psi.OdinStructBody;
-import com.lasagnerd.odin.lang.psi.OdinStructType;
+import com.lasagnerd.odin.lang.psi.*;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +40,12 @@ public class OdinTypeChecker {
         if (argumentBaseType instanceof TsOdinArrayType argArrayType
                 && parameterBaseType instanceof TsOdinArrayType parArrayType) {
             if (argArrayType.isSoa() == parArrayType.isSoa() && argArrayType.isSimd() == parArrayType.isSimd()) {
+                if(argArrayType.getPsiSizeElement().getExpression() instanceof OdinLiteralExpression && parArrayType.getPsiSizeElement().getExpression() instanceof OdinLiteralExpression) {
+                    if(PsiEquivalenceUtil.areElementsEquivalent(argArrayType.getPsiSizeElement(), parArrayType.getPsiSizeElement())) {
+                        return checkTypesStrictly(argArrayType.getElementType(), parArrayType.getElementType());
+                    }
+                    return false;
+                }
                 return checkTypesStrictly(argArrayType.getElementType(), parArrayType.getElementType());
             }
             return true;

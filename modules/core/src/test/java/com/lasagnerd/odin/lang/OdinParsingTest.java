@@ -1895,18 +1895,41 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testRefractVec2() throws IOException {
+        {
+            OdinFile file = load("src/test/sdk/core/math/linalg/glsl/linalg_glsl.odin");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_vec2", "cost2");
+            @NotNull TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+            assertEquals("vec2", tsOdinTypeAlias.getName());
+        }
 
+        {
+            OdinFile file = load("src/test/sdk/core/math/linalg/glsl/linalg_glsl.odin");
+            {
+                TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_dvec2", "x");
+                assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
+            }
+            {
+                TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_dvec2", "cost2");
+                @NotNull TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+                assertEquals("dvec2", tsOdinTypeAlias.getName());
+                TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinTypeAlias.getBaseType(), TsOdinArrayType.class);
+                assertEquals("[2]f64", tsOdinArrayType.getLabel());
+            }
+        }
         {
             OdinFile file = load("src/test/sdk/core/math/linalg/hlsl/linalg_hlsl.odin");
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_double4", "cost2");
             @NotNull TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
             assertEquals("double4", tsOdinTypeAlias.getName());
         }
+
         {
             OdinFile file = load("src/test/sdk/core/math/linalg/glsl/linalg_glsl.odin");
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_vec2", "cost2");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_dvec2", "cost2");
             @NotNull TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
-            assertEquals("vec2", tsOdinTypeAlias.getName());
+            assertEquals("dvec2", tsOdinTypeAlias.getName());
+            TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinTypeAlias.getBaseType(), TsOdinArrayType.class);
+            assertEquals("[2]f64", tsOdinArrayType.getLabel());
         }
     }
 
