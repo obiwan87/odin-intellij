@@ -1980,15 +1980,53 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    public void testQoiOdin() throws IOException {
-        int offset = 3079;
-        OdinFile file = load("src/test/sdk/core/image/qoi/qoi.odin");
+    public void testPointerToCompoundLiteral() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
         {
-            PsiElement psiElement = file.findElementAt(offset);
-            OdinBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(psiElement, OdinBinaryExpression.class);
-            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(binaryExpression);
-            System.out.println(tsOdinType.getLabel());
+            OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file,
+                    "testPointerToCompoundLiteral",
+                    "proc_call");
+            var addressExpression = PsiTreeUtil.findChildOfType(firstVariableDeclarationStatement,
+                    OdinAddressExpression.class);
 
+            OdinLhs lhs = PsiTreeUtil.findChildOfType(addressExpression, OdinLhs.class);
+            OdinExpression expression = Objects.requireNonNull(lhs).getExpression();
+            OdinSymbolTable symbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+            assertNotNull(symbolTable.getSymbol("x"));
+            assertNotNull(symbolTable.getSymbol("y"));
         }
+        {
+            OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file,
+                    "testPointerToCompoundLiteral",
+                    "nested_struct");
+            var addressExpression = PsiTreeUtil.findChildOfType(firstVariableDeclarationStatement,
+                    OdinAddressExpression.class);
+
+            OdinLhs lhs = PsiTreeUtil.findChildOfType(addressExpression, OdinLhs.class);
+            OdinExpression expression = Objects.requireNonNull(lhs).getExpression();
+            OdinSymbolTable symbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+            assertNotNull(symbolTable.getSymbol("x"));
+            assertNotNull(symbolTable.getSymbol("y"));
+        }
+        {
+            OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file, "testPointerToCompoundLiteral", "nested_points");
+            var addressExpression = PsiTreeUtil.findChildOfType(firstVariableDeclarationStatement, OdinAddressExpression.class);
+
+            OdinLhs lhs = PsiTreeUtil.findChildOfType(addressExpression, OdinLhs.class);
+            OdinExpression expression = Objects.requireNonNull(lhs).getExpression();
+            OdinSymbolTable symbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+            assertNotNull(symbolTable.getSymbol("x"));
+            assertNotNull(symbolTable.getSymbol("y"));
+        }
+        {
+            OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file, "testPointerToCompoundLiteral", "points");
+            OdinLhs lhs = PsiTreeUtil.findChildOfType(firstVariableDeclarationStatement, OdinLhs.class);
+            OdinExpression expression = Objects.requireNonNull(lhs).getExpression();
+            OdinSymbolTable symbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+            assertNotNull(symbolTable.getSymbol("x"));
+            assertNotNull(symbolTable.getSymbol("y"));
+        }
+
     }
+
 }

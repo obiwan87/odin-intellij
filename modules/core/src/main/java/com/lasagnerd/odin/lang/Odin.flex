@@ -64,8 +64,8 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
 %state NLSEMI_STATE
 %state NEXT_LINE
 %state BLOCK_COMMENT_STATE
-
 %state FLOAT_LITERAL_STATE
+%state BUILD_FLAG_STATE
 %%
 
 <YYINITIAL> {
@@ -135,48 +135,49 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         {QuatIntegerDecLiteral} { yybegin(NLSEMI_STATE); return QUAT_INTEGER_DEC_LITERAL; }
         {ComplexIntegerDecLiteral} { yybegin(NLSEMI_STATE); return COMPLEX_INTEGER_DEC_LITERAL; }
 
-        ":"         { return COLON; }
-        "="         { return EQ; }
-        \{          { return LBRACE; }
-        \}          { yybegin(NLSEMI_STATE); return RBRACE; }
-        \(          { return LPAREN; }
-        \)          { yybegin(NLSEMI_STATE); return RPAREN; }
-        \.          { return DOT; }
-        ","         { return COMMA; }
-        "->"        { return ARROW; }
-        ";"         { return SEMICOLON; }
-        "["         { return LBRACKET; }
-        "]"         { yybegin(NLSEMI_STATE); return RBRACKET; }
-        "#"         { return HASH; }
-        "?"         { return QUESTION; }
-        "^"         { yybegin(NLSEMI_STATE); return CARET; }
-        "@"         { return AT; }
-        "..."       { return ELLIPSIS; }
+        ":"            { return COLON; }
+        "="            { return EQ; }
+        \{             { return LBRACE; }
+        \}             { yybegin(NLSEMI_STATE); return RBRACE; }
+        \(             { return LPAREN; }
+        \)             { yybegin(NLSEMI_STATE); return RPAREN; }
+        \.             { return DOT; }
+        ","            { return COMMA; }
+        "->"           { return ARROW; }
+        ";"            { return SEMICOLON; }
+        "["            { return LBRACKET; }
+        "]"            { yybegin(NLSEMI_STATE); return RBRACKET; }
+        "#"            { return HASH; }
+        "#+" [^ \t\f\r\n]+ { yybegin(BUILD_FLAG_STATE); return BUILD_FLAG_PREFIX; }
+        "?"            { return QUESTION; }
+        "^"            { yybegin(NLSEMI_STATE); return CARET; }
+        "@"            { return AT; }
+        "..."          { return ELLIPSIS; }
 
-        "/*"        { yybegin(BLOCK_COMMENT_STATE); newLineSeen=false; commentNestingDepth = 1; previousState=YYINITIAL; return BLOCK_COMMENT_START; }
+        "/*"           { yybegin(BLOCK_COMMENT_STATE); newLineSeen=false; commentNestingDepth = 1; previousState=YYINITIAL; return BLOCK_COMMENT_START; }
 
         // Operators
-        "=="        { return EQEQ; }
-        "!="        { return NEQ; }
-        "<"         { return LT; }
-        "<="        { return LTE; }
-        ">"         { return GT; }
-        ">="        { return GTE; }
-        "&&"        { return ANDAND; }
-        "||"        { return OROR; }
-        "!"         { yybegin(NLSEMI_STATE); return NOT; }
-        "+"         { return PLUS; }
-        "-"         { return MINUS; }
-        "*"         { return STAR; }
-        "/"         { return DIV; }
-        "%%"        { return REMAINDER; }
-        "%"         { return MOD; }
-        "&"         { return AND; }
-        "&~"        { return ANDNOT; }
-        "|"         { return PIPE; }
-        "~"         { return TILDE; }
-        "<<"        { return LSHIFT; }
-        ">>"        { return RSHIFT; }
+        "=="           { return EQEQ; }
+        "!="           { return NEQ; }
+        "<"            { return LT; }
+        "<="           { return LTE; }
+        ">"            { return GT; }
+        ">="           { return GTE; }
+        "&&"           { return ANDAND; }
+        "||"           { return OROR; }
+        "!"            { yybegin(NLSEMI_STATE); return NOT; }
+        "+"            { return PLUS; }
+        "-"            { return MINUS; }
+        "*"            { return STAR; }
+        "/"            { return DIV; }
+        "%%"           { return REMAINDER; }
+        "%"            { return MOD; }
+        "&"            { return AND; }
+        "&~"           { return ANDNOT; }
+        "|"            { return PIPE; }
+        "~"            { return TILDE; }
+        "<<"           { return LSHIFT; }
+        ">>"           { return RSHIFT; }
 
         // Assignment operators
         "+="        { return PLUS_EQ; }
@@ -207,6 +208,12 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         \\          { yybegin(NEXT_LINE);  }
     }
 
+    <BUILD_FLAG_STATE> {
+        ([^\/\r\n]|\/[^\*\/\r\n])+          {return BUILD_FLAG_CONTENT; }
+        "//" [^\r\n]*                       { yybegin(YYINITIAL); return LINE_COMMENT; }
+        "/*"                                { yybegin(BLOCK_COMMENT_STATE); newLineSeen=false; commentNestingDepth=1; previousState=NLSEMI_STATE; return BLOCK_COMMENT_START; }
+        [\r\n]                              {yybegin(YYINITIAL); return NEW_LINE;}
+    }
     <NLSEMI_STATE> {
         [ \t]+                               { return WHITE_SPACE; }
         "//" [^\r\n]*                        { return LINE_COMMENT; }

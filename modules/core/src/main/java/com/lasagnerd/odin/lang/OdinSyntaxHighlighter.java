@@ -77,7 +77,8 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.OR_ELSE,
             OdinTypes.OR_RETURN,
             OdinTypes.OR_BREAK,
-            OdinTypes.OR_CONTINUE
+            OdinTypes.OR_CONTINUE,
+            OdinTypes.BUILD_FLAG_PREFIX
     );
 
     private static final List<IElementType> numericLiteral = List.of(

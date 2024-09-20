@@ -581,8 +581,8 @@ public class OdinSymbolTableResolver {
         // Within param entries, polymorphic parameters and other constant declaration are not visible
         // from earlier parameters
         if(commonParent instanceof OdinParamEntries paramEntries) {
-            OdinParamEntry paramEntryPosition = PsiTreeUtil.getParentOfType(position, false, OdinParamEntry.class);
-            OdinParamEntry paramEntryDeclaration = PsiTreeUtil.getParentOfType(declaration, OdinParamEntry.class);
+            OdinParamEntry paramEntryPosition = (OdinParamEntry) PsiTreeUtil.findPrevParent(commonParent, position);
+            OdinParamEntry paramEntryDeclaration = (OdinParamEntry) PsiTreeUtil.findPrevParent(commonParent, declaration);
 
             int indexPosition = paramEntries.getParamEntryList().indexOf(paramEntryPosition);
             int indexDeclaration = paramEntries.getParamEntryList().indexOf(paramEntryDeclaration);

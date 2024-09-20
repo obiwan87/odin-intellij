@@ -102,10 +102,14 @@ public class OdinInsightUtils {
             return symbolTable.with(getEnumFields(enumType));
         }
 
-        if(type instanceof TsOdinMetaType metaType && metaType.representedType() instanceof TsOdinBitSetType tsOdinBitSetType) {
-            if(tsOdinBitSetType.getElementType() instanceof TsOdinEnumType tsOdinEnumType) {
+        if (type instanceof TsOdinMetaType metaType && metaType.representedType() instanceof TsOdinBitSetType tsOdinBitSetType) {
+            if (tsOdinBitSetType.getElementType() instanceof TsOdinEnumType tsOdinEnumType) {
                 return symbolTable.with(getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType()));
             }
+        }
+
+        if(type.getPsiType() instanceof OdinBitFieldType bitFieldType) {
+            return symbolTable.with(getBitFieldFields(bitFieldType));
         }
 
         if (includeReferenceableSymbols && type instanceof TsOdinArrayType arrayType) {
@@ -293,6 +297,13 @@ public class OdinInsightUtils {
             return getEnumFields(((OdinEnumDeclarationStatement) enumType.getDeclaration()).getEnumType());
         }
 
+        if (tsOdinType instanceof TsOdinBitFieldType bitFieldType) {
+            if(bitFieldType.getPsiType() instanceof OdinBitFieldType psiBitFieldType) {
+                return getBitFieldFields(psiBitFieldType);
+            }
+            return Collections.emptyList();
+        }
+
         if (tsOdinType instanceof TsOdinPackageReferenceType packageReferenceType) {
             OdinSymbolTable symbolsOfImportedPackage = OdinImportUtils
                     .getSymbolsOfImportedPackage(packageReferenceType.getReferencingPackagePath(),
@@ -301,6 +312,35 @@ public class OdinInsightUtils {
         }
 
         return Collections.emptyList();
+    }
+
+    private static List<OdinSymbol> getBitFieldFields(OdinBitFieldType psiBitFieldType) {
+        List<OdinSymbol> odinSymbols = new ArrayList<>();
+        OdinBitFieldBlock bitFieldBlock = psiBitFieldType.getBitFieldBlock();
+        if (bitFieldBlock != null) {
+            OdinBitFieldBody bitFieldBody = bitFieldBlock.getBitFieldBody();
+            if (bitFieldBody != null) {
+                for (OdinBitFieldFieldDeclaration odinBitFieldFieldDeclaration : bitFieldBody.getBitFieldFieldDeclarationList()) {
+                    OdinSymbol symbol = createBitFieldSymbol(odinBitFieldFieldDeclaration);
+                    odinSymbols.add(symbol);
+                }
+
+            }
+        }
+        return odinSymbols;
+    }
+
+    public static @NotNull OdinSymbol createBitFieldSymbol(OdinBitFieldFieldDeclaration odinBitFieldFieldDeclaration) {
+        OdinDeclaredIdentifier declaredIdentifier = odinBitFieldFieldDeclaration.getDeclaredIdentifier();
+        OdinSymbol symbol = new OdinSymbol();
+        symbol.setSymbolType(FIELD);
+        symbol.setName(declaredIdentifier.getName());
+        symbol.setDeclaredIdentifier(declaredIdentifier);
+        symbol.setImplicitlyDeclared(false);
+        symbol.setScope(OdinSymbol.OdinScope.TYPE);
+        symbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
+        symbol.setHasUsing(false);
+        return symbol;
     }
 
     // Swizzle field generator
@@ -445,7 +485,7 @@ public class OdinInsightUtils {
 
     public static boolean getEnumeratedArraySymbols(OdinSymbolTable symbolTable, TsOdinArrayType tsOdinArrayType) {
         OdinEnumType psiType = getEnumTypeOfArray(symbolTable, tsOdinArrayType);
-        if(psiType != null) {
+        if (psiType != null) {
             List<OdinSymbol> enumFields = getEnumFields(psiType);
             symbolTable.addAll(enumFields);
             return true;
@@ -499,9 +539,14 @@ public class OdinInsightUtils {
             elementSymbols.addAll(typeSymbols);
         }
 
+        if(tsOdinType instanceof TsOdinBitFieldType tsOdinBitFieldType) {
+            List<OdinSymbol> typeSymbols = getTypeElements(tsOdinBitFieldType, symbolTable);
+            elementSymbols.addAll(typeSymbols);
+        }
+
         if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
             OdinEnumType enumTypeOfArray = getEnumTypeOfArray(symbolTable, tsOdinArrayType);
-            if(enumTypeOfArray != null) {
+            if (enumTypeOfArray != null) {
                 elementSymbols.addAll(getEnumFields(enumTypeOfArray));
 
             } else {

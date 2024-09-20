@@ -163,6 +163,8 @@
 
         SQ_STRING_START='SQ_STRING_START'
         SQ_STRING_END='SQ_STRING_END'
+        BUILD_FLAG_PREFIX='BUILD_FLAG_PREFIX'
+        BUILD_FLAG_CONTENT='BUILD_FLAG_CONTENT'
   ]
 
   extends('.*Expression$') = expression
@@ -185,11 +187,13 @@ odinFile                             ::= fileScope
 // General recovery rules
 private eos_recover ::= !eos
 
-fileScope                            ::= packageDeclaration eos importStatementsContainer? fileScopeStatementList <<eof>> {
+fileScope                            ::= buildFlag* packageDeclaration eos importStatementsContainer? fileScopeStatementList <<eof>> {
     methods=[getImportStatements getSymbolTable]
     mixin= "com.lasagnerd.odin.lang.psi.OdinFileScopeMixin"
     implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
 }
+
+buildFlag                            ::= BUILD_FLAG_PREFIX BUILD_FLAG_CONTENT?
 importStatementsContainer            ::= (importDeclarationStatement eos)+
 fileScopeStatementList               ::= (fileScopeStatement eos)*
 packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=1 recoverWhile=eos_recover}
@@ -253,7 +257,7 @@ unionBody                            ::= type (COMMA type)* [COMMA|EOS_TOKEN] {i
 
 
 bitFieldDeclarationStatement         ::= (attribute eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitFieldType
-bitFieldType                         ::= BIT_FIELD type EOS_TOKEN? bitFieldBlock
+bitFieldType                         ::= BIT_FIELD type EOS_TOKEN? bitFieldBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 bitFieldBlock                        ::= blockStart bitFieldBody? blockEnd
 bitFieldBody                         ::= bitFieldFieldDeclaration (COMMA bitFieldFieldDeclaration )*  [COMMA|EOS_TOKEN]
 bitFieldFieldDeclaration             ::= declaredIdentifier COLON type PIPE expression

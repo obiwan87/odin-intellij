@@ -256,7 +256,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         odinSymbol.setPsiType(o.getEnumType());
         symbols.add(odinSymbol);
 
-        if(o.getUsing() != null) {
+        if (o.getUsing() != null) {
             List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields(o.getEnumType());
             symbols.addAll(enumFields);
         }
@@ -346,9 +346,14 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     @Override
+    public void visitBitFieldFieldDeclaration(@NotNull OdinBitFieldFieldDeclaration o) {
+        symbols.add(OdinInsightUtils.createBitFieldSymbol(o));
+    }
+
+    @Override
     public void visitForeignStatement(@NotNull OdinForeignStatement o) {
         OdinForeignStatementList foreignStatementList = o.getForeignBlock().getForeignStatementList();
-        if(foreignStatementList != null) {
+        if (foreignStatementList != null) {
             for (OdinStatement odinStatement : foreignStatementList.getStatementList()) {
                 odinStatement.accept(this);
             }
@@ -367,12 +372,12 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         addStatementBodySymbols(statementBody);
 
         OdinElseWhenBlock elseWhenBlock = whenBlock.getElseWhenBlock();
-        if(elseWhenBlock != null) {
+        if (elseWhenBlock != null) {
             OdinWhenBlock nextWhenBlock = elseWhenBlock.getWhenBlock();
-            if(nextWhenBlock != null) {
+            if (nextWhenBlock != null) {
                 addWhenBlockDeclarations(nextWhenBlock);
             }
-            if(elseWhenBlock.getStatementBody() != null) {
+            if (elseWhenBlock.getStatementBody() != null) {
                 addStatementBodySymbols(elseWhenBlock.getStatementBody());
             }
         }
@@ -382,9 +387,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         OdinDoStatement doStatement = statementBody.getDoStatement();
         @Nullable OdinBlock block = statementBody.getBlock();
 
-        if(doStatement != null) {
+        if (doStatement != null) {
             doStatement.accept(this);
-        } else if(block != null){
+        } else if (block != null) {
             for (OdinStatement statement : block.getStatements()) {
                 statement.accept(this);
             }

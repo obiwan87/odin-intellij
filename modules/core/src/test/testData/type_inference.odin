@@ -629,6 +629,28 @@ testNestedWhenStatements :: proc() {
 
 testArrayOfStructs :: proc() {
     arr := []Point {
-        { x = 1, y = 2},
+        { x = 1, y = 2 },
     }
+}
+
+testPointerToCompoundLiteral :: proc() {
+    p :: proc(x: ^Point) {
+
+    }
+    points : ^Point = &{
+        x = 1
+    }
+
+    nested_points := []^Point {
+        &{ x = 2 }
+    }
+
+    S :: struct {
+        p: ^Point
+    }
+    nested_struct := S {
+        p = &{ x = 2 }
+    }
+
+    proc_call := p(&{ x = 3 })
 }
