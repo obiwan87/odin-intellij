@@ -661,10 +661,22 @@ testRecursiveStruct :: proc() {
         next: ^Node
     }
 
-    n := Node{}
+    n := Node{ }
     x := n.next.prev
 }
 
 testOffsetOfSymbols :: proc() {
     offset := offset_of(Point, x)
+}
+
+testConstrainedType :: proc($C: typeid/Dict($K , $V)) -> T {
+    c: C
+    x := c.entries
+}
+
+Dict2 :: struct($Key: typeid, $Value: i32 = 3) {
+
+}
+testFieldsOfParaPoly :: proc(d: $D/Dict2($K)) where D.Key {
+
 }

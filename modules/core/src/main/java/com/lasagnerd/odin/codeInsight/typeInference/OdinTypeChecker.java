@@ -124,6 +124,12 @@ public class OdinTypeChecker {
             typeCheckResult.setCompatible(true);
             return;
         }
+
+        if(type instanceof TsOdinConstrainedType constrainedType && expectedType instanceof TsOdinConstrainedType parConstrainedType) {
+            doCheckTypes(constrainedType.getSpecializedType(), parConstrainedType.getSpecializedType());
+            return;
+        }
+
         if (type instanceof TsOdinPointerType pointerType && expectedType instanceof TsOdinPointerType expectedPointerType) {
             doCheckTypes(pointerType.getDereferencedType(), expectedPointerType.getDereferencedType());
             return;

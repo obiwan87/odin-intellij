@@ -1,9 +1,11 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.symbols.*;
+import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import lombok.EqualsAndHashCode;
@@ -343,6 +345,12 @@ public class OdinTypeResolver extends OdinVisitor {
             case OdinBitFieldDeclarationStatement bitFieldDeclarationStatement -> {
                 return doResolveType(symbolTable, identifier, odinDeclaration, bitFieldDeclarationStatement.getBitFieldType());
             }
+            case OdinParameterDeclarator odinParameterDeclarator -> {
+                // Look for polymorphic type definitions like $C: typeid/...
+                if (identifier.getDollar() != null) {
+                    return doResolveType(symbolTable, odinParameterDeclarator.getTypeDefinition());
+                }
+            }
             case null, default -> {
             }
         }
@@ -602,16 +610,6 @@ public class OdinTypeResolver extends OdinVisitor {
         this.type = tsOdinProcedureType;
     }
 
-    private static void addContextSymbol(@NotNull Project project, TsOdinProcedureType tsOdinProcedureType) {
-        OdinSymbol contextSymbol = OdinBuiltinSymbolService.getInstance(project).createImplicitStructSymbol("context", "Context");
-        OdinSymbolTable procSymbolTable = new OdinSymbolTable();
-        procSymbolTable.add(contextSymbol);
-        OdinSymbolTable symbolTable1 = tsOdinProcedureType.getSymbolTable();
-        procSymbolTable.setParentSymbolTable(symbolTable1);
-        tsOdinProcedureType.setSymbolTable(procSymbolTable);
-    }
-
-
     @Override
     public void visitStructType(@NotNull OdinStructType structType) {
         TsOdinStructType tsOdinStructType = new TsOdinStructType();
@@ -646,7 +644,7 @@ public class OdinTypeResolver extends OdinVisitor {
             tsOdinParameter.setIdentifier(declaredIdentifier);
             tsOdinParameter.setExplicitPolymorphicParameter(isValuePolymorphic(declaredIdentifier));
             tsOdinParameter.setDefaultValueExpression(odinParameterInitialization.getExpression());
-            tsOdinParameter.setName(declaredIdentifier.getText());
+            tsOdinParameter.setName(declaredIdentifier.getIdentifierToken().getText());
             tsOdinParameter.setIndex(k);
             tsOdinParameter.setAnyInt(anyInt);
 
@@ -757,103 +755,5 @@ public class OdinTypeResolver extends OdinVisitor {
             this.type = tsOdinSliceType;
         }
         super.visitVariadicType(o);
-    }
-
-    private static class OdinMetaTypeResolver extends OdinVisitor {
-
-        private TsOdinMetaType metaType;
-
-        public OdinMetaTypeResolver() {
-        }
-
-        public static TsOdinMetaType resolveMetaType(OdinType type) {
-            OdinMetaTypeResolver odinMetaTypeResolver = new OdinMetaTypeResolver();
-            type.accept(odinMetaTypeResolver);
-            return odinMetaTypeResolver.metaType;
-        }
-
-        TsOdinMetaType createMetaType(OdinType type, TsOdinMetaType.MetaType metaType) {
-            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(metaType);
-            tsOdinMetaType.setPsiType(type);
-
-            return tsOdinMetaType;
-        }
-
-        @Override
-        public void visitArrayType(@NotNull OdinArrayType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.ARRAY);
-        }
-
-        @Override
-        public void visitSliceType(@NotNull OdinSliceType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.SLICE);
-        }
-
-        @Override
-        public void visitDynamicArrayType(@NotNull OdinDynamicArrayType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.DYNAMIC_ARRAY);
-        }
-
-        @Override
-        public void visitProcedureType(@NotNull OdinProcedureType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.PROCEDURE);
-        }
-
-        @Override
-        public void visitPointerType(@NotNull OdinPointerType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.POINTER);
-        }
-
-        @Override
-        public void visitMultiPointerType(@NotNull OdinMultiPointerType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.MULTI_POINTER);
-        }
-
-        @Override
-        public void visitBitSetType(@NotNull OdinBitSetType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.BIT_SET);
-        }
-
-        @Override
-        public void visitMatrixType(@NotNull OdinMatrixType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.MATRIX);
-        }
-
-        @Override
-        public void visitMapType(@NotNull OdinMapType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.MAP);
-        }
-
-        @Override
-        public void visitStructType(@NotNull OdinStructType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.STRUCT);
-        }
-
-        @Override
-        public void visitEnumType(@NotNull OdinEnumType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.ENUM);
-        }
-
-        @Override
-        public void visitUnionType(@NotNull OdinUnionType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.UNION);
-        }
-
-        @Override
-        public void visitPolymorphicType(@NotNull OdinPolymorphicType o) {
-            this.metaType = createMetaType(o, TsOdinMetaType.MetaType.POLYMORPHIC);
-        }
-
-        @Override
-        public void visitBitFieldType(@NotNull OdinBitFieldType o) {
-            this.metaType = createMetaType(o.getType(), TsOdinMetaType.MetaType.BIT_FIELD);
-        }
-
-        @Override
-        public void visitQualifiedType(@NotNull OdinQualifiedType o) {
-            System.out.println("qualified type visited");
-        }
-
-
     }
 }

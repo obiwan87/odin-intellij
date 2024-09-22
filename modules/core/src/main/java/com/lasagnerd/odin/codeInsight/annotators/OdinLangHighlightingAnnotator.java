@@ -20,6 +20,9 @@ import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPolymorphicType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
 import com.lasagnerd.odin.lang.OdinSyntaxHighlighter;
 import com.lasagnerd.odin.lang.psi.*;
@@ -216,6 +219,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
     private static class OdinAnnotationSessionState {
         Map<PsiElement, OdinRefExpression> refExpressionMap = new HashMap<>();
+        Map<PsiElement, TsOdinType> types = new HashMap<>();
         Set<OdinRefExpression> aborted = new HashSet<>();
     }
 
@@ -268,6 +272,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
 
         if (refExpression == topMostExpression) {
+            // The first parameter of #config(DEF, val) is not defined in code
             if (refExpression.getParent() instanceof OdinArgument argument) {
                 OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class);
                 if (callExpression != null && callExpression.getExpression() instanceof OdinDirectiveExpression directiveExpression) {
@@ -285,22 +290,19 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
         OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
         if (symbol == null) {
+            if(refExpression.getExpression() != null) {
+                TsOdinType type = OdinInferenceEngine.inferType(symbolTable, refExpression.getExpression());
+                TsOdinType referenceableType = OdinInsightUtils.getReferenceableType(type);
+                if (referenceableType instanceof TsOdinPolymorphicType) {
+                    annotationSessionState.aborted.add(topMostExpression);
+                    return;
+                }
+            }
             highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange);
             annotationSessionState.aborted.add(topMostExpression);
             return;
         }
 
-        if (symbol.getPsiType() instanceof OdinPolymorphicType) {
-            annotationSessionState.aborted.add(topMostExpression);
-            return;
-        }
-
-        if (symbol.getPsiType() instanceof OdinPointerType pointerType) {
-            if (pointerType.getType() instanceof OdinPolymorphicType) {
-                annotationSessionState.aborted.add(topMostExpression);
-                return;
-            }
-        }
 
         if (symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier declaredIdentifier) {
             if (declaredIdentifier.getDollar() != null)
@@ -333,6 +335,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 highlightPackageReference(annotationHolder, identifierText, textRange, identifier);
             }
         }
+
     }
 
     @SuppressWarnings("unused")

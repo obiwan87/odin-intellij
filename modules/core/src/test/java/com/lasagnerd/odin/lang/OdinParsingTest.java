@@ -44,6 +44,7 @@ import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -398,7 +399,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testTypeInference() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         var refExpressions = PsiTreeUtil.findChildrenOfType(odinFile, OdinRefExpression.class);
         Objects.requireNonNull(refExpressions);
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
@@ -409,7 +410,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPolymorphicTypes() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(), OdinProcedureDeclarationStatement.class);
 
         {
@@ -421,7 +422,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPolymorphicTypesWithMultipleParams() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
 
         var type = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference2");
 
@@ -430,7 +431,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPolymorphicTypesWithMultipleAndNestedParams() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         var type = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference3");
 
         assertNotNull(type);
@@ -438,7 +439,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPolymorphicTypesWithPolymorphicReturnType() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         var type = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference4");
 
         assertNotNull(type);
@@ -455,7 +456,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPolymorphicTypesWithPolymorphicReturn_typeReferenceOnStructField() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         var type = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference5");
         System.out.println(type);
     }
@@ -478,7 +479,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
 
     public void testPolymorphicTypesWithMultipleReturnTypes() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         var pointVariable = findFirstVariableDeclarationStatement(odinFile, "testTypeInference6", "point");
         assertNotEmpty(Objects.requireNonNull(pointVariable.getRhsExpressions()).getExpressionList());
         OdinExpression odinExpression = pointVariable.getRhsExpressions().getExpressionList().getFirst();
@@ -488,14 +489,14 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testUnionType() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference7", "shape");
         assertInstanceOf(tsOdinType, TsOdinUnionType.class);
         assertEquals("Shape", tsOdinType.getName());
     }
 
     public void testPolyUnionType() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         String procedureName = "testTypeInference8";
         String variableName = "first_shape";
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, procedureName, variableName);
@@ -504,7 +505,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testMaybeExpression() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference9", "k");
         assertInstanceOf(tsOdinType, TsOdinTuple.class);
         List<TsOdinType> types = ((TsOdinTuple) tsOdinType).getTypes();
@@ -514,21 +515,21 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testOrElseExpression() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference10", "point");
         assertInstanceOf(tsOdinType, TsOdinStructType.class);
         assertEquals("Point", tsOdinType.getName());
     }
 
     public void testTypeAssertOneValue() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference11", "point");
         assertInstanceOf(tsOdinType, TsOdinStructType.class);
         assertEquals("Point", tsOdinType.getName());
     }
 
     public void testTypeAssertTwoValues() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference12", "y");
             assertEquals("bool", tsOdinType.getName());
@@ -541,7 +542,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testUnaryAndOperator() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference13", "point_ptr");
         TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
         TsOdinStructType structType = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinStructType.class);
@@ -550,7 +551,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testSliceExpression() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference14", "point_slice");
         TsOdinSliceType tsOdinArrayType = assertInstanceOf(tsOdinType, TsOdinSliceType.class);
         TsOdinStructType structType = assertInstanceOf(tsOdinArrayType.getElementType(), TsOdinStructType.class);
@@ -559,7 +560,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testTernaryConditionals() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference15", "point_1");
             TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
@@ -580,7 +581,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testLiteralExpressions() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
 
         TsOdinType complexNumber1 = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference16", "complex_number1");
         assertEquals("untyped complex", complexNumber1.getName());
@@ -599,7 +600,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testBitsetsAndEnums() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testBitsetsAndEnums", "d");
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
@@ -619,7 +620,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
 
     public void testPrimitiveTypeCasting() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testPrimitiveTypeCasting", "a");
             System.out.println(tsOdinType.getLabel());
@@ -634,20 +635,20 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testTypeAliases() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference_withTypeAliases", "point");
         assertInstanceOf(tsOdinType, TsOdinStructType.class);
     }
 
     public void testTypeAliases_2() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference_withTypeAliases_2", "point");
         assertInstanceOf(tsOdinType, TsOdinStructType.class);
         assertEquals("Point", tsOdinType.getName());
     }
 
     public void testForInVars() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             assertExpressionIsOfTypeWithName(odinFile,
                     "testForInVars",
@@ -701,7 +702,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testTypeSwitch() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             assertExpressionIsOfTypeWithName(odinFile,
                     "testTypeSwitch",
@@ -718,7 +719,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testTypeInference_arrayBinaryOps() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "binary_operators_on_arrays", "test");
             TsOdinArrayType arrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
@@ -1091,7 +1092,6 @@ public class OdinParsingTest extends UsefulTestCase {
                 assertNull(visibleSymbols.getSymbol("Key"));
                 assertNull(visibleSymbols.getSymbol("Val"));
             }
-
 
 
             // proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val)
@@ -1542,7 +1542,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void test_typeInference_procedureOverload() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "x");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
@@ -1588,7 +1588,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void test_typeInference_polyProcedureOverload() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_polyProcedureOverload", "x");
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
@@ -1600,7 +1600,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void test_astNew_procedureOverload() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_astNew", "a");
             TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
@@ -1628,7 +1628,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void test_typeInference_polyProcedureOverloadWithMake() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_polyOverloadWithMake", "z");
             TsOdinTuple tsOdinTuple = assertInstanceOf(tsOdinType, TsOdinTuple.class);
@@ -1660,7 +1660,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void test_implicitExpression() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         OdinProcedureDeclarationStatement proc = findFirstProcedure(file, "testImplicitEnumExpression");
         {
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
@@ -1672,7 +1672,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void test_typeInference_anyType() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference_anyType", "y");
             System.out.println(tsOdinType);
@@ -1680,7 +1680,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testTwoHopsInferenceWithPointer() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTwoHopsInferenceWithPointer", "y");
             System.out.println(tsOdinType);
@@ -1688,7 +1688,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testParapolyWithAliases() throws IOException {
-        OdinFile odinFile = load("src/test/testData/type_inference.odin");
+        OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testTypeInference_withParaPolyAlias", "first");
             TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
@@ -1728,7 +1728,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testProcedureContext() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "test_procedureContext", "y");
             assertInstanceOf(tsOdinType, TsOdinRawPointerType.class);
@@ -1736,7 +1736,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testField() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         OdinProcedureDeclarationStatement proc = findFirstProcedure(file, "test_structField");
 
         {
@@ -1782,7 +1782,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testDynamicArrayAllocator() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "test_dynamicArrayAllocatorSymbol", "y");
             TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
@@ -1791,7 +1791,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testNamelessStruct() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testNamelessStruct", "x");
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
@@ -1807,7 +1807,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testBitSetOperations() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testBitSetOperations", "operation");
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
@@ -1827,7 +1827,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testEnumeratedArrays() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             var proc = findFirstProcedure(file, "testEnumeratedArrays");
             {
@@ -1862,7 +1862,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testArraysAndSwizzleFields() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testSwizzleFieldsAndArrays", "d");
             assertEquals(tsOdinType, TsOdinBuiltInTypes.F32);
@@ -1877,7 +1877,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testStringBuilder() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testStringBuilder", "x");
             TsOdinTuple tsOdinTuple = assertInstanceOf(tsOdinType, TsOdinTuple.class);
@@ -1887,7 +1887,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testTypeInfoOf() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testTypeInfoOf", "x");
             TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
@@ -1936,7 +1936,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testMatrixType() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testMatrixType", "x");
             TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
@@ -1960,7 +1960,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testNestedWhenStatements() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(file, "testNestedWhenStatements", "x");
             OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(var);
@@ -1969,7 +1969,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testArrayOfStructs() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             var proc = findFirstProcedure(file, "testArrayOfStructs");
             OdinLhs lhs = PsiTreeUtil.findChildOfType(proc, OdinLhs.class);
@@ -1981,7 +1981,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPointerToCompoundLiteral() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file,
                     "testPointerToCompoundLiteral",
@@ -2028,11 +2028,10 @@ public class OdinParsingTest extends UsefulTestCase {
         }
 
     }
-    
 
 
     public void testRecursiveStruct() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testRecursiveStruct", "x");
             TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
@@ -2053,7 +2052,7 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testOffsetOf() throws IOException {
-        OdinFile file = load("src/test/testData/type_inference.odin");
+        OdinFile file = loadTypeInference();
         {
             OdinExpression firstExpressionOfVariable = findFirstExpressionOfVariable(file, "testOffsetOfSymbols", "offset");
             OdinArgument[] arguments = PsiTreeUtil.getChildrenOfType(firstExpressionOfVariable, OdinArgument.class);
@@ -2065,14 +2064,46 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(symbolTable.getSymbol("y"));
         }
     }
-    public void testFreeBsd() {
-        // socket_freebsd: 11199
-        String path = "D:\\dev\\code\\Odin\\core\\net\\socket_freebsd.odin";
-        // tga: 3167
-        // time_wasi: 376
-        // where constraints
-        // offset_of
+
+    private OdinFile loadTypeInference() throws IOException {
+        return load("src/test/testData/type_inference.odin");
+    }
+
+    public void testTypeIdSymbols() throws IOException {
+        OdinFile file = loadTypeInference();
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testConstrainedType", "x");
+            assertInstanceOf(tsOdinType, TsOdinMapType.class);
+            System.out.println(tsOdinType);
+        }
+    }
+
+    public void testParaPolyFields() throws IOException {
+        OdinFile file = loadTypeInference();
+        {
+            var proc = findFirstProcedure(file, "testFieldsOfParaPoly");
 
 
+            OdinWhereClause whereClause = PsiTreeUtil.findChildOfType(proc, OdinWhereClause.class);
+            OdinRefExpression refExpression = Objects.requireNonNull(PsiTreeUtil.findChildOfType(whereClause, OdinRefExpression.class));
+
+            OdinIdentifier identifier = Objects.requireNonNull(refExpression.getIdentifier());
+            OdinSymbol symbolTable = OdinSymbolTableResolver.findSymbol(identifier);
+
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(refExpression.getExpression());
+            OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(project, tsOdinType);
+            assertNotNull(typeElements.getSymbol("Key"));
+            assertNotNull(typeElements.getSymbol("Value"));
+        }
+    }
+
+    public void testConstrainedTypeChecker() throws IOException {
+        OdinFile file = load("src/test/sdk/base/runtime/core_builtin_soa.odin");
+        {
+            PsiElement element = file.findElementAt(1728);
+            OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(element, false, OdinCallExpression.class);
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(callExpression);
+            assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+        }
     }
 }

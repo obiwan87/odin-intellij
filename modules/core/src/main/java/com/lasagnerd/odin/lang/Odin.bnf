@@ -319,7 +319,7 @@ relativeType                         ::= directive type
 ellipsisType                         ::= ELLIPSIS
 variadicType                         ::= RANGE type
 callType                             ::= type LPAREN <<enterMode "PAR">> <<enterMode "TYPE_LIST">>  argumentList? <<exitMode "TYPE_LIST">> <<exitMode "PAR">> EOS_TOKEN?  RPAREN
-constrainedType                      ::= type DIV type {pin=3}
+constrainedType                      ::= type DIV type
 polymorphicType                      ::= DOLLAR declaredIdentifier {implements="com.lasagnerd.odin.lang.psi.OdinDeclaration" methods=[getDeclaredIdentifiers]}
 simpleRefType                        ::= identifier
 qualifiedType                        ::= identifier DOT simpleRefType {methods=[getPackageIdentifier getTypeIdentifier]}

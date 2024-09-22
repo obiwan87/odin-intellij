@@ -75,4 +75,11 @@ public abstract class TsOdinGenericType extends TsOdinType {
                         .keySet().stream().allMatch(k -> getResolvedPolymorphicParameters().containsKey(k));
     }
 
+    public TsOdinGenericType genericType() {
+        if(this.getGenericType() != NO_GENERIC_TYPE) {
+            return this.getGenericType();
+        }
+        return this;
+    }
+
 }

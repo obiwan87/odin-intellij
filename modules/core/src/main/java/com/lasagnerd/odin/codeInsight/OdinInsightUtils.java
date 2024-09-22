@@ -17,9 +17,9 @@ import groovy.json.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType.*;
 
@@ -80,7 +80,7 @@ public class OdinInsightUtils {
             symbolsOfImportedPackage.setRoot(odinBuiltinSymbolsTable);
             return symbolsOfImportedPackage;
         }
-        OdinSymbolTable typeScope = type.getSymbolTable();
+        OdinSymbolTable typeSymbolTable = type.getSymbolTable();
         OdinSymbolTable symbolTable = new OdinSymbolTable();
         if (type instanceof TsOdinPointerType pointerType) {
             return getTypeElements(project, pointerType.getDereferencedType(), includeReferenceableSymbols);
@@ -90,11 +90,32 @@ public class OdinInsightUtils {
             return getTypeElements(project, constrainedType.getSpecializedType(), includeReferenceableSymbols);
         }
 
+        if (type instanceof TsOdinMetaType metaType && metaType.representedType() instanceof TsOdinPolymorphicType polymorphicType) {
+            OdinType psiType = polymorphicType.getPsiType();
+            if (psiType != null) {
+                if (psiType.getParent() instanceof OdinConstrainedType constrainedType) {
+                    OdinType specializedType = constrainedType.getTypeList().get(1);
+                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(typeSymbolTable, specializedType);
+                    if (tsOdinType instanceof TsOdinGenericType tsOdinGenericType) {
+                        List<TsOdinParameter> typeParameters = getTypeParameters(tsOdinGenericType.genericType());
+                        for (TsOdinParameter typeParameter : typeParameters) {
+                            OdinSymbol symbol = new OdinSymbol();
+                            symbol.setName(typeParameter.getName());
+                            symbol.setSymbolType(PARAMETER);
+                            symbol.setPsiType(typeParameter.getPsiType());
+                            symbol.setDeclaredIdentifier(typeParameter.getIdentifier());
+                            symbolTable.add(symbol);
+                        }
+                    }
+                }
+            }
+        }
+
         if (type.getPsiType() instanceof OdinStructType structType) {
             var structFields = OdinInsightUtils.getStructFields(type.getSymbolTable(), structType);
 
             symbolTable.addAll(structFields);
-            symbolTable.addTypes(typeScope);
+            symbolTable.addTypes(typeSymbolTable);
             return symbolTable;
         }
 
@@ -108,7 +129,7 @@ public class OdinInsightUtils {
             }
         }
 
-        if(type.getPsiType() instanceof OdinBitFieldType bitFieldType) {
+        if (type.getPsiType() instanceof OdinBitFieldType bitFieldType) {
             return symbolTable.with(getBitFieldFields(bitFieldType));
         }
 
@@ -161,6 +182,30 @@ public class OdinInsightUtils {
             }
         }
         return symbolTable;
+    }
+
+    private static List<TsOdinParameter> getTypeParameters(TsOdinType tsOdinType) {
+        if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
+            return tsOdinStructType.getParameters();
+        }
+
+        if (tsOdinType instanceof TsOdinUnionType tsOdinUnionType) {
+            return tsOdinUnionType.getParameters();
+        }
+
+        return Collections.emptyList();
+    }
+
+    private static @NotNull OdinSymbol createParaPolySymbol(TsOdinType tsOdinType) {
+        OdinSymbol symbol = new OdinSymbol();
+        symbol.setName(tsOdinType.getName());
+        symbol.setSymbolType(PARAMETER);
+        symbol.setPsiType(tsOdinType.getPsiType());
+        symbol.setScope(OdinSymbol.OdinScope.LOCAL);
+        symbol.setImplicitlyDeclared(false);
+        symbol.setDeclaredIdentifier(tsOdinType.getDeclaredIdentifier());
+        symbol.setVisibleThroughUsing(false);
+        return symbol;
     }
 
     @Nullable
@@ -297,7 +342,7 @@ public class OdinInsightUtils {
         }
 
         if (tsOdinType instanceof TsOdinBitFieldType bitFieldType) {
-            if(bitFieldType.getPsiType() instanceof OdinBitFieldType psiBitFieldType) {
+            if (bitFieldType.getPsiType() instanceof OdinBitFieldType psiBitFieldType) {
                 return getBitFieldFields(psiBitFieldType);
             }
             return Collections.emptyList();
@@ -538,7 +583,7 @@ public class OdinInsightUtils {
             elementSymbols.addAll(typeSymbols);
         }
 
-        if(tsOdinType instanceof TsOdinBitFieldType tsOdinBitFieldType) {
+        if (tsOdinType instanceof TsOdinBitFieldType tsOdinBitFieldType) {
             List<OdinSymbol> typeSymbols = getTypeElements(tsOdinBitFieldType, symbolTable);
             elementSymbols.addAll(typeSymbols);
         }
@@ -582,5 +627,102 @@ public class OdinInsightUtils {
         }
 
         return null;
+    }
+
+    public static @Nullable OdinSymbol findBuiltinSymbolOfCallExpression(OdinSymbolTable symbolTable, OdinCallExpression callExpression, Predicate<String> identifierPredicate) {
+        OdinSymbol symbol = null;
+        if (callExpression.getExpression() instanceof OdinRefExpression callRefExpression
+                && callRefExpression.getExpression() == null
+                && callRefExpression.getIdentifier() != null) {
+
+            String text = callRefExpression.getIdentifier().getText();
+            if (identifierPredicate.test(text)) {
+                symbol = symbolTable.getSymbol(text);
+            }
+        }
+        return symbol;
+    }
+
+    public static @Nullable Map<OdinExpression, TsOdinParameter> getArgumentToParameterMap(List<TsOdinParameter> parameters,
+                                                                                           @NotNull List<OdinArgument> argumentList) {
+        return getArgumentToParameterMap(parameters, argumentList, false);
+    }
+
+    public static @Nullable Map<OdinExpression, TsOdinParameter> getArgumentToParameterMap(List<TsOdinParameter> parameters,
+                                                                                           @NotNull List<OdinArgument> argumentList,
+                                                                                           boolean includeDefaultParameters) {
+        Map<String, TsOdinParameter> parametersByName = parameters.stream().collect(Collectors.toMap(
+                TsOdinParameter::getName,
+                v -> v
+        ));
+
+        Map<Integer, TsOdinParameter> parametersByIndex = parameters.stream().collect(Collectors.toMap(
+                TsOdinParameter::getIndex,
+                v -> v
+        ));
+
+        Map<OdinExpression, TsOdinParameter> argumentExpressions = new HashMap<>();
+        int index = 0;
+
+        ArrayList<TsOdinParameter> usedParameters = new ArrayList<>(parameters);
+        boolean nameOnly = false;
+        boolean invalidArguments = false;
+        for (OdinArgument odinArgument : argumentList) {
+            if (odinArgument instanceof OdinUnnamedArgument unnamedArgument) {
+                if (nameOnly) {
+                    invalidArguments = true;
+                    break;
+                }
+                TsOdinParameter tsOdinParameter = parametersByIndex.get(index);
+                if (tsOdinParameter == null) {
+                    invalidArguments = true;
+                    break;
+                }
+
+                argumentExpressions.put(unnamedArgument.getExpression(), tsOdinParameter);
+                usedParameters.remove(tsOdinParameter);
+            }
+
+            if (odinArgument instanceof OdinNamedArgument namedArgument) {
+                TsOdinParameter tsOdinParameter = parametersByName.get(namedArgument.getIdentifier().getText());
+                if (tsOdinParameter == null || !usedParameters.contains(tsOdinParameter)) {
+                    invalidArguments = true;
+                    break;
+                }
+                nameOnly = true;
+                argumentExpressions.put(namedArgument.getExpression(), tsOdinParameter);
+                usedParameters.remove(tsOdinParameter);
+            }
+            index++;
+        }
+
+        for (int i = usedParameters.size() - 1; i >= 0; i--) {
+            TsOdinParameter tsOdinParameter = usedParameters.get(i);
+            if (tsOdinParameter.getDefaultValueExpression() != null) {
+                if (includeDefaultParameters) {
+                    argumentExpressions.put(tsOdinParameter.getDefaultValueExpression(), tsOdinParameter);
+                }
+                usedParameters.remove(tsOdinParameter);
+            } else {
+                invalidArguments = true;
+                break;
+            }
+        }
+
+        if (invalidArguments)
+            return null;
+        return argumentExpressions;
+    }
+
+    public static TsOdinType getReferenceableType(TsOdinType tsOdinRefExpressionType) {
+        if (tsOdinRefExpressionType instanceof TsOdinTypeAlias typeAlias) {
+            return getReferenceableType(typeAlias.getBaseType());
+        }
+
+        if (tsOdinRefExpressionType instanceof TsOdinPointerType pointerType) {
+            return getReferenceableType(pointerType.getDereferencedType());
+        }
+
+        return tsOdinRefExpressionType;
     }
 }

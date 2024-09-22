@@ -25,7 +25,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public @NotNull TextRange getAbsoluteRange() {
-        return super.getAbsoluteRange();
+        return getRangeInElement().shiftRight(getElement().getIdentifierToken().getTextRange().getStartOffset());
     }
 
     @Override

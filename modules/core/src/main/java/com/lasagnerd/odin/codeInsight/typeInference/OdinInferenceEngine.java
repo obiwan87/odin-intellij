@@ -12,8 +12,10 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType.*;
 
@@ -177,7 +179,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
             // extract symbol table
-            tsOdinRefExpressionType = getReferenceableType(doInferType(symbolTable, refExpression.getExpression()));
+            tsOdinRefExpressionType = OdinInsightUtils.getReferenceableType(doInferType(symbolTable, refExpression.getExpression()));
             OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(refExpression.getProject(), tsOdinRefExpressionType, true);
 
             if (tsOdinRefExpressionType instanceof TsOdinPackageReferenceType) {
@@ -185,6 +187,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 globalSymbolTable = typeSymbols;
             } else {
                 globalSymbolTable = tsOdinRefExpressionType.getSymbolTable();
+                globalSymbolTable.getTypeTable().putAll(typeSymbols.getTypeTable());
                 localSymbolTable = typeSymbols;
             }
             // The resolved polymorphic types must be taken over from type scope
@@ -316,18 +319,6 @@ public class OdinInferenceEngine extends OdinVisitor {
         return null;
     }
 
-    private static TsOdinType getReferenceableType(TsOdinType tsOdinRefExpressionType) {
-        if (tsOdinRefExpressionType instanceof TsOdinTypeAlias typeAlias) {
-            return getReferenceableType(typeAlias.getBaseType());
-        }
-
-        if (tsOdinRefExpressionType instanceof TsOdinPointerType pointerType) {
-            return getReferenceableType(pointerType.getDereferencedType());
-        }
-
-        return tsOdinRefExpressionType;
-    }
-
     private static @NotNull TsOdinMetaType createBuiltinMetaType(String name) {
         TsOdinBuiltInType builtInType = TsOdinBuiltInTypes.getBuiltInType(name);
         TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(builtInType.getMetaType());
@@ -378,7 +369,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 TsOdinProcedureOverloadType procedureOverloadType = (TsOdinProcedureOverloadType) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
                 List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>>>> compatibleProcedures = new ArrayList<>();
                 for (TsOdinProcedureType targetProcedure : procedureOverloadType.getTargetProcedures()) {
-                    @Nullable Map<OdinExpression, TsOdinParameter> argumentExpressions = getArgumentToParameterMap(targetProcedure, o.getArgumentList());
+                    @Nullable Map<OdinExpression, TsOdinParameter> argumentExpressions = OdinInsightUtils.getArgumentToParameterMap(targetProcedure.getParameters(), o.getArgumentList());
                     if (argumentExpressions == null) continue;
 
                     boolean allParametersCompatible = true;
@@ -459,67 +450,6 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
     }
 
-    private static @Nullable Map<OdinExpression, TsOdinParameter> getArgumentToParameterMap(TsOdinProcedureType targetProcedure, @NotNull List<OdinArgument> argumentList) {
-        Map<String, TsOdinParameter> parametersByName = targetProcedure.getParameters().stream().collect(Collectors.toMap(
-                TsOdinParameter::getName,
-                v -> v
-        ));
-
-        Map<Integer, TsOdinParameter> parametersByIndex = targetProcedure.getParameters().stream().collect(Collectors.toMap(
-                TsOdinParameter::getIndex,
-                v -> v
-        ));
-
-        Map<OdinExpression, TsOdinParameter> argumentExpressions = new HashMap<>();
-        int index = 0;
-
-        ArrayList<TsOdinParameter> usedParameters = new ArrayList<>(targetProcedure.getParameters());
-        boolean nameOnly = false;
-        boolean invalidArguments = false;
-        for (OdinArgument odinArgument : argumentList) {
-            if (odinArgument instanceof OdinUnnamedArgument unnamedArgument) {
-                if (nameOnly) {
-                    invalidArguments = true;
-                    break;
-                }
-                TsOdinParameter tsOdinParameter = parametersByIndex.get(index);
-                if (tsOdinParameter == null) {
-                    invalidArguments = true;
-                    break;
-                }
-
-                argumentExpressions.put(unnamedArgument.getExpression(), tsOdinParameter);
-                usedParameters.remove(tsOdinParameter);
-            }
-
-            if (odinArgument instanceof OdinNamedArgument namedArgument) {
-                TsOdinParameter tsOdinParameter = parametersByName.get(namedArgument.getIdentifier().getText());
-                if (tsOdinParameter == null || !usedParameters.contains(tsOdinParameter)) {
-                    invalidArguments = true;
-                    break;
-                }
-                nameOnly = true;
-                argumentExpressions.put(namedArgument.getExpression(), tsOdinParameter);
-                usedParameters.remove(tsOdinParameter);
-            }
-            index++;
-        }
-
-        for (int i = usedParameters.size() - 1; i >= 0; i--) {
-            TsOdinParameter tsOdinParameter = usedParameters.get(i);
-            if (tsOdinParameter.getDefaultValueExpression() != null) {
-                usedParameters.remove(tsOdinParameter);
-            } else {
-                invalidArguments = true;
-                break;
-            }
-        }
-
-        if (invalidArguments)
-            return null;
-        return argumentExpressions;
-    }
-
     private static @Nullable TsOdinProcedureType breakTie(List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>>>> compatibleProcedures) {
         // tie-breaker if possible
 
@@ -547,6 +477,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     private TsOdinType inferTypeOfProcedureCall(@NotNull OdinCallExpression o, TsOdinProcedureType procedureType) {
+        // TODO OdinSymbol soaZip = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("soa_zip"));
         if (!procedureType.getReturnTypes().isEmpty()) {
             TsOdinProcedureType specializedType = OdinTypeSpecializer
                     .specializeProcedure(symbolTable, o.getArgumentList(), procedureType);
@@ -567,7 +498,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         OdinExpression expression = o.getExpression();
         TsOdinType tsOdinType = doInferType(symbolTable, expression);
 
-        tsOdinType = getReferenceableType(tsOdinType);
+        tsOdinType = OdinInsightUtils.getReferenceableType(tsOdinType);
 
         if (tsOdinType instanceof TsOdinPointerType pointerType) {
             tsOdinType = pointerType.getDereferencedType();
@@ -612,7 +543,11 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitSliceExpression(@NotNull OdinSliceExpression o) {
         OdinExpression expression = o.getExpression();
         TsOdinType tsOdinType = doInferType(symbolTable, expression);
-        if (tsOdinType instanceof TsOdinSliceType) {
+        if (tsOdinType instanceof TsOdinSliceType
+                || tsOdinType instanceof TsOdinMultiPointerType
+                || tsOdinType instanceof TsOdinArrayType
+                || tsOdinType instanceof TsOdinDynamicArray
+        ) {
             this.type = tsOdinType;
         }
     }
@@ -940,7 +875,6 @@ public class OdinInferenceEngine extends OdinVisitor {
             return OdinTypeResolver.resolveType(parentSymbolTable, fieldDeclarationStatement.getType());
         }
 
-        // TODO add support for #any_int
         if (odinDeclaration instanceof OdinParameterDeclarator parameterDeclaration) {
             OdinType parameterType = parameterDeclaration
                     .getTypeDefinitionContainer()
@@ -1063,7 +997,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 // TODO Range expression should be treated differently. For now, just take the type the expression resolves to
                 OdinExpression expression = forInBlock.getForInParameterDeclaration().getExpression();
-                TsOdinType tsOdinType = getReferenceableType(inferType(parentSymbolTable, expression));
+                TsOdinType tsOdinType = OdinInsightUtils.getReferenceableType(inferType(parentSymbolTable, expression));
                 if (tsOdinType instanceof TsOdinMapType mapType) {
                     if (index == 0) {
                         return createReferenceType(mapType.getKeyType(), isReference);
@@ -1283,7 +1217,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                         callingProcedure = (TsOdinProcedureType) metaType.getRepresentedType();
                     }
 
-                    Map<OdinExpression, TsOdinParameter> argumentToParameterMap = getArgumentToParameterMap(callingProcedure, callExpression.getArgumentList());
+                    Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(callingProcedure.getParameters(), callExpression.getArgumentList());
                     if (argumentToParameterMap != null) {
                         TsOdinParameter tsOdinParameter = argumentToParameterMap.get(rhsExpression);
                         return unfoldExpression(tsOdinParameter.getType(), rhsExpression, position);

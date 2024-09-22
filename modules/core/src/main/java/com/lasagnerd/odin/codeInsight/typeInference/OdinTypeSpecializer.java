@@ -118,32 +118,11 @@ public class OdinTypeSpecializer {
             List<OdinArgument> arguments
     ) {
         OdinSymbolTable instantiationScope = specializedType.getSymbolTable();
-
-        if (!arguments.isEmpty()) {
-            for (int i = 0; i < arguments.size(); i++) {
-                final int currentIndex = i;
-                OdinArgument odinArgument = arguments.get(i);
-
-                OdinExpression argumentExpression = null;
-                TsOdinParameter tsOdinParameter = null;
-
-                if (odinArgument instanceof OdinUnnamedArgument argument) {
-                    argumentExpression = argument.getExpression();
-                    tsOdinParameter = parameters.stream()
-                            .filter(p -> p.getIndex() == currentIndex)
-                            .findFirst().orElse(null);
-                }
-
-                if (odinArgument instanceof OdinNamedArgument argument) {
-                    tsOdinParameter = parameters.stream()
-                            .filter(p -> argument.getIdentifier().getText().equals(p.getName()))
-                            .findFirst().orElse(null);
-                    argumentExpression = argument.getExpression();
-                }
-
-                if (argumentExpression == null || tsOdinParameter == null)
-                    continue;
-
+        Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(parameters, arguments, true);
+        if (argumentToParameterMap != null) {
+            for (Map.Entry<OdinExpression, TsOdinParameter> entry : argumentToParameterMap.entrySet()) {
+                OdinExpression argumentExpression = entry.getKey();
+                TsOdinParameter tsOdinParameter = entry.getValue();
                 TsOdinType argumentType = resolveArgumentType(argumentExpression, tsOdinParameter, outerScope);
                 if (argumentType.isUnknown()) {
                     System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n in %s",
@@ -172,8 +151,8 @@ public class OdinTypeSpecializer {
                 if (specializedType instanceof TsOdinGenericType generalizableType) {
                     generalizableType.getResolvedPolymorphicParameters().putAll(resolvedTypes);
                 }
-                for (Map.Entry<String, TsOdinType> entry : resolvedTypes.entrySet()) {
-                    instantiationScope.addType(entry.getKey(), entry.getValue());
+                for (Map.Entry<String, TsOdinType> resolvedTypeEntry : resolvedTypes.entrySet()) {
+                    instantiationScope.addType(resolvedTypeEntry.getKey(), resolvedTypeEntry.getValue());
                 }
             }
         }
