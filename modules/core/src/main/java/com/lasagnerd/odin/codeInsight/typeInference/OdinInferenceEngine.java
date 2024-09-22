@@ -412,9 +412,42 @@ public class OdinInferenceEngine extends OdinVisitor {
                     this.type = inferTypeOfProcedureCall(o, compatibleProcedures.getFirst().getFirst());
                 } else if (!compatibleProcedures.isEmpty()) {
                     TsOdinProcedureType bestProcedure = breakTie(compatibleProcedures);
-                    System.out.println("Could not determine best procedure for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
                     if (bestProcedure != null) {
                         this.type = inferTypeOfProcedureCall(o, bestProcedure);
+                    } else {
+                        boolean sameReturnTypes = true;
+                        outer:
+                        for (int i = 0; i < compatibleProcedures.size() - 1; i++) {
+                            TsOdinProcedureType a = compatibleProcedures.get(i).getFirst();
+                            for (int j = i + 1; j < compatibleProcedures.size(); j++) {
+                                TsOdinProcedureType b = compatibleProcedures.get(i).getFirst();
+                                if (a.getReturnTypes().size() == b.getReturnTypes().size()) {
+                                    for (int k = 0; k < a.getReturnTypes().size(); k++) {
+                                        TsOdinType returnTypeA = a.getReturnTypes().get(k);
+                                        TsOdinType returnTypeB = a.getReturnTypes().get(k);
+                                        if (!OdinTypeChecker.checkTypesStrictly(returnTypeA, returnTypeB) &&
+                                                !OdinTypeChecker.checkTypesStrictly(returnTypeB, returnTypeA)
+                                        ) {
+                                            sameReturnTypes = false;
+                                            break outer;
+                                        }
+                                    }
+                                } else {
+                                    sameReturnTypes = false;
+                                    break outer;
+                                }
+                            }
+                        }
+
+                        if (sameReturnTypes) {
+                            TsOdinProcedureType firstProcedure = compatibleProcedures.getFirst().getFirst();
+                            if (!firstProcedure.getReturnTypes().isEmpty()) {
+                                this.type = inferTypeOfProcedureCall(o, compatibleProcedures.getFirst().getFirst());
+                            } else {
+                                this.type = TsOdinBuiltInTypes.VOID;
+                            }
+                        }
+                        System.out.println("Could not determine best procedure for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
                     }
                 } else {
                     System.out.println("Could not find any compatible candidate for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
@@ -1245,7 +1278,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 if (tsOdinType instanceof TsOdinMetaType metaType && metaType.getRepresentedMetaType() == PROCEDURE) {
                     TsOdinProcedureType callingProcedure;
                     if (metaType.getRepresentedType() == null) {
-                        callingProcedure = (TsOdinProcedureType) OdinTypeResolver.resolveType(symbolTable, metaType.getPsiType());
+                        callingProcedure = (TsOdinProcedureType) OdinTypeResolver.resolveType(metaType.getSymbolTable(), metaType.getPsiType());
                     } else {
                         callingProcedure = (TsOdinProcedureType) metaType.getRepresentedType();
                     }
@@ -1276,7 +1309,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     private static @Nullable PsiElement findFirstRhsExpression(PsiElement psiElement) {
-        return findParentOfType(
+        return OdinInsightUtils.findParentOfType(
                 psiElement,
                 false,
                 new Class<?>[]{
@@ -1290,33 +1323,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                         OdinLhs.class,
                 }
         );
-    }
-
-    private static PsiElement findParentOfType(PsiElement psiElement, boolean strict, Class<?>[] parentTypes, Class<?>[] stopAt) {
-        boolean[] invalid = {false};
-
-        PsiElement firstParent = PsiTreeUtil.findFirstParent(psiElement, strict, p -> {
-            for (Class<?> clazz : stopAt) {
-                if (clazz.isInstance(p)) {
-                    invalid[0] = true;
-                    return true;
-                }
-            }
-
-            for (Class<?> clazz : parentTypes) {
-                if (clazz.isInstance(p)) {
-                    invalid[0] = false;
-                    return true;
-                }
-            }
-            return false;
-        });
-
-        if (!invalid[0]) {
-            return firstParent;
-        }
-
-        return null;
     }
 
     @Override

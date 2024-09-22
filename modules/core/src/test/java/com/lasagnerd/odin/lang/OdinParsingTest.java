@@ -2028,5 +2028,51 @@ public class OdinParsingTest extends UsefulTestCase {
         }
 
     }
+    
 
+
+    public void testRecursiveStruct() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testRecursiveStruct", "x");
+            TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+            TsOdinStructType tsOdinStructType = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinStructType.class);
+            assertEquals("Node", tsOdinStructType.getName());
+        }
+    }
+
+    public void testPsiFileAtOffset() throws IOException {
+        OdinFile file = load("D:\\dev\\code\\Odin\\core\\image\\tga\\tga.odin");
+        {
+            PsiElement element = file.findElementAt(3056);
+            OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(element, OdinCallExpression.class);
+
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(callExpression);
+            System.out.println(tsOdinType);
+        }
+    }
+
+    public void testOffsetOf() throws IOException {
+        OdinFile file = load("src/test/testData/type_inference.odin");
+        {
+            OdinExpression firstExpressionOfVariable = findFirstExpressionOfVariable(file, "testOffsetOfSymbols", "offset");
+            OdinArgument[] arguments = PsiTreeUtil.getChildrenOfType(firstExpressionOfVariable, OdinArgument.class);
+
+            OdinUnnamedArgument argument = (OdinUnnamedArgument) Objects.requireNonNull(arguments)[1];
+            assertEquals("x", argument.getText());
+            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(argument.getExpression());
+            assertNotNull(symbolTable.getSymbol("x"));
+            assertNotNull(symbolTable.getSymbol("y"));
+        }
+    }
+    public void testFreeBsd() {
+        // socket_freebsd: 11199
+        String path = "D:\\dev\\code\\Odin\\core\\net\\socket_freebsd.odin";
+        // tga: 3167
+        // time_wasi: 376
+        // where constraints
+        // offset_of
+
+
+    }
 }

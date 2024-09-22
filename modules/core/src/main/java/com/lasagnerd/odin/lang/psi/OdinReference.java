@@ -41,16 +41,16 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
             return null;
         }
 
-//        try {
+        try {
             OdinSymbol firstDeclaration = OdinSymbolTableResolver.findSymbol(getElement());
             if (firstDeclaration != null) {
                 return firstDeclaration.getDeclaredIdentifier();
             }
             return null;
-//        } catch (StackOverflowError e) {
-//            logStackOverFlowError(getElement(), LOG);
-//            return null;
-//        }
+        } catch (StackOverflowError e) {
+            logStackOverFlowError(getElement(), LOG);
+            return null;
+        }
     }
 
     public static void logStackOverFlowError(@NotNull OdinIdentifier element, Logger log) {

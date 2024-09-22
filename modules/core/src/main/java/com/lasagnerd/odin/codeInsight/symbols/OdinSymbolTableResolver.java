@@ -140,8 +140,9 @@ public class OdinSymbolTableResolver {
 
         List<OdinSymbol> builtInSymbols = getBuiltInSymbols(project);
 
+        OdinSymbolTable builtinSymbolTable = OdinSymbolTable.from(builtInSymbols);
         // 0. Import built-in symbols
-        symbolTable.addAll(builtInSymbols);
+        symbolTable.setRoot(builtinSymbolTable);
 
         // 1. Import symbols from this file
         // Will be done organically by going up tree
@@ -169,10 +170,11 @@ public class OdinSymbolTableResolver {
             }
         }
 
+
         // 3. Import symbols from the scope tree
         OdinSymbolTable odinSymbolTable = doFindVisibleSymbols(packagePath, element, s -> false, false, symbolTable);
         odinSymbolTable.setPackagePath(packagePath);
-        odinSymbolTable.setRoot(symbolTable);
+//        odinSymbolTable.setRoot(symbolTable);
 
         return odinSymbolTable;
     }
@@ -191,6 +193,7 @@ public class OdinSymbolTableResolver {
                 }
             }
         }
+
         return OdinSymbol.OdinVisibility.PUBLIC;
     }
 
@@ -295,11 +298,12 @@ public class OdinSymbolTableResolver {
             OdinSymbolTable parentSymbolTable = findSymbols(containingScopeBlock, constantsOnlyNext);
             symbolTable.setParentSymbolTable(parentSymbolTable);
 
+
             // Bring field declarations and swizzle into scope
             OdinLhs lhs = PsiTreeUtil.getParentOfType(position, OdinLhs.class, false);
             if (lhs != null && containingScopeBlock instanceof OdinCompoundLiteral compoundLiteral) {
                 TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(symbolTable, compoundLiteral);
-                List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, symbolTable);
+                List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, tsOdinType.getSymbolTable());
                 symbolTable.addAll(elementSymbols);
             }
 
@@ -314,6 +318,10 @@ public class OdinSymbolTableResolver {
                     //                    }
                     symbolTable.add(builtinSymbolService.createImplicitStructSymbol("context", "Context"));
                 }
+            }
+
+            if (containingScopeBlock instanceof OdinArgument argument) {
+                addOffsetOfSymbols(argument, symbolTable);
             }
 
             // Finds the child of the scope block, where of which this element is a child. If we find the parent, this is guaranteed
@@ -347,8 +355,9 @@ public class OdinSymbolTableResolver {
 
 
                     // Add stuff if we are in file scope (e.g. global variables)
-                    boolean shouldAdd = fileScope ||
-                            isStrictlyBefore(declaration, positionCheckResult);
+                    boolean shouldAdd = fileScope
+                            || containingScopeBlock instanceof OdinForeignBlock
+                            || isStrictlyBefore(declaration, positionCheckResult);
 
                     if (shouldAdd) {
                         symbolTable.add(symbol);
@@ -360,6 +369,47 @@ public class OdinSymbolTableResolver {
             }
 
             return symbolTable;
+        }
+
+        private void addOffsetOfSymbols(OdinArgument argument, OdinSymbolTable symbolTable) {
+            OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class);
+            if (callExpression != null && callExpression.getArgumentList().size() == 2) {
+                if (argument == callExpression.getArgumentList().get(1)) {
+                    if (callExpression.getExpression() instanceof OdinRefExpression callRefExpression
+                            && callRefExpression.getExpression() == null
+                            && callRefExpression.getIdentifier() != null) {
+                        String text = callRefExpression.getIdentifier().getText();
+                        if (text.equals("offset_of") || text.equals("offset_of_member")) {
+                            OdinSymbol symbol = symbolTable.getSymbol(text);
+                            if (symbol != null && symbol.isBuiltin()) {
+                                OdinArgument odinArgument = callExpression.getArgumentList().getFirst();
+                                OdinExpression typeExpression = getArgumentExpression(odinArgument);
+                                if (typeExpression != null) {
+                                    TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, typeExpression);
+                                    if (tsOdinType instanceof TsOdinMetaType metaType) {
+                                        if (metaType.representedType() instanceof TsOdinStructType structType) {
+                                            OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(argument.getProject(), structType);
+                                            symbolTable.putAll(typeElements);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private static @Nullable OdinExpression getArgumentExpression(OdinArgument odinArgument) {
+            OdinExpression typeExpression;
+            if (odinArgument instanceof OdinUnnamedArgument typeArgument) {
+                typeExpression = typeArgument.getExpression();
+            } else if (odinArgument instanceof OdinNamedArgument namedTypeArgument) {
+                typeExpression = namedTypeArgument.getExpression();
+            } else {
+                typeExpression = null;
+            }
+            return typeExpression;
         }
 
         private boolean isPolymorphicParameter(OdinDeclaration declaration) {
@@ -580,13 +630,13 @@ public class OdinSymbolTableResolver {
 
         // Within param entries, polymorphic parameters and other constant declaration are not visible
         // from earlier parameters
-        if(commonParent instanceof OdinParamEntries paramEntries) {
+        if (commonParent instanceof OdinParamEntries paramEntries) {
             OdinParamEntry paramEntryPosition = (OdinParamEntry) PsiTreeUtil.findPrevParent(commonParent, position);
             OdinParamEntry paramEntryDeclaration = (OdinParamEntry) PsiTreeUtil.findPrevParent(commonParent, declaration);
 
             int indexPosition = paramEntries.getParamEntryList().indexOf(paramEntryPosition);
             int indexDeclaration = paramEntries.getParamEntryList().indexOf(paramEntryDeclaration);
-            if(indexPosition < indexDeclaration) {
+            if (indexPosition < indexDeclaration) {
                 return new PositionCheckResult(false, commonParent, declaration);
             }
         }

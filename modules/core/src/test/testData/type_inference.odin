@@ -654,3 +654,17 @@ testPointerToCompoundLiteral :: proc() {
 
     proc_call := p(&{ x = 3 })
 }
+
+testRecursiveStruct :: proc() {
+    Node :: struct {
+        prev: ^Node,
+        next: ^Node
+    }
+
+    n := Node{}
+    x := n.next.prev
+}
+
+testOffsetOfSymbols :: proc() {
+    offset := offset_of(Point, x)
+}

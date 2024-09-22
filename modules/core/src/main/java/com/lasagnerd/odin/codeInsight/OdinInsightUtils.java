@@ -208,7 +208,6 @@ public class OdinInsightUtils {
 
     public static List<OdinSymbol> getStructFields(OdinSymbolTable symbolTable, @NotNull OdinStructType structType) {
         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structType);
-//        symbolTable = OdinSymbolTableResolver.computeSymbolTable(structType);
         List<OdinSymbol> symbols = new ArrayList<>();
         for (OdinFieldDeclarationStatement field : fieldDeclarationStatementList) {
             for (OdinDeclaredIdentifier odinDeclaredIdentifier : field.getDeclaredIdentifiers()) {
@@ -556,5 +555,32 @@ public class OdinInsightUtils {
         }
 
         return elementSymbols;
+    }
+
+    public static PsiElement findParentOfType(PsiElement psiElement, boolean strict, Class<?>[] parentTypes, Class<?>[] stopAt) {
+        boolean[] invalid = {false};
+
+        PsiElement firstParent = PsiTreeUtil.findFirstParent(psiElement, strict, p -> {
+            for (Class<?> clazz : stopAt) {
+                if (clazz.isInstance(p)) {
+                    invalid[0] = true;
+                    return true;
+                }
+            }
+
+            for (Class<?> clazz : parentTypes) {
+                if (clazz.isInstance(p)) {
+                    invalid[0] = false;
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        if (!invalid[0]) {
+            return firstParent;
+        }
+
+        return null;
     }
 }

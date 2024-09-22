@@ -140,6 +140,12 @@ public class OdinTypeChecker {
             return;
         }
 
+        if(type instanceof TsOdinPolymorphicType) {
+            typeCheckResult.setPolymorphic(true);
+            typeCheckResult.setCompatible(true);
+            return;
+        }
+
         if (expectedType instanceof TsOdinConstrainedType constrainedType) {
             if (type instanceof TsOdinMetaType metaType) {
                 TsOdinType representedType = metaType.getRepresentedType();

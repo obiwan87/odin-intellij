@@ -3,10 +3,7 @@ package com.lasagnerd.odin.codeInsight.typeInference;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import lombok.EqualsAndHashCode;
@@ -287,19 +284,27 @@ public class OdinTypeResolver extends OdinVisitor {
                 OdinDeclaration.class);
 
         // TODO: do we need to recompute the symbol table for each declaration type?
-
+        OdinSymbolTable typeSymbolTable;
+        if (odinDeclaration != null) {
+            typeSymbolTable = OdinSymbolTableResolver.computeSymbolTable(odinDeclaration);
+            typeSymbolTable.getKnownTypes().putAll(symbolTable.getKnownTypes());
+            typeSymbolTable.getSpecializedTypes().putAll(symbolTable.getSpecializedTypes());
+        } else {
+            typeSymbolTable = OdinSymbolTable.EMPTY;
+        }
         switch (odinDeclaration) {
             case OdinStructDeclarationStatement structDeclarationStatement -> {
-                return doResolveType(symbolTable, identifier, odinDeclaration, structDeclarationStatement.getStructType());
+                return doResolveType(typeSymbolTable, identifier, odinDeclaration, structDeclarationStatement.getStructType());
             }
             case OdinEnumDeclarationStatement enumDeclarationStatement -> {
-                return doResolveType(symbolTable, identifier, odinDeclaration, enumDeclarationStatement.getEnumType());
+                return doResolveType(typeSymbolTable, identifier, odinDeclaration, enumDeclarationStatement.getEnumType());
             }
             case OdinUnionDeclarationStatement unionDeclarationStatement -> {
-                return doResolveType(symbolTable, identifier, odinDeclaration, unionDeclarationStatement.getUnionType());
+
+                return doResolveType(typeSymbolTable, identifier, odinDeclaration, unionDeclarationStatement.getUnionType());
             }
             case OdinProcedureDeclarationStatement procedureDeclarationStatement -> {
-                return doResolveType(symbolTable, identifier, odinDeclaration, procedureDeclarationStatement.getProcedureDefinition().getProcedureType());
+                return doResolveType(typeSymbolTable, identifier, odinDeclaration, procedureDeclarationStatement.getProcedureDefinition().getProcedureType());
             }
             case OdinConstantInitializationStatement constantInitializationStatement -> {
                 List<OdinExpression> expressionList = constantInitializationStatement.getExpressionsList().getExpressionList();
@@ -315,11 +320,13 @@ public class OdinTypeResolver extends OdinVisitor {
                     OdinExpression odinExpression = expressionList.get(index);
                     // TODO this might light to a stackoverflow error because symbol table might contain the symbols
                     //  that will be needed by odinExpression as well
-                    OdinSymbolTable expressionSymbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
-                    TsOdinType tsOdinType = doInferType(expressionSymbolTable, odinExpression);
+                    TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
+                    typeAlias.setName(identifier.getText());
+                    addKnownType(typeAlias, identifier, odinDeclaration, typeSymbolTable);
+                    TsOdinType tsOdinType = doInferType(typeSymbolTable, odinExpression);
                     if (tsOdinType instanceof TsOdinMetaType metaType) {
                         TsOdinType resolvedMetaType = doResolveMetaType(metaType.getSymbolTable(), metaType);
-                        return createTypeAliasFromMetaType(identifier, resolvedMetaType, odinDeclaration, odinExpression);
+                        return createTypeAliasFromMetaType(typeAlias, identifier, resolvedMetaType, odinDeclaration, odinExpression);
                     }
                     return TsOdinBuiltInTypes.UNKNOWN;
                 }
@@ -343,11 +350,11 @@ public class OdinTypeResolver extends OdinVisitor {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    public static @NotNull TsOdinTypeAlias createTypeAliasFromMetaType(OdinDeclaredIdentifier identifier,
+    public static @NotNull TsOdinTypeAlias createTypeAliasFromMetaType(TsOdinTypeAlias typeAlias,
+                                                                       OdinDeclaredIdentifier identifier,
                                                                        TsOdinType resolvedMetaType,
                                                                        OdinDeclaration odinDeclaration,
                                                                        OdinExpression odinExpression) {
-        TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
         typeAlias.setAliasedType(resolvedMetaType);
         typeAlias.setDeclaration(odinDeclaration);
         typeAlias.setDeclaredIdentifier(identifier);
@@ -485,7 +492,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
         List<TsOdinParameter> parameters = createParameters(tsOdinUnionType, unionType.getParamEntryList());
         tsOdinUnionType.setParameters(parameters);
-
+        addKnownType(tsOdinUnionType, typeDeclaredIdentifier, typeDeclaration, tsOdinUnionType.getSymbolTable());
         OdinUnionBody unionBody = unionType.getUnionBlock().getUnionBody();
         if (unionBody != null) {
             List<OdinType> types = unionBody.getTypeList();
@@ -499,6 +506,17 @@ public class OdinTypeResolver extends OdinVisitor {
             }
         }
         this.type = tsOdinUnionType;
+    }
+
+    private static void addKnownType(TsOdinType tsOdinType,
+                                     OdinDeclaredIdentifier declaredIdentifier,
+                                     OdinDeclaration declaration,
+                                     OdinSymbolTable symbolTable) {
+        if (declaredIdentifier != null) {
+            symbolTable.addKnownType(declaredIdentifier, tsOdinType);
+            List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getLocalSymbols(declaration);
+            symbolTable.add(localSymbols.getFirst());
+        }
     }
 
     @Override
@@ -599,7 +617,7 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinStructType tsOdinStructType = new TsOdinStructType();
         tsOdinStructType.setPsiType(structType);
         initializeNamedType(tsOdinStructType);
-
+        addKnownType(tsOdinStructType, this.typeDeclaredIdentifier, this.typeDeclaration, tsOdinStructType.getSymbolTable());
         List<OdinParamEntry> paramEntries = structType.getParamEntryList();
 
         List<TsOdinParameter> parameters = createParameters(tsOdinStructType, paramEntries);
