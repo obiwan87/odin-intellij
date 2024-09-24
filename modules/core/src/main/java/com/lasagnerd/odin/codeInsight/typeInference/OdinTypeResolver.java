@@ -309,7 +309,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 return doResolveType(typeSymbolTable, identifier, odinDeclaration, procedureDeclarationStatement.getProcedureDefinition().getProcedureType());
             }
             case OdinConstantInitializationStatement constantInitializationStatement -> {
-                List<OdinExpression> expressionList = constantInitializationStatement.getExpressionsList().getExpressionList();
+                List<OdinExpression> expressionList = constantInitializationStatement.getExpressionList();
                 if (!expressionList.isEmpty()) {
                     int index = constantInitializationStatement.getDeclaredIdentifiers().indexOf(identifier);
                     if (index == -1) {

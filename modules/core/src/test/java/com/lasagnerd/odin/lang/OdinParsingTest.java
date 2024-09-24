@@ -2083,7 +2083,6 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             var proc = findFirstProcedure(file, "testFieldsOfParaPoly");
 
-
             OdinWhereClause whereClause = PsiTreeUtil.findChildOfType(proc, OdinWhereClause.class);
             OdinRefExpression refExpression = Objects.requireNonNull(PsiTreeUtil.findChildOfType(whereClause, OdinRefExpression.class));
 

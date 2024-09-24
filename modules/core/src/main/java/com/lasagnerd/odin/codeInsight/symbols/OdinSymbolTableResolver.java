@@ -509,11 +509,10 @@ public class OdinSymbolTableResolver {
         }
 
         if (containingScopeBlock instanceof OdinSwitchBlock switchBlock) {
+            if(switchBlock.getSwitchInClause() != null) {
+                declarations.add(switchBlock.getSwitchInClause().getSwitchTypeVariableDeclaration());
+            }
             addControlFlowInit(switchBlock.getControlFlowInit(), declarations);
-        }
-
-        if (containingScopeBlock instanceof OdinSwitchInBlock switchInBlock) {
-            declarations.add(switchInBlock.getSwitchTypeVariableDeclaration());
         }
 
         if (containingScopeBlock instanceof OdinUnionType unionType) {

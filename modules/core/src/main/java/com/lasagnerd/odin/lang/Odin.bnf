@@ -184,7 +184,7 @@
 
 odinFile                             ::= fileScope
 
-// General recovery rules
+// General recover rules
 private eos_recover ::= !eos
 
 fileScope                            ::= buildFlag* packageDeclaration eos importStatementsContainer? fileScopeStatementList <<eof>> {
@@ -235,9 +235,12 @@ foreignBlockStatement                ::= variableDeclarationStatement
 // Attributes
 attribute                           ::= AT IDENTIFIER_TOKEN
                                          | AT LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
+
 // Struct
 structDeclarationStatement           ::= (attribute eos?)* declaredIdentifier doubleColonOperator DISTINCT? structType
-structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? structBlock {methods=[getParamEntryList] implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? structBlock
+                                            { methods=[getParamEntryList]
+                                              implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 fieldDeclarationStatement            ::= USING? directiveIdentifier? declaredIdentifier (COMMA declaredIdentifier)* COLON type [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
@@ -267,9 +270,15 @@ bitFieldFieldDeclaration             ::= declaredIdentifier COLON type PIPE expr
 bitsetDeclarationStatement           ::= (attribute eos?)* declaredIdentifier doubleColonOperator DISTINCT? bitSetType
 
 // Procedure
-procedureDeclarationStatement        ::= (attribute eos?)* declaredIdentifier doubleColonOperator procedureDefinition {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock" methods = [ getBlockStatements getSymbols ]}
+procedureDeclarationStatement        ::= (attribute eos?)* declaredIdentifier doubleColonOperator procedureDefinition
+                                            {
+                                            implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"
+                                            methods = [ getBlockStatements getSymbols ]
+
+                                            }
 procedureDefinition                  ::= procedureType procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-procedureType                        ::= directive? PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>> {methods=[getParamEntryList]}
+procedureType                        ::= directive? PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
+                                            {methods=[getParamEntryList]}
 
 whereClause                          ::= WHERE expression (COMMA expression)*
 procedureBody                        ::= tripleDashBlock
@@ -280,7 +289,7 @@ returnParameters                     ::= NOT | LPAREN paramEntries RPAREN | type
 returnStatement                      ::= [directive] RETURN returnArgumentList?
 private returnArgumentList           ::= expression (COMMA expression)* COMMA?
 
-usingStatement                       ::= USING expressionsList
+usingStatement                       ::= USING expressionListWithRecover
 directiveStatement                   ::= directive
 
 // Procedure overloading
@@ -339,7 +348,7 @@ arraySize                            ::= QUESTION|expression
 dynamicArrayType                     ::= [directiveIdentifier] LBRACKET DYNAMIC RBRACKET type {methods=[getTypeDefinition]}
 
 sliceType                            ::= [directiveIdentifier] LBRACKET RBRACKET type
-constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionsList { methods=[getTypeDefinition]}
+constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionListWithRecover { methods=[getTypeDefinition]}
 colonClosing                         ::= COLON
 
 private symbolDefinitionHead         ::= (attribute eos?)* [directiveIdentifier] [USING] identifierList colonOpening type?
@@ -351,9 +360,8 @@ identifierList                       ::= declaredIdentifier (COMMA declaredIdent
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}
 
 assignmentStatement                  ::= [directiveIdentifier] lhsExpressions assignmentOperator rhsExpressions { pin=assignmentOperator }
-lhsExpressions                       ::= expression (COMMA (expression))*
+lhsExpressions                       ::= expressionListWithRecover
 rhsExpressions                       ::= expressionListWithRecover
-expressionsList                      ::= expressionListWithRecover
 
 private expressionListWithRecover ::= expressionWithRecover (COMMA (expressionWithRecover | eos | &LPAREN))* {pin(".*")=1}
 private expressionWithRecover ::= expression {recoverWhile=expressionListRecover}
@@ -776,14 +784,11 @@ forUpdate                            ::= assignmentStatement | callExpression
 forBlock                             ::= FOR <<enterNoBlockMode>> [forOrInClause | expression] <<exitNoBlockMode>> statementBody
                                                     {
                                                         pin(".*")="FOR|forOrInClause"
-                                                        recoverWhile=forRecovery
+                                                        recoverWhile=forRecover
                                                         implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
                                                         methods = [ getBlockStatements getSymbols ]
                                                     }
-private forRecovery                  ::= !(eos | FOR)
-// For-In
-//forInStatement                       ::= [directive] [labelDeclaration] forInBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-//forInBlock                           ::= FOR &forInParameterDeclaration <<enterNoBlockMode>> forInParameterDeclaration <<exitNoBlockMode>> statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
+private forRecover                  ::= !(eos | FOR)
 forInParameterDeclaration            ::= [forInParameterDeclarator (COMMA forInParameterDeclarator)*] IN expression
 forInParameterDeclarator             ::= AND? declaredIdentifier
 
@@ -797,26 +802,28 @@ conditionalStatement                 ::= [directive] [labelDeclaration] ifBlock 
 
 ifBlock                              ::= if conditionalHead eos? statementBody [sos elseBlock] {
                                                 pin=".*"
-                                                recoverWhile=ifRecovery
+                                                recoverWhile=ifRecover
                                                 implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
                                                 methods = [ getBlockStatements getSymbols ]
                                          }
-private ifRecovery                   ::= !(eos | IF_TOKEN)
+private ifRecover                   ::= !(eos | IF_TOKEN)
 elseBlock                            ::= else (statementBody|ifBlock) {pin=1 implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [ getBlockStatements getSymbols ] }
 if                                   ::= IF_TOKEN
 else                                 ::= ELSE_TOKEN
 
 // Switch
-switchStatement                      ::= [directive] [labelDeclaration] (switchInBlock|switchBlock) {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
+switchStatement                      ::= [directive] [labelDeclaration] switchBlock {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
 
-switchInBlock                        ::= SWITCH switchTypeVariableDeclaration IN expression switchBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 switchTypeVariableDeclaration        ::= AND? declaredIdentifier
-switchBlock                          ::= SWITCH switchHead switchBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+switchInClause                       ::= switchTypeVariableDeclaration IN expression
+switchBlock                          ::= SWITCH [switchInClause | switchHead] switchBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea" pin=1 recoverWhile=switchRecover}
+private switchRecover                       ::= !(eos | SWITCH)
 private switchHead                   ::= <<enterNoBlockMode>> [[controlFlowInit SEMICOLON] [expression]] <<exitNoBlockMode>>
 switchBody                           ::= eos? blockStart switchCases blockEnd
 switchCases                          ::= switchCase*
-switchCase                           ::= CASE [expression (COMMA expression)*] caseBlock
-caseBlock                            ::= COLON statementList?
+switchCase                           ::= CASE [expression (COMMA expression)*] COLON [caseBlock] {pin=1 recoverWhile=caseRecover}
+private caseRecover                 ::= !(eos | COLON | CASE)
+caseBlock                            ::= statementList
 
 // When statement (compile time, which means it does not support an init block)
 whenStatement                        ::= [directive] [labelDeclaration] whenBlock {implements="com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"}

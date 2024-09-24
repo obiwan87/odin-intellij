@@ -72,15 +72,14 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         }
 
         if (using && o.getDeclaredIdentifiers().size() == 1) {
+            List<OdinSymbol> typeElements;
             if (type != null) {
-                List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(type, symbolTable);
-                setVisibleThroughUsing(typeElements);
-                symbols.addAll(typeElements);
+                typeElements = OdinInsightUtils.getTypeElements(type, symbolTable);
             } else {
-                List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(o.getExpression(), symbolTable);
-                setVisibleThroughUsing(typeElements);
-                symbols.addAll(typeElements);
+                typeElements = OdinInsightUtils.getTypeElements(o.getExpression(), symbolTable);
             }
+            setVisibleThroughUsing(typeElements);
+            symbols.addAll(typeElements);
         }
     }
 
@@ -217,7 +216,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitUsingStatement(@NotNull OdinUsingStatement o) {
-        for (OdinExpression expression : o.getExpressionsList().getExpressionList()) {
+        for (OdinExpression expression : o.getExpressionList()) {
             List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(expression, this.symbolTable);
             setVisibleThroughUsing(typeSymbols);
             symbols.addAll(typeSymbols);

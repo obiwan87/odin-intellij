@@ -86,8 +86,7 @@ public class OdinFormatterBlock extends AbstractBlock {
 
     @NotNull
     private static OdinFormatterLeaf createLeaf(ASTNode subNode) {
-        return new OdinFormatterLeaf(subNode, null,
-                null, Indent.getNoneIndent());
+        return new OdinFormatterLeaf(subNode, null, null, Indent.getNoneIndent());
     }
 
     @Override

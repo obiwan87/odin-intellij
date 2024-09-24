@@ -32,7 +32,11 @@ public class OdinInsightUtils {
             OdinDeclaration.class,
             OdinStatement.class,
 
-            OdinExpressionsList.class
+            OdinLhsExpressions.class,
+            OdinRhsExpressions.class,
+            OdinLhs.class,
+            OdinRhs.class
+
     );
     public static final char[] RGBA = {'r', 'g', 'b', 'a'};
     public static final char[] RGB = {'r', 'g', 'b'};

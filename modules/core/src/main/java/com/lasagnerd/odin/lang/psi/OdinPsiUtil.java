@@ -459,7 +459,7 @@ public class OdinPsiUtil {
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinUsingStatement usingStatement) {
         List<OdinDeclaredIdentifier> declaredIdentifiers = new ArrayList<>();
-        for (OdinExpression expression : usingStatement.getExpressionsList().getExpressionList()) {
+        for (OdinExpression expression : usingStatement.getExpressionList()) {
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
 
             OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(usingStatement.getProject(), tsOdinType);

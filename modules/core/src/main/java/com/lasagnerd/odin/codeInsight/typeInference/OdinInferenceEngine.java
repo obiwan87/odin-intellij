@@ -839,7 +839,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                     .indexOf(declaredIdentifier);
 
             List<OdinExpression> expressionList = initializationStatement
-                    .getExpressionsList()
                     .getExpressionList();
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
@@ -1070,9 +1069,9 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinSwitchTypeVariableDeclaration && identifier != null) {
-            OdinSwitchInBlock switchInBlock = PsiTreeUtil.getParentOfType(odinDeclaration, OdinSwitchInBlock.class, true);
-            if (switchInBlock != null) {
-                TsOdinType tsOdinType = inferType(parentSymbolTable, switchInBlock.getExpression());
+            OdinSwitchBlock switchInBlock = PsiTreeUtil.getParentOfType(odinDeclaration, OdinSwitchBlock.class, true);
+            if (switchInBlock != null && switchInBlock.getSwitchInClause() != null) {
+                TsOdinType tsOdinType = inferType(parentSymbolTable, switchInBlock.getSwitchInClause().getExpression());
                 List<OdinSwitchCase> ancestors = new ArrayList<>();
                 for (OdinSwitchCase odinSwitchCase : switchInBlock.getSwitchBody().getSwitchCases().getSwitchCaseList()) {
                     if (PsiTreeUtil.isAncestor(odinSwitchCase, identifier, true)) {
