@@ -49,7 +49,7 @@ public class OdinStructureViewElement implements StructureViewTreeElement, Sorta
         } else if (element instanceof OdinDeclaredIdentifier declaredIdentifier) {
             return declaredIdentifier.getPresentation();
         } else if (element instanceof PsiNamedElement namedElement) {
-            OdinSymbolType symbolType = OdinInsightUtils.classify((PsiNamedElement) element);
+            OdinSymbolType symbolType = OdinInsightUtils.classify(namedElement);
             Icon icon = OdinCompletionContributor.getIcon(symbolType);
             return new PresentationData(namedElement.getName(), "", icon, null);
         }
@@ -74,9 +74,10 @@ public class OdinStructureViewElement implements StructureViewTreeElement, Sorta
         }
 
         if (element instanceof OdinDeclaredIdentifier declaredIdentifier) {
-            if (declaredIdentifier.getParent() instanceof OdinStructDeclarationStatement struct) {
+            OdinType declaredType = OdinInsightUtils.getDeclaredType(declaredIdentifier);
+            if (declaredType instanceof OdinStructType structType) {
                 List<OdinStructureViewElement> structureViewElements = new ArrayList<>();
-                List<OdinFieldDeclarationStatement> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(struct.getStructType());
+                List<OdinFieldDeclarationStatement> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(structType);
                 for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarations) {
                     for (OdinDeclaredIdentifier identifier : fieldDeclaration.getDeclaredIdentifiers()) {
                         structureViewElements.add(new OdinStructureViewElement((NavigatablePsiElement) identifier));

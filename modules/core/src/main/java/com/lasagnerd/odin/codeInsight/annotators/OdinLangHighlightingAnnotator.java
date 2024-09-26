@@ -177,9 +177,9 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 if (identifierTokenParent instanceof OdinDeclaredIdentifier declaredIdentifier) {
                     if (declaredIdentifier.getParent() instanceof OdinImportDeclarationStatement) {
                         highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.PACKAGE);
-                    } else if (declaredIdentifier.getParent() instanceof OdinProcedureDeclarationStatement) {
+                    } else if (OdinInsightUtils.isProcedureDeclaration(declaredIdentifier)) {
                         highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.PROCEDURE_TYPE);
-                    } else if (declaredIdentifier.getParent() instanceof OdinStructDeclarationStatement) {
+                    } else if (OdinInsightUtils.isStructDeclaration(declaredIdentifier)) {
                         highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.STRUCT_TYPE);
                     }
                     // Add other types
@@ -202,7 +202,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(resolvedReference, OdinDeclaration.class, false);
                         if (declaration == null) {
                             highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, psiElementRange);
-                        } else if (declaration instanceof OdinStructDeclarationStatement) {
+                        } else if (OdinInsightUtils.isStructDeclaration(declaration)) {
                             highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.STRUCT_REF);
                         }
                     }
@@ -290,7 +290,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
         OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
         if (symbol == null) {
-            if(refExpression.getExpression() != null) {
+            if (refExpression.getExpression() != null) {
                 TsOdinType type = OdinInferenceEngine.inferType(symbolTable, refExpression.getExpression());
                 TsOdinType referenceableType = OdinInsightUtils.getReferenceableType(type);
                 if (referenceableType instanceof TsOdinPolymorphicType) {
@@ -319,11 +319,11 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         if (refExpressionParent instanceof OdinCallExpression) {
             OdinIdentifier identifier = refExpression.getIdentifier();
             if (identifierTokenParent == identifier) {
-                if (declaration instanceof OdinProcedureDeclarationStatement) {
+                if (OdinInsightUtils.isProcedureDeclaration(declaration)) {
                     highlight(annotationHolder, textRange, OdinSyntaxHighlighter.PROCEDURE_CALL);
-                } else if (declaration instanceof OdinStructDeclarationStatement) {
+                } else if (OdinInsightUtils.isStructDeclaration(declaration)) {
                     highlight(annotationHolder, textRange, OdinSyntaxHighlighter.STRUCT_REF);
-                } else if (declaration instanceof OdinUnionDeclarationStatement) {
+                } else if (OdinInsightUtils.isUnionDeclaration(declaration)) {
                     highlight(annotationHolder, textRange, OdinSyntaxHighlighter.UNION_REF);
                 }
             }

@@ -15,6 +15,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.OdinIcons;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.lang.OdinFileType;
@@ -158,9 +159,10 @@ public class OdinCompletionContributor extends CompletionContributor {
                             .withLookupString(unprefixedLookupString)
                             .withIcon(icon);
 
-                    OdinProcedureDeclarationStatement declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinProcedureDeclarationStatement.class);
-                    if (declaration != null) {
-                        element = procedureLookupElement(element, declaration)
+                    OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(declaredIdentifier);
+
+                    if (procedureType != null) {
+                        element = procedureLookupElement(element, procedureType)
                                 .withInsertHandler(
                                         new CombinedInsertHandler(
                                                 new OdinInsertSymbolHandler(symbol.getSymbolType()),
@@ -171,11 +173,11 @@ public class OdinCompletionContributor extends CompletionContributor {
                     }
                 }
                 case PROCEDURE_OVERLOAD -> {
-                    OdinProcedureOverloadDeclarationStatement procedureOverloadStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, true, OdinProcedureOverloadDeclarationStatement.class);
-                    if (procedureOverloadStatement == null)
+                    OdinProcedureOverloadType procedureOverloadType = OdinInsightUtils.getDeclaredType(declaredIdentifier, OdinProcedureOverloadType.class);
+                    if (procedureOverloadType == null)
                         break;
 
-                    for (var procedureRef : procedureOverloadStatement.getProcedureOverloadType().getProcedureRefList()) {
+                    for (var procedureRef : procedureOverloadType.getProcedureRefList()) {
                         OdinIdentifier odinIdentifier = OdinPsiUtil.getIdentifier(procedureRef);
 
                         if (odinIdentifier == null)
@@ -186,7 +188,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         if (resolvedReference != null) {
                             PsiElement resolved = resolvedReference.resolve();
                             if (resolved instanceof OdinDeclaredIdentifier) {
-                                OdinProcedureDeclarationStatement declaringProcedure = resolved.getParent() instanceof OdinProcedureDeclarationStatement ? (OdinProcedureDeclarationStatement) resolved.getParent() : null;
+                                OdinProcedureType declaringProcedure = OdinInsightUtils.getProcedureType(resolved);
                                 if (declaringProcedure != null) {
                                     LookupElementBuilder element = LookupElementBuilder
                                             .create(resolved, lookupString)
@@ -257,15 +259,15 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     @NotNull
-    private static LookupElementBuilder procedureLookupElement(LookupElementBuilder element, OdinProcedureDeclarationStatement declaringProcedure) {
-        var params = declaringProcedure.getProcedureDefinition().getProcedureType().getParamEntryList();
+    private static LookupElementBuilder procedureLookupElement(LookupElementBuilder element, @NotNull OdinProcedureType procedureType) {
+        var params = procedureType.getParamEntryList();
         StringBuilder tailText = new StringBuilder("(");
         String paramList = params.stream().map(PsiElement::getText).collect(Collectors.joining(", "));
         tailText.append(paramList);
         tailText.append(")");
         element = element.withTailText(tailText.toString());
 
-        OdinReturnParameters returnType = declaringProcedure.getProcedureDefinition().getProcedureType().getReturnParameters();
+        OdinReturnParameters returnType = procedureType.getReturnParameters();
         if (returnType != null) {
             element = element.withTypeText(returnType.getText());
         }

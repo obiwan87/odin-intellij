@@ -55,14 +55,14 @@ public class OdinNameSuggester {
         }
 
         if (targetExpression instanceof OdinCompoundLiteralExpression compoundLiteralExpression) {
-            OdinType type = compoundLiteralExpression.getCompoundLiteral().getType();
+            var  type = compoundLiteralExpression.getCompoundLiteral().getTypeContainer();
             if (type != null) {
-                if (type instanceof OdinQualifiedType qualifiedType) {
+                if (type.getType() instanceof OdinQualifiedType qualifiedType) {
                     String text = qualifiedType.getTypeIdentifier().getText();
                     addName(symbolTable, text, names, blacklist);
                 }
 
-                if (type instanceof OdinSimpleRefType simpleRefType) {
+                if (type.getType() instanceof OdinSimpleRefType simpleRefType) {
                     String text = simpleRefType.getIdentifier().getText();
                     addName(symbolTable, text, names, blacklist);
                 }

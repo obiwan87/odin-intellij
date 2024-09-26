@@ -5,8 +5,8 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.PsiElement;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
-import com.lasagnerd.odin.lang.psi.OdinProcedureDeclarationStatement;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
             return null;
         }
 
-        if (!(element.getParent().getParent() instanceof OdinProcedureDeclarationStatement)) {
+        if (!OdinInsightUtils.isProcedureDeclaration(element.getParent())) {
             return null;
         }
 

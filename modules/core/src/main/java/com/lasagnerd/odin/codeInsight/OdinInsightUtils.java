@@ -127,7 +127,7 @@ public class OdinInsightUtils {
             return symbolTable.with(getEnumFields(enumType));
         }
 
-        if (type instanceof TsOdinMetaType metaType && metaType.representedType() instanceof TsOdinBitSetType tsOdinBitSetType) {
+        if (type instanceof TsOdinMetaType metaType && metaType.representedType().baseType(true) instanceof TsOdinBitSetType tsOdinBitSetType) {
             if (tsOdinBitSetType.getElementType() instanceof TsOdinEnumType tsOdinEnumType) {
                 return symbolTable.with(getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType()));
             }
@@ -198,18 +198,6 @@ public class OdinInsightUtils {
         }
 
         return Collections.emptyList();
-    }
-
-    private static @NotNull OdinSymbol createParaPolySymbol(TsOdinType tsOdinType) {
-        OdinSymbol symbol = new OdinSymbol();
-        symbol.setName(tsOdinType.getName());
-        symbol.setSymbolType(PARAMETER);
-        symbol.setPsiType(tsOdinType.getPsiType());
-        symbol.setScope(OdinSymbol.OdinScope.LOCAL);
-        symbol.setImplicitlyDeclared(false);
-        symbol.setDeclaredIdentifier(tsOdinType.getDeclaredIdentifier());
-        symbol.setVisibleThroughUsing(false);
-        return symbol;
     }
 
     @Nullable
@@ -342,7 +330,7 @@ public class OdinInsightUtils {
         }
 
         if (tsOdinType instanceof TsOdinEnumType enumType) {
-            return getEnumFields(((OdinEnumDeclarationStatement) enumType.getDeclaration()).getEnumType());
+            return getEnumFields((OdinEnumType) enumType.getPsiType());
         }
 
         if (tsOdinType instanceof TsOdinBitFieldType bitFieldType) {
@@ -460,27 +448,91 @@ public class OdinInsightUtils {
     }
 
     public static boolean isProcedureDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinProcedureDeclarationStatement;
+        return isTypeDeclaration(element, OdinProcedureType.class) || isTypeDeclaration(element, OdinProcedureLiteralType.class);
     }
 
     public static boolean isProcedureOverloadDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinProcedureOverloadDeclarationStatement;
+        return isTypeDeclaration(element, OdinProcedureOverloadType.class);
     }
 
     public static boolean isConstantDeclaration(PsiElement element) {
-        return PsiTreeUtil.getParentOfType(element, true, OdinConstantInitializationStatement.class) != null;
+        if (element.getParent() instanceof OdinConstantInitializationStatement constantInitializationStatement) {
+            return constantInitializationStatement.getExpressionList().size() > 1
+                    || (
+                    constantInitializationStatement.getExpressionList().size() == 1 &&
+                            !(
+                                    constantInitializationStatement.getExpressionList().getFirst() instanceof OdinTypeDefinitionExpression
+                            ));
+        }
+
+        return false;
     }
 
     public static boolean isStructDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinStructDeclarationStatement;
+        return isTypeDeclaration(element, OdinStructType.class);
     }
 
     public static boolean isEnumDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinEnumDeclarationStatement;
+        return isTypeDeclaration(element, OdinEnumType.class);
     }
 
     public static boolean isUnionDeclaration(PsiElement element) {
-        return element.getParent() instanceof OdinUnionDeclarationStatement;
+        return isTypeDeclaration(element, OdinUnionType.class);
+    }
+
+    public static @Nullable OdinType getDeclaredType(PsiElement declaredIdentifier) {
+        OdinDeclaration declaration
+                = PsiTreeUtil.getParentOfType(declaredIdentifier,
+                OdinDeclaration.class,
+                false);
+        if(declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
+            return getDeclaredType(constantInitializationStatement);
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends OdinType> T getDeclaredType(PsiElement element, @NotNull Class<T> typeClass) {
+        if(element == null)
+            return null;
+        OdinType declaredType = getDeclaredType(element);
+        if(typeClass.isInstance(declaredType))
+            return (T) declaredType;
+        return null;
+    }
+
+    public static OdinProcedureType getProcedureType(PsiElement element) {
+        OdinProcedureType procedureType = getDeclaredType(element, OdinProcedureType.class);
+        if(procedureType != null)
+            return procedureType;
+
+        OdinProcedureLiteralType procedureLiteralType = getDeclaredType(element, OdinProcedureLiteralType.class);
+        if(procedureLiteralType != null) {
+            return procedureLiteralType.getProcedureDefinition().getProcedureSignature().getProcedureType();
+        }
+        return null;
+    }
+
+    public static @Nullable OdinType getDeclaredType(OdinConstantInitializationStatement constantInitializationStatement) {
+        List<OdinExpression> expressionList = constantInitializationStatement.getExpressionList();
+        if (expressionList.isEmpty())
+            return null;
+
+        OdinExpression expression = expressionList.getFirst();
+        if (expression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+            OdinType type = typeDefinitionExpression.getType();
+            return type;
+        }
+
+        if (expressionList instanceof OdinProcedureExpression procedureExpression) {
+            return procedureExpression.getProcedureDefinition().getProcedureSignature().getProcedureType();
+        }
+        return null;
+    }
+
+    public static boolean isTypeDeclaration(PsiElement element, Class<? extends OdinType> typeClass) {
+        OdinType declaredType = getDeclaredType(element);
+        return typeClass.isInstance(declaredType);
     }
 
     private static boolean isFieldDeclaration(PsiNamedElement element) {

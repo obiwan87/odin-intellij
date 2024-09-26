@@ -8,8 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
@@ -19,7 +17,6 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
-import com.lasagnerd.odin.lang.psi.impl.OdinBitFieldDeclarationStatementImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,20 +107,8 @@ public class OdinPsiUtil {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinUnionDeclarationStatement statement) {
-        return Collections.singletonList(statement.getDeclaredIdentifier());
-    }
-
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinProcedureDeclarationStatement statement) {
-        return Collections.singletonList(statement.getDeclaredIdentifier());
-    }
-
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinVariableInitializationStatement statement) {
         return statement.getIdentifierList().getDeclaredIdentifierList();
-    }
-
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinBitsetDeclarationStatement statement) {
-        return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinPolymorphicType polymorphicType) {
@@ -142,17 +127,8 @@ public class OdinPsiUtil {
         return statement.getIdentifierList().getDeclaredIdentifierList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinEnumDeclarationStatement statement) {
-        return Collections.singletonList(statement.getDeclaredIdentifier());
-    }
-
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinFieldDeclarationStatement statement) {
         return statement.getDeclaredIdentifierList();
-    }
-
-
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinStructDeclarationStatement statement) {
-        return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinForeignImportDeclarationStatement statement) {
@@ -180,16 +156,8 @@ public class OdinPsiUtil {
         return statement.getParameterList().stream().map(OdinParameter::getDeclaredIdentifier).toList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinProcedureOverloadDeclarationStatement statement) {
-        return Collections.singletonList(statement.getDeclaredIdentifier());
-    }
-
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinLabelDeclaration labelDeclaration) {
         return Collections.singletonList(labelDeclaration.getDeclaredIdentifier());
-    }
-
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinBitFieldDeclarationStatementImpl bitFieldDeclarationStatement) {
-        return Collections.singletonList(bitFieldDeclarationStatement.getDeclaredIdentifier());
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinBitFieldFieldDeclaration bitFieldFieldDeclaration) {
@@ -316,74 +284,10 @@ public class OdinPsiUtil {
         return Collections.emptyList();
     }
 
-    // Scope Blocks
-
-    public static List<OdinStatement> getBlockStatements(OdinProcedureDeclarationStatement procedureDeclarationStatement) {
-        OdinBlock block = procedureDeclarationStatement.getProcedureDefinition().getProcedureBody().getBlock();
-        if (block != null) {
-            return block.getStatements();
-        }
-        return Collections.emptyList();
-    }
-
-    public static List<OdinStatement> getBlockStatements(OdinProcedureExpression procedureExpression) {
-        OdinBlock block = procedureExpression.getProcedureDefinition().getProcedureBody().getBlock();
-        if (block != null) {
-            return block.getStatements();
-        }
-        return Collections.emptyList();
-    }
-
-    public static List<OdinStatement> doGetBlockStatements(OdinStatementBody statementBody) {
-        if (statementBody.getBlock() != null) {
-            return statementBody.getBlock().getStatements();
-        }
-
-        if (statementBody.getDoStatement() != null) {
-            return Collections.singletonList(statementBody.getDoStatement().getStatement());
-        }
-        return Collections.emptyList();
-    }
-
-    public static List<OdinStatement> getBlockStatements(OdinIfBlock ifBlock) {
-        if (ifBlock.getStatementBody() != null) {
-            return doGetBlockStatements(ifBlock.getStatementBody());
-        }
-
-        return Collections.emptyList();
-    }
-
-    public static List<OdinStatement> getBlockStatements(OdinElseBlock elseBlock) {
-        OdinStatementBody statementBody = elseBlock.getStatementBody();
-        return statementBody != null ? doGetBlockStatements(statementBody)
-                : Objects.requireNonNull(elseBlock.getIfBlock()).getBlockStatements();
-    }
-
-    public static List<OdinStatement> getBlockStatements(OdinBlockStatement blockStatement) {
-        return blockStatement.getBlock().getStatements();
-    }
-
-    public static List<OdinStatement> getBlockStatements(OdinForBlock forBlock) {
-        if (forBlock.getStatementBody() != null) {
-            return doGetBlockStatements(forBlock.getStatementBody());
-        }
-
-        return Collections.emptyList();
-    }
-
-
-    // Declaration specs
-
-
-    // Procedures
-
-    public static List<OdinSymbol> getSymbols(OdinProcedureDeclarationStatement procedureDeclarationStatement) {
-        OdinProcedureType procedureType = procedureDeclarationStatement.getProcedureDefinition().getProcedureType();
-        return doGetProcedureTypeSymbols(procedureType);
-    }
+    // Procedure
 
     public static List<OdinSymbol> getSymbols(OdinProcedureExpression procedureExpression) {
-        OdinProcedureType procedureType = procedureExpression.getProcedureDefinition().getProcedureType();
+        OdinProcedureType procedureType = procedureExpression.getProcedureDefinition().getProcedureSignature().getProcedureType();
         return doGetProcedureTypeSymbols(procedureType);
     }
 

@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,9 +29,10 @@ public class OdinStructureViewModel extends StructureViewModelBase implements St
                 return false;
             NavigatablePsiElement navigatablePsiElement = odinStructureViewElement.getElement();
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(navigatablePsiElement, OdinDeclaration.class, false);
-            return !(odinDeclaration instanceof OdinStructDeclarationStatement)
-                    && !(odinDeclaration instanceof OdinEnumDeclarationStatement)
-                    && !(odinDeclaration instanceof OdinBitFieldDeclarationStatement);
+            OdinType declaredType = OdinInsightUtils.getDeclaredType(odinDeclaration);
+            return !(declaredType instanceof OdinStructType)
+                    && !(declaredType instanceof OdinEnumType)
+                    && !(declaredType instanceof OdinBitFieldType);
         }
         return true;
     }

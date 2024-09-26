@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.OdinFileType;
@@ -132,10 +133,8 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
             return null;
 
         OdinDeclaration declaration = symbol.getDeclaration();
-        if (declaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-            return structDeclarationStatement.getStructType();
-        }
-        return null;
+
+        return OdinInsightUtils.getDeclaredType(declaration, OdinStructType.class);
     }
 
     private @NotNull List<OdinSymbol> doFindBuiltInSymbols() {

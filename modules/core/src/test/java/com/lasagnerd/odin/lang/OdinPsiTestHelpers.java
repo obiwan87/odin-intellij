@@ -37,9 +37,9 @@ class OdinPsiTestHelpers {
     }
 
     // Helpers
-    static @NotNull List<OdinBlockStatement> getProcedureBlocks(OdinProcedureDeclarationStatement testTypeConversion) {
+    static @NotNull List<OdinBlockStatement> getProcedureBlocks(OdinProcedureDefinition procedureDefinition) {
         OdinStatementList statementList = Objects
-                .requireNonNull(testTypeConversion.getProcedureDefinition().getProcedureBody().getBlock())
+                .requireNonNull(procedureDefinition.getProcedureBody().getBlock())
                 .getStatementList();
         List<OdinBlockStatement> blocks = new ArrayList<>();
         for (OdinStatement odinStatement : Objects.requireNonNull(statementList).getStatementList()) {
@@ -85,17 +85,23 @@ class OdinPsiTestHelpers {
         return Objects.requireNonNull(shapeVariable.getRhsExpressions()).getExpressionList().getFirst();
     }
 
-    static @NotNull OdinProcedureDeclarationStatement findFirstProcedure(@NotNull OdinFile odinFile, String procedureName) {
-        Collection<OdinProcedureDeclarationStatement> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
-                OdinProcedureDeclarationStatement.class);
+    static @NotNull OdinProcedureDefinition findFirstProcedure(@NotNull OdinFile odinFile, String procedureName) {
+        Collection<OdinProcedureLiteralType> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
+                OdinProcedureLiteralType.class);
 
         return procedureDeclarationStatements.stream()
-                .filter(p -> Objects.equals(p.getDeclaredIdentifier().getName(), procedureName))
+                .filter(procedureDefinition -> PsiTreeUtil.getParentOfType(procedureDefinition, OdinConstantInitializationStatement.class) != null)
+                .filter(p -> {
+                    OdinConstantInitializationStatement constantInitializationStatement = PsiTreeUtil.getParentOfType(p, OdinConstantInitializationStatement.class);
+                    assert constantInitializationStatement != null;
+                    return Objects.equals(constantInitializationStatement.getDeclaredIdentifiers().getFirst().getName(), procedureName);
+                })
+                .map(OdinProcedureLiteralType::getProcedureDefinition)
                 .findFirst().orElseThrow();
     }
 
     static @NotNull OdinVariableInitializationStatement findFirstVariableDeclarationStatement(OdinFile odinFile, String procedureName, String variableName) {
-        OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, procedureName);
+        OdinProcedureDefinition procedure = findFirstProcedure(odinFile, procedureName);
         TestCase.assertNotNull(procedure);
         return findFirstVariable(procedure, variableName);
     }
@@ -123,12 +129,16 @@ class OdinPsiTestHelpers {
     }
 
     static @NotNull TsOdinType inferTypeOfFirstExpressionInProcedure(OdinFile odinFile, String procedureName) {
-        OdinProcedureDeclarationStatement procedure = findFirstProcedure(odinFile, procedureName);
-        OdinExpressionStatement odinExpressionStatement = (OdinExpressionStatement) Objects.requireNonNull(procedure.
-                        getProcedureDefinition()
-                        .getProcedureBody().getBlock()).getStatements()
-                .stream().filter(s -> s instanceof OdinExpressionStatement)
-                .findFirst().orElseThrow();
+        OdinProcedureDefinition procedure = findFirstProcedure(odinFile, procedureName);
+        OdinExpressionStatement odinExpressionStatement =
+                (OdinExpressionStatement) Objects.requireNonNull(procedure
+                                .getProcedureBody()
+                                .getBlock())
+                        .getStatements()
+                        .stream()
+                        .filter(s -> s instanceof OdinExpressionStatement)
+                        .findFirst()
+                        .orElseThrow();
 
         OdinExpression expression = odinExpressionStatement.getExpression();
         OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(Objects.requireNonNull(expression));

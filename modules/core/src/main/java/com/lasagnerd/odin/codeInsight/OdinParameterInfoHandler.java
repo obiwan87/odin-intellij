@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallExpression, OdinProcedureType> {
 
@@ -54,26 +55,29 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
         TsOdinType tsOdinType = OdinInferenceEngine.doInferType(callExpression.getExpression());
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
-                if (tsOdinMetaType.getDeclaration() instanceof OdinProcedureDeclarationStatement declaration) {
+                OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(tsOdinType.getDeclaration());
+                if (procedureType != null) {
 //                    OdinParamEntries paramEntries = declaration.getProcedureDefinition().getProcedureType().getParamEntries();
 //                    if (paramEntries != null && !paramEntries.getParamEntryList().isEmpty()) {
-                    procedures.add(declaration.getProcedureDefinition().getProcedureType());
+                    procedures.add(procedureType);
 //                    }
                 }
             }
 
             if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE_OVERLOAD) {
                 OdinDeclaration declaration = tsOdinMetaType.getDeclaration();
-                var overload = (OdinProcedureOverloadDeclarationStatement) declaration;
-                for (var procedureRef : overload.getProcedureOverloadType().getProcedureRefList()) {
+                OdinProcedureOverloadType procedureOverloadType = OdinInsightUtils.getDeclaredType(declaration, OdinProcedureOverloadType.class);
+                Objects.requireNonNull(procedureOverloadType);
+                for (var procedureRef : procedureOverloadType.getProcedureRefList()) {
                     OdinIdentifier odinIdentifier = OdinPsiUtil.getIdentifier(procedureRef);
                     if (odinIdentifier == null)
                         continue;
                     PsiReference identifierReference = odinIdentifier.getReference();
                     if (identifierReference != null) {
                         PsiElement resolve = identifierReference.resolve();
-                        if (resolve != null && resolve.getParent() instanceof OdinProcedureDeclarationStatement proc) {
-                            procedures.add(proc.getProcedureDefinition().getProcedureType());
+                        OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(resolve);
+                        if (resolve != null && procedureType != null) {
+                            procedures.add(procedureType);
                         }
                     }
                 }

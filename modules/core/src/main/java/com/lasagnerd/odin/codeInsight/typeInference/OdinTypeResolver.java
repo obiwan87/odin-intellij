@@ -2,6 +2,7 @@ package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
@@ -72,6 +73,7 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinMetaType.setDeclaration(tsOdinType.getDeclaration());
         tsOdinMetaType.setSymbolTable(tsOdinType.getSymbolTable());
         tsOdinMetaType.setRepresentedType(tsOdinType);
+        tsOdinMetaType.setPsiType(type);
         return tsOdinMetaType;
     }
 
@@ -280,6 +282,11 @@ public class OdinTypeResolver extends OdinVisitor {
         return typeResolver.resolveTypeFromDeclaredIdentifier(symbolTable, identifier);
     }
 
+    @Override
+    public void visitProcedureLiteralType(@NotNull OdinProcedureLiteralType o) {
+        this.type = resolveType(symbolTable, o.getProcedureDefinition().getProcedureSignature().getProcedureType());
+    }
+
     private TsOdinType resolveTypeFromDeclaredIdentifier(OdinSymbolTable symbolTable, OdinDeclaredIdentifier identifier) {
         OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(identifier,
                 false,
@@ -295,20 +302,23 @@ public class OdinTypeResolver extends OdinVisitor {
             typeSymbolTable = OdinSymbolTable.EMPTY;
         }
         switch (odinDeclaration) {
-            case OdinStructDeclarationStatement structDeclarationStatement -> {
-                return doResolveType(typeSymbolTable, identifier, odinDeclaration, structDeclarationStatement.getStructType());
-            }
-            case OdinEnumDeclarationStatement enumDeclarationStatement -> {
-                return doResolveType(typeSymbolTable, identifier, odinDeclaration, enumDeclarationStatement.getEnumType());
-            }
-            case OdinUnionDeclarationStatement unionDeclarationStatement -> {
-
-                return doResolveType(typeSymbolTable, identifier, odinDeclaration, unionDeclarationStatement.getUnionType());
-            }
-            case OdinProcedureDeclarationStatement procedureDeclarationStatement -> {
-                return doResolveType(typeSymbolTable, identifier, odinDeclaration, procedureDeclarationStatement.getProcedureDefinition().getProcedureType());
-            }
             case OdinConstantInitializationStatement constantInitializationStatement -> {
+                OdinType declaredType = OdinInsightUtils.getDeclaredType(constantInitializationStatement);
+                if ((
+                        declaredType instanceof OdinStructType
+                                || declaredType instanceof OdinBitFieldType
+                                || declaredType instanceof OdinUnionType
+                                || declaredType instanceof OdinProcedureOverloadType
+                                || declaredType instanceof OdinProcedureType
+                                || declaredType instanceof OdinProcedureLiteralType
+                                || declaredType instanceof OdinEnumType
+                )
+                ) {
+                    // check distinct
+                    return resolveType(typeSymbolTable, identifier, odinDeclaration, declaredType);
+                }
+
+                // Ref expression: it's a type alias
                 List<OdinExpression> expressionList = constantInitializationStatement.getExpressionList();
                 if (!expressionList.isEmpty()) {
                     int index = constantInitializationStatement.getDeclaredIdentifiers().indexOf(identifier);
@@ -335,15 +345,6 @@ public class OdinTypeResolver extends OdinVisitor {
             }
             case OdinPolymorphicType polymorphicType -> {
                 return doResolveType(symbolTable, identifier, odinDeclaration, polymorphicType);
-            }
-            case OdinBitsetDeclarationStatement odinBitsetDeclarationStatement -> {
-                return doResolveType(symbolTable, odinBitsetDeclarationStatement.getBitSetType());
-            }
-            case OdinProcedureOverloadDeclarationStatement procedureOverloadDeclarationStatement -> {
-                return doResolveType(symbolTable, procedureOverloadDeclarationStatement.getProcedureOverloadType());
-            }
-            case OdinBitFieldDeclarationStatement bitFieldDeclarationStatement -> {
-                return doResolveType(symbolTable, identifier, odinDeclaration, bitFieldDeclarationStatement.getBitFieldType());
             }
             case OdinParameterDeclarator odinParameterDeclarator -> {
                 // Look for polymorphic type definitions like $C: typeid/...

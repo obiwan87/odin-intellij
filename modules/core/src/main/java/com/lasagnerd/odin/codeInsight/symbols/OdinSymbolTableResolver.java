@@ -292,14 +292,12 @@ public class OdinSymbolTableResolver {
                 return Objects.requireNonNullElseGet(initialSymbolTable, () -> new OdinSymbolTable(packagePath));
             }
 
-
             OdinSymbolTable symbolTable = new OdinSymbolTable(packagePath);
             // Since odin does not support closures, all symbols above the current scope, are visible only if they are constants
             boolean isContainingBlockProcedure = containingScopeBlock instanceof OdinProcedureDefinition;
             boolean constantsOnlyNext = isContainingBlockProcedure || constantsOnly;
             OdinSymbolTable parentSymbolTable = findSymbols(containingScopeBlock, constantsOnlyNext);
             symbolTable.setParentSymbolTable(parentSymbolTable);
-
 
             // Bring field declarations and swizzle into scope
             OdinLhs lhs = PsiTreeUtil.getParentOfType(position, OdinLhs.class, false);
@@ -344,7 +342,7 @@ public class OdinSymbolTableResolver {
             }
 
 
-            if (constantsOnly && !fileScope &&!foreignBlock)
+            if (constantsOnly && !fileScope && !foreignBlock)
                 return symbolTable;
 
             for (var declaration : declarations) {
@@ -435,7 +433,7 @@ public class OdinSymbolTableResolver {
         private boolean isStrictlyBefore(OdinDeclaration declaration, PositionCheckResult positionCheckResult) {
             PsiElement commonParent = positionCheckResult.commonParent();
             PsiElement containerOfSymbol = declaration != commonParent ? PsiTreeUtil.findPrevParent(commonParent, declaration) : declaration;
-            PsiElement containerOfPosition = PsiTreeUtil.findPrevParent(commonParent, originalPosition);
+            PsiElement containerOfPosition = originalPosition != commonParent ? PsiTreeUtil.findPrevParent(commonParent, originalPosition) : originalPosition;
 
             // Now check if symbol is strictly a previous sibling of position
             List<@NotNull PsiElement> childrenList = Arrays.stream(commonParent.getChildren()).toList();
@@ -471,7 +469,7 @@ public class OdinSymbolTableResolver {
         }
 
         if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
-            OdinProcedureType procedureType = procedureDefinition.getProcedureType();
+            OdinProcedureType procedureType = procedureDefinition.getProcedureSignature().getProcedureType();
 
             addParamEntries(procedureType.getParamEntries(), declarations);
             addPolymorphicDeclarations(procedureType.getParamEntries(), declarations);
@@ -509,7 +507,7 @@ public class OdinSymbolTableResolver {
         }
 
         if (containingScopeBlock instanceof OdinSwitchBlock switchBlock) {
-            if(switchBlock.getSwitchInClause() != null) {
+            if (switchBlock.getSwitchInClause() != null) {
                 declarations.add(switchBlock.getSwitchInClause().getSwitchTypeVariableDeclaration());
             }
             addControlFlowInit(switchBlock.getControlFlowInit(), declarations);
@@ -606,8 +604,18 @@ public class OdinSymbolTableResolver {
         // to use in structs, and procedures. In union and constants using the declaration is not legal.
         boolean usageInsideDeclaration = declaration == commonParent;
         if (usageInsideDeclaration) {
-            if (declaration instanceof OdinProcedureDeclarationStatement procedureDeclarationStatement) {
-                OdinProcedureBody declarationBody = procedureDeclarationStatement.getProcedureDefinition().getProcedureBody();
+            OdinType type = OdinInsightUtils.getDeclaredType(declaration);
+            OdinProcedureDefinition procedureDefinition;
+            if (type instanceof OdinProcedureType procedureType) {
+                procedureDefinition = PsiTreeUtil.getParentOfType(type, OdinProcedureDefinition.class);
+            } else if (type instanceof OdinProcedureLiteralType procedureLiteralType) {
+                procedureDefinition = procedureLiteralType.getProcedureDefinition();
+            } else {
+                procedureDefinition = null;
+            }
+
+            if (procedureDefinition != null) {
+                OdinProcedureBody declarationBody = procedureDefinition.getProcedureBody();
                 OdinProcedureBody procedureBody = PsiTreeUtil.getParentOfType(position, OdinProcedureBody.class, false);
 
                 if (procedureBody != null && PsiTreeUtil.isAncestor(declarationBody, procedureBody, false)) {
@@ -615,8 +623,9 @@ public class OdinSymbolTableResolver {
                 }
             }
 
-            if (declaration instanceof OdinStructDeclarationStatement structDeclarationStatement) {
-                OdinStructBlock declarationStructBlock = structDeclarationStatement.getStructType().getStructBlock();
+
+            if (type instanceof OdinStructType structType) {
+                OdinStructBlock declarationStructBlock = structType.getStructBlock();
                 OdinStructBlock structBlock = PsiTreeUtil.getParentOfType(position, OdinStructBlock.class);
 
                 if (structBlock != null && PsiTreeUtil.isAncestor(declarationStructBlock, structBlock, false)) {
