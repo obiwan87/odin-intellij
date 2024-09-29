@@ -138,6 +138,19 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
         return flags.getOrDefault(mode, 0) > 0;
     }
 
+    public static boolean afterNewLine(PsiBuilder builder, int level) {
+        int i = 0;
+        IElementType tokenType;
+        int currentOffset = builder.getCurrentOffset();
+        boolean newLineEncountered = false;
+        do {
+            i--;
+            tokenType = builder.rawLookup(i);
+            newLineEncountered |= tokenType == OdinTypes.NEW_LINE;
+        } while ((tokenType == TokenType.WHITE_SPACE || tokenType == OdinTypes.NEW_LINE) && currentOffset + i > 0);
+
+        return newLineEncountered;
+    }
 
     @NotNull
     private static Object2IntOpenHashMap<String> getParsingModes(@NotNull PsiBuilder builder_) {
@@ -191,4 +204,20 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
             OdinTypes.WHEN,
             OdinTypes.COMMA
     );
+
+    public static boolean guardedExpression(PsiBuilder builder,
+                                            int level,
+                                            Parser incompleteGuard,
+                                            Parser expressionListWithRecover) {
+        boolean r = report_error_(builder, incompleteGuard.parse(builder, level));
+        PsiBuilder.Marker marker = builder.mark();
+        r = r && expressionListWithRecover.parse(builder, level);
+        if (r) {
+            marker.drop();
+        } else {
+            marker.rollbackTo();
+        }
+
+        return r;
+    }
 }

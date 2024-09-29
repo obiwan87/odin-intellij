@@ -403,4 +403,12 @@ public class OdinPsiUtil {
         }
         return odinIdentifier;
     }
+
+    public static List<OdinExpression> getExpressionList(OdinConstantInitializationStatement constantInitializationStatement) {
+        return PsiTreeUtil.getChildrenOfTypeAsList(constantInitializationStatement, OdinExpression.class);
+    }
+
+    public static OdinRhsExpressions getRhsExpressions(OdinVariableInitializationStatement variableInitializationStatement) {
+        return PsiTreeUtil.getChildOfType(variableInitializationStatement, OdinRhsExpressions.class);
+    }
 }

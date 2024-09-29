@@ -15,6 +15,7 @@ import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("TokenSetInParserDefinition")
 public class OdinParserDefinition implements ParserDefinition {
     public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE, OdinTypes.NEW_LINE);
 

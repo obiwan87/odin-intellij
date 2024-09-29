@@ -1,5 +1,4 @@
 {
-  parserImports="static com.intellij.lang.parser.GeneratedParserUtilBase.*"
   parserClass="com.lasagnerd.odin.lang.OdinParser"
 
   extends="com.lasagnerd.odin.lang.psi.OdinPsiElementImpl"
@@ -195,7 +194,7 @@ fileScope                            ::= buildFlag* packageDeclaration eos impor
 
 buildFlag                            ::= BUILD_FLAG_PREFIX BUILD_FLAG_CONTENT?
 importStatementsContainer            ::= (importDeclarationStatement eos)+
-fileScopeStatementList               ::= (fileScopeStatement eos)*
+fileScopeStatementList               ::= (fileScopeStatement (eos|<<afterNewLine>>))*
 packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=1 recoverWhile=eos_recover}
 
 importDeclarationStatement           ::= [attribute EOS_TOKEN?] IMPORT declaredIdentifier? importPath {methods=[alias="/declaredIdentifier" path="/importPath" getName setName getNameIdentifier getImportInfo] implements="com.intellij.psi.PsiNameIdentifierOwner"}
@@ -319,7 +318,6 @@ qualifiedType                        ::= identifier DOT simpleRefType {methods=[
 pointerType                          ::= CARET type
 multiPointerType                     ::= LBRACKET CARET RBRACKET type
 
-
 bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON type] RBRACKET
 
 mapType                              ::= MAP LBRACKET type RBRACKET type {methods=[getKeyType getValueType]}
@@ -330,30 +328,32 @@ arraySize                            ::= QUESTION|expression
 dynamicArrayType                     ::= [directiveIdentifier] LBRACKET DYNAMIC RBRACKET type {methods=[getTypeDefinition]}
 
 sliceType                            ::= [directiveIdentifier] LBRACKET RBRACKET type
-constantInitializationStatement      ::= symbolDefinitionHead colonClosing expressionListWithRecover { methods=[getTypeDefinition]}
+constantInitializationStatement      ::= symbolDefinitionHead colonClosing  <<guardedExpression incompleteGuard expressionListWithRecover>> { methods=[getTypeDefinition getExpressionList] pin=2}
+private incompleteGuard              ::= !(<<afterNewLine>> (symbolDefinitionHead|!expression))
 colonClosing                         ::= COLON
 
 private symbolDefinitionHead         ::= (attribute eos?)* [directiveIdentifier] [USING] identifierList colonOpening type?
 colonOpening                         ::= COLON
 
-variableInitializationStatement      ::= symbolDefinitionHead EQ rhsExpressions { methods=[getTypeDefinition]}
+variableInitializationStatement      ::= symbolDefinitionHead EQ <<guardedExpression incompleteGuard rhsExpressions>> { methods=[getTypeDefinition getRhsExpressions] pin=2}
 
 identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}
 
-assignmentStatement                  ::= [directiveIdentifier] lhsExpressions assignmentOperator rhsExpressions { pin=assignmentOperator }
+assignmentStatement                  ::= [directiveIdentifier] lhsExpressions assignmentOperator rhsExpressions
 lhsExpressions                       ::= expressionListWithRecover
 rhsExpressions                       ::= expressionListWithRecover
 
 private expressionListWithRecover ::= expressionWithRecover (COMMA (expressionWithRecover | eos | &LPAREN))* {pin(".*")=1}
-private expressionWithRecover ::= expression {recoverWhile=expressionListRecover}
-private expressionListRecover ::= !(NOT
+private expressionWithRecover ::= expression {recoverWhile=expressionRecover}
+private expressionRecover ::= !( NOT
                                     | NEQ
                                     | MOD
                                     | MOD_EQ
                                     | ANDAND
                                     | AND
                                     | AND_EQ
+                                    | ANDAND_EQ
                                     | ANDNOT
                                     | BITWISE_AND_NOT_EQ
                                     | LPAREN
@@ -387,6 +387,7 @@ private expressionListRecover ::= !(NOT
                                     | LBRACE
                                     | PIPE
                                     | OR_EQ
+                                    | OROR_EQ
                                     | OROR
                                     | RBRACE
                                     | BREAK
@@ -404,7 +405,8 @@ private expressionListRecover ::= !(NOT
                                     | SQ_STRING_LITERAL
                                     | RAW_STRING_LITERAL
                                     | STRUCT
-                                    | SWITCH)
+                                    | SWITCH
+                                    )
 
 
 assignmentOperator                   ::= EQ
@@ -699,7 +701,7 @@ blockEnd                             ::= RBRACE
 
 eos                                  ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<multilineBlockComment>> | <<atClosingBrace>> | <<afterClosingBrace>>
 sos                                  ::= SEMICOLON | NEW_LINE | EOS_TOKEN | <<afterClosingBrace>> | <<multilineBlockComment>>
-statementList                        ::= (sos? statement eos)+ {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
+statementList                        ::= (sos? statement (eos|<<afterNewLine>>))+ {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
 statement                            ::= assignmentStatement
                                          | forStatement
                                          | constantInitializationStatement
