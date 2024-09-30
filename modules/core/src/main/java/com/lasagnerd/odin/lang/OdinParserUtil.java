@@ -208,10 +208,10 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
     public static boolean guardedExpression(PsiBuilder builder,
                                             int level,
                                             Parser incompleteGuard,
-                                            Parser expressionListWithRecover) {
+                                            Parser expression) {
         boolean r = report_error_(builder, incompleteGuard.parse(builder, level));
         PsiBuilder.Marker marker = builder.mark();
-        r = r && expressionListWithRecover.parse(builder, level);
+        r = r && expression.parse(builder, level);
         if (r) {
             marker.drop();
         } else {

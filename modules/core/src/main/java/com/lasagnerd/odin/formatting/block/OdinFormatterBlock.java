@@ -29,8 +29,9 @@ public class OdinFormatterBlock extends AbstractBlock {
             OdinTypes.BLOCK,
             OdinTypes.STRUCT_BLOCK,
             OdinTypes.CASE_BLOCK,
+            OdinTypes.UNION_BLOCK,
             OdinTypes.ENUM_BLOCK,
-            OdinTypes.COMPOUND_VALUE_BODY
+            OdinTypes.COMPOUND_VALUE
     );
 
     public OdinFormatterBlock(@NotNull ASTNode node,
@@ -135,7 +136,7 @@ public class OdinFormatterBlock extends AbstractBlock {
 
     @Override
     protected @Nullable Indent getChildIndent() {
-        return getIndent();
+        return getChildAttributes(-1).getChildIndent();
     }
 
     @Override

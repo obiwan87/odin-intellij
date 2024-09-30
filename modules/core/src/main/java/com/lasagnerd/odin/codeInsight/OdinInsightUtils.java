@@ -90,32 +90,34 @@ public class OdinInsightUtils {
         }
         OdinSymbolTable typeSymbolTable = type.getSymbolTable();
         OdinSymbolTable symbolTable = new OdinSymbolTable();
-        if (type instanceof TsOdinPointerType pointerType) {
-            return getTypeElements(project, pointerType.getDereferencedType(), includeReferenceableSymbols);
-        }
-
-        if (type instanceof TsOdinConstrainedType constrainedType) {
-            return getTypeElements(project, constrainedType.getSpecializedType(), includeReferenceableSymbols);
-        }
-
-        if (type instanceof TsOdinMetaType metaType && metaType.representedType() instanceof TsOdinPolymorphicType polymorphicType) {
-            OdinType psiType = polymorphicType.getPsiType();
-            if (psiType != null) {
-                if (psiType.getParent() instanceof OdinConstrainedType constrainedType) {
-                    OdinType specializedType = constrainedType.getTypeList().get(1);
-                    TsOdinType tsOdinType = OdinTypeResolver.resolveType(typeSymbolTable, specializedType);
-                    if (tsOdinType instanceof TsOdinGenericType tsOdinGenericType) {
-                        List<TsOdinParameter> typeParameters = getTypeParameters(tsOdinGenericType.genericType());
-                        for (TsOdinParameter typeParameter : typeParameters) {
-                            OdinSymbol symbol = new OdinSymbol();
-                            symbol.setName(typeParameter.getName());
-                            symbol.setSymbolType(PARAMETER);
-                            symbol.setPsiType(typeParameter.getPsiType());
-                            symbol.setDeclaredIdentifier(typeParameter.getIdentifier());
-                            symbolTable.add(symbol);
+        switch (type) {
+            case TsOdinPointerType pointerType -> {
+                return getTypeElements(project, pointerType.getDereferencedType(), includeReferenceableSymbols);
+            }
+            case TsOdinConstrainedType constrainedType -> {
+                return getTypeElements(project, constrainedType.getSpecializedType(), includeReferenceableSymbols);
+            }
+            case TsOdinMetaType metaType when metaType.representedType() instanceof TsOdinPolymorphicType polymorphicType -> {
+                OdinType psiType = polymorphicType.getPsiType();
+                if (psiType != null) {
+                    if (psiType.getParent() instanceof OdinConstrainedType constrainedType) {
+                        OdinType specializedType = constrainedType.getTypeList().get(1);
+                        TsOdinType tsOdinType = OdinTypeResolver.resolveType(typeSymbolTable, specializedType);
+                        if (tsOdinType instanceof TsOdinGenericType tsOdinGenericType) {
+                            List<TsOdinParameter> typeParameters = getTypeParameters(tsOdinGenericType.genericType());
+                            for (TsOdinParameter typeParameter : typeParameters) {
+                                OdinSymbol symbol = new OdinSymbol();
+                                symbol.setName(typeParameter.getName());
+                                symbol.setSymbolType(PARAMETER);
+                                symbol.setPsiType(typeParameter.getPsiType());
+                                symbol.setDeclaredIdentifier(typeParameter.getIdentifier());
+                                symbolTable.add(symbol);
+                            }
                         }
                     }
                 }
+            }
+            default -> {
             }
         }
 
