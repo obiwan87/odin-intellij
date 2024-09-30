@@ -288,7 +288,6 @@ type                                 ::= mapType
                                          | dynamicArrayType
                                          | arrayType
                                          | relativeType
-                                         | procedureLiteralType
                                          | procedureType
                                          | procedureOverloadType
                                          | structType
@@ -570,7 +569,7 @@ private refOperator ::= (DOT|ARROW)
 implicitSelectorExpression           ::= DOT identifier
 indexExpression                      ::= expression index
 sliceExpression                      ::= expression slice
-procedureExpression                  ::= procedureDefinition {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
+procedureExpression                  ::= procedureLiteralType {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
 dereferenceExpression                ::= expression CARET
 identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference delete]}
 
@@ -579,11 +578,10 @@ callExpression                       ::= expression LPAREN <<enterMode "PAR">> a
 private primaryGroup                 ::= simpleRefExpression
                                          | transmuteExpression
                                          | parenthesizedExpression
-
+                                         | procedureExpression
                                          | typeDefinitionExpression
                                          | directiveExpression
                                          | literalExpression
-                                         | procedureExpression
 
 
 literalExpression                    ::= basicLiteral
@@ -592,7 +590,7 @@ compoundLiteralExpression            ::= compoundLiteralTyped | compoundLiteralU
 fake compoundValue                   ::= {methods=[getCompoundValueBody]}
 fake compoundLiteral                 ::= typeContainer (compoundValueTyped | compoundValueUntyped)
 
-compoundLiteralTyped                 ::= typeContainer compoundValueTyped {extends=compoundLiteral implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+compoundLiteralTyped                 ::= !procedureType typeContainer compoundValueTyped {extends=compoundLiteral implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 typeContainer ::= sliceType
                 | dynamicArrayType
                 | arrayType

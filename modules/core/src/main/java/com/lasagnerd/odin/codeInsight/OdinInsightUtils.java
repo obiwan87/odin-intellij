@@ -40,10 +40,14 @@ public class OdinInsightUtils {
     );
     public static final char[] RGBA = {'r', 'g', 'b', 'a'};
     public static final char[] RGB = {'r', 'g', 'b'};
+
+    @SuppressWarnings("unused")
     public static final char[] RG = {'r', 'g',};
     public static final char[] R = {'r'};
     public static final char[] XYZW = {'x', 'y', 'z', 'w'};
     public static final char[] XYZ = {'x', 'y', 'z'};
+
+    @SuppressWarnings("unused")
     public static final char[] XY = {'x', 'y'};
     public static final char[] X = {'x'};
 
@@ -207,17 +211,6 @@ public class OdinInsightUtils {
             if (!declaration.getDeclaredIdentifiers().isEmpty()) {
                 OdinDeclaredIdentifier declaredIdentifier = declaration.getDeclaredIdentifiers().getFirst();
                 return declaredIdentifier.getText();
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    public static OdinDeclaration getTypeDeclaration(OdinType type) {
-        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(type, OdinDeclaration.class);
-        if (declaration != null) {
-            if (!declaration.getDeclaredIdentifiers().isEmpty()) {
-                return declaration;
             }
         }
         return null;
@@ -520,12 +513,11 @@ public class OdinInsightUtils {
 
         OdinExpression expression = expressionList.getFirst();
         if (expression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
-            OdinType type = typeDefinitionExpression.getType();
-            return type;
+            return typeDefinitionExpression.getType();
         }
 
-        if (expressionList instanceof OdinProcedureExpression procedureExpression) {
-            return procedureExpression.getProcedureDefinition().getProcedureSignature().getProcedureType();
+        if (expression instanceof OdinProcedureExpression procedureExpression) {
+            return procedureExpression.getProcedureLiteralType();
         }
         return null;
     }
@@ -581,16 +573,6 @@ public class OdinInsightUtils {
             return (lineColumn.line + 1) + ":" + (lineColumn.column + 1);
         }
         return "<unknown>:<unknown>";
-    }
-
-    public static boolean getEnumeratedArraySymbols(OdinSymbolTable symbolTable, TsOdinArrayType tsOdinArrayType) {
-        OdinEnumType psiType = getEnumTypeOfArray(symbolTable, tsOdinArrayType);
-        if (psiType != null) {
-            List<OdinSymbol> enumFields = getEnumFields(psiType);
-            symbolTable.addAll(enumFields);
-            return true;
-        }
-        return false;
     }
 
     public static @Nullable OdinEnumType getEnumTypeOfArray(OdinSymbolTable symbolTable, TsOdinArrayType tsOdinArrayType) {

@@ -680,3 +680,9 @@ Dict2 :: struct($Key: typeid, $Value: i32 = 3) {
 testFieldsOfParaPoly :: proc(d: $D/Dict2($K)) where D.Key {
 
 }
+
+default_swap_proc :: proc($T: typeid) -> proc(q: []T, i, j: int) {
+    return proc(q: []T, i, j: int) {
+        q[i], q[j] = q[j], q[i]
+    }
+}

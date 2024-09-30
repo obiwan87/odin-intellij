@@ -588,7 +588,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitProcedureExpression(@NotNull OdinProcedureExpression o) {
         // get type of expression. If it is a procedure, retrieve the return type and set that as result
-        var procedureType = o.getProcedureDefinition().getProcedureSignature().getProcedureType();
+        var procedureType = o.getProcedureLiteralType();
         TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(PROCEDURE);
         tsOdinMetaType.setPsiType(procedureType);
 
@@ -1024,9 +1024,11 @@ public class OdinInferenceEngine extends OdinVisitor {
                 TsOdinType tsOdinType = inferType(parentSymbolTable, switchInBlock.getSwitchInClause().getExpression());
                 List<OdinSwitchCase> ancestors = new ArrayList<>();
                 OdinSwitchBody switchBody = switchInBlock.getSwitchBody();
-                for (OdinSwitchCase odinSwitchCase : switchBody.getSwitchCases().getSwitchCaseList()) {
-                    if (PsiTreeUtil.isAncestor(odinSwitchCase, identifier, true)) {
-                        ancestors.add(odinSwitchCase);
+                if (switchBody != null) {
+                    for (OdinSwitchCase odinSwitchCase : switchBody.getSwitchCases().getSwitchCaseList()) {
+                        if (PsiTreeUtil.isAncestor(odinSwitchCase, identifier, true)) {
+                            ancestors.add(odinSwitchCase);
+                        }
                     }
                 }
                 if (ancestors.size() != 1)

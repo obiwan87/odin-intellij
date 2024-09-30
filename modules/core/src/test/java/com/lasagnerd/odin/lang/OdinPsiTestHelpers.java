@@ -28,7 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-@SuppressWarnings("UnstableApiUsage")
+@SuppressWarnings({"UnstableApiUsage", "unused"})
 class OdinPsiTestHelpers {
     static <T extends TsOdinType> void assertExpressionIsOfTypeWithName(OdinFile odinFile, String procedure, String variableName, Class<T> aClass, String name) {
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, procedure, variableName);
@@ -86,17 +86,18 @@ class OdinPsiTestHelpers {
     }
 
     static @NotNull OdinProcedureDefinition findFirstProcedure(@NotNull OdinFile odinFile, String procedureName) {
-        Collection<OdinProcedureLiteralType> procedureDeclarationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
-                OdinProcedureLiteralType.class);
+        Collection<OdinConstantInitializationStatement> constantInitializationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
+                OdinConstantInitializationStatement.class);
 
-        return procedureDeclarationStatements.stream()
-                .filter(procedureDefinition -> PsiTreeUtil.getParentOfType(procedureDefinition, OdinConstantInitializationStatement.class) != null)
-                .filter(p -> {
-                    OdinConstantInitializationStatement constantInitializationStatement = PsiTreeUtil.getParentOfType(p, OdinConstantInitializationStatement.class);
-                    assert constantInitializationStatement != null;
-                    return Objects.equals(constantInitializationStatement.getDeclaredIdentifiers().getFirst().getName(), procedureName);
+        return constantInitializationStatements.stream()
+                .filter(c -> c.getDeclaredIdentifiers().getFirst().getIdentifierToken().getText().equals(procedureName))
+                .filter(c -> OdinInsightUtils.getDeclaredType(c) instanceof OdinProcedureLiteralType)
+                .map(c -> {
+                    OdinProcedureLiteralType declaredType = (OdinProcedureLiteralType) OdinInsightUtils.getDeclaredType(c);
+                    assert declaredType != null;
+                    return declaredType.getProcedureDefinition();
                 })
-                .map(OdinProcedureLiteralType::getProcedureDefinition)
+
                 .findFirst().orElseThrow();
     }
 

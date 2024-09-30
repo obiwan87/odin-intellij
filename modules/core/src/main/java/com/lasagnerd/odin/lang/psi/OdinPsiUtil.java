@@ -287,7 +287,11 @@ public class OdinPsiUtil {
     // Procedure
 
     public static List<OdinSymbol> getSymbols(OdinProcedureExpression procedureExpression) {
-        OdinProcedureType procedureType = procedureExpression.getProcedureDefinition().getProcedureSignature().getProcedureType();
+        OdinProcedureType procedureType = procedureExpression
+                .getProcedureLiteralType()
+                .getProcedureDefinition()
+                .getProcedureSignature()
+                .getProcedureType();
         return doGetProcedureTypeSymbols(procedureType);
     }
 
