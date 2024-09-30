@@ -149,7 +149,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitImplicitSelectorExpression(@NotNull OdinImplicitSelectorExpression o) {
-        OdinElementEntry elementEntry = PsiTreeUtil.getParentOfType(o, OdinElementEntry.class, true);
+        PsiElement elementEntry = PsiTreeUtil.getParentOfType(o, OdinLhs.class, OdinRhs.class);
         if (elementEntry != null) {
             OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(elementEntry, OdinCompoundLiteral.class);
             TsOdinType tsOdinType = inferTypeOfCompoundLiteral(symbolTable, compoundLiteral).baseType(true);

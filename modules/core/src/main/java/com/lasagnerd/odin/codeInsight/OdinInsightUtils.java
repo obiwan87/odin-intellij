@@ -77,6 +77,7 @@ public class OdinInsightUtils {
     }
 
     public static OdinSymbolTable getTypeElements(Project project, TsOdinType type, boolean includeReferenceableSymbols) {
+
         type = type.baseType(true);
 
         if (type instanceof TsOdinPackageReferenceType packageType) {
@@ -143,6 +144,7 @@ public class OdinInsightUtils {
             return symbolTable.with(getBitFieldFields(bitFieldType));
         }
 
+
         if (includeReferenceableSymbols && type instanceof TsOdinArrayType arrayType) {
             return OdinSymbolTable.from(getSwizzleFields(arrayType));
         }
@@ -192,6 +194,21 @@ public class OdinInsightUtils {
             }
         }
         return symbolTable;
+    }
+
+    public static boolean getEnumeratedArraySymbols(OdinSymbolTable symbolTable, TsOdinArrayType tsOdinArrayType) {
+        var psiSizeElement = tsOdinArrayType.getPsiSizeElement();
+        OdinExpression expression = psiSizeElement.getExpression();
+
+        if (expression != null) {
+            TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, expression);
+            if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
+                List<OdinSymbol> enumFields = getEnumFields((OdinEnumType) sizeType.getPsiType());
+                symbolTable.addAll(enumFields);
+                return true;
+            }
+        }
+        return false;
     }
 
     private static List<TsOdinParameter> getTypeParameters(TsOdinType tsOdinType) {
