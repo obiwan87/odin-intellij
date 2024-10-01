@@ -27,10 +27,10 @@ public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
         }
 
         if (element.getText().equals("main")) {
-            AnAction[] actions = ExecutorAction.getActions(1);
+            AnAction[] actions = ExecutorAction.getActions(0);
             return new Info(
                     AllIcons.RunConfigurations.TestState.Run,
-                    new AnAction[]{ actions[0], actions[actions.length - 1] },
+                    new AnAction[]{ actions[0], actions[1], actions[actions.length - 1] },
                     (ignored) -> "Run " + element.getContainingFile().getName()
             );
 

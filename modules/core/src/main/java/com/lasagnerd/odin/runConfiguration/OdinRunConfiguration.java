@@ -68,8 +68,5 @@ public class OdinRunConfiguration extends LocatableConfigurationBase<OdinRunConf
         return getOptions().getOutputPath();
     }
 
-//    @Override
-//    public @NotNull List<BeforeRunTask<?>> getBeforeRunTasks() {
-//        return List.of(new OdinBuildBeforeRunTask(OdinBuildBeforeRunTaskProvider.ID));
-//    }
+
 }
