@@ -3,6 +3,12 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.6.3</h3>
+        <h4>Improvements</h4>
+        <li>Huge improvement in auto-completion</li>
+        <li>Support new build flags</li>
+        <li>Parser is now more flexible with incomplete statements, thus preserving formatting and auto-complete in many situations</li>
+
         <h3>0.6.2</h3>
         <h4>Bug Fixes</h4>
         <li>Fix a bug in the type inference engine, where a stackoverflow was caused by circular references</li>
@@ -11,10 +17,10 @@
 
         <h3>0.6.1</h3>
         <h4>Improvements</h4>
-        <li>Added bundled LLDB debugger, which is supported on MacOs (and probably Linux)🔥</li>
+        <li>Added bundled LLDB debugger, which is supported on macOS (and probably Linux)🔥</li>
 
         <h4>Bug Fix</h4>
-        <li>Fixed bug in LLDB-DAP Debugger, which now works on MacOs (and probably Linux)</li>
+        <li>Fixed bug in LLDB-DAP Debugger, which now works on macOS (and probably Linux)</li>
 
         <h3>0.6.0</h3>
         <h4>Improvements</h4>
