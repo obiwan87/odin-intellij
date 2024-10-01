@@ -127,7 +127,9 @@ public class OdinSymbolTableResolver {
     private static List<OdinSymbol> getBuiltInSymbols(Project project) {
         OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(project);
         if (builtinSymbolService != null)
-            return builtinSymbolService.getBuiltInSymbols();
+            return builtinSymbolService.getBuiltInSymbols().stream()
+                    .filter(s -> s.getVisibility()== OdinSymbol.OdinVisibility.PUBLIC)
+                    .toList();
         return Collections.emptyList();
     }
 
@@ -192,6 +194,25 @@ public class OdinSymbolTableResolver {
                     return OdinSymbol.OdinVisibility.FILE_PRIVATE;
                 }
             }
+        }
+
+        OdinBuildFlag[] buildFlags = PsiTreeUtil.getChildrenOfType(fileScope, OdinBuildFlag.class);
+        if(buildFlags == null)
+            return OdinSymbol.OdinVisibility.PUBLIC;
+
+        for (OdinBuildFlag buildFlag : buildFlags) {
+
+            String prefix = buildFlag.getBuildFlagPrefix().getText();
+            if(prefix.equals("#+private")) {
+                if(buildFlag.getBuildFlagContent() != null && buildFlag.getBuildFlagContent()
+                        .getText()
+                        .trim()
+                        .equals("file")) {
+                    return OdinSymbol.OdinVisibility.FILE_PRIVATE;
+                }
+                return OdinSymbol.OdinVisibility.PACKAGE_PRIVATE;
+            }
+
         }
 
         return OdinSymbol.OdinVisibility.PUBLIC;

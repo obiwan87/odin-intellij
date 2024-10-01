@@ -45,7 +45,6 @@ public class OdinAttributeUtils {
                     String text = odinNamedArgument.getIdentifier().getText();
                     if (text.equals("private")) {
                         String attributeValue = OdinInsightUtils.getStringLiteralValue(odinNamedArgument.getExpression());
-                        OdinExpression valueExpression = odinNamedArgument.getExpression();
                         if (Objects.equals(attributeValue, "file")) {
                             return OdinSymbol.OdinVisibility.FILE_PRIVATE;
                         }

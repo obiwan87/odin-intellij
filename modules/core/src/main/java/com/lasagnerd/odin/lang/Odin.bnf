@@ -162,8 +162,8 @@
 
         SQ_STRING_START='SQ_STRING_START'
         SQ_STRING_END='SQ_STRING_END'
-        BUILD_FLAG_PREFIX='BUILD_FLAG_PREFIX'
-        BUILD_FLAG_CONTENT='BUILD_FLAG_CONTENT'
+        BUILD_FLAG_PREFIX_TOKEN='regexp:'
+        BUILD_FLAG_CONTENT_TOKEN='BUILD_FLAG_CONTENT_TOKEN'
   ]
 
   extends('.*Expression$') = expression
@@ -192,7 +192,9 @@ fileScope                            ::= buildFlag* packageDeclaration eos impor
     implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
 }
 
-buildFlag                            ::= BUILD_FLAG_PREFIX BUILD_FLAG_CONTENT?
+buildFlag                            ::= buildFlagPrefix buildFlagContent?
+buildFlagPrefix                      ::= BUILD_FLAG_PREFIX_TOKEN
+buildFlagContent                     ::= BUILD_FLAG_CONTENT_TOKEN
 importStatementsContainer            ::= (importDeclarationStatement eos)+
 fileScopeStatementList               ::= (fileScopeStatement (eos|<<afterNewLine>>))*
 packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=1 recoverWhile=eos_recover}
