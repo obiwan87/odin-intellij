@@ -204,7 +204,7 @@ public class OdinSdkConfigurable implements Configurable {
                                     """.stripIndent()), 0)
                     .addLabeledComponent(new JBLabel("Odin checker"), createOdinCheckerCheckbox(), 1)
                     .addComponentToRightColumn(createComment("Enable/Disable the odin checker and the respective error messages"))
-                    .addLabeledComponent(new JBLabel("Highlight unknown References"), createHighlightUnknownReferencesCheckbox(), 1)
+                    .addLabeledComponent(new JBLabel("Highlight unknown references (experimental)"), createHighlightUnknownReferencesCheckbox(), 1)
                     .addComponentToRightColumn(createComment("Enable/Disable highlighting of unknown references"))
                     .addComponentFillVertically(new JPanel(), 1)
                     .getPanel();
