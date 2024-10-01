@@ -6,6 +6,16 @@ the [Plugin Page](https://plugins.jetbrains.com/plugin/22933-odin-lang-support).
 
 ## Debugger Setup
 
+Debugging is supported only in IntelliJ IDEA Ultimate, GoLand, CLion, PyCharm Profession and
+RustRover. If you do not see the "Debugger Settings" section in the Odin settings panel, you need to install
+the  [Native Debugging Support](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) plugin 
+from the marketplace.
+
+This is what the settings panel, will look like, if your IDE is correctly set up.
+![Debugger Settings](debugger-settings.png)
+
+The following sections describe how to set up the various debuggers.
+
 ### LLDB-DAP
 
 Download the LLVM 18.1.x binaries for your machine. In the Odin settings
