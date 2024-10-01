@@ -5,8 +5,9 @@ import "base:runtime"
 
 @builtin len :: proc(array: Array_Type) -> int ---
 @builtin cap :: proc(array: Array_Type) -> int ---
-
-size_of      :: proc($T: typeid) -> int ---
+@builtin soa_zip :: proc(slices: ...) -> #soa[]Struct ---
+@builtin soa_unzip :: proc(value: $S/#soa[]$E) -> (slices: ...) ---
+@builtin size_of      :: proc($T: typeid) -> int ---
 @builtin align_of     :: proc($T: typeid) -> int ---
 @builtin type_of      :: proc(x: expr) -> type ---
 @builtin type_info_of :: proc($T: typeid) -> ^runtime.Type_Info ---
@@ -175,7 +176,7 @@ ODIN_VENDOR:  string
 @builtin
 ODIN_VALGRIND_SUPPORT: bool
 
-@(private, builtin)
+@(private="file", builtin)
 Any_Type :: struct {
     data: rawptr,
     id: typeid

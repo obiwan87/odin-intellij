@@ -50,6 +50,8 @@ public class TsOdinMetaType extends TsOdinType {
         PROCEDURE_OVERLOAD,
         DISTINCT_TYPE,
         DYNAMIC_ARRAY,
+        SOA_SLICE,
+        SOA_STRUCT,
     }
 
     private TsOdinType representedType;

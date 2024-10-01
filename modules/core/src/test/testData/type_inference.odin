@@ -686,3 +686,22 @@ default_swap_proc :: proc($T: typeid) -> proc(q: []T, i, j: int) {
         q[i], q[j] = q[j], q[i]
     }
 }
+
+testSoaSlices :: proc() {
+    xs := []i32{ 1, 2, 3 }
+    ys := []f32{ 1, 2, 3 }
+    zs := []i64{ 1, 2, 3 }
+
+    s := soa_zip(x=xs, y=ys, z=zs)
+
+    for v, i in s {
+        d := v.x
+        e := v.y
+        f := v.z
+    }
+
+    xs2, ys2, zs2 := soa_unzip(s);
+    a := xs2
+    b := ys2
+    c := zs2
+}

@@ -57,7 +57,7 @@ public class OdinCompletionContributor extends CompletionContributor {
             return AllIcons.FileTypes.Unknown;
         return switch (symbolType) {
             case STRUCT -> OdinIcons.Types.Struct;
-            case SWIZZLE_FIELD, FIELD -> AllIcons.Nodes.Property;
+            case SWIZZLE_FIELD, FIELD, SOA_FIELD -> AllIcons.Nodes.Property;
             case BIT_FIELD, LABEL, FOREIGN_IMPORT, BIT_SET, BUILTIN_TYPE -> null;
             case ENUM_FIELD -> AllIcons.Nodes.Field;
             case ENUM -> AllIcons.Nodes.Enum;

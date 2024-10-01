@@ -4,6 +4,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,9 @@ import java.util.stream.Collectors;
 public class TsOdinTuple extends TsOdinType {
     private final List<TsOdinType> types;
 
+    public TsOdinTuple() {
+        this.types = new ArrayList<>();
+    }
     public TsOdinTuple(List<TsOdinType> types) {
         this.types = types;
     }

@@ -68,6 +68,7 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
             case FOREIGN_IMPORT -> "Foreign Import";
             case SWIZZLE_FIELD -> "Swizzle Field";
             case BIT_FIELD -> "Bit Field";
+            case SOA_FIELD -> "Soa Field";
             case BIT_SET -> "Bit set";
         };
     }

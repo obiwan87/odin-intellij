@@ -130,6 +130,22 @@ public class OdinInsightUtils {
             return symbolTable;
         }
 
+        if(type instanceof TsOdinSoaStructType tsOdinSoaStructType) {
+            for (Map.Entry<String, TsOdinType> entry : tsOdinSoaStructType.getFields().entrySet()) {
+                TsOdinType sliceType = entry.getValue();
+                OdinSymbol symbol = new OdinSymbol();
+                symbol.setName(entry.getKey());
+                symbol.setVisibility(OdinSymbol.OdinVisibility.PUBLIC);
+                symbol.setSymbolType(SOA_FIELD);
+                symbol.setPsiType(sliceType.getPsiType());
+                symbol.setImplicitlyDeclared(true);
+                symbol.setScope(OdinSymbol.OdinScope.TYPE);
+                symbolTable.add(symbol);
+            }
+
+            return symbolTable;
+        }
+
         if (type.getPsiType() instanceof OdinEnumType enumType) {
             return symbolTable.with(getEnumFields(enumType));
         }
@@ -143,7 +159,6 @@ public class OdinInsightUtils {
         if (type.getPsiType() instanceof OdinBitFieldType bitFieldType) {
             return symbolTable.with(getBitFieldFields(bitFieldType));
         }
-
 
         if (includeReferenceableSymbols && type instanceof TsOdinArrayType arrayType) {
             return OdinSymbolTable.from(getSwizzleFields(arrayType));
@@ -196,6 +211,7 @@ public class OdinInsightUtils {
         return symbolTable;
     }
 
+    @SuppressWarnings("unused")
     public static boolean getEnumeratedArraySymbols(OdinSymbolTable symbolTable, TsOdinArrayType tsOdinArrayType) {
         var psiSizeElement = tsOdinArrayType.getPsiSizeElement();
         OdinExpression expression = psiSizeElement.getExpression();

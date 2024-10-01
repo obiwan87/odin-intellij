@@ -181,7 +181,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         TsOdinType tsOdinRefExpressionType = TsOdinBuiltInTypes.UNKNOWN;
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
-            // extract symbol table
+            // extract symbol table<
             tsOdinRefExpressionType = OdinInsightUtils.getReferenceableType(doInferType(symbolTable, refExpression.getExpression()));
             OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(refExpression.getProject(), tsOdinRefExpressionType, true);
 
@@ -235,7 +235,13 @@ public class OdinInferenceEngine extends OdinVisitor {
                             }
                         }
 
-                    } else if (symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
+                    }
+                    else if (symbol.getSymbolType() == OdinSymbolType.SOA_FIELD) {
+                        if(tsOdinRefExpressionType instanceof TsOdinSoaStructType soaStructType) {
+                            this.type = soaStructType.getFields().get(symbol.getName());
+                        }
+                    }
+                    else if (symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
                         this.type = createBuiltinMetaType(name);
                     } else {
                         Project project = refExpression.getProject();
@@ -349,108 +355,123 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         // Calling: expr(args)
         else if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
+            // resolve to base type
             if (tsOdinMetaType.getRepresentedMetaType() == ALIAS) {
                 tsOdinMetaType = tsOdinMetaType.getAliasedMetaType();
             }
 
+            // normal procedure call
             if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE) {
                 TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
-                this.type = inferTypeOfProcedureCall(o, procedureType);
-            } else if (tsOdinMetaType.getRepresentedMetaType() == STRUCT) {
+                this.type = inferTypeOfProcedureCall(o, procedureType, symbolTable);
+            }
+            // struct specialization
+            else if (tsOdinMetaType.getRepresentedMetaType() == STRUCT) {
                 TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType);
                 TsOdinStructType specializedStructType = OdinTypeSpecializer.specializeStructOrGetCached(symbolTable, structType, o.getArgumentList());
                 TsOdinMetaType resultType = new TsOdinMetaType(STRUCT);
                 resultType.setRepresentedType(specializedStructType);
                 this.type = resultType;
-            } else if (tsOdinMetaType.getRepresentedMetaType() == UNION) {
+            }
+            // union specialization
+            else if (tsOdinMetaType.getRepresentedMetaType() == UNION) {
                 TsOdinUnionType unionType = (TsOdinUnionType) OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType);
                 TsOdinType specializedUnion = OdinTypeSpecializer.specializeUnionOrGetCached(symbolTable, unionType, o.getArgumentList());
                 TsOdinMetaType resultType = new TsOdinMetaType(UNION);
                 resultType.setRepresentedType(specializedUnion);
                 this.type = resultType;
-            } else if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE_OVERLOAD) {
+            }
+            // procedure group
+            else if (tsOdinMetaType.getRepresentedMetaType() == PROCEDURE_OVERLOAD) {
                 TsOdinProcedureOverloadType procedureOverloadType = (TsOdinProcedureOverloadType) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
-                List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>>>> compatibleProcedures = new ArrayList<>();
-                for (TsOdinProcedureType targetProcedure : procedureOverloadType.getTargetProcedures()) {
-                    @Nullable Map<OdinExpression, TsOdinParameter> argumentExpressions = OdinInsightUtils.getArgumentToParameterMap(targetProcedure.getParameters(), o.getArgumentList());
-                    if (argumentExpressions == null) continue;
-
-                    boolean allParametersCompatible = true;
-
-                    // Gather all compatible procedures along with their original argument
-                    List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>> compatibilityResults = new ArrayList<>();
-                    for (var entry : argumentExpressions.entrySet()) {
-                        TsOdinParameter tsOdinParameter = entry.getValue();
-                        OdinExpression argumentExpression = entry.getKey();
-
-                        TsOdinType parameterType = tsOdinParameter.getType().baseType();
-                        TsOdinType argumentType = inferType(symbolTable, argumentExpression).baseType();
-
-                        OdinTypeChecker.TypeCheckResult compatibilityResult = OdinTypeChecker.checkTypes(argumentType,
-                                parameterType,
-                                tsOdinParameter.isAnyInt());
-
-                        if (!compatibilityResult.isCompatible()) {
-                            allParametersCompatible = false;
-                            break;
-                        }
-                        compatibilityResults.add(Pair.create(argumentType, compatibilityResult));
-                    }
-                    if (allParametersCompatible) {
-                        compatibleProcedures.add(Pair.create(targetProcedure, compatibilityResults));
-                    }
-                }
-
-
-                if (compatibleProcedures.size() == 1) {
-                    this.type = inferTypeOfProcedureCall(o, compatibleProcedures.getFirst().getFirst());
-                } else if (!compatibleProcedures.isEmpty()) {
-                    TsOdinProcedureType bestProcedure = breakTie(compatibleProcedures);
-                    if (bestProcedure != null) {
-                        this.type = inferTypeOfProcedureCall(o, bestProcedure);
-                    } else {
-                        boolean sameReturnTypes = true;
-                        outer:
-                        for (int i = 0; i < compatibleProcedures.size() - 1; i++) {
-                            TsOdinProcedureType a = compatibleProcedures.get(i).getFirst();
-                            for (int j = i + 1; j < compatibleProcedures.size(); j++) {
-                                TsOdinProcedureType b = compatibleProcedures.get(i).getFirst();
-                                if (a.getReturnTypes().size() == b.getReturnTypes().size()) {
-                                    for (int k = 0; k < a.getReturnTypes().size(); k++) {
-                                        TsOdinType returnTypeA = a.getReturnTypes().get(k);
-                                        TsOdinType returnTypeB = a.getReturnTypes().get(k);
-                                        if (!OdinTypeChecker.checkTypesStrictly(returnTypeA, returnTypeB) &&
-                                                !OdinTypeChecker.checkTypesStrictly(returnTypeB, returnTypeA)
-                                        ) {
-                                            sameReturnTypes = false;
-                                            break outer;
-                                        }
-                                    }
-                                } else {
-                                    sameReturnTypes = false;
-                                    break outer;
-                                }
-                            }
-                        }
-
-                        if (sameReturnTypes) {
-                            TsOdinProcedureType firstProcedure = compatibleProcedures.getFirst().getFirst();
-                            if (!firstProcedure.getReturnTypes().isEmpty()) {
-                                this.type = inferTypeOfProcedureCall(o, compatibleProcedures.getFirst().getFirst());
-                            } else {
-                                this.type = TsOdinBuiltInTypes.VOID;
-                            }
-                        }
-                        System.out.println("Could not determine best procedure for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
-                    }
-                } else {
-                    System.out.println("Could not find any compatible candidate for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
-                }
-            } else if (tsOdinMetaType.representedType() instanceof TsOdinBuiltInType builtInType) {
+                this.type = inferTypeOfBestProcedure(o, procedureOverloadType);
+            }
+            // builtin type casting, e.g. i32(expr)
+            else if (tsOdinMetaType.representedType() instanceof TsOdinBuiltInType builtInType) {
                 // builtin type casting
                 this.type = builtInType;
             }
         }
+    }
+
+    private TsOdinType inferTypeOfBestProcedure(@NotNull OdinCallExpression o, TsOdinProcedureOverloadType procedureOverloadType) {
+        List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>>>> compatibleProcedures = new ArrayList<>();
+        for (TsOdinProcedureType targetProcedure : procedureOverloadType.getTargetProcedures()) {
+            @Nullable Map<OdinExpression, TsOdinParameter> argumentExpressions = OdinInsightUtils.getArgumentToParameterMap(targetProcedure.getParameters(), o.getArgumentList());
+            if (argumentExpressions == null) continue;
+
+            boolean allParametersCompatible = true;
+
+            // Gather all compatible procedures along with their original argument
+            List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>> compatibilityResults = new ArrayList<>();
+            for (var entry : argumentExpressions.entrySet()) {
+                TsOdinParameter tsOdinParameter = entry.getValue();
+                OdinExpression argumentExpression = entry.getKey();
+
+                TsOdinType parameterType = tsOdinParameter.getType().baseType();
+                TsOdinType argumentType = inferType(symbolTable, argumentExpression).baseType();
+
+                OdinTypeChecker.TypeCheckResult compatibilityResult = OdinTypeChecker.checkTypes(argumentType,
+                        parameterType,
+                        tsOdinParameter.isAnyInt());
+
+                if (!compatibilityResult.isCompatible()) {
+                    allParametersCompatible = false;
+                    break;
+                }
+                compatibilityResults.add(Pair.create(argumentType, compatibilityResult));
+            }
+            if (allParametersCompatible) {
+                compatibleProcedures.add(Pair.create(targetProcedure, compatibilityResults));
+            }
+        }
+
+
+        if (compatibleProcedures.size() == 1) {
+            return inferTypeOfProcedureCall(o, compatibleProcedures.getFirst().getFirst(), symbolTable);
+        } else if (!compatibleProcedures.isEmpty()) {
+            TsOdinProcedureType bestProcedure = breakTie(compatibleProcedures);
+            if (bestProcedure != null) {
+                return inferTypeOfProcedureCall(o, bestProcedure, symbolTable);
+            } else {
+                boolean sameReturnTypes = true;
+                outer:
+                for (int i = 0; i < compatibleProcedures.size() - 1; i++) {
+                    TsOdinProcedureType a = compatibleProcedures.get(i).getFirst();
+                    for (int j = i + 1; j < compatibleProcedures.size(); j++) {
+                        TsOdinProcedureType b = compatibleProcedures.get(i).getFirst();
+                        if (a.getReturnTypes().size() == b.getReturnTypes().size()) {
+                            for (int k = 0; k < a.getReturnTypes().size(); k++) {
+                                TsOdinType returnTypeA = a.getReturnTypes().get(k);
+                                TsOdinType returnTypeB = a.getReturnTypes().get(k);
+                                if (!OdinTypeChecker.checkTypesStrictly(returnTypeA, returnTypeB) &&
+                                        !OdinTypeChecker.checkTypesStrictly(returnTypeB, returnTypeA)
+                                ) {
+                                    sameReturnTypes = false;
+                                    break outer;
+                                }
+                            }
+                        } else {
+                            sameReturnTypes = false;
+                            break outer;
+                        }
+                    }
+                }
+
+                if (sameReturnTypes) {
+                    TsOdinProcedureType firstProcedure = compatibleProcedures.getFirst().getFirst();
+                    if (!firstProcedure.getReturnTypes().isEmpty()) {
+                        return inferTypeOfProcedureCall(o, compatibleProcedures.getFirst().getFirst(), symbolTable);
+                    } else {
+                        return TsOdinBuiltInTypes.VOID;
+                    }
+                }
+                System.out.println("Could not determine best procedure for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
+            }
+        } else {
+            System.out.println("Could not find any compatible candidate for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
+        }
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     private static @Nullable TsOdinProcedureType breakTie(List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>>>> compatibleProcedures) {
@@ -479,9 +500,35 @@ public class OdinInferenceEngine extends OdinVisitor {
         return bestProcedure;
     }
 
-    private TsOdinType inferTypeOfProcedureCall(@NotNull OdinCallExpression o, TsOdinProcedureType procedureType) {
-        // TODO OdinSymbol soaZip = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("soa_zip"));
-        if (!procedureType.getReturnTypes().isEmpty()) {
+    private static TsOdinType inferTypeOfProcedureCall(@NotNull OdinCallExpression o,
+                                                       TsOdinProcedureType procedureType,
+                                                       OdinSymbolTable symbolTable) {
+        OdinSymbol soaZip = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("soa_zip"));
+        OdinSymbol soaUnzip = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("soa_unzip"));
+        if (soaZip != null) {
+            TsOdinSoaSliceType soaSlice = new TsOdinSoaSliceType();
+            for (OdinArgument odinArgument : o.getArgumentList()) {
+                if (odinArgument instanceof OdinNamedArgument namedArgument) {
+                    TsOdinType sliceType = inferType(symbolTable, namedArgument.getExpression());
+                    soaSlice.getSlices().put(namedArgument.getIdentifier().getText(), sliceType);
+                }
+            }
+            return soaSlice;
+        }
+        else if(soaUnzip != null) {
+            TsOdinTuple tuple = new TsOdinTuple();
+
+            if(o.getArgumentList().size() == 1) {
+                if(o.getArgumentList().getFirst() instanceof OdinUnnamedArgument unnamedArgument) {
+                    TsOdinType tsOdinType = inferType(symbolTable, unnamedArgument.getExpression());
+                    if(tsOdinType instanceof TsOdinSoaSliceType tsOdinSoaSliceType) {
+                        tuple.getTypes().addAll(tsOdinSoaSliceType.getSlices().values());
+                    }
+                }
+            }
+            return tuple;
+        }
+        else if (!procedureType.getReturnTypes().isEmpty()) {
             TsOdinProcedureType specializedType = OdinTypeSpecializer
                     .specializeProcedure(symbolTable, o.getArgumentList(), procedureType);
             if (specializedType.getReturnTypes().size() == 1) {
@@ -1010,6 +1057,16 @@ public class OdinInferenceEngine extends OdinVisitor {
                     return tuple.get(index);
                 }
 
+                if (tsOdinType instanceof TsOdinSoaSliceType soaSliceType) {
+                    if (index == 0) {
+                        return createReferenceType(soaSliceType.getSoaStructType(), isReference);
+                    }
+
+                    if (index == 1) {
+                        return TsOdinBuiltInTypes.INT;
+                    }
+                }
+
                 if (expression instanceof OdinRangeExclusiveExpression || expression instanceof OdinRangeInclusiveExpression) {
                     return tsOdinType;
                 }
@@ -1139,7 +1196,6 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             if (tsOdinType != null) {
                 TsOdinType tsOdinBaseType = tsOdinType.baseType(true);
-
                 if (tsOdinBaseType instanceof TsOdinStructType) {
                     OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(rhsExpression.getProject(), tsOdinBaseType);
                     // Named element entry

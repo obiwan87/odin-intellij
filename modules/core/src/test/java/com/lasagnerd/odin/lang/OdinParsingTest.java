@@ -2129,4 +2129,44 @@ public class OdinParsingTest extends UsefulTestCase {
             }
         }
     }
+
+    public void testSoaSlices() throws IOException {
+        OdinFile odinFile = loadTypeInference();
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "s");
+            TsOdinSoaSliceType soaSlice = assertInstanceOf(tsOdinType, TsOdinSoaSliceType.class);
+
+            assertNotNull(soaSlice.getSlices().get("x"));
+            assertNotNull(soaSlice.getSlices().get("y"));
+            assertNotNull(soaSlice.getSlices().get("z"));
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "d");
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "e");
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.F32);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "f");
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I64);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "a");
+            TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinType, TsOdinSliceType.class);
+            assertEquals(tsOdinSliceType.getElementType(), TsOdinBuiltInTypes.I32);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "b");
+            TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinType, TsOdinSliceType.class);
+            assertEquals(tsOdinSliceType.getElementType(), TsOdinBuiltInTypes.F32);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "c");
+            TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinType, TsOdinSliceType.class);
+            assertEquals(tsOdinSliceType.getElementType(), TsOdinBuiltInTypes.I64);
+        }
+    }
 }
