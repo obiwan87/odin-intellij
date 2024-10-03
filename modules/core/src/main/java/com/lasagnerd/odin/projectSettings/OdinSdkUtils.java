@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.sdkConfig;
+package com.lasagnerd.odin.projectSettings;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ProgramParametersConfigurator;
@@ -25,8 +25,10 @@ public class OdinSdkUtils {
         if (project == null) {
             return null;
         }
-        OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
-        String sdkPath = sdkConfig.getSdkPath();
+        OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
+        OdinProjectSettingsState state = settingsService.getState();
+
+        String sdkPath = state.getSdkPath();
         if (sdkPath == null)
             return null;
 
@@ -70,17 +72,20 @@ public class OdinSdkUtils {
     }
 
     public static @Nullable OdinDebuggerSettings getDebuggerSettings(Project project) {
-        OdinSdkConfigPersistentState state = OdinSdkConfigPersistentState.getInstance(project);
-        if(StringUtils.isBlank(state.debuggerId))
+        OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
+        OdinProjectSettingsState state = settingsService.getState();
+        if (StringUtils.isBlank(state.debuggerId))
             return null;
         return new OdinDebuggerSettings(state.debuggerId, state.debuggerPath);
     }
 
     public static Optional<String> getSdkPath(Project project) {
-        OdinSdkConfigPersistentState sdkConfig = OdinSdkConfigPersistentState.getInstance(project);
-        if (sdkConfig == null) {
+        OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
+        if (settingsService == null) {
             return Optional.empty();
         }
+
+        OdinProjectSettingsState sdkConfig = settingsService.getState();
 
         String sdkPath = sdkConfig.getSdkPath();
         if (sdkPath == null || sdkPath.isBlank()) {

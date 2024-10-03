@@ -16,10 +16,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
-import com.lasagnerd.odin.sdkConfig.OdinSdkLibraryManager;
-import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
-import kotlinx.html.I;
+import com.lasagnerd.odin.projectSettings.OdinSdkLibraryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

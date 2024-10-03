@@ -26,7 +26,7 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
 import com.lasagnerd.odin.lang.OdinSyntaxHighlighter;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
+import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -138,8 +138,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
-        OdinSdkConfigPersistentState persistentState = OdinSdkConfigPersistentState.getInstance(annotationHolder.getCurrentAnnotationSession().getFile().getProject());
-        if (persistentState.getState() != null && !persistentState.getState().isSemanticAnnotatorEnabled())
+        OdinProjectSettingsService persistentState = OdinProjectSettingsService.getInstance(annotationHolder.getCurrentAnnotationSession().getFile().getProject());
+        if (persistentState != null && !persistentState.isSemanticAnnotatorEnabled())
             return;
 
         IElementType elementType = PsiUtilCore.getElementType(psiElement);
@@ -219,7 +219,6 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
     private static class OdinAnnotationSessionState {
         Map<PsiElement, OdinRefExpression> refExpressionMap = new HashMap<>();
-        Map<PsiElement, TsOdinType> types = new HashMap<>();
         Set<OdinRefExpression> aborted = new HashSet<>();
     }
 
@@ -340,7 +339,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
     @SuppressWarnings("unused")
     private static void highlightUnknownReference(Project project, @NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange) {
-        OdinSdkConfigPersistentState state = OdinSdkConfigPersistentState.getInstance(project);
+        OdinProjectSettingsService state = OdinProjectSettingsService.getInstance(project);
         if (state.isHighlightUnknownReferencesEnabled()) {
             annotationHolder
                     .newAnnotation(HighlightSeverity.ERROR, "Unresolved reference '%s'".formatted(identifierText))

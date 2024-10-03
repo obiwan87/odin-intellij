@@ -36,7 +36,7 @@ import com.lasagnerd.odin.OdinBundle
 import com.lasagnerd.odin.debugger.OdinDebuggerToolchainService
 import com.lasagnerd.odin.runConfiguration.OdinRunCommandLineState
 import com.lasagnerd.odin.runConfiguration.OdinRunConfiguration
-import com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable
+import com.lasagnerd.odin.projectSettings.OdinProjectConfigurable
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -67,7 +67,7 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
                     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                         ShowSettingsUtil.getInstance().showSettingsDialog(
                             environment.project,
-                            OdinSdkConfigurable::class.java,
+                            OdinProjectConfigurable::class.java,
                             null
                         )
                     }

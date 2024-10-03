@@ -4,8 +4,8 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 import com.lasagnerd.odin.debugger.toolchains.DebuggerDriverConfigurationProvider;
 import com.lasagnerd.odin.extensions.OdinDebuggerToolchain;
-import com.lasagnerd.odin.sdkConfig.OdinDebuggerSettings;
-import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
+import com.lasagnerd.odin.projectSettings.OdinDebuggerSettings;
+import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.Nullable;
 
 public class OdinDebuggerToolchainService {

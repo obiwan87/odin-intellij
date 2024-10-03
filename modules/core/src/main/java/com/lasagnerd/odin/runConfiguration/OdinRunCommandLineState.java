@@ -12,7 +12,7 @@ import com.intellij.execution.process.ProcessHandlerFactory;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
-import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
+import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;

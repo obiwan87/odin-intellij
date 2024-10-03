@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.sdkConfig;
+package com.lasagnerd.odin.projectSettings;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -43,7 +43,7 @@ public class OdinEditorNotificationProvider implements EditorNotificationProvide
                 if (!project.isDisposed()) {
                     file.refresh(false, false);
                     ShowSettingsUtil.getInstance().showSettingsDialog(project,
-                            OdinSdkConfigurable.class, null);
+                            OdinProjectConfigurable.class, null);
                 }
             });
 

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
-import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
+import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -6,8 +6,9 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
-import com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable;
+import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.projectSettings.OdinProjectConfigurable;
+import com.lasagnerd.odin.projectSettings.OdinProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,12 +35,13 @@ public class OdinRunConfiguration extends LocatableConfigurationBase<OdinRunConf
             throw new RuntimeConfigurationError("Project directory does not exist");
         }
 
-        String sdkPath = OdinSdkConfigPersistentState.getInstance(getProject()).getSdkPath();
+        OdinProjectSettingsState state = OdinProjectSettingsService.getInstance(getProject()).getState();
 
+        String sdkPath = state.sdkPath;
         if (sdkPath == null || sdkPath.isEmpty()) {
             throw new RuntimeConfigurationError("Odin SDK path is not set",
                     () -> ShowSettingsUtil.getInstance().showSettingsDialog(getProject(),
-                            OdinSdkConfigurable.class, null));
+                            OdinProjectConfigurable.class, null));
         }
 
         File sdkFile = new File(sdkPath);

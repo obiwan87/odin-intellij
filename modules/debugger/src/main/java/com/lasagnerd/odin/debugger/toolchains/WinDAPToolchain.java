@@ -4,7 +4,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -163,7 +162,7 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
     }
 
     @Override
-    public String download(Project project) {
+    public String download() {
         String debuggerExecutablePath = null;
 
         String detectedPath = detect();
@@ -199,7 +198,7 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
             throw new RuntimeException("Could not create temp dirs");
 
         @Nullable List<Pair<VirtualFile, DownloadableFileDescription>> downloads = fileDownloader
-                .downloadWithProgress(downloadDir.toString(), project, null);
+                .downloadWithProgress(downloadDir.toString(), null, null);
         if (downloads != null) {
             for (Pair<VirtualFile, DownloadableFileDescription> download : downloads) {
                 var file = download.getFirst();
@@ -216,7 +215,7 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
                         },
                         "Extracting Downloaded Contents",
                         true,
-                        project
+                        null
                 );
                 if (extraction) {
                     debuggerExecutablePath = extractionTargetPath.resolve("extension/debugAdapters/vsdbg/bin/vsdbg.exe").toString();

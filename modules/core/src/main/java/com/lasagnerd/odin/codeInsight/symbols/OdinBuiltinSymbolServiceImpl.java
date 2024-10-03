@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.lasagnerd.odin.lang.psi.OdinFile;
-import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
+import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 
 import java.nio.file.Path;
 import java.util.Optional;

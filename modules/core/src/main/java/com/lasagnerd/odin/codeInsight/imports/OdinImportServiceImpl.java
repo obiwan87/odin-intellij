@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.lasagnerd.odin.lang.psi.OdinFile;
-import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
+import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -13,7 +13,8 @@
         <h4>Bug Fixes</h4>
         <li>Fix a bug in the type inference engine, where a stackoverflow was caused by circular references</li>
         <li>Fix bug in Settings panel, where a NullPointerException, would cause the panel to never finish loading.
-        This affected IDEs without "Native Debugging Support"</li>
+            This affected IDEs without "Native Debugging Support"
+        </li>
 
         <h3>0.6.1</h3>
         <h4>Improvements</h4>
@@ -33,7 +34,9 @@
 
         <h3>0.5.3</h3>
         <h4>Features</h4>
-        <li>"Introduce variable" refactoring🔥. Use<kbd>Ctrl+Alt+V</kbd> or <a href="https://www.jetbrains.com/help/idea/resolving-problems.html">Quick Fix💡</a>.</li>
+        <li>"Introduce variable" refactoring🔥. Use<kbd>Ctrl+Alt+V</kbd> or <a href="https://www.jetbrains.com/help/idea/resolving-problems.html">Quick
+            Fix💡</a>.
+        </li>
         <li>"Specify type explicitly" refactoring🔥. Use Quick Fix💡 on variable identifier.</li>
         <li>Add notification for missing SDK</li>
 
@@ -158,12 +161,14 @@
         <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
         <projectConfigurable
                 parentId="language"
-                instance="com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable"
-                id="com.lasagnerd.odin.sdkConfig.OdinSdkConfigurable"
+                instance="com.lasagnerd.odin.projectSettings.OdinProjectConfigurable"
+                id="com.lasagnerd.odin.projectSettings.OdinProjectConfigurable"
                 displayName="Odin"/>
-        <projectService serviceImplementation="com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState"/>
+
+        <projectService serviceImplementation="com.lasagnerd.odin.projectSettings.OdinProjectSettingsService"/>
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
-        <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolServiceImpl" serviceInterface="com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolServiceImpl"
+                        serviceInterface="com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService"/>
         <projectService serviceInterface="com.lasagnerd.odin.codeInsight.imports.OdinImportService"
                         serviceImplementation="com.lasagnerd.odin.codeInsight.imports.OdinImportServiceImpl"/>
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType"
@@ -220,7 +225,7 @@
         <defaultLiveTemplates file="/liveTemplates/Odin.xml"/>
         <liveTemplateContext contextId="ODIN" implementation="com.lasagnerd.odin.liveTemplates.OdinLiveTemplateContextType"/>
 
-        <editorNotificationProvider implementation="com.lasagnerd.odin.sdkConfig.OdinEditorNotificationProvider"/>
+        <editorNotificationProvider implementation="com.lasagnerd.odin.projectSettings.OdinEditorNotificationProvider"/>
         <intentionAction>
             <language>Odin</language>
             <className>com.lasagnerd.odin.codeInsight.refactor.OdinIntroduceVariableQuickFix</className>
@@ -233,7 +238,12 @@
             <category>Refactor</category>
         </intentionAction>
 
-<!--        <lang.documentationProvider language="Odin" implementationClass="com.lasagnerd.odin.documentation.OdinDocumentationProvider"/>-->
+        <lang.documentationProvider language="Odin" implementationClass="com.lasagnerd.odin.documentation.OdinDocumentationProvider"/>
+<!--        <postStartupActivity implementation="com.lasagnerd.odin.externalBuildSystem.OdinProjectActivity"/>-->
+        <moduleBuilder builderClass="com.lasagnerd.odin.module.OdinModuleBuilder"/>
+        <directoryProjectGenerator implementation="com.lasagnerd.odin.module.OdinDirectoryProjectGenerator"/>
+        <newProjectWizard.languageGenerator implementation="com.lasagnerd.odin.module.OdinNewProjectWizard"/>
+
     </extensions>
 
     <extensionPoints>

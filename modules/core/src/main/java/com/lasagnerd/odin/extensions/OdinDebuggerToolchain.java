@@ -1,7 +1,6 @@
 package com.lasagnerd.odin.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 
 public interface OdinDebuggerToolchain {
     ExtensionPointName<OdinDebuggerToolchain> DEBUGGER_TOOLCHAIN =
@@ -25,7 +24,7 @@ public interface OdinDebuggerToolchain {
         return null;
     }
 
-    default String download(Project project) {
+    default String download() {
         return null;
     }
 

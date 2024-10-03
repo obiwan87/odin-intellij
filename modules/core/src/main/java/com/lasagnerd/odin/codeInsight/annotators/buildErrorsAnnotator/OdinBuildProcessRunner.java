@@ -8,8 +8,9 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.lasagnerd.odin.sdkConfig.OdinSdkConfigPersistentState;
-import com.lasagnerd.odin.sdkConfig.OdinSdkUtils;
+import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.projectSettings.OdinProjectSettingsState;
+import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import lombok.Getter;
 
 import java.io.ByteArrayOutputStream;
@@ -51,7 +52,9 @@ public class OdinBuildProcessRunner {
     }
 
     public static boolean canRunOdinBuild(Project project) {
-        OdinSdkConfigPersistentState config = OdinSdkConfigPersistentState.getInstance(project);
+        OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
+        OdinProjectSettingsState config = settingsService.getState();
+
         if (config.sdkPath.isEmpty()) {
             return false;
         }
@@ -95,7 +98,9 @@ public class OdinBuildProcessRunner {
             return null;
         }
 
-        String extraBuildFlags = OdinSdkConfigPersistentState.getInstance(project).extraBuildFlags;
+        OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
+        OdinProjectSettingsState state = settingsService.getState();
+        String extraBuildFlags = state.extraBuildFlags;
         String filePath = file.getVirtualFile().getPath();
 
         ProcessBuilder pb = launchProcessBuilder(filePath, odinBinaryPath, extraBuildFlags);
@@ -152,7 +157,8 @@ public class OdinBuildProcessRunner {
 
     private static void consumeStream(InputStream inputStream) {
         try {
-            while (inputStream.read() != -1) {
+            while (true) {
+                if (inputStream.read() == -1) break;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
