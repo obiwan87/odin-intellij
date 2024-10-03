@@ -1,9 +1,12 @@
-package com.lasagnerd.odin.module;
+package com.lasagnerd.odin.projectStructure.module;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.ModuleType;
+import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
+import com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 
@@ -35,5 +38,8 @@ public class OdinModuleType extends ModuleType<OdinModuleBuilder> {
         return AllIcons.Nodes.Module;
     }
 
-
+    @Override
+    public boolean isSupportedRootType(JpsModuleSourceRootType<?> type) {
+        return type instanceof OdinSourceRootType || type instanceof OdinCollectionRootType;
+    }
 }

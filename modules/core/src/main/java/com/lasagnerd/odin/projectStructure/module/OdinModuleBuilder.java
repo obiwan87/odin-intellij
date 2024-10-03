@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.module;
+package com.lasagnerd.odin.projectStructure.module;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
@@ -59,4 +59,8 @@ public class OdinModuleBuilder extends ModuleBuilder {
     public boolean isTemplateBased() {
         return true;
     }
+
+
+
+
 }

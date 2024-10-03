@@ -225,7 +225,7 @@
         <defaultLiveTemplates file="/liveTemplates/Odin.xml"/>
         <liveTemplateContext contextId="ODIN" implementation="com.lasagnerd.odin.liveTemplates.OdinLiveTemplateContextType"/>
 
-        <editorNotificationProvider implementation="com.lasagnerd.odin.projectSettings.OdinEditorNotificationProvider"/>
+<!--        <editorNotificationProvider implementation="com.lasagnerd.odin.projectSettings.OdinEditorNotificationProvider"/>-->
         <intentionAction>
             <language>Odin</language>
             <className>com.lasagnerd.odin.codeInsight.refactor.OdinIntroduceVariableQuickFix</className>
@@ -240,10 +240,13 @@
 
         <lang.documentationProvider language="Odin" implementationClass="com.lasagnerd.odin.documentation.OdinDocumentationProvider"/>
 <!--        <postStartupActivity implementation="com.lasagnerd.odin.externalBuildSystem.OdinProjectActivity"/>-->
-        <moduleBuilder builderClass="com.lasagnerd.odin.module.OdinModuleBuilder"/>
-        <directoryProjectGenerator implementation="com.lasagnerd.odin.module.OdinDirectoryProjectGenerator"/>
-        <newProjectWizard.languageGenerator implementation="com.lasagnerd.odin.module.OdinNewProjectWizard"/>
-
+        <moduleBuilder builderClass="com.lasagnerd.odin.projectStructure.module.OdinModuleBuilder"/>
+        <directoryProjectGenerator implementation="com.lasagnerd.odin.projectStructure.project.OdinDirectoryProjectGenerator"/>
+        <newProjectWizard.languageGenerator implementation="com.lasagnerd.odin.projectStructure.project.OdinNewProjectWizard"/>
+        <additionalLibraryRootsProvider implementation="com.lasagnerd.odin.projectStructure.library.OdinLibraryProvider"/>
+        <jps.plugin />
+        <projectStructure.sourceRootEditHandler implementation="com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootEditHandler"/>
+        <projectStructure.sourceRootEditHandler implementation="com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootEditHandler"/>
     </extensions>
 
     <extensionPoints>
@@ -261,7 +264,31 @@
                 description="Creates a new Odin file">
             <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
         </action>
+        <action id="com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinMarkSourceRootAction"
+                class="com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinMarkSourceRootAction"
+                text="Odin Source Directory"
+                icon="AllIcons.Modules.SourceRoot"
+                description="Marks a directory as an Odin source">
+            <add-to-group group-id="MarkRootGroup" anchor="first"/>
+        </action>
+        <action id="com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinMarkCollectionRootAction"
+                class="com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinMarkCollectionRootAction"
+                text="Odin Source Directory"
+                icon="AllIcons.Nodes.PpLibFolder"
+                description="Marks a directory as an Odin source">
+            <add-to-group group-id="MarkRootGroup"
+                          anchor="after"
+                          relative-to-action="com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinMarkCollectionRootAction"/>
+        </action>
+        <action id="com.lasagnerd.odin.projectStructure.module.rootTypes.OdinUnmarkRootAction"
+                class="com.lasagnerd.odin.projectStructure.module.rootTypes.OdinUnmarkRootAction"
+                text="Unmark Odin Source Directory"
+                description="Unmarks a Odin source directory">
+            <add-to-group group-id="MarkRootGroup" anchor="first"/>
+        </action>
+
     </actions>
+
 
     <depends optional="true" config-file="odin-debugger.xml">com.intellij.modules.cidr.debugger</depends>
     <depends optional="true" config-file="odin-clion.xml">com.intellij.modules.clion</depends>

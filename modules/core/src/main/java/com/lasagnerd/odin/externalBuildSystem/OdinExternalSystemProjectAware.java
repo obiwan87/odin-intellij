@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
@@ -28,6 +30,7 @@ public class OdinExternalSystemProjectAware implements ExternalSystemProjectAwar
         this.project = project;
     }
 
+
     @Override
     public @NotNull ExternalSystemProjectId getProjectId() {
         return new ExternalSystemProjectId(ODIN_SYSTEM_ID,
@@ -36,7 +39,12 @@ public class OdinExternalSystemProjectAware implements ExternalSystemProjectAwar
 
     @Override
     public @NotNull Set<String> getSettingsFiles() {
-        return Set.of("ols.json");
+        String basePath = project.getBasePath();
+        if(basePath != null) {
+            Path path = Path.of(basePath, "ols.json");
+            return Set.of(path.toString());
+        }
+        return Collections.emptySet();
     }
 
     @Override

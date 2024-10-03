@@ -29,16 +29,16 @@ public class OdinSdkLibraryManager {
             if (existingLibrary != null) {
                 // Update the existing library
                 Library.ModifiableModel modifiableLibraryModel = existingLibrary.getModifiableModel();
-                String[] urls = existingLibrary.getRootProvider().getUrls(OrderRootType.CLASSES);
+                String[] urls = existingLibrary.getRootProvider().getUrls(OrderRootType.SOURCES);
 
                 for (String url : urls) {
-                    modifiableLibraryModel.removeRoot(url, OrderRootType.CLASSES);
+                    modifiableLibraryModel.removeRoot(url, OrderRootType.SOURCES);
                 }
 
                 // Add the new SDK path
                 VirtualFile sdkVirtualFile = LocalFileSystem.getInstance().findFileByPath(sdkPath);
                 if (sdkVirtualFile != null) {
-                    modifiableLibraryModel.addRoot(sdkVirtualFile, OrderRootType.CLASSES);
+                    modifiableLibraryModel.addRoot(sdkVirtualFile, OrderRootType.SOURCES);
                 }
 
                 modifiableLibraryModel.commit();
@@ -51,7 +51,7 @@ public class OdinSdkLibraryManager {
                 // Specify the path to the Odin SDK
                 VirtualFile sdkVirtualFile = LocalFileSystem.getInstance().findFileByPath(sdkPath);
                 if (sdkVirtualFile != null) {
-                    modifiableLibraryModel.addRoot(sdkVirtualFile, OrderRootType.CLASSES);
+                    modifiableLibraryModel.addRoot(sdkVirtualFile, OrderRootType.SOURCES);
                 }
 
                 modifiableLibraryModel.commit();

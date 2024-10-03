@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.module;
+package com.lasagnerd.odin.projectStructure.project;
 
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;

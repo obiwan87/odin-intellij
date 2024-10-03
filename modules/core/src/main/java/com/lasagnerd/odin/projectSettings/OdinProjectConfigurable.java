@@ -60,9 +60,7 @@ public class OdinProjectConfigurable implements Configurable {
     @Override
     public void apply() {
         OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
-
         OdinProjectSettingsState state = settingsService.getState();
-
         apply(state, sdkSettings);
 
         OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project, sdkSettings.getSdkPath());

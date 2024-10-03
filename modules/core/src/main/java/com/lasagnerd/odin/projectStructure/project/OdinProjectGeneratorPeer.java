@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.module;
+package com.lasagnerd.odin.projectStructure.project;
 
 import com.intellij.platform.GeneratorPeerImpl;
 import com.lasagnerd.odin.projectSettings.OdinProjectSettings;
