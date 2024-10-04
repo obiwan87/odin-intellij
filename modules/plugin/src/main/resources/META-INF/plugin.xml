@@ -247,6 +247,7 @@
         <jps.plugin />
         <projectStructure.sourceRootEditHandler implementation="com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootEditHandler"/>
         <projectStructure.sourceRootEditHandler implementation="com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootEditHandler"/>
+        <treeStructureProvider implementation="com.lasagnerd.odin.projectStructure.module.rootTypes.OdinCollectionRootTreeStructureProvider"/>
     </extensions>
 
     <extensionPoints>
@@ -278,7 +279,7 @@
                 description="Marks a directory as an Odin source">
             <add-to-group group-id="MarkRootGroup"
                           anchor="after"
-                          relative-to-action="com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinMarkCollectionRootAction"/>
+                          relative-to-action="com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinMarkSourceRootAction"/>
         </action>
         <action id="com.lasagnerd.odin.projectStructure.module.rootTypes.OdinUnmarkRootAction"
                 class="com.lasagnerd.odin.projectStructure.module.rootTypes.OdinUnmarkRootAction"
@@ -286,6 +287,7 @@
                 description="Unmarks a Odin source directory">
             <add-to-group group-id="MarkRootGroup" anchor="first"/>
         </action>
+
 
     </actions>
 
