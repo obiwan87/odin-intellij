@@ -1,6 +1,9 @@
 package com.lasagnerd.odin.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
@@ -15,7 +18,7 @@ import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinArrayType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -29,6 +32,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.completion.CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 import static com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor.addLookUpElements;
+import static com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor.getIcon;
 
 class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     private final OdinSymbolFilter symbolFilter;
@@ -95,6 +99,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         if (!(parameters.getPosition().getParent() instanceof OdinIdentifier identifier))
             return;
 
+
         // Stuff inside arrays, struct init blocks, etc.
         OdinRefExpression topMostRefExpression = OdinInsightUtils.findTopMostRefExpression(identifier);
         if (topMostRefExpression != null && (topMostRefExpression.getParent() instanceof OdinLhs || topMostRefExpression.getParent() instanceof OdinRhs)) {
@@ -105,8 +110,34 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         }
 
         PsiElement parent = identifier.getParent();
+
+        if (parent instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
+            TsOdinType tsOdinType = OdinInferenceEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(parameters.getPosition()),
+                    implicitSelectorExpression);
+
+            if (tsOdinType instanceof TsOdinEnumType tsOdinEnumType) {
+                OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(parameters.getEditor().getProject(), tsOdinEnumType);
+                // Sort by definition order
+                List<OdinSymbol> list = typeElements.getSymbols().stream()
+                        .sorted(
+                                Comparator.comparing(s -> s.getDeclaration().getTextOffset())
+                        )
+                        .toList();
+                for (int i = 0; i < list.size(); i++) {
+                    OdinSymbol symbol = list.get(i);
+                    LookupElementBuilder lookupElementBuilder = LookupElementBuilder
+                            .create(symbol.getName())
+                            .withTypeText(tsOdinEnumType.getName())
+                            .withPresentableText("." + symbol.getName())
+                            .withIcon(getIcon(OdinSymbolType.ENUM_FIELD));
+
+                    // Higher for earlier elements
+                    result.addElement(PrioritizedLookupElement.withPriority(lookupElementBuilder, list.size() - i));
+                }
+            }
+        }
         // Qualified types like 'package.<caret>'
-        if (parent instanceof OdinSimpleRefType && parent.getParent() instanceof OdinQualifiedType qualifiedType) {
+        else if (parent instanceof OdinSimpleRefType && parent.getParent() instanceof OdinQualifiedType qualifiedType) {
             addSelectorTypeCompletions(parameters, result, qualifiedType);
         }
         // Expressions like 'a.b.c.<caret>'
@@ -153,15 +184,15 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
     private static @Nullable String getTypeText(OdinSymbol symbol) {
         String typeText = null;
-        if(symbol.getPsiType() != null) {
-            if(symbol.getSymbolType() == OdinSymbolType.ENUM_FIELD) {
+        if (symbol.getPsiType() != null) {
+            if (symbol.getSymbolType() == OdinSymbolType.ENUM_FIELD) {
                 OdinDeclaration declaration = PsiTreeUtil.getParentOfType(symbol.getPsiType(), OdinDeclaration.class);
                 if (declaration != null) {
                     OdinDeclaredIdentifier declaredIdentifier = declaration.getDeclaredIdentifiers().getFirst();
                     typeText = declaredIdentifier.getName();
                 }
             }
-            if(symbol.getSymbolType() == OdinSymbolType.FIELD) {
+            if (symbol.getSymbolType() == OdinSymbolType.FIELD) {
                 typeText = symbol.getPsiType().getText();
             }
         }

@@ -29,6 +29,8 @@ public class OdinCompletionContributor extends CompletionContributor {
     public static final PsiElementPattern.@NotNull Capture<PsiElement> REF_EXPRESSION_PATTERN = psiElement(OdinTypes.IDENTIFIER_TOKEN)
             .withSuperParent(2, psiElement(OdinRefExpression.class));
 
+    public static final PsiElementPattern.@NotNull Capture<PsiElement> IMPLICIT_SELECTOR_EXPRESSION_PATTERN = psiElement(OdinTypes.IDENTIFIER_TOKEN)
+            .withSuperParent(2, psiElement(OdinImplicitSelectorExpression.class));
     private static final @NotNull ElementPattern<PsiElement> TYPE_PATTERN = psiElement(OdinTypes.IDENTIFIER_TOKEN)
             .withSuperParent(2, OdinSimpleRefType.class);
 
@@ -50,6 +52,7 @@ public class OdinCompletionContributor extends CompletionContributor {
         );
 
         extend(CompletionType.BASIC, TYPE_PATTERN, new OdinCompletionProvider(TYPE_FILTER));
+        extend(CompletionType.BASIC, IMPLICIT_SELECTOR_EXPRESSION_PATTERN, new OdinCompletionProvider());
     }
 
     public static Icon getIcon(OdinSymbolType symbolType) {
