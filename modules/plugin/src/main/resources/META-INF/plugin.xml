@@ -290,7 +290,7 @@
 
         <action id="com.lasagnerd.odin.projectStructure.OdinImportOlsConfigAction"
                 class="com.lasagnerd.odin.projectStructure.OdinImportOlsConfigAction"
-                text="Import OLS Config"
+                text="Import ols Config"
                 description="Imports the configuration to this project">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="NewGroup"/>
         </action>

@@ -15,7 +15,7 @@ import java.util.Set;
 public class OdinExternalSystemProjectAware implements ExternalSystemProjectAware {
 
     public static final ProjectSystemId ODIN_SYSTEM_ID = new ProjectSystemId(
-            "ols", "OLS"
+            "ols", "Ols"
     );
     Project project;
     private ExternalSystemProjectListener listener;

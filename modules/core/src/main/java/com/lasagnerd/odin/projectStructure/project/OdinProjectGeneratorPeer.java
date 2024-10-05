@@ -9,6 +9,16 @@ import javax.swing.*;
 public class OdinProjectGeneratorPeer extends GeneratorPeerImpl<OdinProjectSettings> {
     OdinProjectSettings projectSettings = new OdinProjectSettings();
 
+    public OdinProjectGeneratorPeer() {
+        setDefaultValues();
+    }
+
+    private void setDefaultValues() {
+        projectSettings.getComponent();
+        projectSettings.setOdinCheckerEnabled(true);
+        projectSettings.setSemanticAnnotatorEnabled(true);
+    }
+
     @Override
     public @NotNull OdinProjectSettings getSettings() {
         return projectSettings;
