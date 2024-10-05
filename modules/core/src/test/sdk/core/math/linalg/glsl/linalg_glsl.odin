@@ -1,4 +1,4 @@
-// core:math/linalg/glsl implements a GLSL-like mathematics library plus numerous other utility procedures
+// core:math/linalg/glsl implements a GLSL-like mathematics collection plus numerous other utility procedures
 package math_linalg_glsl
 
 import "base:builtin"

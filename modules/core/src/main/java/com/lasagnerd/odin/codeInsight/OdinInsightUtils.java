@@ -81,13 +81,7 @@ public class OdinInsightUtils {
         type = type.baseType(true);
 
         if (type instanceof TsOdinPackageReferenceType packageType) {
-            List<OdinSymbol> builtInSymbols = OdinBuiltinSymbolService.getInstance(project).getBuiltInSymbols();
-            OdinSymbolTable odinBuiltinSymbolsTable = OdinSymbolTable.from(builtInSymbols);
-            OdinSymbolTable symbolsOfImportedPackage = OdinImportUtils
-                    .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
-                            (OdinImportDeclarationStatement) packageType.getDeclaration());
-            symbolsOfImportedPackage.setRoot(odinBuiltinSymbolsTable);
-            return symbolsOfImportedPackage;
+            return getPackageReferenceSymbols(project, packageType, true);
         }
         OdinSymbolTable typeSymbolTable = type.getSymbolTable();
         OdinSymbolTable symbolTable = new OdinSymbolTable();
@@ -130,7 +124,7 @@ public class OdinInsightUtils {
             return symbolTable;
         }
 
-        if(type instanceof TsOdinSoaStructType tsOdinSoaStructType) {
+        if (type instanceof TsOdinSoaStructType tsOdinSoaStructType) {
             for (Map.Entry<String, TsOdinType> entry : tsOdinSoaStructType.getFields().entrySet()) {
                 TsOdinType sliceType = entry.getValue();
                 OdinSymbol symbol = new OdinSymbol();
@@ -209,6 +203,20 @@ public class OdinInsightUtils {
             }
         }
         return symbolTable;
+    }
+
+    public static @NotNull OdinSymbolTable getPackageReferenceSymbols(Project project,
+                                                                       TsOdinPackageReferenceType packageType,
+                                                                       boolean includeBuiltin) {
+        OdinSymbolTable symbolsOfImportedPackage = OdinImportUtils
+                .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
+                        (OdinImportDeclarationStatement) packageType.getDeclaration());
+        if (includeBuiltin) {
+            List<OdinSymbol> builtInSymbols = OdinBuiltinSymbolService.getInstance(project).getBuiltInSymbols();
+            OdinSymbolTable odinBuiltinSymbolsTable = OdinSymbolTable.from(builtInSymbols);
+            symbolsOfImportedPackage.setRoot(odinBuiltinSymbolsTable);
+        }
+        return symbolsOfImportedPackage;
     }
 
     @SuppressWarnings("unused")
@@ -513,7 +521,7 @@ public class OdinInsightUtils {
                 = PsiTreeUtil.getParentOfType(declaredIdentifier,
                 OdinDeclaration.class,
                 false);
-        if(declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
+        if (declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
             return getDeclaredType(constantInitializationStatement);
         }
         return null;
@@ -521,21 +529,21 @@ public class OdinInsightUtils {
 
     @SuppressWarnings("unchecked")
     public static <T extends OdinType> T getDeclaredType(PsiElement element, @NotNull Class<T> typeClass) {
-        if(element == null)
+        if (element == null)
             return null;
         OdinType declaredType = getDeclaredType(element);
-        if(typeClass.isInstance(declaredType))
+        if (typeClass.isInstance(declaredType))
             return (T) declaredType;
         return null;
     }
 
     public static OdinProcedureType getProcedureType(PsiElement element) {
         OdinProcedureType procedureType = getDeclaredType(element, OdinProcedureType.class);
-        if(procedureType != null)
+        if (procedureType != null)
             return procedureType;
 
         OdinProcedureLiteralType procedureLiteralType = getDeclaredType(element, OdinProcedureLiteralType.class);
-        if(procedureLiteralType != null) {
+        if (procedureLiteralType != null) {
             return procedureLiteralType.getProcedureDefinition().getProcedureSignature().getProcedureType();
         }
         return null;

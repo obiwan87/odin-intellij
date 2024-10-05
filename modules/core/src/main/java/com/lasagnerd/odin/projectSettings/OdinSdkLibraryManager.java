@@ -27,7 +27,7 @@ public class OdinSdkLibraryManager {
 
         ApplicationManager.getApplication().runWriteAction(() -> {
             if (existingLibrary != null) {
-                // Update the existing library
+                // Update the existing collection
                 Library.ModifiableModel modifiableLibraryModel = existingLibrary.getModifiableModel();
                 String[] urls = existingLibrary.getRootProvider().getUrls(OrderRootType.SOURCES);
 
@@ -43,7 +43,7 @@ public class OdinSdkLibraryManager {
 
                 modifiableLibraryModel.commit();
             } else {
-                // Create a new library if it doesn't exist
+                // Create a new collection if it doesn't exist
                 LibraryTable.ModifiableModel libraryModel = libraryTable.getModifiableModel();
                 Library newLibrary = libraryModel.createLibrary("Odin SDK");
                 Library.ModifiableModel modifiableLibraryModel = newLibrary.getModifiableModel();
@@ -59,7 +59,7 @@ public class OdinSdkLibraryManager {
             }
         });
 
-        // Now associate this library with a module
+        // Now associate this collection with a module
         addLibraryToModule(project);
     }
 

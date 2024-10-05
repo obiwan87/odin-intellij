@@ -2261,7 +2261,7 @@ fmt_array :: proc(fi: ^Info, data: rawptr, n: int, elem_size: int, elem: ^reflec
 // - verb: The formatting verb.
 // - info: The named type information.
 //
-// NOTE: This procedure supports built-in custom formatters for core library types such as runtime.Source_Code_Location, time.Duration, and time.Time.
+// NOTE: This procedure supports built-in custom formatters for core collection types such as runtime.Source_Code_Location, time.Duration, and time.Time.
 //
 fmt_named :: proc(fi: ^Info, v: any, verb: rune, info: runtime.Type_Info_Named) {
 	write_padded_number :: proc(fi: ^Info, i: i64, width: int) {
@@ -2275,7 +2275,7 @@ fmt_named :: proc(fi: ^Info, v: any, verb: rune, info: runtime.Type_Info_Named) 
 		io.write_i64(fi.writer, i, 10, &fi.n)
 	}
 
-	// Built-in Custom Formatters for core library types
+	// Built-in Custom Formatters for core collection types
 	if verb != 'w' {
 		switch a in v {
 		case runtime.Source_Code_Location:

@@ -101,11 +101,11 @@ EOVERFLOW       :: Platform_Error.EOVERFLOW       /* Value too large for defined
 ENOTUNIQ        :: Platform_Error.ENOTUNIQ        /* Name not unique on network */
 EBADFD          :: Platform_Error.EBADFD          /* File descriptor in bad state */
 EREMCHG         :: Platform_Error.EREMCHG         /* Remote address changed */
-ELIBACC         :: Platform_Error.ELIBACC         /* Can not access a needed shared library */
-ELIBBAD         :: Platform_Error.ELIBBAD         /* Accessing a corrupted shared library */
+ELIBACC         :: Platform_Error.ELIBACC         /* Can not access a needed shared collection */
+ELIBBAD         :: Platform_Error.ELIBBAD         /* Accessing a corrupted shared collection */
 ELIBSCN         :: Platform_Error.ELIBSCN         /* .lib section in a.out corrupted */
 ELIBMAX         :: Platform_Error.ELIBMAX         /* Attempting to link in too many shared libraries */
-ELIBEXEC        :: Platform_Error.ELIBEXEC        /* Cannot exec a shared library directly */
+ELIBEXEC        :: Platform_Error.ELIBEXEC        /* Cannot exec a shared collection directly */
 EILSEQ          :: Platform_Error.EILSEQ          /* Illegal byte sequence */
 ERESTART        :: Platform_Error.ERESTART        /* Interrupted system call should be restarted */
 ESTRPIPE        :: Platform_Error.ESTRPIPE        /* Streams pipe error */

@@ -5,7 +5,7 @@ import "base:intrinsics"
 // Linux has inconsistent system call numbering across architectures,
 // for largely historical reasons.  This attempts to provide a unified
 // Odin-side interface for system calls that are required for the core
-// library to work.
+// collection to work.
 
 // For authorative system call numbers, the following files in the kernel
 // source can be used:

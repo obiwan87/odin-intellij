@@ -11,7 +11,7 @@ when ODIN_OS == .Darwin {
 	foreign import lib "system:c"
 }
 
-// stdlib.h - standard library definitions
+// stdlib.h - standard collection definitions
 
 atof          :: libc.atof
 atoi          :: libc.atoi

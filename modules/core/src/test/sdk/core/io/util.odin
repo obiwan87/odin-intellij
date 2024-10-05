@@ -158,7 +158,7 @@ write_escaped_rune :: proc(w: Writer, r: rune, quote: byte, html_safe := false, 
 			}
 		}
 
-		// TODO(bill): A proper unicode library will be needed!
+		// TODO(bill): A proper unicode collection will be needed!
 		return false
 	}
 	defer if n_written != nil {

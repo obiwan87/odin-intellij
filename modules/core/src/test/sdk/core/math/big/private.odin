@@ -99,7 +99,7 @@ _private_int_mul :: proc(dest, a, b: ^Int, digits: int, allocator := context.all
 	(We're talking 1000s of digits here...).
 
 	This file contains code from J. Arndt's book  "Matters Computational"
-	and the accompanying FXT-library with permission of the author.
+	and the accompanying FXT-collection with permission of the author.
 
 	Setup from:
 		Chung, Jaewook, and M. Anwar Hasan. "Asymmetric squaring formulae."

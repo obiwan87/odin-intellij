@@ -13,7 +13,7 @@ Symbols :: struct {
 	// If it's not a pointer or procedure type, we'll skip the struct field.
 	hellope: ^i32,
 
-	// Handle to free library.
+	// Handle to free collection.
 	// We can have more than one of these so we can match symbols for more than one DLL with one struct.
 	_my_lib_handle: dynlib.Library,
 }
@@ -23,7 +23,7 @@ main :: proc() {
 
 	// Load symbols from `lib.dll` into Symbols struct.
 	// Each struct field is prefixed with `foo_` before lookup in the DLL's symbol table.
-	// The library's Handle (to unload) will be stored in `sym._my_lib_handle`. This way you can load multiple DLLs in one struct.
+	// The collection's Handle (to unload) will be stored in `sym._my_lib_handle`. This way you can load multiple DLLs in one struct.
 	count, ok := dynlib.initialize_symbols(&sym, "lib.dll", "foo_", "_my_lib_handle")
 	defer dynlib.unload_library(sym._my_lib_handle)
 	fmt.printf("(Initial DLL Load) ok: %v. %v symbols loaded from lib.dll (%p).\n", ok, count, sym._my_lib_handle)

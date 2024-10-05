@@ -81,7 +81,7 @@ _create_socket :: proc(family: Address_Family, protocol: Socket_Protocol) -> (so
 	// This behavior is unlikely to be expected by general users.
 	//
 	// There are two workarounds. One is to apply the .NOSIGNAL flag when using
-	// the `sendto` syscall. However, that would prevent users of this library
+	// the `sendto` syscall. However, that would prevent users of this collection
 	// from re-enabling the SIGPIPE-raising functionality, if they really
 	// wanted it.
 	//

@@ -8,13 +8,13 @@ _ :: reflect
 _ :: runtime
 
 /*
-A handle to a dynamically loaded library.
+A handle to a dynamically loaded collection.
 */
 Library :: distinct rawptr
 
 /*
-Loads a dynamic library from the filesystem. The paramater `global_symbols` makes the symbols in the loaded
-library available to resolve references in subsequently loaded libraries.
+Loads a dynamic collection from the filesystem. The paramater `global_symbols` makes the symbols in the loaded
+collection available to resolve references in subsequently loaded libraries.
 
 The parameter `global_symbols` is only used for the platforms `linux`, `darwin`, `freebsd` and `openbsd`.
 On `windows` this paramater is ignored.
@@ -29,12 +29,12 @@ Example:
 
 	load_my_library :: proc() {
 		LIBRARY_PATH :: "my_library.dll"
-		library, ok := dynlib.load_library(LIBRARY_PATH)
+		collection, ok := dynlib.load_library(LIBRARY_PATH)
 		if ! ok {
 			fmt.eprintln(dynlib.last_error())
 			return
 		}
-		fmt.println("The library %q was successfully loaded", LIBRARY_PATH)
+		fmt.println("The collection %q was successfully loaded", LIBRARY_PATH)
 	}
 */
 load_library :: proc(path: string, global_symbols := false) -> (library: Library, did_load: bool) {
@@ -42,7 +42,7 @@ load_library :: proc(path: string, global_symbols := false) -> (library: Library
 }
 
 /*
-Unloads a dynamic library.
+Unloads a dynamic collection.
 
 The underlying behaviour is platform specific.
 On `linux`, `darwin`, `freebsd` and `openbsd` refer to `dlclose`.
@@ -54,17 +54,17 @@ Example:
 
 	load_then_unload_my_library :: proc() {
 		LIBRARY_PATH :: "my_library.dll"
-		library, ok := dynlib.load_library(LIBRARY_PATH)
+		collection, ok := dynlib.load_library(LIBRARY_PATH)
 		if ! ok {
 			fmt.eprintln(dynlib.last_error())
 			return
 		}
-		did_unload := dynlib.unload_library(library)
+		did_unload := dynlib.unload_library(collection)
 		if ! did_unload {
 			fmt.eprintln(dynlib.last_error())
 			return
 		}
-		fmt.println("The library %q was successfully unloaded", LIBRARY_PATH)
+		fmt.println("The collection %q was successfully unloaded", LIBRARY_PATH)
 	}
 */
 unload_library :: proc(library: Library) -> (did_unload: bool) {
@@ -72,7 +72,7 @@ unload_library :: proc(library: Library) -> (did_unload: bool) {
 }
 
 /*
-Loads the address of a procedure/variable from a dynamic library.
+Loads the address of a procedure/variable from a dynamic collection.
 
 The underlying behaviour is platform specific.
 On `linux`, `darwin`, `freebsd` and `openbsd` refer to `dlsym`.
@@ -84,13 +84,13 @@ Example:
 
 	find_a_in_my_library :: proc() {
 		LIBRARY_PATH :: "my_library.dll"
-		library, ok := dynlib.load_library(LIBRARY_PATH)
+		collection, ok := dynlib.load_library(LIBRARY_PATH)
 		if ! ok {
 			fmt.eprintln(dynlib.last_error())
 			return
 		}
 
-		a, found_a := dynlib.symbol_address(library, "a")
+		a, found_a := dynlib.symbol_address(collection, "a")
 		if found_a {
 			fmt.printf("The symbol %q was found at the address %v", "a", a)
 		} else {
@@ -103,16 +103,16 @@ symbol_address :: proc(library: Library, symbol: string) -> (ptr: rawptr, found:
 }
 
 /*
-Scans a dynamic library for symbols matching a struct's members, assigning found procedure pointers to the corresponding entry.
-Optionally takes a symbol prefix added to the struct's member name to construct the symbol looked up in the library.
-Optionally also takes the struct member to assign the library handle to, `__handle` by default.
+Scans a dynamic collection for symbols matching a struct's members, assigning found procedure pointers to the corresponding entry.
+Optionally takes a symbol prefix added to the struct's member name to construct the symbol looked up in the collection.
+Optionally also takes the struct member to assign the collection handle to, `__handle` by default.
 
-This allows using one struct to hold library handles and symbol pointers for more than 1 dynamic library.
+This allows using one struct to hold collection handles and symbol pointers for more than 1 dynamic collection.
 
-Loading the same library twice unloads the previous incarnation, allowing for straightforward hot reload support.
+Loading the same collection twice unloads the previous incarnation, allowing for straightforward hot reload support.
 
 Returns:
-* `-1, false` if the library could not be loaded.
+* `-1, false` if the collection could not be loaded.
 * The number of symbols assigned on success. `ok` = true if `count` > 0
 
 See doc.odin for an example.
@@ -135,7 +135,7 @@ initialize_symbols :: proc(
 
 		// If we've come across the struct member for the handle, store it and continue scanning for other symbols.
 		if field.name == handle_field_name {
-			// We appear to be hot reloading. Unload previous incarnation of the library.
+			// We appear to be hot reloading. Unload previous incarnation of the collection.
 			if old_handle := (^Library)(field_ptr)^; old_handle != nil {
 				unload_library(old_handle) or_return
 			}
@@ -143,12 +143,12 @@ initialize_symbols :: proc(
 			continue
 		}
 
-		// We're not the library handle, so the field needs to be a pointer type, be it a procedure pointer or an exported global.
+		// We're not the collection handle, so the field needs to be a pointer type, be it a procedure pointer or an exported global.
 		if !(reflect.is_procedure(field.type) || reflect.is_pointer(field.type)) {
 			continue
 		}
 
-		// Let's look up or construct the symbol name to find in the library
+		// Let's look up or construct the symbol name to find in the collection
 		prefixed_name: string
 
 		// Do we have a symbol override tag?

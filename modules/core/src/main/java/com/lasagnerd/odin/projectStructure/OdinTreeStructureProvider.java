@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.projectStructure.module.rootTypes;
+package com.lasagnerd.odin.projectStructure;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 
-public class OdinCollectionRootTreeStructureProvider implements TreeStructureProvider {
+public class OdinTreeStructureProvider implements TreeStructureProvider {
     @Override
     public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
         for (AbstractTreeNode<?> child : children) {

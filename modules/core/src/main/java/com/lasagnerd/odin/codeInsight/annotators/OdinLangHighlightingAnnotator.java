@@ -150,7 +150,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             OdinImportPath odinImportPath = (OdinImportPath) psiElement;
             OdinImportDeclarationStatement parent = (OdinImportDeclarationStatement) odinImportPath.getParent();
             OdinImportInfo importInfo = parent.getImportInfo();
-            if (importInfo.library() != null) {
+            if (importInfo.collection() != null) {
                 String text = odinImportPath.getText();
                 int indexOfColon = text.indexOf(':');
                 if (indexOfColon > 2) {

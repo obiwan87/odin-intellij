@@ -1210,6 +1210,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                     return unfoldExpression(tsOdinArrayType.getElementType(), rhsExpression, position);
                 } else if (tsOdinBaseType instanceof TsOdinSliceType tsOdinSliceType) {
                     return unfoldExpression(tsOdinSliceType.getElementType(), rhsExpression, position);
+                } else if(tsOdinBaseType instanceof TsOdinDynamicArray tsOdinDynamicArray) {
+                    return unfoldExpression(tsOdinDynamicArray.getElementType(), rhsExpression, position);
                 }
             }
         }

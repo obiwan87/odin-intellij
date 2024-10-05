@@ -5,7 +5,7 @@ match and capture text.
 Regular expressions are used to describe how a piece of text can match to
 another, using a pattern language.
 
-Odin's regex library implements the following features:
+Odin's regex collection implements the following features:
 
 	Alternation:           `apple|cherry`
 	Classes:               `[0-9_]`

@@ -1,9 +1,14 @@
 package com.lasagnerd.odin.codeInsight.imports;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -17,6 +22,8 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinSdkLibraryManager;
+import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootProperties;
+import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,11 +36,23 @@ public class OdinImportUtils {
 
     public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC;
 
-    @NotNull
+    @Nullable
     public static String getFileName(@NotNull PsiElement psiElement) {
+        VirtualFile virtualFile = getContainingVirtualFile(psiElement);
+        if (virtualFile != null) {
+            return virtualFile.getName();
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public static VirtualFile getContainingVirtualFile(@NotNull PsiElement psiElement) {
         VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
-        return Objects.requireNonNullElseGet(virtualFile,
-                () -> psiElement.getContainingFile().getViewProvider().getVirtualFile()).getName();
+        if (virtualFile == null) {
+            virtualFile = psiElement.getContainingFile().getOriginalFile().getVirtualFile();
+        }
+        return virtualFile;
     }
 
 
@@ -102,7 +121,7 @@ public class OdinImportUtils {
      * @param importInfo     The import to be imported
      * @param sourceFilePath Path of the file from where the import should be resolved
      * @param project        The current project
-     * @return The first import path that exists or null if it none exist
+     * @return The first import path that exists or null if none exist
      */
     public static @Nullable Path getFirstAbsoluteImportPath(OdinImportInfo importInfo,
                                                             String sourceFilePath,
@@ -128,19 +147,48 @@ public class OdinImportUtils {
         return packagePath;
     }
 
+    public static Map<String, Path> getCollectionPaths(Project project, String sourceFilePath) {
+        Map<String, Path> collectionPaths = new HashMap<>();
+        VirtualFile sourceFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(sourceFilePath));
+        if (sourceFile != null) {
+            Module module = ModuleUtilCore.findModuleForFile(sourceFile, project);
+            if (module != null) {
+                ModuleRootManager model = ModuleRootManager.getInstance(module);
+                List<SourceFolder> sourceFolders = Arrays.stream(model.getContentEntries())
+                        .flatMap(c -> c.getSourceFolders(OdinCollectionRootType.INSTANCE).stream())
+                        .toList();
+
+                for (SourceFolder sourceFolder : sourceFolders) {
+                    OdinCollectionRootProperties properties = (OdinCollectionRootProperties) sourceFolder.getJpsElement().getProperties();
+                    String collectionName = properties.getCollectionName();
+                    VirtualFile collectionDirectory = sourceFolder.getFile();
+                    if (collectionDirectory != null) {
+                        collectionPaths.put(collectionName, collectionDirectory.toNioPath());
+                    }
+                }
+            }
+        }
+
+        return collectionPaths;
+    }
+
     public static @NotNull List<Path> getAbsoluteImportPaths(OdinImportInfo importInfo, String sourceFilePath, Project project) {
         List<Path> dirs = new ArrayList<>();
-        String library = Objects.requireNonNullElse(importInfo.library(), "");
-        Path sdkSourceDir = null;
+        String library = Objects.requireNonNullElse(importInfo.collection(), "");
         if (!library.isBlank()) {
             Optional<String> sdkPath = OdinImportService.getInstance(project).getSdkPath();
             if (sdkPath.isPresent()) {
-                sdkSourceDir = Path.of(sdkPath.get(), importInfo.library());
-                dirs.add(sdkSourceDir);
+                Path sdkSourceDir = Path.of(sdkPath.get(), importInfo.collection());
+                if (sdkSourceDir.toFile().exists()) {
+                    dirs.add(sdkSourceDir);
+                } else {
+                    Map<String, Path> collectionPaths = getCollectionPaths(project, sourceFilePath);
+                    Path collectionPath = collectionPaths.get(library);
+                    if (collectionPath != null) {
+                        dirs.add(collectionPath);
+                    }
+                }
             }
-        }
-        if (sdkSourceDir != null) {
-            dirs.add(sdkSourceDir);
         }
         Path sourcePath = Path.of(sourceFilePath);
         Path currentDir = sourcePath.getParent();
@@ -169,7 +217,7 @@ public class OdinImportUtils {
                     String library = FileUtil.toSystemIndependentName(relativePath.getName(0).toString());
                     String subPath = FileUtil.toSystemIndependentName(relativePath.subpath(1, targetDir.getNameCount()).toString());
                     String packageName = relativePath.getFileName().toString();
-                    String fullImportPath = library +":"+subPath;
+                    String fullImportPath = library + ":" + subPath;
                     return new OdinImportInfo(fullImportPath, packageName, subPath, library);
                 }
             }

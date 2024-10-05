@@ -10,7 +10,7 @@ package flags
 @require import "core:strconv"
 @require import "core:strings"
 
-// This proc is used to assert that `T` meets the expectations of the library.
+// This proc is used to assert that `T` meets the expectations of the collection.
 @(optimization_mode="favor_size", disabled=ODIN_DISABLE_ASSERT)
 validate_structure :: proc(model_type: $T, style: Parsing_Style, loc := #caller_location) {
 	positionals_assigned_so_far: bit_array.Bit_Array

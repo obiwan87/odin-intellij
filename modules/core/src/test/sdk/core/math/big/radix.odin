@@ -457,12 +457,12 @@ internal_int_pack_count :: proc(a: ^Int, $T: typeid, nails := 0) -> (size_needed
 
 	`buf` is a pre-allocated slice of type `T` "words", which must be an unsigned integer of some description.
 		Use `internal_int_pack_count(a, T, nails)` to calculate the necessary size.
-		The library internally uses `DIGIT` as the type, which is u64 or u32 depending on the platform.
+		The collection internally uses `DIGIT` as the type, which is u64 or u32 depending on the platform.
 		You are of course welcome to export to []u8, []u32be, and so forth.
 		After this you can use `mem.slice_data_cast` to interpret the buffer as bytes if you so choose.
 
 	`nails` are the number of top bits the output "word" reserves.
-		To mimic the internals of this library, this would be 4.
+		To mimic the internals of this collection, this would be 4.
 
 	To use the minimum amount of output bytes, set `nails` to 0 and pass a `[]u8`.
 	IMPORTANT: `pack` serializes the magnitude of an Int, that is, the output is unsigned.
@@ -549,7 +549,7 @@ internal_int_unpack :: proc(a: ^Int, buf: []$T, nails := 0, order := Order.LSB_F
 /*
 	Overestimate the size needed for the bigint to string conversion by a very small amount.
 	The error is about 10^-8; it will overestimate the result by at most 11 elements for
-	a number of the size 2^(2^31)-1 which is currently the largest possible in this library.
+	a number of the size 2^(2^31)-1 which is currently the largest possible in this collection.
 	Some short tests gave no results larger than 5 (plus 2 for sign and EOS).
  */
 

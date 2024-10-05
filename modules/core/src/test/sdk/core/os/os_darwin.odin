@@ -124,7 +124,7 @@ _Platform_Error :: enum i32 {
 	/* Program loading errors */
 	EBADEXEC        = 85,     /* Bad executable */
 	EBADARCH        = 86,     /* Bad CPU type in executable */
-	ESHLIBVERS      = 87,     /* Shared library version mismatch */
+	ESHLIBVERS      = 87,     /* Shared collection version mismatch */
 	EBADMACHO       = 88,     /* Malformed Macho file */
 
 	ECANCELED       = 89,     /* Operation canceled */

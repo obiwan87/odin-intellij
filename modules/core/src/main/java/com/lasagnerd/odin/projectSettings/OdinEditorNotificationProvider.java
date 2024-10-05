@@ -25,8 +25,8 @@ public class OdinEditorNotificationProvider implements EditorNotificationProvide
             if(sdkPath.isPresent()) {
                 if(!OdinSdkLibraryManager.isSdkLibraryConfigured(project)) {
                     EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning);
-                    panel.setText("Odin SDK is not configured as project library");
-                    panel.createActionLabel("Set library", () -> {
+                    panel.setText("Odin SDK is not configured as project collection");
+                    panel.createActionLabel("Set collection", () -> {
                         if (!project.isDisposed()) {
                             file.refresh(false, false);
                             OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project, sdkPath.get());

@@ -239,7 +239,7 @@
         </intentionAction>
 
         <lang.documentationProvider language="Odin" implementationClass="com.lasagnerd.odin.documentation.OdinDocumentationProvider"/>
-<!--        <postStartupActivity implementation="com.lasagnerd.odin.externalBuildSystem.OdinProjectActivity"/>-->
+        <postStartupActivity implementation="com.lasagnerd.odin.projectStructure.OdinProjectActivity"/>
         <moduleBuilder builderClass="com.lasagnerd.odin.projectStructure.module.OdinModuleBuilder"/>
         <directoryProjectGenerator implementation="com.lasagnerd.odin.projectStructure.project.OdinDirectoryProjectGenerator"/>
         <newProjectWizard.languageGenerator implementation="com.lasagnerd.odin.projectStructure.project.OdinNewProjectWizard"/>
@@ -247,7 +247,7 @@
         <jps.plugin />
         <projectStructure.sourceRootEditHandler implementation="com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootEditHandler"/>
         <projectStructure.sourceRootEditHandler implementation="com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootEditHandler"/>
-        <treeStructureProvider implementation="com.lasagnerd.odin.projectStructure.module.rootTypes.OdinCollectionRootTreeStructureProvider"/>
+        <treeStructureProvider implementation="com.lasagnerd.odin.projectStructure.OdinTreeStructureProvider"/>
     </extensions>
 
     <extensionPoints>
@@ -288,7 +288,12 @@
             <add-to-group group-id="MarkRootGroup" anchor="first"/>
         </action>
 
-
+        <action id="com.lasagnerd.odin.projectStructure.OdinImportOlsConfigAction"
+                class="com.lasagnerd.odin.projectStructure.OdinImportOlsConfigAction"
+                text="Import OLS Config"
+                description="Imports the configuration to this project">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="NewGroup"/>
+        </action>
     </actions>
 
 

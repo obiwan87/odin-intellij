@@ -5,6 +5,7 @@ import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator.OdinBuildProcessRunner;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,6 +140,7 @@ public class OdinSdkUtils {
             addCommandPart(command, "-debug");
         }
         addCommandPart(command, compilerOptions);
+        OdinBuildProcessRunner.addCollectionPaths(project, projectDirectoryPath, command);
 
 
         if (!outputPathString.isEmpty()) {

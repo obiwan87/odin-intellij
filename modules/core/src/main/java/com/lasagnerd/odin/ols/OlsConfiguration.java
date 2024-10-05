@@ -1,12 +1,24 @@
 package com.lasagnerd.odin.ols;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OlsConfiguration {
+
+    public static final ObjectMapper MAPPER = new ObjectMapper();
+    @JsonProperty("$schema")
+    private String schema;
+
     private List<OlsCollection> collections;
 
     @JsonProperty("thread_pool_count")
@@ -65,4 +77,21 @@ public class OlsConfiguration {
 
     private String profile;
     private List<OlsProfile> profiles;
+
+    public static OlsConfiguration read(String json) {
+        try {
+            return MAPPER.readValue(json, OlsConfiguration.class);
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    public static OlsConfiguration read(VirtualFile file) {
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null) {
+            String olsContent = document.getText();
+            return read(olsContent);
+        }
+        return null;
+    }
 }

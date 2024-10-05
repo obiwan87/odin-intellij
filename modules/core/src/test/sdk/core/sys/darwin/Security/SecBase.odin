@@ -194,7 +194,7 @@ errSec :: enum OSStatus {
 	InvalidKeyRef = -67712, // An invalid key was encountered.
 	InvalidKeyHierarchy = -67713, // An invalid key hierarchy was encountered.
 	AddinUnloadFailed = -67714, // The add-in unload operation has failed.
-	LibraryReferenceNotFound = -67715, // A library reference was not found.
+	LibraryReferenceNotFound = -67715, // A collection reference was not found.
 	InvalidAddinFunctionTable = -67716, // An invalid add-in function table was encountered.
 	InvalidServiceMask = -67717, // An invalid service mask was encountered.
 	ModuleNotLoaded = -67718, // A module was not loaded.

@@ -3,7 +3,7 @@ package posix
 import "core:c"
 
 when ODIN_OS == .Darwin {
-	// NOTE: iconv is in a different library
+	// NOTE: iconv is in a different collection
 	foreign import lib "system:iconv"
 } else {
 	foreign import lib "system:c"

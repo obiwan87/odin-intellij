@@ -5,6 +5,7 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPackageReferenceType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 
@@ -19,6 +20,9 @@ public class OdinReferenceResolver {
             if(tsOdinType instanceof TsOdinEnumType) {
                 return OdinInsightUtils.getTypeElements(valueExpression.getProject(), tsOdinType);
             }
+        }
+        if(type instanceof TsOdinPackageReferenceType packageReferenceType) {
+            return OdinInsightUtils.getPackageReferenceSymbols(valueExpression.getProject(), packageReferenceType, false);
         }
         return OdinInsightUtils.getTypeElements(valueExpression.getProject(), type, true);
     }

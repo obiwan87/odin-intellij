@@ -811,7 +811,7 @@ runner :: proc(internal_tests: []Internal_Test) -> bool {
 	// there is the possibility that you may have encountered a rare edge case
 	// involving the joining of threads.
 	//
-	// At the time of writing, the thread library is undergoing a rewrite that
+	// At the time of writing, the thread collection is undergoing a rewrite that
 	// should solve this problem; it is not an issue with the test runner itself.
 	thread.pool_join(&pool)
 

@@ -31,7 +31,7 @@ import "core:math/big"
 		Answers to common questions about Odin.
 	Packages - https://pkg.odin-lang.org/
 		Documentation for all the official packages part of the
-		core and vendor library collections.
+		core and vendor collection collections.
 	Nightly Builds - https://odin-lang.org/docs/nightly/
 		Get the latest nightly builds of Odin.
 	More Odin Examples - https://github.com/odin-lang/examples
@@ -824,9 +824,9 @@ implicit_context_system :: proc() {
 
 	// The main purpose of the implicit context system is for the ability
 	// to intercept third-party code and libraries and modify their
-	// functionality. One such case is modifying how a library allocates
+	// functionality. One such case is modifying how a collection allocates
 	// something or logs something. In C, this was usually achieved with
-	// the library defining macros which could be overridden so that the
+	// the collection defining macros which could be overridden so that the
 	// user could define what he wanted. However, not many libraries
 	// supported this in many languages by default which meant intercepting
 	// third-party code to see what it does and to change how it does it is
@@ -1670,8 +1670,8 @@ foreign_system :: proc() {
 	fmt.println("\n#foreign system")
 	when ODIN_OS == .Windows {
 		// It is sometimes necessarily to interface with foreign code,
-		// such as a C library. In Odin, this is achieved through the
-		// foreign system. You can “import” a library into the code
+		// such as a C collection. In Odin, this is achieved through the
+		// foreign system. You can “import” a collection into the code
 		// using the same semantics as a normal import declaration.
 
 		// This foreign import declaration will create a

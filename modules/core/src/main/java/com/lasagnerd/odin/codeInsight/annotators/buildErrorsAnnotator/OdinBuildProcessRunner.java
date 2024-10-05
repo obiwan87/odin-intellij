@@ -7,7 +7,9 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
 import com.lasagnerd.odin.projectSettings.OdinProjectSettingsState;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
@@ -21,6 +23,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -66,7 +69,7 @@ public class OdinBuildProcessRunner {
         return Path.of(odinBinaryPath).toFile().exists();
     }
 
-    private static ProcessBuilder launchProcessBuilder(String filePath, String odinBinaryPath, String extraBuildFlags) {
+    private static ProcessBuilder launchProcessBuilder(Project project, String filePath, String odinBinaryPath, String extraBuildFlags) {
 
         File fileParentDirPath = Path.of(filePath).getParent().toFile();
         List<String> command = new ArrayList<>();
@@ -75,12 +78,20 @@ public class OdinBuildProcessRunner {
         command.add(fileParentDirPath.toString());
         command.add("-json-errors");
         command.add("-no-entry-point");
+        addCollectionPaths(project, filePath, command);
 
         if (!extraBuildFlags.isEmpty()) {
             Collections.addAll(command, extraBuildFlags.split(" +"));
         }
 
         return new ProcessBuilder(command).directory(fileParentDirPath);
+    }
+
+    public static void addCollectionPaths(Project project, String filePath, List<String> command) {
+        Map<String, Path> collectionPaths = OdinImportUtils.getCollectionPaths(project, filePath);
+        for (Map.Entry<String, Path> entry : collectionPaths.entrySet()) {
+            command.add("-collection:%s=%s".formatted(entry.getKey(), FileUtil.toSystemDependentName(entry.getValue().toString())));
+        }
     }
 
     /**
@@ -103,7 +114,7 @@ public class OdinBuildProcessRunner {
         String extraBuildFlags = state.extraBuildFlags;
         String filePath = file.getVirtualFile().getPath();
 
-        ProcessBuilder pb = launchProcessBuilder(filePath, odinBinaryPath, extraBuildFlags);
+        ProcessBuilder pb = launchProcessBuilder(project, filePath, odinBinaryPath, extraBuildFlags);
         try {
             Process p = pb.start();
 

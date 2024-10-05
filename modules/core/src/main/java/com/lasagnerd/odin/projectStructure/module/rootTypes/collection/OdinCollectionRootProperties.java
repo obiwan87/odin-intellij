@@ -9,4 +9,12 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 @Getter
 public class OdinCollectionRootProperties extends JpsElementBase<OdinCollectionRootProperties> {
     private String collectionName;
+
+    public OdinCollectionRootProperties(String collectionName) {
+        this.collectionName = collectionName;
+    }
+
+
+    public OdinCollectionRootProperties() {
+    }
 }

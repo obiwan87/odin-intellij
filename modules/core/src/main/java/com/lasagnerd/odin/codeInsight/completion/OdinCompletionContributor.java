@@ -180,8 +180,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 .withIcon(AllIcons.Nodes.Package)
                                 .withTypeText(info.path());
 
-                        if (info.library() != null) {
-                            element = element.withTailText(" -> " + info.library());
+                        if (info.collection() != null) {
+                            element = element.withTailText(" -> " + info.collection());
                         }
 
                         result.addElement(PrioritizedLookupElement.withPriority(element, 100));

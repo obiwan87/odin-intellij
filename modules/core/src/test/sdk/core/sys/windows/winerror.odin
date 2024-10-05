@@ -915,7 +915,7 @@ System_Error :: enum DWORD {
 	TIMER_RESOLUTION_NOT_SET = 0x25F,
 	// There is insufficient account information to log you on.
 	INSUFFICIENT_LOGON_INFO = 0x260,
-	// {Invalid DLL Entrypoint} The dynamic link library %hs is not written correctly. The stack pointer has been left in an inconsistent state. The entrypoint should be declared as WINAPI or STDCALL. Select YES to fail the DLL load. Select NO to continue execution. Selecting NO may cause the application to operate incorrectly.
+	// {Invalid DLL Entrypoint} The dynamic link collection %hs is not written correctly. The stack pointer has been left in an inconsistent state. The entrypoint should be declared as WINAPI or STDCALL. Select YES to fail the DLL load. Select NO to continue execution. Selecting NO may cause the application to operate incorrectly.
 	BAD_DLL_ENTRYPOINT = 0x261,
 	// {Invalid Service Callback Entrypoint} The %hs service is not written correctly. The stack pointer has been left in an inconsistent state. The callback entrypoint should be declared as WINAPI or STDCALL. Selecting OK will cause the service to continue operation. However, the service process may operate incorrectly.
 	BAD_SERVICE_ENTRYPOINT = 0x262,
@@ -1424,7 +1424,7 @@ System_Error :: enum DWORD {
 	NO_MEDIA_IN_DRIVE = 0x458,
 	// No mapping for the Unicode character exists in the target multi-byte code page.
 	NO_UNICODE_TRANSLATION = 0x459,
-	// A dynamic link library (DLL) initialization routine failed.
+	// A dynamic link collection (DLL) initialization routine failed.
 	DLL_INIT_FAILED = 0x45A,
 	// A system shutdown is in progress.
 	SHUTDOWN_IN_PROGRESS = 0x45B,
@@ -1476,13 +1476,13 @@ System_Error :: enum DWORD {
 	SINGLE_INSTANCE_APP = 0x480,
 	// The specified program was written for an earlier version of Windows.
 	RMODE_APP = 0x481,
-	// One of the library files needed to run this application is damaged.
+	// One of the collection files needed to run this application is damaged.
 	INVALID_DLL = 0x482,
 	// No application is associated with the specified file for this operation.
 	NO_ASSOCIATION = 0x483,
 	// An error occurred in sending the command to the application.
 	DDE_FAIL = 0x484,
-	// One of the library files needed to run this application cannot be found.
+	// One of the collection files needed to run this application cannot be found.
 	DLL_NOT_FOUND = 0x485,
 	// The current process has used all of its system allowance of handles for Window Manager objects.
 	NO_MORE_USER_HANDLES = 0x486,
@@ -1674,7 +1674,7 @@ System_Error :: enum DWORD {
 	SYNC_FOREGROUND_REFRESH_REQUIRED = 0x4FA,
 	// This driver has been blocked from loading.
 	DRIVER_BLOCKED = 0x4FB,
-	// A dynamic link library (DLL) referenced a module that was neither a DLL nor the process's executable image.
+	// A dynamic link collection (DLL) referenced a module that was neither a DLL nor the process's executable image.
 	INVALID_IMPORT_OF_NON_DLL = 0x4FC,
 	// Windows cannot open this program since it has been disabled.
 	ACCESS_DISABLED_WEBBLADE = 0x4FD,
@@ -2728,21 +2728,21 @@ System_Error :: enum DWORD {
 	INVALID_PACKAGE_SID_LENGTH = 0x109D,
 	// The media identifier does not represent a valid medium.
 	INVALID_MEDIA = 0x10CC,
-	// The library identifier does not represent a valid library.
+	// The collection identifier does not represent a valid collection.
 	INVALID_LIBRARY = 0x10CD,
 	// The media pool identifier does not represent a valid media pool.
 	INVALID_MEDIA_POOL = 0x10CE,
 	// The drive and medium are not compatible or exist in different libraries.
 	DRIVE_MEDIA_MISMATCH = 0x10CF,
-	// The medium currently exists in an offline library and must be online to perform this operation.
+	// The medium currently exists in an offline collection and must be online to perform this operation.
 	MEDIA_OFFLINE = 0x10D0,
-	// The operation cannot be performed on an offline library.
+	// The operation cannot be performed on an offline collection.
 	LIBRARY_OFFLINE = 0x10D1,
-	// The library, drive, or media pool is empty.
+	// The collection, drive, or media pool is empty.
 	EMPTY = 0x10D2,
-	// The library, drive, or media pool must be empty to perform this operation.
+	// The collection, drive, or media pool must be empty to perform this operation.
 	NOT_EMPTY = 0x10D3,
-	// No media is currently available in this media pool or library.
+	// No media is currently available in this media pool or collection.
 	MEDIA_UNAVAILABLE = 0x10D4,
 	// A resource required for this operation is disabled.
 	RESOURCE_DISABLED = 0x10D5,
@@ -2802,11 +2802,11 @@ System_Error :: enum DWORD {
 	MESSAGE_EXCEEDS_MAX_SIZE = 0x10F0,
 	// The volume contains system or paging files.
 	VOLUME_CONTAINS_SYS_FILES = 0x10F1,
-	// The media type cannot be removed from this library since at least one drive in the library reports it can support this media type.
+	// The media type cannot be removed from this collection since at least one drive in the collection reports it can support this media type.
 	INDIGENOUS_TYPE = 0x10F2,
 	// This offline media cannot be mounted on this system since no enabled drives are present which can be used.
 	NO_SUPPORTING_DRIVES = 0x10F3,
-	// A cleaner cartridge is present in the tape library.
+	// A cleaner cartridge is present in the tape collection.
 	CLEANER_CARTRIDGE_INSTALLED = 0x10F4,
 	// Cannot use the inject/eject port because it is not empty.
 	IEPORT_FULL = 0x10F5,
@@ -5280,7 +5280,7 @@ System_Error :: enum DWORD {
 	SXS_DUPLICATE_CLSID = 0x36C7,
 	// Two or more components referenced directly or indirectly by the application manifest have proxies for the same COM interface IIDs.
 	SXS_DUPLICATE_IID = 0x36C8,
-	// Two or more components referenced directly or indirectly by the application manifest have the same COM type library TLBIDs.
+	// Two or more components referenced directly or indirectly by the application manifest have the same COM type collection TLBIDs.
 	SXS_DUPLICATE_TLBID = 0x36C9,
 	// Two or more components referenced directly or indirectly by the application manifest have the same COM ProgIDs.
 	SXS_DUPLICATE_PROGID = 0x36CA,

@@ -47,7 +47,7 @@ when #config(MATH_BIG_EXE, true) {
 	TODO(Jeroen): Port this tuning algorithm and tune them for more modern processors.
 
 	It would also be cool if we collected some data across various processor families.
-	This would let uss set reasonable defaults at runtime as this library initializes
+	This would let uss set reasonable defaults at runtime as this collection initializes
 	itself by using `cpuid` or the ARM equivalent.
 
 	IMPORTANT: The 32_BIT path has largely gone untested. It needs to be tested and

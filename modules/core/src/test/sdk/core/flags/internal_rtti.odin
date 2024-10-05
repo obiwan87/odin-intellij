@@ -24,7 +24,7 @@ parse_and_set_pointer_by_base_type :: proc(ptr: rawptr, str: string, type_info: 
 	}
 
 	// NOTE(Feoramund): This procedure has been written with the goal in mind
-	// of generating the least amount of assembly, given that this library is
+	// of generating the least amount of assembly, given that this collection is
 	// likely to be called once and forgotten.
 	//
 	// I've rewritten the switch tables below in 3 different ways, and the
