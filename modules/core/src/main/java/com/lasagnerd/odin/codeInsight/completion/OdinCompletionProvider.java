@@ -197,7 +197,10 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                         String packagePath = currentFile.getParent().getPath();
                         OdinFile odinFile = (OdinFile) PsiManager.getInstance(project).findFile(currentFile);
 
-                        if (!packagePath.isBlank() && !packagePath.equals(sourceRoot.getPath())) {
+                        if (!packagePath.isBlank()
+                                && !packagePath.equals(sourceRoot.getPath())
+                                && !packagePath.equals(thisFile.getParent().getPath())
+                        ) {
                             packages.computeIfAbsent(packagePath, k -> new ArrayList<>()).add(odinFile);
                         }
                     }
