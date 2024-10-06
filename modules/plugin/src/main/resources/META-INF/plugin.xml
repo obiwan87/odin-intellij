@@ -231,7 +231,8 @@
             <className>com.lasagnerd.odin.codeInsight.refactor.OdinIntroduceVariableQuickFix</className>
             <category>Refactor</category>
         </intentionAction>
-        <psi.referenceContributor language="Odin" implementation="com.lasagnerd.odin.lang.psi.OdinReferenceContributor"/>
+        <psi.referenceContributor language="Odin" implementation="com.lasagnerd.odin.lang.psi.OdinReferenceContributor" />
+
         <intentionAction>
             <language>Odin</language>
             <className>com.lasagnerd.odin.codeInsight.refactor.OdinSpecifyTypeIntention</className>
@@ -248,6 +249,11 @@
         <projectStructure.sourceRootEditHandler implementation="com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootEditHandler"/>
         <projectStructure.sourceRootEditHandler implementation="com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootEditHandler"/>
         <treeStructureProvider implementation="com.lasagnerd.odin.projectStructure.OdinTreeStructureProvider"/>
+        <renameHandler implementation="com.lasagnerd.odin.projectStructure.collection.OdinCollectionRenameHandler"/>
+        <renamePsiElementProcessor implementation="com.lasagnerd.odin.projectStructure.collection.OdinCollectionRenameProcessor"/>
+        <elementDescriptionProvider implementation="com.lasagnerd.odin.projectStructure.collection.OdinCollectionTypeDescriptionProvider"/>
+        <targetElementEvaluator language="Odin"
+                                implementationClass="com.lasagnerd.odin.projectStructure.collection.OdinCollectionTargetElementEvaluator"/>
     </extensions>
 
     <extensionPoints>

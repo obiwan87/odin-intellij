@@ -199,8 +199,8 @@ importStatementsContainer            ::= (importDeclarationStatement eos)+
 fileScopeStatementList               ::= (fileScopeStatement (eos|<<afterNewLine>>))*
 packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=1 recoverWhile=eos_recover}
 
-importDeclarationStatement           ::= [attribute EOS_TOKEN?] IMPORT declaredIdentifier? importPath {methods=[alias="/declaredIdentifier" path="/importPath" getName setName getNameIdentifier getImportInfo] implements="com.intellij.psi.PsiNameIdentifierOwner"}
-importPath                           ::= DQ_STRING_LITERAL {methods=[getReference]}
+importDeclarationStatement           ::= [attribute EOS_TOKEN?] IMPORT declaredIdentifier? importPath {methods=[alias="/declaredIdentifier" path="/importPath" getName setName getNameIdentifier getImportInfo] implements=["com.intellij.psi.PsiNameIdentifierOwner"]}
+importPath                           ::= DQ_STRING_LITERAL {methods=[getReference getReferences shouldAskParentForReferences] implements=["com.intellij.psi.HintedReferenceHost"]}
 
 fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | importDeclarationStatement

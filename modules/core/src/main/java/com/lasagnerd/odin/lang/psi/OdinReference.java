@@ -7,8 +7,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
@@ -45,7 +47,11 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
         try {
             OdinSymbol firstDeclaration = OdinSymbolTableResolver.findSymbol(getElement());
             if (firstDeclaration != null) {
-                return firstDeclaration.getDeclaredIdentifier();
+                PsiNamedElement declaredIdentifier = firstDeclaration.getDeclaredIdentifier();
+                if(declaredIdentifier instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+                    return OdinPackageReference.resolvePackagePathDirectory(importDeclarationStatement.getImportPath());
+                }
+                return declaredIdentifier;
             }
             return null;
         } catch (StackOverflowError e) {

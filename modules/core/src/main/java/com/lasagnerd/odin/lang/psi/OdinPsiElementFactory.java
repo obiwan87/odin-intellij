@@ -149,4 +149,15 @@ public class OdinPsiElementFactory {
         Objects.requireNonNull(importStatementsContainer);
         return importStatementsContainer;
     }
+
+    public OdinImportPath createImportPath(String importPath) {
+        String dummyCode = """
+                package dummy
+                
+                import %s
+                """;
+
+        OdinFile file = createFile(dummyCode.formatted(importPath));
+        return file.getFileScope().getImportStatements().getFirst().getImportPath();
+    }
 }

@@ -9,13 +9,13 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
@@ -146,23 +146,23 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
         TextRange psiElementRange = psiElement.getTextRange();
 
-        if (elementType == OdinTypes.IMPORT_PATH) {
-            OdinImportPath odinImportPath = (OdinImportPath) psiElement;
-            OdinImportDeclarationStatement parent = (OdinImportDeclarationStatement) odinImportPath.getParent();
-            OdinImportInfo importInfo = parent.getImportInfo();
-            if (importInfo.collection() != null) {
-                String text = odinImportPath.getText();
-                int indexOfColon = text.indexOf(':');
-                if (indexOfColon > 2) {
-
-                    annotationHolder
-                            .newSilentAnnotation(HighlightSeverity.INFORMATION)
-                            .range(TextRange.from(1 + psiElementRange.getStartOffset(), indexOfColon - 1))
-                            .textAttributes(OdinSyntaxHighlighter.LIBRARY)
-                            .create();
-                }
-            }
-        }
+//        if (elementType == OdinTypes.IMPORT_PATH) {
+//            OdinImportPath odinImportPath = (OdinImportPath) psiElement;
+//            OdinImportDeclarationStatement parent = (OdinImportDeclarationStatement) odinImportPath.getParent();
+//            OdinImportInfo importInfo = parent.getImportInfo();
+//            if (importInfo.collection() != null) {
+//                String text = odinImportPath.getText();
+//                int indexOfColon = text.indexOf(':');
+//                if (indexOfColon > 2) {
+//
+//                    annotationHolder
+//                            .newSilentAnnotation(HighlightSeverity.INFORMATION)
+//                            .range(TextRange.from(1 + psiElementRange.getStartOffset(), indexOfColon - 1))
+//                            .textAttributes(OdinSyntaxHighlighter.LIBRARY)
+//                            .create();
+//                }
+//            }
+//        }
 
         if (elementType == OdinTypes.IDENTIFIER_TOKEN) {
 
@@ -355,11 +355,15 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         PsiReference reference = identifier.getReference();
         if (reference != null) {
             PsiElement resolveReference = reference.resolve();
-            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
-            if (odinDeclaration == null) {
-                highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, textRange);
-            } else if (odinDeclaration instanceof OdinImportDeclarationStatement) {
+            if (resolveReference instanceof PsiDirectory) {
                 highlight(annotationHolder, textRange, OdinSyntaxHighlighter.PACKAGE);
+            } else {
+                OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
+                if (odinDeclaration == null) {
+                    highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, textRange);
+                } else if (odinDeclaration instanceof OdinImportDeclarationStatement) {
+                    highlight(annotationHolder, textRange, OdinSyntaxHighlighter.PACKAGE);
+                }
             }
         }
     }

@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -16,6 +17,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
@@ -318,6 +320,7 @@ public class OdinImportUtils {
         if (importDeclarationStatement.getDeclaredIdentifier() == null) {
             String text = importDeclarationStatement.getImportInfo().packageName();
 
+            PsiDirectory psiDirectory = OdinPackageReference.resolvePackagePathDirectory(importDeclarationStatement.getImportPath());
             if (text.isBlank())
                 return false;
 
@@ -329,7 +332,9 @@ public class OdinImportUtils {
                             PsiReference reference = identifier.getReference();
                             if (reference != null) {
                                 PsiElement resolvedReference = reference.resolve();
-                                return resolvedReference != importDeclarationStatement;
+                                if(resolvedReference != null) {
+                                    return !resolvedReference.isEquivalentTo(psiDirectory);
+                                }
                             }
                         }
                         return true;
@@ -360,5 +365,12 @@ public class OdinImportUtils {
             OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatementsContainer().getImportDeclarationStatementList().getLast();
             importStatementsContainer.addAfter(anImport, odinImportDeclarationStatement);
         }
+    }
+
+    public static @Nullable OdinImportInfo getImportInfo(@NotNull OdinImportPath element) {
+        OdinImportDeclarationStatement importDeclarationStatement = PsiTreeUtil.getParentOfType(element, OdinImportDeclarationStatement.class);
+        if (importDeclarationStatement == null)
+            return null;
+        return importDeclarationStatement.getImportInfo();
     }
 }

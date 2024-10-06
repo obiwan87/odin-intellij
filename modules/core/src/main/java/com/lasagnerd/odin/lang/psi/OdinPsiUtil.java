@@ -6,6 +6,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
@@ -32,7 +34,7 @@ public class OdinPsiUtil {
             OdinTypes.AND,
             OdinTypes.NOT,
             OdinTypes.RANGE
-            );
+    );
     public static final @NotNull TokenSet BINARY_OPERATORS = TokenSet.create(OdinTypes.STAR,
             OdinTypes.DIV,
             OdinTypes.MOD,
@@ -63,23 +65,37 @@ public class OdinPsiUtil {
         return new OdinReference(self);
     }
 
+    // Import path
     public static PsiReference getReference(OdinImportPath importPath) {
-        return new OdinImportReference(importPath);
+        return null;
+    }
+
+    public static PsiReference[] getReferences(OdinImportPath importPath) {
+        return ReferenceProvidersRegistry.getReferencesFromProviders(importPath, PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES);
+    }
+
+    public static PsiReference[] getReferences(OdinImportPath importPath, PsiReferenceService.Hints hints) {
+        return ReferenceProvidersRegistry.getReferencesFromProviders(importPath, hints);
+    }
+
+    public static boolean shouldAskParentForReferences(OdinImportPath importPath, PsiReferenceService.Hints hints) {
+        return true;
     }
 
     public static PsiElement getOperator(OdinBinaryExpression self) {
         ASTNode[] children = self.getNode().getChildren(BINARY_OPERATORS);
-        if(children.length > 0)
+        if (children.length > 0)
             return children[0].getPsi();
         return null;
     }
 
     public static PsiElement getOperator(OdinUnaryExpression unaryExpression) {
         ASTNode[] children = unaryExpression.getNode().getChildren(UNARY_OPERATORS);
-        if(children.length > 0)
+        if (children.length > 0)
             return children[0].getPsi();
         return null;
     }
+
     public static OdinCompoundValueBody getCompoundValueBody(OdinCompoundValue self) {
         return PsiTreeUtil.findChildOfType(self, OdinCompoundValueBody.class);
     }
@@ -215,7 +231,7 @@ public class OdinPsiUtil {
     public static PsiElement getNameIdentifier(OdinImportDeclarationStatement importStatement) {
         if (importStatement.getAlias() != null)
             return importStatement.getAlias();
-        return importStatement;
+        return null;
     }
 
 
