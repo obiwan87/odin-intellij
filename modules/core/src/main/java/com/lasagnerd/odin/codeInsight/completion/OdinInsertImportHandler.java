@@ -51,7 +51,7 @@ public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
         // Check if package is already imported
         for (OdinImportDeclarationStatement importStatement : sourceFile.getFileScope().getImportStatements()) {
             OdinImport importInfo = importStatement.getImportInfo();
-            if (importInfo.path().equals(importPath)) {
+            if (importInfo.fullImportPath().equals(this.odinImport.fullImportPath())) {
                 return;
             }
         }

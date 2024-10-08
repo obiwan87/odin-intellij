@@ -245,11 +245,11 @@ public class OdinPsiUtil {
                 ? importStatement.getAlias().getText()
                 : null;
 
-        String fullPath = importStatement.getPath().getText();
+        String fullPathWithQuotes = importStatement.getPath().getText();
+        String fullPath = fullPathWithQuotes.substring(1, fullPathWithQuotes.length() - 1);
         String path = fullPath;
-        // Remove quotes
-        path = path.substring(1, path.length() - 1);
 
+        // Remove quotes
         String[] parts = path.split(":");
         String library = null;
         if (parts.length > 1) {
