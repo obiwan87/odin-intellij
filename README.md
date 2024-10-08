@@ -8,7 +8,7 @@ To begin, ensure you have installed the plugin using the steps mentioned above.
 
 ## SDK Setup
 
-Download the Odin SDK [here](https://github.com/odin-lang/Odin/releases) or build it from source by following the instructions on the same [page](https://github.com/odin-lang/Odin/releases).
+Download the Odin SDK [here](https://github.com/odin-lang/Odin/releases) or build it from source by following the instructions on the official Odin [Install page](https://odin-lang.org/docs/install/).
 
 ### Creating a New Project
 
