@@ -129,7 +129,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitDirectiveExpression(@NotNull OdinDirectiveExpression o) {
         PsiElement identifierToken = o.getDirectiveIdentifier().getIdentifierToken();
         if (identifierToken.getText().equals("caller_location")) {
-            OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(o.getProject());
+            OdinSdkService builtinSymbolService = OdinSdkService.getInstance(o.getProject());
             if (builtinSymbolService != null) {
                 List<OdinSymbol> runtimeCoreSymbols = builtinSymbolService.getRuntimeCoreSymbols();
                 OdinSymbolTable odinSymbolTable = OdinSymbolTable.from(runtimeCoreSymbols);
@@ -245,7 +245,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                         this.type = createBuiltinMetaType(name);
                     } else {
                         Project project = refExpression.getProject();
-                        OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(project);
+                        OdinSdkService builtinSymbolService = OdinSdkService.getInstance(project);
                         if (symbol.getPsiType() != null && builtinSymbolService != null) {
                             String typeName = OdinInsightUtils.getTypeName(symbol.getPsiType());
                             this.type = builtinSymbolService.getType(typeName);

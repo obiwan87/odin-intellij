@@ -204,7 +204,7 @@ public class OdinProjectSettings implements Disposable {
                         createSdkPathTextFieldWithBrowseButton(), 1, false)
                 .addVerticalGap(10)
                 .addLabeledComponent(
-                        new JBLabel("Extra build flags: "),
+                        new JBLabel("Checker arguments: "),
                         createBuildFlagsTextField(), 1, false)
                 .addComponentToRightColumn(createComment(
                         "Optional. Space separated build flags passed to 'odin check'.<br><br>" +

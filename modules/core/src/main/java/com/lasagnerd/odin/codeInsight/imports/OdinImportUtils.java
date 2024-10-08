@@ -9,19 +9,18 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
+import com.lasagnerd.odin.codeInsight.refactor.OdinNameSuggester;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinSdkLibraryManager;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootProperties;
@@ -59,7 +58,7 @@ public class OdinImportUtils {
 
 
     public static OdinSymbolTable getSymbolsOfImportedPackage(OdinImportDeclarationStatement importStatement) {
-        OdinImportInfo importInfo = importStatement.getImportInfo();
+        OdinImport importInfo = importStatement.getImportInfo();
 
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         PsiFile containingFile = importStatement.getContainingFile();
@@ -82,7 +81,7 @@ public class OdinImportUtils {
      * @param project        Project
      * @return Scope
      */
-    public static OdinSymbolTable getSymbolsOfImportedPackage(OdinImportInfo importInfo, String sourceFilePath, Project project) {
+    public static OdinSymbolTable getSymbolsOfImportedPackage(OdinImport importInfo, String sourceFilePath, Project project) {
         List<OdinSymbol> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
             Path packagePath = getFirstAbsoluteImportPath(importInfo, sourceFilePath, project);
@@ -125,7 +124,7 @@ public class OdinImportUtils {
      * @param project        The current project
      * @return The first import path that exists or null if none exist
      */
-    public static @Nullable Path getFirstAbsoluteImportPath(OdinImportInfo importInfo,
+    public static @Nullable Path getFirstAbsoluteImportPath(OdinImport importInfo,
                                                             String sourceFilePath,
                                                             Project project) {
         List<Path> packagePaths = getAbsoluteImportPaths(importInfo, sourceFilePath, project);
@@ -174,7 +173,100 @@ public class OdinImportUtils {
         return collectionPaths;
     }
 
-    public static @NotNull List<Path> getAbsoluteImportPaths(OdinImportInfo importInfo, String sourceFilePath, Project project) {
+    /**
+     * Collects the importable packages of a directory from the perspective of a requesting package path.
+     *
+     * @param project               Current project
+     * @param rootDir               The dir for which to collect importable packages
+     * @param collection            Whether this dir is a collection
+     * @param requestingPackagePath The path from which to collect the importable packages
+     * @return A map of imports to files
+     */
+    public static @NotNull Map<OdinImport, List<OdinFile>> collectImportablePackages(Project project,
+                                                                                     VirtualFile rootDir,
+                                                                                     @Nullable String collection,
+                                                                                     String requestingPackagePath) {
+        String rootDirPath = rootDir.getPath();
+        Stack<VirtualFile> work = new Stack<>();
+        Map<OdinImport, List<OdinFile>> packages = new HashMap<>();
+        work.add(rootDir);
+
+        do {
+            VirtualFile currentFile = work.pop();
+            if (currentFile.isDirectory()) {
+                Collections.addAll(work, currentFile.getChildren());
+            } else {
+                if (currentFile.getFileType() == OdinFileType.INSTANCE) {
+                    VirtualFile parent = currentFile.getParent();
+                    String packagePath = parent.getPath();
+                    Path packageNioPath = Path.of(packagePath);
+                    OdinFile odinFile = (OdinFile) PsiManager.getInstance(project).findFile(currentFile);
+                    if (odinFile == null) continue;
+                    if (odinFile.getVirtualFile() == null) continue;
+
+                    String filePath = odinFile.getVirtualFile().getPath();
+                    if (!packagePath.isBlank()
+                            && !packagePath.equals(rootDirPath)
+                            && !packagePath.equals(requestingPackagePath)
+                    ) {
+                        String packageName = parent.getName();
+                        boolean aliasFound = false;
+                        String alias = null;
+                        if (!OdinNameSuggester.isValidIdentifier(packageName)) {
+                            alias = packageName;
+                            for (int j = packageNioPath.getNameCount() - 1; j > 0; j--) {
+                                String name = packageNioPath.getName(j).toString();
+                                if (Character.isJavaIdentifierStart(name.charAt(0))) {
+                                    alias = OdinNameSuggester.normalizeName(name + "_" + alias);
+                                    aliasFound = true;
+                                    break;
+                                }
+                            }
+
+                            if (!aliasFound) {
+                                alias = OdinNameSuggester.normalizeName("_" + packageName);
+                            }
+                        }
+
+                        String relativeImportPath;
+                        Path fileNioPath = Path.of(filePath);
+
+                        if (requestingPackagePath != null) {
+                            relativeImportPath = FileUtil.toSystemIndependentName(Path.of(requestingPackagePath)
+                                    .relativize(fileNioPath)
+                                    .toString());
+                        } else {
+                            relativeImportPath = FileUtil.toSystemIndependentName(
+                                    Path.of(rootDirPath)
+                                            .relativize(fileNioPath.getParent())
+                                            .toString()
+                            );
+                        }
+                        String fullImportPath = collection == null ? relativeImportPath : collection + ":" + relativeImportPath;
+                        packages.computeIfAbsent(new OdinImport(fullImportPath,
+                                packageName,
+                                relativeImportPath,
+                                collection, alias), k -> new ArrayList<>()).add(odinFile);
+                    }
+                }
+            }
+        } while (!work.isEmpty());
+        return packages;
+    }
+
+    public String getCollectionName(Project project, String path) {
+        Path nioPath = Path.of(path);
+        Map<String, Path> collectionPaths = getCollectionPaths(project, path);
+        for (Map.Entry<String, Path> entry : collectionPaths.entrySet()) {
+            if (entry.getValue().equals(nioPath)) {
+                return entry.getKey();
+            }
+        }
+
+        return null;
+    }
+
+    public static @NotNull List<Path> getAbsoluteImportPaths(OdinImport importInfo, String sourceFilePath, Project project) {
         List<Path> dirs = new ArrayList<>();
         String library = Objects.requireNonNullElse(importInfo.collection(), "");
         if (!library.isBlank()) {
@@ -207,7 +299,7 @@ public class OdinImportUtils {
         return packagePaths;
     }
 
-    public static @NotNull OdinImportInfo computeRelativeImport(Project project, String sourceFilePath, String targetFilePath) {
+    public static @NotNull OdinImport computeRelativeImport(Project project, String sourceFilePath, String targetFilePath) {
         Path sourceDir = Path.of(sourceFilePath);
         Path targetDir = Path.of(targetFilePath).normalize();
 
@@ -220,24 +312,24 @@ public class OdinImportUtils {
                     String subPath = FileUtil.toSystemIndependentName(relativePath.subpath(1, targetDir.getNameCount()).toString());
                     String packageName = relativePath.getFileName().toString();
                     String fullImportPath = library + ":" + subPath;
-                    return new OdinImportInfo(fullImportPath, packageName, subPath, library);
+                    return new OdinImport(fullImportPath, packageName, subPath, library, null);
                 }
             }
         }
 
         String importPath = FileUtil.toSystemIndependentName(sourceDir.relativize(targetDir).toString());
         String packageName = targetDir.getFileName().toString();
-        return new OdinImportInfo(importPath, packageName, importPath, null);
+        return new OdinImport(importPath, packageName, importPath, null, null);
     }
 
     @NotNull
-    public static Map<String, OdinImportInfo> getImportStatementsInfo(OdinFileScope fileScope) {
-        Map<String, OdinImportInfo> importMap = new HashMap<>();
+    public static Map<String, OdinImport> getImportStatementsInfo(OdinFileScope fileScope) {
+        Map<String, OdinImport> importMap = new HashMap<>();
         List<OdinImportDeclarationStatement> importStatements
                 = fileScope.getImportStatements();
 
         for (OdinImportDeclarationStatement importStatement : importStatements) {
-            OdinImportInfo importInfo = importStatement.getImportInfo();
+            OdinImport importInfo = importStatement.getImportInfo();
             importMap.put(importInfo.packageName(), importInfo);
         }
         return importMap;
@@ -264,7 +356,7 @@ public class OdinImportUtils {
     }
 
     public static OdinSymbolTable getSymbolsOfImportedPackage(String packagePath, OdinImportDeclarationStatement importStatement) {
-        OdinImportInfo importInfo = importStatement.getImportInfo();
+        OdinImport importInfo = importStatement.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         // Check if package is null. If yes log debug
         String path = Path.of(packagePath, getFileName(importStatement)).toString();
@@ -332,7 +424,7 @@ public class OdinImportUtils {
                             PsiReference reference = identifier.getReference();
                             if (reference != null) {
                                 PsiElement resolvedReference = reference.resolve();
-                                if(resolvedReference != null) {
+                                if (resolvedReference != null) {
                                     return !resolvedReference.isEquivalentTo(psiDirectory);
                                 }
                             }
@@ -351,10 +443,9 @@ public class OdinImportUtils {
         }
     }
 
-    public static void insertImport(Project project, String importPath, OdinFileScope fileScope) {
-
+    public static void insertImport(Project project, String alias, String importPath, OdinFileScope fileScope) {
         OdinImportDeclarationStatement anImport = OdinPsiElementFactory.getInstance(project)
-                .createImport(importPath);
+                .createImport(alias, importPath);
 
         OdinImportStatementsContainer importStatementsContainer = fileScope.getImportStatementsContainer();
         if (importStatementsContainer == null) {
@@ -367,7 +458,7 @@ public class OdinImportUtils {
         }
     }
 
-    public static @Nullable OdinImportInfo getImportInfo(@NotNull OdinImportPath element) {
+    public static @Nullable OdinImport getImportInfo(@NotNull OdinImportPath element) {
         OdinImportDeclarationStatement importDeclarationStatement = PsiTreeUtil.getParentOfType(element, OdinImportDeclarationStatement.class);
         if (importDeclarationStatement == null)
             return null;

@@ -4,6 +4,8 @@ This plugin adds support for the [Odin programming language](https://www.odin-la
 You can add it to your JetBrains IDE using the "Plugin" settings panel or by visiting
 the [Plugin Page](https://plugins.jetbrains.com/plugin/22933-odin-lang-support).
 
+## Project Setup 
+
 ## Debugger Setup
 
 Debugging is supported only in IntelliJ IDEA Ultimate, GoLand, CLion, PyCharm Profession and

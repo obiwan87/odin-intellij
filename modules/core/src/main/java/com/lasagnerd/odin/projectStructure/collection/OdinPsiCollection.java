@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementBase;
+import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
-public class OdinPsiCollection extends PsiElementBase implements PsiDirectoryContainer {
+public class OdinPsiCollection extends PsiElementBase implements PsiDirectoryContainer, NavigatablePsiElement {
 
     private final String collectionName;
     private final PsiDirectory psiDirectory;
@@ -108,27 +109,30 @@ public class OdinPsiCollection extends PsiElementBase implements PsiDirectoryCon
 
     @Override
     public @NotNull GlobalSearchScope getResolveScope() {
-        return super.getResolveScope();
+        return ResolveScopeManager.getElementResolveScope(this.getPsiDirectory());
     }
 
     @Override
     public boolean isEquivalentTo(PsiElement another) {
-        if(another instanceof OdinPsiCollection psiCollection) {
+        if (another instanceof OdinPsiCollection psiCollection) {
             return PsiEquivalenceUtil.areElementsEquivalent(psiCollection.getPsiDirectory(), getPsiDirectory())
                     && collectionName.equals(psiCollection.collectionName);
         }
         return super.isEquivalentTo(another);
     }
 
-    private static class Reference extends PsiReferenceBase<OdinPsiCollection> {
+    @Override
+    public boolean canNavigate() {
+        return true;
+    }
 
-        public Reference(@NotNull OdinPsiCollection element) {
-            super(element);
-        }
+    @Override
+    public @NotNull PsiElement getNavigationElement() {
+        return psiDirectory;
+    }
 
-        @Override
-        public @Nullable PsiElement resolve() {
-            return getElement().psiDirectory;
-        }
+    @Override
+    public boolean canNavigateToSource() {
+        return true;
     }
 }

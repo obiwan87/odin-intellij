@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -100,6 +101,16 @@ public class OdinSdkUtils {
         }
 
         return Optional.of(sdkPath);
+    }
+
+    public static Optional<String> getValidSdkPath(Project project) {
+        String odinBinaryPath = getOdinBinaryPath(project);
+        if(odinBinaryPath != null) {
+            if(new File(odinBinaryPath).exists()) {
+                return getSdkPath(project);
+            }
+        }
+        return Optional.empty();
     }
 
     /**

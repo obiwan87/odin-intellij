@@ -7,7 +7,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
+import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinCollectionSearchResult;
 import com.lasagnerd.odin.projectStructure.OdinProjectUtils;
@@ -30,7 +30,7 @@ public class OdinCollectionReference extends PsiReferenceBase<OdinImportPath> im
     }
 
     private @Nullable PsiElement resolveCollectionPathDirectory() {
-        OdinImportInfo importInfo = OdinImportUtils.getImportInfo(getElement());
+        OdinImport importInfo = OdinImportUtils.getImportInfo(getElement());
         if (importInfo != null && importInfo.collection() != null) {
             OdinCollectionSearchResult odinCollectionSearchResult = OdinProjectUtils.findOdinCollection(getElement(), importInfo.collection());
             if (odinCollectionSearchResult != null) {

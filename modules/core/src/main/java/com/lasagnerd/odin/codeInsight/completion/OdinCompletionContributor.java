@@ -1,6 +1,10 @@
 package com.lasagnerd.odin.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.patterns.ElementPattern;
@@ -11,15 +15,17 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.OdinIcons;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
-import com.lasagnerd.odin.codeInsight.symbols.*;
+import com.lasagnerd.odin.codeInsight.imports.OdinImport;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -38,7 +44,7 @@ public class OdinCompletionContributor extends CompletionContributor {
     private static final OdinCompletionProvider.OdinSymbolFilter TYPE_FILTER = new OdinCompletionProvider.OdinSymbolFilter("TYPE_FILTER") {
         @Override
         public boolean shouldInclude(OdinSymbol symbol) {
-            return  (symbol.getSymbolType().isType() && symbol.getSymbolType() != OdinSymbolType.PROCEDURE && symbol.getSymbolType() != OdinSymbolType.PROCEDURE_OVERLOAD)
+            return (symbol.getSymbolType().isType() && symbol.getSymbolType() != OdinSymbolType.PROCEDURE && symbol.getSymbolType() != OdinSymbolType.PROCEDURE_OVERLOAD)
                     || symbol.getSymbolType() == OdinSymbolType.CONSTANT;
         }
     };
@@ -91,22 +97,34 @@ public class OdinCompletionContributor extends CompletionContributor {
         return element;
     }
 
-    public static void addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols) {
-        addLookUpElements(null, "", "", result, symbols);
+    public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols) {
+        return addLookUpElements(result, symbols, 0);
     }
 
-    public static void addLookUpElements(OdinFile sourceFile,
-                                          String sourcePackagePath,
-                                          String targetPackagePath,
-                                          @NotNull CompletionResultSet result,
-                                          Collection<OdinSymbol> symbols) {
+    public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols, int priority) {
+        return addLookUpElements(null, null, "", result, symbols, priority);
+    }
+
+    public static List<LookupElement> addLookUpElements(OdinFile sourceFile,
+                                                        OdinImport odinImport,
+                                                        String sourcePackagePath,
+                                                        @NotNull CompletionResultSet result,
+                                                        Collection<OdinSymbol> symbols,
+                                                        int priority
+    ) {
+        List<LookupElement> lookupElements = new ArrayList<>();
         String prefix = "";
-        if (targetPackagePath != null && !targetPackagePath.isBlank()) {
+        if (odinImport != null) {
             // Get last segment of path
-            prefix = Path.of(targetPackagePath).getFileName().toString() + ".";
+            if(odinImport.alias() == null) {
+                prefix = odinImport.packageName() + ".";
+            } else {
+                prefix = odinImport.alias() + ".";
+            }
         }
 
         for (var symbol : symbols) {
+            LookupElement lookupElement = null;
             Icon icon = getIcon(symbol.getSymbolType());
             @Nullable PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
 
@@ -130,10 +148,12 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 .withInsertHandler(
                                         new CombinedInsertHandler(
                                                 new OdinInsertSymbolHandler(symbol.getSymbolType()),
-                                                new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
+                                                new OdinInsertImportHandler(odinImport, sourcePackagePath, sourceFile)
                                         )
                                 );
-                        result.addElement(PrioritizedLookupElement.withPriority(element, 0));
+                        lookupElement = PrioritizedLookupElement
+                                .withPriority(element, priority);
+
                     }
                 }
                 case PROCEDURE_OVERLOAD -> {
@@ -157,18 +177,17 @@ public class OdinCompletionContributor extends CompletionContributor {
                                 if (declaringProcedure != null) {
                                     LookupElementBuilder element = LookupElementBuilder
                                             .create(resolved, lookupString)
+                                            .withLookupString(unprefixedLookupString)
                                             .withItemTextItalic(true)
                                             .withIcon(icon)
                                             .withInsertHandler(
                                                     new CombinedInsertHandler(
                                                             new OdinInsertSymbolHandler(symbol.getSymbolType()),
-                                                            new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
+                                                            new OdinInsertImportHandler(odinImport, sourcePackagePath, sourceFile)
                                                     )
                                             );
                                     element = procedureLookupElement(element, declaringProcedure);
-                                    result.addElement(
-                                            PrioritizedLookupElement.withPriority(element, 0)
-                                    );
+                                    lookupElement = PrioritizedLookupElement.withPriority(element, priority);
                                 }
                             }
                         }
@@ -177,9 +196,10 @@ public class OdinCompletionContributor extends CompletionContributor {
                 case PACKAGE_REFERENCE -> {
                     OdinImportDeclarationStatement odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinImportDeclarationStatement.class);
                     if (odinDeclaration != null) {
-                        OdinImportInfo info = odinDeclaration.getImportInfo();
+                        OdinImport info = odinDeclaration.getImportInfo();
 
-                        LookupElementBuilder element = LookupElementBuilder.create(info.packageName())
+                        LookupElementBuilder element = LookupElementBuilder
+                                .create(info.packageName())
                                 .withIcon(AllIcons.Nodes.Package)
                                 .withTypeText(info.path());
 
@@ -187,21 +207,28 @@ public class OdinCompletionContributor extends CompletionContributor {
                             element = element.withTailText(" -> " + info.collection());
                         }
 
-                        result.addElement(PrioritizedLookupElement.withPriority(element, 100));
+                        lookupElement = PrioritizedLookupElement.withPriority(element, priority + 100);
                     }
                 }
                 default -> {
-                    LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon)
+                    LookupElementBuilder element = LookupElementBuilder.create(lookupString)
+                            .withIcon(icon)
                             .withLookupString(unprefixedLookupString)
                             .withInsertHandler(
                                     new CombinedInsertHandler(
                                             new OdinInsertSymbolHandler(symbol.getSymbolType()),
-                                            new OdinInsertImportHandler(sourcePackagePath, targetPackagePath, sourceFile)
+                                            new OdinInsertImportHandler(odinImport, sourcePackagePath, sourceFile)
                                     )
                             );
-                    result.addElement(PrioritizedLookupElement.withPriority(element, 0));
+                    lookupElement = PrioritizedLookupElement.withPriority(element, priority);
                 }
             }
+
+            if (lookupElement != null) {
+                result.addElement(lookupElement);
+                lookupElements.add(lookupElement);
+            }
         }
+        return lookupElements;
     }
 }

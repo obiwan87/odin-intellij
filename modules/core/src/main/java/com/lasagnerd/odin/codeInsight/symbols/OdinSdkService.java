@@ -1,13 +1,16 @@
 package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.openapi.project.Project;
+import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.lang.psi.OdinFile;
 
 import java.util.List;
+import java.util.Map;
 
-public interface OdinBuiltinSymbolService {
-    static OdinBuiltinSymbolService getInstance(Project project) {
-        return project.getService(OdinBuiltinSymbolService.class);
+public interface OdinSdkService {
+    static OdinSdkService getInstance(Project project) {
+        return project.getService(OdinSdkService.class);
     }
 
     static OdinSymbol createAllocatorSymbol(Project project) {
@@ -23,4 +26,8 @@ public interface OdinBuiltinSymbolService {
     TsOdinType getType(String typeName);
 
     OdinSymbol createImplicitStructSymbol(String symbolName, String structTypeName);
+
+    Map<OdinImport, List<OdinFile>> getSdkPackages();
+
+    void invalidateCache();
 }

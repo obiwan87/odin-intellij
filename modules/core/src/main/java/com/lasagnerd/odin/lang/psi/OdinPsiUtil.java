@@ -12,7 +12,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
+import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
@@ -240,7 +240,7 @@ public class OdinPsiUtil {
     }
 
     @NotNull
-    public static OdinImportInfo getImportInfo(OdinImportDeclarationStatement importStatement) {
+    public static OdinImport getImportInfo(OdinImportDeclarationStatement importStatement) {
         String name = importStatement.getAlias() != null
                 ? importStatement.getAlias().getText()
                 : null;
@@ -265,7 +265,7 @@ public class OdinPsiUtil {
             name = pathParts[pathParts.length - 1];
         }
 
-        return new OdinImportInfo(fullPath, name, path, library);
+        return new OdinImport(fullPath, name, path, library, null);
     }
 
     public static OdinIdentifier getPackageIdentifier(OdinQualifiedType qualifiedType) {

@@ -11,8 +11,8 @@ import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class OdinBuiltinSymbolServiceImpl extends OdinBuiltinSymbolServiceBase {
-    public OdinBuiltinSymbolServiceImpl(Project project) {
+public class OdinSdkServiceImpl extends OdinSdkServiceBase {
+    public OdinSdkServiceImpl(Project project) {
         super(project);
     }
 

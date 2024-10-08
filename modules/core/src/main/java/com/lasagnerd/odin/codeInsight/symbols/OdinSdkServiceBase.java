@@ -2,14 +2,19 @@ package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.imports.OdinImport;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,8 +24,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 
-public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolService {
-    private static final Logger log = Logger.getInstance(OdinBuiltinSymbolServiceBase.class);
+public abstract class OdinSdkServiceBase implements OdinSdkService {
+    private static final Logger log = Logger.getInstance(OdinSdkServiceBase.class);
     protected final Project project;
     /**
      * These symbols are implicitly imported
@@ -32,10 +37,13 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
      */
     private List<OdinSymbol> runtimeCoreSymbols;
 
-    private final Map<String, OdinSymbol> cachedSymbols = new HashMap<>();
-    private final Map<String, TsOdinType> cachedTypes = new HashMap<>();
+    private final Map<String, OdinSymbol> symbolsCache = new HashMap<>();
+    private final Map<String, TsOdinType> typesCache = new HashMap<>();
+    private Map<OdinImport, List<OdinFile>> sdkImportsCache;
 
-    public OdinBuiltinSymbolServiceBase(Project project) {
+
+
+    public OdinSdkServiceBase(Project project) {
         this.project = project;
     }
 
@@ -84,17 +92,17 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
 
     @Override
     public OdinSymbol getSymbol(String symbolName) {
-        if (cachedSymbols.get(symbolName) == null) {
+        if (symbolsCache.get(symbolName) == null) {
             List<OdinSymbol> builtInSymbols = getRuntimeCoreSymbols();
             var symbol = builtInSymbols.stream().filter(s -> s.getName().equals(symbolName)).findFirst().orElse(null);
-            cachedSymbols.put(symbolName, symbol);
+            symbolsCache.put(symbolName, symbol);
         }
-        return cachedSymbols.get(symbolName);
+        return symbolsCache.get(symbolName);
     }
 
     @Override
     public TsOdinType getType(String typeName) {
-        if (cachedTypes.get(typeName) == null) {
+        if (typesCache.get(typeName) == null) {
             OdinSymbol symbol = getSymbol(typeName);
 
             PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
@@ -105,11 +113,11 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
 
                 TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, odinDeclaredIdentifier);
                 if (tsOdinType != null) {
-                    cachedTypes.put(typeName, tsOdinType);
+                    typesCache.put(typeName, tsOdinType);
                 }
             }
         }
-        return cachedTypes.getOrDefault(typeName, TsOdinBuiltInTypes.UNKNOWN);
+        return typesCache.getOrDefault(typeName, TsOdinBuiltInTypes.UNKNOWN);
     }
 
     @Override
@@ -125,6 +133,34 @@ public abstract class OdinBuiltinSymbolServiceBase implements OdinBuiltinSymbolS
         odinSymbol.setPackagePath("");
 
         return odinSymbol;
+    }
+
+    @Override
+    public void invalidateCache() {
+        builtInSymbols = null;
+        runtimeCoreSymbols = null;
+        sdkImportsCache = null;
+        symbolsCache.clear();
+        typesCache.clear();
+    }
+
+    @Override
+    public Map<OdinImport, List<OdinFile>> getSdkPackages() {
+        if(sdkImportsCache != null)
+            return sdkImportsCache;
+        sdkImportsCache = new HashMap<>();
+        Optional<String> sdkPath = OdinSdkUtils.getValidSdkPath(project);
+        if(sdkPath.isPresent()) {
+            List<String> collections = List.of("core", "base", "vendor");
+            for (String collection : collections) {
+                Path rootDirPath = Path.of(sdkPath.get(), collection);
+                VirtualFile rootDirPathFile = VirtualFileManager.getInstance().findFileByNioPath(rootDirPath);
+                Map<OdinImport, List<OdinFile>> odinImportListMap = OdinImportUtils.collectImportablePackages(project, rootDirPathFile, collection, null);
+                sdkImportsCache.putAll(odinImportListMap);
+            }
+        }
+
+        return sdkImportsCache;
     }
 
     private OdinStructType findStructType(String typeName) {

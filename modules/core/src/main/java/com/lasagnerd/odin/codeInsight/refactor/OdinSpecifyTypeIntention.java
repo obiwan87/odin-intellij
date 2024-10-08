@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
+import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
@@ -36,7 +36,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
 
         OdinDeclaredIdentifier declaredIdentifier = varInit.getIdentifierList().getDeclaredIdentifierList().getFirst();
         OdinRhsExpressions rhsExpressions = varInit.getRhsExpressions();
-        if(rhsExpressions == null)
+        if (rhsExpressions == null)
             return;
 
         List<OdinExpression> expressionList = rhsExpressions.getExpressionList();
@@ -92,7 +92,10 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
         {
             // Perform the modification
             if (importPath != null) {
-                OdinImportUtils.insertImport(project, importPath, containingFile.getFileScope());
+                OdinImportUtils.insertImport(project,
+                        null,
+                        importPath,
+                        containingFile.getFileScope());
             }
             String type;
             if (!packageName.isBlank()) {
@@ -176,8 +179,8 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
 
     private static class TypePrinter {
         private final OdinFileScope sourceFileScope;
-        private final Map<String, OdinImportInfo> pathToImportMap;
-        private final List<OdinImportInfo> importsToAdd = new ArrayList<>();
+        private final Map<String, OdinImport> pathToImportMap;
+        private final List<OdinImport> importsToAdd = new ArrayList<>();
         private final StringBuilder typePresentation = new StringBuilder();
 
 
@@ -186,7 +189,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
 
             pathToImportMap = new HashMap<>();
             for (OdinImportDeclarationStatement importStatement : sourceFileScope.getImportStatements()) {
-                OdinImportInfo importInfo = importStatement.getImportInfo();
+                OdinImport importInfo = importStatement.getImportInfo();
                 Path importPath = OdinImportUtils.getFirstAbsoluteImportPath(importInfo,
                         sourceFileScope.getContainingFile().getVirtualFile().getPath(),
                         sourceFileScope.getProject());
@@ -198,7 +201,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
 
         public static void printType(TsOdinType tsOdinType) {
             OdinType type = tsOdinType.getPsiType();
-            if(type != null) {
+            if (type != null) {
 
             }
         }

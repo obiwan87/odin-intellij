@@ -135,7 +135,7 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(project, new PsiCachedValuesFactory(project)));
         project.registerService(StartupManager.class, new StartupManagerImpl(project, project.getCoroutineScope()));
         project.registerService(OdinImportService.class, new MockOdinImportService(myFileFactory));
-        project.registerService(OdinBuiltinSymbolService.class, new MockBuiltinSymbolsService(project, myFileFactory));
+        project.registerService(OdinSdkService.class, new MockBuiltinSymbolsService(project, myFileFactory));
         registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
         registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 

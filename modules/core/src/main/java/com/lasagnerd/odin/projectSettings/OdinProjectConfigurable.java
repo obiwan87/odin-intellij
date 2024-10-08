@@ -3,9 +3,11 @@ package com.lasagnerd.odin.projectSettings;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class OdinProjectConfigurable implements Configurable {
 
@@ -61,6 +63,11 @@ public class OdinProjectConfigurable implements Configurable {
     public void apply() {
         OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
         OdinProjectSettingsState state = settingsService.getState();
+
+        if(!Objects.equals(state.getSdkPath(), sdkSettings.getSdkPath())) {
+            OdinSdkService.getInstance(project).invalidateCache();
+        }
+
         apply(state, sdkSettings);
 
         OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project, sdkSettings.getSdkPath());

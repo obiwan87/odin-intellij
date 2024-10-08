@@ -154,10 +154,8 @@
         <lang.syntaxHighlighterFactory language="Odin"
                                        implementationClass="com.lasagnerd.odin.lang.OdinSyntaxHighlighterFactory"/>
         <lang.braceMatcher language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinBraceMatcher"/>
-        <annotator language="Odin"
-                   implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinLangHighlightingAnnotator"/>
+
         <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFormattingBuilder"/>
-        <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinAnnotator"/>
         <colorSettingsPage implementation="com.lasagnerd.odin.lang.OdinColorSettingsPage"/>
         <projectConfigurable
                 parentId="language"
@@ -167,8 +165,8 @@
 
         <projectService serviceImplementation="com.lasagnerd.odin.projectSettings.OdinProjectSettingsService"/>
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
-        <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolServiceImpl"
-                        serviceInterface="com.lasagnerd.odin.codeInsight.symbols.OdinBuiltinSymbolService"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.symbols.OdinSdkServiceImpl"
+                        serviceInterface="com.lasagnerd.odin.codeInsight.symbols.OdinSdkService"/>
         <projectService serviceInterface="com.lasagnerd.odin.codeInsight.imports.OdinImportService"
                         serviceImplementation="com.lasagnerd.odin.codeInsight.imports.OdinImportServiceImpl"/>
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType"
@@ -201,7 +199,6 @@
         <consoleFilterProvider implementation="com.lasagnerd.odin.runConfiguration.OdinBuildConsoleFilterProvider"/>
         <refactoring.safeDeleteProcessor
                 implementation="com.lasagnerd.odin.codeInsight.refactor.OdinSafeDeleteProcessor"/>
-        <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinUnusedAnnotator"/>
         <lang.importOptimizer language="Odin"
                               implementationClass="com.lasagnerd.odin.codeInsight.refactor.OdinImportOptimizer"/>
         <additionalTextAttributes
@@ -216,9 +213,15 @@
         <notificationGroup id="Odin Notifications"
                            displayType="BALLOON"
                            key="notification.odin"/>
+
+
+        <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinAnnotator" id="OdinAnnotator"/>
+        <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinUnusedAnnotator" id="OdinUnusedAnnotator" order="after OdinAnnotator"/>
+        <annotator language="Odin"
+                   implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinLangHighlightingAnnotator" order="after OdinUnusedAnnotator" />
         <externalAnnotator
                 language="Odin"
-                implementationClass="com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator.OdinBuildErrorsExternalAnnotator"/>
+                implementationClass="com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator.OdinBuildErrorsExternalAnnotator" order="last"/>
 
         <extendWordSelectionHandler implementation="com.lasagnerd.odin.selectioner.OdinStringSelectioner"/>
 

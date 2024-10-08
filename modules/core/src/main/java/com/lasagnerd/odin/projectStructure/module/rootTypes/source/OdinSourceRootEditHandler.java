@@ -31,7 +31,7 @@ public class OdinSourceRootEditHandler extends ModuleSourceRootEditHandler<OdinS
 
     @Override
     public @Nullable Icon getFolderUnderRootIcon() {
-        return null;
+        return AllIcons.Nodes.Package;
     }
 
     @Override

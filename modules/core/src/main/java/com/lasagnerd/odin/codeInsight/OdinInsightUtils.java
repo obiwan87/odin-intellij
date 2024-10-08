@@ -159,7 +159,7 @@ public class OdinInsightUtils {
         }
 
         if (includeReferenceableSymbols && (type instanceof TsOdinDynamicArray || type instanceof TsOdinMapType)) {
-            OdinSymbol implicitStructSymbol = OdinBuiltinSymbolService.createAllocatorSymbol(project);
+            OdinSymbol implicitStructSymbol = OdinSdkService.createAllocatorSymbol(project);
             return OdinSymbolTable.from(Collections.singletonList(implicitStructSymbol));
         }
 
@@ -212,7 +212,7 @@ public class OdinInsightUtils {
                 .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
                         (OdinImportDeclarationStatement) packageType.getDeclaration());
         if (includeBuiltin) {
-            List<OdinSymbol> builtInSymbols = OdinBuiltinSymbolService.getInstance(project).getBuiltInSymbols();
+            List<OdinSymbol> builtInSymbols = OdinSdkService.getInstance(project).getBuiltInSymbols();
             OdinSymbolTable odinBuiltinSymbolsTable = OdinSymbolTable.from(builtInSymbols);
             symbolsOfImportedPackage.setRoot(odinBuiltinSymbolsTable);
         }

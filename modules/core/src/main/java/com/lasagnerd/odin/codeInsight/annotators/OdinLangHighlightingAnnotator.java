@@ -146,23 +146,36 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
         TextRange psiElementRange = psiElement.getTextRange();
 
-//        if (elementType == OdinTypes.IMPORT_PATH) {
-//            OdinImportPath odinImportPath = (OdinImportPath) psiElement;
-//            OdinImportDeclarationStatement parent = (OdinImportDeclarationStatement) odinImportPath.getParent();
-//            OdinImportInfo importInfo = parent.getImportInfo();
-//            if (importInfo.collection() != null) {
-//                String text = odinImportPath.getText();
-//                int indexOfColon = text.indexOf(':');
-//                if (indexOfColon > 2) {
-//
-//                    annotationHolder
-//                            .newSilentAnnotation(HighlightSeverity.INFORMATION)
-//                            .range(TextRange.from(1 + psiElementRange.getStartOffset(), indexOfColon - 1))
-//                            .textAttributes(OdinSyntaxHighlighter.LIBRARY)
-//                            .create();
-//                }
-//            }
-//        }
+        if (psiElement instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+
+            OdinImportPath odinImportPath = importDeclarationStatement.getImportPath();
+            PsiReference[] references = odinImportPath.getReferences();
+
+            for (PsiReference reference : references) {
+                PsiElement resolvedPackageDir = reference.resolve();
+                if (resolvedPackageDir == null) {
+                    TextRange rangeInElement = reference.getRangeInElement();
+                    TextRange textRange = rangeInElement.shiftRight(odinImportPath.getTextRange().getStartOffset());
+                    String packagePath = odinImportPath
+                            .getText()
+                            .substring(rangeInElement.getStartOffset(), rangeInElement.getEndOffset());
+                    String type;
+                    if (reference instanceof OdinPackageReference) {
+                        type = "package path";
+                    } else if (reference instanceof OdinCollectionReference) {
+                        type = "collection";
+                    } else {
+                        type = "reference";
+                    }
+                    highlightUnknownReference(psiElement.getProject(),
+                            annotationHolder,
+                            packagePath,
+                            textRange,
+                            type);
+                }
+            }
+
+        }
 
         if (elementType == OdinTypes.IDENTIFIER_TOKEN) {
 
@@ -201,7 +214,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         PsiElement resolvedReference = identifier.getReference().resolve();
                         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(resolvedReference, OdinDeclaration.class, false);
                         if (declaration == null) {
-                            highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, psiElementRange);
+                            highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
                         } else if (OdinInsightUtils.isStructDeclaration(declaration)) {
                             highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.STRUCT_REF);
                         }
@@ -297,7 +310,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                     return;
                 }
             }
-            highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange);
+            highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange, "reference");
             annotationSessionState.aborted.add(topMostExpression);
             return;
         }
@@ -338,11 +351,15 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     }
 
     @SuppressWarnings("unused")
-    private static void highlightUnknownReference(Project project, @NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange) {
+    private static void highlightUnknownReference(Project project,
+                                                  @NotNull AnnotationHolder annotationHolder,
+                                                  String identifierText,
+                                                  TextRange textRange,
+                                                  String reference) {
         OdinProjectSettingsService state = OdinProjectSettingsService.getInstance(project);
         if (state.isHighlightUnknownReferencesEnabled()) {
             annotationHolder
-                    .newAnnotation(HighlightSeverity.ERROR, "Unresolved reference '%s'".formatted(identifierText))
+                    .newAnnotation(HighlightSeverity.ERROR, ("Unresolved " + reference + " '%s'").formatted(identifierText))
                     .range(textRange)
                     .textAttributes(OdinSyntaxHighlighter.BAD_CHARACTER)
                     .create();
@@ -360,7 +377,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             } else {
                 OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
                 if (odinDeclaration == null) {
-                    highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, textRange);
+                    highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, textRange, "reference");
                 } else if (odinDeclaration instanceof OdinImportDeclarationStatement) {
                     highlight(annotationHolder, textRange, OdinSyntaxHighlighter.PACKAGE);
                 }

@@ -10,41 +10,48 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
+import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.lang.psi.OdinFile;
+import com.lasagnerd.odin.lang.psi.OdinFileScope;
+import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
     private final String sourcePackagePath;
-    private final String targetPackagePath;
+    private final OdinImport odinImport;
     private final OdinFile sourceFile;
 
-    public OdinInsertImportHandler(String sourcePackagePath, String targetPackagePath, OdinFile sourceFile) {
+    public OdinInsertImportHandler(OdinImport odinImport, String sourcePackagePath, OdinFile sourceFile) {
         this.sourcePackagePath = sourcePackagePath;
-        this.targetPackagePath = targetPackagePath;
+        this.odinImport = odinImport;
         this.sourceFile = sourceFile;
     }
 
 
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-        if (sourcePackagePath.equals(targetPackagePath)) {
+        if (odinImport == null)
+            return;
+
+        if (sourcePackagePath.equals(odinImport.path())) {
             return;
         }
         if (sourceFile == null) {
             return;
         }
 
-        String relativePath = FileUtil.toSystemIndependentName(Path.of(sourcePackagePath)
-                .relativize(Path.of(targetPackagePath)).toString());
+        String targetPackagePath = odinImport.path();
+
+        String importPath = odinImport.fullImportPath();
 
         // Check if package is already imported
         for (OdinImportDeclarationStatement importStatement : sourceFile.getFileScope().getImportStatements()) {
-            OdinImportInfo importInfo = importStatement.getImportInfo();
-            if (importInfo.path().equals(relativePath)) {
+            OdinImport importInfo = importStatement.getImportInfo();
+            if (importInfo.path().equals(importPath)) {
                 return;
             }
         }
@@ -55,7 +62,10 @@ public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
         Project project = context.getProject();
         ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.runWriteCommandAction(project, () -> {
             PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-            OdinImportUtils.insertImport(project, relativePath, fileScope);
+            OdinImportUtils.insertImport(project,
+                    odinImport.alias(),
+                    importPath,
+                    fileScope);
             Document document = manager.getDocument(odinFile);
             if (document != null) {
                 manager.commitDocument(document);
@@ -63,6 +73,5 @@ public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
         }));
 
         CodeStyleManager.getInstance(project).reformat(fileScope);
-
     }
 }

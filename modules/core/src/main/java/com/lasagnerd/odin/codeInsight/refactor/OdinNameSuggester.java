@@ -56,16 +56,14 @@ public class OdinNameSuggester {
 
         if (targetExpression instanceof OdinCompoundLiteralExpression compoundLiteralExpression) {
             var  type = compoundLiteralExpression.getCompoundLiteral().getTypeContainer();
-            if (type != null) {
-                if (type.getType() instanceof OdinQualifiedType qualifiedType) {
-                    String text = qualifiedType.getTypeIdentifier().getText();
-                    addName(symbolTable, text, names, blacklist);
-                }
+            if (type.getType() instanceof OdinQualifiedType qualifiedType) {
+                String text = qualifiedType.getTypeIdentifier().getText();
+                addName(symbolTable, text, names, blacklist);
+            }
 
-                if (type.getType() instanceof OdinSimpleRefType simpleRefType) {
-                    String text = simpleRefType.getIdentifier().getText();
-                    addName(symbolTable, text, names, blacklist);
-                }
+            if (type.getType() instanceof OdinSimpleRefType simpleRefType) {
+                String text = simpleRefType.getIdentifier().getText();
+                addName(symbolTable, text, names, blacklist);
             }
         }
 
@@ -154,6 +152,10 @@ public class OdinNameSuggester {
         }
 
         return result.toLowerCase();
+    }
+
+    public static boolean isValidIdentifier(String input) {
+        return input.equals(normalizeName(input));
     }
 
     private static String convertCamelCaseToSnakeCase(String input) {

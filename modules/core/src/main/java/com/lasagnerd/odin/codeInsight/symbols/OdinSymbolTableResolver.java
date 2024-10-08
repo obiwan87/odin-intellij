@@ -125,7 +125,7 @@ public class OdinSymbolTableResolver {
     }
 
     private static List<OdinSymbol> getBuiltInSymbols(Project project) {
-        OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(project);
+        OdinSdkService builtinSymbolService = OdinSdkService.getInstance(project);
         if (builtinSymbolService != null)
             return builtinSymbolService.getBuiltInSymbols().stream()
                     .filter(s -> s.getVisibility()== OdinSymbol.OdinVisibility.PUBLIC)
@@ -329,7 +329,7 @@ public class OdinSymbolTableResolver {
             }
 
             if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
-                OdinBuiltinSymbolService builtinSymbolService = OdinBuiltinSymbolService.getInstance(procedureDefinition.getProject());
+                OdinSdkService builtinSymbolService = OdinSdkService.getInstance(procedureDefinition.getProject());
                 if (builtinSymbolService != null) {
                     // TODO check logic of "contextless"
                     //OdinStringLiteral callConvention = procedureDefinition.getProcedureType().getStringLiteral();

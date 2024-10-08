@@ -28,6 +28,12 @@ public class OdinPsiElementFactory {
             import "packagePath"
             """;
 
+    private static final String IMPORT_WITH_ALIAS = """
+            package dummy;
+            
+            import %s "%s"
+            """;
+
     private final Project project;
 
     OdinPsiElementFactory(Project project) {
@@ -125,8 +131,13 @@ public class OdinPsiElementFactory {
     }
 
 
-    public OdinImportDeclarationStatement createImport(String relativePath) {
-        OdinFile file = createFile(IMPORT.replaceAll("packagePath", relativePath));
+    public OdinImportDeclarationStatement createImport(String alias, String packagePath) {
+        OdinFile file;
+        if(alias == null) {
+            file = createFile(IMPORT.replaceAll("packagePath", packagePath));
+        } else {
+            file = createFile(IMPORT_WITH_ALIAS.formatted(alias, packagePath));
+        }
         return file.getFileScope().getImportStatements().getFirst();
     }
 

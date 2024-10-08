@@ -9,7 +9,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportInfo;
+import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
 
     private static VirtualFile findDirectoryForImportPath(Project project, @NotNull OdinImportPath element) {
         // Implement this to map the import path to an actual directory in your project.
-        OdinImportInfo importInfo = OdinImportUtils.getImportInfo(element);
+        OdinImport importInfo = OdinImportUtils.getImportInfo(element);
         if (importInfo == null) return null;
 
 
@@ -69,7 +69,10 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
             return null;
         }
 
-        Path directoryPath = Path.of(element.getContainingFile().getVirtualFile().getParent().getPath(), importInfo.path());
+        Path directoryPath = Path.of(element.getContainingFile()
+                .getVirtualFile()
+                .getParent()
+                .getPath(), importInfo.path());
         return VfsUtil.findFile(directoryPath, false);
     }
 
