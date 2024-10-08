@@ -3,6 +3,19 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.7.0</h3>
+        <h4>Improvements</h4>
+        <ul>
+            <li>Auto-completion now includes packages from SDK and custom collections</li>
+        </ul>
+        <h4>New Features</h4>
+        <ul>
+            <li>"Odin" now available in "New Project" wizard</li>
+            <li>Support for source roots</li>
+            <li>Support for custom collections</li>
+            <li>ols.json can now be imported into an IntelliJ project</li>
+        </ul>
+        For more information on source roots and custom collections, visit the <a href="https://github.com/obiwan87/odin-intellij">Odin IntelliJ Support</a> GitHub page.
         <h3>0.6.3</h3>
         <h4>Improvements</h4>
         <li>Huge improvement in auto-completion</li>
@@ -11,52 +24,72 @@
 
         <h3>0.6.2</h3>
         <h4>Bug Fixes</h4>
+        <ul>
         <li>Fix a bug in the type inference engine, where a stackoverflow was caused by circular references</li>
         <li>Fix bug in Settings panel, where a NullPointerException, would cause the panel to never finish loading.
             This affected IDEs without "Native Debugging Support"
         </li>
+        </ul>
 
         <h3>0.6.1</h3>
         <h4>Improvements</h4>
+        <ul>
         <li>Added bundled LLDB debugger, which is supported on macOS (and probably Linux)🔥</li>
+        </ul>
 
         <h4>Bug Fix</h4>
+        <ul>
         <li>Fixed bug in LLDB-DAP Debugger, which now works on macOS (and probably Linux)</li>
+        </ul>
 
         <h3>0.6.0</h3>
         <h4>Improvements</h4>
+        <ul>
         <li>Added debugging support 🔥</li>
+        </ul>
 
         <h3>0.5.4</h3>
         <h4>Improvements</h4>
+        <ul>
         <li>Better support for incomplete expressions and statements</li>
         <li>Minor improvements in grammar</li>
+        </ul>
 
         <h3>0.5.3</h3>
         <h4>Features</h4>
+        <ul>
         <li>"Introduce variable" refactoring🔥. Use<kbd>Ctrl+Alt+V</kbd> or <a href="https://www.jetbrains.com/help/idea/resolving-problems.html">Quick
             Fix💡</a>.
         </li>
         <li>"Specify type explicitly" refactoring🔥. Use Quick Fix💡 on variable identifier.</li>
         <li>Add notification for missing SDK</li>
+        </ul>
 
         <h4>Improvements</h4>
+        <ul>
         <li>Organizing imports now gathers imports from everywhere in the file</li>
         <li>File formatting improved</li>
+        </ul>
 
         <h4>Bugfixes</h4>
+        <ul>
         <li>Fix exception where parsing would fail because of missing class♨️</li>
         <li>Fix tooltip layout for compiler problems</li>
+        </ul>
 
         <h3>0.5.2</h3>
         <h4>Bugfixes</h4>
+        <ul>
         <li>Fixed bug where odin checker would falsely report errors</li>
         <li>Fixed bug where odin checker would not terminate</li>
         <li>Fixed bug where closing parentheses would be wrongly auto-inserted</li>
+        </ul>
 
         <h3>0.5.1</h3>
         <h4>Bugfix</h4>
+        <ul>
         <li>Fix bug in Odin settings panel. Saving settings now works again</li>
+        </ul>
 
         <h3>0.5.0</h3>
         <h4>Features</h4>
