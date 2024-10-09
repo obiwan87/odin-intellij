@@ -271,7 +271,7 @@
         <defaultLiveTemplates file="/liveTemplates/Odin.xml"/>
         <liveTemplateContext contextId="ODIN" implementation="com.lasagnerd.odin.liveTemplates.OdinLiveTemplateContextType"/>
 
-<!--        <editorNotificationProvider implementation="com.lasagnerd.odin.projectSettings.OdinEditorNotificationProvider"/>-->
+        <editorNotificationProvider implementation="com.lasagnerd.odin.projectSettings.OdinEditorNotificationProvider"/>
         <intentionAction>
             <language>Odin</language>
             <className>com.lasagnerd.odin.codeInsight.refactor.OdinIntroduceVariableQuickFix</className>
