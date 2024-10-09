@@ -3,6 +3,16 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.7.1</h3>
+        <h4>Bugfix</h4>
+        <ul>
+            <li>Fix bug where the auto-insert would generate a wrong import path after confirming an auto-completion suggestion</li>
+        </ul>
+        <h4>Improvement</h4>
+        <ul>
+            <li>"Go to declaration..." is now provided for each sub-path of an import</li>
+        </ul>
+
         <h3>0.7.0</h3>
         <h4>Improvements</h4>
         <ul>
