@@ -8,6 +8,7 @@ import com.lasagnerd.odin.lang.OdinLanguage;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
+//test
 public class OdinFormattingBuilder implements FormattingModelBuilder {
     private static SpacingBuilder createSpaceBuilder(CodeStyleSettings settings) {
 //        CommonCodeStyleSettings odinSettings = settings.getCommonSettings(OdinLanguage.INSTANCE.getID());
@@ -93,7 +94,7 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .withinPair(OdinTypes.PACKAGE_DECLARATION, OdinTypes.IMPORT_DECLARATION_STATEMENT)
                 .spacing(0, 0, 2, false, 0)
 
-                .withinPair(OdinTypes.IMPORT_DECLARATION_STATEMENT, OdinTypes.FILE_SCOPE_STATEMENT_LIST)
+                .between(OdinTypes.IMPORT_STATEMENTS_CONTAINER, TokenSet.create(OdinTypes.FILE_SCOPE_STATEMENT_LIST, OdinTypes.LINE_COMMENT, OdinTypes.BLOCK_COMMENT))
                 .spacing(0, 0, 2, false, 0)
                 ;
     }
