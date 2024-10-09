@@ -290,6 +290,7 @@
         <elementDescriptionProvider implementation="com.lasagnerd.odin.projectStructure.collection.OdinCollectionTypeDescriptionProvider"/>
         <targetElementEvaluator language="Odin"
                                 implementationClass="com.lasagnerd.odin.projectStructure.collection.OdinCollectionTargetElementEvaluator"/>
+        <fileIconProvider implementation="com.lasagnerd.odin.projectStructure.OdinFileTypeIconProvider"/>
     </extensions>
 
     <extensionPoints>
