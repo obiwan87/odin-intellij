@@ -1,6 +1,8 @@
 package com.lasagnerd.odin.projectSettings;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -11,8 +13,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -21,7 +22,6 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.lasagnerd.odin.extensions.OdinDebuggerToolchain;
-import kotlin.reflect.jvm.internal.ReflectProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +33,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -50,6 +51,7 @@ public class OdinProjectSettings implements Disposable {
     @Nullable
     private JButton downloadButton;
     private JBCheckBox highlightUnknownReferencesEnabledCheckbox;
+    private SimpleColoredComponent sdkVersion;
 
     @Override
     public void dispose() {
@@ -187,31 +189,59 @@ public class OdinProjectSettings implements Disposable {
 
         // Components initialization
         new ComponentValidator(this)
-                .withValidator(validateSdkPathField())
+                .withValidator(sdkPathValidator())
                 .andStartOnFocusLost()
                 .andRegisterOnDocumentListener(sdkPathTextField.getTextField())
                 .installOn(sdkPathTextField.getTextField());
 
+        sdkPathTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent e) {
+                if (validateSdkPath(sdkPathTextField.getText()) == null) {
+                    sdkVersion.clear();
+                    if (sdkPathTextField.getText().isBlank())
+                        return;
+
+                    sdkVersion.setIcon(AnimatedIcon.Default.INSTANCE);
+                    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                        String odinSdkVersion = OdinSdkUtils.getOdinSdkVersion(sdkPathTextField.getText());
+                        sdkVersion.clear();
+                        sdkVersion.setIcon(AllIcons.General.GreenCheckmark);
+                        sdkVersion.append("Version: "+odinSdkVersion);
+                    });
+
+                } else {
+                    sdkVersion.clear();
+                    sdkVersion.setIcon(AllIcons.General.Error);
+                    sdkVersion.append("Invalid path");
+                }
+            }
+        });
+
         return panel;
     }
 
-    private @NotNull Supplier<ValidationInfo> validateSdkPathField() {
+    private @NotNull Supplier<ValidationInfo> sdkPathValidator() {
         return () -> {
             String sdkPath = sdkPathTextField.getText();
-            if (StringUtil.isNotEmpty(sdkPath)) {
-                Path nioPath = Path.of(sdkPath);
-                if (!nioPath.toFile().exists()) {
-                    return new ValidationInfo("Path does not exist", sdkPathTextField.getTextField());
-                }
-
-                String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(nioPath.toString());
-                File binaryFile = new File(odinBinaryPath);
-                if (!binaryFile.exists() || !binaryFile.isFile()) {
-                    return new ValidationInfo("Odin binary not found", sdkPathTextField.getTextField());
-                }
-            }
-            return null;
+            return validateSdkPath(sdkPath);
         };
+    }
+
+    private @Nullable ValidationInfo validateSdkPath(String sdkPath) {
+        if (StringUtil.isNotEmpty(sdkPath)) {
+            Path nioPath = Path.of(sdkPath);
+            if (!nioPath.toFile().exists()) {
+                return new ValidationInfo("Path does not exist", sdkPathTextField.getTextField());
+            }
+
+            String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(nioPath.toString());
+            File binaryFile = new File(odinBinaryPath);
+            if (!binaryFile.exists() || !binaryFile.isFile()) {
+                return new ValidationInfo("Odin binary not found", sdkPathTextField.getTextField());
+            }
+        }
+        return null;
     }
 
     private JComponent createBuildFlagsTextField() {
@@ -233,10 +263,19 @@ public class OdinProjectSettings implements Disposable {
     public JComponent getComponent() {
         if (component != null)
             return component;
+
+        sdkVersion = new SimpleColoredComponent();
+
+        sdkVersion.setIcon(AllIcons.General.GreenCheckmark);
+        sdkVersion.setIconTextGap(2);
+        sdkVersion.setFont(JBUI.Fonts.smallFont());
+        sdkVersion.append("Version: 2024-08-dev");
+
         FormBuilder formBuilder = FormBuilder.createFormBuilder()
                 .addLabeledComponent(
                         new JBLabel("Path to SDK: "),
                         createSdkPathTextFieldWithBrowseButton(), 1, false)
+                .addComponentToRightColumn(sdkVersion)
                 .addVerticalGap(10)
                 .addLabeledComponent(
                         new JBLabel("Checker arguments: "),

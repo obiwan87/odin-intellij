@@ -49,8 +49,9 @@ public class OdinSdkUtils {
     }
 
     public static @NotNull String getOdinSdkVersion(@NotNull String sdkHome) {
-        ProcessBuilder processBuilder = new ProcessBuilder("odin", "version");
-        processBuilder.directory(Path.of(sdkHome).toFile());
+        Path path = Path.of(sdkHome, "odin");
+        ProcessBuilder processBuilder = new ProcessBuilder(path.toString(), "version");
+
         try {
             Process start = processBuilder.start();
             byte[] bytes = start.getInputStream().readAllBytes();
@@ -61,13 +62,12 @@ public class OdinSdkUtils {
 
             String version;
             if (matcher.find()) {
-                version = matcher.group(1);
-
+                version = matcher.group(1).trim();
             } else {
                 return "Unknown";
             }
 
-            return "Odin version \"" + version + "\"";
+            return version;
         } catch (IOException e) {
             return "Unknown";
         }
@@ -105,8 +105,8 @@ public class OdinSdkUtils {
 
     public static Optional<String> getValidSdkPath(Project project) {
         String odinBinaryPath = getOdinBinaryPath(project);
-        if(odinBinaryPath != null) {
-            if(new File(odinBinaryPath).exists()) {
+        if (odinBinaryPath != null) {
+            if (new File(odinBinaryPath).exists()) {
                 return getSdkPath(project);
             }
         }
