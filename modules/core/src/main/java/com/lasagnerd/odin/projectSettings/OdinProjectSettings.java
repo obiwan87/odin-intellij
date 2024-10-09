@@ -5,9 +5,13 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -17,15 +21,20 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.lasagnerd.odin.extensions.OdinDebuggerToolchain;
+import kotlin.reflect.jvm.internal.ReflectProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class OdinProjectSettings implements Disposable {
     private JComponent component;
@@ -176,7 +185,33 @@ public class OdinProjectSettings implements Disposable {
         sdkPathTextField = new TextFieldWithBrowseButton(new ExtendableTextField(10), new BrowseToSdkFileChooserAction());
         panel.add(sdkPathTextField, constraints);
 
+        // Components initialization
+        new ComponentValidator(this)
+                .withValidator(validateSdkPathField())
+                .andStartOnFocusLost()
+                .andRegisterOnDocumentListener(sdkPathTextField.getTextField())
+                .installOn(sdkPathTextField.getTextField());
+
         return panel;
+    }
+
+    private @NotNull Supplier<ValidationInfo> validateSdkPathField() {
+        return () -> {
+            String sdkPath = sdkPathTextField.getText();
+            if (StringUtil.isNotEmpty(sdkPath)) {
+                Path nioPath = Path.of(sdkPath);
+                if (!nioPath.toFile().exists()) {
+                    return new ValidationInfo("Path does not exist", sdkPathTextField.getTextField());
+                }
+
+                String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(nioPath.toString());
+                File binaryFile = new File(odinBinaryPath);
+                if (!binaryFile.exists() || !binaryFile.isFile()) {
+                    return new ValidationInfo("Odin binary not found", sdkPathTextField.getTextField());
+                }
+            }
+            return null;
+        };
     }
 
     private JComponent createBuildFlagsTextField() {
@@ -196,7 +231,7 @@ public class OdinProjectSettings implements Disposable {
     }
 
     public JComponent getComponent() {
-        if(component != null)
+        if (component != null)
             return component;
         FormBuilder formBuilder = FormBuilder.createFormBuilder()
                 .addLabeledComponent(

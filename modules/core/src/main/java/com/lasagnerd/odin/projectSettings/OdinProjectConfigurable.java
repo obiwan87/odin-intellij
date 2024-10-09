@@ -1,12 +1,15 @@
 package com.lasagnerd.odin.projectSettings;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Objects;
 
 public class OdinProjectConfigurable implements Configurable {
@@ -60,12 +63,20 @@ public class OdinProjectConfigurable implements Configurable {
     }
 
     @Override
-    public void apply() {
+    public void apply() throws ConfigurationException {
         OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
         OdinProjectSettingsState state = settingsService.getState();
 
-        if(!Objects.equals(state.getSdkPath(), sdkSettings.getSdkPath())) {
+        if (!Objects.equals(state.getSdkPath(), sdkSettings.getSdkPath())) {
             OdinSdkService.getInstance(project).invalidateCache();
+        }
+
+        if (StringUtil.isNotEmpty(sdkSettings.getSdkPath())) {
+            String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(sdkSettings.getSdkPath());
+            File odinBinaryFile = new File(odinBinaryPath);
+            if (!odinBinaryFile.exists() || !odinBinaryFile.isFile()) {
+                throw new ConfigurationException("SDK path is not valid");
+            }
         }
 
         apply(state, sdkSettings);
