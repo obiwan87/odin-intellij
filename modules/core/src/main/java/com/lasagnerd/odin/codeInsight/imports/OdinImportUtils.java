@@ -173,6 +173,18 @@ public class OdinImportUtils {
         return collectionPaths;
     }
 
+    @Nullable
+    public static Path getCollectionPath(@NotNull String collectionName, @NotNull PsiElement psiElement) {
+        PsiFile containingFile = psiElement.getOriginalElement().getContainingFile();
+        if(containingFile != null) {
+            VirtualFile virtualFile = containingFile.getVirtualFile();
+            if(virtualFile != null) {
+                Map<String, Path> collectionPaths = getCollectionPaths(psiElement.getProject(), virtualFile.getPath());
+                return collectionPaths.get(collectionName);
+            }
+        }
+        return null;
+    }
     /**
      * Collects the importable packages of a directory from the perspective of a requesting package path.
      *
@@ -233,7 +245,7 @@ public class OdinImportUtils {
 
                         if (requestingPackagePath != null) {
                             relativeImportPath = FileUtil.toSystemIndependentName(Path.of(requestingPackagePath)
-                                    .relativize(fileNioPath)
+                                    .relativize(fileNioPath.getParent())
                                     .toString());
                         } else {
                             relativeImportPath = FileUtil.toSystemIndependentName(

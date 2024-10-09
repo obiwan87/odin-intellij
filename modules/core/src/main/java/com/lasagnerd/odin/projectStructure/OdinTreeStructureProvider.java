@@ -29,35 +29,36 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
                 VirtualFile directoryFile = directoryNode.getVirtualFile();
                 if (directoryFile != null) {
                     Module module = ModuleUtilCore.findModuleForFile(directoryFile, child.getProject());
-                    if(module == null)
-                        continue;;
+                    if (module == null)
+                        continue;
+
                     SourceFolder sourceFolder = OdinProjectUtils.getSourceFolder(directoryFile,
                             ModuleRootManager.getInstance(module).getModifiableModel());
-                    if (sourceFolder == null)
-                        continue;
-                    JpsElement properties = sourceFolder.getJpsElement().getProperties();
-                    if (properties instanceof OdinCollectionRootProperties collectionRootProperties) {
-                        PresentationData presentation = child.getPresentation();
+                    if (sourceFolder != null) {
+                        JpsElement properties = sourceFolder.getJpsElement().getProperties();
+                        if (properties instanceof OdinCollectionRootProperties collectionRootProperties) {
+                            PresentationData presentation = child.getPresentation();
 
-                        String collectionName = collectionRootProperties.getCollectionName();
-                        String directoryName = directoryFile.getName();
-                        Color foreground = presentation.getForcedTextForeground();
+                            String collectionName = collectionRootProperties.getCollectionName();
+                            String directoryName = directoryFile.getName();
+                            Color foreground = presentation.getForcedTextForeground();
 
-                        OdinPsiCollection odinPsiCollection = new OdinPsiCollection(collectionName, directoryNode.getValue());
-                        OdinPsiCollectionDirectory odinPsiCollectionDirectory
-                                = new OdinPsiCollectionDirectory(directoryNode.getValue(), odinPsiCollection);
-                        directoryNode.setValue(odinPsiCollectionDirectory);
+                            OdinPsiCollection odinPsiCollection = new OdinPsiCollection(collectionName, directoryNode.getValue());
+                            OdinPsiCollectionDirectory odinPsiCollectionDirectory
+                                    = new OdinPsiCollectionDirectory(directoryNode.getValue(), odinPsiCollection);
+                            directoryNode.setValue(odinPsiCollectionDirectory);
 
-                        if (directoryName.equals(collectionName)) {
-                            presentation.addText(directoryName,
-                                    new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, foreground)
-                            );
-                        } else {
-                            presentation.addText(directoryName,
-                                    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground)
-                            );
-                            presentation.addText(" [%s]".formatted(collectionName),
-                                    new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, Gray._150));
+                            if (directoryName.equals(collectionName)) {
+                                presentation.addText(directoryName,
+                                        new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, foreground)
+                                );
+                            } else {
+                                presentation.addText(directoryName,
+                                        new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground)
+                                );
+                                presentation.addText(" [%s]".formatted(collectionName),
+                                        new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, Gray._150));
+                            }
                         }
                     }
                 }

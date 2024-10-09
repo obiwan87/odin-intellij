@@ -54,5 +54,8 @@ public class OdinSourceRootEditHandler extends ModuleSourceRootEditHandler<OdinS
         return "Unmark Source";
     }
 
-
+    @Override
+    public @NotNull @Nls String getFullRootTypeName() {
+        return "Odin Sources Root";
+    }
 }
