@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.lasagnerd.odin.projectStructure.OdinProjectUtils;
+import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class OdinCollectionRenameHandler implements RenameHandler {
                 );
     }
 
-    private static boolean isCollectionRoot(Project project, VirtualFile file) {
+    public static boolean isCollectionRoot(Project project, VirtualFile file) {
         if (project == null)
             return false;
 
@@ -35,7 +35,7 @@ public class OdinCollectionRenameHandler implements RenameHandler {
             return false;
 
         if (file.isDirectory()) {
-            OdinCollectionSearchResult result = OdinProjectUtils.findOdinCollection(project, file);
+            OdinRootTypeResult result = OdinRootTypeUtils.findCollectionRoot(project, file);
             if (result == null)
                 return false;
             return result.sourceFolder() != null

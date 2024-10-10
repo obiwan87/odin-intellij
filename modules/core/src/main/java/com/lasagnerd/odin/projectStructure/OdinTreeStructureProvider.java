@@ -32,7 +32,7 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
                     if (module == null)
                         continue;
 
-                    SourceFolder sourceFolder = OdinProjectUtils.getSourceFolder(directoryFile,
+                    SourceFolder sourceFolder = OdinRootTypeUtils.getCollectionFolder(directoryFile,
                             ModuleRootManager.getInstance(module).getModifiableModel());
                     if (sourceFolder != null) {
                         JpsElement properties = sourceFolder.getJpsElement().getProperties();

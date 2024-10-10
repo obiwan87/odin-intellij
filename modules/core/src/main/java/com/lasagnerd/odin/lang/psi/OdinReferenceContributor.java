@@ -1,13 +1,9 @@
 package com.lasagnerd.odin.lang.psi;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.text.TextRangeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +46,10 @@ public class OdinReferenceContributor extends PsiReferenceContributor {
                         Path subPath = path.subpath(0, i);
                         Path name = subPath.getName(i - 1);
                         TextRange textRange = TextRange.from(offset + caret, name.toString().length());
-                        packageReferences.add(new OdinPackageReference(odinImportPath, textRange, subPath));
+                        packageReferences.add(new OdinPackageReference(odinImportPath, textRange,
+                                path,
+                                subPath,
+                                i-1));
 
                         // name + separator
                         caret += name.toString().length() + 1;

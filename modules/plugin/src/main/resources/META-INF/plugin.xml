@@ -301,6 +301,7 @@
         <targetElementEvaluator language="Odin"
                                 implementationClass="com.lasagnerd.odin.projectStructure.collection.OdinCollectionTargetElementEvaluator"/>
         <fileIconProvider implementation="com.lasagnerd.odin.projectStructure.OdinFileTypeIconProvider"/>
+        <refactoring.moveHandler implementation="com.lasagnerd.odin.codeInsight.refactor.OdinMovePackageHandler" order="first" />
     </extensions>
 
     <extensionPoints>
@@ -343,7 +344,7 @@
 
         <action id="com.lasagnerd.odin.projectStructure.OdinImportOlsConfigAction"
                 class="com.lasagnerd.odin.projectStructure.OdinImportOlsConfigAction"
-                text="Import ols Config"
+                text="Import Ols Config"
                 description="Imports the configuration to this project">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="NewGroup"/>
         </action>

@@ -14,7 +14,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.lasagnerd.odin.projectStructure.OdinProjectUtils;
+import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public class OdinCollectionRenameProcessor extends RenamePsiElementProcessor {
             return;
 
         ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-        SourceFolder sourceFolder = OdinProjectUtils.getSourceFolder(virtualFile, modifiableModel);
+        SourceFolder sourceFolder = OdinRootTypeUtils.getCollectionFolder(virtualFile, modifiableModel);
         if (sourceFolder != null) {
             if (modifiableModel.isDisposed())
                 return;

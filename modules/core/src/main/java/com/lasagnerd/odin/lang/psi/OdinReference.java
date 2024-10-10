@@ -5,10 +5,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
@@ -82,5 +80,13 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
     @Override
     public Object @NotNull [] getVariants() {
         return new Object[0];
+    }
+
+    @Override
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+        if(element instanceof PsiDirectory) {
+            return element;
+        }
+        return super.bindToElement(element);
     }
 }
