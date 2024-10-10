@@ -144,9 +144,4 @@ public class OdinMovePackageHandler extends MoveFilesOrDirectoriesHandler {
             }
         }
     }
-
-    @Override
-    public boolean tryToMove(PsiElement element, Project project, DataContext dataContext, PsiReference reference, Editor editor) {
-        return super.tryToMove(element, project, dataContext, reference, editor);
-    }
 }
