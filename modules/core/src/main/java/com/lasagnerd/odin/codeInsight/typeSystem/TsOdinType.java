@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
@@ -90,6 +91,20 @@ public abstract class TsOdinType {
 
     public String getLabel() {
         return getName() == null ? "<undefined>" : getName();
+    }
+
+    public boolean isAnyType() {
+        TsOdinType tsOdinType = baseType();
+        if(tsOdinType instanceof TsOdinTypeAlias tsOdinStructType) {
+            OdinDeclaration declaration = tsOdinStructType.getDeclaration();
+            if(tsOdinType.getName().equals("any") && declaration != null) {
+                OdinSdkService sdkService = OdinSdkService.getInstance(declaration.getProject());
+                return sdkService.getBuiltInSymbols().stream()
+                        .anyMatch(s -> declaration.equals(s.getDeclaration()));
+            }
+        }
+
+        return false;
     }
 
     public boolean isUntyped() {

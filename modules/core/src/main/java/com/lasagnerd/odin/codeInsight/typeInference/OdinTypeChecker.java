@@ -40,14 +40,14 @@ public class OdinTypeChecker {
         if (argumentBaseType instanceof TsOdinArrayType argArrayType
                 && parameterBaseType instanceof TsOdinArrayType parArrayType) {
             if (argArrayType.isSoa() == parArrayType.isSoa() && argArrayType.isSimd() == parArrayType.isSimd()) {
-               OdinArraySize argSizeElement = argArrayType.getPsiSizeElement();
+                OdinArraySize argSizeElement = argArrayType.getPsiSizeElement();
                 OdinArraySize parSizeElement = parArrayType.getPsiSizeElement();
-                if(parSizeElement != null
+                if (parSizeElement != null
                         && argSizeElement != null
                         && parSizeElement.getExpression() instanceof OdinLiteralExpression
                         && argSizeElement.getExpression() instanceof OdinLiteralExpression) {
 
-                    if(PsiEquivalenceUtil.areElementsEquivalent(argArrayType.getPsiSizeElement(), parArrayType.getPsiSizeElement())) {
+                    if (PsiEquivalenceUtil.areElementsEquivalent(argArrayType.getPsiSizeElement(), parArrayType.getPsiSizeElement())) {
                         return checkTypesStrictly(argArrayType.getElementType(), parArrayType.getElementType());
                     }
                     return false;
@@ -90,12 +90,12 @@ public class OdinTypeChecker {
         POINTER_TO_MP,
         TO_ANY,
         USING_SUBTYPE,
+        TO_UNION_VARIANT
     }
 
     @Data
     public static class TypeCheckResult {
         private boolean compatible;
-        private boolean polymorphic;
         private List<ConversionAction> conversionActionList = new ArrayList<>();
     }
 
@@ -125,7 +125,7 @@ public class OdinTypeChecker {
             return;
         }
 
-        if(type instanceof TsOdinConstrainedType constrainedType && expectedType instanceof TsOdinConstrainedType parConstrainedType) {
+        if (type instanceof TsOdinConstrainedType constrainedType && expectedType instanceof TsOdinConstrainedType parConstrainedType) {
             doCheckTypes(constrainedType.getSpecializedType(), parConstrainedType.getSpecializedType());
             return;
         }
@@ -141,16 +141,26 @@ public class OdinTypeChecker {
         }
 
         if (expectedType instanceof TsOdinPolymorphicType) {
-            typeCheckResult.setPolymorphic(true);
             typeCheckResult.setCompatible(true);
             return;
         }
 
-        if(type instanceof TsOdinPolymorphicType) {
-            typeCheckResult.setPolymorphic(true);
+        if (expectedType.isAnyType()) {
+            if (type instanceof TsOdinGenericType genericType) {
+                if (genericType.isSpecialized()) {
+                    addActionAndSetCompatible(ConversionAction.TO_ANY);
+                }
+            } else if (!type.isPolymorphic()) {
+                addActionAndSetCompatible(ConversionAction.TO_ANY);
+            }
+            return;
+        }
+
+        if (type instanceof TsOdinPolymorphicType) {
             typeCheckResult.setCompatible(true);
             return;
         }
+
 
         if (expectedType instanceof TsOdinConstrainedType constrainedType) {
             if (type instanceof TsOdinMetaType metaType) {
@@ -211,6 +221,18 @@ public class OdinTypeChecker {
         if (type == TsOdinBuiltInTypes.NIL && expectedType.isNillable()) {
             typeCheckResult.setCompatible(true);
             return;
+        }
+
+        if (expectedType instanceof TsOdinUnionType unionType) {
+            for (TsOdinUnionVariant variant : unionType.getVariants()) {
+                TypeCheckResult unionResult = OdinTypeChecker.checkTypes(type, variant.getType());
+                if (unionResult.isCompatible()) {
+                    typeCheckResult.getConversionActionList().addAll(unionResult.conversionActionList);
+                    typeCheckResult.getConversionActionList().add(ConversionAction.TO_UNION_VARIANT);
+                    typeCheckResult.setCompatible(true);
+                    break;
+                }
+            }
         }
 
         if (expectedType instanceof TsOdinStructType &&

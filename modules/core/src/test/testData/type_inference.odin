@@ -705,3 +705,28 @@ testSoaSlices :: proc() {
     b := ys2
     c := zs2
 }
+
+testAnyType :: proc() {
+    x: any
+    y := x
+}
+
+testUnionConversion :: proc() {
+    U :: union {i32, f32}
+    p1 :: proc(u: U) -> i32 {}
+    p2 :: proc(point: Point) -> f32 {}
+
+    p :: proc {p1, p2}
+
+    x := p(1.0)
+}
+
+testAnyTypeConversion :: proc() {
+    U :: union {i32, f32}
+    p1 :: proc(t: any, u: U) -> i32 {}
+    p2 :: proc(t: any, point: Point) -> f32 {}
+
+    p :: proc {p1, p2}
+
+    x := p(1.0, 1.0)
+}

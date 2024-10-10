@@ -96,6 +96,12 @@ public class OdinTypeConverter {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
+    /**
+     * Computes the resulting type of converting a -> b or b -> a.
+     * @param a First type
+     * @param b Second type
+     * @return The compatible type if successful, or UNKNOWN_TYPE if conversion fails.
+     */
     public static TsOdinType convertToTyped(TsOdinType a, TsOdinType b) {
         if (a.isUntyped() && b.isUntyped()) {
             return convertUntypedTypes((TsOdinUntypedType) a, (TsOdinUntypedType) b);
@@ -104,7 +110,7 @@ public class OdinTypeConverter {
         if (a == b)
             return a;
 
-        // Here we know that 'b' is untyped and 'a' isn't
+        // Here we know that at least one is not untyped. Figure out which
         TsOdinUntypedType untypedType;
         TsOdinType typed;
 

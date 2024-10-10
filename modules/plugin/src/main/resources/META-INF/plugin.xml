@@ -317,7 +317,7 @@
                 text="Odin File"
                 icon="com.lasagnerd.odin.OdinIcons.OdinFileType"
                 description="Creates a new Odin file">
-            <add-to-group group-id="NewGroup" anchor="after" relative-to-action="Groovy.NewClass"/>
+            <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
         <action id="com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinMarkSourceRootAction"
                 class="com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinMarkSourceRootAction"

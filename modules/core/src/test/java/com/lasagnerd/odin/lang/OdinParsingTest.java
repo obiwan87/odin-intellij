@@ -1426,7 +1426,7 @@ public class OdinParsingTest extends UsefulTestCase {
         @org.intellij.lang.annotations.Language("Odin")
         String fileContent = """
                 package main;
-
+                
                 main :: proc() {
                    a.b.c.d().e.f()
                    a.?.b.c.d().e.f()
@@ -2168,5 +2168,26 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinType, TsOdinSliceType.class);
             assertEquals(tsOdinSliceType.getElementType(), TsOdinBuiltInTypes.I64);
         }
+    }
+
+    public void testAnyType() throws IOException {
+        OdinFile file = loadTypeInference();
+
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testAnyType", "y");
+        assertTrue(tsOdinType.isAnyType());
+    }
+
+    public void testUnionConversion() throws IOException {
+        OdinFile file = loadTypeInference();
+
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testUnionConversion", "x");
+        assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+    }
+
+    public void testAnyTypeConversion() throws IOException {
+        OdinFile file = loadTypeInference();
+
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testAnyTypeConversion", "x");
+        assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
     }
 }
