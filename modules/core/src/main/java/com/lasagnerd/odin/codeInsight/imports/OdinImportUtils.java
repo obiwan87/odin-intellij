@@ -23,6 +23,8 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinSdkLibraryManager;
+import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
+import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootProperties;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
 import org.jetbrains.annotations.NotNull;
@@ -176,15 +178,16 @@ public class OdinImportUtils {
     @Nullable
     public static Path getCollectionPath(@NotNull String collectionName, @NotNull PsiElement psiElement) {
         PsiFile containingFile = psiElement.getOriginalElement().getContainingFile();
-        if(containingFile != null) {
+        if (containingFile != null) {
             VirtualFile virtualFile = containingFile.getVirtualFile();
-            if(virtualFile != null) {
+            if (virtualFile != null) {
                 Map<String, Path> collectionPaths = getCollectionPaths(psiElement.getProject(), virtualFile.getPath());
                 return collectionPaths.get(collectionName);
             }
         }
         return null;
     }
+
     /**
      * Collects the importable packages of a directory from the perspective of a requesting package path.
      *
@@ -311,27 +314,53 @@ public class OdinImportUtils {
         return packagePaths;
     }
 
-    public static @NotNull OdinImport computeRelativeImport(Project project, String sourceFilePath, String targetFilePath) {
-        Path sourceDir = Path.of(sourceFilePath);
-        Path targetDir = Path.of(targetFilePath).normalize();
+    public static @Nullable OdinImport computeRelativeImport(Project project, VirtualFile sourceFile, VirtualFile targetFile) {
+        // no import necessary, because same package
+        if (sourceFile.getParent().equals(targetFile.getParent())) {
+            return null;
+        }
 
+        Path sourceDir = Path.of(sourceFile.getParent().getPath());
+        Path targetDir = Path.of(targetFile.getParent().getPath());
+
+        // Case 0: target is in sdk
         Optional<String> sdkPath = OdinImportService.getInstance(project).getSdkPath();
         if (sdkPath.isPresent()) {
             if (targetDir.startsWith(Path.of(sdkPath.get()))) {
                 Path relativePath = Path.of(sdkPath.get()).relativize(targetDir);
                 if (relativePath.getNameCount() >= 2) {
-                    String library = FileUtil.toSystemIndependentName(relativePath.getName(0).toString());
+                    String collection = FileUtil.toSystemIndependentName(relativePath.getName(0).toString());
                     String subPath = FileUtil.toSystemIndependentName(relativePath.subpath(1, targetDir.getNameCount()).toString());
                     String packageName = relativePath.getFileName().toString();
-                    String fullImportPath = library + ":" + subPath;
-                    return new OdinImport(fullImportPath, packageName, subPath, library, null);
+                    String fullImportPath = collection + ":" + subPath;
+                    return new OdinImport(fullImportPath, packageName, subPath, collection, null);
                 }
             }
         }
 
-        String importPath = FileUtil.toSystemIndependentName(sourceDir.relativize(targetDir).toString());
-        String packageName = targetDir.getFileName().toString();
-        return new OdinImport(importPath, packageName, importPath, null, null);
+        // Case 1: files under same source root
+        OdinRootTypeResult sourceFileRoot = OdinRootTypeUtils.findContainingRoot(project, sourceFile);
+        OdinRootTypeResult targetFileRoot = OdinRootTypeUtils.findContainingRoot(project, targetFile);
+        if (sourceFileRoot != null && targetFileRoot != null) {
+            String packageName = targetDir.getFileName().toString();
+
+            if (Objects.equals(sourceFileRoot.directory(), targetFileRoot.directory())) {
+                // compute relative path from source to target with no collection name
+                String importPath = FileUtil.toSystemIndependentName(sourceDir.relativize(targetDir).toString());
+                return new OdinImport(importPath, packageName, importPath, null, null);
+            }
+
+            // Case 2:target in different root, and target in collection root
+            if(targetFileRoot.isCollectionRoot()) {
+                String collection = targetFileRoot.collectionName();
+                Path collectionPath = Path.of(targetFileRoot.directory().getPath());
+                String importPath = FileUtil.toSystemIndependentName(collectionPath.relativize(targetDir).toString());
+                String fullImportPath = collection + ":" + importPath;
+
+                return new OdinImport(fullImportPath, packageName, importPath, collection, null);
+            }
+        }
+        return null;
     }
 
     @NotNull

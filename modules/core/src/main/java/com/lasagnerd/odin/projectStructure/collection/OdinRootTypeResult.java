@@ -7,27 +7,23 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootProperties;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record OdinRootTypeResult(
         Module module,
         ModifiableRootModel modifiableModel,
-        SourceFolder sourceFolder
+        @NotNull SourceFolder sourceFolder
 ) {
     public @Nullable String collectionName() {
-        if(sourceFolder != null) {
-            if(sourceFolder.getJpsElement().getProperties() instanceof OdinCollectionRootProperties collectionRootProperties) {
-                return collectionRootProperties.getCollectionName();
-            }
+        if (sourceFolder.getJpsElement().getProperties() instanceof OdinCollectionRootProperties collectionRootProperties) {
+            return collectionRootProperties.getCollectionName();
         }
         return null;
     }
 
     public VirtualFile directory() {
-        if(sourceFolder != null) {
-            return sourceFolder.getFile();
-        }
-        return null;
+        return sourceFolder.getFile();
     }
 
     public boolean isSourceRoot() {

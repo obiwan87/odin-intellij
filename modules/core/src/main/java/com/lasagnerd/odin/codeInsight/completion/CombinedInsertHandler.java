@@ -8,13 +8,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class CombinedInsertHandler implements InsertHandler<LookupElement> {
     private final List<InsertHandler<LookupElement>> handlers = new ArrayList<>();
 
     @SafeVarargs
     public CombinedInsertHandler(InsertHandler<LookupElement>... handlers) {
-        this.handlers.addAll(Arrays.asList(handlers));
+        this.handlers.addAll(Arrays.stream(handlers).filter(Objects::nonNull).toList());
     }
 
     @Override

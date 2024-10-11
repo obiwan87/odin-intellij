@@ -38,8 +38,7 @@ public class OdinCollectionRenameHandler implements RenameHandler {
             OdinRootTypeResult result = OdinRootTypeUtils.findCollectionRoot(project, file);
             if (result == null)
                 return false;
-            return result.sourceFolder() != null
-                    && result.sourceFolder().getRootType() == OdinCollectionRootType.INSTANCE;
+            return result.sourceFolder().getRootType() == OdinCollectionRootType.INSTANCE;
         }
 
         return false;

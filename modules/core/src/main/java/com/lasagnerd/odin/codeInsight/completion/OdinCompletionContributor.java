@@ -25,7 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -97,12 +99,51 @@ public class OdinCompletionContributor extends CompletionContributor {
         return element;
     }
 
+    public static List<LookupElement> addLookUpElement(OdinFile sourceFile,
+                                                       OdinImport odinImport,
+                                                       String sourcePackagePath,
+                                                       @NotNull CompletionResultSet result,
+                                                       OdinSymbol symbol,
+                                                       int priority) {
+        return addLookUpElements(sourceFile,
+                odinImport,
+                sourcePackagePath,
+                result,
+                Collections.singleton(symbol),
+                priority,
+                false,
+                Function.identity());
+    }
+
+    public static List<LookupElement> addLookUpElement(OdinFile sourceFile,
+                                                       OdinImport odinImport,
+                                                       String sourcePackagePath,
+                                                       @NotNull CompletionResultSet result,
+                                                       OdinSymbol symbol,
+                                                       int priority,
+                                                       Function<LookupElementBuilder, LookupElementBuilder> transformer) {
+        return addLookUpElements(sourceFile,
+                odinImport,
+                sourcePackagePath,
+                result,
+                Collections.singleton(symbol),
+                priority,
+                false,
+                transformer);
+    }
+
+
     public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols) {
         return addLookUpElements(result, symbols, 0);
     }
 
     public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols, int priority) {
-        return addLookUpElements(null, null, "", result, symbols, priority);
+        return addLookUpElements(null,
+                null,
+                "",
+                result,
+                symbols,
+                priority);
     }
 
     public static List<LookupElement> addLookUpElements(OdinFile sourceFile,
@@ -112,17 +153,39 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                         Collection<OdinSymbol> symbols,
                                                         int priority
     ) {
+        return addLookUpElements(sourceFile,
+                odinImport,
+                sourcePackagePath,
+                result,
+                symbols,
+                priority,
+                false,
+                Function.identity());
+    }
+
+    public static List<LookupElement> addLookUpElements(OdinFile sourceFile,
+                                                        OdinImport odinImport,
+                                                        String sourcePackagePath,
+                                                        @NotNull CompletionResultSet result,
+                                                        Collection<OdinSymbol> symbols,
+                                                        int priority,
+                                                        boolean batchMode,
+                                                        @NotNull Function<LookupElementBuilder, LookupElementBuilder> transformer
+    ) {
         List<LookupElement> lookupElements = new ArrayList<>();
         String prefix = "";
         if (odinImport != null) {
             // Get last segment of path
-            if(odinImport.alias() == null) {
+            if (odinImport.alias() == null) {
                 prefix = odinImport.packageName() + ".";
             } else {
                 prefix = odinImport.alias() + ".";
             }
         }
 
+        if (batchMode) {
+            result.startBatch();
+        }
         for (var symbol : symbols) {
             LookupElement lookupElement = null;
             Icon icon = getIcon(symbol.getSymbolType());
@@ -152,7 +215,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                         )
                                 );
                         lookupElement = PrioritizedLookupElement
-                                .withPriority(element, priority);
+                                .withPriority(transformer.apply(element), priority);
 
                     }
                 }
@@ -186,7 +249,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                             new OdinInsertImportHandler(odinImport, sourcePackagePath, sourceFile)
                                                     )
                                             );
-                                    element = procedureLookupElement(element, declaringProcedure);
+                                    element = transformer.apply(procedureLookupElement(element, declaringProcedure));
                                     lookupElement = PrioritizedLookupElement.withPriority(element, priority);
                                 }
                             }
@@ -207,7 +270,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                             element = element.withTailText(" -> " + info.collection());
                         }
 
-                        lookupElement = PrioritizedLookupElement.withPriority(element, priority + 100);
+                        lookupElement = PrioritizedLookupElement.withPriority(transformer.apply(element), priority + 100);
                     }
                 }
                 default -> {
@@ -220,7 +283,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                             new OdinInsertImportHandler(odinImport, sourcePackagePath, sourceFile)
                                     )
                             );
-                    lookupElement = PrioritizedLookupElement.withPriority(element, priority);
+                    lookupElement = PrioritizedLookupElement.withPriority(transformer.apply(element), priority);
                 }
             }
 
@@ -228,6 +291,10 @@ public class OdinCompletionContributor extends CompletionContributor {
                 result.addElement(lookupElement);
                 lookupElements.add(lookupElement);
             }
+        }
+
+        if (batchMode) {
+            result.endBatch();
         }
         return lookupElements;
     }
