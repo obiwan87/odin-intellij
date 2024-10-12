@@ -3,7 +3,6 @@ package com.lasagnerd.odin.codeInsight.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -31,6 +30,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.completion.CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
+import static com.intellij.codeInsight.completion.PrioritizedLookupElement.withPriority;
 import static com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor.*;
 
 class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
@@ -120,55 +120,42 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
         PsiElement parent = identifier.getParent();
 
+
+        // Type assert
         if (parent instanceof OdinType && parent.getParent() instanceof OdinRefExpression refExpression) {
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(refExpression.getExpression());
-
             if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
-                result.startBatch();
-                List<TsOdinUnionVariant> variants = tsOdinUnionType.getVariants();
-                for (int i = 0; i < variants.size(); i++) {
-                    TsOdinUnionVariant variant = variants.get(i);
-                    TsOdinType variantType = variant.getType();
-
-                    OdinDeclaration declaration = variantType.getDeclaration();
-                    if (declaration != null) {
-                        List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver
-                                .getLocalSymbols(declaration, variantType.getSymbolTable());
-                        if (!localSymbols.isEmpty()) {
-                            OdinSymbol symbol = localSymbols.getFirst();
-                            if (symbol.getDeclaration() != null) {
-                                VirtualFile targetFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaration());
-                                OdinImport odinImport = null;
-                                if (targetFile != null) {
-                                    odinImport = OdinImportUtils.computeRelativeImport(project, sourceFile, targetFile);
-                                }
-                                addLookUpElement(odinFile,
-                                        odinImport,
-                                        sourceFile.getParent().getPath(),
-                                        result,
-                                        localSymbols.getFirst(),
-                                        10000 + variants.size() - i,
-                                        lookupElementBuilder -> {
-                                            InsertHandler<LookupElement> insertHandler
-                                                    = lookupElementBuilder.getInsertHandler();
-                                            CombinedInsertHandler newInsertHandler = new CombinedInsertHandler(insertHandler, new OdinTypeAssertInsertHandler());
-                                            return lookupElementBuilder.bold().withInsertHandler(newInsertHandler);
-                                        }
-                                );
-                            }
-                        }
-                    } else if (variantType instanceof TsOdinBuiltInType builtInType) {
-                        LookupElementBuilder lookupElement =
-                                LookupElementBuilder.create(builtInType.getName()).bold().withInsertHandler(new OdinTypeAssertInsertHandler());
-                        result.addElement(
-                                PrioritizedLookupElement.withPriority(lookupElement, 10000 + variants.size() - i)
-                        );
-                    }
-                }
-                result.endBatch();
+                addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
                 return;
             }
         }
+
+        // Case clause
+        if (parent instanceof OdinRefExpression refExpression && refExpression.getParent() instanceof OdinSwitchCase switchCase) {
+            OdinSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(switchCase, OdinSwitchBlock.class);
+            if (switchBlock != null) {
+                if (switchBlock.getSwitchInClause() != null) {
+                    OdinExpression expression = switchBlock.getSwitchInClause().getExpression();
+                    TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+                    if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
+                        addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
+                    }
+                } else if (switchBlock.getExpression() != null) {
+                    TsOdinType tsOdinType = OdinInferenceEngine.doInferType(switchBlock.getExpression());
+                    if (tsOdinType.baseType(true) instanceof TsOdinEnumType tsOdinEnumType) {
+                        List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType());
+                        result.startBatch();
+                        for (int i = 0; i < enumFields.size(); i++) {
+                            OdinSymbol enumField = enumFields.get(i);
+                            LookupElementBuilder typeElementSymbol = createTypeElementSymbol(enumField, null, null);
+                            result.addElement(withPriority(typeElementSymbol, 10000 + enumFields.size() - i));
+                        }
+                        result.endBatch();
+                    }
+                }
+            }
+        }
+
         switch (parent) {
             case OdinImplicitSelectorExpression implicitSelectorExpression -> {
                 TsOdinType tsOdinType = OdinInferenceEngine
@@ -177,25 +164,8 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                                 implicitSelectorExpression
                         );
 
-                if (tsOdinType instanceof TsOdinEnumType tsOdinEnumType) {
-                    OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(project, tsOdinEnumType);
-                    // Sort by definition order
-                    List<OdinSymbol> symbols = typeElements.getSymbols().stream()
-                            .sorted(
-                                    Comparator.comparing(s -> s.getDeclaration().getTextOffset())
-                            )
-                            .toList();
-                    for (int i = 0; i < symbols.size(); i++) {
-                        OdinSymbol symbol = symbols.get(i);
-                        LookupElementBuilder lookupElementBuilder = LookupElementBuilder
-                                .create(symbol.getName())
-                                .withTypeText(tsOdinEnumType.getName())
-                                .withPresentableText("." + symbol.getName())
-                                .withIcon(getIcon(OdinSymbolType.ENUM_FIELD));
-
-                        // Higher for earlier elements
-                        result.addElement(PrioritizedLookupElement.withPriority(lookupElementBuilder, symbols.size() - i));
-                    }
+                if (tsOdinType.baseType(true) instanceof TsOdinEnumType tsOdinEnumType) {
+                    addImplicitEnumCompletions(result, tsOdinEnumType, project, 0);
                 }
             }
 
@@ -212,36 +182,121 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         }
     }
 
+    private static void addImplicitEnumCompletions(@NotNull CompletionResultSet result, TsOdinEnumType tsOdinEnumType, Project project, int priority) {
+        OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(project, tsOdinEnumType);
+        // Sort by definition order
+        List<OdinSymbol> symbols = typeElements.getSymbols().stream()
+                .sorted(
+                        Comparator.comparing(s -> s.getDeclaration().getTextOffset())
+                )
+                .toList();
+        for (int i = 0; i < symbols.size(); i++) {
+            OdinSymbol symbol = symbols.get(i);
+            LookupElementBuilder lookupElementBuilder = LookupElementBuilder
+                    .create(symbol.getName())
+                    .withTypeText(tsOdinEnumType.getName())
+                    .withPresentableText("." + symbol.getName())
+                    .withIcon(getIcon(OdinSymbolType.ENUM_FIELD));
+
+            // Higher for earlier elements
+            result.addElement(withPriority(lookupElementBuilder, priority + symbols.size() - i));
+        }
+    }
+
+    private static void addUnionTypeCompletions(@NotNull CompletionResultSet result,
+                                                OdinFile odinFile,
+                                                TsOdinUnionType tsOdinUnionType,
+                                                Project project,
+                                                VirtualFile sourceFile,
+                                                OdinTypeAssertInsertHandler insertHandler) {
+        result.startBatch();
+        List<TsOdinUnionVariant> variants = tsOdinUnionType.getVariants();
+        for (int i = 0; i < variants.size(); i++) {
+            TsOdinUnionVariant variant = variants.get(i);
+            TsOdinType variantType = variant.getType();
+
+            OdinDeclaration declaration = variantType.getDeclaration();
+            if (declaration != null) {
+                List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver
+                        .getLocalSymbols(declaration, variantType.getSymbolTable());
+                if (!localSymbols.isEmpty()) {
+                    OdinSymbol symbol = localSymbols.getFirst();
+                    if (symbol.getDeclaration() != null) {
+                        VirtualFile targetFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaration());
+                        OdinImport odinImport = null;
+                        if (targetFile != null) {
+                            odinImport = OdinImportUtils.computeRelativeImport(project, sourceFile, targetFile);
+                        }
+                        addLookUpElement(odinFile,
+                                odinImport,
+                                sourceFile.getParent().getPath(),
+                                result,
+                                localSymbols.getFirst(),
+                                10000 + variants.size() - i,
+                                lookupElementBuilder -> {
+                                    LookupElementBuilder bold = lookupElementBuilder.bold();
+                                    if (insertHandler != null) {
+                                        InsertHandler<LookupElement> currentInsertHandler
+                                                = lookupElementBuilder.getInsertHandler();
+                                        CombinedInsertHandler newInsertHandler = new CombinedInsertHandler(currentInsertHandler, currentInsertHandler);
+                                        return bold.withInsertHandler(newInsertHandler);
+                                    }
+                                    return bold;
+                                }
+                        );
+                    }
+                }
+            } else if (variantType instanceof TsOdinBuiltInType builtInType) {
+                LookupElementBuilder lookupElement =
+                        LookupElementBuilder.create(builtInType.getName()).bold();
+                if (insertHandler != null) {
+                    lookupElement = lookupElement.withInsertHandler(insertHandler);
+                }
+                result.addElement(
+                        withPriority(lookupElement, 10000 + variants.size() - i)
+                );
+            }
+        }
+        result.endBatch();
+    }
+
     private static void addCompoundLiteralCompletions(@NotNull CompletionResultSet result, OdinRefExpression topMostRefExpression, OdinCompoundLiteral compoundLiteral) {
         OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(topMostRefExpression);
         TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(symbolTable, compoundLiteral);
 
         List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, symbolTable);
+        InsertHandler<LookupElement> insertHandler = new ElementEntryInsertHandler();
 
         for (OdinSymbol symbol : elementSymbols) {
-            Icon icon = OdinCompletionContributor.getIcon(symbol.getSymbolType());
-            String text = symbol.getSymbolType() == OdinSymbolType.ENUM_FIELD ? "." + symbol.getName() : symbol.getName();
+            LookupElementBuilder element = createTypeElementSymbol(symbol, tsOdinType, insertHandler);
 
-            String typeText = getTypeText(symbol);
-
-            LookupElementBuilder element = LookupElementBuilder
-                    .create(symbol.getDeclaredIdentifier(), text)
-                    .withLookupString(symbol.getName())
-                    .withIcon(icon)
-                    .withTypeText(typeText)
-                    .withTailText(" → " + tsOdinType.getLabel())
-                    .withInsertHandler(
-                            (insertionContext, item) -> {
-                                Document document = insertionContext.getDocument();
-                                document.insertString(insertionContext.getTailOffset(), " = ");
-                                insertionContext.getEditor().getCaretModel().moveToOffset(insertionContext.getTailOffset());
-                                PsiDocumentManager.getInstance(insertionContext.getProject()).commitDocument(document);
-                            }
-                    );
-
-            LookupElement prioritized = PrioritizedLookupElement.withPriority(element, 10000);
+            LookupElement prioritized = withPriority(element, 10000);
             result.addElement(prioritized);
         }
+    }
+
+    private static @NotNull LookupElementBuilder createTypeElementSymbol(OdinSymbol symbol,
+                                                                         TsOdinType compoundLiteralType,
+                                                                         InsertHandler<LookupElement> insertHandler) {
+        Icon icon = OdinCompletionContributor.getIcon(symbol.getSymbolType());
+        String text = symbol.getSymbolType() == OdinSymbolType.ENUM_FIELD ? "." + symbol.getName() : symbol.getName();
+
+        String typeText = getTypeText(symbol);
+
+        LookupElementBuilder element = LookupElementBuilder
+                .create(symbol.getDeclaredIdentifier(), text)
+                .withLookupString(symbol.getName())
+                .withIcon(icon)
+                .withTypeText(typeText);
+
+        if (compoundLiteralType != null)
+            element = element
+                    .withTailText(" → " + compoundLiteralType.getLabel());
+
+        if (insertHandler != null) {
+            element = element.withInsertHandler(insertHandler);
+        }
+        return element;
     }
 
     private static @Nullable String getTypeText(OdinSymbol symbol) {
@@ -379,11 +434,21 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             // after completion it should look like this:
             // expr.(completion).<caret>
             String text = context.getDocument().getText(TextRange.from(context.getTailOffset() + 1, 1));
-            if(!text.equals(".")) {
+            if (!text.equals(".")) {
                 context.getDocument().insertString(context.getTailOffset() + 1, ".");
             }
             context.getEditor().getCaretModel().moveToOffset(context.getTailOffset() + 2);
             context.commitDocument();
+        }
+    }
+
+    private static class ElementEntryInsertHandler implements InsertHandler<LookupElement> {
+        @Override
+        public void handleInsert(@NotNull InsertionContext insertionContext, @NotNull LookupElement item) {
+            Document document = insertionContext.getDocument();
+            document.insertString(insertionContext.getTailOffset(), " = ");
+            insertionContext.getEditor().getCaretModel().moveToOffset(insertionContext.getTailOffset());
+            PsiDocumentManager.getInstance(insertionContext.getProject()).commitDocument(document);
         }
     }
 }

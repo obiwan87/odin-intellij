@@ -2190,4 +2190,8 @@ public class OdinParsingTest extends UsefulTestCase {
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testAnyTypeConversion", "x");
         assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
     }
+
+    public void testRecoverRules() throws IOException {
+        OdinFile file = load("src/test/testData/recover.odin");
+    }
 }

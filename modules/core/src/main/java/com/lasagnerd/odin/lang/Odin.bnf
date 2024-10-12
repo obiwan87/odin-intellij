@@ -805,7 +805,10 @@ private switchHead                   ::= <<enterNoBlockMode>> [[controlFlowInit 
 switchBody                           ::= eos? blockStart switchCases blockEnd
 switchCases                          ::= switchCase*
 switchCase                           ::= CASE [expression (COMMA expression)*] COLON [caseBlock] {pin=1 recoverWhile=caseRecover}
-private caseRecover                 ::= !(eos | COLON | CASE)
+private caseRecover                 ::= !(EOS_TOKEN !RBRACE
+                                           | COLON
+                                           | CASE
+                                           | RBRACE)
 caseBlock                            ::= statementList
 
 // When statement (compile time, which means it does not support an init block)
