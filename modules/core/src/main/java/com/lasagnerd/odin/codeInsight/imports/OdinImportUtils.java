@@ -23,6 +23,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinSdkLibraryManager;
+import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootProperties;
@@ -95,6 +96,40 @@ public class OdinImportUtils {
                 return OdinSymbolTable.EMPTY;
 
             List<OdinFile> importedFiles = getFilesInPackage(project, packagePath);
+
+            // For base package we also add core_builtin.odin and soa_core_builtin.odin
+            Optional<String> validSdkPath = OdinSdkUtils.getValidSdkPath(project);
+            if (validSdkPath.isPresent()
+                    && importInfo.collection() != null
+                    && importInfo.collection().equals("base")) {
+                String sdkPath = validSdkPath.get();
+                Path sdkNioPath = Path.of(sdkPath);
+                if (packagePath.startsWith(sdkNioPath)) {
+                    VirtualFile coreBuiltin = VirtualFileManager.getInstance()
+                            .findFileByNioPath(sdkNioPath.resolve("base/runtime/core_builtin.odin"));
+
+                    VirtualFile coreBuiltinSoa = VirtualFileManager.getInstance()
+                            .findFileByNioPath(sdkNioPath.resolve("base/runtime/core_builtin_soa.odin"));
+
+                    if (coreBuiltin != null && coreBuiltinSoa != null) {
+                        {
+                            PsiFile psiFile = PsiManager.getInstance(project).findFile(coreBuiltin);
+                            if (psiFile instanceof OdinFile odinFile) {
+                                importedFiles.add(odinFile);
+                            }
+                        }
+
+                        {
+                            PsiFile psiFile = PsiManager.getInstance(project).findFile(coreBuiltinSoa);
+                            if (psiFile instanceof OdinFile odinFile) {
+                                importedFiles.add(odinFile);
+                            }
+                        }
+                    }
+
+                }
+            }
+
             for (OdinFile importedFile : importedFiles) {
                 OdinFileScope importedFileScope = importedFile.getFileScope();
                 if (importedFileScope == null) {
