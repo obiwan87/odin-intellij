@@ -233,8 +233,10 @@ structType                           ::= STRUCT [LPAREN polymorphicParameterList
                                             { methods=[getParamEntryList]
                                               implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 structBlock                          ::= blockStart [structBody] blockEnd
-structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  [COMMA|EOS_TOKEN] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-fieldDeclarationStatement            ::= USING? directiveIdentifier? declaredIdentifier (COMMA declaredIdentifier)* COLON type [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ]  }
+structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  (COMMA|EOS_TOKEN|&RBRACE) {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+fieldDeclarationStatement            ::= USING? directiveIdentifier? fieldDeclarator [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ] pin="declaredIdentifier" }
+private fieldDeclarator              ::= declaredIdentifier (COMMA declaredIdentifier)* COLON type {pin(".*")=1 recoverWhile=fieldRecover}
+private fieldRecover                 ::= !(EOS_TOKEN | COMMA  | RBRACE | RAW_STRING_LITERAL)
 
 // Enum
 enumType                             ::= ENUM [qualifiedType|simpleRefType] EOS_TOKEN? enumBlock
@@ -262,7 +264,7 @@ procedureSignature                   ::= procedureType
 procedureType                        ::= directive? PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
                                             {methods=[getParamEntryList]}
 
-whereClause                          ::= WHERE expression (COMMA expression)*
+whereClause                          ::= WHERE <<enterNoBlockMode>> expression (COMMA expression)* <<exitNoBlockMode>>
 procedureBody                        ::= (tripleDashBlock)
                                           | (block)
 private tripleDashBlock              ::= [directive] TRIPLE_DASH {pin=2}
@@ -345,7 +347,9 @@ assignmentStatement                  ::= [directiveIdentifier] lhsExpressions as
 lhsExpressions                       ::= expressionListWithRecover
 rhsExpressions                       ::= expressionListWithRecover
 
+
 private expressionListWithRecover ::= expressionWithRecover (COMMA (expressionWithRecover | eos | &LPAREN))* {pin(".*")=1}
+// private expressionList            ::= expression (COMMA expression)*
 private expressionWithRecover ::= expression {recoverWhile=expressionRecover}
 private expressionRecover ::= !( NOT
                                     | NEQ
@@ -484,6 +488,7 @@ expression                           ::= postfixGroup
 
 
 fake binaryExpression                ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
+
 // Arithmetic
 mulExpression                        ::= expression STAR            <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
 divExpression                        ::= expression DIV             <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
@@ -640,6 +645,7 @@ private unaryGroup                   ::= unaryPlusExpression
 fake unaryExpression                 ::= 'OP' expression
 
 unaryPlusExpression                  ::= PLUS  <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
+
 unaryMinusExpression                 ::= MINUS <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
 unaryTildeExpression                 ::= TILDE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
 addressExpression                    ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
@@ -675,18 +681,17 @@ basicLiteral                         ::= stringLiteral
 parExpressionType                    ::= parenthesizedExpression
 
 
-compoundValueTyped                   ::= (( <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
-                                         | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeComma>>) {extends=compoundValue elementType=compoundValue}
+compoundValueTyped                   ::= (( <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd) {extends=compoundValue elementType=compoundValue}
 compoundValueStart                   ::= LBRACE
 compoundValueEnd                     ::= RBRACE
-compoundValueBody                    ::= elementEntry (COMMA elementEntry)* [EOS_TOKEN|COMMA] //{pin(".*")=1 recoverWhile=compoundValueBodyRecover}
+compoundValueBody                    ::= elementEntry (COMMA elementEntry)* (EOS_TOKEN|COMMA|&RBRACE)
 elementEntry                         ::= lhs EQ rhs
                                          | rhs {pin(".*")=2 recoverWhile=elemEntryRecover}
 private elemEntryRecover             ::= !(COMMA | EOS_TOKEN | RBRACE)
 lhs                                  ::= expression
 rhs                                  ::= expression
 
-directiveExpression                  ::= directiveIdentifier
+directiveExpression                  ::= directiveIdentifier !(IF_TOKEN|STRUCT|WHEN|UNION|SWITCH|ENUM|PROC|FOR|BIT_SET|BIT_FIELD) // do not match as expression before any type or control flow block
 directive                            ::= directiveIdentifier [(LPAREN argumentList? RPAREN)]
 directiveIdentifier                  ::= HASH IDENTIFIER_TOKEN
 
