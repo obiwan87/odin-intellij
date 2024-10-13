@@ -1091,9 +1091,9 @@ public class OdinInferenceEngine extends OdinVisitor {
                 if (ancestors.size() != 1)
                     return TsOdinBuiltInTypes.UNKNOWN;
 
-                OdinSwitchCase caseBlock = ancestors.getFirst();
-                if (caseBlock != null) {
-                    @NotNull List<OdinExpression> expressionList = caseBlock.getExpressionList();
+                OdinSwitchCase switchCase = ancestors.getFirst();
+                if (switchCase != null && switchCase.getCaseClause() != null) {
+                    @NotNull List<OdinExpression> expressionList = switchCase.getCaseClause().getExpressionList();
 
                     if (expressionList.size() == 1) {
                         OdinExpression odinExpression = expressionList.getFirst();
@@ -1237,6 +1237,15 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         }
 
+        if(rhsContainer instanceof OdinCaseClause caseClause) {
+            OdinSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(caseClause, OdinSwitchBlock.class);
+            if (switchBlock != null) {
+                 if (switchBlock.getExpression() != null) {
+                    return OdinInferenceEngine.doInferType(switchBlock.getExpression());
+                 }
+            }
+        }
+
         // TODO: add argument
         return TsOdinBuiltInTypes.VOID;
     }
@@ -1261,7 +1270,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                         OdinReturnStatement.class,
                         OdinRhs.class,
                         OdinArgument.class,
-                        OdinRhsExpressions.class
+                        OdinRhsExpressions.class,
+                        OdinCaseClause.class
                 },
                 new Class<?>[]{
                         OdinLhsExpressions.class,

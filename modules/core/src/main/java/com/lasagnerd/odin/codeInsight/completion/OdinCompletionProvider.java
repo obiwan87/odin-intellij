@@ -131,7 +131,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         }
 
         // Case clause
-        if (parent instanceof OdinRefExpression refExpression && refExpression.getParent() instanceof OdinSwitchCase switchCase) {
+        if (parent instanceof OdinRefExpression refExpression && refExpression.getParent() instanceof OdinCaseClause switchCase) {
             OdinSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(switchCase, OdinSwitchBlock.class);
             if (switchBlock != null) {
                 if (switchBlock.getSwitchInClause() != null) {

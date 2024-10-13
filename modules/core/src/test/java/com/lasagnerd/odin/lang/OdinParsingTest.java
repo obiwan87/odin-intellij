@@ -1193,7 +1193,9 @@ public class OdinParsingTest extends UsefulTestCase {
 
                 OdinSwitchCase odinSwitchCase = Objects.requireNonNull(odinSwitchBlock.getSwitchBody()).getSwitchCases().getSwitchCaseList().getFirst();
                 {
-                    OdinExpression expression = odinSwitchCase.getExpressionList().getFirst();
+                    OdinExpression expression = odinSwitchCase.getCaseClause()
+                            .getExpressionList()
+                            .getFirst();
                     OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
                     assertNull(odinSymbolTable.getSymbol("x"));
                     assertNotNull(odinSymbolTable.getSymbol("u"));
