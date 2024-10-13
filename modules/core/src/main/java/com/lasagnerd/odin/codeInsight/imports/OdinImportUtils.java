@@ -55,6 +55,10 @@ public class OdinImportUtils {
         if (virtualFile == null) {
             virtualFile = psiElement.getContainingFile().getOriginalFile().getVirtualFile();
         }
+
+        if (virtualFile == null) {
+            virtualFile = psiElement.getContainingFile().getViewProvider().getVirtualFile();
+        }
         return virtualFile;
     }
 
@@ -351,7 +355,7 @@ public class OdinImportUtils {
             }
 
             // Case 2:target in different root, and target in collection root
-            if(targetFileRoot.isCollectionRoot()) {
+            if (targetFileRoot.isCollectionRoot()) {
                 String collection = targetFileRoot.collectionName();
                 Path collectionPath = Path.of(targetFileRoot.directory().getPath());
                 String importPath = FileUtil.toSystemIndependentName(collectionPath.relativize(targetDir).toString());
@@ -400,10 +404,15 @@ public class OdinImportUtils {
         OdinImport importInfo = importStatement.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         // Check if package is null. If yes log debug
-        String path = Path.of(packagePath, getFileName(importStatement)).toString();
-        String name = importInfo.packageName();
-        Project project = importStatement.getProject();
-        return getSymbolsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
+        String fileName = getFileName(importStatement);
+
+        if (packagePath != null && fileName != null) {
+            String path = Path.of(packagePath, fileName).toString();
+            String name = importInfo.packageName();
+            Project project = importStatement.getProject();
+            return getSymbolsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
+        }
+        return OdinSymbolTable.EMPTY;
     }
 
 
