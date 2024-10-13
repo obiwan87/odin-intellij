@@ -6,6 +6,10 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,7 +184,6 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
 
-
     @Override
     public void visitUsingStatement(@NotNull OdinUsingStatement o) {
         for (OdinExpression expression : o.getExpressionList()) {
@@ -215,7 +218,6 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
 
-
     @Override
     public void visitConstantInitializationStatement(@NotNull OdinConstantInitializationStatement o) {
         OdinType declaredType = OdinInsightUtils.getDeclaredType(o);
@@ -236,7 +238,21 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             OdinSymbol odinSymbol = new OdinSymbol(
                     o.getDeclaredIdentifiers().get(i),
                     getVisibility(o.getAttributeList(), defaultVisibility));
-            odinSymbol.setHasUsing(false);
+
+            if (o.getUsing() != null) {
+                odinSymbol.setHasUsing(true);
+                if (declaredType instanceof OdinEnumType enumType) {
+                    List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields(enumType);
+                    symbols.addAll(enumFields);
+                } else {
+                    TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, o.getExpressionList().getFirst());
+                    if (tsOdinType instanceof TsOdinMetaType metaType
+                            && metaType.representedType().baseType(true) instanceof TsOdinEnumType enumType) {
+                        List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields((OdinEnumType) enumType.getPsiType());
+                        symbols.addAll(enumFields);
+                    }
+                }
+            }
             odinSymbol.setPsiType(typeDefinition);
             odinSymbol.setSymbolType(symbolType);
             odinSymbol.setAttributes(o.getAttributeList());
