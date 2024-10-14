@@ -28,7 +28,7 @@ public class OdinFormatterBlock extends AbstractBlock {
     static List<IElementType> typesToSmartIndent = List.of(
             OdinTypes.BLOCK,
             OdinTypes.STRUCT_BLOCK,
-            OdinTypes.CASE_BLOCK,
+            OdinTypes.SWITCH_CASE,
             OdinTypes.UNION_BLOCK,
             OdinTypes.ENUM_BLOCK,
             OdinTypes.COMPOUND_VALUE
