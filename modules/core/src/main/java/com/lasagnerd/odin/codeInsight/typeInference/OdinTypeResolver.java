@@ -57,13 +57,15 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     public static @NotNull TsOdinMetaType findMetaType(OdinSymbolTable symbolTable,
+                                                       OdinTypeDefinitionExpression expression,
                                                        @NotNull OdinType type) {
-        return findMetaType(symbolTable, null, null, type);
+        return findMetaType(symbolTable, null, null, expression, type);
     }
 
     public static @NotNull TsOdinMetaType findMetaType(OdinSymbolTable symbolTable,
                                                        OdinDeclaredIdentifier declaredIdentifier,
                                                        OdinDeclaration declaration,
+                                                       OdinExpression firstExpression,
                                                        @NotNull OdinType type) {
 
         TsOdinType tsOdinType = resolveType(symbolTable, declaredIdentifier, declaration, type);
@@ -74,6 +76,8 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinMetaType.setSymbolTable(tsOdinType.getSymbolTable());
         tsOdinMetaType.setRepresentedType(tsOdinType);
         tsOdinMetaType.setPsiType(type);
+        tsOdinMetaType.setDistinct(OdinInsightUtils.isDistinct(firstExpression));
+
         return tsOdinMetaType;
     }
 
@@ -303,6 +307,7 @@ public class OdinTypeResolver extends OdinVisitor {
         }
         switch (odinDeclaration) {
             case OdinConstantInitializationStatement constantInitializationStatement -> {
+                OdinExpression firstExpression = constantInitializationStatement.getExpressionList().getFirst();
                 OdinType declaredType = OdinInsightUtils.getDeclaredType(constantInitializationStatement);
                 if ((
                         declaredType instanceof OdinStructType
@@ -315,7 +320,9 @@ public class OdinTypeResolver extends OdinVisitor {
                 )
                 ) {
                     // check distinct
-                    return resolveType(typeSymbolTable, identifier, odinDeclaration, declaredType);
+                    TsOdinType tsOdinType = resolveType(typeSymbolTable, identifier, odinDeclaration, declaredType);
+                    tsOdinType.setDistinct(OdinInsightUtils.isDistinct(firstExpression));
+                    return tsOdinType;
                 }
 
                 // Ref expression: it's a type alias
@@ -338,6 +345,7 @@ public class OdinTypeResolver extends OdinVisitor {
                     TsOdinType tsOdinType = doInferType(typeSymbolTable, odinExpression);
                     if (tsOdinType instanceof TsOdinMetaType metaType) {
                         TsOdinType resolvedMetaType = doResolveMetaType(metaType.getSymbolTable(), metaType);
+                        typeAlias.setDistinct(OdinInsightUtils.isDistinct(odinExpression));
                         return createTypeAliasFromMetaType(typeAlias, identifier, resolvedMetaType, odinDeclaration, odinExpression);
                     }
                     return TsOdinBuiltInTypes.UNKNOWN;

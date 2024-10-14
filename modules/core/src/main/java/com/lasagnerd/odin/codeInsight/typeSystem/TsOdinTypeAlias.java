@@ -9,7 +9,6 @@ import lombok.Setter;
 @Setter
 public class TsOdinTypeAlias extends TsOdinType{
     private TsOdinType aliasedType;
-    private boolean distinct;
 
     @Override
     public TsOdinMetaType.MetaType getMetaType() {

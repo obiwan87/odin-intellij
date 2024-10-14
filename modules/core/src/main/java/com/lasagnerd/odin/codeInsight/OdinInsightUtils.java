@@ -8,7 +8,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.codeInsight.symbols.*;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -206,8 +209,8 @@ public class OdinInsightUtils {
     }
 
     public static @NotNull OdinSymbolTable getPackageReferenceSymbols(Project project,
-                                                                       TsOdinPackageReferenceType packageType,
-                                                                       boolean includeBuiltin) {
+                                                                      TsOdinPackageReferenceType packageType,
+                                                                      boolean includeBuiltin) {
         OdinSymbolTable symbolsOfImportedPackage = OdinImportUtils
                 .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
                         (OdinImportDeclarationStatement) packageType.getDeclaration());
@@ -302,6 +305,9 @@ public class OdinInsightUtils {
     public static void getSymbolsOfFieldWithUsing(OdinSymbolTable symbolTable,
                                                   OdinFieldDeclarationStatement field,
                                                   List<OdinSymbol> symbols) {
+        if (field.getType() == null) {
+            return;
+        }
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, field.getType());
         TsOdinStructType structType;
         if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
@@ -805,5 +811,17 @@ public class OdinInsightUtils {
         }
 
         return tsOdinRefExpressionType;
+    }
+
+    public static boolean isDistinct(OdinExpression firstExpression) {
+        boolean distinct;
+        if (firstExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+            distinct = typeDefinitionExpression.getDistinct() != null;
+        } else if (firstExpression instanceof OdinProcedureExpression procedureExpression) {
+            distinct = procedureExpression.getDistinct() != null;
+        } else {
+            distinct = false;
+        }
+        return distinct;
     }
 }

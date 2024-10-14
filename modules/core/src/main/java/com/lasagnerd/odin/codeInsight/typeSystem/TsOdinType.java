@@ -21,6 +21,7 @@ public abstract class TsOdinType {
     private OdinType psiType;
     private OdinExpression psiTypeExpression;
 
+    private boolean distinct;
     /**
      * The symbols visible from where the type is declared.
      * <p>

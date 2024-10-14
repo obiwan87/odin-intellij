@@ -122,7 +122,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitTypeDefinitionExpression(@NotNull OdinTypeDefinitionExpression o) {
-        this.type = OdinTypeResolver.findMetaType(symbolTable, o.getType());
+        this.type = OdinTypeResolver.findMetaType(symbolTable, o, o.getType());
     }
 
     @Override
@@ -235,13 +235,11 @@ public class OdinInferenceEngine extends OdinVisitor {
                             }
                         }
 
-                    }
-                    else if (symbol.getSymbolType() == OdinSymbolType.SOA_FIELD) {
-                        if(tsOdinRefExpressionType instanceof TsOdinSoaStructType soaStructType) {
+                    } else if (symbol.getSymbolType() == OdinSymbolType.SOA_FIELD) {
+                        if (tsOdinRefExpressionType instanceof TsOdinSoaStructType soaStructType) {
                             this.type = soaStructType.getFields().get(symbol.getName());
                         }
-                    }
-                    else if (symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
+                    } else if (symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
                         this.type = createBuiltinMetaType(name);
                     } else {
                         Project project = refExpression.getProject();
@@ -515,33 +513,30 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
             }
             return soaSlice;
-        }
-        else if(soaUnzip != null) {
+        } else if (soaUnzip != null) {
             TsOdinTuple tuple = new TsOdinTuple();
 
-            if(o.getArgumentList().size() == 1) {
-                if(o.getArgumentList().getFirst() instanceof OdinUnnamedArgument unnamedArgument) {
+            if (o.getArgumentList().size() == 1) {
+                if (o.getArgumentList().getFirst() instanceof OdinUnnamedArgument unnamedArgument) {
                     TsOdinType tsOdinType = inferType(symbolTable, unnamedArgument.getExpression());
-                    if(tsOdinType instanceof TsOdinSoaSliceType tsOdinSoaSliceType) {
+                    if (tsOdinType instanceof TsOdinSoaSliceType tsOdinSoaSliceType) {
                         tuple.getTypes().addAll(tsOdinSoaSliceType.getSlices().values());
                     }
                 }
             }
             return tuple;
-        }
-        else if(swizzle != null) {
-            if(o.getArgumentList().size() > 1) {
+        } else if (swizzle != null) {
+            if (o.getArgumentList().size() > 1) {
                 OdinArgument first = o.getArgumentList().getFirst();
-                if(first instanceof OdinUnnamedArgument arrayArgument) {
+                if (first instanceof OdinUnnamedArgument arrayArgument) {
                     TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, arrayArgument.getExpression());
-                    if(tsOdinType.baseType(true) instanceof TsOdinArrayType tsOdinArrayType) {
+                    if (tsOdinType.baseType(true) instanceof TsOdinArrayType tsOdinArrayType) {
                         tsOdinArrayType.setSize(o.getArgumentList().size() - 1);
                         return tsOdinArrayType;
                     }
                 }
             }
-        }
-        else if (!procedureType.getReturnTypes().isEmpty()) {
+        } else if (!procedureType.getReturnTypes().isEmpty()) {
             TsOdinProcedureType specializedType = OdinTypeSpecializer
                     .specializeProcedure(symbolTable, o.getArgumentList(), procedureType);
             if (specializedType.getReturnTypes().size() == 1) {
@@ -892,6 +887,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         // If we get a type here, then it's an alias
         if (odinDeclaration instanceof OdinConstantInitializationStatement initializationStatement) {
+            OdinExpression firstExpression = initializationStatement.getExpressionList().getFirst();
             OdinType declaredType = OdinInsightUtils.getDeclaredType(initializationStatement);
             if (
                     declaredType instanceof OdinStructType
@@ -900,10 +896,15 @@ public class OdinInferenceEngine extends OdinVisitor {
                             || declaredType instanceof OdinProcedureOverloadType
                             || declaredType instanceof OdinProcedureType
                             || declaredType instanceof OdinProcedureLiteralType
-                            || declaredType instanceof OdinEnumType
-            ) {
+                            || declaredType instanceof OdinEnumType) {
                 // check distinct
-                return OdinTypeResolver.findMetaType(parentSymbolTable, declaredIdentifier, odinDeclaration, declaredType);
+                return OdinTypeResolver.findMetaType(
+                        parentSymbolTable,
+                        declaredIdentifier,
+                        initializationStatement,
+                        firstExpression,
+                        declaredType
+                );
             }
 
             if (initializationStatement.getType() != null) {
@@ -948,7 +949,10 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
-            return OdinTypeResolver.resolveType(parentSymbolTable, fieldDeclarationStatement.getType());
+            if (fieldDeclarationStatement.getType() != null) {
+                return OdinTypeResolver.resolveType(parentSymbolTable, fieldDeclarationStatement.getType());
+            }
+            return TsOdinBuiltInTypes.UNKNOWN;
         }
 
         if (odinDeclaration instanceof OdinParameterDeclarator parameterDeclaration) {
@@ -1095,9 +1099,12 @@ public class OdinInferenceEngine extends OdinVisitor {
                 List<OdinSwitchCase> ancestors = new ArrayList<>();
                 OdinSwitchBody switchBody = switchInBlock.getSwitchBody();
                 if (switchBody != null) {
-                    for (OdinSwitchCase odinSwitchCase : switchBody.getSwitchCases().getSwitchCaseList()) {
-                        if (PsiTreeUtil.isAncestor(odinSwitchCase, identifier, true)) {
-                            ancestors.add(odinSwitchCase);
+                    OdinSwitchCases switchCases = switchBody.getSwitchCases();
+                    if (switchCases != null) {
+                        for (OdinSwitchCase odinSwitchCase : switchCases.getSwitchCaseList()) {
+                            if (PsiTreeUtil.isAncestor(odinSwitchCase, identifier, true)) {
+                                ancestors.add(odinSwitchCase);
+                            }
                         }
                     }
                 }
@@ -1223,7 +1230,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     return unfoldExpression(tsOdinArrayType.getElementType(), rhsExpression, position);
                 } else if (tsOdinBaseType instanceof TsOdinSliceType tsOdinSliceType) {
                     return unfoldExpression(tsOdinSliceType.getElementType(), rhsExpression, position);
-                } else if(tsOdinBaseType instanceof TsOdinDynamicArray tsOdinDynamicArray) {
+                } else if (tsOdinBaseType instanceof TsOdinDynamicArray tsOdinDynamicArray) {
                     return unfoldExpression(tsOdinDynamicArray.getElementType(), rhsExpression, position);
                 }
             }
@@ -1250,12 +1257,12 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         }
 
-        if(rhsContainer instanceof OdinCaseClause caseClause) {
+        if (rhsContainer instanceof OdinCaseClause caseClause) {
             OdinSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(caseClause, OdinSwitchBlock.class);
             if (switchBlock != null) {
-                 if (switchBlock.getExpression() != null) {
+                if (switchBlock.getExpression() != null) {
                     return OdinInferenceEngine.doInferType(switchBlock.getExpression());
-                 }
+                }
             }
         }
 

@@ -1,7 +1,5 @@
 package com.lasagnerd.odin.projectSettings;
 
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import lombok.Data;
 
 @SuppressWarnings("unused")

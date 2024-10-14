@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TsOdinMatrixType extends TsOdinType {
-    TsOdinType elementType;
+    private TsOdinType elementType;
 
     @Override
     public TsOdinMetaType.MetaType getMetaType() {
