@@ -148,6 +148,24 @@ public class OdinTypeChecker {
             return;
         }
 
+        TsOdinType indistinctBaseType = type.baseType(true);
+        TsOdinType indistinctExpectedBaseType = expectedType.baseType(true);
+        if(indistinctBaseType instanceof TsOdinMatrixType &&
+            indistinctExpectedBaseType instanceof TsOdinMatrixType) {
+            if(checkTypesStrictly(indistinctBaseType, indistinctExpectedBaseType)) {
+                typeCheckResult.setCompatible(true);
+                return;
+            }
+        }
+
+        if(indistinctBaseType instanceof TsOdinProcedureType &&
+            indistinctExpectedBaseType instanceof TsOdinProcedureType) {
+            if(checkTypesStrictly(indistinctBaseType, indistinctExpectedBaseType)) {
+                typeCheckResult.setCompatible(true);
+                return;
+            }
+        }
+
         if (expectedType.isAnyType()) {
             if (type instanceof TsOdinGenericType genericType) {
                 if (genericType.isSpecialized()) {
