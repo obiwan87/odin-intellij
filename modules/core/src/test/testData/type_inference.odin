@@ -94,12 +94,12 @@ testTypeInference3 :: proc() {
     get_multi_dict_entry(dict, 0, 0)
 }
 
-testTypeInference4:: proc() {
+testTypeInference4 :: proc() {
     dict := Dict(i32, List(Point)) { entries = { 1 = Point{ a, b } } }
     get_value(dict, 1)
 }
 
-testTypeInference5:: proc() {
+testTypeInference5 :: proc() {
     dict := Dict(i32, List(Point)) { entries = { 1 = Point{ a, b } } }
     get_value(dict, 1).items[0]
 }
@@ -712,21 +712,58 @@ testAnyType :: proc() {
 }
 
 testUnionConversion :: proc() {
-    U :: union {i32, f32}
-    p1 :: proc(u: U) -> i32 {}
-    p2 :: proc(point: Point) -> f32 {}
+    U :: union {
+        i32, f32
+    }
+    p1 :: proc(u: U) -> i32 {
+    }
+    p2 :: proc(point: Point) -> f32 {
+    }
 
-    p :: proc {p1, p2}
+    p :: proc {
+    p1, p2
+    }
 
     x := p(1.0)
 }
 
 testAnyTypeConversion :: proc() {
-    U :: union {i32, f32}
-    p1 :: proc(t: any, u: U) -> i32 {}
-    p2 :: proc(t: any, point: Point) -> f32 {}
+    U :: union {
+        i32, f32
+    }
+    p1 :: proc(t: any, u: U) -> i32 {
+    }
+    p2 :: proc(t: any, point: Point) -> f32 {
+    }
 
-    p :: proc {p1, p2}
+    p :: proc {
+    p1, p2
+    }
 
     x := p(1.0, 1.0)
+}
+
+testFloatConversion :: proc() {
+    p1 :: proc(t: f64) -> f64 {
+    }
+    p2 :: proc(p: Point) -> Point {
+    }
+    p3 :: proc(t: i64) -> i64 {
+    }
+
+    p :: proc {
+    p1, p2
+    }
+    q :: proc {
+    p2, p3
+    }
+
+    x := p(1)
+    y := q(1.0)
+}
+
+testSwizzleBuiltinProc :: proc() {
+    arr := [3]i32 { }
+
+    x := swizzle(arr, 3, 2, 1)
 }

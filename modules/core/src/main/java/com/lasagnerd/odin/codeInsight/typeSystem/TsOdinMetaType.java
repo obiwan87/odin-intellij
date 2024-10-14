@@ -66,4 +66,11 @@ public class TsOdinMetaType extends TsOdinType {
         }
         return representedType;
     }
+
+    public TsOdinMetaType baseMetaType() {
+        if(aliasedMetaType != null) {
+            return aliasedMetaType.baseMetaType();
+        }
+        return this;
+    }
 }

@@ -357,7 +357,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         else if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             // resolve to base type
             if (tsOdinMetaType.getRepresentedMetaType() == ALIAS) {
-                tsOdinMetaType = tsOdinMetaType.getAliasedMetaType();
+                tsOdinMetaType = tsOdinMetaType.baseMetaType();
             }
 
             // normal procedure call
@@ -505,6 +505,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                                                        OdinSymbolTable symbolTable) {
         OdinSymbol soaZip = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("soa_zip"));
         OdinSymbol soaUnzip = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("soa_unzip"));
+        OdinSymbol swizzle = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("swizzle"));
         if (soaZip != null) {
             TsOdinSoaSliceType soaSlice = new TsOdinSoaSliceType();
             for (OdinArgument odinArgument : o.getArgumentList()) {
@@ -527,6 +528,18 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
             }
             return tuple;
+        }
+        else if(swizzle != null) {
+            if(o.getArgumentList().size() > 1) {
+                OdinArgument first = o.getArgumentList().getFirst();
+                if(first instanceof OdinUnnamedArgument arrayArgument) {
+                    TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, arrayArgument.getExpression());
+                    if(tsOdinType.baseType(true) instanceof TsOdinArrayType tsOdinArrayType) {
+                        tsOdinArrayType.setSize(o.getArgumentList().size() - 1);
+                        return tsOdinArrayType;
+                    }
+                }
+            }
         }
         else if (!procedureType.getReturnTypes().isEmpty()) {
             TsOdinProcedureType specializedType = OdinTypeSpecializer

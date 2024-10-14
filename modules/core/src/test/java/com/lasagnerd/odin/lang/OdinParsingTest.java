@@ -2228,4 +2228,26 @@ public class OdinParsingTest extends UsefulTestCase {
             assertTrue(typeCheckResult.isCompatible());
         }
     }
+
+    public void testFloatTypeConversion() throws IOException {
+        OdinFile file = loadTypeInference();
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testFloatConversion", "x");
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.F64);
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testFloatConversion", "y");
+            assertEquals(tsOdinType, TsOdinBuiltInTypes.I64);
+        }
+    }
+
+    public void testSwizzleBuiltinProc() throws IOException {
+        OdinFile file = loadTypeInference();
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testSwizzleBuiltinProc", "x");
+            TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
+            assertEquals(3, tsOdinArrayType.getSize().intValue());
+        }
+    }
 }
