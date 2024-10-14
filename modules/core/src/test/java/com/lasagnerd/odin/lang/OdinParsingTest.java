@@ -2196,4 +2196,36 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testRecoverRules() throws IOException {
         OdinFile file = load("src/test/testData/recover.odin");
     }
+
+    public void testTypeConversionRules() {
+        {
+            OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(TsOdinBuiltInTypes.F16, TsOdinBuiltInTypes.COMPLEX32);
+            assertTrue(typeCheckResult.isCompatible());
+        }
+
+        {
+            OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(TsOdinBuiltInTypes.F32, TsOdinBuiltInTypes.COMPLEX64);
+            assertTrue(typeCheckResult.isCompatible());
+        }
+
+        {
+            OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(TsOdinBuiltInTypes.F64, TsOdinBuiltInTypes.COMPLEX128);
+            assertTrue(typeCheckResult.isCompatible());
+        }
+
+        {
+            OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(TsOdinBuiltInTypes.F16, TsOdinBuiltInTypes.QUATERNION64);
+            assertTrue(typeCheckResult.isCompatible());
+        }
+
+        {
+            OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(TsOdinBuiltInTypes.F32, TsOdinBuiltInTypes.QUATERNION128);
+            assertTrue(typeCheckResult.isCompatible());
+        }
+
+        {
+            OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(TsOdinBuiltInTypes.F64, TsOdinBuiltInTypes.QUATERNION256);
+            assertTrue(typeCheckResult.isCompatible());
+        }
+    }
 }

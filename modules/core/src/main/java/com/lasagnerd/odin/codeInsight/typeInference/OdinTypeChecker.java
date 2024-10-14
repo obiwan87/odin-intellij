@@ -90,7 +90,10 @@ public class OdinTypeChecker {
         POINTER_TO_MP,
         TO_ANY,
         USING_SUBTYPE,
-        TO_UNION_VARIANT
+        TO_UNION_VARIANT,
+        FLOAT_TO_COMPLEX,
+        FLOAT_TO_QUATERNION,
+        COMPLEX_TO_QUATERNION,
     }
 
     @Data
@@ -161,7 +164,6 @@ public class OdinTypeChecker {
             return;
         }
 
-
         if (expectedType instanceof TsOdinConstrainedType constrainedType) {
             if (type instanceof TsOdinMetaType metaType) {
                 TsOdinType representedType = metaType.getRepresentedType();
@@ -172,6 +174,41 @@ public class OdinTypeChecker {
                 doCheckTypes(representedType.baseType(true), constrainedType.getSpecializedType());
             }
             return;
+        }
+
+        if (TsOdinBuiltInTypes.getFloatingPointTypes().contains(type)) {
+            if (type instanceof TsOdinNumericType numericType) {
+                if (TsOdinBuiltInTypes.getComplexTypes().contains(expectedType)) {
+                    TsOdinNumericType complexType = (TsOdinNumericType) expectedType;
+                    if(numericType.getLength()*2 == complexType.getLength()) {
+                        typeCheckResult.getConversionActionList().add(ConversionAction.FLOAT_TO_COMPLEX);
+                        typeCheckResult.setCompatible(true);
+                        return;
+                    }
+                }
+
+                if(TsOdinBuiltInTypes.getQuaternionTypes().contains(expectedType)) {
+                    TsOdinNumericType quaternionType = (TsOdinNumericType) expectedType;
+                    if(numericType.getLength()*4 == quaternionType.getLength()) {
+                        typeCheckResult.getConversionActionList().add(ConversionAction.FLOAT_TO_COMPLEX);
+                        typeCheckResult.setCompatible(true);
+                        return;
+                    }
+                }
+            }
+        }
+
+        if(TsOdinBuiltInTypes.getComplexTypes().contains(type)) {
+            if(TsOdinBuiltInTypes.getQuaternionTypes().contains(expectedType)) {
+                if (type instanceof TsOdinNumericType complexType) {
+                    TsOdinNumericType quaternionType = (TsOdinNumericType) expectedType;
+                    if(complexType.getLength()*2 == quaternionType.getLength()) {
+                        typeCheckResult.getConversionActionList().add(ConversionAction.COMPLEX_TO_QUATERNION);
+                        typeCheckResult.setCompatible(true);
+                        return;
+                    }
+                }
+            }
         }
 
         if (expectedType instanceof TsOdinArrayType tsOdinArrayType) {
@@ -243,24 +280,28 @@ public class OdinTypeChecker {
             if (structBody != null) {
                 for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : structBody.getFieldDeclarationStatementList()) {
                     if (odinFieldDeclarationStatement.getUsing() != null) {
-                        TsOdinType usedType = OdinTypeResolver
-                                .resolveType(structType.getSymbolTable(),
-                                        odinFieldDeclarationStatement.getType());
+                        OdinType declarationType = odinFieldDeclarationStatement.getType();
+                        if (declarationType != null) {
+                            TsOdinType usedType = OdinTypeResolver.resolveType(
+                                    structType.getSymbolTable(),
+                                    declarationType
+                            );
 
-                        if (usedType instanceof TsOdinPointerType pointerType) {
-                            usedType = pointerType.getDereferencedType();
-                        }
+                            if (usedType instanceof TsOdinPointerType pointerType) {
+                                usedType = pointerType.getDereferencedType();
+                            }
 
-                        if (checkTypesStrictly(usedType, expectedType)) {
-                            addActionAndSetCompatible(ConversionAction.USING_SUBTYPE);
-                            return;
-                        } else if (usedType instanceof TsOdinStructType) {
-                            TypeCheckResult typeCheckResult = checkTypes(usedType, expectedType, false);
-                            if (typeCheckResult.isCompatible()) {
-                                this.typeCheckResult.getConversionActionList().add(ConversionAction.USING_SUBTYPE);
-                                this.typeCheckResult.getConversionActionList().addAll(typeCheckResult.getConversionActionList());
-                                this.typeCheckResult.setCompatible(true);
+                            if (checkTypesStrictly(usedType, expectedType)) {
+                                addActionAndSetCompatible(ConversionAction.USING_SUBTYPE);
                                 return;
+                            } else if (usedType instanceof TsOdinStructType) {
+                                TypeCheckResult typeCheckResult = checkTypes(usedType, expectedType, false);
+                                if (typeCheckResult.isCompatible()) {
+                                    this.typeCheckResult.getConversionActionList().add(ConversionAction.USING_SUBTYPE);
+                                    this.typeCheckResult.getConversionActionList().addAll(typeCheckResult.getConversionActionList());
+                                    this.typeCheckResult.setCompatible(true);
+                                    return;
+                                }
                             }
                         }
                     }

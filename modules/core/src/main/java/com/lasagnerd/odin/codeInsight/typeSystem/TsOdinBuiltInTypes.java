@@ -261,7 +261,7 @@ public class TsOdinBuiltInTypes {
     }
 
     public static Collection<TsOdinType> getComplexTypes() {
-        return List.of(COMPLEX32, COMPLEX64, COMPLEX64);
+        return List.of(COMPLEX32, COMPLEX64, COMPLEX128);
     }
 
     public static Collection<TsOdinType> getQuaternionTypes() {

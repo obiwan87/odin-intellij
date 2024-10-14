@@ -821,6 +821,3 @@ caseBlock                            ::= [statementList]
 whenStatement                        ::= [directive] [labelDeclaration] whenBlock {implements="com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"}
 whenBlock                            ::= WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody [sos elseWhenBlock]
 elseWhenBlock                        ::= else (whenBlock|statementBody)
-
-
-
