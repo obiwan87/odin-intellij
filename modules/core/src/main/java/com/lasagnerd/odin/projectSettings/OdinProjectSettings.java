@@ -266,11 +266,6 @@ public class OdinProjectSettings implements Disposable {
 
         sdkVersion = new SimpleColoredComponent();
 
-        sdkVersion.setIcon(AllIcons.General.GreenCheckmark);
-        sdkVersion.setIconTextGap(2);
-        sdkVersion.setFont(JBUI.Fonts.smallFont());
-        sdkVersion.append("Version: 2024-08-dev");
-
         FormBuilder formBuilder = FormBuilder.createFormBuilder()
                 .addLabeledComponent(
                         new JBLabel("Path to SDK: "),
