@@ -16,6 +16,10 @@ import java.util.Stack;
 @SuppressWarnings("unused")
 public class OdinParserUtil extends GeneratedParserUtilBase {
 
+    public static final TokenSet WHITESPACE_OR_COMMENT = TokenSet.orSet(
+            OdinParserDefinition.COMMENT_TOKENS,
+            OdinParserDefinition.WHITE_SPACES
+    );
     private static final Key<Object2IntOpenHashMap<String>> MODES_KEY = Key.create("MODES_KEY");
     private static final Key<Stack<Object2IntOpenHashMap<String>>> MODES_STACK_KEY = Key.create("MODES_STACK_KEY");
 
@@ -39,14 +43,22 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
 
     @Nullable
     private static IElementType lookBehindUntilNoWhitespace(PsiBuilder builder) {
+        return lookbehindWhileSkipping(builder, OdinParserDefinition.WHITE_SPACES);
+    }
 
+    @Nullable
+    private static IElementType lookbehindUntilNoWhitespaceOrComment(PsiBuilder builder) {
+        return lookbehindWhileSkipping(builder, WHITESPACE_OR_COMMENT);
+    }
+
+    private static @Nullable IElementType lookbehindWhileSkipping(PsiBuilder builder, TokenSet tokensToSkip) {
         int i = 0;
         IElementType tokenType;
         int currentOffset = builder.getCurrentOffset();
         do {
             i--;
             tokenType = builder.rawLookup(i);
-        } while ((tokenType == TokenType.WHITE_SPACE || tokenType == OdinTypes.NEW_LINE) && currentOffset + i > 0);
+        } while (tokensToSkip.contains(tokenType) && currentOffset + i > 0);
         return tokenType;
     }
 
@@ -80,6 +92,10 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
     }
 
 
+    public static boolean beforeColon(PsiBuilder builder, int level) {
+        IElementType elementType = lookbehindUntilNoWhitespaceOrComment(builder);
+        return elementType == OdinTypes.COLON;
+    }
     public static boolean isModeOff(PsiBuilder builder, int level, String mode) {
         Object2IntOpenHashMap<String> flags = getParsingModes(builder);
 

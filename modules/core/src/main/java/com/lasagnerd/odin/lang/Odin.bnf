@@ -815,7 +815,7 @@ private caseRecover                  ::= !(EOS_TOKEN !RBRACE
                                            | COLON
                                            | CASE
                                            | RBRACE)
-caseBlock                            ::= [statementList]
+caseBlock                            ::= [<<beforeColon>> statementList]
 
 // When statement (compile time, which means it does not support an init block)
 whenStatement                        ::= [directive] [labelDeclaration] whenBlock {implements="com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"}
