@@ -151,7 +151,8 @@ public class OdinSdkUtils {
         if (debug) {
             addCommandPart(command, "-debug");
         }
-        addCommandPart(command, compilerOptions);
+
+        Collections.addAll(command, compilerOptions.split(" +"));
         OdinBuildProcessRunner.addCollectionPaths(project, projectDirectoryPath, command);
 
 
