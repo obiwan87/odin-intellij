@@ -16,6 +16,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -169,10 +170,9 @@ public class OdinSdkUtils {
             addCommandPart(command, "-out:" + expandedPath);
         }
 
-
         if (programArguments != null && !programArguments.isEmpty()) {
             addCommandPart(command, "--");
-            addCommandPart(command, programArguments);
+            Collections.addAll(command, programArguments.split(" +"));
         }
 
         GeneralCommandLine commandLine = new GeneralCommandLine(command);
