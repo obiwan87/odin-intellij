@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
@@ -66,8 +67,12 @@ public class OdinPsiUtil {
     }
 
     // Import path
-    public static PsiReference getReference(OdinImportPath importPath) {
+    public static PsiReference getReference(OdinImportPath ignored) {
         return null;
+    }
+
+    public static OdinImport getImportInfo(OdinImportPath importPath) {
+        return OdinImportUtils.getImportInfo(importPath);
     }
 
     public static PsiReference[] getReferences(OdinImportPath importPath) {
@@ -76,10 +81,6 @@ public class OdinPsiUtil {
 
     public static PsiReference[] getReferences(OdinImportPath importPath, PsiReferenceService.Hints hints) {
         return ReferenceProvidersRegistry.getReferencesFromProviders(importPath, hints);
-    }
-
-    public static boolean shouldAskParentForReferences(OdinImportPath importPath, PsiReferenceService.Hints hints) {
-        return true;
     }
 
     public static PsiElement getOperator(OdinBinaryExpression self) {

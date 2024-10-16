@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class OdinImportUtils {
 
@@ -214,6 +217,21 @@ public class OdinImportUtils {
         return collectionPaths;
     }
 
+    public static Map<String, Path> getSdkCollections(Project project) {
+        Optional<String> validSdkPath = OdinSdkUtils.getValidSdkPath(project);
+        if (validSdkPath.isPresent()) {
+            return Stream.of("core", "base", "vendor")
+                    .collect(
+                            Collectors.toMap(
+                                    s -> s,
+                                    s -> Path.of(validSdkPath.get(), s)
+                            )
+                    );
+        }
+
+        return Collections.emptyMap();
+    }
+
     @Nullable
     public static Path getCollectionPath(@NotNull String collectionName, @NotNull PsiElement psiElement) {
         PsiFile containingFile = psiElement.getOriginalElement().getContainingFile();
@@ -306,6 +324,19 @@ public class OdinImportUtils {
             }
         } while (!work.isEmpty());
         return packages;
+    }
+
+    public static @Nullable PsiDirectory findPsiDirectory(@NotNull Project project, VirtualFile importDir) {
+        return PsiManager.getInstance(project).findDirectory(importDir);
+    }
+
+    public static @Nullable PsiDirectory findPsiDirectory(@NotNull Project project, Path importDir) {
+        VirtualFile fileByNioPath = VirtualFileManager.getInstance().findFileByNioPath(importDir);
+        if (fileByNioPath != null) {
+            return PsiManager.getInstance(project).findDirectory(fileByNioPath);
+        }
+
+        return null;
     }
 
     public String getCollectionName(Project project, String path) {

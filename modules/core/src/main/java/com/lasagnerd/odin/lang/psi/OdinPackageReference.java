@@ -9,8 +9,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.IncorrectOperationException;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
@@ -22,9 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @EqualsAndHashCode(callSuper = true)
 public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> implements HighlightedReference {
@@ -53,7 +52,7 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
                     importInfo.path(),
                     containingVirtualFile);
             if (importDir != null) {
-                return PsiManager.getInstance(importPath.getProject()).findDirectory(importDir);
+                return OdinImportUtils.findPsiDirectory(importPath.getProject(), importDir);
             }
         }
         return null;
@@ -105,14 +104,14 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
     }
 
     public Path getDirectoryPath() {
-        return getDirectoryPath(subdirectory.toString());
+        return getDirectoryPath(subdirectory.toString(), getElement());
     }
 
-    public Path getDirectoryPath(String importPath) {
-        OdinImport importInfo = OdinImportUtils.getImportInfo(getElement());
-        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(getElement());
+    public static Path getDirectoryPath(String importPath, @NotNull OdinImportPath element) {
+        OdinImport importInfo = OdinImportUtils.getImportInfo(element);
+        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(element);
         if (importInfo != null && containingVirtualFile != null) {
-            return findDirectoryPathForImportPath(getElement().getProject(), importInfo,
+            return findDirectoryPathForImportPath(element.getProject(), importInfo,
                     importPath,
                     containingVirtualFile
             );
@@ -131,15 +130,15 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
                     containingVirtualFile
             );
             if (importDir != null) {
-                return PsiManager.getInstance(getElement().getProject()).findDirectory(importDir);
+                return OdinImportUtils.findPsiDirectory(getElement().getProject(), importDir);
             }
         }
         return null;
     }
 
     // Gets the path to which the import path is relative to
-    public Path getImportRootPath() {
-        return getDirectoryPath("");
+    public static Path getImportRootPath(@NotNull OdinImportPath element) {
+        return getDirectoryPath("", element);
     }
 
     @Override
@@ -147,7 +146,7 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
         // sub path: current path
         Path directoryPath = getDirectoryPath();
 
-        if(directoryPath != null) {
+        if (directoryPath != null) {
             if (newTarget instanceof PsiDirectory psiTargetDirectory) {
                 Project project = myElement.getProject();
 
@@ -157,7 +156,7 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
                         .findContainingCollection(project, psiTargetDirectory.getVirtualFile());
 
                 String newCollection;
-                if(odinCollection != null && odinCollection.isCollectionRoot()) {
+                if (odinCollection != null && odinCollection.isCollectionRoot()) {
                     newCollection = odinCollection.collectionName();
                 } else {
                     newCollection = null;
@@ -167,12 +166,12 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
                 // current path: path-before/current-dir/path-after
                 // new path: normalize(relative-path-from-curr-dir-to-new-dir/path-after)
                 OdinImport importInfo = getImportInfo();
-                Path rootPath = getImportRootPath();
+                Path rootPath = getImportRootPath(getElement());
 
                 Path relativizedPath = directoryPath.relativize(newDirPath);
                 String pathAfter;
 
-                if(wholePath.getNameCount() > subPathIndex + 1) {
+                if (wholePath.getNameCount() > subPathIndex + 1) {
                     pathAfter = wholePath.subpath(subPathIndex + 1, wholePath.getNameCount()).toString();
                 } else {
                     pathAfter = "";
@@ -182,11 +181,11 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
                 Path normalized = newAbsolutePath.normalize();
 
                 Path newRootPath;
-                if(Objects.equals(newCollection, importInfo.collection())) {
+                if (Objects.equals(newCollection, importInfo.collection())) {
                     newRootPath = rootPath;
-                } else if(odinCollection != null) {
+                } else if (odinCollection != null) {
                     VirtualFile file = odinCollection.sourceFolder().getFile();
-                    if(file != null) {
+                    if (file != null) {
                         newRootPath = file.toNioPath();
                     } else {
                         newRootPath = rootPath;
@@ -198,8 +197,8 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
                 Path newRelativePath = newRootPath.relativize(normalized);
 
                 String fullImportPath = "";
-                if(newCollection != null) {
-                    fullImportPath += newCollection +":";
+                if (newCollection != null) {
+                    fullImportPath += newCollection + ":";
                 }
 
                 fullImportPath += FileUtil.toSystemIndependentName(newRelativePath.toString());
@@ -215,5 +214,34 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
 
     public OdinImport getImportInfo() {
         return OdinImportUtils.getImportInfo(getElement());
+    }
+
+    private @NotNull List<Object> doGetVariants() {
+        TextRange rangeInElement = getRangeInElement();
+
+        List<Object> variants = new ArrayList<>();
+        String text = getElement().getText();
+        int start = 1;
+        int index = text.indexOf(':');
+        if (index > 0) {
+            start += index;
+        }
+
+        String str = text.substring(start, text.length() - 1);
+        FileReferenceSet referenceSet = new FileReferenceSet(
+                str,
+                getElement(),
+                rangeInElement.getStartOffset(),
+                new OdinReferenceContributor.OdinPackageReferenceProvider(),
+                false,
+                true,
+                null
+        );
+
+
+        for (FileReference fileReference : referenceSet.getAllReferences()) {
+            Collections.addAll(variants, fileReference.getVariants());
+        }
+        return variants;
     }
 }

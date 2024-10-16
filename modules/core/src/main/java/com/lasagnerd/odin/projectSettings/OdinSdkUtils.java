@@ -5,6 +5,8 @@ import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator.OdinBuildProcessRunner;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -112,6 +114,13 @@ public class OdinSdkUtils {
             }
         }
         return Optional.empty();
+    }
+
+    public static VirtualFile getValidSdkPathFile(Project project) {
+        Optional<String> validSdkPath = getValidSdkPath(project);
+        return validSdkPath
+                .map(s -> VirtualFileManager.getInstance().findFileByNioPath(Path.of(s)))
+                .orElse(null);
     }
 
     /**

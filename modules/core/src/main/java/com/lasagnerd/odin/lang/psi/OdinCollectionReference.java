@@ -1,6 +1,8 @@
 package com.lasagnerd.odin.lang.psi;
 
 import com.intellij.codeInsight.highlighting.HighlightedReference;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -12,12 +14,15 @@ import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
-import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
 import com.lasagnerd.odin.projectStructure.collection.OdinPsiCollection;
+import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class OdinCollectionReference extends PsiReferenceBase<OdinImportPath> implements HighlightedReference {
@@ -61,5 +66,37 @@ public class OdinCollectionReference extends PsiReferenceBase<OdinImportPath> im
     @Override
     public @NotNull TextRange getRangeInElement() {
         return rangeInElement;
+    }
+
+    private @NotNull List<LookupElement> getCollectionLookupElements() {
+        List<LookupElement> collections = new ArrayList<>();
+        Optional<String> validSdkPath = OdinSdkUtils.getValidSdkPath(myElement.getProject());
+        if (validSdkPath.isPresent()) {
+            List<String> sdkCollections = List.of("core", "base", "vendor");
+            for (String sdkCollection : sdkCollections) {
+                LookupElementBuilder lookupElement = LookupElementBuilder
+                        .create(sdkCollection)
+                        .withTypeText("SDK");
+
+                collections.add(lookupElement);
+            }
+        }
+        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(getElement());
+        if (containingVirtualFile != null) {
+            String basePath = myElement.getProject().getBasePath();
+            if (basePath != null) {
+                Path projectPath = Path.of(basePath);
+                Map<String, Path> collectionPaths = OdinImportUtils.getCollectionPaths(getElement().getProject(), containingVirtualFile.getPath());
+                for (Map.Entry<String, Path> entry : collectionPaths.entrySet()) {
+                    Path collectinPath = entry.getValue();
+                    LookupElementBuilder lookupElement = LookupElementBuilder
+                            .create(collectinPath, entry.getKey())
+                            .withTailText(" " + projectPath.relativize(collectinPath));
+
+                    collections.add(lookupElement);
+                }
+            }
+        }
+        return collections;
     }
 }

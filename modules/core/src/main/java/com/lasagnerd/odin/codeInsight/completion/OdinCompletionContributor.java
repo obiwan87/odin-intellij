@@ -1,9 +1,6 @@
 package com.lasagnerd.odin.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
@@ -42,6 +39,7 @@ public class OdinCompletionContributor extends CompletionContributor {
     private static final @NotNull ElementPattern<PsiElement> TYPE_PATTERN = psiElement(OdinTypes.IDENTIFIER_TOKEN)
             .withSuperParent(2, OdinSimpleRefType.class);
 
+    private static final ElementPattern<PsiElement> IMPORT_PATH = psiElement(OdinTypes.DQ_STRING_LITERAL).withParent(OdinImportPath.class);
 
     private static final OdinCompletionProvider.OdinSymbolFilter TYPE_FILTER = new OdinCompletionProvider.OdinSymbolFilter("TYPE_FILTER") {
         @Override
@@ -61,6 +59,7 @@ public class OdinCompletionContributor extends CompletionContributor {
 
         extend(CompletionType.BASIC, TYPE_PATTERN, new OdinCompletionProvider(TYPE_FILTER));
         extend(CompletionType.BASIC, IMPLICIT_SELECTOR_EXPRESSION_PATTERN, new OdinCompletionProvider());
+        extend(CompletionType.BASIC, IMPORT_PATH, new OdinImportPathCompletionProvider());
     }
 
     public static Icon getIcon(OdinSymbolType symbolType) {

@@ -51,6 +51,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     }
 
     private void addSelectorTypeCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result, @NotNull OdinQualifiedType parentType) {
+
         OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(parentType, parameters
                 .getOriginalFile()
                 .getContainingDirectory()

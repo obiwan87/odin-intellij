@@ -26,7 +26,7 @@ public class OdinReferenceContributor extends PsiReferenceContributor {
         );
     }
 
-    private static class OdinPackageReferenceProvider extends PsiReferenceProvider {
+    public static class OdinPackageReferenceProvider extends PsiReferenceProvider {
         @Override
         public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
             if (element instanceof OdinImportPath odinImportPath) {

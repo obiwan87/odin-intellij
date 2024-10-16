@@ -200,7 +200,12 @@ fileScopeStatementList               ::= (fileScopeStatement (eos|<<afterNewLine
 packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=1 recoverWhile=eos_recover}
 
 importDeclarationStatement           ::= [attribute EOS_TOKEN?] IMPORT declaredIdentifier? importPath {methods=[alias="/declaredIdentifier" path="/importPath" getName setName getNameIdentifier getImportInfo] implements=["com.intellij.psi.PsiNameIdentifierOwner"]}
-importPath                           ::= DQ_STRING_LITERAL {methods=[getReference getReferences shouldAskParentForReferences] implements=["com.intellij.psi.HintedReferenceHost"]}
+importPath                           ::= DQ_STRING_LITERAL {
+                                                        methods=[
+                                                                getReference
+                                                                getReferences
+                                                                getImportInfo
+                                                                ] implements=["com.intellij.psi.HintedReferenceHost"]}
 
 fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | importDeclarationStatement
@@ -445,7 +450,7 @@ fake parameterDeclaration            ::= parameter+ typeDefinitionContainer? exp
 typeDefinitionContainer              ::= type
 
 parameter                            ::= [USING] directive? declaredIdentifier
-parameterDeclarator                  ::= parameter (COMMA parameter)* COLON typeDefinitionContainer {extends=parameterDeclaration  methods=[getTypeDefinition]}
+parameterDeclarator                  ::= parameter (COMMA parameter)* COLON typeDefinitionContainer {extends=parameterDeclaration  methods=[getTypeDefinition] pin="COLON"}
 parameterInitialization              ::= parameter COLON [typeDefinitionContainer] EQ expression {extends=parameterDeclaration methods=[getTypeDefinition] }
 
 unnamedParameter                     ::= RANGE? typeDefinitionContainer {extends=parameterDeclaration methods=[getTypeDefinition]}
