@@ -29,7 +29,6 @@ public class OdinImportPathCompletionProvider extends CompletionProvider<Complet
     protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
         if (!(parameters.getOriginalPosition() != null && parameters.getOriginalPosition().getParent() instanceof OdinImportPath importPath))
             return;
-
         PsiFile originalFile = parameters.getOriginalFile();
         String filePath = originalFile.getVirtualFile().getPath();
 
@@ -158,18 +157,12 @@ public class OdinImportPathCompletionProvider extends CompletionProvider<Complet
         int depth = 0;
         for (PsiDirectory current; !stack.empty(); ) {
             current = stack.pop();
-            System.out.println("--------------------");
-            System.out.println("Current: " + current.getVirtualFile().getPath());
-            System.out.println("--------------------");
-
             for (PsiDirectory subdir : current.getSubdirectories()) {
                 Path subdirPath = Path.of(subdir.getVirtualFile().getPath());
                 System.out.println("- " + subdirPath);
                 Path relativePath = root.relativize(subdirPath);
                 String lookupString = FileUtil.toSystemIndependentName(relativePath.toString());
                 if (lookupString.isBlank()) {
-                    System.out.println("Root: " + root);
-                    System.out.println("Subdir: " + subdirPath);
                     continue;
                 }
 
