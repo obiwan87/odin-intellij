@@ -3,6 +3,12 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.7.3</h3>
+        <h4>New Features</h4>
+        <ul>
+            <li>Code completion for import paths</li>
+        </ul>
+
         <h3>0.7.2</h3>
         <h4>Bugfixes</h4>
         <ul>
