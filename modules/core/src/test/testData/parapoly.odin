@@ -1,7 +1,7 @@
 package main
 
 Point :: struct {
-
+    x, y: i32
 }
 
 parapoly_slice :: proc(x: []$T) -> T {
@@ -92,6 +92,7 @@ testTypeInference_withRecursivePolyPara :: proc() {
 
     t1 := Parent(Point) { }
     test := t1.data
+
 }
 
 testTypeInference_withDoubleInstantiation :: proc() {

@@ -278,7 +278,7 @@ procedureDefinition                  ::= procedureSignature procedureBody {imple
 procedureSignature                   ::= procedureType
 procedureType                        ::= !procOverloadHead PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
                                             {pin=2 methods=[getParamEntryList]}
-whereClause                          ::= WHERE <<enterNoBlockMode>> expression (COMMA expression)* <<exitNoBlockMode>>
+whereClause                          ::= WHERE <<enterNoBlockMode>> expressionListWithRecover <<exitNoBlockMode>> {pin=1}
 procedureBody                        ::= (tripleDashBlock)
                                           | (block)
 private tripleDashBlock              ::= [directive] TRIPLE_DASH {pin=2}
@@ -840,4 +840,5 @@ caseBlock                            ::= [<<beforeColon>> statementList]
 // When statement (compile time, which means it does not support an init block)
 whenStatement                        ::= [directive] [labelDeclaration] whenBlock {implements="com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"}
 whenBlock                            ::= WHEN <<enterNoBlockMode>> condition <<exitNoBlockMode>> statementBody [sos elseWhenBlock]
-elseWhenBlock                        ::= else (whenBlock|statementBody)
+    {pin=1 }
+elseWhenBlock                        ::= else (whenBlock|statementBody) {pin=1}
