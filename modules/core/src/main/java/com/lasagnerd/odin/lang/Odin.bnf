@@ -238,6 +238,7 @@ attribute                           ::= AT IDENTIFIER_TOKEN
 structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? structBlock
                                             { methods=[getParamEntryList]
                                               implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  (COMMA|EOS_TOKEN|&RBRACE) {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 fieldDeclarationStatement            ::= USING? directiveIdentifier? fieldDeclarator [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ] pin="declaredIdentifier" }
@@ -712,7 +713,7 @@ blockStart                           ::= LBRACE
 blockEnd                             ::= RBRACE
 
 
-eos                                  ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<multilineBlockComment>> | <<atClosingBrace>> | <<afterClosingBrace>>
+eos                                  ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<multilineBlockComment>> | &RBRACE | <<afterClosingBrace>>
 sos                                  ::= SEMICOLON | NEW_LINE | EOS_TOKEN | <<afterClosingBrace>> | <<multilineBlockComment>>
 statementList                        ::= (sos? statement (eos|<<afterNewLine>>))+ {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
 statement                            ::= assignmentStatement

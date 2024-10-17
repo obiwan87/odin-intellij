@@ -35,12 +35,6 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
         return tokenType == OdinTypes.MULTILINE_BLOCK_COMMENT;
     }
 
-    public static boolean atClosingBrace(PsiBuilder builder, int level) {
-        IElementType tokenType = builder.getTokenType();
-
-        return tokenType == OdinTypes.RBRACE;
-    }
-
     @Nullable
     private static IElementType lookBehindUntilNoWhitespace(PsiBuilder builder) {
         return lookbehindWhileSkipping(builder, OdinParserDefinition.WHITE_SPACES);
