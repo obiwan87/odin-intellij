@@ -235,9 +235,12 @@ attribute                           ::= AT IDENTIFIER_TOKEN
                                          | AT LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
 
 // Struct
-structType                           ::= STRUCT [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? structBlock
+structType                           ::= STRUCT [polyParams] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? structBlock
                                             { methods=[getParamEntryList]
+                                              pin=1
                                               implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+private polyParams                   ::= LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?] {pin=1}
+
 
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  (COMMA|EOS_TOKEN|&RBRACE) {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
@@ -246,19 +249,24 @@ private fieldDeclarator              ::= declaredIdentifier (COMMA declaredIdent
 private fieldRecover                 ::= !(EOS_TOKEN | COMMA  | RBRACE | RAW_STRING_LITERAL)
 
 // Enum
-enumType                             ::= ENUM [qualifiedType|simpleRefType] EOS_TOKEN? enumBlock
+enumType                             ::= ENUM [qualifiedType|simpleRefType] EOS_TOKEN? enumBlock {pin=1}
 enumBlock                            ::= blockStart [enumBody] blockEnd
 enumBody                             ::= enumValueDeclaration (COMMA enumValueDeclaration)* [EOS_TOKEN|COMMA] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 enumValueDeclaration                 ::= declaredIdentifier [EQ expression]
 
 // Union
-unionType                            ::= UNION [LPAREN polymorphicParameterList RPAREN [eos? whereClause eos?]] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? unionBlock {methods=[getParamEntryList] implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+unionType                            ::= UNION [polyParams] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? unionBlock
+                                        {
+                                            pin=1
+                                            methods=[getParamEntryList]
+                                            implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"
+                                        }
 unionBlock                           ::= blockStart [unionBody] blockEnd
 unionBody                            ::= type (COMMA type)* [COMMA|EOS_TOKEN] {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 
 
 // Bit field
-bitFieldType                         ::= BIT_FIELD type EOS_TOKEN? bitFieldBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+bitFieldType                         ::= BIT_FIELD type EOS_TOKEN? bitFieldBlock {pin=1 implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 bitFieldBlock                        ::= blockStart bitFieldBody? blockEnd
 bitFieldBody                         ::= bitFieldFieldDeclaration (COMMA bitFieldFieldDeclaration )*  [COMMA|EOS_TOKEN]
 bitFieldFieldDeclaration             ::= declaredIdentifier COLON type PIPE expression
@@ -268,9 +276,8 @@ bitFieldFieldDeclaration             ::= declaredIdentifier COLON type PIPE expr
 procedureLiteralType                 ::= procedureDefinition
 procedureDefinition                  ::= procedureSignature procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 procedureSignature                   ::= procedureType
-procedureType                        ::= directive? PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
-                                            {methods=[getParamEntryList]}
-
+procedureType                        ::= !procOverloadHead PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
+                                            {pin=2 methods=[getParamEntryList]}
 whereClause                          ::= WHERE <<enterNoBlockMode>> expression (COMMA expression)* <<exitNoBlockMode>>
 procedureBody                        ::= (tripleDashBlock)
                                           | (block)
@@ -284,7 +291,9 @@ usingStatement                       ::= USING expressionListWithRecover
 directiveStatement                   ::= directive
 
 // Procedure overloading
-procedureOverloadType                 ::= PROC EOS_TOKEN? blockStart procedureRef (COMMA procedureRef)* (COMMA | EOS_TOKEN)? blockEnd
+procedureOverloadType                 ::= &procOverloadHead PROC EOS_TOKEN? procedureOverloadBody {pin=2}
+private procedureOverloadBody         ::= blockStart procedureRef (COMMA procedureRef)* (COMMA | EOS_TOKEN | &RBRACE) blockEnd
+private procOverloadHead              ::= PROC EOS_TOKEN? blockStart
 procedureRef                          ::= qualifiedType | simpleRefType
 
 // TYPES
@@ -328,10 +337,14 @@ qualifiedType                        ::= identifier DOT simpleRefType {methods=[
 pointerType                          ::= CARET type
 multiPointerType                     ::= LBRACKET CARET RBRACKET type
 
-bitSetType                           ::= BIT_SET LBRACKET expression [SEMICOLON type] RBRACKET
+bitSetType                           ::= BIT_SET bitSetDef {pin=1}
+private bitSetDef ::= LBRACKET expression [SEMICOLON type] RBRACKET
 
-mapType                              ::= MAP LBRACKET type RBRACKET type {methods=[getKeyType getValueType]}
-matrixType                           ::= MATRIX LBRACKET arraySize COMMA arraySize RBRACKET type
+mapType                              ::= MAP mapDef {pin=1 methods=[getKeyType getValueType]}
+private mapDef                       ::= LBRACKET type RBRACKET type
+matrixType                           ::= MATRIX matrixDef {pin=1}
+private matrixDef                    ::= LBRACKET arraySize COMMA arraySize RBRACKET type {pin=1}
+
 arrayType                            ::= [directiveIdentifier] LBRACKET arraySize RBRACKET type {methods=[getTypeDefinition]}
 arraySize                            ::= QUESTION|expression
 
@@ -583,7 +596,7 @@ private refOperator ::= (DOT|ARROW)
 implicitSelectorExpression           ::= DOT identifier
 indexExpression                      ::= expression index
 sliceExpression                      ::= expression slice
-procedureExpression                  ::= DISTINCT? procedureLiteralType {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
+procedureExpression                  ::= DISTINCT? directive? procedureLiteralType {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
 dereferenceExpression                ::= expression CARET
 identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference delete]}
 
