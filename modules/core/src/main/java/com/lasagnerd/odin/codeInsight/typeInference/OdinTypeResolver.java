@@ -51,6 +51,9 @@ public class OdinTypeResolver extends OdinVisitor {
                                                   OdinDeclaredIdentifier declaredIdentifier,
                                                   OdinDeclaration declaration,
                                                   OdinType type) {
+        if(type == null)
+            return TsOdinBuiltInTypes.UNKNOWN;
+
         OdinTypeResolver typeResolver = new OdinTypeResolver(level, symbolTable, declaration, declaredIdentifier);
         type.accept(typeResolver);
         return Objects.requireNonNullElse(typeResolver.type, TsOdinBuiltInTypes.UNKNOWN);

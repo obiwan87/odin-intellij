@@ -205,6 +205,7 @@ importPath                           ::= DQ_STRING_LITERAL {
                                                                 getReference
                                                                 getReferences
                                                                 getImportInfo
+                                                                shouldAskParentForReferences
                                                                 ] implements=["com.intellij.psi.HintedReferenceHost"]}
 
 fileScopeStatement                   ::= foreignImportDeclarationStatement

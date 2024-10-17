@@ -62,6 +62,11 @@ public class OdinPsiUtil {
             OdinTypes.OROR,
             OdinTypes.ANDAND);
 
+    public static boolean shouldAskParentForReferences(OdinImportPath ignored,
+                                                       @NotNull PsiReferenceService.Hints ignored2) {
+        return true;
+    }
+
     public static PsiReference getReference(OdinIdentifier self) {
         return new OdinReference(self);
     }
@@ -192,7 +197,12 @@ public class OdinPsiUtil {
     }
 
     public static OdinType getTypeDefinition(OdinParameterDeclarator statement) {
-        return statement.getTypeDefinitionContainer().getType();
+        OdinTypeDefinitionContainer typeDefinitionContainer = statement.getTypeDefinitionContainer();
+        if(typeDefinitionContainer != null) {
+            return typeDefinitionContainer.getType();
+        }
+
+        return null;
     }
 
     public static OdinType getTypeDefinition(OdinVariableInitializationStatement statement) {
