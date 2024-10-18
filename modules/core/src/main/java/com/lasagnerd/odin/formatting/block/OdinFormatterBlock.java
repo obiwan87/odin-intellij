@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.tree.IElementType;
-import com.lasagnerd.odin.lang.psi.OdinTypes;
+import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OdinFormatterBlock extends AbstractBlock {
+    public static final Spacing NO_SPACING = Spacing.createSpacing(0, 0, 0, false, 0);
     private final Indent indent;
     private final SpacingBuilder spacingBuilder;
     static List<IElementType> typesToIndent = List.of(
@@ -97,9 +98,36 @@ public class OdinFormatterBlock extends AbstractBlock {
 
     @Override
     public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
-        if (endOfBlockIsNewLine(child1, child2))
-            return Spacing.createSpacing(0, 0, 0, false, 0);
+        if (endOfBlockIsNewLine(child1, child2) || lastSwitchCaseIsEmpty(child1, child2))
+            return NO_SPACING;
+
         return spacingBuilder.getSpacing(this, child1, child2);
+    }
+
+    private boolean lastSwitchCaseIsEmpty(@Nullable Block child1, @NotNull Block child2) {
+        OdinSwitchCases switchCases = getPsiElement(child1, OdinSwitchCases.class);
+        OdinBlockEnd blockEnd = getPsiElement(child2, OdinBlockEnd.class);
+
+        if(switchCases == null || blockEnd == null)
+            return false;
+
+        List<OdinSwitchCase> switchCaseList = switchCases.getSwitchCaseList();
+        if(switchCaseList.isEmpty())
+            return false;
+
+        OdinSwitchCase lastSwitchCase = switchCaseList.getLast();
+        OdinCaseBlock caseBlock = lastSwitchCase.getCaseBlock();
+        return caseBlock == null || caseBlock.getText().isBlank();
+    }
+
+    private <T extends PsiElement> T getPsiElement(Block block, Class<T> clazz) {
+        if(block instanceof ASTBlock astBlock) {
+            PsiElement psiElement = ASTBlock.getPsiElement(astBlock);
+            if(clazz.isInstance(psiElement)) {
+                return (T) psiElement;
+            }
+        }
+        return null;
     }
 
     private static boolean endOfBlockIsNewLine(@Nullable Block child1, @NotNull Block child2) {

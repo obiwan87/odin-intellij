@@ -829,7 +829,8 @@ private switchRecover                       ::= !(eos | SWITCH)
 private switchHead                   ::= <<enterNoBlockMode>> [[controlFlowInit SEMICOLON] [expression]] <<exitNoBlockMode>>
 switchBody                           ::= eos? blockStart [switchCases] blockEnd
 switchCases                          ::= switchCase+
-switchCase                           ::= CASE [caseClause] COLON caseBlock  {pin=1 recoverWhile=caseRecover}
+switchCase                           ::= CASE [caseClause] caseClauseColon caseBlock  {pin=1 recoverWhile=caseRecover}
+caseClauseColon ::= COLON
 caseClause                           ::= expression (COMMA expression)*
 private caseRecover                  ::= !(EOS_TOKEN !RBRACE
                                            | COLON

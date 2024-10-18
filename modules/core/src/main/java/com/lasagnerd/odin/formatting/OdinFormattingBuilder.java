@@ -96,6 +96,15 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
 
                 .between(OdinTypes.IMPORT_STATEMENTS_CONTAINER, TokenSet.create(OdinTypes.FILE_SCOPE_STATEMENT_LIST, OdinTypes.LINE_COMMENT, OdinTypes.BLOCK_COMMENT))
                 .spacing(0, 0, 2, false, 0)
+
+                .between(OdinTypes.SWITCH_CASES, OdinTypes.BLOCK_END)
+                .spacing(0, 0, 1, false, 0)
+
+                .between(OdinTypes.CASE_CLAUSE, OdinTypes.CASE_CLAUSE_COLON)
+                .none()
+
+                .between(OdinTypes.CASE_CLAUSE_COLON, OdinTypes.CASE_BLOCK)
+                .spacing(1, 1, 0, true, 0)
                 ;
     }
 
