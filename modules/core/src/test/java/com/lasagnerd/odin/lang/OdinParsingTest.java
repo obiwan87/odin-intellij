@@ -400,6 +400,11 @@ public class OdinParsingTest extends UsefulTestCase {
         loadAndCheck(path);
     }
 
+    public void testIntrinsicsFile() {
+        String path = "src/test/testData/intrinsics.odin";
+        loadAndCheck(path);
+    }
+
     public void testTypeInference() throws IOException {
         OdinFile odinFile = loadTypeInference();
         var refExpressions = PsiTreeUtil.findChildrenOfType(odinFile, OdinRefExpression.class);

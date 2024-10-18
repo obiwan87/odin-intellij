@@ -1,5 +1,6 @@
-package testData
+package subpackage
 
-d :: struct(a)
-
-a :: proc() {}
+p :: proc() -> ! {
+x += 1
+<
+}
