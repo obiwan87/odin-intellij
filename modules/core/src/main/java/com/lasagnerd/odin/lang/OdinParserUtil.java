@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Stack;
 
+import static com.lasagnerd.odin.lang.psi.OdinTypes.DIRECTIVE_IDENTIFIER;
+
 @SuppressWarnings("unused")
 public class OdinParserUtil extends GeneratedParserUtilBase {
 
@@ -228,6 +230,25 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
             marker.rollbackTo();
         }
 
+        return r;
+    }
+
+    public static boolean relativeTypeRule(PsiBuilder builder,
+                                            int level,
+                                            Parser type)
+    {
+        PsiBuilder.Marker m = enter_section_(builder);
+        boolean r = consumeToken(builder, OdinTypes.HASH);
+        if(r && builder.getTokenType() == OdinTypes.IDENTIFIER_TOKEN) {
+            if(!"relative".equals(builder.getTokenText())) {
+                return false;
+            }
+        }
+        r = r && consumeToken(builder, OdinTypes.IDENTIFIER_TOKEN);
+        exit_section_(builder, m, DIRECTIVE_IDENTIFIER, r);
+        r = r && consumeToken(builder, OdinTypes.LPAREN);
+        r = r && report_error_(builder, type.parse(builder, level));
+        r = r && consumeToken(builder, OdinTypes.RPAREN);
         return r;
     }
 }

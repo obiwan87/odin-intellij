@@ -276,8 +276,8 @@ bitFieldFieldDeclaration             ::= declaredIdentifier COLON type PIPE expr
 procedureLiteralType                 ::= procedureDefinition
 procedureDefinition                  ::= procedureSignature procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 procedureSignature                   ::= procedureType
-procedureType                        ::= !procOverloadHead PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
-                                            {pin=2 methods=[getParamEntryList]}
+procedureType                        ::= [directive] !procOverloadHead PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
+                                            {pin="PROC" methods=[getParamEntryList]}
 whereClause                          ::= WHERE <<enterNoBlockMode>> expressionListWithRecover <<exitNoBlockMode>> {pin=1}
 procedureBody                        ::= (tripleDashBlock)
                                           | (block)
@@ -300,6 +300,8 @@ procedureRef                          ::= qualifiedType | simpleRefType
 
 // Variables and constants
 typeDefinitionExpression             ::= DISTINCT? [directive] type
+
+//noinspection BnfUnreachableChoiceBranch
 type                                 ::= mapType
                                          | matrixType
                                          | bitSetType
@@ -307,9 +309,9 @@ type                                 ::= mapType
                                          | sliceType
                                          | dynamicArrayType
                                          | arrayType
-                                         | relativeType
                                          | procedureType
                                          | procedureOverloadType
+                                         | relativeType
                                          | structType
                                          | enumType
                                          | unionType
@@ -324,7 +326,8 @@ type                                 ::= mapType
                                          | variadicType
                                          | simpleRefType
 
-relativeType                         ::= directive type
+relativeType                         ::= <<relativeTypeRule relativeDef>> type
+private relativeDef                  ::= qualifiedType|simpleRefType
 ellipsisType                         ::= ELLIPSIS
 variadicType                         ::= RANGE type
 callType                             ::= type LPAREN <<enterMode "PAR">> <<enterMode "TYPE_LIST">>  argumentList? <<exitMode "TYPE_LIST">> <<exitMode "PAR">> EOS_TOKEN?  RPAREN
@@ -422,6 +425,7 @@ private expressionRecover ::= !( NOT
                                     | ELSE_TOKEN
                                     | FALLTHROUGH
                                     | FOR
+                                    | FOREIGN
                                     | PROC
                                     | IDENTIFIER_TOKEN
                                     | IF_TOKEN
@@ -431,6 +435,8 @@ private expressionRecover ::= !( NOT
                                     | RAW_STRING_LITERAL
                                     | STRUCT
                                     | SWITCH
+                                    | TRIPLE_DASH
+                                    | directive
                                     )
 
 
@@ -728,7 +734,45 @@ blockEnd                             ::= RBRACE
 
 eos                                  ::= SEMICOLON | <<eof>> | EOS_TOKEN | <<multilineBlockComment>> | &RBRACE | <<afterClosingBrace>>
 sos                                  ::= SEMICOLON | NEW_LINE | EOS_TOKEN | <<afterClosingBrace>> | <<multilineBlockComment>>
-statementList                        ::= (sos? statement (eos|<<afterNewLine>>))+ {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
+statementList                        ::= statementWithSemi+ {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
+private statementWithSemi            ::= sos? statement (eos|<<afterNewLine>>) {pin=2 recoverWhile=statementRecover}
+private statementRecover             ::= !(NOT
+                                         | AND
+                                         | LPAREN
+                                         | STAR
+                                         | PLUS
+                                         | MINUS
+                                         | SEMICOLON
+                                         | CARET
+                                         | LBRACE
+                                         | OR
+                                         | OR_EQ
+                                         | OROR
+                                         | RBRACE
+                                         | BREAK
+                                         | CASE
+                                         | CONTINUE
+                                         | OR_CONTINUE
+                                         | OR_BREAK
+                                         | OR_ELSE
+                                         | OR_RETURN
+                                         | USING
+                                         | DEFER
+                                         | ELSE_TOKEN
+                                         | FALLTHROUGH
+                                         | FOR
+                                         | PROC
+                                         | IDENTIFIER_TOKEN
+                                         | IF_TOKEN
+                                         | WHEN
+                                         | MAP
+                                         | directive
+                                         | FOREIGN
+                                         | TRIPLE_DASH
+                                         | AT
+                                         | RETURN
+                                         | STRUCT
+                                         | SWITCH)
 statement                            ::= assignmentStatement
                                          | forStatement
                                          | constantInitializationStatement

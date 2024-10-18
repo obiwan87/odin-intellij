@@ -337,7 +337,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     private void addWhenBlockDeclarations(OdinWhenBlock whenBlock) {
         OdinStatementBody statementBody = whenBlock.getStatementBody();
 
-        addStatementBodySymbols(statementBody);
+        if(statementBody != null) {
+            addStatementBodySymbols(statementBody);
+        }
 
         OdinElseWhenBlock elseWhenBlock = whenBlock.getElseWhenBlock();
         if (elseWhenBlock != null) {
