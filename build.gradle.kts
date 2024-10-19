@@ -36,15 +36,8 @@ val clionVersion = properties("clionVersion").get()
 val clionPlugins = listOf("com.intellij.clion", "com.intellij.cidr.lang", "com.intellij.cidr.base", "com.intellij.nativeDebug")
 
 val lsp4jVersion = "0.23.0"
-val lsp4ijVersion = "0.4.0"
-
-val lsp4ijNightly = lsp4ijVersion.contains("-")
-val lsp4ijDepString = "${if (lsp4ijNightly) "nightly." else ""}com.jetbrains.plugins:com.redhat.devtools.lsp4ij:$lsp4ijVersion"
-val lsp4ijPluginString = "com.redhat.devtools.lsp4ij:$lsp4ijVersion${if (lsp4ijNightly) "@nightly" else ""}"
 
 val lsp4ijDep: DependencyHandler.() -> Unit = {
-    intellijPlatformPluginDependency(lsp4ijDepString)
-    compileOnlyApi(lsp4ijDepString)
     compileOnlyApi("org.eclipse.lsp4j:org.eclipse.lsp4j:$lsp4jVersion")
 }
 
@@ -100,7 +93,7 @@ allprojects {
     dependencies {
         compileOnly("org.projectlombok:lombok:1.18.34")
         annotationProcessor("org.projectlombok:lombok:1.18.34")
-        if (path !in listOf(":", ":plugin", ":debugger")) {
+        if (path !in listOf(":", ":plugin", ":debugger", ":rider")) {
             intellijPlatform {
                 intellijIdeaCommunity(ideaVersion, useInstaller = false)
             }
@@ -178,7 +171,6 @@ project(":core") {
     dependencies {
         lsp4ijDep()
         intellijPlatform {
-            plugin(lsp4ijPluginString)
             testFramework(TestFrameworkType.Platform)
 
             testImplementation("junit:junit:4.13.2")
@@ -214,8 +206,6 @@ project(":plugin") {
                 "idea" -> intellijIdeaCommunity(ideaVersion, useInstaller = false)
                 "clion" -> clion(clionVersion, useInstaller = false)
             }
-            plugin(lsp4ijPluginString)
-
         }
     }
 
