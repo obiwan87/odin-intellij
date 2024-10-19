@@ -42,9 +42,10 @@ public class OdinTypeConverter {
 
     }
 
-    public static @NotNull TsOdinType inferTypeOfBinaryExpression(@NotNull TsOdinType a, @NotNull TsOdinType b) {
+    public static @NotNull TsOdinType inferTypeOfArithmeticExpression(@NotNull TsOdinType a, @NotNull TsOdinType b) {
         if (a.isUnknown() || b.isUnknown())
             return TsOdinBuiltInTypes.UNKNOWN;
+
 
         a = a.baseType();
         b = b.baseType();

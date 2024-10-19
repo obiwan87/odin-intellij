@@ -4,7 +4,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -116,7 +118,8 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         PsiElement operator = o.getOperator();
         if (operator != null) {
-            this.type = OdinTypeConverter.inferTypeOfBinaryExpression(leftType, rightType);
+            IElementType operatorType = PsiUtilCore.getElementType(operator);
+            this.type = OdinTypeConverter.inferTypeOfArithmeticExpression(leftType, rightType);
         }
     }
 
@@ -169,7 +172,19 @@ public class OdinInferenceEngine extends OdinVisitor {
                 this.type = bitSetType.getElementType();
             }
         } else {
-            this.type = inferExpectedType(symbolTable, o);
+            PsiElement parent = o.getParent();
+            if (parent instanceof OdinBinaryExpression binaryExpression) {
+                IElementType operatorType = PsiUtilCore.getElementType(binaryExpression.getOperator());
+                if (OdinPsiUtil.COMPARISON_OPERATORS.contains(operatorType)) {
+                    if (binaryExpression.getLeft() == o && binaryExpression.getRight() != null) {
+                        this.type = inferType(symbolTable, binaryExpression.getRight());
+                    } else if (binaryExpression.getRight() == o) {
+                        this.type = inferType(symbolTable, binaryExpression.getLeft());
+                    }
+                }
+            } else {
+                this.type = inferExpectedType(symbolTable, o);
+            }
         }
     }
 
@@ -504,6 +519,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         OdinSymbol soaZip = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("soa_zip"));
         OdinSymbol soaUnzip = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("soa_unzip"));
         OdinSymbol swizzle = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("swizzle"));
+        OdinSymbol typeOf = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("type_of"));
         if (soaZip != null) {
             TsOdinSoaSliceType soaSlice = new TsOdinSoaSliceType();
             for (OdinArgument odinArgument : o.getArgumentList()) {
@@ -534,6 +550,15 @@ public class OdinInferenceEngine extends OdinVisitor {
                         tsOdinArrayType.setSize(o.getArgumentList().size() - 1);
                         return tsOdinArrayType;
                     }
+                }
+            }
+        } else if (typeOf != null) {
+            List<OdinArgument> argumentList = o.getArgumentList();
+            if(!argumentList.isEmpty()) {
+                OdinArgument first = argumentList.getFirst();
+                if(first instanceof OdinUnnamedArgument argument) {
+                    TsOdinType tsOdinType = OdinInferenceEngine.doInferType(argument.getExpression());
+                    return OdinTypeResolver.createMetaType(tsOdinType, null);
                 }
             }
         } else if (!procedureType.getReturnTypes().isEmpty()) {
@@ -887,30 +912,14 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         // If we get a type here, then it's an alias
         if (odinDeclaration instanceof OdinConstantInitializationStatement initializationStatement) {
-            OdinExpression firstExpression = initializationStatement.getExpressionList().getFirst();
-            OdinType declaredType = OdinInsightUtils.getDeclaredType(initializationStatement);
-            if (
-                    declaredType instanceof OdinStructType
-                            || declaredType instanceof OdinBitFieldType
-                            || declaredType instanceof OdinUnionType
-                            || declaredType instanceof OdinProcedureOverloadType
-                            || declaredType instanceof OdinProcedureType
-                            || declaredType instanceof OdinProcedureLiteralType
-                            || declaredType instanceof OdinEnumType) {
-                // check distinct
-                return OdinTypeResolver.findMetaType(
-                        parentSymbolTable,
-                        declaredIdentifier,
-                        initializationStatement,
-                        firstExpression,
-                        declaredType
-                );
-            }
-
             if (initializationStatement.getType() != null) {
                 OdinType mainType = initializationStatement.getType();
                 return OdinTypeResolver.resolveType(parentSymbolTable, mainType);
             }
+
+            TsOdinMetaType metaType = findMetaType(parentSymbolTable, declaredIdentifier, initializationStatement);
+            if (metaType != null) return metaType;
+
 
             int index = initializationStatement.getIdentifierList()
                     .getDeclaredIdentifierList()
@@ -1129,6 +1138,31 @@ public class OdinInferenceEngine extends OdinVisitor {
 
 
         return TsOdinBuiltInTypes.UNKNOWN;
+    }
+
+    public static @Nullable TsOdinMetaType findMetaType(OdinSymbolTable symbolTable,
+                                                        OdinDeclaredIdentifier declaredIdentifier,
+                                                        OdinConstantInitializationStatement initializationStatement) {
+        OdinExpression firstExpression = initializationStatement.getExpressionList().getFirst();
+        OdinType declaredType = OdinInsightUtils.getDeclaredType(initializationStatement);
+        if (
+                declaredType instanceof OdinStructType
+                        || declaredType instanceof OdinBitFieldType
+                        || declaredType instanceof OdinUnionType
+                        || declaredType instanceof OdinProcedureOverloadType
+                        || declaredType instanceof OdinProcedureType
+                        || declaredType instanceof OdinProcedureLiteralType
+                        || declaredType instanceof OdinEnumType) {
+            // check distinct
+            return OdinTypeResolver.findMetaType(
+                    symbolTable,
+                    declaredIdentifier,
+                    initializationStatement,
+                    firstExpression,
+                    declaredType
+            );
+        }
+        return null;
     }
 
     @SuppressWarnings("unused")

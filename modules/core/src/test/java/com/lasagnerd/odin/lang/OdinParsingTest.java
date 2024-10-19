@@ -45,6 +45,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -1522,18 +1523,18 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testTypeConversion() {
         {
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfArithmeticExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
         {
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfBinaryExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfArithmeticExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.STRING);
         }
 
         {
             TsOdinArrayType arrayType = new TsOdinArrayType();
             arrayType.setElementType(TsOdinBuiltInTypes.I32);
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfBinaryExpression(arrayType, TsOdinBuiltInTypes.UNTYPED_INT);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfArithmeticExpression(arrayType, TsOdinBuiltInTypes.UNTYPED_INT);
             assertEquals(tsOdinType, arrayType);
         }
     }
@@ -2256,5 +2257,50 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
             assertEquals(3, tsOdinArrayType.getSize().intValue());
         }
+    }
+
+    // Expression Evaluation
+
+    public void testIntegerValue() throws IOException {
+        OdinFile file = loadExpressionEval();
+        {
+            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testIntegerValue", "Y");
+            Long l = assertInstanceOf(evOdinValue.getValue(), Long.class);
+            assertEquals(1, l.longValue());
+        }
+
+        {
+            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testIntegerValue", "X");
+            Long l = assertInstanceOf(evOdinValue.getValue(), Long.class);
+            assertEquals(1, l.longValue());
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testIntegerValue", "x");
+            TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
+            assertEquals(1, tsOdinArrayType.getSize().intValue());
+        }
+    }
+
+    public void testAddingIntegers() throws  IOException {
+        OdinFile file = loadExpressionEval();
+        {
+            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testAddingIntegers", "Y");
+            Long l = assertInstanceOf(evOdinValue.getValue(), Long.class);
+            assertEquals(4, l.longValue());
+        }
+    }
+
+    public void testOdinOs() throws IOException {
+        OdinFile file = loadExpressionEval();
+        {
+            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_WINDOWS");
+            @NotNull Boolean val = assertInstanceOf(evOdinValue.getValue(), Boolean.class);
+            assertEquals(true, val.booleanValue());
+        }
+    }
+
+    private OdinFile loadExpressionEval() throws IOException {
+        return load("src/test/testData/expression_eval.odin");
     }
 }

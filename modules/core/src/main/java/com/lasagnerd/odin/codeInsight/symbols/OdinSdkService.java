@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.openapi.project.Project;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinFile;
@@ -20,6 +21,10 @@ public interface OdinSdkService {
     List<OdinSymbol> getRuntimeCoreSymbols();
 
     List<OdinSymbol> getBuiltInSymbols();
+
+    OdinSymbolTable getBuiltInSymbolTable();
+
+    EvOdinValue getValue(String name);
 
     OdinSymbol getSymbol(String symbolName);
 

@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight.symbols;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
@@ -29,6 +30,8 @@ public class OdinSymbolTable {
     private String packagePath;
     public static final OdinSymbolTable EMPTY = new OdinSymbolTable();
     Map<String, OdinSymbol> symbolNameMap = new HashMap<>();
+
+    Map<String, EvOdinValue> valueStorage = new HashMap<>();
 
 
     /**
@@ -68,6 +71,14 @@ public class OdinSymbolTable {
             return odinSymbol;
 
         return parentSymbolTable != null? parentSymbolTable.getSymbol(name) : null;
+    }
+
+    public EvOdinValue getValue(String name) {
+        EvOdinValue value = valueStorage.get(name);
+        if(value != null)
+            return value;
+
+        return parentSymbolTable != null? parentSymbolTable.getValue(name) : null;
     }
 
     @Nullable
@@ -231,5 +242,9 @@ public class OdinSymbolTable {
                 parentSymbolTable = symbolTable;
             }
         }
+    }
+
+    public void addAll(Map<String, EvOdinValue> builtInValues) {
+        valueStorage.putAll(builtInValues);
     }
 }

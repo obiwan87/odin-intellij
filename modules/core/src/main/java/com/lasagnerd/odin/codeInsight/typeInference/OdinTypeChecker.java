@@ -11,7 +11,7 @@ import java.util.List;
 
 public class OdinTypeChecker {
 
-    static boolean checkTypesStrictly(TsOdinType argumentType, TsOdinType parameterType) {
+    public static boolean checkTypesStrictly(TsOdinType argumentType, TsOdinType parameterType) {
         final TsOdinType argumentBaseType = argumentType.baseType();
         final TsOdinType parameterBaseType = parameterType.baseType();
 

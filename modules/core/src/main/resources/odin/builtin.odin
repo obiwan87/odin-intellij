@@ -39,6 +39,7 @@ conj       :: proc(value: Complex_Or_Quaternion) -> Complex_Or_Quaternion ---
 	This is interally from the compiler
 */
 
+@builtin
 Odin_OS_Type :: enum int {
     Unknown,
     Windows,
@@ -54,7 +55,7 @@ Odin_OS_Type :: enum int {
 }
 
 @builtin
-ODIN_OS: Odin_OS_Type
+ODIN_OS : Odin_OS_Type : .Unknown
 
 Odin_Arch_Type :: enum int {
     Unknown,

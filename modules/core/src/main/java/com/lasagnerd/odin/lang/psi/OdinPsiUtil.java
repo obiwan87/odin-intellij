@@ -62,6 +62,17 @@ public class OdinPsiUtil {
             OdinTypes.OROR,
             OdinTypes.ANDAND);
 
+    public static final TokenSet COMPARISON_OPERATORS = TokenSet.create(
+            OdinTypes.LT,
+            OdinTypes.GT,
+            OdinTypes.LTE,
+            OdinTypes.GTE,
+            OdinTypes.EQEQ,
+            OdinTypes.NEQ,
+            OdinTypes.OROR,
+            OdinTypes.ANDAND
+    );
+
     public static boolean shouldAskParentForReferences(OdinImportPath ignored,
                                                        @NotNull PsiReferenceService.Hints ignored2) {
         return true;
@@ -198,7 +209,7 @@ public class OdinPsiUtil {
 
     public static OdinType getTypeDefinition(OdinParameterDeclarator statement) {
         OdinTypeDefinitionContainer typeDefinitionContainer = statement.getTypeDefinitionContainer();
-        if(typeDefinitionContainer != null) {
+        if (typeDefinitionContainer != null) {
             return typeDefinitionContainer.getType();
         }
 

@@ -2,12 +2,15 @@ package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.evaluation.EvEnumValue;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
@@ -40,7 +43,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     private final Map<String, OdinSymbol> symbolsCache = new HashMap<>();
     private final Map<String, TsOdinType> typesCache = new HashMap<>();
     private Map<OdinImport, List<OdinFile>> sdkImportsCache;
-
+    private Map<String, EvOdinValue> builtInValues;
 
 
     public OdinSdkServiceBase(Project project) {
@@ -88,6 +91,64 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         if (builtInSymbols == null)
             builtInSymbols = doFindBuiltInSymbols();
         return builtInSymbols;
+    }
+
+    @Override
+    public OdinSymbolTable getBuiltInSymbolTable() {
+        if (builtInValues == null) {
+            builtInValues = populateBuiltinValues();
+        }
+        OdinSymbolTable symbolTable = new OdinSymbolTable();
+        symbolTable.addAll(builtInSymbols);
+        symbolTable.addAll(builtInValues);
+        return symbolTable;
+    }
+
+    @Override
+    public EvOdinValue getValue(String name) {
+        if(builtInValues == null) {
+            builtInValues = populateBuiltinValues();
+        }
+        return builtInValues.get(name);
+    }
+
+    private Map<String, EvOdinValue> populateBuiltinValues() {
+        if (builtInSymbols == null)
+            builtInSymbols = doFindBuiltInSymbols();
+
+        Map<String, EvOdinValue> valueMap = new HashMap<>();
+        // ODIN_OS
+        {
+            TsOdinType odinOsType = getType("Odin_OS_Type");
+        /*
+        	    Unknown,
+                Windows,
+                Darwin,
+                Linux,
+                Essence,
+                FreeBSD,
+                Haiku,
+                OpenBSD,
+                WASI,
+                JS,
+                Freestanding,
+         */
+
+            EvEnumValue enumValue;
+            if (SystemInfo.isWindows) {
+                enumValue = new EvEnumValue("Windows", 1);
+            } else if (SystemInfo.isLinux || SystemInfo.isMac) {
+                enumValue = new EvEnumValue("Linux", 3);
+            } else {
+                enumValue = new EvEnumValue("Unknown", 0);
+            }
+            EvOdinValue value = new EvOdinValue(enumValue, odinOsType);
+            valueMap.put("ODIN_OS", value);
+            EvOdinValue stringValue = new EvOdinValue(enumValue.getName().toLowerCase(), TsOdinBuiltInTypes.STRING);
+            valueMap.put("ODIN_OS_STRING", stringValue);
+        }
+
+        return valueMap;
     }
 
     @Override
@@ -140,17 +201,18 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         builtInSymbols = null;
         runtimeCoreSymbols = null;
         sdkImportsCache = null;
+        builtInValues = null;
         symbolsCache.clear();
         typesCache.clear();
     }
 
     @Override
     public Map<OdinImport, List<OdinFile>> getSdkPackages() {
-        if(sdkImportsCache != null)
+        if (sdkImportsCache != null)
             return sdkImportsCache;
         sdkImportsCache = new HashMap<>();
         Optional<String> sdkPath = OdinSdkUtils.getValidSdkPath(project);
-        if(sdkPath.isPresent()) {
+        if (sdkPath.isPresent()) {
             List<String> collections = List.of("core", "base", "vendor");
             for (String collection : collections) {
                 Path rootDirPath = Path.of(sdkPath.get(), collection);

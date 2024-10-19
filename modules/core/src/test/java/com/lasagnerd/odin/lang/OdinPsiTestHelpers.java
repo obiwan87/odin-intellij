@@ -16,6 +16,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -79,6 +81,12 @@ class OdinPsiTestHelpers {
         return OdinInferenceEngine.doInferType(odinExpression);
     }
 
+    static EvOdinValue evaluateFirstRightHandExpressionOfConstant(OdinFile odinFile, String procedureName, String variableName) {
+        OdinExpression odinExpression = findFirstExpressionOfConstant(odinFile, procedureName, variableName);
+
+        return OdinExpressionEvaluator.evaluate(OdinSymbolTableResolver.computeSymbolTable(odinExpression), odinExpression);
+    }
+
     static OdinExpression findFirstExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         var shapeVariable = findFirstVariableDeclarationStatement(odinFile, procedureName,
                 variableName);
@@ -118,6 +126,23 @@ class OdinPsiTestHelpers {
         return variable;
     }
 
+    static @NotNull OdinConstantInitializationStatement findFirstConstant(PsiElement parent, String constantName) {
+        Collection<OdinConstantInitializationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinConstantInitializationStatement.class);
+
+        OdinConstantInitializationStatement variable = vars.stream()
+                .filter(v -> v.getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), constantName)))
+                .findFirst().orElse(null);
+        TestCase.assertNotNull(variable);
+
+        return variable;
+    }
+
+    static @NotNull OdinConstantInitializationStatement findFirstConstant(OdinFile odinFile, String procedureName, String variableName) {
+        OdinProcedureDefinition procedure = findFirstProcedure(odinFile, procedureName);
+        TestCase.assertNotNull(procedure);
+        return findFirstConstant(procedure, variableName);
+    }
+
     static @NotNull OdinVariableDeclarationStatement findFirstVariableDeclaration(PsiElement parent, String variableName) {
         Collection<OdinVariableDeclarationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinVariableDeclarationStatement.class);
 
@@ -127,6 +152,12 @@ class OdinPsiTestHelpers {
         TestCase.assertNotNull(variable);
 
         return variable;
+    }
+
+    static OdinExpression findFirstExpressionOfConstant(OdinFile odinFile, String procedureName, String variableName) {
+        var shapeVariable = findFirstConstant(odinFile, procedureName,
+                variableName);
+        return Objects.requireNonNull(shapeVariable).getExpressionList().getFirst();
     }
 
     static @NotNull TsOdinType inferTypeOfFirstExpressionInProcedure(OdinFile odinFile, String procedureName) {

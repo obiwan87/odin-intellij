@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight.typeInference;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
@@ -72,15 +73,19 @@ public class OdinTypeResolver extends OdinVisitor {
                                                        @NotNull OdinType type) {
 
         TsOdinType tsOdinType = resolveType(symbolTable, declaredIdentifier, declaration, type);
+
+        return createMetaType(tsOdinType, firstExpression);
+    }
+
+    public static @NotNull TsOdinMetaType createMetaType(TsOdinType tsOdinType, OdinExpression firstExpression) {
         TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(tsOdinType.getMetaType());
         tsOdinMetaType.setName(tsOdinType.getName());
         tsOdinMetaType.setDeclaredIdentifier(tsOdinMetaType.getDeclaredIdentifier());
         tsOdinMetaType.setDeclaration(tsOdinType.getDeclaration());
         tsOdinMetaType.setSymbolTable(tsOdinType.getSymbolTable());
         tsOdinMetaType.setRepresentedType(tsOdinType);
-        tsOdinMetaType.setPsiType(type);
+        tsOdinMetaType.setPsiType(tsOdinType.getPsiType());
         tsOdinMetaType.setDistinct(OdinInsightUtils.isDistinct(firstExpression));
-
         return tsOdinMetaType;
     }
 
@@ -375,7 +380,9 @@ public class OdinTypeResolver extends OdinVisitor {
                                                                        TsOdinType resolvedMetaType,
                                                                        OdinDeclaration odinDeclaration,
                                                                        OdinExpression odinExpression) {
-        typeAlias.setAliasedType(resolvedMetaType);
+        if(typeAlias != resolvedMetaType) {
+            typeAlias.setAliasedType(resolvedMetaType);
+        }
         typeAlias.setDeclaration(odinDeclaration);
         typeAlias.setDeclaredIdentifier(identifier);
         typeAlias.setName(identifier.getName());
@@ -543,8 +550,13 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitArrayType(@NotNull OdinArrayType arrayType) {
         TsOdinArrayType tsOdinArrayType = new TsOdinArrayType();
         tsOdinArrayType.setSymbolTable(symbolTable);
-        tsOdinArrayType.setPsiSizeElement(arrayType.getArraySize());
+        OdinArraySize arraySize = arrayType.getArraySize();
+        tsOdinArrayType.setPsiSizeElement(arraySize);
         tsOdinArrayType.setPsiType(arrayType);
+        if(arraySize.getExpression() != null) {
+            Integer sizeValue = OdinExpressionEvaluator.evaluate(symbolTable, arraySize.getExpression()).asInt();
+            tsOdinArrayType.setSize(sizeValue);
+        }
 
         tsOdinArrayType.setSoa(checkDirective(arrayType.getDirectiveIdentifier(), "#soa"));
         tsOdinArrayType.setSimd(checkDirective(arrayType.getDirectiveIdentifier(), "#simd"));
