@@ -2,6 +2,8 @@ package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeChecker;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
@@ -137,5 +139,19 @@ public abstract class TsOdinType {
         return defaultValue;
     }
 
+    public boolean isInteger() {
+        return TsOdinBuiltInTypes.getIntegerTypes().contains(this);
+    }
+
+    public TsOdinType typed() {
+        if(isUntyped()) {
+            return OdinTypeConverter.convertToTyped(this);
+        }
+        return this;
+    }
+
+    public boolean isBool() {
+        return  TsOdinBuiltInTypes.getBoolTypes().contains(this);
+    }
 }
 

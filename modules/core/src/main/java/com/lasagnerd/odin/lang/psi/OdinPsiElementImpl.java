@@ -7,9 +7,17 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
-public class OdinPsiElementImpl extends ASTWrapperPsiElement {
+@Setter
+@Getter
+public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiElement {
+
+    protected OdinSymbolTable symbolTable;
+
     public OdinPsiElementImpl(@NotNull ASTNode node) {
         super(node);
     }
@@ -32,5 +40,8 @@ public class OdinPsiElementImpl extends ASTWrapperPsiElement {
         return references;
     }
 
-
+    @Override
+    public void subtreeChanged() {
+        symbolTable = null;
+    }
 }

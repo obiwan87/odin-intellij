@@ -20,6 +20,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinLanguage;
@@ -31,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class OdinDocumentationProvider extends AbstractDocumentationProvider {
     @Override
@@ -45,13 +49,13 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
         }
 
         String declarationText = "";
-        if(declaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
+        if (declaration instanceof OdinFieldDeclarationStatement) {
             declarationText += "field ";
         }
 
         declarationText += declaredIdentifier.getName();
 
-        if(declaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
+        if (declaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
             declarationText += ": " + fieldDeclarationStatement.getType().getText();
         }
 
@@ -73,12 +77,26 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
         }
 
 
-
         OdinType declaredType = OdinInsightUtils.getDeclaredType(declaredIdentifier);
         if (declaredType instanceof OdinProcedureLiteralType procedureLiteralType) {
             declarationText += procedureLiteralType.getProcedureDefinition().getProcedureSignature().getText();
         } else if (declaredType != null) {
             declarationText += declaredType.getText();
+        } else if (declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
+            int index = constantInitializationStatement.getDeclaredIdentifiers().indexOf(declaredIdentifier);
+            OdinExpression odinExpression = constantInitializationStatement.getExpressionList().get(index);
+            String name = declaredIdentifier.getName();
+
+            if (name != null && name.startsWith("ODIN_")) {
+                EvOdinValue value = OdinSdkService.getInstance(declaration.getProject()).getValue(name);
+                if (value != null && !value.isNull() && value.getValue() != null) {
+                    declarationText += value.getValue() + " (evaluated)";
+                } else {
+                    declarationText += "NULL (evaluated)";
+                }
+            } else {
+                declarationText += odinExpression.getText();
+            }
         }
 
         StringBuilder builder = new StringBuilder();

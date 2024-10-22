@@ -280,6 +280,7 @@
                                       implementationClass="com.lasagnerd.odin.structureView.OdinStructureViewFactory"/>
         <notificationGroup id="Odin Notifications"
                            displayType="BALLOON"
+                           bundle="odin.Bundle"
                            key="notification.odin"/>
 
 
@@ -330,6 +331,13 @@
                                 implementationClass="com.lasagnerd.odin.projectStructure.collection.OdinCollectionTargetElementEvaluator"/>
         <fileIconProvider implementation="com.lasagnerd.odin.projectStructure.OdinFileTypeIconProvider"/>
         <refactoring.moveHandler implementation="com.lasagnerd.odin.codeInsight.refactor.OdinMovePackageHandler" order="first"/>
+        <codeInsight.declarativeInlayProvider implementationClass="com.lasagnerd.odin.codeInsight.inlayHints.OdinWhenStatementInlayHintsProvider"
+                                              language="Odin"
+                                              group="VALUES_GROUP"
+                                              isEnabledByDefault="true"
+                                              nameKey="odin.whenEval"
+                                              providerId="Odin"
+                                              bundle="odin.Bundle"/>
     </extensions>
 
     <extensionPoints>

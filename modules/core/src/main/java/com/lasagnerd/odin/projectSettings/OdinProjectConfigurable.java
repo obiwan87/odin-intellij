@@ -112,6 +112,7 @@ public class OdinProjectConfigurable implements Configurable {
 
     @Override
     public void disposeUIResources() {
+        this.sdkSettings.dispose();
         this.sdkSettings = null;
     }
 

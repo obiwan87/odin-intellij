@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 
 import java.util.*;
@@ -134,13 +135,22 @@ public class TsOdinBuiltInTypes {
             "typeid",
             "nil"
     );
+
+    public static final Map<String, EvOdinValue> BUILTIN_IDENTIFIERS = new HashMap<>();
+    static {
+        BUILTIN_IDENTIFIERS.put("true", new EvOdinValue(true, BOOL));
+        BUILTIN_IDENTIFIERS.put("false", new EvOdinValue(false, BOOL));
+    }
     public static final TsOdinType UNKNOWN = new TsOdinUnknownType();
+    public static final EvOdinValue NULL = new EvNullValue();
     public static final TsOdinType VOID = new TsOdinVoidType();
     
     private static final Map<String, TsOdinBuiltInType> builtInTypeMap = new HashMap<>();
     private static List<TsOdinType> integerTypes;
     private static List<TsOdinType> numericTypes;
     private static List<TsOdinType> floatingPointTypes;
+    private static List<TsOdinType> stringTypes;
+    private static List<TsOdinType> boolTypes;
 
     static {
         // Boolean types
@@ -234,6 +244,13 @@ public class TsOdinBuiltInTypes {
         return integerTypes;
     }
 
+    public static Collection<TsOdinType> getStringTypes() {
+        if(stringTypes == null) {
+            stringTypes = List.of(STRING, C_STRING, RUNE);
+        }
+        return stringTypes;
+    }
+
     public static Collection<TsOdinType> getNumericTypes() {
         if (numericTypes == null) {
             numericTypes = builtInTypeMap.values().stream()
@@ -243,6 +260,17 @@ public class TsOdinBuiltInTypes {
         }
 
         return numericTypes;
+    }
+
+    public static Collection<TsOdinType> getBoolTypes() {
+        if (boolTypes == null) {
+            boolTypes = builtInTypeMap.values().stream()
+                    .filter(t -> t instanceof TsOdinBoolType)
+                    .map(t -> (TsOdinType) t)
+                    .toList();
+        }
+
+        return boolTypes;
     }
 
     public static Collection<TsOdinType> getFloatingPointTypes() {
@@ -308,5 +336,33 @@ public class TsOdinBuiltInTypes {
         public TsOdinMetaType.MetaType getMetaType() {
             return TsOdinMetaType.MetaType.VOID;
         }
+    }
+
+    private static class EvNullValue extends EvOdinValue {
+
+        public EvNullValue() {
+            super(null, TsOdinBuiltInTypes.UNKNOWN);
+        }
+
+        @Override
+        public TsOdinType getType() {
+            return TsOdinBuiltInTypes.UNKNOWN;
+        }
+
+        @Override
+        public void setType(TsOdinType type) {
+
+        }
+
+        @Override
+        public Object getValue() {
+            return null;
+        }
+
+        @Override
+        public void setValue(Object value) {
+
+        }
+
     }
 }

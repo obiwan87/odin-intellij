@@ -355,6 +355,7 @@ dynamicArrayType                     ::= [directiveIdentifier] LBRACKET DYNAMIC 
 
 sliceType                            ::= [directiveIdentifier] LBRACKET RBRACKET type
 constantInitializationStatement      ::= symbolDefinitionHead colonClosing  <<guardedExpression incompleteGuard expressionListWithRecover>> { methods=[getTypeDefinition getExpressionList] pin=2}
+
 private incompleteGuard              ::= !(<<afterNewLine>> (symbolDefinitionHead|!expression))
 colonClosing                         ::= COLON
 
@@ -668,10 +669,9 @@ private unaryGroup                   ::= unaryPlusExpression
                                          | unaryRangeExpression
 
 
-fake unaryExpression                 ::= 'OP' expression
+fake unaryExpression                 ::= 'OP' expression {methods=[getOperator]}
 
 unaryPlusExpression                  ::= PLUS  <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
-
 unaryMinusExpression                 ::= MINUS <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
 unaryTildeExpression                 ::= TILDE <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}
 addressExpression                    ::= AND   <<enterMode "OPERAND">> expression <<exitMode "OPERAND">> {extends=unaryExpression}

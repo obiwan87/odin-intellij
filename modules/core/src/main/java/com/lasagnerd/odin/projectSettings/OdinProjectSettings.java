@@ -30,8 +30,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -57,7 +61,49 @@ public class OdinProjectSettings implements Disposable {
 
     @Override
     public void dispose() {
-
+        // Dispose of UI components
+        if (component != null) {
+            component = null;
+        }
+        if (sdkPathTextField != null) {
+            Document document = sdkPathTextField.getTextField().getDocument();
+            if(document instanceof AbstractDocument abstractDocument) {
+                for (DocumentListener documentListener : abstractDocument.getDocumentListeners()) {
+                    document.removeDocumentListener(documentListener);
+                }
+            }
+            sdkPathTextField.dispose();
+            sdkPathTextField = null;
+        }
+        if (buildFlagsTextField != null) {
+            buildFlagsTextField = null; // JBTextField does not require explicit dispose
+        }
+        if (semanticAnnotatorEnabled != null) {
+            semanticAnnotatorEnabled = null;
+        }
+        if (odinCheckerCheckbox != null) {
+            odinCheckerCheckbox = null;
+        }
+        if (debuggerCombobox != null) {
+            debuggerCombobox = null;
+        }
+        if (debuggerPathField != null) {
+            debuggerPathField.dispose();
+            debuggerPathField = null;
+        }
+        if (downloadButton != null) {
+            for (ActionListener listener : downloadButton.getActionListeners()) {
+                downloadButton.removeActionListener(listener);
+            }
+            downloadButton = null;
+        }
+        if (highlightUnknownReferencesEnabledCheckbox != null) {
+            highlightUnknownReferencesEnabledCheckbox = null;
+        }
+        if (sdkVersion != null) {
+            sdkVersion.clear(); // Clear any text or icons
+            sdkVersion = null;
+        }
     }
 
     public boolean isSemanticAnnotatorEnabled() {
@@ -196,29 +242,7 @@ public class OdinProjectSettings implements Disposable {
                 .andRegisterOnDocumentListener(sdkPathTextField.getTextField())
                 .installOn(sdkPathTextField.getTextField());
 
-        sdkPathTextField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-            @Override
-            protected void textChanged(@NotNull DocumentEvent e) {
-                if (validateSdkPath(sdkPathTextField.getText()) == null) {
-                    sdkVersion.clear();
-                    if (sdkPathTextField.getText().isBlank())
-                        return;
-
-                    sdkVersion.setIcon(AnimatedIcon.Default.INSTANCE);
-                    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                        String odinSdkVersion = OdinSdkUtils.getOdinSdkVersion(sdkPathTextField.getText());
-                        sdkVersion.clear();
-                        sdkVersion.setIcon(AllIcons.General.GreenCheckmark);
-                        sdkVersion.append("Version: "+odinSdkVersion);
-                    });
-
-                } else {
-                    sdkVersion.clear();
-                    sdkVersion.setIcon(AllIcons.General.Error);
-                    sdkVersion.append("Invalid path");
-                }
-            }
-        });
+        sdkPathTextField.getTextField().getDocument().addDocumentListener(new VersionListener());
 
         return panel;
     }
@@ -495,6 +519,30 @@ public class OdinProjectSettings implements Disposable {
                         debuggerPathField.setText(debuggerExecutablePath);
                     }
                 }
+            }
+        }
+    }
+
+    private class VersionListener extends DocumentAdapter {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
+            if (validateSdkPath(sdkPathTextField.getText()) == null) {
+                sdkVersion.clear();
+                if (sdkPathTextField.getText().isBlank())
+                    return;
+
+                sdkVersion.setIcon(AnimatedIcon.Default.INSTANCE);
+                ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                    String odinSdkVersion = OdinSdkUtils.getOdinSdkVersion(sdkPathTextField.getText());
+                    sdkVersion.clear();
+                    sdkVersion.setIcon(AllIcons.General.GreenCheckmark);
+                    sdkVersion.append("Version: "+odinSdkVersion);
+                });
+
+            } else {
+                sdkVersion.clear();
+                sdkVersion.setIcon(AllIcons.General.Error);
+                sdkVersion.append("Invalid path");
             }
         }
     }

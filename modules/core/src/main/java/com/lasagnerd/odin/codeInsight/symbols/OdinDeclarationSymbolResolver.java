@@ -6,7 +6,10 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
@@ -335,19 +338,31 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     private void addWhenBlockDeclarations(OdinWhenBlock whenBlock) {
+        OdinCondition condition = whenBlock.getCondition();
+
+        EvOdinValue conditionValue = TsOdinBuiltInTypes.NULL;
+        if (condition != null) {
+            conditionValue = OdinExpressionEvaluator.evaluate(symbolTable, condition.getExpression());
+        }
+
+        boolean ifConditionTrue = conditionValue.asBool() == Boolean.TRUE;
+        boolean ignoreCondition = conditionValue.isNull();
+
+//        boolean ifConditionTrue = true;
+//        boolean ignoreCondition = true;
+
         OdinStatementBody statementBody = whenBlock.getStatementBody();
 
-        if(statementBody != null) {
+        if (statementBody != null && (ifConditionTrue || ignoreCondition)) {
             addStatementBodySymbols(statementBody);
         }
 
         OdinElseWhenBlock elseWhenBlock = whenBlock.getElseWhenBlock();
-        if (elseWhenBlock != null) {
+        if (elseWhenBlock != null && (!ifConditionTrue || ignoreCondition)) {
             OdinWhenBlock nextWhenBlock = elseWhenBlock.getWhenBlock();
             if (nextWhenBlock != null) {
                 addWhenBlockDeclarations(nextWhenBlock);
-            }
-            if (elseWhenBlock.getStatementBody() != null) {
+            } else if (elseWhenBlock.getStatementBody() != null) {
                 addStatementBodySymbols(elseWhenBlock.getStatementBody());
             }
         }

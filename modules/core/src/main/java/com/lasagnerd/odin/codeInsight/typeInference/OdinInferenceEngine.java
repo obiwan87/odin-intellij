@@ -119,7 +119,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         PsiElement operator = o.getOperator();
         if (operator != null) {
             IElementType operatorType = PsiUtilCore.getElementType(operator);
-            this.type = OdinTypeConverter.inferTypeOfArithmeticExpression(leftType, rightType);
+            this.type = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(leftType, rightType);
         }
     }
 
@@ -341,7 +341,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         return null;
     }
 
-    private static @NotNull TsOdinMetaType createBuiltinMetaType(String name) {
+    public static @NotNull TsOdinMetaType createBuiltinMetaType(String name) {
         TsOdinBuiltInType builtInType = TsOdinBuiltInTypes.getBuiltInType(name);
         TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(builtInType.getMetaType());
         tsOdinMetaType.setName(name);
@@ -554,9 +554,9 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         } else if (typeOf != null) {
             List<OdinArgument> argumentList = o.getArgumentList();
-            if(!argumentList.isEmpty()) {
+            if (!argumentList.isEmpty()) {
                 OdinArgument first = argumentList.getFirst();
-                if(first instanceof OdinUnnamedArgument argument) {
+                if (first instanceof OdinUnnamedArgument argument) {
                     TsOdinType tsOdinType = OdinInferenceEngine.doInferType(argument.getExpression());
                     return OdinTypeResolver.createMetaType(tsOdinType, null);
                 }
@@ -1300,6 +1300,22 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         }
 
+        if (rhsContainer instanceof OdinConstantInitializationStatement constantInitializationStatement) {
+            OdinType type = constantInitializationStatement.getType();
+            if (type != null) {
+                return OdinTypeResolver.resolveType(symbolTable, type);
+            }
+            return TsOdinBuiltInTypes.UNKNOWN;
+        }
+
+        if (rhsContainer instanceof OdinVariableInitializationStatement variableInitializationStatement) {
+            OdinType declaredType = OdinInsightUtils.getDeclaredType(variableInitializationStatement);
+            if (declaredType != null) {
+                return OdinTypeResolver.resolveType(symbolTable, declaredType);
+            }
+            return TsOdinBuiltInTypes.UNKNOWN;
+        }
+
         // TODO: add argument
         return TsOdinBuiltInTypes.VOID;
     }
@@ -1325,7 +1341,9 @@ public class OdinInferenceEngine extends OdinVisitor {
                         OdinRhs.class,
                         OdinArgument.class,
                         OdinRhsExpressions.class,
-                        OdinCaseClause.class
+                        OdinCaseClause.class,
+                        OdinVariableInitializationStatement.class,
+                        OdinConstantInitializationStatement.class
                 },
                 new Class<?>[]{
                         OdinLhsExpressions.class,

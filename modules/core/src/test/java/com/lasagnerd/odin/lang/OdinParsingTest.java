@@ -46,6 +46,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -1523,18 +1524,18 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testTypeConversion() {
         {
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfArithmeticExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
         {
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfArithmeticExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.STRING);
         }
 
         {
             TsOdinArrayType arrayType = new TsOdinArrayType();
             arrayType.setElementType(TsOdinBuiltInTypes.I32);
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfArithmeticExpression(arrayType, TsOdinBuiltInTypes.UNTYPED_INT);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(arrayType, TsOdinBuiltInTypes.UNTYPED_INT);
             assertEquals(tsOdinType, arrayType);
         }
     }
@@ -2291,12 +2292,45 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    public void testOdinOs() throws IOException {
+    public void testOdinContants() throws IOException {
         OdinFile file = loadExpressionEval();
+        {
+            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_BUILD_MODE_DYNAMIC");
+            @NotNull Boolean val = assertInstanceOf(evOdinValue.getValue(), Boolean.class);
+            assertEquals(false, val.booleanValue());
+        }
+
         {
             EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_WINDOWS");
             @NotNull Boolean val = assertInstanceOf(evOdinValue.getValue(), Boolean.class);
             assertEquals(true, val.booleanValue());
+        }
+
+
+    }
+
+    public void testWhenStatement() throws IOException {
+        OdinFile file = loadExpressionEval();
+        {
+            OdinProcedureDefinition proc = findFirstProcedure(file, "testWhenStatementConditions");
+            Collection<OdinCondition> conditions = PsiTreeUtil.findChildrenOfType(proc, OdinCondition.class);
+            for (OdinCondition condition : conditions) {
+                try {
+
+
+                OdinExpression expression = condition.getExpression();
+                EvOdinValue value = OdinExpressionEvaluator.evaluate(expression);
+                System.out.printf("%s -> %s%n", expression.getText(), value);
+                } catch (StackOverflowError t) {
+                    System.out.println(condition.getExpression().getText() + " caused a stack overflow");
+                }
+            }
+        }
+
+        {
+            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testWhenStatement", "Y");
+            @NotNull Long val = assertInstanceOf(evOdinValue.getValue(), Long.class);
+            assertEquals(3, val.longValue());
         }
     }
 

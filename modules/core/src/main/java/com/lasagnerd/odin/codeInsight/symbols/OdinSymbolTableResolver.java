@@ -21,6 +21,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class OdinSymbolTableResolver {
     public static OdinSymbolTable computeSymbolTable(@NotNull PsiElement element) {
@@ -125,11 +126,11 @@ public class OdinSymbolTableResolver {
     }
 
     private static List<OdinSymbol> getBuiltInSymbols(Project project) {
-        OdinSdkService builtinSymbolService = OdinSdkService.getInstance(project);
-        if (builtinSymbolService != null)
-            return builtinSymbolService.getBuiltInSymbols().stream()
-                    .filter(s -> s.getVisibility()== OdinSymbol.OdinVisibility.PUBLIC)
-                    .toList();
+        OdinSdkService sdkService = OdinSdkService.getInstance(project);
+        if (sdkService != null)
+            return sdkService.getBuiltInSymbols().stream()
+                    .filter(s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC)
+                    .collect(Collectors.toCollection(ArrayList::new));
         return Collections.emptyList();
     }
 
@@ -143,8 +144,13 @@ public class OdinSymbolTableResolver {
         List<OdinSymbol> builtInSymbols = getBuiltInSymbols(project);
 
         OdinSymbolTable builtinSymbolTable = OdinSymbolTable.from(builtInSymbols);
+
+        OdinSdkService sdkService = OdinSdkService.getInstance(element.getProject());
+
         // 0. Import built-in symbols
-        symbolTable.setRoot(builtinSymbolTable);
+        if (!sdkService.isInSyntheticOdinFile(element)) {
+            symbolTable.setRoot(builtinSymbolTable);
+        }
 
         // 1. Import symbols from this file
         // Will be done organically by going up tree
@@ -176,7 +182,7 @@ public class OdinSymbolTableResolver {
         // 3. Import symbols from the scope tree
         OdinSymbolTable odinSymbolTable = doFindVisibleSymbols(packagePath, element, s -> false, false, symbolTable);
         odinSymbolTable.setPackagePath(packagePath);
-//        odinSymbolTable.setRoot(symbolTable);
+
 
         return odinSymbolTable;
     }
@@ -197,14 +203,14 @@ public class OdinSymbolTableResolver {
         }
 
         OdinBuildFlag[] buildFlags = PsiTreeUtil.getChildrenOfType(fileScope, OdinBuildFlag.class);
-        if(buildFlags == null)
+        if (buildFlags == null)
             return OdinSymbol.OdinVisibility.PUBLIC;
 
         for (OdinBuildFlag buildFlag : buildFlags) {
 
             String prefix = buildFlag.getBuildFlagPrefix().getText();
-            if(prefix.equals("#+private")) {
-                if(buildFlag.getBuildFlagContent() != null && buildFlag.getBuildFlagContent()
+            if (prefix.equals("#+private")) {
+                if (buildFlag.getBuildFlagContent() != null && buildFlag.getBuildFlagContent()
                         .getText()
                         .trim()
                         .equals("file")) {
@@ -296,7 +302,7 @@ public class OdinSymbolTableResolver {
             return findSymbols(originalPosition, false);
         }
 
-        private OdinSymbolTable findSymbols(PsiElement position, boolean constantsOnly) {
+        private OdinSymbolTable findSymbols(PsiElement element, boolean constantsOnly) {
             // 1. Find the starting point
             //  = a statement whose parent is a scope block
             // 2. Get the parent and get all declarations inside the scope block
@@ -304,7 +310,7 @@ public class OdinSymbolTableResolver {
             // 4. Add all non-constant declarations, depending on whether the position is before or after
             //    the declared symbol
 
-            OdinScopeArea containingScopeBlock = PsiTreeUtil.getParentOfType(position, OdinScopeArea.class);
+            OdinScopeArea containingScopeBlock = PsiTreeUtil.getParentOfType(element, OdinScopeArea.class);
 
             boolean fileScope = containingScopeBlock instanceof OdinFileScope;
             boolean foreignBlock = containingScopeBlock instanceof OdinForeignBlock;
@@ -313,7 +319,14 @@ public class OdinSymbolTableResolver {
                 return Objects.requireNonNullElseGet(initialSymbolTable, () -> new OdinSymbolTable(packagePath));
             }
 
+//            if(element instanceof OdinPsiElement odinPsiElement && odinPsiElement.getSymbolTable() != null)
+//                return odinPsiElement.getSymbolTable();
+
             OdinSymbolTable symbolTable = new OdinSymbolTable(packagePath);
+//            if(element instanceof OdinPsiElement odinPsiElement) {
+//                odinPsiElement.setSymbolTable(symbolTable);
+//            }
+
             // Since odin does not support closures, all symbols above the current scope, are visible only if they are constants
             boolean isContainingBlockProcedure = containingScopeBlock instanceof OdinProcedureDefinition;
             boolean constantsOnlyNext = isContainingBlockProcedure || constantsOnly;
@@ -321,7 +334,7 @@ public class OdinSymbolTableResolver {
             symbolTable.setParentSymbolTable(parentSymbolTable);
 
             // Bring field declarations and swizzle into scope
-            OdinLhs lhs = PsiTreeUtil.getParentOfType(position, OdinLhs.class, false);
+            OdinLhs lhs = PsiTreeUtil.getParentOfType(element, OdinLhs.class, false);
             if (lhs != null && containingScopeBlock instanceof OdinCompoundLiteral compoundLiteral) {
                 TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(symbolTable, compoundLiteral);
                 List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, tsOdinType.getSymbolTable());

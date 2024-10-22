@@ -42,7 +42,7 @@ public class OdinTypeConverter {
 
     }
 
-    public static @NotNull TsOdinType inferTypeOfArithmeticExpression(@NotNull TsOdinType a, @NotNull TsOdinType b) {
+    public static @NotNull TsOdinType inferTypeOfSymmetricalBinaryExpression(@NotNull TsOdinType a, @NotNull TsOdinType b) {
         if (a.isUnknown() || b.isUnknown())
             return TsOdinBuiltInTypes.UNKNOWN;
 

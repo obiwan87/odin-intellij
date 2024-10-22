@@ -6,7 +6,6 @@ import lombok.Data;
 
 @Data
 public class EvOdinValue {
-    public static final EvOdinValue NULL = new EvOdinValue(null, TsOdinBuiltInTypes.UNKNOWN);
 
     TsOdinType type;
     Object value;
@@ -17,7 +16,7 @@ public class EvOdinValue {
     }
 
     public boolean isNull() {
-        return this == NULL;
+        return this == TsOdinBuiltInTypes.NULL;
     }
 
     public TsOdinType asType() {
@@ -25,6 +24,14 @@ public class EvOdinValue {
             return tsOdinType;
         }
         return null;
+    }
+
+    public Boolean asBool() {
+        if(value instanceof Boolean) {
+            return (Boolean) value;
+        }
+
+        return false;
     }
 
     public TsOdinType asBaseType() {
@@ -79,5 +86,12 @@ public class EvOdinValue {
         if(intValue == null)
             return defaultValue;
         return intValue;
+    }
+
+    public String asString() {
+        if(value instanceof String) {
+            return (String) value;
+        }
+        return null;
     }
 }

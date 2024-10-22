@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
@@ -23,6 +24,8 @@ public interface OdinSdkService {
     List<OdinSymbol> getBuiltInSymbols();
 
     OdinSymbolTable getBuiltInSymbolTable();
+
+    boolean isInSyntheticOdinFile(PsiElement element);
 
     EvOdinValue getValue(String name);
 

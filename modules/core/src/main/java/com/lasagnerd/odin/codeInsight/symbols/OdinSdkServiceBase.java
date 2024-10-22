@@ -5,6 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
@@ -14,11 +16,13 @@ import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
-import com.lasagnerd.odin.codeInsight.typeSystem.*;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
-import org.jetbrains.annotations.NotNull;
+import org.apache.commons.lang3.ArchUtils;
+import org.apache.commons.lang3.arch.Processor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +48,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     private final Map<String, TsOdinType> typesCache = new HashMap<>();
     private Map<OdinImport, List<OdinFile>> sdkImportsCache;
     private Map<String, EvOdinValue> builtInValues;
+    private List<OdinFile> syntheticFiles = new ArrayList<>();
 
 
     public OdinSdkServiceBase(Project project) {
@@ -88,15 +93,18 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
 
     @Override
     public List<OdinSymbol> getBuiltInSymbols() {
-        if (builtInSymbols == null)
-            builtInSymbols = doFindBuiltInSymbols();
+        if (builtInSymbols == null) {
+            builtInSymbols = new ArrayList<>();
+            populateBuiltinSymbols(builtInSymbols);
+        }
         return builtInSymbols;
     }
 
     @Override
     public OdinSymbolTable getBuiltInSymbolTable() {
         if (builtInValues == null) {
-            builtInValues = populateBuiltinValues();
+            builtInValues = new HashMap<>();
+            populateBuiltinValues(builtInValues);
         }
         OdinSymbolTable symbolTable = new OdinSymbolTable();
         symbolTable.addAll(builtInSymbols);
@@ -105,21 +113,55 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     }
 
     @Override
+    public boolean isInSyntheticOdinFile(PsiElement element) {
+        PsiFile containingFile = element.getContainingFile();
+        if (containingFile instanceof OdinFile)
+            return syntheticFiles.contains(containingFile);
+        return false;
+    }
+
+    @Override
     public EvOdinValue getValue(String name) {
-        if(builtInValues == null) {
-            builtInValues = populateBuiltinValues();
+        if (builtInValues == null) {
+            builtInValues = new HashMap<>();
+            populateBuiltinValues(builtInValues);
         }
         return builtInValues.get(name);
     }
 
-    private Map<String, EvOdinValue> populateBuiltinValues() {
-        if (builtInSymbols == null)
-            builtInSymbols = doFindBuiltInSymbols();
+    private void populateBuiltinValues(Map<String, EvOdinValue> valueMap) {
+        if (builtInSymbols == null) {
+            builtInSymbols = new ArrayList<>();
+            populateBuiltinSymbols(builtInSymbols);
+        }
 
-        Map<String, EvOdinValue> valueMap = new HashMap<>();
         // ODIN_OS
         {
-            TsOdinType odinOsType = getType("Odin_OS_Type");
+            setOdinOs(valueMap);
+            setOdinArch(valueMap);
+        }
+    }
+
+    private void setOdinArch(Map<String, EvOdinValue> valueMap) {
+        TsOdinType odinArchType = getType("Odin_Arch_Type");
+        Processor processor = ArchUtils.getProcessor();
+        Processor.Type type = processor.getType();
+
+        EvEnumValue enumName = switch (type) {
+            case AARCH_64 -> new EvEnumValue("arm46", 0);
+            case X86 -> new EvEnumValue("i386", 2);
+            case IA_64, PPC, UNKNOWN -> new EvEnumValue("Unknown", 0);
+            case RISC_V -> new EvEnumValue("riscv64", 6);
+            case null -> new EvEnumValue("Unknown", 0);
+        };
+
+        EvOdinValue value = new EvOdinValue(enumName, odinArchType);
+        valueMap.put("ODIN_ARCH", value);
+        valueMap.put("ODIN_ARCH_STRING", new EvOdinValue(enumName.getName().toLowerCase(), TsOdinBuiltInTypes.STRING));
+    }
+
+    private void setOdinOs(Map<String, EvOdinValue> valueMap) {
+        TsOdinType odinOsType = getType("Odin_OS_Type");
         /*
         	    Unknown,
                 Windows,
@@ -134,21 +176,21 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                 Freestanding,
          */
 
-            EvEnumValue enumValue;
-            if (SystemInfo.isWindows) {
-                enumValue = new EvEnumValue("Windows", 1);
-            } else if (SystemInfo.isLinux || SystemInfo.isMac) {
-                enumValue = new EvEnumValue("Linux", 3);
-            } else {
-                enumValue = new EvEnumValue("Unknown", 0);
-            }
-            EvOdinValue value = new EvOdinValue(enumValue, odinOsType);
-            valueMap.put("ODIN_OS", value);
-            EvOdinValue stringValue = new EvOdinValue(enumValue.getName().toLowerCase(), TsOdinBuiltInTypes.STRING);
-            valueMap.put("ODIN_OS_STRING", stringValue);
+        EvEnumValue enumValue;
+        if (SystemInfo.isWindows) {
+            enumValue = new EvEnumValue("Windows", 1);
+        } else if (SystemInfo.isLinux || SystemInfo.isMac) {
+            enumValue = new EvEnumValue("Linux", 3);
+        } else {
+            enumValue = new EvEnumValue("Unknown", 0);
         }
+        EvOdinValue value = new EvOdinValue(enumValue, odinOsType);
+        valueMap.put("ODIN_OS", value);
 
-        return valueMap;
+        EvOdinValue stringValue = new EvOdinValue(enumValue
+                .getName()
+                .toLowerCase(), TsOdinBuiltInTypes.STRING);
+        valueMap.put("ODIN_OS_STRING", stringValue);
     }
 
     @Override
@@ -204,6 +246,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         builtInValues = null;
         symbolsCache.clear();
         typesCache.clear();
+        syntheticFiles.clear();
     }
 
     @Override
@@ -217,8 +260,10 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             for (String collection : collections) {
                 Path rootDirPath = Path.of(sdkPath.get(), collection);
                 VirtualFile rootDirPathFile = VirtualFileManager.getInstance().findFileByNioPath(rootDirPath);
-                Map<OdinImport, List<OdinFile>> odinImportListMap = OdinImportUtils.collectImportablePackages(project, rootDirPathFile, collection, null);
-                sdkImportsCache.putAll(odinImportListMap);
+                if (rootDirPathFile != null) {
+                    Map<OdinImport, List<OdinFile>> odinImportListMap = OdinImportUtils.collectImportablePackages(project, rootDirPathFile, collection, null);
+                    sdkImportsCache.putAll(odinImportListMap);
+                }
             }
         }
 
@@ -235,9 +280,8 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         return OdinInsightUtils.getDeclaredType(declaration, OdinStructType.class);
     }
 
-    private @NotNull List<OdinSymbol> doFindBuiltInSymbols() {
+    private void populateBuiltinSymbols(List<OdinSymbol> builtinSymbols) {
         // TODO Cache this stuff
-        List<OdinSymbol> builtinSymbols = new ArrayList<>();
         Collection<TsOdinType> builtInTypes = TsOdinBuiltInTypes.getBuiltInTypes();
         for (TsOdinType builtInType : builtInTypes) {
             OdinSymbol odinSymbol = new OdinSymbol();
@@ -253,7 +297,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         Optional<String> sdkPathOptional = getSdkPath();
 
         if (sdkPathOptional.isEmpty())
-            return Collections.emptyList();
+            return;
 
         String sdkPath = sdkPathOptional.get();
 
@@ -268,6 +312,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         List<String> resources = List.of("odin/builtin.odin", "odin/annotations.odin");
         for (String resource : resources) {
             OdinFile odinFile = createOdinFileFromResource(project, resource);
+            syntheticFiles.add(odinFile);
             if (odinFile != null) {
                 OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getSymbolTable();
                 fileScopeDeclarations
@@ -282,7 +327,6 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             }
         }
 
-        return builtinSymbols;
     }
 
     private void doFindBuiltInSymbols(List<Path> builtinPaths, List<OdinSymbol> builtinSymbols) {

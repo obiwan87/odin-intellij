@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.lasagnerd.odin.codeInsight.annotators.OdinAnnotationUtils.getUserData;
 import static com.lasagnerd.odin.lang.psi.OdinReference.logStackOverFlowError;
 
 public class OdinLangHighlightingAnnotator implements Annotator {
@@ -133,7 +134,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
     public static final String ALL_ESCAPE_SEQUENCES =
             "\\\\n|\\\\r|\\\\v|\\\\t|\\\\e|\\\\a|\\\\b|\\\\f|\\\\[0-7]{2}|\\\\x[0-9a-fA-F]{2}|\\\\u[0-9a-fA-F]{4}|\\\\U[0-9a-fA-F]{8}|\\\\\"|\\\\\\\\";
-    public static final @NotNull Key<Object> ANNOTATION_SESSION_STATE = Key.create("annotationSessionState");
+    private static final Key<OdinAnnotationSessionState> ANNOTATION_SESSION_STATE = Key.create("annotationSessionState");
     public static Pattern ESCAPE_SEQUENCES_PATTERN = Pattern.compile(ALL_ESCAPE_SEQUENCES);
 
     @Override
@@ -236,13 +237,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     }
 
     private static OdinAnnotationSessionState getAnnotationSessionState(AnnotationHolder annotationHolder) {
-        Object annotationSessionState = annotationHolder.getCurrentAnnotationSession().getUserData(ANNOTATION_SESSION_STATE);
-        if (annotationSessionState == null) {
-            OdinAnnotationSessionState newState = new OdinAnnotationSessionState();
-            annotationHolder.getCurrentAnnotationSession().putUserData(ANNOTATION_SESSION_STATE, newState);
-            return newState;
-        }
-        return (OdinAnnotationSessionState) annotationSessionState;
+        return getUserData(annotationHolder.getCurrentAnnotationSession(), ANNOTATION_SESSION_STATE, OdinAnnotationSessionState::new);
     }
 
     private void handleRefExpression(@NotNull AnnotationHolder annotationHolder,
