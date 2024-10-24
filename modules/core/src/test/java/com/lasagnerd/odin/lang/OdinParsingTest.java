@@ -2283,7 +2283,7 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    public void testAddingIntegers() throws  IOException {
+    public void testAddingIntegers() throws IOException {
         OdinFile file = loadExpressionEval();
         {
             EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testAddingIntegers", "Y");
@@ -2292,7 +2292,7 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    public void testOdinContants() throws IOException {
+    public void testOdinConstants() throws IOException {
         OdinFile file = loadExpressionEval();
         {
             EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_BUILD_MODE_DYNAMIC");
@@ -2318,9 +2318,9 @@ public class OdinParsingTest extends UsefulTestCase {
                 try {
 
 
-                OdinExpression expression = condition.getExpression();
-                EvOdinValue value = OdinExpressionEvaluator.evaluate(expression);
-                System.out.printf("%s -> %s%n", expression.getText(), value);
+                    OdinExpression expression = condition.getExpression();
+                    EvOdinValue value = OdinExpressionEvaluator.evaluate(expression);
+                    System.out.printf("%s -> %s%n", expression.getText(), value);
                 } catch (StackOverflowError t) {
                     System.out.println(condition.getExpression().getText() + " caused a stack overflow");
                 }

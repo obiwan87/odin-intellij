@@ -33,11 +33,11 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         this.symbolTable = symbolTable;
     }
 
-    public static List<OdinSymbol> getLocalSymbols(OdinDeclaration odinDeclaration) {
-        return getLocalSymbols(odinDeclaration, OdinSymbolTable.EMPTY);
+    public static List<OdinSymbol> getSymbols(OdinDeclaration odinDeclaration) {
+        return getSymbols(odinDeclaration, OdinSymbolTable.EMPTY);
     }
 
-    public static List<OdinSymbol> getLocalSymbols(OdinDeclaration odinDeclaration, OdinSymbolTable odinSymbolTable) {
+    public static List<OdinSymbol> getSymbols(OdinDeclaration odinDeclaration, OdinSymbolTable odinSymbolTable) {
         return getSymbols(OdinSymbol.OdinVisibility.NONE, odinDeclaration, odinSymbolTable);
     }
 

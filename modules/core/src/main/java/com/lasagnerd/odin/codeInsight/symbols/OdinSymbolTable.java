@@ -9,29 +9,43 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
+import com.lasagnerd.odin.lang.psi.OdinScopeArea;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Getter
 public class OdinSymbolTable {
 
     @Setter
+    OdinScopeArea containingElement;
+
+    @Setter
+    Map<OdinDeclaration, List<OdinSymbol>> declarationSymbols = new HashMap<>();
+
+    @Setter
     OdinSymbolTable parentSymbolTable;
+
+
+    public List<OdinSymbol> getDeclarationSymbols(@NotNull OdinDeclaration declaration) {
+        return declarationSymbols.getOrDefault(declaration, Collections.emptyList());
+    }
+    @Setter
+    private String packagePath;
+    public static final OdinSymbolTable EMPTY = new OdinSymbolTable();
+
+    Map<String, OdinSymbol> symbolNameMap = new HashMap<>();
+    Map<String, EvOdinValue> valueStorage = new HashMap<>();
+
 
     public OdinSymbolTable(String packagePath) {
         this.packagePath = packagePath;
     }
-
-    @Setter
-    private String packagePath;
-    public static final OdinSymbolTable EMPTY = new OdinSymbolTable();
-    Map<String, OdinSymbol> symbolNameMap = new HashMap<>();
-
-    Map<String, EvOdinValue> valueStorage = new HashMap<>();
 
 
     /**
@@ -247,4 +261,6 @@ public class OdinSymbolTable {
     public void addAll(Map<String, EvOdinValue> builtInValues) {
         valueStorage.putAll(builtInValues);
     }
+
+
 }

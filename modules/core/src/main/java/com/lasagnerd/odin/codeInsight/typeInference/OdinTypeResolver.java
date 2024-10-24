@@ -541,7 +541,7 @@ public class OdinTypeResolver extends OdinVisitor {
                                      OdinSymbolTable symbolTable) {
         if (declaredIdentifier != null) {
             symbolTable.addKnownType(declaredIdentifier, tsOdinType);
-            List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getLocalSymbols(declaration);
+            List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getSymbols(declaration);
             symbolTable.add(localSymbols.getFirst());
         }
     }

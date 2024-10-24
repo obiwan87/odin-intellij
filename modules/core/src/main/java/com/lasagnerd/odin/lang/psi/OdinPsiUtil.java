@@ -338,7 +338,7 @@ public class OdinPsiUtil {
         {
 
             for (OdinParamEntry odinParamEntry : procedureType.getParamEntryList()) {
-                declarations.addAll(OdinDeclarationSymbolResolver.getLocalSymbols(odinParamEntry.getParameterDeclaration()));
+                declarations.addAll(OdinDeclarationSymbolResolver.getSymbols(odinParamEntry.getParameterDeclaration()));
             }
         }
 
@@ -354,7 +354,7 @@ public class OdinPsiUtil {
             if (returnParameters != null) {
                 var paramEntries = procedureType.getReturnParameters().getParamEntryList();
                 for (OdinParamEntry odinParamEntry : paramEntries) {
-                    declarations.addAll(OdinDeclarationSymbolResolver.getLocalSymbols(odinParamEntry.getParameterDeclaration()));
+                    declarations.addAll(OdinDeclarationSymbolResolver.getSymbols(odinParamEntry.getParameterDeclaration()));
                 }
             }
         }
