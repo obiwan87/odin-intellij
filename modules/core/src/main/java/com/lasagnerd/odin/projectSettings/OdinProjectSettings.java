@@ -59,50 +59,57 @@ public class OdinProjectSettings implements Disposable {
     private JBCheckBox highlightUnknownReferencesEnabledCheckbox;
     private SimpleColoredComponent sdkVersion;
 
+    private final Object MUTEX = new Object();
+    private boolean diposed;
+
     @Override
     public void dispose() {
-        // Dispose of UI components
-        if (component != null) {
-            component = null;
-        }
-        if (sdkPathTextField != null) {
-            Document document = sdkPathTextField.getTextField().getDocument();
-            if(document instanceof AbstractDocument abstractDocument) {
-                for (DocumentListener documentListener : abstractDocument.getDocumentListeners()) {
-                    document.removeDocumentListener(documentListener);
+        synchronized (MUTEX) {
+
+            // Dispose of UI components
+            if (component != null) {
+                component = null;
+            }
+            if (sdkPathTextField != null) {
+                Document document = sdkPathTextField.getTextField().getDocument();
+                if (document instanceof AbstractDocument abstractDocument) {
+                    for (DocumentListener documentListener : abstractDocument.getDocumentListeners()) {
+                        document.removeDocumentListener(documentListener);
+                    }
                 }
+                sdkPathTextField.dispose();
+                sdkPathTextField = null;
             }
-            sdkPathTextField.dispose();
-            sdkPathTextField = null;
-        }
-        if (buildFlagsTextField != null) {
-            buildFlagsTextField = null; // JBTextField does not require explicit dispose
-        }
-        if (semanticAnnotatorEnabled != null) {
-            semanticAnnotatorEnabled = null;
-        }
-        if (odinCheckerCheckbox != null) {
-            odinCheckerCheckbox = null;
-        }
-        if (debuggerCombobox != null) {
-            debuggerCombobox = null;
-        }
-        if (debuggerPathField != null) {
-            debuggerPathField.dispose();
-            debuggerPathField = null;
-        }
-        if (downloadButton != null) {
-            for (ActionListener listener : downloadButton.getActionListeners()) {
-                downloadButton.removeActionListener(listener);
+            if (buildFlagsTextField != null) {
+                buildFlagsTextField = null; // JBTextField does not require explicit dispose
             }
-            downloadButton = null;
-        }
-        if (highlightUnknownReferencesEnabledCheckbox != null) {
-            highlightUnknownReferencesEnabledCheckbox = null;
-        }
-        if (sdkVersion != null) {
-            sdkVersion.clear(); // Clear any text or icons
-            sdkVersion = null;
+            if (semanticAnnotatorEnabled != null) {
+                semanticAnnotatorEnabled = null;
+            }
+            if (odinCheckerCheckbox != null) {
+                odinCheckerCheckbox = null;
+            }
+            if (debuggerCombobox != null) {
+                debuggerCombobox = null;
+            }
+            if (debuggerPathField != null) {
+                debuggerPathField.dispose();
+                debuggerPathField = null;
+            }
+            if (downloadButton != null) {
+                for (ActionListener listener : downloadButton.getActionListeners()) {
+                    downloadButton.removeActionListener(listener);
+                }
+                downloadButton = null;
+            }
+            if (highlightUnknownReferencesEnabledCheckbox != null) {
+                highlightUnknownReferencesEnabledCheckbox = null;
+            }
+            if (sdkVersion != null) {
+                sdkVersion.clear(); // Clear any text or icons
+                sdkVersion = null;
+            }
+            diposed = true;
         }
     }
 
@@ -249,8 +256,11 @@ public class OdinProjectSettings implements Disposable {
 
     private @NotNull Supplier<ValidationInfo> sdkPathValidator() {
         return () -> {
-            String sdkPath = sdkPathTextField.getText();
-            return validateSdkPath(sdkPath);
+            if (sdkPathTextField != null) {
+                String sdkPath = sdkPathTextField.getText();
+                return validateSdkPath(sdkPath);
+            }
+            return null;
         };
     }
 
@@ -287,49 +297,54 @@ public class OdinProjectSettings implements Disposable {
     }
 
     public JComponent getComponent() {
-        if (component != null)
+        synchronized (MUTEX) {
+            if (component != null)
+                return component;
+
+            if(diposed)
+                return null;
+
+            sdkVersion = new SimpleColoredComponent();
+
+            FormBuilder formBuilder = FormBuilder.createFormBuilder()
+                    .addLabeledComponent(
+                            new JBLabel("Path to SDK: "),
+                            createSdkPathTextFieldWithBrowseButton(), 1, false)
+                    .addComponentToRightColumn(sdkVersion)
+                    .addVerticalGap(10)
+                    .addLabeledComponent(
+                            new JBLabel("Checker arguments: "),
+                            createBuildFlagsTextField(), 1, false)
+                    .addComponentToRightColumn(createComment(
+                            "Optional. Space separated build flags passed to 'odin check'.<br><br>" +
+                                    "Useful flags:<ul>" +
+                                    "<li>-vet -vet-cast -strict-style (for more checks)</li>" +
+                                    "<li>-max-error-count:999 (to report more errors)</li>" +
+                                    "</ul>"), 0);
+            if (extensions.length > 0) {
+                formBuilder
+                        .addComponent(new TitledSeparator("Debugger"))
+                        .addLabeledComponent(new JBLabel("Debugger"), createDebuggerComboBox())
+                        .addLabeledComponent(new JBLabel("Debugger path"), createDebuggerPathField())
+                        .addComponentToRightColumn(createDownloadButton());
+            }
+
+            component = formBuilder
+                    .addComponent(new TitledSeparator("Miscellaneous"))
+                    .addLabeledComponent(new JBLabel("Semantic annotator"), createCustomAnnotatorCheckbox(), 1)
+                    .addComponentToRightColumn(createComment(
+                            """
+                                    <html><p>Turn this off if you get StackOverflowError's or when the <br>'Analyzing...' message on the top right corner won't disappear</p></html>
+                                    """.stripIndent()), 0)
+                    .addLabeledComponent(new JBLabel("Odin checker"), createOdinCheckerCheckbox(), 1)
+                    .addComponentToRightColumn(createComment("Enable/Disable the odin checker and the respective error messages"))
+                    .addLabeledComponent(new JBLabel("Highlight unknown references (experimental)"), createHighlightUnknownReferencesCheckbox(), 1)
+                    .addComponentToRightColumn(createComment("Enable/Disable highlighting of unknown references"))
+                    .addComponentFillVertically(new JPanel(), 1)
+                    .getPanel();
+
             return component;
-
-        sdkVersion = new SimpleColoredComponent();
-
-        FormBuilder formBuilder = FormBuilder.createFormBuilder()
-                .addLabeledComponent(
-                        new JBLabel("Path to SDK: "),
-                        createSdkPathTextFieldWithBrowseButton(), 1, false)
-                .addComponentToRightColumn(sdkVersion)
-                .addVerticalGap(10)
-                .addLabeledComponent(
-                        new JBLabel("Checker arguments: "),
-                        createBuildFlagsTextField(), 1, false)
-                .addComponentToRightColumn(createComment(
-                        "Optional. Space separated build flags passed to 'odin check'.<br><br>" +
-                                "Useful flags:<ul>" +
-                                "<li>-vet -vet-cast -strict-style (for more checks)</li>" +
-                                "<li>-max-error-count:999 (to report more errors)</li>" +
-                                "</ul>"), 0);
-        if (extensions.length > 0) {
-            formBuilder
-                    .addComponent(new TitledSeparator("Debugger"))
-                    .addLabeledComponent(new JBLabel("Debugger"), createDebuggerComboBox())
-                    .addLabeledComponent(new JBLabel("Debugger path"), createDebuggerPathField())
-                    .addComponentToRightColumn(createDownloadButton());
         }
-
-        component = formBuilder
-                .addComponent(new TitledSeparator("Miscellaneous"))
-                .addLabeledComponent(new JBLabel("Semantic annotator"), createCustomAnnotatorCheckbox(), 1)
-                .addComponentToRightColumn(createComment(
-                        """
-                                <html><p>Turn this off if you get StackOverflowError's or when the <br>'Analyzing...' message on the top right corner won't disappear</p></html>
-                                """.stripIndent()), 0)
-                .addLabeledComponent(new JBLabel("Odin checker"), createOdinCheckerCheckbox(), 1)
-                .addComponentToRightColumn(createComment("Enable/Disable the odin checker and the respective error messages"))
-                .addLabeledComponent(new JBLabel("Highlight unknown references (experimental)"), createHighlightUnknownReferencesCheckbox(), 1)
-                .addComponentToRightColumn(createComment("Enable/Disable highlighting of unknown references"))
-                .addComponentFillVertically(new JPanel(), 1)
-                .getPanel();
-
-        return component;
     }
 
     @NotNull
@@ -536,7 +551,7 @@ public class OdinProjectSettings implements Disposable {
                     String odinSdkVersion = OdinSdkUtils.getOdinSdkVersion(sdkPathTextField.getText());
                     sdkVersion.clear();
                     sdkVersion.setIcon(AllIcons.General.GreenCheckmark);
-                    sdkVersion.append("Version: "+odinSdkVersion);
+                    sdkVersion.append("Version: " + odinSdkVersion);
                 });
 
             } else {

@@ -28,7 +28,6 @@ public class OdinProjectConfigurable implements Configurable {
 
     @Override
     public @Nullable JComponent createComponent() {
-
         OdinProjectSettings odinProjectSettings = new OdinProjectSettings();
         this.sdkSettings = odinProjectSettings;
         return odinProjectSettings.getComponent();

@@ -219,7 +219,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             OdinDeclaration declaration = variantType.getDeclaration();
             if (declaration != null) {
                 List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver
-                        .getLocalSymbols(declaration, variantType.getSymbolTable());
+                        .getSymbols(declaration, variantType.getSymbolTable());
                 if (!localSymbols.isEmpty()) {
                     OdinSymbol symbol = localSymbols.getFirst();
                     if (symbol.getDeclaration() != null) {
