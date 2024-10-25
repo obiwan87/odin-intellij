@@ -364,7 +364,7 @@ colonOpening                         ::= COLON
 
 variableInitializationStatement      ::= symbolDefinitionHead EQ <<guardedExpression incompleteGuard rhsExpressions>> { methods=[getTypeDefinition getRhsExpressions] pin=2}
 
-identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
+private identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}
 
 assignmentStatement                  ::= [directiveIdentifier] lhsExpressions assignmentOperator rhsExpressions

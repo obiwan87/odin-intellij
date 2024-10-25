@@ -34,7 +34,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
         if (varInit == null)
             return;
 
-        OdinDeclaredIdentifier declaredIdentifier = varInit.getIdentifierList().getDeclaredIdentifierList().getFirst();
+        OdinDeclaredIdentifier declaredIdentifier = varInit.getDeclaredIdentifierList().getFirst();
         OdinRhsExpressions rhsExpressions = varInit.getRhsExpressions();
         if (rhsExpressions == null)
             return;
@@ -157,7 +157,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
             }
         }
 
-        return PsiUtilCore.getElementType(element) == OdinTypes.IDENTIFIER_TOKEN && varInit.getIdentifierList()
+        return PsiUtilCore.getElementType(element) == OdinTypes.IDENTIFIER_TOKEN && varInit
                 .getDeclaredIdentifierList()
                 .getFirst().getIdentifierToken() == element;
     }

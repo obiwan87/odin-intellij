@@ -884,12 +884,12 @@ public class OdinInferenceEngine extends OdinVisitor {
                 return OdinTypeResolver.resolveType(parentSymbolTable, initializationStatement.getType());
             }
 
-            int index = initializationStatement.getIdentifierList().getDeclaredIdentifierList().indexOf(declaredIdentifier);
+            int index = initializationStatement.getDeclaredIdentifierList().indexOf(declaredIdentifier);
             List<OdinExpression> expressionList = Objects
                     .requireNonNull(initializationStatement.getRhsExpressions())
                     .getExpressionList();
 
-            int lhsValuesCount = initializationStatement.getIdentifierList().getDeclaredIdentifierList().size();
+            int lhsValuesCount = initializationStatement.getDeclaredIdentifierList().size();
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
             for (OdinExpression odinExpression : expressionList) {
@@ -921,7 +921,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (metaType != null) return metaType;
 
 
-            int index = initializationStatement.getIdentifierList()
+            int index = initializationStatement
                     .getDeclaredIdentifierList()
                     .indexOf(declaredIdentifier);
 

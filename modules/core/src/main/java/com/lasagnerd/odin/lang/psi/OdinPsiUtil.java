@@ -141,7 +141,7 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinVariableInitializationStatement statement) {
-        return statement.getIdentifierList().getDeclaredIdentifierList();
+        return statement.getDeclaredIdentifierList();
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinPolymorphicType polymorphicType) {
@@ -153,11 +153,11 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinConstantInitializationStatement statement) {
-        return statement.getIdentifierList().getDeclaredIdentifierList();
+        return statement.getDeclaredIdentifierList();
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinVariableDeclarationStatement statement) {
-        return statement.getIdentifierList().getDeclaredIdentifierList();
+        return statement.getDeclaredIdentifierList();
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinFieldDeclarationStatement statement) {

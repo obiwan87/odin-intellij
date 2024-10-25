@@ -612,7 +612,7 @@ public class OdinInsightUtils {
     }
 
     public static boolean isParameterDeclaration(PsiElement element) {
-        return PsiTreeUtil.getParentOfType(element, true, OdinDeclaration.class) instanceof OdinParameterDeclaration;
+        return PsiTreeUtil.getParentOfType(element, true, OdinParameterDeclaration.class) != null;
     }
 
     public static String getLineColumn(@NotNull PsiElement element) {
@@ -823,5 +823,27 @@ public class OdinInsightUtils {
             distinct = false;
         }
         return distinct;
+    }
+
+    public static boolean isLocalVariable(OdinDeclaredIdentifier declaredIdentifier) {
+        PsiElement parent = declaredIdentifier.getParent();
+        return isLocalVariable(parent);
+    }
+
+    public static boolean isGlobalVariable(OdinDeclaredIdentifier declaredIdentifier) {
+        PsiElement parent = declaredIdentifier.getParent();
+        return (parent instanceof OdinVariableInitializationStatement || parent instanceof OdinVariableDeclarationStatement)
+                && !isLocalVariable(parent);
+    }
+
+    public static boolean isLocalVariable(@NotNull PsiElement o) {
+        if (o instanceof OdinVariableInitializationStatement || o instanceof OdinVariableDeclarationStatement) {
+            OdinFileScopeStatementList fileScope = PsiTreeUtil.getParentOfType(o, OdinFileScopeStatementList.class,
+                    true,
+                    OdinProcedureBody.class,
+                    OdinForeignBlock.class);
+            return fileScope == null;
+        }
+        return false;
     }
 }

@@ -150,6 +150,8 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitVariableInitializationStatement(@NotNull OdinVariableInitializationStatement o) {
+        boolean isLocal = OdinInsightUtils.isLocalVariable(o);
+
         boolean hasUsing = o.getUsing() != null;
         OdinType typeDefinition = o.getType();
         for (int i = 0; i < o.getDeclaredIdentifiers().size(); i++) {
@@ -158,6 +160,11 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             odinSymbol.setHasUsing(hasUsing);
             odinSymbol.setPsiType(typeDefinition);
 
+            if (isLocal) {
+                odinSymbol.setScope(OdinSymbol.OdinScope.LOCAL);
+            } else {
+                odinSymbol.setScope(OdinSymbol.OdinScope.GLOBAL);
+            }
             symbols.add(odinSymbol);
         }
 

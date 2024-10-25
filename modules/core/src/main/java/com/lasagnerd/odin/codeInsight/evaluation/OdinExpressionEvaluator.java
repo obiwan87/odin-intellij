@@ -124,7 +124,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             }
 
             // This is not a type
-            int index = constantInitializationStatement.getIdentifierList()
+            int index = constantInitializationStatement
                     .getDeclaredIdentifierList()
                     .indexOf(declaredIdentifier);
 
