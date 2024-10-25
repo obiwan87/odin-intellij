@@ -127,10 +127,17 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitVariableDeclarationStatement(@NotNull OdinVariableDeclarationStatement o) {
+        boolean isLocal = OdinInsightUtils.isLocalVariable(o);
+
         boolean hasUsing = o.getUsing() != null;
 
         for (var declaredIdentifier : o.getDeclaredIdentifiers()) {
             OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
+            if (isLocal) {
+                odinSymbol.setScope(OdinSymbol.OdinScope.LOCAL);
+            } else {
+                odinSymbol.setScope(OdinSymbol.OdinScope.GLOBAL);
+            }
             odinSymbol.setPsiType(o.getType());
             odinSymbol.setHasUsing(hasUsing);
             odinSymbol.setAttributes(o.getAttributeList());
@@ -159,7 +166,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             odinSymbol.setSymbolType(OdinSymbolType.VARIABLE);
             odinSymbol.setHasUsing(hasUsing);
             odinSymbol.setPsiType(typeDefinition);
-
+            odinSymbol.setAttributes(o.getAttributeList());
             if (isLocal) {
                 odinSymbol.setScope(OdinSymbol.OdinScope.LOCAL);
             } else {
@@ -308,7 +315,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         boolean hasUsing = o.getUsing() != null;
         for (OdinDeclaredIdentifier odinDeclaredIdentifier : o.getDeclaredIdentifierList()) {
             OdinSymbol odinSymbol = new OdinSymbol(odinDeclaredIdentifier, OdinSymbol.OdinVisibility.NONE);
-            odinSymbol.setSymbolType(OdinSymbolType.FIELD);
+            odinSymbol.setSymbolType(OdinSymbolType.STRUCT_FIELD);
             odinSymbol.setPsiType(type);
             odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
             odinSymbol.setImplicitlyDeclared(false);

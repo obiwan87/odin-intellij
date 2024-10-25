@@ -289,7 +289,7 @@ public class OdinInsightUtils {
             for (OdinDeclaredIdentifier odinDeclaredIdentifier : field.getDeclaredIdentifiers()) {
                 boolean hasUsing = field.getUsing() != null;
                 OdinSymbol odinSymbol = new OdinSymbol(odinDeclaredIdentifier);
-                odinSymbol.setSymbolType(FIELD);
+                odinSymbol.setSymbolType(STRUCT_FIELD);
                 odinSymbol.setPsiType(field.getType());
                 odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
                 odinSymbol.setHasUsing(hasUsing);
@@ -411,7 +411,7 @@ public class OdinInsightUtils {
     public static @NotNull OdinSymbol createBitFieldSymbol(OdinBitFieldFieldDeclaration odinBitFieldFieldDeclaration) {
         OdinDeclaredIdentifier declaredIdentifier = odinBitFieldFieldDeclaration.getDeclaredIdentifier();
         OdinSymbol symbol = new OdinSymbol();
-        symbol.setSymbolType(FIELD);
+        symbol.setSymbolType(BIT_FIELD_FIELD);
         symbol.setName(declaredIdentifier.getName());
         symbol.setDeclaredIdentifier(declaredIdentifier);
         symbol.setImplicitlyDeclared(false);
@@ -603,7 +603,7 @@ public class OdinInsightUtils {
         } else if (isPackageDeclaration(element)) {
             return PACKAGE_REFERENCE;
         } else if (isFieldDeclaration(element)) {
-            return FIELD;
+            return STRUCT_FIELD;
         } else if (isParameterDeclaration(element)) {
             return PARAMETER;
         } else {
@@ -837,7 +837,7 @@ public class OdinInsightUtils {
     }
 
     public static boolean isLocalVariable(@NotNull PsiElement o) {
-        if (o instanceof OdinVariableInitializationStatement || o instanceof OdinVariableDeclarationStatement) {
+        if (isVariable(o)) {
             OdinFileScopeStatementList fileScope = PsiTreeUtil.getParentOfType(o, OdinFileScopeStatementList.class,
                     true,
                     OdinProcedureBody.class,
@@ -845,5 +845,34 @@ public class OdinInsightUtils {
             return fileScope == null;
         }
         return false;
+    }
+
+    private static boolean isVariable(@NotNull PsiElement o) {
+        return o instanceof OdinVariableInitializationStatement || o instanceof OdinVariableDeclarationStatement;
+    }
+
+    public static boolean isStaticVariable(OdinDeclaredIdentifier declaredIdentifier) {
+        if (isVariable(declaredIdentifier.getParent())) {
+            OdinVariableDeclaration declaration = (OdinVariableDeclaration) declaredIdentifier.getParent();
+            return OdinAttributeUtils.containsAttribute(declaration.getAttributeList(), "static");
+        }
+        return false;
+    }
+
+    public static boolean isStaticProcedure(OdinDeclaredIdentifier declaredIdentifier) {
+        PsiElement parent = declaredIdentifier.getParent();
+        if(isProcedureDeclaration(parent)) {
+            OdinConstantInitializationStatement constant = (OdinConstantInitializationStatement) parent;
+            return OdinAttributeUtils.containsAttribute(constant.getAttributeList(), "static");
+        }
+        return false;
+    }
+
+    public static boolean isStructFieldDeclaration(OdinDeclaredIdentifier declaredIdentifier) {
+        return isFieldDeclaration(declaredIdentifier);
+    }
+
+    public static boolean isBitFieldFieldDeclaration(OdinDeclaredIdentifier declaredIdentifier) {
+        return declaredIdentifier.getParent() instanceof OdinBitFieldFieldDeclaration;
     }
 }

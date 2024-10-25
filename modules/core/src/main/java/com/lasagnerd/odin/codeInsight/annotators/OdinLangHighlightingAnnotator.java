@@ -15,6 +15,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
@@ -37,6 +38,8 @@ import static com.lasagnerd.odin.codeInsight.annotators.OdinAnnotationUtils.getU
 import static com.lasagnerd.odin.lang.psi.OdinReference.logStackOverFlowError;
 
 public class OdinLangHighlightingAnnotator implements Annotator {
+    public static final TextAttributesKey STRUCT_FIELD = DefaultLanguageHighlighterColors.INSTANCE_FIELD;
+    public static final TextAttributesKey BIT_FIELD_FIELD = DefaultLanguageHighlighterColors.INSTANCE_FIELD;
     public static Logger LOG = Logger.getInstance(OdinLangHighlightingAnnotator.class);
     public static final List<String> RESERVED_TYPES = List.of(
             "bool",
@@ -190,23 +193,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             } else {
                 PsiElement identifierTokenParent = psiElement.getParent();
                 if (identifierTokenParent instanceof OdinDeclaredIdentifier declaredIdentifier) {
-                    if (declaredIdentifier.getParent() instanceof OdinImportDeclarationStatement) {
-                        highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.PACKAGE);
-                    } else if (OdinInsightUtils.isProcedureDeclaration(declaredIdentifier)) {
-                        highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.PROCEDURE_TYPE);
-                    } else if (OdinInsightUtils.isStructDeclaration(declaredIdentifier)) {
-                        highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.STRUCT_TYPE);
-                    } else if (OdinInsightUtils.isUnionDeclaration(declaredIdentifier)) {
-                        highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.UNION_TYPE);
-                    } else if (OdinInsightUtils.isLocalVariable(declaredIdentifier)) {
-                        highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
-                    } else if (OdinInsightUtils.isGlobalVariable(declaredIdentifier)) {
-                        highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
-                    } else if (OdinInsightUtils.isConstantDeclaration(declaredIdentifier)) {
-                        highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.CONSTANT);
-                    } else if (OdinInsightUtils.isParameterDeclaration(declaredIdentifier)) {
-                        highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.PARAMETER);
-                    }
+                    handleDeclarations(annotationHolder, declaredIdentifier, psiElementRange);
                     // Add other types
                 } else if (identifierTokenParent.getParent() instanceof OdinRefExpression refExpression) {
                     handleRefExpression(annotationHolder,
@@ -239,6 +226,32 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
         if (psiElement instanceof OdinDirectiveIdentifier tagHead) {
             highlightDirectiveIdentifier(tagHead, annotationHolder);
+        }
+    }
+
+    private static void handleDeclarations(@NotNull AnnotationHolder annotationHolder, OdinDeclaredIdentifier declaredIdentifier, TextRange psiElementRange) {
+        if (declaredIdentifier.getParent() instanceof OdinImportDeclarationStatement) {
+            highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.PACKAGE);
+        } else if (OdinInsightUtils.isProcedureDeclaration(declaredIdentifier)) {
+            highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.PROCEDURE_TYPE);
+        } else if (OdinInsightUtils.isStructDeclaration(declaredIdentifier)) {
+            highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.STRUCT_TYPE);
+        } else if (OdinInsightUtils.isUnionDeclaration(declaredIdentifier)) {
+            highlight(annotationHolder, psiElementRange, OdinSyntaxHighlighter.UNION_TYPE);
+        } else if (OdinInsightUtils.isStaticVariable(declaredIdentifier)) {
+            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.STATIC_FIELD);
+        } else if (OdinInsightUtils.isLocalVariable(declaredIdentifier)) {
+            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
+        } else if (OdinInsightUtils.isGlobalVariable(declaredIdentifier)) {
+            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
+        } else if (OdinInsightUtils.isConstantDeclaration(declaredIdentifier)) {
+            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.CONSTANT);
+        } else if (OdinInsightUtils.isParameterDeclaration(declaredIdentifier)) {
+            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.PARAMETER);
+        } else if (OdinInsightUtils.isStructFieldDeclaration(declaredIdentifier)) {
+            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+        } else if (OdinInsightUtils.isBitFieldFieldDeclaration(declaredIdentifier)) {
+            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.INSTANCE_FIELD);
         }
     }
 
@@ -323,6 +336,11 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
 
         if (symbol.getSymbolType() == OdinSymbolType.VARIABLE) {
+            if (OdinAttributeUtils.containsAttribute(symbol.getAttributes(), "static")) {
+                highlight(annotationHolder, textRange, DefaultLanguageHighlighterColors.STATIC_FIELD);
+                return;
+            }
+
             if (symbol.getScope() == OdinSymbol.OdinScope.LOCAL) {
                 highlight(annotationHolder, textRange, DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
                 return;
@@ -334,19 +352,28 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             }
         }
 
-        if(symbol.getSymbolType() == OdinSymbolType.PARAMETER) {
+        if (symbol.getSymbolType() == OdinSymbolType.PARAMETER) {
             highlight(annotationHolder, textRange, DefaultLanguageHighlighterColors.PARAMETER);
             return;
         }
 
-        if(symbol.getSymbolType() == OdinSymbolType.CONSTANT) {
+        if (symbol.getSymbolType() == OdinSymbolType.CONSTANT) {
             highlight(annotationHolder, textRange, DefaultLanguageHighlighterColors.CONSTANT);
             return;
         }
 
-        if (symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier declaredIdentifier) {
-            if (declaredIdentifier.getDollar() != null)
-                return;
+        if (symbol.getSymbolType() == OdinSymbolType.STRUCT_FIELD) {
+            if (symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier declaredIdentifier) {
+                if (declaredIdentifier.getDollar() != null)
+                    return;
+            }
+            highlight(annotationHolder, textRange, STRUCT_FIELD);
+            return;
+        }
+
+        if (symbol.getSymbolType() == OdinSymbolType.BIT_FIELD_FIELD) {
+            highlight(annotationHolder, textRange, BIT_FIELD_FIELD);
+            return;
         }
 
         if (symbol.isImplicitlyDeclared())

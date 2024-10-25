@@ -310,7 +310,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                     typeText = declaredIdentifier.getName();
                 }
             }
-            if (symbol.getSymbolType() == OdinSymbolType.FIELD) {
+            if (symbol.getSymbolType() == OdinSymbolType.STRUCT_FIELD) {
                 typeText = symbol.getPsiType().getText();
             }
         }

@@ -53,7 +53,8 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
             case UNKNOWN -> "Unknown";
             case BUILTIN_TYPE -> "Built-In type";
             case PARAMETER -> "Parameter";
-            case FIELD -> "Field";
+            case STRUCT_FIELD -> "Struct Field";
+            case BIT_FIELD_FIELD -> "Bit-Field Field";
             case PROCEDURE -> "Procedure";
             case PROCEDURE_OVERLOAD -> "Procedure overload";
             case STRUCT -> "Struct";

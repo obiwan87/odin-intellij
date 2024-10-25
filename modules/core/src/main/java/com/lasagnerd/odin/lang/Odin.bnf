@@ -362,7 +362,11 @@ colonClosing                         ::= COLON
 private symbolDefinitionHead         ::= (attribute eos?)* [directiveIdentifier] [USING] identifierList colonOpening type?
 colonOpening                         ::= COLON
 
-variableInitializationStatement      ::= symbolDefinitionHead EQ <<guardedExpression incompleteGuard rhsExpressions>> { methods=[getTypeDefinition getRhsExpressions] pin=2}
+variableInitializationStatement      ::= symbolDefinitionHead EQ <<guardedExpression incompleteGuard rhsExpressions>>
+                                        { implements=["com.lasagnerd.odin.lang.psi.OdinVariableDeclaration"]
+                                          methods=[getTypeDefinition getRhsExpressions]
+                                          pin=2
+                                        }
 
 private identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}
@@ -457,7 +461,10 @@ assignmentOperator                   ::= EQ
                                          | RSHIFT_EQ
                                          | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement         ::= (attribute eos?)* [USING] identifierList COLON type { methods=[getTypeDefinition]}
+variableDeclarationStatement         ::= (attribute eos?)* [USING] identifierList COLON type {
+                                                        implements=["com.lasagnerd.odin.lang.psi.OdinVariableDeclaration"]
+                                                        methods=[getTypeDefinition]
+                                                    }
 
 // Parameters for procedures and assignments
 private polymorphicParameterList     ::= paramEntries

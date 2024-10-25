@@ -37,6 +37,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
 
     @Override
     public @NotNull Lexer getHighlightingLexer() {
+
         return new OdinLexerAdapter();
     }
 
