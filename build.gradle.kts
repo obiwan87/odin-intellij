@@ -32,8 +32,10 @@ val javaVersion = JavaVersion.VERSION_21
 val baseIDE = properties("baseIDE").get()
 val ideaVersion = properties("ideaVersion").get()
 val clionVersion = properties("clionVersion").get()
+val riderVersion = properties("riderVersion").get()
 
-val clionPlugins = listOf("com.intellij.clion", "com.intellij.cidr.lang", "com.intellij.cidr.base", "com.intellij.nativeDebug")
+val debuggerPlugins = listOf("com.intellij.cidr.lang", "com.intellij.cidr.base", "com.intellij.nativeDebug")
+val riderPlugins = emptyList<String>()
 
 val lsp4jVersion = "0.23.0"
 
@@ -86,6 +88,7 @@ allprojects {
                     includeModule("com.jetbrains.intellij.clion", "clion")
                     includeModule("com.jetbrains.intellij.idea", "ideaIC")
                     includeModule("com.jetbrains.intellij.idea", "ideaIU")
+                    includeModule("com.jetbrains.intellij.rider", "riderRD")
                 }
             }
         }
@@ -157,7 +160,20 @@ project(":debugger") {
         }
         intellijPlatform {
             clion(clionVersion, useInstaller = false)
-            for (p in clionPlugins) {
+            for (p in debuggerPlugins) {
+                bundledPlugin(p)
+            }
+        }
+    }
+}
+
+project(":rider") {
+    dependencies {
+        implementation(project(":core"))
+        implementation(project(":debugger"))
+        intellijPlatform {
+            rider(riderVersion, useInstaller = false)
+            for (p in riderPlugins) {
                 bundledPlugin(p)
             }
         }
@@ -192,19 +208,18 @@ project(":core") {
     }
 }
 
-
-
-
 project(":plugin") {
     dependencies {
         implementation(project(":core"))
         implementation(project(":debugger"))
+        implementation(project(":rider"))
         intellijPlatform {
             zipSigner()
             pluginVerifier()
             when (baseIDE) {
                 "idea" -> intellijIdeaCommunity(ideaVersion, useInstaller = false)
                 "clion" -> clion(clionVersion, useInstaller = false)
+                "rider" -> rider(riderVersion, useInstaller = false)
             }
         }
     }

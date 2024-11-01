@@ -1,0 +1,3 @@
+<idea-plugin package="com.lasagnerd.odin.rider">
+    <depends>com.intellij.modules.rider</depends>
+</idea-plugin>
