@@ -52,7 +52,7 @@ public class OdinTypeResolver extends OdinVisitor {
                                                   OdinDeclaredIdentifier declaredIdentifier,
                                                   OdinDeclaration declaration,
                                                   OdinType type) {
-        if(type == null)
+        if (type == null)
             return TsOdinBuiltInTypes.UNKNOWN;
 
         OdinTypeResolver typeResolver = new OdinTypeResolver(level, symbolTable, declaration, declaredIdentifier);
@@ -296,7 +296,11 @@ public class OdinTypeResolver extends OdinVisitor {
 
     @Override
     public void visitProcedureLiteralType(@NotNull OdinProcedureLiteralType o) {
-        this.type = resolveType(symbolTable, o.getProcedureDefinition().getProcedureSignature().getProcedureType());
+        this.type = resolveType(level + 1,
+                symbolTable,
+                this.typeDeclaredIdentifier,
+                this.typeDeclaration,
+                o.getProcedureDefinition().getProcedureSignature().getProcedureType());
     }
 
     private TsOdinType resolveTypeFromDeclaredIdentifier(OdinSymbolTable symbolTable, OdinDeclaredIdentifier identifier) {
@@ -380,7 +384,7 @@ public class OdinTypeResolver extends OdinVisitor {
                                                                        TsOdinType resolvedMetaType,
                                                                        OdinDeclaration odinDeclaration,
                                                                        OdinExpression odinExpression) {
-        if(typeAlias != resolvedMetaType) {
+        if (typeAlias != resolvedMetaType) {
             typeAlias.setAliasedType(resolvedMetaType);
         }
         typeAlias.setDeclaration(odinDeclaration);
@@ -553,7 +557,7 @@ public class OdinTypeResolver extends OdinVisitor {
         OdinArraySize arraySize = arrayType.getArraySize();
         tsOdinArrayType.setPsiSizeElement(arraySize);
         tsOdinArrayType.setPsiType(arrayType);
-        if(arraySize.getExpression() != null) {
+        if (arraySize.getExpression() != null) {
             Integer sizeValue = OdinExpressionEvaluator.evaluate(symbolTable, arraySize.getExpression()).asInt();
             tsOdinArrayType.setSize(sizeValue);
         }
