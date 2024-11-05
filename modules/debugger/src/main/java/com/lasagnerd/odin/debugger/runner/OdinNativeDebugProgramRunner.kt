@@ -2,6 +2,7 @@ package com.lasagnerd.odin.debugger.runner
 
 import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
@@ -19,6 +20,8 @@ import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.util.ProgramParametersConfigurator
+import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -85,7 +88,13 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
         // Switch to BGT for long-running and blocking calls
         AppExecutorUtil.getAppExecutorService().execute {
-            val runExecutable = GeneralCommandLine(runProfile.outputPath)
+            val expandedOutputPath = ProgramParametersUtil.expandPathAndMacros(
+                runProfile.outputPath,
+                null,
+                environment.project
+            )
+
+            val runExecutable = GeneralCommandLine(expandedOutputPath)
             runExecutable.setWorkDirectory(runProfile.options.workingDirectory)
             val debugCompiledExeRunParameters = OdinDebugRunParameters(runExecutable, debuggerDriverConfiguration)
 
