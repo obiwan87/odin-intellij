@@ -230,8 +230,8 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         odinSymbol.setPsiType(findStructType(structTypeName));
         odinSymbol.setName(symbolName);
         odinSymbol.setSymbolType(OdinSymbolType.PARAMETER);
-        odinSymbol.setScope(OdinSymbol.OdinScope.LOCAL);
-        odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
+        odinSymbol.setScope(OdinScope.LOCAL);
+        odinSymbol.setVisibility(OdinVisibility.NONE);
         // TODO
         odinSymbol.setPackagePath("");
 
@@ -286,10 +286,10 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         for (TsOdinType builtInType : builtInTypes) {
             OdinSymbol odinSymbol = new OdinSymbol();
             odinSymbol.setName(builtInType.getName());
-            odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+            odinSymbol.setScope(OdinScope.TYPE);
             odinSymbol.setSymbolType(OdinSymbolType.BUILTIN_TYPE);
             odinSymbol.setBuiltin(true);
-            odinSymbol.setVisibility(OdinSymbol.OdinVisibility.PUBLIC);
+            odinSymbol.setVisibility(OdinVisibility.PACKAGE_EXPORTED);
             odinSymbol.setImplicitlyDeclared(true);
             builtinSymbols.add(odinSymbol);
         }

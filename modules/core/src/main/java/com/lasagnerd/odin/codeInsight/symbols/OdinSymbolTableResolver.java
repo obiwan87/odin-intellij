@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.codeInsight.symbols;
 
-import com.ibm.icu.text.SymbolTable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -35,7 +34,7 @@ public class OdinSymbolTableResolver {
                 .getPackagePath(element), matcher);
     }
 
-    public static OdinSymbolTable getFileScopeSymbols(@NotNull OdinFileScope fileScope, @NotNull OdinSymbol.OdinVisibility globalVisibility) {
+    public static OdinSymbolTable getFileScopeSymbols(@NotNull OdinFileScope fileScope, @NotNull OdinVisibility globalVisibility) {
         OdinSymbolTable symbolTable = new OdinSymbolTable();
         // Find all blocks that are not in a procedure
         List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
@@ -137,7 +136,7 @@ public class OdinSymbolTableResolver {
         OdinSdkService sdkService = OdinSdkService.getInstance(project);
         if (sdkService != null)
             return sdkService.getBuiltInSymbols().stream()
-                    .filter(s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC)
+                    .filter(s -> s.getVisibility() == OdinVisibility.PACKAGE_EXPORTED)
                     .collect(Collectors.toCollection(ArrayList::new));
         return Collections.emptyList();
     }
@@ -173,12 +172,12 @@ public class OdinSymbolTableResolver {
                 if (odinFile == null || odinFile.getFileScope() == null) {
                     continue;
                 }
-                OdinSymbol.OdinVisibility globalFileVisibility = getGlobalFileVisibility(odinFile.getFileScope());
-                if (globalFileVisibility == OdinSymbol.OdinVisibility.FILE_PRIVATE) continue;
+                OdinVisibility globalFileVisibility = getGlobalFileVisibility(odinFile.getFileScope());
+                if (globalFileVisibility == OdinVisibility.FILE_PRIVATE) continue;
                 Collection<OdinSymbol> fileScopeDeclarations = odinFile.getFileScope().getSymbolTable().getSymbolNameMap()
                         .values()
                         .stream()
-                        .filter(o -> !o.getVisibility().equals(OdinSymbol.OdinVisibility.FILE_PRIVATE))
+                        .filter(o -> !o.getVisibility().equals(OdinVisibility.FILE_PRIVATE))
                         .toList();
 
 
@@ -195,24 +194,24 @@ public class OdinSymbolTableResolver {
         return odinSymbolTable;
     }
 
-    public static OdinSymbol.OdinVisibility getGlobalFileVisibility(@NotNull OdinFileScope fileScope) {
+    public static OdinVisibility getGlobalFileVisibility(@NotNull OdinFileScope fileScope) {
         PsiElement lineComment = PsiTreeUtil.skipSiblingsBackward(fileScope, PsiWhiteSpace.class);
         if (lineComment != null) {
             IElementType elementType = PsiUtilCore.getElementType(lineComment.getNode());
             if (elementType == OdinTypes.LINE_COMMENT) {
                 if (lineComment.getText().equals("//+private")) {
-                    return OdinSymbol.OdinVisibility.PACKAGE_PRIVATE;
+                    return OdinVisibility.PACKAGE_PRIVATE;
                 }
 
                 if (lineComment.getText().equals("//+private file")) {
-                    return OdinSymbol.OdinVisibility.FILE_PRIVATE;
+                    return OdinVisibility.FILE_PRIVATE;
                 }
             }
         }
 
         OdinBuildFlag[] buildFlags = PsiTreeUtil.getChildrenOfType(fileScope, OdinBuildFlag.class);
         if (buildFlags == null)
-            return OdinSymbol.OdinVisibility.PUBLIC;
+            return OdinVisibility.PACKAGE_EXPORTED;
 
         for (OdinBuildFlag buildFlag : buildFlags) {
 
@@ -222,14 +221,14 @@ public class OdinSymbolTableResolver {
                         .getText()
                         .trim()
                         .equals("file")) {
-                    return OdinSymbol.OdinVisibility.FILE_PRIVATE;
+                    return OdinVisibility.FILE_PRIVATE;
                 }
-                return OdinSymbol.OdinVisibility.PACKAGE_PRIVATE;
+                return OdinVisibility.PACKAGE_PRIVATE;
             }
 
         }
 
-        return OdinSymbol.OdinVisibility.PUBLIC;
+        return OdinVisibility.PACKAGE_EXPORTED;
     }
 
     /**

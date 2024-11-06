@@ -8,10 +8,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -132,11 +129,11 @@ public class OdinInsightUtils {
                 TsOdinType sliceType = entry.getValue();
                 OdinSymbol symbol = new OdinSymbol();
                 symbol.setName(entry.getKey());
-                symbol.setVisibility(OdinSymbol.OdinVisibility.PUBLIC);
+                symbol.setVisibility(OdinVisibility.PACKAGE_EXPORTED);
                 symbol.setSymbolType(SOA_FIELD);
                 symbol.setPsiType(sliceType.getPsiType());
                 symbol.setImplicitlyDeclared(true);
-                symbol.setScope(OdinSymbol.OdinScope.TYPE);
+                symbol.setScope(OdinScope.TYPE);
                 symbolTable.add(symbol);
             }
 
@@ -291,7 +288,7 @@ public class OdinInsightUtils {
                 OdinSymbol odinSymbol = new OdinSymbol(odinDeclaredIdentifier);
                 odinSymbol.setSymbolType(STRUCT_FIELD);
                 odinSymbol.setPsiType(field.getType());
-                odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+                odinSymbol.setScope(OdinScope.TYPE);
                 odinSymbol.setHasUsing(hasUsing);
                 symbols.add(odinSymbol);
                 if (field.getDeclaredIdentifiers().size() == 1 && hasUsing) {
@@ -415,8 +412,8 @@ public class OdinInsightUtils {
         symbol.setName(declaredIdentifier.getName());
         symbol.setDeclaredIdentifier(declaredIdentifier);
         symbol.setImplicitlyDeclared(false);
-        symbol.setScope(OdinSymbol.OdinScope.TYPE);
-        symbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
+        symbol.setScope(OdinScope.TYPE);
+        symbol.setVisibility(OdinVisibility.NONE);
         symbol.setHasUsing(false);
         return symbol;
     }
@@ -444,8 +441,8 @@ public class OdinInsightUtils {
         for (String s : result) {
             OdinSymbol odinSymbol = new OdinSymbol();
             odinSymbol.setSymbolType(SWIZZLE_FIELD);
-            odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
-            odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
+            odinSymbol.setScope(OdinScope.TYPE);
+            odinSymbol.setVisibility(OdinVisibility.NONE);
             odinSymbol.setName(s);
             odinSymbol.setImplicitlyDeclared(true);
             if (elementType != null) {
@@ -653,9 +650,9 @@ public class OdinInsightUtils {
             if (elementType != null) {
                 odinSymbol.setPsiType(elementType.getPsiType());
             }
-            odinSymbol.setVisibility(OdinSymbol.OdinVisibility.NONE);
+            odinSymbol.setVisibility(OdinVisibility.NONE);
             odinSymbol.setImplicitlyDeclared(true);
-            odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+            odinSymbol.setScope(OdinScope.TYPE);
             odinSymbol.setSymbolType(SWIZZLE_FIELD);
             swizzleSymbols.add(odinSymbol);
         }
@@ -838,13 +835,21 @@ public class OdinInsightUtils {
 
     public static boolean isLocalVariable(@NotNull PsiElement o) {
         if (isVariable(o)) {
-            OdinFileScopeStatementList fileScope = PsiTreeUtil.getParentOfType(o, OdinFileScopeStatementList.class,
-                    true,
-                    OdinProcedureBody.class,
-                    OdinForeignBlock.class);
-            return fileScope == null;
+            return isLocal(o);
         }
         return false;
+    }
+
+    public static boolean isLocal(@NotNull PsiElement o) {
+        OdinFileScopeStatementList fileScope = PsiTreeUtil.getParentOfType(o, OdinFileScopeStatementList.class,
+                true,
+                OdinProcedureBody.class,
+                OdinForeignBlock.class);
+        return fileScope == null;
+    }
+
+    public static boolean isForeign(PsiElement o) {
+        return PsiTreeUtil.getParentOfType(o, OdinForeignStatementList.class, true) != null;
     }
 
     private static boolean isVariable(@NotNull PsiElement o) {
@@ -861,7 +866,7 @@ public class OdinInsightUtils {
 
     public static boolean isStaticProcedure(OdinDeclaredIdentifier declaredIdentifier) {
         PsiElement parent = declaredIdentifier.getParent();
-        if(isProcedureDeclaration(parent)) {
+        if (isProcedureDeclaration(parent)) {
             OdinConstantInitializationStatement constant = (OdinConstantInitializationStatement) parent;
             return OdinAttributeUtils.containsAttribute(constant.getAttributeList(), "static");
         }

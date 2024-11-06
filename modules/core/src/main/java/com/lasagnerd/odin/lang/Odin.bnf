@@ -244,7 +244,9 @@ private polyParams                   ::= LPAREN polymorphicParameterList RPAREN 
 
 structBlock                          ::= blockStart [structBody] blockEnd
 structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  (COMMA|EOS_TOKEN|&RBRACE) {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
-fieldDeclarationStatement            ::= USING? directiveIdentifier? fieldDeclarator [RAW_STRING_LITERAL] { methods=[ getTypeDefinition ] pin="declaredIdentifier" }
+fieldDeclarationStatement            ::= USING? directiveIdentifier? fieldDeclarator [structTag] { methods=[ getTypeDefinition ] pin="declaredIdentifier" }
+
+structTag                            ::= RAW_STRING_LITERAL
 private fieldDeclarator              ::= declaredIdentifier (COMMA declaredIdentifier)* COLON type {pin(".*")=1 recoverWhile=fieldRecover}
 private fieldRecover                 ::= !(EOS_TOKEN | COMMA  | RBRACE | RAW_STRING_LITERAL)
 

@@ -2,10 +2,10 @@ package com.lasagnerd.odin.lang;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
+import com.lasagnerd.odin.colorSettings.OdinSyntaxColors;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,30 +14,25 @@ import java.util.List;
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
 public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
-    public static final TextAttributesKey BUILTIN_FUNCTION = createTextAttributesKey("ODIN_BUILTIN_FUNCTION", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
-    public static final TextAttributesKey PACKAGE = createTextAttributesKey("ODIN_PACKAGE", DefaultLanguageHighlighterColors.IDENTIFIER);
-    public static final TextAttributesKey PROCEDURE_TYPE = createTextAttributesKey("ODIN_PROCEDURE", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
-    public static final TextAttributesKey KEYWORD =  createTextAttributesKey("ODIN_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
-    public static final TextAttributesKey IDENTIFIER = createTextAttributesKey("ODIN_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER);
-    public static final TextAttributesKey PROCEDURE_CALL = createTextAttributesKey("ODIN_PROCEDURE_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
-
-    public static final TextAttributesKey STRUCT_TYPE = createTextAttributesKey("ODIN_STRUCT_TYPE", DefaultLanguageHighlighterColors.CLASS_NAME);
-    public static final TextAttributesKey STRUCT_REF = createTextAttributesKey("ODIN_STRUCT_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
-
-    public static final TextAttributesKey UNION_TYPE = createTextAttributesKey("ODIN_UNION_TYPE", DefaultLanguageHighlighterColors.CLASS_NAME);
-    public static final TextAttributesKey UNION_REF = createTextAttributesKey("ODIN_UNION_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
 
 
-    public static final TextAttributesKey BAD_CHARACTER =
-            createTextAttributesKey("ODIN_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
-
-    private static final TextAttributesKey[] KEYWORD_KEYS = new TextAttributesKey[]{KEYWORD};
+    private static final TextAttributesKey[] KEYWORD_KEYS = new TextAttributesKey[]{OdinSyntaxColors.ODIN_KEYWORD};
 
     private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
+    public static final TextAttributesKey[] STRINGS = {OdinSyntaxColors.ODIN_TEXT};
+    public static final TextAttributesKey[] IDENTIFIERS = {OdinSyntaxColors.ODIN_IDENTIFIER};
+    public static final TextAttributesKey[] LINE_COMMENT = {OdinSyntaxColors.ODIN_LINE_COMMENT};
+    public static final TextAttributesKey[] BLOCK_COMMENT = {OdinSyntaxColors.ODIN_BLOCK_COMMENT};
+    public static final TextAttributesKey[] NUMBER = {OdinSyntaxColors.ODIN_NUMBER};
+    public static final TextAttributesKey[] COMMA = {OdinSyntaxColors.ODIN_COMMA};
+    public static final TextAttributesKey[] SEMICOLON = {OdinSyntaxColors.ODIN_SEMICOLON};
+    public static final TextAttributesKey[] DOT = {OdinSyntaxColors.ODIN_DOT};
+    public static final TextAttributesKey[] PARENTHESES = {OdinSyntaxColors.ODIN_PARENTHESES};
+    public static final TextAttributesKey[] BRACES = {OdinSyntaxColors.ODIN_BRACES};
+    public static final TextAttributesKey[] ATTRIBUTE_PREFIX = {DefaultLanguageHighlighterColors.METADATA};
 
     @Override
     public @NotNull Lexer getHighlightingLexer() {
-
         return new OdinLexerAdapter();
     }
 
@@ -95,6 +90,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
 
     @Override
     public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+
         if (keywords.contains(tokenType)) {
             return KEYWORD_KEYS;
         }
@@ -103,53 +99,52 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
                 tokenType.equals(OdinTypes.SQ_STRING_LITERAL) ||
                 tokenType.equals(OdinTypes.RAW_STRING_LITERAL)
         ) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.STRING};
+            return STRINGS;
         }
 
         if (tokenType.equals(OdinTypes.IDENTIFIER_TOKEN)) {
-            return new TextAttributesKey[]{IDENTIFIER};
+            return IDENTIFIERS;
         }
 
         if (tokenType.equals(OdinTypes.LINE_COMMENT)) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.LINE_COMMENT};
+            return LINE_COMMENT;
         }
 
         if (tokenType.equals(OdinTypes.BLOCK_COMMENT)) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BLOCK_COMMENT};
+            return BLOCK_COMMENT;
         }
 
         if (tokenType.equals(OdinTypes.MULTILINE_BLOCK_COMMENT)) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BLOCK_COMMENT};
+            return BLOCK_COMMENT;
         }
 
         if (numericLiteral.contains(tokenType)) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.NUMBER};
+            return NUMBER;
         }
 
         if (tokenType.equals(OdinTypes.COMMA)) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.COMMA};
+            return COMMA;
         }
 
         if (tokenType.equals(OdinTypes.SEMICOLON)) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.SEMICOLON};
+            return SEMICOLON;
         }
 
         if (tokenType.equals(OdinTypes.DOT)) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.DOT};
+            return DOT;
         }
 
         if (tokenType.equals(OdinTypes.LPAREN) || tokenType.equals(OdinTypes.RPAREN)) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.PARENTHESES};
+            return PARENTHESES;
         }
 
         if (tokenType.equals(OdinTypes.LBRACE) || tokenType.equals(OdinTypes.RBRACE)) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.BRACES};
+            return BRACES;
         }
 
         if (tokenType.equals(OdinTypes.AT)) {
-            return new TextAttributesKey[]{DefaultLanguageHighlighterColors.METADATA};
+            return ATTRIBUTE_PREFIX;
         }
-
 
         return EMPTY_KEYS;
     }

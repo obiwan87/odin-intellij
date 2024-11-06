@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <list>
-    <option name="ODIN_BUILTIN_FUNCTION">
+    <option name="ODIN_BUILTIN_PROC">
         <value>
             <option name="FOREGROUND" value="CC7832"/>
         </value>

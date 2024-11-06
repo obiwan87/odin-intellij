@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,6 +20,7 @@ import com.lasagnerd.odin.codeInsight.refactor.OdinNameSuggester;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinSdkLibraryManager;
@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 public class OdinImportUtils {
 
 
-    public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinSymbol.OdinVisibility.PUBLIC;
+    public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinVisibility.PACKAGE_EXPORTED;
 
     @Nullable
     public static String getFileName(@NotNull PsiElement psiElement) {
@@ -139,9 +139,9 @@ public class OdinImportUtils {
                     System.out.printf("File scope is null for file %s%n", importedFile.getVirtualFile().getPath());
                     continue;
                 }
-                OdinSymbol.OdinVisibility globalFileVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(importedFileScope);
-                if (globalFileVisibility == OdinSymbol.OdinVisibility.PACKAGE_PRIVATE
-                        || globalFileVisibility == OdinSymbol.OdinVisibility.FILE_PRIVATE)
+                OdinVisibility globalFileVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(importedFileScope);
+                if (globalFileVisibility == OdinVisibility.PACKAGE_PRIVATE
+                        || globalFileVisibility == OdinVisibility.FILE_PRIVATE)
                     continue;
 
                 Collection<OdinSymbol> fileScopeDeclarations = importedFileScope

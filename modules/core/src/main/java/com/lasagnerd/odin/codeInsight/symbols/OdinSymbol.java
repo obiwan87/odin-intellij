@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class OdinSymbol {
-//    private OdinDeclaration declaration;
+    //    private OdinDeclaration declaration;
     private PsiNamedElement declaredIdentifier;
     private OdinType psiType;
     private List<OdinAttribute> attributes;
@@ -25,45 +25,34 @@ public class OdinSymbol {
     private boolean implicitlyDeclared;
     private boolean builtin;
     private boolean visibleThroughUsing;
+    private boolean foreign;
 
     public OdinSymbol(PsiNamedElement declaredIdentifier, @NotNull OdinVisibility visibility) {
         this.declaredIdentifier = declaredIdentifier;
         this.visibility = visibility;
+        this.scope = OdinScope.NONE;
         this.name = declaredIdentifier.getName();
 
     }
 
     public OdinSymbol(PsiNamedElement declaredIdentifier) {
         this.declaredIdentifier = declaredIdentifier;
-        this.visibility = OdinVisibility.PUBLIC;
+        this.visibility = OdinVisibility.NONE;
+        this.scope = OdinScope.NONE;
         this.name = declaredIdentifier.getName();
     }
 
     public OdinDeclaration getDeclaration() {
-        if(declaredIdentifier != null) {
+        if (declaredIdentifier != null) {
             return PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
         }
         return null;
     }
 
-    public enum OdinVisibility {
-        NONE,
-        PACKAGE_PRIVATE,
-        FILE_PRIVATE,
-        PUBLIC
+    public OdinSymbolOrigin getSymbolOrigin() {
+        if (isVisibleThroughUsing()) return OdinSymbolOrigin.USING;
+        if (isForeign()) return OdinSymbolOrigin.FOREIGN;
+        return OdinSymbolOrigin.NONE;
     }
 
-    public enum OdinScope {
-        GLOBAL,
-        LOCAL,
-        TYPE
-    }
-
-    public static OdinVisibility min(OdinVisibility v1, OdinVisibility v2) {
-        return v1.ordinal() < v2.ordinal() ? v1 : v2;
-    }
-
-    public static OdinVisibility max(OdinVisibility v1, OdinVisibility v2) {
-        return v1.ordinal() > v2.ordinal() ? v1 : v2;
-    }
 }

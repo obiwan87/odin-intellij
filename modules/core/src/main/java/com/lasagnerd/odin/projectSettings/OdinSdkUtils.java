@@ -157,13 +157,12 @@ public class OdinSdkUtils {
         addCommandPart(command, mode);
 
         addCommandPart(command, projectDirectoryPath);
-        if (debug) {
-            addCommandPart(command, "-debug");
-        }
 
         Collections.addAll(command, compilerOptions.split(" +"));
+        if (debug && !command.contains("-debug")) {
+            addCommandPart(command, "-debug");
+        }
         OdinBuildProcessRunner.addCollectionPaths(project, projectDirectoryPath, command);
-
 
         if (!outputPathString.isEmpty()) {
             ProgramParametersConfigurator configurator = new ProgramParametersConfigurator();

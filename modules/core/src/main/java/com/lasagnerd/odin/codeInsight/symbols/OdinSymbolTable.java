@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Getter
 public class OdinSymbolTable {
@@ -130,7 +129,7 @@ public class OdinSymbolTable {
         return symbolNameMap.values();
     }
 
-    public Collection<OdinSymbol> getSymbols(OdinSymbol.OdinVisibility minVisibility) {
+    public Collection<OdinSymbol> getSymbols(OdinVisibility minVisibility) {
         return getFilteredSymbols(symbol -> symbol.getVisibility().compareTo(minVisibility) >= 0);
     }
 

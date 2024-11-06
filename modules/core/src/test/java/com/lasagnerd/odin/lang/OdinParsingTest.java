@@ -857,22 +857,22 @@ public class OdinParsingTest extends UsefulTestCase {
                     .getFilteredSymbols(e -> true));
             symbols.sort(Comparator.comparing(OdinSymbol::getName));
             assertEquals(4, symbols.size());
-            assertEquals(OdinSymbol.OdinVisibility.PUBLIC, symbols.get(0).getVisibility());
-            assertEquals(OdinSymbol.OdinVisibility.PUBLIC, symbols.get(1).getVisibility());
-            assertEquals(OdinSymbol.OdinVisibility.PACKAGE_PRIVATE, symbols.get(2).getVisibility());
-            assertEquals(OdinSymbol.OdinVisibility.FILE_PRIVATE, symbols.get(3).getVisibility());
+            assertEquals(OdinVisibility.PACKAGE_EXPORTED, symbols.get(0).getVisibility());
+            assertEquals(OdinVisibility.PACKAGE_EXPORTED, symbols.get(1).getVisibility());
+            assertEquals(OdinVisibility.PACKAGE_PRIVATE, symbols.get(2).getVisibility());
+            assertEquals(OdinVisibility.FILE_PRIVATE, symbols.get(3).getVisibility());
         }
 
         {
             OdinFile odinFile = load("src/test/testData/mypackage/package_private.odin");
-            OdinSymbol.OdinVisibility globalVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(odinFile.getFileScope());
-            assertEquals(OdinSymbol.OdinVisibility.PACKAGE_PRIVATE, globalVisibility);
+            OdinVisibility globalVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(odinFile.getFileScope());
+            assertEquals(OdinVisibility.PACKAGE_PRIVATE, globalVisibility);
         }
 
         {
             OdinFile odinFile = load("src/test/testData/mypackage/file_private.odin");
-            OdinSymbol.OdinVisibility globalVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(odinFile.getFileScope());
-            assertEquals(OdinSymbol.OdinVisibility.FILE_PRIVATE, globalVisibility);
+            OdinVisibility globalVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(odinFile.getFileScope());
+            assertEquals(OdinVisibility.FILE_PRIVATE, globalVisibility);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.lasagnerd.odin.codeInsight;
 
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,19 +38,24 @@ public class OdinAttributeUtils {
         return false;
     }
 
-    public static @NotNull OdinSymbol.OdinVisibility computeVisibility(@NotNull Collection<OdinAttribute> attributeStatements) {
+    public static @NotNull OdinVisibility computeVisibility(@NotNull Collection<OdinAttribute> attributeStatements) {
         for (OdinAttribute attributeStatement : attributeStatements) {
+            if(attributeStatement.getIdentifierToken() != null) {
+                if(attributeStatement.getIdentifierToken().getText().equals("private")) {
+                    return OdinVisibility.PACKAGE_PRIVATE;
+                }
+            }
             for (OdinArgument odinArgument : attributeStatement.getArgumentList()) {
                 if (odinArgument instanceof OdinNamedArgument odinNamedArgument) {
                     String text = odinNamedArgument.getIdentifier().getText();
                     if (text.equals("private")) {
                         String attributeValue = OdinInsightUtils.getStringLiteralValue(odinNamedArgument.getExpression());
                         if (Objects.equals(attributeValue, "file")) {
-                            return OdinSymbol.OdinVisibility.FILE_PRIVATE;
+                            return OdinVisibility.FILE_PRIVATE;
                         }
 
                         if(Objects.equals(attributeValue, "package")) {
-                            return OdinSymbol.OdinVisibility.PACKAGE_PRIVATE;
+                            return OdinVisibility.PACKAGE_PRIVATE;
                         }
                     }
                 }
@@ -58,12 +63,12 @@ public class OdinAttributeUtils {
                 if (odinArgument instanceof OdinUnnamedArgument unnamedArgument) {
                     OdinExpression expression = unnamedArgument.getExpression();
                     if (expression.getText().equals("private")) {
-                        return OdinSymbol.OdinVisibility.PACKAGE_PRIVATE;
+                        return OdinVisibility.PACKAGE_PRIVATE;
                     }
                 }
             }
         }
 
-        return OdinSymbol.OdinVisibility.PUBLIC;
+        return OdinVisibility.PACKAGE_EXPORTED;
     }
 }

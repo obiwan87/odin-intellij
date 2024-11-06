@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
 
         if(declaringParent instanceof OdinFileScope fileScope) {
             Collection<OdinAttribute> attributeStatements = PsiTreeUtil.findChildrenOfType(declaration.get(), OdinAttribute.class);
-            OdinSymbol.OdinVisibility globalFileVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(fileScope);
+            OdinVisibility globalFileVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(fileScope);
             return new OdinSymbol(declaredIdentifier, OdinDeclarationSymbolResolver.getVisibility(attributeStatements, globalFileVisibility));
         }
 
@@ -48,11 +49,11 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
                 if(declaration.get().getParent() instanceof OdinFileScopeStatementList fileScopeStatementList) {
                     Collection<OdinAttribute> attributeStatements = PsiTreeUtil.findChildrenOfType(declaration.get(), OdinAttribute.class);
                     OdinFileScope fileScopeStatementListParent = (OdinFileScope) fileScopeStatementList.getParent();
-                    OdinSymbol.OdinVisibility globalFileVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(fileScopeStatementListParent);
+                    OdinVisibility globalFileVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(fileScopeStatementListParent);
                     return new OdinSymbol(declaredIdentifier, OdinDeclarationSymbolResolver.getVisibility(attributeStatements, globalFileVisibility));
                 }
             }
-            return new OdinSymbol(declaredIdentifier, OdinSymbol.OdinVisibility.NONE);
+            return new OdinSymbol(declaredIdentifier, OdinVisibility.NONE);
         }
         return new OdinSymbol(declaredIdentifier);
     }

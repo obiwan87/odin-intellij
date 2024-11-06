@@ -399,7 +399,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                 OdinSymbolTable fileScopeDeclarations = fileScope.getSymbolTable();
 
                 List<OdinSymbol> visibleSymbols = fileScopeDeclarations
-                        .getSymbols(OdinSymbol.OdinVisibility.PUBLIC)
+                        .getSymbols(OdinVisibility.PACKAGE_EXPORTED)
                         .stream()
                         .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
                         .filter(symbolFilter::shouldInclude)

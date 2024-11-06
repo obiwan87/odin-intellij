@@ -25,23 +25,23 @@ import java.util.Objects;
 public class OdinDeclarationSymbolResolver extends OdinVisitor {
     private static final Logger LOG = Logger.getInstance(OdinDeclarationSymbolResolver.class);
     List<OdinSymbol> symbols = new ArrayList<>();
-    private final OdinSymbol.OdinVisibility defaultVisibility;
+    private final OdinVisibility defaultVisibility;
     private final OdinSymbolTable symbolTable;
 
-    public OdinDeclarationSymbolResolver(OdinSymbol.OdinVisibility defaultVisibility, OdinSymbolTable symbolTable) {
+    public OdinDeclarationSymbolResolver(OdinVisibility defaultVisibility, OdinSymbolTable symbolTable) {
         this.defaultVisibility = defaultVisibility;
         this.symbolTable = symbolTable;
     }
 
     public static List<OdinSymbol> getSymbols(OdinDeclaration odinDeclaration) {
-        return getSymbols(odinDeclaration, OdinSymbolTable.EMPTY);
+        return getSymbols(OdinVisibility.PACKAGE_EXPORTED, odinDeclaration, OdinSymbolTable.EMPTY);
     }
 
     public static List<OdinSymbol> getSymbols(OdinDeclaration odinDeclaration, OdinSymbolTable odinSymbolTable) {
-        return getSymbols(OdinSymbol.OdinVisibility.NONE, odinDeclaration, odinSymbolTable);
+        return getSymbols(OdinVisibility.NONE, odinDeclaration, odinSymbolTable);
     }
 
-    public static List<OdinSymbol> getSymbols(@NotNull OdinSymbol.OdinVisibility defaultVisibility,
+    public static List<OdinSymbol> getSymbols(@NotNull OdinVisibility defaultVisibility,
                                               OdinDeclaration odinDeclaration,
                                               OdinSymbolTable symbolTable) {
         OdinDeclarationSymbolResolver odinDeclarationSymbolResolver = new OdinDeclarationSymbolResolver(defaultVisibility, symbolTable);
@@ -105,7 +105,6 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             OdinSymbol symbol = new OdinSymbol(declaredIdentifier);
             hasUsing |= odinParameter.getUsing() != null;
 
-            // TODO why does every parameter have to option of having a "using"?
             symbol.setHasUsing(hasUsing);
             symbol.setPsiType(psiType);
             symbol.setSymbolType(OdinSymbolType.PARAMETER);
@@ -131,17 +130,22 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
         boolean hasUsing = o.getUsing() != null;
 
+        List<OdinAttribute> attributeList = o.getAttributeList();
+        OdinScope scope = getScope(o);
+        OdinVisibility visibility = getVisibility(scope, attributeList);
+
         for (var declaredIdentifier : o.getDeclaredIdentifiers()) {
-            OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
+            OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier, visibility);
             if (isLocal) {
-                odinSymbol.setScope(OdinSymbol.OdinScope.LOCAL);
+                odinSymbol.setScope(OdinScope.LOCAL);
             } else {
-                odinSymbol.setScope(OdinSymbol.OdinScope.GLOBAL);
+                odinSymbol.setScope(OdinScope.GLOBAL);
             }
             odinSymbol.setPsiType(o.getType());
             odinSymbol.setHasUsing(hasUsing);
-            odinSymbol.setAttributes(o.getAttributeList());
+            odinSymbol.setAttributes(attributeList);
             odinSymbol.setSymbolType(OdinSymbolType.VARIABLE);
+            odinSymbol.setScope(scope);
             symbols.add(odinSymbol);
         }
 
@@ -155,22 +159,35 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     }
 
+    private @NotNull OdinVisibility getVisibility(OdinScope scope, List<OdinAttribute> attributeList) {
+        OdinVisibility defaultVisibility = scope == OdinScope.LOCAL ? OdinVisibility.NONE : this.defaultVisibility;
+        return getVisibility(attributeList, defaultVisibility);
+    }
+
+    private static @NotNull OdinScope getScope(@NotNull OdinDeclaration o) {
+        return OdinInsightUtils.isLocalVariable(o) ? OdinScope.LOCAL : OdinScope.GLOBAL;
+    }
+
     @Override
     public void visitVariableInitializationStatement(@NotNull OdinVariableInitializationStatement o) {
         boolean isLocal = OdinInsightUtils.isLocalVariable(o);
 
         boolean hasUsing = o.getUsing() != null;
         OdinType typeDefinition = o.getType();
+
+        OdinScope scope = getScope(o);
+        OdinVisibility visibility = getVisibility(scope, o.getAttributeList());
         for (int i = 0; i < o.getDeclaredIdentifiers().size(); i++) {
-            OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifiers().get(i));
+            OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifiers().get(i), visibility);
             odinSymbol.setSymbolType(OdinSymbolType.VARIABLE);
             odinSymbol.setHasUsing(hasUsing);
             odinSymbol.setPsiType(typeDefinition);
             odinSymbol.setAttributes(o.getAttributeList());
+            odinSymbol.setScope(scope);
             if (isLocal) {
-                odinSymbol.setScope(OdinSymbol.OdinScope.LOCAL);
+                odinSymbol.setScope(OdinScope.LOCAL);
             } else {
-                odinSymbol.setScope(OdinSymbol.OdinScope.GLOBAL);
+                odinSymbol.setScope(OdinScope.GLOBAL);
             }
             symbols.add(odinSymbol);
         }
@@ -214,7 +231,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     public void visitForInParameterDeclaration(@NotNull OdinForInParameterDeclaration o) {
         for (OdinForInParameterDeclarator odinForInParameterDeclarator : o.getForInParameterDeclaratorList()) {
             PsiNamedElement declaredIdentifier = odinForInParameterDeclarator.getDeclaredIdentifier();
-            OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier, OdinSymbol.OdinVisibility.NONE);
+            OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier, OdinVisibility.NONE);
             odinSymbol.setSymbolType(OdinSymbolType.VARIABLE);
             symbols.add(odinSymbol);
         }
@@ -222,14 +239,14 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitSwitchTypeVariableDeclaration(@NotNull OdinSwitchTypeVariableDeclaration o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.NONE);
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinVisibility.NONE);
         odinSymbol.setSymbolType(OdinSymbolType.VARIABLE);
         symbols.add(odinSymbol);
     }
 
     @Override
     public void visitPolymorphicType(@NotNull OdinPolymorphicType o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.NONE);
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinVisibility.NONE);
         odinSymbol.setSymbolType(OdinSymbolType.POLYMORPHIC_TYPE);
         symbols.add(odinSymbol);
     }
@@ -251,10 +268,12 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         };
 
         OdinType typeDefinition = o.getType();
+        OdinScope scope = getScope(o);
+        List<OdinAttribute> attributeList = o.getAttributeList();
+
+        OdinVisibility visibility = getVisibility(scope, attributeList);
         for (int i = 0; i < o.getDeclaredIdentifiers().size(); i++) {
-            OdinSymbol odinSymbol = new OdinSymbol(
-                    o.getDeclaredIdentifiers().get(i),
-                    getVisibility(o.getAttributeList(), defaultVisibility));
+            OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifiers().get(i), visibility);
 
             if (o.getUsing() != null) {
                 odinSymbol.setHasUsing(true);
@@ -272,7 +291,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             }
             odinSymbol.setPsiType(typeDefinition);
             odinSymbol.setSymbolType(symbolType);
-            odinSymbol.setAttributes(o.getAttributeList());
+            odinSymbol.setAttributes(attributeList);
+
+            odinSymbol.setScope(scope);
             symbols.add(odinSymbol);
         }
 
@@ -281,8 +302,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitLabelDeclaration(@NotNull OdinLabelDeclaration o) {
-        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinSymbol.OdinVisibility.NONE);
+        OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifier(), OdinVisibility.NONE);
         odinSymbol.setSymbolType(OdinSymbolType.LABEL);
+        odinSymbol.setScope(OdinScope.LOCAL);
         symbols.add(odinSymbol);
     }
 
@@ -292,6 +314,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
             odinSymbol.setSymbolType(OdinSymbolType.FOREIGN_IMPORT);
             odinSymbol.setAttributes(o.getAttributeList());
+            odinSymbol.setScope(getScope(o));
             symbols.add(odinSymbol);
         }
     }
@@ -302,7 +325,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         odinSymbol.setName(o.getDeclaredIdentifier().getName());
         odinSymbol.setDeclaredIdentifier(o.getDeclaredIdentifier());
         odinSymbol.setImplicitlyDeclared(false);
-        odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+        odinSymbol.setScope(OdinScope.TYPE);
         odinSymbol.setSymbolType(OdinSymbolType.ENUM_FIELD);
         OdinEnumType enumType = PsiTreeUtil.getParentOfType(o, OdinEnumType.class);
         odinSymbol.setPsiType(enumType);
@@ -314,10 +337,10 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         OdinType type = o.getType();
         boolean hasUsing = o.getUsing() != null;
         for (OdinDeclaredIdentifier odinDeclaredIdentifier : o.getDeclaredIdentifierList()) {
-            OdinSymbol odinSymbol = new OdinSymbol(odinDeclaredIdentifier, OdinSymbol.OdinVisibility.NONE);
+            OdinSymbol odinSymbol = new OdinSymbol(odinDeclaredIdentifier, OdinVisibility.NONE);
             odinSymbol.setSymbolType(OdinSymbolType.STRUCT_FIELD);
             odinSymbol.setPsiType(type);
-            odinSymbol.setScope(OdinSymbol.OdinScope.TYPE);
+            odinSymbol.setScope(OdinScope.TYPE);
             odinSymbol.setImplicitlyDeclared(false);
             odinSymbol.setHasUsing(hasUsing);
             symbols.add(odinSymbol);
@@ -340,7 +363,12 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         OdinForeignStatementList foreignStatementList = o.getForeignBlock().getForeignStatementList();
         if (foreignStatementList != null) {
             for (OdinStatement odinStatement : foreignStatementList.getStatementList()) {
-                odinStatement.accept(this);
+                OdinDeclarationSymbolResolver declarationSymbolResolver = new OdinDeclarationSymbolResolver(defaultVisibility, symbolTable);
+                odinStatement.accept(declarationSymbolResolver);
+                declarationSymbolResolver.symbols.forEach(s -> {
+                    s.setForeign(true);
+                    this.symbols.add(s);
+                });
             }
         }
     }
@@ -395,10 +423,10 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         }
     }
 
-    public static @NotNull OdinSymbol.OdinVisibility getVisibility(@NotNull Collection<OdinAttribute> attributeStatementList,
-                                                                   OdinSymbol.OdinVisibility defaultVisibility) {
-        OdinSymbol.OdinVisibility odinVisibility = OdinAttributeUtils.computeVisibility(attributeStatementList);
-        return defaultVisibility == null ? odinVisibility : OdinSymbol.min(defaultVisibility, odinVisibility);
+    public static @NotNull OdinVisibility getVisibility(@NotNull Collection<OdinAttribute> attributeStatementList,
+                                                        OdinVisibility defaultVisibility) {
+        OdinVisibility odinVisibility = OdinAttributeUtils.computeVisibility(attributeStatementList);
+        return defaultVisibility == null ? odinVisibility : OdinVisibility.min(defaultVisibility, odinVisibility);
     }
 
 }
