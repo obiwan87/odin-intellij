@@ -3,6 +3,19 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.7.4</h3>
+        <h4>New Features</h4>
+        <ul>
+            <li>🌈Color Settings Page: Syntax colors are now fully customizable🌈</li>
+            <li>Type inference now correctly evaluates array sizes</li>
+            <li>Highly Experimental: Evaluation of when-statements</li>
+        </ul>
+        <h4>Bugfixes</h4>
+        <ul>
+            <li>Parameter hints now work again</li>
+            <li>Using a macro in the output path of the executable won't break debugging anymore</li>
+        </ul>
+
         <h3>0.7.3</h3>
         <h4>New Features</h4>
         <ul>
