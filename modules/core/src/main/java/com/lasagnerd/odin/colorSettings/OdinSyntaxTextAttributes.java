@@ -174,7 +174,6 @@ public class OdinSyntaxTextAttributes {
 //    public static final TextAttributesKey ODIN_PKG_PRIVATE_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_PKG_PRIVATE_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
 //    public static final TextAttributesKey ODIN_LOCAL_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_LOCAL_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
 
-    public static final TextAttributesKey ODIN_VAR_CALL = createTextAttributesKey("ODIN_VAR_CALL", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
     public static final TextAttributesKey ODIN_LOCAL_VAR_CALL = createTextAttributesKey("ODIN_LOCAL_VAR_CALL", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
     public static final TextAttributesKey ODIN_PKG_EXP_VAR_CALL = createTextAttributesKey("ODIN_PKG_EXP_VAR_CALL", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_VAR_CALL = createTextAttributesKey("ODIN_PKG_PRIVATE_VAR_CALL", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
