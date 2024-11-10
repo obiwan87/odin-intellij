@@ -16,7 +16,12 @@ public interface OdinSdkService {
     }
 
     static OdinSymbol createAllocatorSymbol(Project project) {
-        return getInstance(project).createImplicitStructSymbol("allocator", "Allocator");
+        return getInstance(project).createImplicitStructSymbol("allocator", "Allocator",
+                OdinSymbolType.ALLOCATOR_FIELD, OdinScope.TYPE, OdinVisibility.NONE);
+    }
+
+    static OdinSymbol createContextSymbol(Project project) {
+        return getInstance(project).createImplicitStructSymbol("context", "Context", OdinSymbolType.PARAMETER, OdinScope.LOCAL, OdinVisibility.NONE);
     }
 
     List<OdinSymbol> getRuntimeCoreSymbols();
@@ -33,7 +38,7 @@ public interface OdinSdkService {
 
     TsOdinType getType(String typeName);
 
-    OdinSymbol createImplicitStructSymbol(String symbolName, String structTypeName);
+    OdinSymbol createImplicitStructSymbol(String symbolName, String structTypeName, OdinSymbolType symbolType, OdinScope symbolScope, OdinVisibility symbolVisibility);
 
     Map<OdinImport, List<OdinFile>> getSdkPackages();
 

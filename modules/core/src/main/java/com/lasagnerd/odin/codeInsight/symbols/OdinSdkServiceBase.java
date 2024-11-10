@@ -224,14 +224,18 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     }
 
     @Override
-    public OdinSymbol createImplicitStructSymbol(String symbolName, String structTypeName) {
+    public OdinSymbol createImplicitStructSymbol(String symbolName,
+                                                 String structTypeName,
+                                                 OdinSymbolType symbolType,
+                                                 OdinScope symbolScope,
+                                                 OdinVisibility symbolVisibility) {
         OdinSymbol odinSymbol = new OdinSymbol();
         odinSymbol.setImplicitlyDeclared(true);
         odinSymbol.setPsiType(findStructType(structTypeName));
         odinSymbol.setName(symbolName);
-        odinSymbol.setSymbolType(OdinSymbolType.PARAMETER);
-        odinSymbol.setScope(OdinScope.LOCAL);
-        odinSymbol.setVisibility(OdinVisibility.NONE);
+        odinSymbol.setSymbolType(symbolType);
+        odinSymbol.setScope(symbolScope);
+        odinSymbol.setVisibility(symbolVisibility);
         // TODO
         odinSymbol.setPackagePath("");
 

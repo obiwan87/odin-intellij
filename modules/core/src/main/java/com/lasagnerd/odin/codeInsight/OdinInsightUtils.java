@@ -260,8 +260,13 @@ public class OdinInsightUtils {
     }
 
     public static @NotNull List<OdinSymbol> getEnumFields(OdinEnumType enumType) {
-        OdinEnumBody enumBody = enumType
-                .getEnumBlock()
+        OdinEnumBlock enumBlock = enumType
+                .getEnumBlock();
+
+        if (enumBlock == null)
+            return Collections.emptyList();
+
+        OdinEnumBody enumBody = enumBlock
                 .getEnumBody();
 
         if (enumBody == null)
@@ -273,6 +278,8 @@ public class OdinInsightUtils {
             OdinDeclaredIdentifier identifier = odinEnumValueDeclaration.getDeclaredIdentifier();
             OdinSymbol odinSymbol = new OdinSymbol(identifier);
             odinSymbol.setSymbolType(ENUM_FIELD);
+            odinSymbol.setScope(OdinScope.TYPE);
+            odinSymbol.setVisibility(OdinVisibility.NONE);
             odinSymbol.setPsiType(enumType);
             symbols.add(odinSymbol);
         }
@@ -330,8 +337,12 @@ public class OdinInsightUtils {
     }
 
     public static @NotNull List<OdinFieldDeclarationStatement> getStructFieldsDeclarationStatements(OdinStructType structType) {
-        OdinStructBody structBody = structType
-                .getStructBlock()
+        OdinStructBlock structBlock = structType
+                .getStructBlock();
+
+        if(structBlock == null)
+            return Collections.emptyList();
+        OdinStructBody structBody = structBlock
                 .getStructBody();
 
         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList;
@@ -859,7 +870,7 @@ public class OdinInsightUtils {
     public static boolean isStaticVariable(OdinDeclaredIdentifier declaredIdentifier) {
         if (isVariable(declaredIdentifier.getParent())) {
             OdinVariableDeclaration declaration = (OdinVariableDeclaration) declaredIdentifier.getParent();
-            return OdinAttributeUtils.containsAttribute(declaration.getAttributeList(), "static");
+            return OdinAttributeUtils.containsAttribute(declaration.getAttributesDefinitionList(), "static");
         }
         return false;
     }
@@ -868,7 +879,7 @@ public class OdinInsightUtils {
         PsiElement parent = declaredIdentifier.getParent();
         if (isProcedureDeclaration(parent)) {
             OdinConstantInitializationStatement constant = (OdinConstantInitializationStatement) parent;
-            return OdinAttributeUtils.containsAttribute(constant.getAttributeList(), "static");
+            return OdinAttributeUtils.containsAttribute(constant.getAttributesDefinitionList(), "static");
         }
         return false;
     }

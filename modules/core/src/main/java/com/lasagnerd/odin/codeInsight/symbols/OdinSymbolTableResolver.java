@@ -249,30 +249,37 @@ public class OdinSymbolTableResolver {
                         .getPackagePath(identifier)));
     }
 
-    public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier, OdinSymbolTable parentScope) {
+    public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier, OdinSymbolTable parentSymbolTable) {
         PsiElement parent = identifier.getParent();
         OdinSymbolTable symbolTable;
         if (parent instanceof OdinRefExpression refExpression) {
             if (refExpression.getExpression() != null) {
-                symbolTable = OdinReferenceResolver.resolve(parentScope, refExpression.getExpression());
+                symbolTable = OdinReferenceResolver.resolve(parentSymbolTable, refExpression.getExpression());
             } else {
-                symbolTable = parentScope;
+                symbolTable = parentSymbolTable;
             }
+        } else if(parent instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
+                TsOdinType tsOdinType = OdinInferenceEngine.doInferType(parentSymbolTable, implicitSelectorExpression);
+                if(!tsOdinType.isUnknown()) {
+                    symbolTable = OdinInsightUtils.getTypeElements(identifier.getProject(), tsOdinType);
+                } else {
+                    symbolTable = parentSymbolTable;
+                }
         } else {
             OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, OdinQualifiedType.class);
             if (qualifiedType != null) {
                 if (qualifiedType.getPackageIdentifier() == identifier) {
-                    symbolTable = parentScope;
+                    symbolTable = parentSymbolTable;
                 } else {
-                    symbolTable = OdinReferenceResolver.resolve(parentScope, qualifiedType);
+                    symbolTable = OdinReferenceResolver.resolve(parentSymbolTable, qualifiedType);
                 }
             } else {
-                symbolTable = parentScope;
+                symbolTable = parentSymbolTable;
             }
         }
 
         if (symbolTable == OdinSymbolTable.EMPTY || symbolTable == null) {
-            symbolTable = parentScope;
+            symbolTable = parentSymbolTable;
         }
 
         if (symbolTable != null) {
@@ -314,6 +321,7 @@ public class OdinSymbolTableResolver {
             OdinSymbolTable fullSymbolTable = findSymbols2(originalPosition);
             return trimToPosition(fullSymbolTable, false);
         }
+
         private OdinSymbolTable findSymbols2(PsiElement element) {
             // 1. Find the starting point
             //  = a statement whose parent is a scope block
@@ -361,7 +369,7 @@ public class OdinSymbolTableResolver {
                     //                    if (stringLiteralValue == null && ) {
                     //                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
                     //                    }
-                    symbolTable.add(builtinSymbolService.createImplicitStructSymbol("context", "Context"));
+                    symbolTable.add(OdinSdkService.createContextSymbol(element.getProject()));
                 }
             }
 
@@ -409,7 +417,7 @@ public class OdinSymbolTableResolver {
             boolean fileScope = containingScopeBlock instanceof OdinFileScope;
             boolean foreignBlock = containingScopeBlock instanceof OdinForeignBlock;
 
-            if(containingScopeBlock == null)
+            if (containingScopeBlock == null)
                 return fullSymbolTable;
 
             OdinSymbolTable symbolTable = new OdinSymbolTable(packagePath);
@@ -514,7 +522,7 @@ public class OdinSymbolTableResolver {
                     //                    if (stringLiteralValue == null && ) {
                     //                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
                     //                    }
-                    symbolTable.add(builtinSymbolService.createImplicitStructSymbol("context", "Context"));
+                    symbolTable.add(OdinSdkService.createContextSymbol(element.getProject()));
                 }
             }
 
@@ -619,11 +627,11 @@ public class OdinSymbolTableResolver {
 
         private boolean isStatic(OdinDeclaration declaration) {
             if (declaration instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-                return OdinAttributeUtils.containsAttribute(variableInitializationStatement.getAttributeList(), "static");
+                return OdinAttributeUtils.containsAttribute(variableInitializationStatement.getAttributesDefinitionList(), "static");
             }
 
             if (declaration instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
-                return OdinAttributeUtils.containsAttribute(variableDeclarationStatement.getAttributeList(), "static");
+                return OdinAttributeUtils.containsAttribute(variableDeclarationStatement.getAttributesDefinitionList(), "static");
             }
             return false;
         }

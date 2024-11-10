@@ -70,7 +70,8 @@ public class OdinCompletionContributor extends CompletionContributor {
             return AllIcons.FileTypes.Unknown;
         return switch (symbolType) {
             case STRUCT -> OdinIcons.Types.Struct;
-            case SWIZZLE_FIELD, STRUCT_FIELD, SOA_FIELD, BIT_FIELD_FIELD -> AllIcons.Nodes.Property;
+            case SWIZZLE_FIELD, STRUCT_FIELD, SOA_FIELD, BIT_FIELD_FIELD, ALLOCATOR_FIELD -> AllIcons.Nodes.Property;
+            case TYPE_ALIAS, POLYMORPHIC_TYPE -> AllIcons.Nodes.Type;
             case BIT_FIELD, LABEL, FOREIGN_IMPORT, BIT_SET, BUILTIN_TYPE -> null;
             case ENUM_FIELD -> AllIcons.Nodes.Field;
             case ENUM -> AllIcons.Nodes.Enum;
@@ -81,7 +82,6 @@ public class OdinCompletionContributor extends CompletionContributor {
             case PACKAGE_REFERENCE -> AllIcons.Nodes.Package;
             case PARAMETER -> AllIcons.Nodes.Parameter;
             case UNKNOWN -> AllIcons.FileTypes.Unknown;
-            case POLYMORPHIC_TYPE -> AllIcons.Nodes.Type;
         };
     }
 

@@ -23,6 +23,7 @@ public class OdinFormatterBlock extends AbstractBlock {
             OdinTypes.STRUCT_BODY,
             OdinTypes.ENUM_BODY,
             OdinTypes.UNION_BODY,
+            OdinTypes.BIT_FIELD_BODY,
             OdinTypes.COMPOUND_VALUE_BODY
     );
 
@@ -32,6 +33,7 @@ public class OdinFormatterBlock extends AbstractBlock {
             OdinTypes.SWITCH_CASE,
             OdinTypes.UNION_BLOCK,
             OdinTypes.ENUM_BLOCK,
+            OdinTypes.BIT_FIELD_BLOCK,
             OdinTypes.COMPOUND_VALUE
     );
 

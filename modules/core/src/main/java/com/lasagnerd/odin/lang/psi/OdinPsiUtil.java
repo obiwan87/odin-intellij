@@ -60,7 +60,8 @@ public class OdinPsiUtil {
             OdinTypes.EQEQ,
             OdinTypes.NEQ,
             OdinTypes.OROR,
-            OdinTypes.ANDAND);
+            OdinTypes.ANDAND
+    );
 
     public static final TokenSet COMPARISON_OPERATORS = TokenSet.create(
             OdinTypes.LT,

@@ -6,10 +6,12 @@ import lombok.Getter;
 @Getter
 public enum OdinSymbolType {
     UNKNOWN(false),
+    TYPE_ALIAS(true),
     BUILTIN_TYPE(true),
     PARAMETER(false),
     STRUCT_FIELD(false),
     BIT_FIELD_FIELD(false),
+    ALLOCATOR_FIELD(false),
     PROCEDURE(true),
     PROCEDURE_OVERLOAD(true),
     STRUCT(true),

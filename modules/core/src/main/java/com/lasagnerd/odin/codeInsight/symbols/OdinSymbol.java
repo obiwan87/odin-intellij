@@ -2,6 +2,7 @@ package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.lang.psi.*;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,7 @@ public class OdinSymbol {
     //    private OdinDeclaration declaration;
     private PsiNamedElement declaredIdentifier;
     private OdinType psiType;
-    private List<OdinAttribute> attributes;
+    private List<OdinAttributesDefinition> attributes;
 
     private String name;
     private String packagePath;
@@ -55,4 +56,11 @@ public class OdinSymbol {
         return OdinSymbolOrigin.NONE;
     }
 
+    public boolean isContext() {
+        return this.isImplicitlyDeclared() && getName().equals("context");
+    }
+
+    public boolean isStatic() {
+        return OdinAttributeUtils.containsAttribute(attributes, "static");
+    }
 }

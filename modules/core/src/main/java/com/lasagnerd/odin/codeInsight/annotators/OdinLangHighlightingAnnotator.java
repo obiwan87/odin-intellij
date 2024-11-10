@@ -4,7 +4,6 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -22,17 +21,18 @@ import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPolymorphicType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
-import com.lasagnerd.odin.colorSettings.OdinIdentifierType;
-import com.lasagnerd.odin.colorSettings.OdinSyntaxColors;
+import com.lasagnerd.odin.colorSettings.OdinSyntaxTextAttributes;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.lasagnerd.odin.codeInsight.annotators.OdinAnnotationUtils.getUserData;
+import static com.lasagnerd.odin.colorSettings.OdinSyntaxTextAttributes.TEXT_ATTRIBUTES_MAP;
 import static com.lasagnerd.odin.lang.psi.OdinReference.logStackOverFlowError;
 
 
@@ -185,16 +185,28 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             String identifierText = psiElement.getText();
 
             if (RESERVED_TYPES.contains(identifierText)) {
-                highlight(annotationHolder, psiElementRange, OdinSyntaxColors.ODIN_BUILTIN_PROC);
+                highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_PROC);
             } else if (PREDEFINED_SYMBOLS.contains(identifierText)) {
-                highlight(annotationHolder, psiElementRange, OdinSyntaxColors.ODIN_BUILTIN_PROC);
+                highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_PROC);
             } else {
                 PsiElement identifierTokenParent = psiElement.getParent();
                 if (identifierTokenParent instanceof OdinDeclaredIdentifier declaredIdentifier) {
-                    handleDeclarations2(annotationHolder, declaredIdentifier, psiElementRange);
+                    handleDeclarations(annotationHolder, declaredIdentifier, psiElementRange);
                     // Add other types
+                }
+                else if (identifierTokenParent instanceof OdinAttributeIdentifier) {
+                    highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_ATTRIBUTE_REF);
+                }
+                else if (identifierTokenParent.getParent() instanceof OdinImplicitSelectorExpression selectorExpression) {
+                    OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
+                    OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
+                    if (symbol != null) {
+                        highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_IMPLICIT_ENUM_FIELD_REF);
+                        return;
+                    }
+                    highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
                 } else if (identifierTokenParent.getParent() instanceof OdinRefExpression refExpression) {
-                    handleRefExpression(annotationHolder,
+                    handleReferences(annotationHolder,
                             psiElement,
                             identifierText,
                             refExpression,
@@ -205,31 +217,40 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                     if (identifier.getIdentifierToken() == psiElement) {
                         highlightPackageReference(annotationHolder, identifierText, psiElementRange, identifier);
                     }
-                } else if (identifierTokenParent.getParent() instanceof OdinSimpleRefType) {
-                    OdinIdentifier identifier = (OdinIdentifier) identifierTokenParent;
-                    if (identifier.getReference() != null) {
-                        PsiElement resolvedReference = identifier.getReference().resolve();
-                        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(resolvedReference, OdinDeclaration.class, false);
-                        if (declaration == null) {
-                            highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
-                        } else if (OdinInsightUtils.isStructDeclaration(declaration)) {
-                            highlight(annotationHolder, psiElementRange, OdinSyntaxColors.ODIN_STRUCT_REF);
-                        }
-                    }
+                } else if (identifierTokenParent.getParent() instanceof OdinSimpleRefType simpleRefType) {
+                    handleTypeReferences(annotationHolder,
+                            psiElement,
+                            identifierTokenParent,
+                            identifierText,
+                            psiElementRange,
+                            simpleRefType);
                 }
             }
         }
 
         highlightEscapeSequences(psiElement, annotationHolder);
 
-        if (psiElement instanceof OdinDirectiveIdentifier tagHead) {
-            highlightDirectiveIdentifier(tagHead, annotationHolder);
+        if (psiElement instanceof OdinDirectiveIdentifier directiveIdentifier) {
+            highlightDirectiveIdentifier(directiveIdentifier, annotationHolder);
         }
     }
 
-    private static void handleDeclarations2(@NotNull AnnotationHolder annotationHolder,
-                                            OdinDeclaredIdentifier declaredIdentifier,
-                                            TextRange psiElementRange) {
+    private void handleTypeReferences(AnnotationHolder annotationHolder, PsiElement element, PsiElement identifierTokenParent, String identifierText, TextRange psiElementRange, OdinSimpleRefType simpleRefType) {
+        OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
+        OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
+        if (symbol == null) {
+            highlightUnknownReference(element.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
+        }
+
+        TextAttributesKey textAttribute = TEXT_ATTRIBUTES_MAP.getReferenceTextAttribute(symbol);
+        if (textAttribute != null) {
+            highlight(annotationHolder, psiElementRange, textAttribute);
+        }
+    }
+
+    private static void handleDeclarations(@NotNull AnnotationHolder annotationHolder,
+                                           OdinDeclaredIdentifier declaredIdentifier,
+                                           TextRange psiElementRange) {
         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
         if (declaration != null) {
             List<OdinSymbol> symbols = OdinDeclarationSymbolResolver.getSymbols(declaration);
@@ -238,43 +259,15 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                     .findFirst()
                     .orElse(null);
             if (symbol != null) {
-                TextAttributesKey textAttribute = OdinSyntaxColors.STYLES.getDeclarationStyle(symbol);
+                if(symbol.getSymbolType() == OdinSymbolType.VARIABLE && symbol.isStatic()) {
+                    highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_STATIC_VARIABLE);
+                    return;
+                }
+                TextAttributesKey textAttribute = TEXT_ATTRIBUTES_MAP.getDeclarationStyle(symbol);
                 if (textAttribute != null) {
                     highlight(annotationHolder, psiElementRange, textAttribute);
                 }
             }
-        }
-    }
-
-    private Map<OdinSymbolType, Map<OdinScope, Map<OdinVisibility, Map<OdinIdentifierType, TextAttributesKey>>>> textAttributes = new HashMap<>();
-
-    private static void handleDeclarations(@NotNull AnnotationHolder annotationHolder,
-                                           OdinDeclaredIdentifier declaredIdentifier,
-                                           TextRange psiElementRange) {
-
-
-        if (declaredIdentifier.getParent() instanceof OdinImportDeclarationStatement) {
-            highlight(annotationHolder, psiElementRange, OdinSyntaxColors.ODIN_PACKAGE);
-        } else if (OdinInsightUtils.isProcedureDeclaration(declaredIdentifier)) {
-            highlight(annotationHolder, psiElementRange, OdinSyntaxColors.ODIN_PROCEDURE_TYPE);
-        } else if (OdinInsightUtils.isStructDeclaration(declaredIdentifier)) {
-            highlight(annotationHolder, psiElementRange, OdinSyntaxColors.ODIN_STRUCT_TYPE);
-        } else if (OdinInsightUtils.isUnionDeclaration(declaredIdentifier)) {
-            highlight(annotationHolder, psiElementRange, OdinSyntaxColors.ODIN_UNION_TYPE);
-        } else if (OdinInsightUtils.isStaticVariable(declaredIdentifier)) {
-            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.STATIC_FIELD);
-        } else if (OdinInsightUtils.isLocalVariable(declaredIdentifier)) {
-            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
-        } else if (OdinInsightUtils.isGlobalVariable(declaredIdentifier)) {
-            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
-        } else if (OdinInsightUtils.isConstantDeclaration(declaredIdentifier)) {
-            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.CONSTANT);
-        } else if (OdinInsightUtils.isParameterDeclaration(declaredIdentifier)) {
-            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.PARAMETER);
-        } else if (OdinInsightUtils.isStructFieldDeclaration(declaredIdentifier)) {
-            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.INSTANCE_FIELD);
-        } else if (OdinInsightUtils.isBitFieldFieldDeclaration(declaredIdentifier)) {
-            highlight(annotationHolder, psiElementRange, DefaultLanguageHighlighterColors.INSTANCE_FIELD);
         }
     }
 
@@ -287,14 +280,108 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         return getUserData(annotationHolder.getCurrentAnnotationSession(), ANNOTATION_SESSION_STATE, OdinAnnotationSessionState::new);
     }
 
-    private void handleRefExpression(@NotNull AnnotationHolder annotationHolder,
-                                     @NotNull PsiElement psiElement,
-                                     String identifierText,
-                                     OdinRefExpression refExpression,
-                                     PsiElement identifierTokenParent,
-                                     TextRange textRange) {
+    private void handleReferences(@NotNull AnnotationHolder annotationHolder,
+                                  @NotNull PsiElement psiElement,
+                                  String identifierText,
+                                  OdinRefExpression refExpression,
+                                  PsiElement identifierTokenParent,
+                                  TextRange textRange) {
         OdinAnnotationSessionState annotationSessionState = getAnnotationSessionState(annotationHolder);
 
+        OdinRefExpression topMostExpression = getTopMostExpression(psiElement, refExpression, annotationSessionState);
+        if (topMostExpression == null)
+            return;
+
+        // If we already found an unknown reference earlier in the reference chain, we skip
+        if (annotationSessionState.aborted.contains(topMostExpression))
+            return;
+
+        // Ignore any identifier "_"
+        if (topMostExpression.getIdentifier() == identifierTokenParent) {
+            if (identifierText.equals("_"))
+                return;
+        }
+
+        PsiElement refExpressionParent = refExpression.getParent();
+
+        OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
+
+
+        if (refExpression == topMostExpression) {
+            // The first parameter of #config(DEF, val) is not defined in code
+            if (isInsideConfigDirective(refExpression)) return;
+        }
+
+        OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
+
+        // Symbol not found
+        if (symbol == null) {
+            // If we are being referenced from a polymorphic type, do not show any errors
+            if (refExpression.getExpression() != null) {
+                TsOdinType type = OdinInferenceEngine.inferType(symbolTable, refExpression.getExpression());
+                TsOdinType referenceableType = OdinInsightUtils.getReferenceableType(type);
+                if (referenceableType instanceof TsOdinPolymorphicType) {
+                    annotationSessionState.aborted.add(topMostExpression);
+                    return;
+                }
+            }
+
+            // Otherwise, annotate as error
+            highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange, "reference");
+            annotationSessionState.aborted.add(topMostExpression);
+            return;
+        }
+
+        if (symbol.getSymbolType() == OdinSymbolType.PARAMETER) {
+            if (symbol.isContext()) {
+                highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_CONTEXT_PARAM_REF);
+                return;
+            }
+        }
+
+        if (symbol.getSymbolType() == OdinSymbolType.POLYMORPHIC_TYPE) {
+            highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_POLY_PARAMETER_REF);
+            return;
+        }
+
+        if (symbol.getSymbolType() == OdinSymbolType.VARIABLE) {
+            if (OdinAttributeUtils.containsAttribute(symbol.getAttributes(), "static")) {
+                highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_STATIC_VARIABLE);
+                return;
+            }
+        }
+
+        // Check if we have a call expression at hand
+        if (refExpressionParent instanceof OdinCallExpression) {
+            TextAttributesKey callTextAttribute = TEXT_ATTRIBUTES_MAP.getCallTextAttribute(symbol);
+            if (callTextAttribute != null) {
+                highlight(annotationHolder, textRange, callTextAttribute);
+            }
+            return;
+        }
+
+        // Check if we have a reference text attribute for this symbol
+        TextAttributesKey referenceTextAttribute = TEXT_ATTRIBUTES_MAP.getReferenceTextAttribute(symbol);
+        if (referenceTextAttribute != null) {
+            highlight(annotationHolder, textRange, referenceTextAttribute);
+            return;
+        }
+
+        PsiElement lastRefExpression = PsiTreeUtil.findFirstParent(identifierTokenParent,
+                p -> !(p.getParent() instanceof OdinRefExpression));
+        OdinIdentifier identifier = PsiTreeUtil.findChildOfType(lastRefExpression, OdinIdentifier.class);
+        if (identifier != null && identifier.getIdentifierToken() == psiElement) {
+            highlightPackageReference(annotationHolder, identifierText, textRange, identifier);
+        }
+    }
+
+    private static OdinSymbolTable computeSymbolTable(PsiElement identifierTokenParent) {
+        return OdinSymbolTableResolver.computeSymbolTable(identifierTokenParent)
+                .with(OdinImportService.getInstance(identifierTokenParent.getProject())
+                        .getPackagePath(identifierTokenParent));
+    }
+
+    private static @Nullable OdinRefExpression getTopMostExpression(@NotNull PsiElement psiElement, OdinRefExpression refExpression, OdinAnnotationSessionState annotationSessionState) {
         // Unfold refExpression
         OdinRefExpression topMostExpression = annotationSessionState.refExpressionMap.get(psiElement);
         if (topMostExpression == null) {
@@ -306,126 +393,22 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 }
             }
         }
+        return topMostExpression;
+    }
 
-        if (topMostExpression == null)
-            return;
-
-        if (annotationSessionState.aborted.contains(topMostExpression))
-            return;
-
-        if (topMostExpression.getIdentifier() == identifierTokenParent) {
-            if (identifierText.equals("_"))
-                return;
-        }
-
-        PsiElement refExpressionParent = refExpression.getParent();
-
-        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(identifierTokenParent)
-                .with(OdinImportService.getInstance(identifierTokenParent.getProject())
-                        .getPackagePath(identifierTokenParent));
-
-
-        if (refExpression == topMostExpression) {
-            // The first parameter of #config(DEF, val) is not defined in code
-            if (refExpression.getParent() instanceof OdinArgument argument) {
-                OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class);
-                if (callExpression != null && callExpression.getExpression() instanceof OdinDirectiveExpression directiveExpression) {
-                    if (directiveExpression.getText().equals("#config")) {
-                        callExpression.getArgumentList();
-                        if (!callExpression.getArgumentList().isEmpty()) {
-                            if (callExpression.getArgumentList().getFirst() == argument) {
-                                return;
-                            }
-                        }
+    private static boolean isInsideConfigDirective(OdinRefExpression refExpression) {
+        if (refExpression.getParent() instanceof OdinArgument argument) {
+            OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class);
+            if (callExpression != null && callExpression.getExpression() instanceof OdinDirectiveExpression directiveExpression) {
+                if (directiveExpression.getText().equals("#config")) {
+                    callExpression.getArgumentList();
+                    if (!callExpression.getArgumentList().isEmpty()) {
+                        return callExpression.getArgumentList().getFirst() == argument;
                     }
                 }
             }
         }
-
-        OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
-
-        if (symbol == null) {
-            if (refExpression.getExpression() != null) {
-                TsOdinType type = OdinInferenceEngine.inferType(symbolTable, refExpression.getExpression());
-                TsOdinType referenceableType = OdinInsightUtils.getReferenceableType(type);
-                if (referenceableType instanceof TsOdinPolymorphicType) {
-                    annotationSessionState.aborted.add(topMostExpression);
-                    return;
-                }
-            }
-            highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange, "reference");
-            annotationSessionState.aborted.add(topMostExpression);
-            return;
-        }
-
-        if (symbol.getSymbolType() == OdinSymbolType.VARIABLE) {
-            if (OdinAttributeUtils.containsAttribute(symbol.getAttributes(), "static")) {
-                highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_STATIC_VARIABLE);
-                return;
-            }
-
-            if (symbol.getScope() == OdinScope.LOCAL) {
-                highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_LOCAL_VARIABLE);
-                return;
-            }
-
-            if (symbol.getScope() == OdinScope.GLOBAL) {
-                highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_GLOBAL_VARIABLE);
-                return;
-            }
-        }
-
-        if (symbol.getSymbolType() == OdinSymbolType.PARAMETER) {
-            highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_PARAMETER);
-            return;
-        }
-
-        if (symbol.getSymbolType() == OdinSymbolType.CONSTANT) {
-            highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_CONSTANT);
-            return;
-        }
-
-        if (symbol.getSymbolType() == OdinSymbolType.STRUCT_FIELD) {
-            if (symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier declaredIdentifier) {
-                if (declaredIdentifier.getDollar() != null)
-                    return;
-            }
-            highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_STRUCT_FIELD);
-            return;
-        }
-
-        if (symbol.getSymbolType() == OdinSymbolType.BIT_FIELD_FIELD) {
-            highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_FIELD);
-            return;
-        }
-
-        if (symbol.isImplicitlyDeclared())
-            return;
-
-        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(symbol.getDeclaredIdentifier(),
-                OdinDeclaration.class,
-                true);
-
-        if (refExpressionParent instanceof OdinCallExpression) {
-            OdinIdentifier identifier = refExpression.getIdentifier();
-            if (identifierTokenParent == identifier) {
-                if (OdinInsightUtils.isProcedureDeclaration(declaration)) {
-                    highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_PROC_CALL);
-                } else if (OdinInsightUtils.isStructDeclaration(declaration)) {
-                    highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_STRUCT_REF);
-                } else if (OdinInsightUtils.isUnionDeclaration(declaration)) {
-                    highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_UNION_REF);
-                }
-            }
-        } else {
-            PsiElement lastRefExpression = PsiTreeUtil.findFirstParent(identifierTokenParent,
-                    p -> !(p.getParent() instanceof OdinRefExpression));
-            OdinIdentifier identifier = PsiTreeUtil.findChildOfType(lastRefExpression, OdinIdentifier.class);
-            if (identifier != null && identifier.getIdentifierToken() == psiElement) {
-                highlightPackageReference(annotationHolder, identifierText, textRange, identifier);
-            }
-        }
-
+        return false;
     }
 
     @SuppressWarnings("unused")
@@ -439,7 +422,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             annotationHolder
                     .newAnnotation(HighlightSeverity.ERROR, ("Unresolved " + reference + " '%s'").formatted(identifierText))
                     .range(textRange)
-                    .textAttributes(OdinSyntaxColors.ODIN_BAD_CHARACTER)
+                    .textAttributes(OdinSyntaxTextAttributes.ODIN_BAD_CHARACTER)
                     .create();
             // TODO enable when it's done}
         }
@@ -451,21 +434,21 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         if (reference != null) {
             PsiElement resolveReference = reference.resolve();
             if (resolveReference instanceof PsiDirectory) {
-                highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_PACKAGE);
+                highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE);
             } else {
                 OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
                 if (odinDeclaration == null) {
                     highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, textRange, "reference");
                 } else if (odinDeclaration instanceof OdinImportDeclarationStatement) {
-                    highlight(annotationHolder, textRange, OdinSyntaxColors.ODIN_PACKAGE);
+                    highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE);
                 }
             }
         }
     }
 
-    private static void highlight(@NotNull AnnotationHolder annotationHolder, TextRange psiElement, TextAttributesKey constant) {
+    private static void highlight(@NotNull AnnotationHolder annotationHolder, TextRange textRange, TextAttributesKey constant) {
         annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                .range(psiElement)
+                .range(textRange)
                 .textAttributes(constant)
                 .create();
     }
@@ -473,7 +456,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     private static void highlightDirectiveIdentifier(OdinDirectiveIdentifier tagHead, @NotNull AnnotationHolder annotationHolder) {
 
         var matchRange = tagHead.getTextRange();
-        highlight(annotationHolder, matchRange, OdinSyntaxColors.ODIN_PROC_DECLARATION);
+        highlight(annotationHolder, matchRange, OdinSyntaxTextAttributes.ODIN_DIRECTIVE_REF);
     }
 
     private static void highlightEscapeSequences(PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
@@ -491,7 +474,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                     psiElement.getTextRange().getStartOffset() + matcher.start(),
                     matcher.end() - matcher.start()
             );
-            highlight(annotationHolder, matchRange, OdinSyntaxColors.ODIN_VALID_STRING_ESCAPE);
+            highlight(annotationHolder, matchRange, OdinSyntaxTextAttributes.ODIN_VALID_STRING_ESCAPE);
         }
     }
 

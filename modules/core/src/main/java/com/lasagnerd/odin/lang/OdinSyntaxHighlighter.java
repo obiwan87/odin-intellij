@@ -1,11 +1,11 @@
 package com.lasagnerd.odin.lang;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
-import com.lasagnerd.odin.colorSettings.OdinSyntaxColors;
+import com.intellij.psi.tree.TokenSet;
+import com.lasagnerd.odin.colorSettings.OdinSyntaxTextAttributes;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,27 +16,58 @@ import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAtt
 public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
 
 
-    private static final TextAttributesKey[] KEYWORD_KEYS = new TextAttributesKey[]{OdinSyntaxColors.ODIN_KEYWORD};
+    private static final TextAttributesKey[] KEYWORD_KEYS = new TextAttributesKey[]{OdinSyntaxTextAttributes.ODIN_KEYWORD};
 
     private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
-    public static final TextAttributesKey[] STRINGS = {OdinSyntaxColors.ODIN_TEXT};
-    public static final TextAttributesKey[] IDENTIFIERS = {OdinSyntaxColors.ODIN_IDENTIFIER};
-    public static final TextAttributesKey[] LINE_COMMENT = {OdinSyntaxColors.ODIN_LINE_COMMENT};
-    public static final TextAttributesKey[] BLOCK_COMMENT = {OdinSyntaxColors.ODIN_BLOCK_COMMENT};
-    public static final TextAttributesKey[] NUMBER = {OdinSyntaxColors.ODIN_NUMBER};
-    public static final TextAttributesKey[] COMMA = {OdinSyntaxColors.ODIN_COMMA};
-    public static final TextAttributesKey[] SEMICOLON = {OdinSyntaxColors.ODIN_SEMICOLON};
-    public static final TextAttributesKey[] DOT = {OdinSyntaxColors.ODIN_DOT};
-    public static final TextAttributesKey[] PARENTHESES = {OdinSyntaxColors.ODIN_PARENTHESES};
-    public static final TextAttributesKey[] BRACES = {OdinSyntaxColors.ODIN_BRACES};
-    public static final TextAttributesKey[] ATTRIBUTE_PREFIX = {DefaultLanguageHighlighterColors.METADATA};
+    public static final TextAttributesKey[] STRINGS = {OdinSyntaxTextAttributes.ODIN_TEXT};
+    public static final TextAttributesKey[] IDENTIFIERS = {OdinSyntaxTextAttributes.ODIN_IDENTIFIER};
+    public static final TextAttributesKey[] LINE_COMMENT = {OdinSyntaxTextAttributes.ODIN_LINE_COMMENT};
+    public static final TextAttributesKey[] BLOCK_COMMENT = {OdinSyntaxTextAttributes.ODIN_BLOCK_COMMENT};
+    public static final TextAttributesKey[] NUMBER = {OdinSyntaxTextAttributes.ODIN_NUMBER};
+    public static final TextAttributesKey[] COMMA = {OdinSyntaxTextAttributes.ODIN_COMMA};
+    public static final TextAttributesKey[] SEMICOLON = {OdinSyntaxTextAttributes.ODIN_SEMICOLON};
+    public static final TextAttributesKey[] DOT = {OdinSyntaxTextAttributes.ODIN_DOT};
+    public static final TextAttributesKey[] PARENTHESES = {OdinSyntaxTextAttributes.ODIN_PARENTHESES};
+    public static final TextAttributesKey[] BRACES = {OdinSyntaxTextAttributes.ODIN_BRACES};
+    public static final TextAttributesKey[] ATTRIBUTE_PREFIX = {OdinSyntaxTextAttributes.ODIN_AT};
+    public static final TextAttributesKey[] COLON = {OdinSyntaxTextAttributes.ODIN_COLON};
+    public static final TextAttributesKey[] OPERATOR_KEYS = {OdinSyntaxTextAttributes.ODIN_OPERATOR};
+
 
     @Override
     public @NotNull Lexer getHighlightingLexer() {
         return new OdinLexerAdapter();
     }
 
-    private static final List<IElementType> keywords = List.of(
+    private static final TokenSet OPERATORS = TokenSet.create(
+            OdinTypes.DIV,
+            OdinTypes.MOD,
+            OdinTypes.REMAINDER,
+            OdinTypes.PLUS,
+            OdinTypes.MINUS,
+            OdinTypes.AND,
+            OdinTypes.PIPE,
+            OdinTypes.TILDE,
+            OdinTypes.ANDNOT,
+            OdinTypes.LSHIFT,
+            OdinTypes.RSHIFT,
+            OdinTypes.OR_ELSE,
+            OdinTypes.RANGE_INCLUSIVE,
+            OdinTypes.RANGE_EXCLUSIVE,
+            OdinTypes.IN,
+            OdinTypes.NOT_IN,
+            OdinTypes.LT,
+            OdinTypes.GT,
+            OdinTypes.LTE,
+            OdinTypes.GTE,
+            OdinTypes.EQEQ,
+            OdinTypes.NEQ,
+            OdinTypes.OROR,
+            OdinTypes.ANDAND,
+            OdinTypes.NOT,
+            OdinTypes.RANGE
+    );
+    private static final TokenSet KEYWORDS = TokenSet.create(
             OdinTypes.BIT_SET,
             OdinTypes.DYNAMIC,
             OdinTypes.NOT_IN,
@@ -76,7 +107,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.BUILD_FLAG_PREFIX_TOKEN
     );
 
-    private static final List<IElementType> numericLiteral = List.of(
+    private static final TokenSet NUMERIC_LITERALS = TokenSet.create(
             OdinTypes.INTEGER_DEC_LITERAL,
             OdinTypes.INTEGER_HEX_LITERAL,
             OdinTypes.INTEGER_OCT_LITERAL,
@@ -88,11 +119,17 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.QUAT_INTEGER_DEC_LITERAL
     );
 
+
+
     @Override
     public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
 
-        if (keywords.contains(tokenType)) {
+        if (KEYWORDS.contains(tokenType)) {
             return KEYWORD_KEYS;
+        }
+
+        if(OPERATORS.contains(tokenType)) {
+            return OPERATOR_KEYS;
         }
 
         if (tokenType.equals(OdinTypes.DQ_STRING_LITERAL) ||
@@ -118,7 +155,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return BLOCK_COMMENT;
         }
 
-        if (numericLiteral.contains(tokenType)) {
+        if (NUMERIC_LITERALS.contains(tokenType)) {
             return NUMBER;
         }
 
@@ -128,6 +165,10 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
 
         if (tokenType.equals(OdinTypes.SEMICOLON)) {
             return SEMICOLON;
+        }
+
+        if (tokenType.equals(OdinTypes.COLON)) {
+            return COLON;
         }
 
         if (tokenType.equals(OdinTypes.DOT)) {

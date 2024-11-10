@@ -5,6 +5,11 @@
             <option name="FOREGROUND" value="CC7832"/>
         </value>
     </option>
+    <option name="ODIN_BUILTIN_TYPE">
+        <value>
+            <option name="FOREGROUND" value="CC7832"/>
+        </value>
+    </option>
     <option name="ODIN_PACKAGE">
         <value>
             <option name="FOREGROUND" value="AFBF7E"/>
@@ -20,7 +25,7 @@
             <option name="FOREGROUND" value="6FAFBD"/>
         </value>
     </option>
-    <option name="ODIN_PROCEDURE_CALL">
+    <option name="ODIN_PKG_EXP_PROC_CALL">
         <value>
             <option name="FOREGROUND" value="B09D79"/>
         </value>

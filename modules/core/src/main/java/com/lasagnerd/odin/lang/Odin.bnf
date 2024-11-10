@@ -199,7 +199,7 @@ importStatementsContainer            ::= (importDeclarationStatement eos)+
 fileScopeStatementList               ::= (fileScopeStatement (eos|<<afterNewLine>>))*
 packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=1 recoverWhile=eos_recover}
 
-importDeclarationStatement           ::= [attribute EOS_TOKEN?] IMPORT declaredIdentifier? importPath {methods=[alias="/declaredIdentifier" path="/importPath" getName setName getNameIdentifier getImportInfo] implements=["com.intellij.psi.PsiNameIdentifierOwner"]}
+importDeclarationStatement           ::= [attributesDefinition EOS_TOKEN?] IMPORT declaredIdentifier? importPath {methods=[alias="/declaredIdentifier" path="/importPath" getName setName getNameIdentifier getImportInfo] implements=["com.intellij.psi.PsiNameIdentifierOwner"]}
 importPath                           ::= DQ_STRING_LITERAL {
                                                         methods=[
                                                                 getReference
@@ -218,10 +218,10 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | directiveStatement
 
 // @require foreign import entry "entryUnixNoCrtAmd64.asm"
-foreignImportDeclarationStatement    ::= (attribute EOS_TOKEN?)* FOREIGN IMPORT
+foreignImportDeclarationStatement    ::= (attributesDefinition EOS_TOKEN?)* FOREIGN IMPORT
         ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart expressionListWithRecover blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
 
-foreignStatement                     ::= (attribute EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock {implements=["com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"]}
+foreignStatement                     ::= (attributesDefinition EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock {implements=["com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"]}
 
 foreignBlock                         ::= blockStart foreignStatementList? blockEnd {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 
@@ -231,8 +231,18 @@ foreignBlockStatement                ::= variableDeclarationStatement
                                          | whenStatement
 
 // Attributes
-attribute                           ::= AT IDENTIFIER_TOKEN
-                                         | AT LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
+attributesDefinition                  ::= AT unassignedAttribute
+                                         | AT LPAREN <<enterMode "PAR">> attributeList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
+
+attributeIdentifier ::= IDENTIFIER_TOKEN
+
+private attributeList               ::= attributeArgument (COMMA attributeArgument)* COMMA?
+assignedAttribute                   ::= attributeIdentifier EQ expression { extends = attributeArgument}
+unassignedAttribute                 ::= attributeIdentifier {extends = attributeArgument}
+attributeArgument                   ::= assignedAttribute
+                                         | unassignedAttribute {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
+
+
 
 // Struct
 structType                           ::= STRUCT [polyParams] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? structBlock
@@ -361,7 +371,7 @@ constantInitializationStatement      ::= symbolDefinitionHead colonClosing  <<gu
 private incompleteGuard              ::= !(<<afterNewLine>> (symbolDefinitionHead|!expression))
 colonClosing                         ::= COLON
 
-private symbolDefinitionHead         ::= (attribute eos?)* [directiveIdentifier] [USING] identifierList colonOpening type?
+private symbolDefinitionHead         ::= (attributesDefinition eos?)* [directiveIdentifier] [USING] identifierList colonOpening type?
 colonOpening                         ::= COLON
 
 variableInitializationStatement      ::= symbolDefinitionHead EQ <<guardedExpression incompleteGuard rhsExpressions>>
@@ -463,7 +473,7 @@ assignmentOperator                   ::= EQ
                                          | RSHIFT_EQ
                                          | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement         ::= (attribute eos?)* [USING] identifierList COLON type {
+variableDeclarationStatement         ::= (attributesDefinition eos?)* [USING] identifierList COLON type {
                                                         implements=["com.lasagnerd.odin.lang.psi.OdinVariableDeclaration"]
                                                         methods=[getTypeDefinition]
                                                     }

@@ -9,60 +9,50 @@ import java.util.List;
 import java.util.Objects;
 
 public class OdinAttributeUtils {
-    public static boolean containsAttribute(List<OdinAttribute> attributeStatements, String attributeName) {
-        if(attributeStatements == null)
+    public static boolean containsAttribute(List<OdinAttributesDefinition> attributesDefinitions, String attributeName) {
+        if (attributesDefinitions == null)
             return false;
 
-        for (OdinAttribute attributeStatement : attributeStatements) {
-            if(attributeStatement.getIdentifierToken() != null) {
-                if(attributeStatement.getIdentifierToken().getText().equals(attributeName)) {
-                    return true;
-                }
-            } else {
-                for (OdinArgument odinArgument : attributeStatement.getArgumentList()) {
-                    if(odinArgument instanceof OdinUnnamedArgument) {
-                        if(odinArgument.getText().equals(attributeName)) {
-                            return true;
-                        }
-                    }
+        for (OdinAttributesDefinition attributesDefinition : attributesDefinitions) {
 
-                    if(odinArgument instanceof OdinNamedArgument) {
-                        if(((OdinNamedArgument) odinArgument).getIdentifier().getText().equals(attributeName)) {
-                            return true;
-                        }
+            for (OdinAttributeArgument odinArgument : attributesDefinition.getAttributeArgumentList()) {
+                if (odinArgument instanceof OdinUnassignedAttribute unassignedAttribute) {
+                    if (unassignedAttribute.getText().equals(attributeName)) {
+                        return true;
+                    }
+                }
+
+                if (odinArgument instanceof OdinAssignedAttribute assignedAttribute) {
+                    if (assignedAttribute.getAttributeIdentifier().getText().equals(attributeName)) {
+                        return true;
                     }
                 }
             }
+
         }
 
         return false;
     }
 
-    public static @NotNull OdinVisibility computeVisibility(@NotNull Collection<OdinAttribute> attributeStatements) {
-        for (OdinAttribute attributeStatement : attributeStatements) {
-            if(attributeStatement.getIdentifierToken() != null) {
-                if(attributeStatement.getIdentifierToken().getText().equals("private")) {
-                    return OdinVisibility.PACKAGE_PRIVATE;
-                }
-            }
-            for (OdinArgument odinArgument : attributeStatement.getArgumentList()) {
-                if (odinArgument instanceof OdinNamedArgument odinNamedArgument) {
-                    String text = odinNamedArgument.getIdentifier().getText();
+    public static @NotNull OdinVisibility computeVisibility(@NotNull Collection<OdinAttributesDefinition> odinAttributesDefinitions) {
+        for (OdinAttributesDefinition odinAttributesDefinition : odinAttributesDefinitions) {
+            for (OdinAttributeArgument attributeArgument : odinAttributesDefinition.getAttributeArgumentList()) {
+                if (attributeArgument instanceof OdinAssignedAttribute assignedAttribute) {
+                    String text = assignedAttribute.getAttributeIdentifier().getText();
                     if (text.equals("private")) {
-                        String attributeValue = OdinInsightUtils.getStringLiteralValue(odinNamedArgument.getExpression());
+                        String attributeValue = OdinInsightUtils.getStringLiteralValue(assignedAttribute.getExpression());
                         if (Objects.equals(attributeValue, "file")) {
                             return OdinVisibility.FILE_PRIVATE;
                         }
 
-                        if(Objects.equals(attributeValue, "package")) {
+                        if (Objects.equals(attributeValue, "package")) {
                             return OdinVisibility.PACKAGE_PRIVATE;
                         }
                     }
                 }
 
-                if (odinArgument instanceof OdinUnnamedArgument unnamedArgument) {
-                    OdinExpression expression = unnamedArgument.getExpression();
-                    if (expression.getText().equals("private")) {
+                if (attributeArgument instanceof OdinUnassignedAttribute unnamedArgument) {
+                    if (unnamedArgument.getAttributeIdentifier().getText().equals("private")) {
                         return OdinVisibility.PACKAGE_PRIVATE;
                     }
                 }
