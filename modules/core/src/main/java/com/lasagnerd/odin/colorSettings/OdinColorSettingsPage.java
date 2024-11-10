@@ -64,7 +64,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             
             // constants
             @(<ODIN_ATTRIBUTE_REF>private</ODIN_ATTRIBUTE_REF>="file")
-            FILE_PRIVATE_CONST :: 2
+            <ODIN_FILE_PRIVATE_CONSTANT>FILE_PRIVATE_CONST</ODIN_FILE_PRIVATE_CONSTANT> :: 2
             
             @<ODIN_ATTRIBUTE_REF>private</ODIN_ATTRIBUTE_REF>
             <ODIN_PKG_PRIVATE_CONSTANT>PACKAGE_PRIVATE_CONST</ODIN_PKG_PRIVATE_CONSTANT> :: 1
@@ -190,24 +190,24 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                 // Swizzle fields
                 {
                     <ODIN_LOCAL_VARIABLE>arr</ODIN_LOCAL_VARIABLE> := [3]<ODIN_BUILTIN_TYPE>i32</ODIN_BUILTIN_TYPE> { }
-                    <ODIN_LOCAL_VARIABLE>arr</ODIN_LOCAL_VARIABLE>.<ODIN_SWIZZLE_FIELD_REF>x</ODIN_SWIZZLE_FIELD_REF> = <ODIN_LOCAL_VARIABLE>arr</ODIN_LOCAL_VARIABLE>.<ODIN_SWIZZLE_FIELD_REF>r</ODIN_SWIZZLE_FIELD_REF> + <ODIN_LOCAL_VARIABLE>arr</ODIN_LOCAL_VARIABLE>.<ODIN_SWIZZLE_FIELD_REF>g</ODIN_SWIZZLE_FIELD_REF> + <ODIN_LOCAL_VARIABLE>arr</ODIN_LOCAL_VARIABLE>.<ODIN_SWIZZLE_FIELD_REF>z</ODIN_SWIZZLE_FIELD_REF>
+                    <ODIN_LOCAL_VARIABLE_REF>arr</ODIN_LOCAL_VARIABLE_REF>.<ODIN_SWIZZLE_FIELD_REF>x</ODIN_SWIZZLE_FIELD_REF> = <ODIN_LOCAL_VARIABLE_REF>arr</ODIN_LOCAL_VARIABLE_REF>.<ODIN_SWIZZLE_FIELD_REF>r</ODIN_SWIZZLE_FIELD_REF> + <ODIN_LOCAL_VARIABLE_REF>arr</ODIN_LOCAL_VARIABLE_REF>.<ODIN_SWIZZLE_FIELD_REF>g</ODIN_SWIZZLE_FIELD_REF> + <ODIN_LOCAL_VARIABLE_REF>arr</ODIN_LOCAL_VARIABLE_REF>.<ODIN_SWIZZLE_FIELD_REF>z</ODIN_SWIZZLE_FIELD_REF>
                 }
             
                 // Implicit enum reference
                 {
                     <ODIN_LOCAL_VARIABLE>e</ODIN_LOCAL_VARIABLE> : <ODIN_PKG_EXP_ENUM_REF>Package_Exported_Enum</ODIN_PKG_EXP_ENUM_REF>
-                    <ODIN_LOCAL_VARIABLE>e</ODIN_LOCAL_VARIABLE> = .<ODIN_IMPLICIT_ENUM_FIELD_REF>ENUM_FIELD</ODIN_IMPLICIT_ENUM_FIELD_REF>
+                    <ODIN_LOCAL_VARIABLE_REF>e</ODIN_LOCAL_VARIABLE_REF> = .<ODIN_IMPLICIT_ENUM_FIELD_REF>ENUM_FIELD</ODIN_IMPLICIT_ENUM_FIELD_REF>
                 }
             
                 // Fields brought into scope through "using"
                 {
                     {
                         using <ODIN_LOCAL_VARIABLE>s</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_EXP_STRUCT_REF>Package_Exported_Struct</ODIN_PKG_EXP_STRUCT_REF> { }
-                        <ODIN_LOCAL_VARIABLE>t</ODIN_LOCAL_VARIABLE> := <ODIN_USING_STRUCT_FIELD_REF>x</ODIN_USING_STRUCT_FIELD_REF> + <ODIN_USING_STRUCT_FIELD_REF>y</ODIN_USING_STRUCT_FIELD_REF>
+                        <ODIN_LOCAL_VARIABLE_REF>t</ODIN_LOCAL_VARIABLE_REF> := <ODIN_USING_STRUCT_FIELD_REF>x</ODIN_USING_STRUCT_FIELD_REF> + <ODIN_USING_STRUCT_FIELD_REF>y</ODIN_USING_STRUCT_FIELD_REF>
                     }
                     {
                         using <ODIN_PKG_EXP_ENUM_REF>Package_Exported_Enum</ODIN_PKG_EXP_ENUM_REF>
-                        <ODIN_LOCAL_VARIABLE>e</ODIN_LOCAL_VARIABLE> := <ODIN_USING_ENUM_FIELD_REF>ENUM_FIELD</ODIN_USING_ENUM_FIELD_REF>
+                        <ODIN_LOCAL_VARIABLE_REF>e</ODIN_LOCAL_VARIABLE_REF> := <ODIN_USING_ENUM_FIELD_REF>ENUM_FIELD</ODIN_USING_ENUM_FIELD_REF>
                     }
                 }
             
@@ -217,6 +217,16 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                     <ODIN_LOCAL_VARIABLE>package_private_var_ref</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_PRIVATE_VARIABLE_REF>package_private_var</ODIN_PKG_PRIVATE_VARIABLE_REF>
                     <ODIN_LOCAL_VARIABLE>package_exported_var_ref</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_EXP_VARIABLE_REF>package_exported_var</ODIN_PKG_EXP_VARIABLE_REF>
                 }
+    
+                // Constant references
+                {
+                    <ODIN_LOCAL_CONSTANT>LOCAL_CONST</ODIN_LOCAL_CONSTANT> :: 1
+                    <ODIN_LOCAL_VARIABLE>w</ODIN_LOCAL_VARIABLE> := <ODIN_LOCAL_CONSTANT_REF>LOCAL_CONST</ODIN_LOCAL_CONSTANT_REF>
+                    <ODIN_LOCAL_VARIABLE>x</ODIN_LOCAL_VARIABLE> := <ODIN_FILE_PRIVATE_CONSTANT_REF>FILE_PRIVATE_CONST</ODIN_FILE_PRIVATE_CONSTANT_REF>
+                    <ODIN_LOCAL_VARIABLE>y</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_PRIVATE_CONSTANT_REF>PACKAGE_PRIVATE_CONST</ODIN_PKG_PRIVATE_CONSTANT_REF>
+                    <ODIN_LOCAL_VARIABLE>z</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_EXP_CONSTANT_REF>PACKAGE_EXPORTED_CONST</ODIN_PKG_EXP_CONSTANT_REF>
+                }
+            
             
                 // Struct references
                 {
@@ -224,7 +234,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                     <ODIN_LOCAL_VARIABLE>package_private_struct</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_PRIVATE_STRUCT_REF>Package_Private_Struct</ODIN_PKG_PRIVATE_STRUCT_REF> { }
                     <ODIN_LOCAL_VARIABLE>package_exported_struct</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_EXP_STRUCT_REF>Package_Exported_Struct</ODIN_PKG_EXP_STRUCT_REF> { }
             
-                    <ODIN_PACKAGE_REF>fmt</ODIN_PACKAGE_REF>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_LOCAL_VARIABLE>package_exported_struct</ODIN_LOCAL_VARIABLE>.<ODIN_STRUCT_FIELD>x</ODIN_STRUCT_FIELD>)
+                    <ODIN_PACKAGE_REF>fmt</ODIN_PACKAGE_REF>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_LOCAL_VARIABLE_REF>package_exported_struct</ODIN_LOCAL_VARIABLE_REF>.<ODIN_STRUCT_FIELD>x</ODIN_STRUCT_FIELD>)
                 }
             
                 // Union references
@@ -264,12 +274,19 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                         <ODIN_PARAMETER_CALL>parameter_proc</ODIN_PARAMETER_CALL>()
                     }
             
-                    <ODIN_LOCAL_VARIABLE>s</ODIN_LOCAL_VARIABLE> :: <ODIN_PKG_EXP_STRUCT_REF>Package_Exported_Struct</ODIN_PKG_EXP_STRUCT_REF>{}
-                    <ODIN_LOCAL_VARIABLE>s</ODIN_LOCAL_VARIABLE>.<ODIN_STRUCT_FIELD_CALL>p</ODIN_STRUCT_FIELD_CALL>()
+                    <ODIN_LOCAL_VARIABLE>s</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_EXP_STRUCT_REF>Package_Exported_Struct</ODIN_PKG_EXP_STRUCT_REF>{}
+                    <ODIN_LOCAL_VARIABLE_REF>s</ODIN_LOCAL_VARIABLE_REF>.<ODIN_STRUCT_FIELD_CALL>p</ODIN_STRUCT_FIELD_CALL>()
             
                     <ODIN_FILE_PRIVATE_PROC_CALL>file_private_proc</ODIN_FILE_PRIVATE_PROC_CALL>()
                     <ODIN_PKG_PRIVATE_PROC_CALL>package_private_proc</ODIN_PKG_PRIVATE_PROC_CALL>()
                     <ODIN_PKG_EXP_PROC_CALL>package_exported_proc</ODIN_PKG_EXP_PROC_CALL>()
+                }
+    
+                // Errors
+                {
+                    <ODIN_UNKNOWN_REF>unknown</ODIN_UNKNOWN_REF>.does_not_exist()
+                    <ODIN_LOCAL_VARIABLE>s</ODIN_LOCAL_VARIABLE> := "<ODIN_VALID_STRING_ESCAPE>\\n</ODIN_VALID_STRING_ESCAPE><ODIN_INVALID_ESCAPE>\\x</ODIN_INVALID_ESCAPE>"
+                    <ODIN_BAD_CHARACTER>bad_character</ODIN_BAD_CHARACTER>
                 }
             }
             
@@ -363,15 +380,13 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("Declarations//Variables//Package exported global variable", ODIN_PKG_EXP_VARIABLE),
             new AttributesDescriptor("Declarations//Variables//File private global variable", ODIN_FILE_PRIVATE_VARIABLE),
             new AttributesDescriptor("Declarations//Variables//Package private global variable", ODIN_PKG_PRIVATE_VARIABLE),
-            new AttributesDescriptor("Declarations//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
-            new AttributesDescriptor("Declarations//Variables//Shadowing variable", ODIN_SHADOWING_VARIABLE),
-            new AttributesDescriptor("Declarations//Variables//Static variable", ODIN_STATIC_VARIABLE),
+//            new AttributesDescriptor("Declarations//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
+//            new AttributesDescriptor("Declarations//Variables//Shadowing variable", ODIN_SHADOWING_VARIABLE),
 
             // Fields
             new AttributesDescriptor("Declarations//Fields//Struct field", ODIN_STRUCT_FIELD),
-            new AttributesDescriptor("Declarations//Fields//Bit field", ODIN_BIT_FIELD_FIELD),
+            new AttributesDescriptor("Declarations//Fields//Field of bit field", ODIN_BIT_FIELD_FIELD),
             new AttributesDescriptor("Declarations//Fields//Enum field", ODIN_ENUM_FIELD),
-            new AttributesDescriptor("Declarations//Package", ODIN_PACKAGE),
 
             // Function calls
             new AttributesDescriptor("Procedure calls//Local procedure call", ODIN_LOCAL_PROC_CALL),
@@ -409,7 +424,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("References//Enum//Local enum reference", ODIN_LOCAL_ENUM_REF),
 
             new AttributesDescriptor("References//Fields//Struct field", ODIN_STRUCT_FIELD_REF),
-            new AttributesDescriptor("References//Fields//Bit field", ODIN_BIT_FIELD_FIELD_REF),
+            new AttributesDescriptor("References//Fields//Field of Bit field", ODIN_BIT_FIELD_FIELD_REF),
             new AttributesDescriptor("References//Fields//Enum field", ODIN_ENUM_FIELD_REF),
             new AttributesDescriptor("References//Fields//Allocator field", ODIN_ALLOCATOR_FIELD_REF),
             new AttributesDescriptor("References//Fields//Implicit Enum field", ODIN_IMPLICIT_ENUM_FIELD_REF),
@@ -423,9 +438,14 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("References//Variables//Package exported global variable", ODIN_PKG_EXP_VARIABLE_REF),
             new AttributesDescriptor("References//Variables//File private global variable", ODIN_FILE_PRIVATE_VARIABLE_REF),
             new AttributesDescriptor("References//Variables//Package private global variable", ODIN_PKG_PRIVATE_VARIABLE_REF),
-            new AttributesDescriptor("References//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
-            new AttributesDescriptor("References//Variables//Shadowing variable", ODIN_SHADOWING_VARIABLE_REF),
-            new AttributesDescriptor("References//Variables//Static variable", ODIN_STATIC_VARIABLE_REF),
+            
+            // Constants
+            new AttributesDescriptor("References//Constants//Local constant", ODIN_LOCAL_CONSTANT_REF),
+            new AttributesDescriptor("References//Constants//Package exported global constant", ODIN_PKG_EXP_CONSTANT_REF),
+            new AttributesDescriptor("References//Constants//File private global constant", ODIN_FILE_PRIVATE_CONSTANT_REF),
+            new AttributesDescriptor("References//Constants//Package private global constant", ODIN_PKG_PRIVATE_CONSTANT_REF),
+//            new AttributesDescriptor("References//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
+//            new AttributesDescriptor("References//Variables//Shadowing variable", ODIN_SHADOWING_VARIABLE_REF),
 
 //            new AttributesDescriptor("References//Type alias//Package exported type alias reference", OdinSyntaxTextAttributes.ODIN_PKG_EXP_TYPE_ALIAS_REF),
 //            new AttributesDescriptor("References//Type alias//File private type alias reference", OdinSyntaxTextAttributes.ODIN_FILE_PRIVATE_TYPE_ALIAS_REF),
@@ -441,6 +461,10 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("String and Escape//Text", ODIN_TEXT),
             new AttributesDescriptor("String and Escape//Valid escape", ODIN_VALID_ESCAPE),
             new AttributesDescriptor("String and Escape//Invalid escape", ODIN_INVALID_ESCAPE),
+
+            // Errors
+            new AttributesDescriptor("Errors//Bad character", ODIN_BAD_CHARACTER),
+            new AttributesDescriptor("Errors//Unknown reference", ODIN_UNKNOWN_REF),
 
             new AttributesDescriptor("Numbers", ODIN_NUMBER)
     };
@@ -593,7 +617,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             ADDITIONAL_TAGS.put("ODIN_TEXT", ODIN_TEXT);
             ADDITIONAL_TAGS.put("ODIN_VALID_ESCAPE", ODIN_VALID_ESCAPE);
             ADDITIONAL_TAGS.put("ODIN_NUMBER", ODIN_NUMBER);
-
+            ADDITIONAL_TAGS.put("ODIN_UNKNOWN_REF", ODIN_UNKNOWN_REF);
         }
         return ADDITIONAL_TAGS;
     }

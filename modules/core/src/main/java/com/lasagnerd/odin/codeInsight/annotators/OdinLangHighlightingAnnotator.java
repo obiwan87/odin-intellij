@@ -442,7 +442,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             annotationHolder
                     .newAnnotation(HighlightSeverity.ERROR, ("Unresolved " + reference + " '%s'").formatted(identifierText))
                     .range(textRange)
-                    .textAttributes(OdinSyntaxTextAttributes.ODIN_BAD_CHARACTER)
+                    .textAttributes(OdinSyntaxTextAttributes.ODIN_UNKNOWN_REF)
                     .create();
         }
     }

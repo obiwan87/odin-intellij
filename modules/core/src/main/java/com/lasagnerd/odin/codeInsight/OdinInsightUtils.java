@@ -129,7 +129,7 @@ public class OdinInsightUtils {
                 TsOdinType sliceType = entry.getValue();
                 OdinSymbol symbol = new OdinSymbol();
                 symbol.setName(entry.getKey());
-                symbol.setVisibility(OdinVisibility.PACKAGE_EXPORTED);
+                symbol.setVisibility(OdinVisibility.NONE);
                 symbol.setSymbolType(SOA_FIELD);
                 symbol.setPsiType(sliceType.getPsiType());
                 symbol.setImplicitlyDeclared(true);

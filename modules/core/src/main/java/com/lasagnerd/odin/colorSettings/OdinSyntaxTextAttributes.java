@@ -215,6 +215,7 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_VALID_ESCAPE = createTextAttributesKey("ODIN_VALID_ESCAPE", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
     public static final TextAttributesKey ODIN_NUMBER = createTextAttributesKey("ODIN_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
 
+    public static final TextAttributesKey ODIN_UNKNOWN_REF = createTextAttributesKey("ODIN_UNKNOWN_REF", HighlighterColors.BAD_CHARACTER);
 
     public static final OdinSymbolTextAttributes TEXT_ATTRIBUTES_MAP = new OdinSymbolTextAttributes();
 
