@@ -258,6 +258,10 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                                            TextRange psiElementRange) {
         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
         if (declaration != null) {
+            if(declaration instanceof OdinPackageDeclaration) {
+                highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_PACKAGE);
+                return;
+            }
             List<OdinSymbol> symbols = OdinDeclarationSymbolResolver.getSymbols(declaration);
             OdinSymbol symbol = symbols.stream()
                     .filter(s -> s.getName().equals(declaredIdentifier.getName()))
@@ -449,13 +453,13 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         if (reference != null) {
             PsiElement resolveReference = reference.resolve();
             if (resolveReference instanceof PsiDirectory) {
-                highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE);
+                highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE_REF);
             } else {
                 OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
                 if (odinDeclaration == null) {
                     highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, textRange, "reference");
                 } else if (odinDeclaration instanceof OdinImportDeclarationStatement) {
-                    highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE);
+                    highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE_REF);
                 }
             }
         }

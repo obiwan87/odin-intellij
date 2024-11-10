@@ -15,6 +15,11 @@
             <option name="FOREGROUND" value="AFBF7E"/>
         </value>
     </option>
+    <option name="ODIN_PACKAGE_REF">
+        <value>
+            <option name="FOREGROUND" value="AFBF7E"/>
+        </value>
+    </option>
     <option name="ODIN_PROCEDURE">
         <value>
             <option name="FOREGROUND" value="61AFEF"/>

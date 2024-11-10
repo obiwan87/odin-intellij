@@ -49,6 +49,7 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_LINE_COMMENT = createTextAttributesKey("ODIN_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
     public static final TextAttributesKey ODIN_PACKAGE = createTextAttributesKey("ODIN_PACKAGE", DefaultLanguageHighlighterColors.IDENTIFIER);
 
+
     // Declarations
     public static final TextAttributesKey ODIN_LABEL = createTextAttributesKey("ODIN_LABEL", DefaultLanguageHighlighterColors.LABEL);
 
@@ -115,6 +116,9 @@ public class OdinSyntaxTextAttributes {
     // REFERENCES
     /////////////////////////////////////////////////
 
+    // Package
+    public static final TextAttributesKey ODIN_PACKAGE_REF = createTextAttributesKey("ODIN_PACKAGE_REF", DefaultLanguageHighlighterColors.IDENTIFIER);
+
     // Fields
     public static final TextAttributesKey ODIN_STRUCT_FIELD_REF = createTextAttributesKey("ODIN_STRUCT_FIELD_REF", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
     public static final TextAttributesKey ODIN_BIT_FIELD_FIELD_REF = createTextAttributesKey("ODIN_BIT_FIELD_FIELD_REF", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
@@ -127,7 +131,7 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_USING_STRUCT_FIELD_REF = createTextAttributesKey("ODIN_USING_STRUCT_FIELD_REF", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
     public static final TextAttributesKey ODIN_USING_ENUM_FIELD_REF = createTextAttributesKey("ODIN_USING_ENUM_FIELD_REF", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
 
-    public static final TextAttributesKey ODIN_STATIC_VARIABLE_REF = createTextAttributesKey("ODIN_STATIC_VARIABLE_REF", DefaultLanguageHighlighterColors.STATIC_FIELD);
+    public static final TextAttributesKey ODIN_STATIC_VARIABLE_REF = createTextAttributesKey("ODIN_STATIC_VARIABLE_REF", ODIN_STATIC_VARIABLE);
 
     // Procedure calls
     public static final TextAttributesKey ODIN_PKG_EXP_PROC_CALL = createTextAttributesKey("ODIN_PKG_EXP_PROC_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);

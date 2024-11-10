@@ -24,7 +24,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
 
     @Language("Odin")
     public static final String CODE = """
-            package testData
+            package <ODIN_PACKAGE>testData</ODIN_PACKAGE>
             
             import "core:fmt"
             
@@ -129,18 +129,19 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             }
             
             // Parameters and parametric polymorphism
-            <ODIN_PKG_EXP_PROC>poly_parameters</ODIN_PKG_EXP_PROC> :: proc($<ODIN_POLY_PARAMETER>T</ODIN_POLY_PARAMETER>: typeid, $<ODIN_POLY_PARAMETER>S</ODIN_POLY_PARAMETER>: $<ODIN_POLY_PARAMETER>Arr</ODIN_POLY_PARAMETER>/[dynamic]$<ODIN_POLY_PARAMETER>Elem</ODIN_POLY_PARAMETER>) {
+            <ODIN_PKG_EXP_PROC>poly_parameters</ODIN_PKG_EXP_PROC> :: proc($<ODIN_POLY_PARAMETER>T</ODIN_POLY_PARAMETER>: <ODIN_BUILTIN_TYPE>typeid</ODIN_BUILTIN_TYPE>, $<ODIN_POLY_PARAMETER>S</ODIN_POLY_PARAMETER>: $<ODIN_POLY_PARAMETER>Arr</ODIN_POLY_PARAMETER>/[dynamic]$<ODIN_POLY_PARAMETER>Elem</ODIN_POLY_PARAMETER>) {
                 <ODIN_LOCAL_VARIABLE>x</ODIN_LOCAL_VARIABLE> := <ODIN_POLY_PARAMETER_REF>T</ODIN_POLY_PARAMETER_REF> { }
             }
             
-            Struct_With_Poly :: struct($<ODIN_POLY_PARAMETER>T</ODIN_POLY_PARAMETER>: typeid, $<ODIN_POLY_PARAMETER>S</ODIN_POLY_PARAMETER>: int) {
+            <ODIN_PKG_EXP_STRUCT>Struct_With_Poly</ODIN_PKG_EXP_STRUCT> :: struct($<ODIN_POLY_PARAMETER>T</ODIN_POLY_PARAMETER>: <ODIN_BUILTIN_TYPE>typeid</ODIN_BUILTIN_TYPE>, $<ODIN_POLY_PARAMETER>S</ODIN_POLY_PARAMETER>: <ODIN_BUILTIN_TYPE>int</ODIN_BUILTIN_TYPE>) {
                 <ODIN_STRUCT_FIELD>x</ODIN_STRUCT_FIELD>: <ODIN_POLY_PARAMETER_REF>T</ODIN_POLY_PARAMETER_REF>,
                 <ODIN_STRUCT_FIELD>y</ODIN_STRUCT_FIELD>: [<ODIN_POLY_PARAMETER_REF>S</ODIN_POLY_PARAMETER_REF>]i32
             }
             
-            Union_With_Poly :: union($T: typeid) {
-                i32, T
+            <ODIN_PKG_EXP_UNION>Union_With_Poly</ODIN_PKG_EXP_UNION> :: union($<ODIN_POLY_PARAMETER>T</ODIN_POLY_PARAMETER>: <ODIN_BUILTIN_TYPE>typeid</ODIN_BUILTIN_TYPE>) {
+                <ODIN_BUILTIN_TYPE>i32</ODIN_BUILTIN_TYPE>, <ODIN_POLY_PARAMETER_REF>T</ODIN_POLY_PARAMETER_REF>
             }
+
             
             // Tag directives
             <ODIN_PKG_EXP_VARIABLE>CONFIGURED_VALUE</ODIN_PKG_EXP_VARIABLE> : <ODIN_BUILTIN_TYPE>string</ODIN_BUILTIN_TYPE> : <ODIN_DIRECTIVE_REF>#config</ODIN_DIRECTIVE_REF>(CONFIG_ARG, "VALUE")
@@ -174,11 +175,11 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                 {
                     @<ODIN_ATTRIBUTE_REF>static</ODIN_ATTRIBUTE_REF>
                     <ODIN_STATIC_VARIABLE>static_x</ODIN_STATIC_VARIABLE> := 1
-                    <ODIN_PACKAGE>fmt</ODIN_PACKAGE>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_STATIC_VARIABLE_REF>static_x</ODIN_STATIC_VARIABLE_REF>)
+                    <ODIN_PACKAGE_REF>fmt</ODIN_PACKAGE_REF>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_STATIC_VARIABLE_REF>static_x</ODIN_STATIC_VARIABLE_REF>)
                 }
             
                 // Context
-                <ODIN_PACKAGE>fmt</ODIN_PACKAGE>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_CONTEXT_PARAM_REF>context</ODIN_CONTEXT_PARAM_REF>.<ODIN_STRUCT_FIELD>temp_allocator</ODIN_STRUCT_FIELD>)
+                <ODIN_PACKAGE_REF>fmt</ODIN_PACKAGE_REF>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_CONTEXT_PARAM_REF>context</ODIN_CONTEXT_PARAM_REF>.<ODIN_STRUCT_FIELD>temp_allocator</ODIN_STRUCT_FIELD>)
             
                 // Allocator field
                 {
@@ -223,7 +224,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                     <ODIN_LOCAL_VARIABLE>package_private_struct</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_PRIVATE_STRUCT_REF>Package_Private_Struct</ODIN_PKG_PRIVATE_STRUCT_REF> { }
                     <ODIN_LOCAL_VARIABLE>package_exported_struct</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_EXP_STRUCT_REF>Package_Exported_Struct</ODIN_PKG_EXP_STRUCT_REF> { }
             
-                    <ODIN_PACKAGE>fmt</ODIN_PACKAGE>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_LOCAL_VARIABLE>package_exported_struct</ODIN_LOCAL_VARIABLE>.<ODIN_STRUCT_FIELD>x</ODIN_STRUCT_FIELD>)
+                    <ODIN_PACKAGE_REF>fmt</ODIN_PACKAGE_REF>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_LOCAL_VARIABLE>package_exported_struct</ODIN_LOCAL_VARIABLE>.<ODIN_STRUCT_FIELD>x</ODIN_STRUCT_FIELD>)
                 }
             
                 // Union references
@@ -239,7 +240,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                     <ODIN_LOCAL_VARIABLE>package_private_bit_field</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_PRIVATE_BIT_FIELD_REF>Package_Private_Bit_Field</ODIN_PKG_PRIVATE_BIT_FIELD_REF> { }
                     <ODIN_LOCAL_VARIABLE>package_exported_bit_field</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_EXP_BIT_FIELD_REF>Package_Exported_Bit_Field</ODIN_PKG_EXP_BIT_FIELD_REF> { }
             
-                    <ODIN_PACKAGE>fmt</ODIN_PACKAGE>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_LOCAL_VARIABLE>package_exported_bit_field</ODIN_LOCAL_VARIABLE>.<ODIN_BIT_FIELD_FIELD>bit_field_field</ODIN_BIT_FIELD_FIELD>)
+                    <ODIN_PACKAGE_REF>fmt</ODIN_PACKAGE_REF>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_LOCAL_VARIABLE>package_exported_bit_field</ODIN_LOCAL_VARIABLE>.<ODIN_BIT_FIELD_FIELD>bit_field_field</ODIN_BIT_FIELD_FIELD>)
                 }
             
                 // Enum references
@@ -354,9 +355,9 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
 //            new AttributesDescriptor("Declarations//Type alias//Package private type alias", ODIN_PKG_PRIVATE_TYPE_ALIAS),
 //            new AttributesDescriptor("Declarations//Type alias//Local type alias", ODIN_LOCAL_TYPE_ALIAS),
 
-            new AttributesDescriptor("Declarations//Types//Polymorphic parameter", ODIN_POLY_PARAMETER),
+            new AttributesDescriptor("Declarations//Polymorphic parameter", ODIN_POLY_PARAMETER),
 
-            // Variables and Fields
+            // Variables
             new AttributesDescriptor("Declarations//Variables//Local variable", ODIN_LOCAL_VARIABLE),
             new AttributesDescriptor("Declarations//Variables//Static variable", ODIN_STATIC_VARIABLE),
             new AttributesDescriptor("Declarations//Variables//Package exported global variable", ODIN_PKG_EXP_VARIABLE),
@@ -364,11 +365,13 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("Declarations//Variables//Package private global variable", ODIN_PKG_PRIVATE_VARIABLE),
             new AttributesDescriptor("Declarations//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
             new AttributesDescriptor("Declarations//Variables//Shadowing variable", ODIN_SHADOWING_VARIABLE),
+            new AttributesDescriptor("Declarations//Variables//Static variable", ODIN_STATIC_VARIABLE),
 
+            // Fields
             new AttributesDescriptor("Declarations//Fields//Struct field", ODIN_STRUCT_FIELD),
             new AttributesDescriptor("Declarations//Fields//Bit field", ODIN_BIT_FIELD_FIELD),
             new AttributesDescriptor("Declarations//Fields//Enum field", ODIN_ENUM_FIELD),
-
+            new AttributesDescriptor("Declarations//Package", ODIN_PACKAGE),
 
             // Function calls
             new AttributesDescriptor("Procedure calls//Local procedure call", ODIN_LOCAL_PROC_CALL),
@@ -414,6 +417,16 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("References//Fields//Struct field through using", ODIN_USING_STRUCT_FIELD_REF),
             new AttributesDescriptor("References//Fields//Swizzle field", ODIN_SWIZZLE_FIELD_REF),
 
+            // Variables
+            new AttributesDescriptor("References//Variables//Local variable", ODIN_LOCAL_VARIABLE_REF),
+            new AttributesDescriptor("References//Variables//Static variable", ODIN_STATIC_VARIABLE_REF),
+            new AttributesDescriptor("References//Variables//Package exported global variable", ODIN_PKG_EXP_VARIABLE_REF),
+            new AttributesDescriptor("References//Variables//File private global variable", ODIN_FILE_PRIVATE_VARIABLE_REF),
+            new AttributesDescriptor("References//Variables//Package private global variable", ODIN_PKG_PRIVATE_VARIABLE_REF),
+            new AttributesDescriptor("References//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
+            new AttributesDescriptor("References//Variables//Shadowing variable", ODIN_SHADOWING_VARIABLE_REF),
+            new AttributesDescriptor("References//Variables//Static variable", ODIN_STATIC_VARIABLE_REF),
+
 //            new AttributesDescriptor("References//Type alias//Package exported type alias reference", OdinSyntaxTextAttributes.ODIN_PKG_EXP_TYPE_ALIAS_REF),
 //            new AttributesDescriptor("References//Type alias//File private type alias reference", OdinSyntaxTextAttributes.ODIN_FILE_PRIVATE_TYPE_ALIAS_REF),
 //            new AttributesDescriptor("References//Type alias//Package private type alias reference", OdinSyntaxTextAttributes.ODIN_PKG_PRIVATE_TYPE_ALIAS_REF),
@@ -422,6 +435,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("References//Polymorphic parameter", ODIN_POLY_PARAMETER_REF),
             new AttributesDescriptor("References//Procedure parameter", ODIN_PARAMETER_REF),
             new AttributesDescriptor("References//Context parameter", ODIN_CONTEXT_PARAM_REF),
+            new AttributesDescriptor("References//Package", ODIN_PACKAGE_REF),
 
             // String and Escape
             new AttributesDescriptor("String and Escape//Text", ODIN_TEXT),
@@ -476,6 +490,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             ADDITIONAL_TAGS.put("ODIN_COMMENT_REFERENCE", ODIN_COMMENT_REFERENCE);
             ADDITIONAL_TAGS.put("ODIN_LINE_COMMENT", ODIN_LINE_COMMENT);
             ADDITIONAL_TAGS.put("ODIN_PACKAGE", ODIN_PACKAGE);
+            ADDITIONAL_TAGS.put("ODIN_PACKAGE_REF", ODIN_PACKAGE_REF);
             ADDITIONAL_TAGS.put("ODIN_LABEL", ODIN_LABEL);
             ADDITIONAL_TAGS.put("ODIN_LOCAL_CONSTANT", ODIN_LOCAL_CONSTANT);
             ADDITIONAL_TAGS.put("ODIN_PKG_EXP_CONSTANT", ODIN_PKG_EXP_CONSTANT);
