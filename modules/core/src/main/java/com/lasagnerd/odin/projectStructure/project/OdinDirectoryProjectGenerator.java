@@ -79,22 +79,17 @@ public class OdinDirectoryProjectGenerator extends DirectoryProjectGeneratorBase
                                        @NotNull VirtualFile baseDir,
                                        VirtualFile srcDir) {
         ModuleManager moduleManager = ModuleManager.getInstance(project);
-        var workspaceFile = project.getWorkspaceFile();
-        if (workspaceFile != null) {
-            Module odinModule = moduleManager.findModuleByName(project.getName());
-            if (odinModule == null)
-                return;
-            ModifiableRootModel modifiableModuleModel = ModuleRootManager.getInstance(odinModule).getModifiableModel();
-            ContentEntry contentEntry = modifiableModuleModel.addContentEntry(baseDir);
-            contentEntry.addSourceFolder(srcDir, OdinSourceRootType.INSTANCE);
-            modifiableModuleModel.commit();
-        }
+        Module odinModule = moduleManager.findModuleByName(project.getName());
+        if (odinModule == null)
+            return;
+        setupModule(baseDir, srcDir, odinModule);
     }
 
-    @Override
-    public void configureModule(@NotNull Module module, @NotNull VirtualFile baseDir, @NotNull OdinProjectSettings settings) {
-
-        super.configureModule(module, baseDir, settings);
+    private static void setupModule(@NotNull VirtualFile baseDir, VirtualFile srcDir, Module odinModule) {
+        ModifiableRootModel modifiableModuleModel = ModuleRootManager.getInstance(odinModule).getModifiableModel();
+        ContentEntry contentEntry = modifiableModuleModel.addContentEntry(baseDir);
+        contentEntry.addSourceFolder(srcDir, OdinSourceRootType.INSTANCE);
+        modifiableModuleModel.commit();
     }
 
     @Override
