@@ -103,7 +103,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
 
     // Check https://pkg.odin-lang.org/core/builtin/ for the full list of built-in types and procedures
-    private static final List<String> PREDEFINED_SYMBOLS = List.of(
+    private static final List<String> PREDEFINED_PROCEDURES = List.of(
             "len",
             "cap",
             "size_of",
@@ -185,9 +185,14 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             String identifierText = psiElement.getText();
 
             if (RESERVED_TYPES.contains(identifierText)) {
-                highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_PROC);
-            } else if (PREDEFINED_SYMBOLS.contains(identifierText)) {
-                highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_PROC);
+                highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_TYPE);
+            } else if (PREDEFINED_PROCEDURES.contains(identifierText)) {
+                PsiElement identifierTokenParent = psiElement.getParent();
+                if(identifierTokenParent.getParent() instanceof OdinCallExpression) {
+                    highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_PROC_CALL);
+                } else {
+                    highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_PROC);
+                }
             } else {
                 PsiElement identifierTokenParent = psiElement.getParent();
                 if (identifierTokenParent instanceof OdinDeclaredIdentifier declaredIdentifier) {
@@ -349,6 +354,17 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_STATIC_VARIABLE);
                 return;
             }
+            if(symbol.isBuiltin()) {
+                highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_VAR);
+                return;
+            }
+        }
+
+        if (symbol.getSymbolType() == OdinSymbolType.CONSTANT) {
+            if(symbol.isBuiltin()) {
+                highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_CONSTANT);
+                return;
+            }
         }
 
         // Check if we have a call expression at hand
@@ -424,7 +440,6 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                     .range(textRange)
                     .textAttributes(OdinSyntaxTextAttributes.ODIN_BAD_CHARACTER)
                     .create();
-            // TODO enable when it's done}
         }
     }
 

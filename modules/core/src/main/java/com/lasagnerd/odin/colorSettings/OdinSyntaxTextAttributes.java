@@ -7,7 +7,6 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinScope;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolOrigin;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
-import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
 
@@ -44,6 +43,7 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_AT = createTextAttributesKey("ODIN_AT", DefaultLanguageHighlighterColors.METADATA);
 
     // Comments
+
     public static final TextAttributesKey ODIN_BLOCK_COMMENT = createTextAttributesKey("ODIN_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
     public static final TextAttributesKey ODIN_COMMENT_REFERENCE = createTextAttributesKey("ODIN_COMMENT_REFERENCE", DefaultLanguageHighlighterColors.LINE_COMMENT);
     public static final TextAttributesKey ODIN_LINE_COMMENT = createTextAttributesKey("ODIN_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
@@ -59,7 +59,7 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_PKG_PRIVATE_CONSTANT = createTextAttributesKey("ODIN_PKG_PRIVATE_CONSTANT", DefaultLanguageHighlighterColors.CONSTANT);
 
     // Procedures
-    public static final TextAttributesKey ODIN_BUILTIN_PROC = createTextAttributesKey("ODIN_BUILTIN_PROC", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+
     public static final TextAttributesKey ODIN_PKG_EXP_PROC = createTextAttributesKey("ODIN_PKG_EXP_PROC", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
     public static final TextAttributesKey ODIN_FILE_PRIVATE_PROC = createTextAttributesKey("ODIN_FILE_PRIVATE_PROC", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_PROC = createTextAttributesKey("ODIN_PKG_PRIVATE_PROC", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
@@ -74,28 +74,32 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_PKG_PRIVATE_STRUCT = createTextAttributesKey("ODIN_PKG_PRIVATE_STRUCT", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_LOCAL_STRUCT = createTextAttributesKey("ODIN_LOCAL_STRUCT", DefaultLanguageHighlighterColors.CLASS_NAME);
 
+    // Union
     public static final TextAttributesKey ODIN_PKG_EXP_UNION = createTextAttributesKey("ODIN_PKG_EXP_UNION", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_FILE_PRIVATE_UNION = createTextAttributesKey("ODIN_FILE_PRIVATE_UNION", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_UNION = createTextAttributesKey("ODIN_PKG_PRIVATE_UNION", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_LOCAL_UNION = createTextAttributesKey("ODIN_LOCAL_UNION", DefaultLanguageHighlighterColors.CLASS_NAME);
 
+    // Enum
     public static final TextAttributesKey ODIN_PKG_EXP_ENUM = createTextAttributesKey("ODIN_PKG_EXP_ENUM", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_FILE_PRIVATE_ENUM = createTextAttributesKey("ODIN_FILE_PRIVATE_ENUM", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_ENUM = createTextAttributesKey("ODIN_PKG_PRIVATE_ENUM", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_LOCAL_ENUM = createTextAttributesKey("ODIN_LOCAL_ENUM", DefaultLanguageHighlighterColors.CLASS_NAME);
 
+    // Bit field
     public static final TextAttributesKey ODIN_PKG_EXP_BIT_FIELD = createTextAttributesKey("ODIN_PKG_EXP_BIT_FIELD", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_FILE_PRIVATE_BIT_FIELD = createTextAttributesKey("ODIN_FILE_PRIVATE_BIT_FIELD", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_BIT_FIELD = createTextAttributesKey("ODIN_PKG_PRIVATE_BIT_FIELD", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_LOCAL_BIT_FIELD = createTextAttributesKey("ODIN_LOCAL_BIT_FIELD", DefaultLanguageHighlighterColors.CLASS_NAME);
 
-    public static final TextAttributesKey ODIN_PKG_EXP_TYPE_ALIAS = createTextAttributesKey("ODIN_PKG_EXP_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
-    public static final TextAttributesKey ODIN_FILE_PRIVATE_TYPE_ALIAS = createTextAttributesKey("ODIN_FILE_PRIVATE_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
-    public static final TextAttributesKey ODIN_PKG_PRIVATE_TYPE_ALIAS = createTextAttributesKey("ODIN_PKG_PRIVATE_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
-    public static final TextAttributesKey ODIN_LOCAL_TYPE_ALIAS = createTextAttributesKey("ODIN_LOCAL_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
+//    public static final TextAttributesKey ODIN_PKG_EXP_TYPE_ALIAS = createTextAttributesKey("ODIN_PKG_EXP_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
+//    public static final TextAttributesKey ODIN_FILE_PRIVATE_TYPE_ALIAS = createTextAttributesKey("ODIN_FILE_PRIVATE_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
+//    public static final TextAttributesKey ODIN_PKG_PRIVATE_TYPE_ALIAS = createTextAttributesKey("ODIN_PKG_PRIVATE_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
+//    public static final TextAttributesKey ODIN_LOCAL_TYPE_ALIAS = createTextAttributesKey("ODIN_LOCAL_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
 
     // Variables
-    public static final TextAttributesKey ODIN_BUILTIN_VAR = createTextAttributesKey("ODIN_BUILTIN_VAR", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
+
+
     public static final TextAttributesKey ODIN_LOCAL_VARIABLE = createTextAttributesKey("ODIN_LOCAL_VARIABLE", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
 
     public static final TextAttributesKey ODIN_PKG_EXP_VARIABLE = createTextAttributesKey("ODIN_PKG_EXP_VARIABLE", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
@@ -120,23 +124,19 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_SWIZZLE_FIELD_REF = createTextAttributesKey("ODIN_SWIZZLE_FIELD_REF", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
 
     // Fields brought into scope with using
-    public static final TextAttributesKey ODIN_USING_STRUCT_FIELD_REF = createTextAttributesKey("ODIN_USING_STRUCT_FIELD", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
-    public static final TextAttributesKey ODIN_USING_ENUM_FIELD_REF = createTextAttributesKey("ODIN_USING_ENUM_FIELD", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+    public static final TextAttributesKey ODIN_USING_STRUCT_FIELD_REF = createTextAttributesKey("ODIN_USING_STRUCT_FIELD_REF", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+    public static final TextAttributesKey ODIN_USING_ENUM_FIELD_REF = createTextAttributesKey("ODIN_USING_ENUM_FIELD_REF", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
 
     public static final TextAttributesKey ODIN_STATIC_VARIABLE_REF = createTextAttributesKey("ODIN_STATIC_VARIABLE_REF", DefaultLanguageHighlighterColors.STATIC_FIELD);
 
-    // Function calls
+    // Procedure calls
     public static final TextAttributesKey ODIN_PKG_EXP_PROC_CALL = createTextAttributesKey("ODIN_PKG_EXP_PROC_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
     public static final TextAttributesKey ODIN_LOCAL_PROC_CALL = createTextAttributesKey("ODIN_LOCAL_PROC_CALL", ODIN_PKG_EXP_PROC_CALL);
     public static final TextAttributesKey ODIN_FOREIGN_PROC_CALL = createTextAttributesKey("ODIN_FOREIGN_PROC_CALL", ODIN_PKG_EXP_PROC_CALL);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_PROC_CALL = createTextAttributesKey("ODIN_PKG_PRIVATE_PROC_CALL", ODIN_PKG_EXP_PROC_CALL);
     public static final TextAttributesKey ODIN_FILE_PRIVATE_PROC_CALL = createTextAttributesKey("ODIN_FILE_PRIVATE_PROC_CALL", ODIN_PKG_EXP_PROC_CALL);
 
-    public static final TextAttributesKey ODIN_BUILTIN_PROC_CALL = createTextAttributesKey("ODIN_BUILTIN_PROC_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
-
     // Type references
-    public static final TextAttributesKey ODIN_BUILTIN_TYPE_REF = createTextAttributesKey("ODIN_BUILTIN_TYPE_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
-
     public static final TextAttributesKey ODIN_PKG_EXP_STRUCT_REF = createTextAttributesKey("ODIN_PKG_EXP_STRUCT_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_STRUCT_REF = createTextAttributesKey("ODIN_PKG_PRIVATE_STRUCT_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_FILE_PRIVATE_STRUCT_REF = createTextAttributesKey("ODIN_FILE_PRIVATE_STRUCT_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
@@ -156,6 +156,13 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_FILE_PRIVATE_ENUM_REF = createTextAttributesKey("ODIN_FILE_PRIVATE_ENUM_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_ENUM_REF = createTextAttributesKey("ODIN_PKG_PRIVATE_ENUM_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_LOCAL_ENUM_REF = createTextAttributesKey("ODIN_LOCAL_ENUM_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+
+    // Built-In
+    public static final TextAttributesKey ODIN_BUILTIN_PROC = createTextAttributesKey("ODIN_BUILTIN_PROC", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
+    public static final TextAttributesKey ODIN_BUILTIN_PROC_CALL = createTextAttributesKey("ODIN_BUILTIN_PROC_CALL", ODIN_BUILTIN_PROC);
+    public static final TextAttributesKey ODIN_BUILTIN_VAR = createTextAttributesKey("ODIN_BUILTIN_VAR", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
+    public static final TextAttributesKey ODIN_BUILTIN_CONSTANT = createTextAttributesKey("ODIN_BUILTIN_CONSTANT", DefaultLanguageHighlighterColors.CONSTANT);
+    public static final TextAttributesKey ODIN_BUILTIN_TYPE = createTextAttributesKey("ODIN_BUILTIN_TYPE", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
 
     // TODO Maybe implement
 //    public static final TextAttributesKey ODIN_PKG_EXP_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_PKG_EXP_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
@@ -255,10 +262,10 @@ public class OdinSyntaxTextAttributes {
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.CONSTANT, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.DECLARATION, ODIN_LOCAL_CONSTANT);
 
         // Type Alias
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.DECLARATION, ODIN_PKG_EXP_TYPE_ALIAS);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_PKG_PRIVATE_TYPE_ALIAS);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_FILE_PRIVATE_TYPE_ALIAS);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.DECLARATION, ODIN_LOCAL_TYPE_ALIAS);
+//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.DECLARATION, ODIN_PKG_EXP_TYPE_ALIAS);
+//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_PKG_PRIVATE_TYPE_ALIAS);
+//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_FILE_PRIVATE_TYPE_ALIAS);
+//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.DECLARATION, ODIN_LOCAL_TYPE_ALIAS);
 
 
         // Fields
@@ -330,10 +337,10 @@ public class OdinSyntaxTextAttributes {
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.CONSTANT, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_CONSTANT_REF);
 
         // Type Alias
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, ODIN_PKG_EXP_TYPE_ALIAS);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_PKG_PRIVATE_TYPE_ALIAS);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_TYPE_ALIAS);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_TYPE_ALIAS);
+//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, ODIN_PKG_EXP_TYPE_ALIAS);
+//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_PKG_PRIVATE_TYPE_ALIAS);
+//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_TYPE_ALIAS);
+//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_TYPE_ALIAS);
 
 
         // Variable

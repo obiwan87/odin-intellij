@@ -9,19 +9,19 @@ import com.lasagnerd.odin.lang.psi.OdinCondition
 import com.lasagnerd.odin.lang.psi.OdinWhenBlock
 
 class OdinWhenStatementInlayHintsProvider : InlayHintsProvider {
-    override fun createCollector(psiFile: PsiFile, editor: Editor): InlayHintsCollector? {
+    override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
         return MyCollector()
     }
 
     private class MyCollector : SharedBypassCollector {
-        override fun collectFromElement(psiElement: PsiElement, inlayTreeSink: InlayTreeSink) {
-            if (psiElement is OdinCondition) {
-                if (psiElement.getParent() is OdinWhenBlock) {
-                    val value = OdinExpressionEvaluator.evaluate(psiElement.expression)
+        override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
+            if (element is OdinCondition) {
+                if (element.getParent() is OdinWhenBlock) {
+                    val value = OdinExpressionEvaluator.evaluate(element.expression)
                     val valString = value.asBool()?.toString() ?: "?"
 
-                    val pos = InlineInlayPosition(psiElement.getTextRange().endOffset, true, 1)
-                    inlayTreeSink.addPresentation(
+                    val pos = InlineInlayPosition(element.getTextRange().endOffset, true, 1)
+                    sink.addPresentation(
                         pos, null, null, HintFormat.default
                     ) {
                         text("= $valString")

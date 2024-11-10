@@ -243,7 +243,7 @@ public class OdinProjectSettings implements Disposable {
         panel.add(sdkPathTextField, constraints);
 
         // Components initialization
-        new ComponentValidator(this)
+        ComponentValidator componentValidator = new ComponentValidator(this)
                 .withValidator(sdkPathValidator())
                 .andStartOnFocusLost()
                 .andRegisterOnDocumentListener(sdkPathTextField.getTextField())
