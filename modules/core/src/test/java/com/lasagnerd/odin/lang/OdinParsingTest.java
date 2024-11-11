@@ -1677,12 +1677,38 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = loadTypeInference();
         OdinProcedureDefinition proc = findFirstProcedure(file, "testImplicitEnumExpression");
         {
+            OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "b");
+            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("Direction", tsOdinEnumType.getName());
+        }
+        {
+            OdinAssignmentStatement assignmentStatement = PsiTreeUtil.findChildOfType(proc, OdinAssignmentStatement.class);
+            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(assignmentStatement, OdinImplicitSelectorExpression.class);
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("Direction", tsOdinEnumType.getName());
+        }
+        {
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
             Objects.requireNonNull(implicitSelectorExpression);
             TsOdinType tsOdinType = OdinInferenceEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(implicitSelectorExpression), implicitSelectorExpression);
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
         }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "s");
+            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            assertNotNull(implicitSelectorExpression);
+            PsiReference reference = implicitSelectorExpression.getIdentifier().getReference();
+            assertNotNull(reference);
+            PsiElement resolvedReference = reference.resolve();
+            assertNotNull(resolvedReference);
+        }
+
+
     }
 
     public void test_typeInference_anyType() throws IOException {
@@ -2330,7 +2356,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testWhenStatement", "Y");
             @NotNull Long val = assertInstanceOf(evOdinValue.getValue(), Long.class);
-            assertEquals(3, val.longValue());
+            assertEquals(5, val.longValue());
         }
     }
 

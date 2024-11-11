@@ -558,6 +558,21 @@ testImplicitEnumExpression :: proc() {
     }
 
     x := p(.North) // expecting direction from .North
+
+    S :: struct {
+        x, y: Direction
+    }
+
+    s := S {
+        x = .North
+    }
+
+    arr := [Direction]i32 {}
+    arr[.North] = 1
+
+    Directions :: bit_set[Direction; i32]
+    bs := Directions {}
+    b := .North in bs
 }
 
 testBitSetOperations :: proc() {

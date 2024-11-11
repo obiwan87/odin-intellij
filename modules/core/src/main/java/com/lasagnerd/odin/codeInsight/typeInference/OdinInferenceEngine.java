@@ -152,7 +152,9 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitImplicitSelectorExpression(@NotNull OdinImplicitSelectorExpression o) {
+        String enumValue = o.getIdentifier().getText();
         PsiElement elementEntry = PsiTreeUtil.getParentOfType(o, OdinLhs.class, OdinRhs.class);
+
         if (elementEntry != null) {
             OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(elementEntry, OdinCompoundLiteral.class);
             TsOdinType tsOdinType = inferTypeOfCompoundLiteral(symbolTable, compoundLiteral).baseType(true);
@@ -170,22 +172,80 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
             } else if (tsOdinType instanceof TsOdinBitSetType bitSetType && expressionContainer instanceof OdinRhs) {
                 this.type = bitSetType.getElementType();
+            } else if (expressionContainer instanceof OdinRhs) {
+                TsOdinType expectedType = inferExpectedType(symbolTable, o);
+                this.type = inferImplicitSelectorType(expectedType, enumValue);
             }
         } else {
             PsiElement parent = o.getParent();
+
             if (parent instanceof OdinBinaryExpression binaryExpression) {
-                IElementType operatorType = PsiUtilCore.getElementType(binaryExpression.getOperator());
-                if (OdinPsiUtil.COMPARISON_OPERATORS.contains(operatorType)) {
-                    if (binaryExpression.getLeft() == o && binaryExpression.getRight() != null) {
-                        this.type = inferType(symbolTable, binaryExpression.getRight());
-                    } else if (binaryExpression.getRight() == o) {
-                        this.type = inferType(symbolTable, binaryExpression.getLeft());
+                OdinExpression otherExpression = binaryExpression.getLeft() == o ? binaryExpression.getRight() : binaryExpression.getLeft();
+                if (otherExpression != null) {
+                    IElementType operatorType = PsiUtilCore.getElementType(binaryExpression.getOperator());
+                    if (OdinPsiUtil.COMPARISON_OPERATORS.contains(operatorType)) {
+                        TsOdinType tsOdinType = inferType(symbolTable, otherExpression);
+                        this.type = inferImplicitSelectorType(tsOdinType, enumValue);
+                    }
+
+                    if (operatorType == OdinTypes.IN || operatorType == OdinTypes.NOT_IN) {
+                        TsOdinType tsOdinType = inferType(symbolTable, otherExpression);
+                        if (tsOdinType.baseType(true) instanceof TsOdinBitSetType tsOdinBitSetType) {
+                            if (tsOdinBitSetType.getElementType() instanceof TsOdinEnumType tsOdinEnumType) {
+                                if (enumContainsValue(tsOdinEnumType, enumValue)) {
+                                    this.type = tsOdinEnumType;
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (parent instanceof OdinIndex index && index.getParent() instanceof OdinIndexExpression indexExpression) {
+                TsOdinType tsOdinType = inferType(symbolTable, indexExpression.getExpression());
+                if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+                    OdinArraySize psiSizeElement = tsOdinArrayType.getPsiSizeElement();
+                    if (psiSizeElement != null && psiSizeElement.getExpression() != null) {
+                        TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, psiSizeElement.getExpression());
+                        if (sizeType instanceof TsOdinMetaType metaType && metaType.representedType() instanceof TsOdinEnumType tsOdinEnumType) {
+                            if (enumContainsValue(tsOdinEnumType, enumValue)) {
+                                this.type = tsOdinEnumType;
+                            }
+                        }
                     }
                 }
             } else {
-                this.type = inferExpectedType(symbolTable, o);
+                TsOdinType expectedType = inferExpectedType(symbolTable, o);
+                this.type = inferImplicitSelectorType(expectedType, enumValue);
             }
         }
+    }
+
+    private @NotNull TsOdinType inferImplicitSelectorType(TsOdinType tsOdinType, String enumValue) {
+        TsOdinType implicitSelectorType = null;
+        if (tsOdinType.baseType(true) instanceof TsOdinEnumType tsOdinEnumType) {
+            if (enumContainsValue(tsOdinEnumType, enumValue)) {
+                implicitSelectorType = tsOdinEnumType;
+            }
+        } else if (tsOdinType.baseType(true) instanceof TsOdinUnionType unionType) {
+            for (TsOdinUnionVariant variant : unionType.getVariants()) {
+                TsOdinType variantType = variant.getType();
+                if (variantType.baseType(true) instanceof TsOdinEnumType tsOdinEnumType) {
+                    if (enumContainsValue(tsOdinEnumType, enumValue)) {
+                        implicitSelectorType = tsOdinEnumType;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(implicitSelectorType == null) {
+            implicitSelectorType = TsOdinBuiltInTypes.UNKNOWN;
+        }
+        return implicitSelectorType;
+    }
+
+    private boolean enumContainsValue(TsOdinEnumType tsOdinEnumType, String enumValue) {
+        List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(tsOdinEnumType, OdinSymbolTable.EMPTY);
+        return typeElements.stream().anyMatch(s -> s.getName().equals(enumValue));
     }
 
     @Override
@@ -1309,14 +1369,22 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (rhsContainer instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            OdinType declaredType = OdinInsightUtils.getDeclaredType(variableInitializationStatement);
+            OdinType type = variableInitializationStatement.getType();
+            if (type != null) {
+                return OdinTypeResolver.resolveType(symbolTable, type);
+            }
+            return TsOdinBuiltInTypes.UNKNOWN;
+        }
+
+        if(rhsContainer instanceof OdinParameterInitialization parameterInitialization) {
+            OdinType declaredType = parameterInitialization.getTypeDefinition();
             if (declaredType != null) {
                 return OdinTypeResolver.resolveType(symbolTable, declaredType);
             }
             return TsOdinBuiltInTypes.UNKNOWN;
         }
 
-        // TODO: add argument
+        // TODO: add index
         return TsOdinBuiltInTypes.VOID;
     }
 
@@ -1343,7 +1411,9 @@ public class OdinInferenceEngine extends OdinVisitor {
                         OdinRhsExpressions.class,
                         OdinCaseClause.class,
                         OdinVariableInitializationStatement.class,
-                        OdinConstantInitializationStatement.class
+                        OdinConstantInitializationStatement.class,
+                        OdinParameterInitialization.class,
+                        OdinIndex.class
                 },
                 new Class<?>[]{
                         OdinLhsExpressions.class,

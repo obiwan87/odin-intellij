@@ -60,7 +60,7 @@ public class OdinProjectSettings implements Disposable {
     private SimpleColoredComponent sdkVersion;
 
     private final Object MUTEX = new Object();
-    private boolean diposed;
+    private boolean disposed;
 
     @Override
     public void dispose() {
@@ -109,7 +109,7 @@ public class OdinProjectSettings implements Disposable {
                 sdkVersion.clear(); // Clear any text or icons
                 sdkVersion = null;
             }
-            diposed = true;
+            disposed = true;
         }
     }
 
@@ -301,7 +301,7 @@ public class OdinProjectSettings implements Disposable {
             if (component != null)
                 return component;
 
-            if(diposed)
+            if(disposed)
                 return null;
 
             sdkVersion = new SimpleColoredComponent();

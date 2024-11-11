@@ -530,9 +530,9 @@ public class OdinInsightUtils {
         return isTypeDeclaration(element, OdinUnionType.class);
     }
 
-    public static @Nullable OdinType getDeclaredType(PsiElement declaredIdentifier) {
+    public static @Nullable OdinType getDeclaredType(PsiElement element) {
         OdinDeclaration declaration
-                = PsiTreeUtil.getParentOfType(declaredIdentifier,
+                = PsiTreeUtil.getParentOfType(element,
                 OdinDeclaration.class,
                 false);
         if (declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
@@ -854,8 +854,9 @@ public class OdinInsightUtils {
     public static boolean isLocal(@NotNull PsiElement o) {
         OdinFileScopeStatementList fileScope = PsiTreeUtil.getParentOfType(o, OdinFileScopeStatementList.class,
                 true,
-                OdinProcedureBody.class,
-                OdinForeignBlock.class);
+                OdinProcedureBody.class);
+
+
         return fileScope == null;
     }
 
