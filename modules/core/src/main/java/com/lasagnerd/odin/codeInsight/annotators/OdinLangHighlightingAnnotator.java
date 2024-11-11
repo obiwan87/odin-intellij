@@ -188,7 +188,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_TYPE);
             } else if (PREDEFINED_PROCEDURES.contains(identifierText)) {
                 PsiElement identifierTokenParent = psiElement.getParent();
-                if(identifierTokenParent.getParent() instanceof OdinCallExpression) {
+                if (identifierTokenParent.getParent() instanceof OdinCallExpression) {
                     highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_PROC_CALL);
                 } else {
                     highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_PROC);
@@ -198,18 +198,17 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 if (identifierTokenParent instanceof OdinDeclaredIdentifier declaredIdentifier) {
                     handleDeclarations(annotationHolder, declaredIdentifier, psiElementRange);
                     // Add other types
-                }
-                else if (identifierTokenParent instanceof OdinAttributeIdentifier) {
+                } else if (identifierTokenParent instanceof OdinAttributeIdentifier) {
                     highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_ATTRIBUTE_REF);
-                }
-                else if (identifierTokenParent.getParent() instanceof OdinImplicitSelectorExpression selectorExpression) {
+                } else if (identifierTokenParent.getParent() instanceof OdinImplicitSelectorExpression) {
                     OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
                     OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
                     if (symbol != null) {
                         highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_IMPLICIT_ENUM_FIELD_REF);
                         return;
                     }
-                    highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
+                    // TODO: activate when finished with inference engine
+//                    highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
                 } else if (identifierTokenParent.getParent() instanceof OdinRefExpression refExpression) {
                     handleReferences(annotationHolder,
                             psiElement,
@@ -222,13 +221,13 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                     if (identifier.getIdentifierToken() == psiElement) {
                         highlightPackageReference(annotationHolder, identifierText, psiElementRange, identifier);
                     }
-                } else if (identifierTokenParent.getParent() instanceof OdinSimpleRefType simpleRefType) {
+                } else if (identifierTokenParent.getParent() instanceof OdinSimpleRefType) {
                     handleTypeReferences(annotationHolder,
                             psiElement,
                             identifierTokenParent,
                             identifierText,
-                            psiElementRange,
-                            simpleRefType);
+                            psiElementRange
+                    );
                 }
             }
         }
@@ -240,7 +239,11 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
     }
 
-    private void handleTypeReferences(AnnotationHolder annotationHolder, PsiElement element, PsiElement identifierTokenParent, String identifierText, TextRange psiElementRange, OdinSimpleRefType simpleRefType) {
+    private void handleTypeReferences(AnnotationHolder annotationHolder,
+                                      PsiElement element,
+                                      PsiElement identifierTokenParent,
+                                      String identifierText,
+                                      TextRange psiElementRange) {
         OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
         OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
         if (symbol == null) {
@@ -259,7 +262,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                                            TextRange psiElementRange) {
         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
         if (declaration != null) {
-            if(declaration instanceof OdinPackageDeclaration) {
+            if (declaration instanceof OdinPackageDeclaration) {
                 highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_PACKAGE);
                 return;
             }
@@ -269,7 +272,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                     .findFirst()
                     .orElse(null);
             if (symbol != null) {
-                if(symbol.getSymbolType() == OdinSymbolType.VARIABLE && symbol.isStatic()) {
+                if (symbol.getSymbolType() == OdinSymbolType.VARIABLE && symbol.isStatic()) {
                     highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_STATIC_VARIABLE);
                     return;
                 }
@@ -359,14 +362,14 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_STATIC_VARIABLE);
                 return;
             }
-            if(symbol.isBuiltin()) {
+            if (symbol.isBuiltin()) {
                 highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_VAR);
                 return;
             }
         }
 
         if (symbol.getSymbolType() == OdinSymbolType.CONSTANT) {
-            if(symbol.isBuiltin()) {
+            if (symbol.isBuiltin()) {
                 highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_CONSTANT);
                 return;
             }
