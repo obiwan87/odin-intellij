@@ -22,8 +22,10 @@ public class OdinLibraryProvider extends AdditionalLibraryRootsProvider {
             if (odinBinaryPath != null) {
                 // Path is valid
                 VirtualFile baseDir = VirtualFileManager.getInstance().findFileByNioPath(Path.of(sdkPathOptional.get()));
-                OdinSdkLibrary odinSdkLibrary = new OdinSdkLibrary(baseDir);
-                libraries.add(odinSdkLibrary);
+                if(baseDir != null) {
+                    OdinSdkLibrary odinSdkLibrary = new OdinSdkLibrary(baseDir);
+                    libraries.add(odinSdkLibrary);
+                }
             }
         }
 
