@@ -250,6 +250,12 @@ public class OdinSyntaxTextAttributes {
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_FILE_PRIVATE_PROC);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.DECLARATION, ODIN_LOCAL_PROC);
 
+        // Procedure overloading
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE_OVERLOAD, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.DECLARATION, ODIN_PKG_EXP_PROC);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE_OVERLOAD, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_PKG_PRIVATE_PROC);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE_OVERLOAD, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_FILE_PRIVATE_PROC);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE_OVERLOAD, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.DECLARATION, ODIN_LOCAL_PROC);
+
         // TODO Check if foreign procedure can have visibility and local scope
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.DECLARATION, OdinSymbolOrigin.FOREIGN, ODIN_FOREIGN_PROC);
 
@@ -319,12 +325,39 @@ public class OdinSyntaxTextAttributes {
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.BIT_FIELD, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_BIT_FIELD_REF);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.BIT_FIELD, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_BIT_FIELD_REF);
 
-        // Procedures
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, ODIN_PKG_EXP_PROC_CALL);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_PKG_PRIVATE_PROC_CALL);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_PROC_CALL);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_PROC_CALL);
+        // Procedures references (such as in procedure overloading)
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, ODIN_PKG_EXP_PROC);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_PKG_PRIVATE_PROC);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_PROC);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_PROC);
 
+        // Reference to foreign procedures
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, OdinSymbolOrigin.FOREIGN, ODIN_PKG_EXP_PROC);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, OdinSymbolOrigin.FOREIGN, ODIN_PKG_PRIVATE_PROC);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, OdinSymbolOrigin.FOREIGN, ODIN_FILE_PRIVATE_PROC);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, OdinSymbolOrigin.FOREIGN, ODIN_LOCAL_PROC);
+
+        // Call foreign procedures
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.CALL, OdinSymbolOrigin.FOREIGN, ODIN_PKG_EXP_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.CALL, OdinSymbolOrigin.FOREIGN, ODIN_PKG_PRIVATE_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.CALL, OdinSymbolOrigin.FOREIGN, ODIN_FILE_PRIVATE_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.CALL, OdinSymbolOrigin.FOREIGN, ODIN_LOCAL_PROC_CALL);
+
+        // Call normal procedures
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.CALL, ODIN_LOCAL_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.CALL, ODIN_PKG_EXP_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.CALL, ODIN_PKG_PRIVATE_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.CALL, ODIN_FILE_PRIVATE_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.TYPE, OdinVisibility.NONE, OdinIdentifierType.CALL, ODIN_STRUCT_FIELD_CALL);
+
+        // Call procedure overload
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE_OVERLOAD, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.CALL, ODIN_LOCAL_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE_OVERLOAD, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.CALL, ODIN_PKG_EXP_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE_OVERLOAD, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.CALL, ODIN_PKG_PRIVATE_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE_OVERLOAD, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.CALL, ODIN_FILE_PRIVATE_PROC_CALL);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE_OVERLOAD, OdinScope.TYPE, OdinVisibility.NONE, OdinIdentifierType.CALL, ODIN_STRUCT_FIELD_CALL);
+
+        // TODO add procedure overloads!
         // TODO Check if foreign procedure can have visibility and local scope
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, OdinSymbolOrigin.FOREIGN, ODIN_FOREIGN_PROC_CALL);
 
@@ -356,11 +389,7 @@ public class OdinSyntaxTextAttributes {
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PARAMETER, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.CALL, ODIN_PARAMETER_CALL);
 
         // Constant
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.CALL, ODIN_LOCAL_PROC_CALL);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.CALL, ODIN_PKG_EXP_PROC_CALL);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.CALL, ODIN_PKG_PRIVATE_PROC_CALL);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.CALL, ODIN_FILE_PRIVATE_PROC_CALL);
-        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.PROCEDURE, OdinScope.TYPE, OdinVisibility.NONE, OdinIdentifierType.CALL, ODIN_STRUCT_FIELD_CALL);
+
 
 //      TODO
 //        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.VARIABLE, OdinScope.TYPE, OdinVisibility.NONE, OdinIdentifierType.CALL, ODIN_FAKE_METHOD_CALL);
