@@ -245,6 +245,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
         if (symbol == null) {
             highlightUnknownReference(element.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
+            return;
         }
 
         TextAttributesKey textAttribute = TEXT_ATTRIBUTES_MAP.getReferenceTextAttribute(symbol);

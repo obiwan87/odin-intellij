@@ -2,6 +2,7 @@ package com.lasagnerd.odin.colorSettings;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.lasagnerd.odin.codeInsight.symbols.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -11,12 +12,12 @@ public class OdinSymbolTextAttributes
         extends HashMap<OdinSymbolType, Map<OdinScope, Map<OdinVisibility, Map<OdinSymbolOrigin, Map<OdinIdentifierType, TextAttributesKey>>>>>
         implements Map<OdinSymbolType, Map<OdinScope, Map<OdinVisibility, Map<OdinSymbolOrigin, Map<OdinIdentifierType, TextAttributesKey>>>>> {
 
-    public TextAttributesKey getReferenceTextAttribute(OdinSymbol symbol) {
+    public TextAttributesKey getReferenceTextAttribute(@NotNull OdinSymbol symbol) {
         OdinIdentifierType identifierType = OdinIdentifierType.REFERENCE;
         return getStyle(symbol, identifierType);
     }
 
-    private @Nullable TextAttributesKey getStyle(OdinSymbol symbol, OdinIdentifierType identifierType) {
+    private @Nullable TextAttributesKey getStyle(@NotNull OdinSymbol symbol, @NotNull OdinIdentifierType identifierType) {
         var map1 = get(symbol.getSymbolType());
         if (map1 != null) {
             var map2 = map1.get(symbol.getScope());
@@ -33,11 +34,11 @@ public class OdinSymbolTextAttributes
         return null;
     }
 
-    public TextAttributesKey getDeclarationStyle(OdinSymbol symbol) {
+    public TextAttributesKey getDeclarationStyle(@NotNull OdinSymbol symbol) {
         return getStyle(symbol, OdinIdentifierType.DECLARATION);
     }
 
-    public TextAttributesKey getCallTextAttribute(OdinSymbol symbol) {
+    public TextAttributesKey getCallTextAttribute(@NotNull OdinSymbol symbol) {
         return getStyle(symbol, OdinIdentifierType.CALL);
     }
 
