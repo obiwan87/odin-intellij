@@ -76,7 +76,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             symbol.setHasUsing(using);
             symbol.setScope(OdinScope.LOCAL);
             symbol.setVisibility(OdinVisibility.NONE);
-            if(declaredIdentifier.getDollar() == null) {
+            if (declaredIdentifier.getDollar() == null) {
                 symbol.setSymbolType(OdinSymbolType.PARAMETER);
             } else {
                 symbol.setSymbolType(OdinSymbolType.POLYMORPHIC_TYPE);
@@ -113,7 +113,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
             symbol.setHasUsing(hasUsing);
             symbol.setPsiType(psiType);
-            if(declaredIdentifier.getDollar() == null) {
+            if (declaredIdentifier.getDollar() == null) {
                 symbol.setSymbolType(OdinSymbolType.PARAMETER);
             } else {
                 symbol.setSymbolType(OdinSymbolType.POLYMORPHIC_TYPE);
@@ -172,7 +172,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     private @NotNull OdinVisibility getVisibility(OdinScope scope, List<OdinAttributesDefinition> attributeList) {
-        if(scope == OdinScope.LOCAL)
+        if (scope == OdinScope.LOCAL)
             return OdinVisibility.NONE;
         return getVisibility(attributeList, this.defaultVisibility);
     }
@@ -399,18 +399,18 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     private void addWhenBlockDeclarations(OdinWhenBlock whenBlock) {
-        OdinCondition condition = whenBlock.getCondition();
+//        OdinCondition condition = whenBlock.getCondition();
 
-        EvOdinValue conditionValue = TsOdinBuiltInTypes.NULL;
-        if (condition != null) {
-            conditionValue = OdinExpressionEvaluator.evaluate(symbolTable, condition.getExpression());
-        }
+//        EvOdinValue conditionValue = TsOdinBuiltInTypes.NULL;
+//        if (condition != null) {
+//            conditionValue = OdinExpressionEvaluator.evaluate(symbolTable, condition.getExpression());
+//        }
 
-        boolean ifConditionTrue = conditionValue.asBool() == Boolean.TRUE;
-        boolean ignoreCondition = conditionValue.isNull();
+//        boolean ifConditionTrue = conditionValue.asBool() == Boolean.TRUE;
+//        boolean ignoreCondition = conditionValue.isNull();
 
-//        boolean ifConditionTrue = true;
-//        boolean ignoreCondition = true;
+        boolean ifConditionTrue = true;
+        boolean ignoreCondition = true;
 
         OdinStatementBody statementBody = whenBlock.getStatementBody();
 
