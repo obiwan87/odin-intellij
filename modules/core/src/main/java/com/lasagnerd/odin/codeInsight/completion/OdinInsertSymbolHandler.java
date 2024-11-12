@@ -2,32 +2,39 @@ package com.lasagnerd.odin.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.lang.OdinLanguage;
+import com.lasagnerd.odin.lang.psi.OdinCallExpression;
 import org.jetbrains.annotations.NotNull;
 
 class OdinInsertSymbolHandler implements InsertHandler<LookupElement> {
-    private final OdinSymbolType typeType;
+    private final OdinSymbolType symbolType;
     private final String prefix;
 
-    OdinInsertSymbolHandler(OdinSymbolType typeType) {
-        this(typeType, "");
+    OdinInsertSymbolHandler(OdinSymbolType symbolType) {
+        this(symbolType, "");
     }
 
-    OdinInsertSymbolHandler(OdinSymbolType typeType, String prefix) {
-        this.typeType = typeType;
+    OdinInsertSymbolHandler(OdinSymbolType symbolType, String prefix) {
+        this.symbolType = symbolType;
         this.prefix = prefix != null ? prefix : "";
     }
 
     @Override
     public void handleInsert(@NotNull InsertionContext insertionContext, @NotNull LookupElement lookupElement) {
         Document document = insertionContext.getDocument();
-        if(!prefix.isBlank()) {
+        if (!prefix.isBlank()) {
             document.insertString(insertionContext.getStartOffset(), prefix);
         }
-        if (typeType == OdinSymbolType.PROCEDURE || typeType == OdinSymbolType.PROCEDURE_OVERLOAD) {
+        if (isProcedure()) {
 
             document.insertString(insertionContext.getTailOffset(), "(");
 
@@ -35,6 +42,34 @@ class OdinInsertSymbolHandler implements InsertHandler<LookupElement> {
             insertionContext.getEditor().getCaretModel().moveToOffset(insertionContext.getTailOffset() - 1);
         }
         // commit document
-        PsiDocumentManager.getInstance(insertionContext.getProject()).commitDocument(document);
+        PsiDocumentManager.getInstance(insertionContext.getProject())
+                .commitDocument(document);
+        if (isProcedure()) {
+            showParameterHints(insertionContext, document);
+        }
+    }
+
+    private static void showParameterHints(@NotNull InsertionContext insertionContext, Document document) {
+        int lbraceOffset = insertionContext.getEditor().getCaretModel().getOffset();
+        PsiFile psiFile = PsiDocumentManager.getInstance(insertionContext.getProject())
+                .getPsiFile(document);
+        if (psiFile != null) {
+            PsiElement element = psiFile.findElementAt(lbraceOffset);
+            if(element != null) {
+                OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(element, false, OdinCallExpression.class);
+                if(callExpression == null)
+                    return;
+                ShowParameterInfoHandler.invoke(
+                        insertionContext.getProject(),
+                        insertionContext.getEditor(),
+                        insertionContext.getFile(),
+                        lbraceOffset, callExpression, false
+                        );
+            }
+        }
+    }
+
+    private boolean isProcedure() {
+        return symbolType == OdinSymbolType.PROCEDURE || symbolType == OdinSymbolType.PROCEDURE_OVERLOAD;
     }
 }
