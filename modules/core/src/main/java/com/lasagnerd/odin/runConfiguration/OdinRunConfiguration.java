@@ -32,7 +32,7 @@ public class OdinRunConfiguration extends LocatableConfigurationBase<OdinRunConf
     public void checkConfiguration() throws RuntimeConfigurationException {
         expandAndCheck(getOptions().getProjectDirectoryPath(), "Project directory");
         expandAndCheck(getOptions().getWorkingDirectory(), "Working directory");
-        expandAndCheck(getOptions().getOutputPath(), "Output path");
+        checkSet(getOptions().getOutputPath(), "Output path");
 
         OdinProjectSettingsState state = OdinProjectSettingsService.getInstance(getProject()).getState();
         String sdkPath = state.sdkPath;
