@@ -2,16 +2,14 @@ package com.lasagnerd.odin.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.hint.*;
+import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
-import com.lasagnerd.odin.lang.OdinLanguage;
 import com.lasagnerd.odin.lang.psi.OdinCallExpression;
 import org.jetbrains.annotations.NotNull;
 
