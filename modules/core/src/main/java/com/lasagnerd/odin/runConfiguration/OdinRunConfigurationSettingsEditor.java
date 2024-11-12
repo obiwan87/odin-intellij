@@ -22,7 +22,7 @@ public class OdinRunConfigurationSettingsEditor extends SettingsEditor<OdinRunCo
     private final JTextField compilerOptions;
     private final ExtendableTextField workingDirectory;
     private final RawCommandLineEditor programArguments;
-    private final JTextField projectProjectDirectoryPath;
+    private final ExtendableTextField projectProjectDirectoryPath;
     private final ExtendableTextField outputPath;
 
     public OdinRunConfigurationSettingsEditor(@NotNull Project project) {
@@ -35,6 +35,7 @@ public class OdinRunConfigurationSettingsEditor extends SettingsEditor<OdinRunCo
 
         projectProjectDirectoryPath = new ExtendableTextField("$ProjectFileDir$");
         TextFieldWithBrowseButton extendableProjectDirectoryPath = createDirectoryChooser(project, projectProjectDirectoryPath);
+        MacrosDialog.addMacroSupport(projectProjectDirectoryPath, (x) -> true, () -> false);
 
         workingDirectory = new ExtendableTextField("$ProjectFileDir$");
         TextFieldWithBrowseButton extendableWorkingDirectory = createDirectoryChooser(project, workingDirectory);
@@ -46,7 +47,7 @@ public class OdinRunConfigurationSettingsEditor extends SettingsEditor<OdinRunCo
         MacrosDialog.addMacroSupport(programArguments.getEditorField(), (x) -> true, () -> false);
 
         panel = FormBuilder.createFormBuilder()
-                .addLabeledComponent(new JLabel("Package Directory"), extendableProjectDirectoryPath)
+                .addLabeledComponent("Project directory", extendableProjectDirectoryPath)
                 .addLabeledComponent("Program arguments", programArguments)
                 .addLabeledComponent("Working directory", extendableWorkingDirectory)
 

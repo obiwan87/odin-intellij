@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -144,6 +145,13 @@ public class OdinSdkUtils {
                                                                 String projectDirectoryPath,
                                                                 String programArguments,
                                                                 String workingDirectory) {
+        ProgramParametersConfigurator configurator = new ProgramParametersConfigurator();
+        Function<String, String> expandPath = s -> configurator.expandPathAndMacros(s, null, project);
+
+        projectDirectoryPath = expandPath.apply(projectDirectoryPath);
+        workingDirectory = expandPath.apply(workingDirectory);
+        outputPathString = expandPath.apply(outputPathString);
+
         List<String> command = new ArrayList<>();
         String odinBinaryPath = getOdinBinaryPath(project);
 
@@ -165,10 +173,8 @@ public class OdinSdkUtils {
         OdinBuildProcessRunner.addCollectionPaths(project, projectDirectoryPath, command);
 
         if (!outputPathString.isEmpty()) {
-            ProgramParametersConfigurator configurator = new ProgramParametersConfigurator();
-            String expandedPath = configurator.expandPathAndMacros(outputPathString, null, project);
 
-            Path outputPath = getAbsolutePath(project, expandedPath);
+            Path outputPath = getAbsolutePath(project, outputPathString);
             if (!outputPath.getParent().toFile().exists()) {
                 boolean success = outputPath.getParent().toFile().mkdirs();
                 if (!success) {
@@ -176,7 +182,7 @@ public class OdinSdkUtils {
                 }
             }
 
-            addCommandPart(command, "-out:" + expandedPath);
+            addCommandPart(command, "-out:" + outputPathString);
         }
 
         if (programArguments != null && !programArguments.isEmpty()) {
