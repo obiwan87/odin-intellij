@@ -327,11 +327,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                     }
                 } else {
                     OdinSymbolTable symbolTableForTypeResolution;
-                    if (symbol.isVisibleThroughUsing()) {
-                        symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
-                    } else {
-                        symbolTableForTypeResolution = globalSymbolTable;
-                    }
+                    symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
+
                     this.type = inferTypeOfDeclaredIdentifier(
                             symbolTableForTypeResolution,
                             symbol.getDeclaredIdentifier(),
@@ -1373,8 +1370,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                             TsOdinParameter tsOdinParameter = argumentToParameterMap.get(rhsExpression);
                             return unfoldExpression(tsOdinParameter.getType(), rhsExpression, position);
                         }
-                    }
-                    else if (representedMetaType == PROCEDURE_GROUP) {
+                    } else if (representedMetaType == PROCEDURE_GROUP) {
                         TsOdinProcedureGroup callingProcedureGroup = (TsOdinProcedureGroup) metaType.representedType();
                         ProcedureRankingResult result = findBestProcedure(symbolTable, callingProcedureGroup, callExpression.getArgumentList());
                         TsOdinProcedureType callingProcedure = result.bestProcedure();

@@ -606,6 +606,11 @@ testImplicitEnumExpression :: proc() {
         Direction_Alias :: distinct Direction
         z := Direction_Alias(.North)
     }
+
+    {
+        r, err := o.optional_ok()
+        cmp := .Italian == err
+    }
 }
 // TODO
 // resolve references in attributes
@@ -617,9 +622,6 @@ testImplicitEnumExpression :: proc() {
 // objective-c types with "->"
 // check if inferring expected type with bit_set's works with +=
 // implicit selector not working in io.odin:111, where it calls procedure field of type "#type proc"
-// F_DUPFD :: FCntl_Command_DUPFD(.DUPFD) -> it might be casting!!
-// - what is the return type of calling an enum?
-// - what is the expected argument?
 
 testBitSetOperations :: proc() {
     Direction :: enum {

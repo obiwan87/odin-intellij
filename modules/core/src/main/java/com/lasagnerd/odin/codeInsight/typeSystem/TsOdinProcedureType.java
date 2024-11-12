@@ -18,7 +18,7 @@ public class TsOdinProcedureType extends TsOdinType {
 
     @Override
     public String getLabel() {
-        String label = "proc";
+        String label = "proc ";
         label += getName() != null? getName() : "";
         label += "("+ TsOdinUtils.getParametersString(parameters) + ")";
         String returTypesString = returnTypes.stream().map(TsOdinType::getLabel).collect(Collectors.joining(", "));
