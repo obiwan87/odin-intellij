@@ -174,7 +174,7 @@
 
   implements("binaryExpression|unaryExpression|castExpression|transmuteExpression|autoCastExpression|orElseExpression|orReturnExpression|orBreakExpression|orContinueExpression|ternaryExpression") = 'com.lasagnerd.odin.lang.psi.OdinOperator'
   implements('.*([iI]nitialization|[dD]eclaration).*') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
-  implements('(procedure|enum|bitField|bitset|struct|union|procedureOverload|import)DeclarationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
+  implements('(procedure|enum|bitField|bitset|struct|union|procedureGroup|import)DeclarationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
   implements('usingStatement') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
   methods('usingStatement') = [getDeclaredIdentifiers]
   implements('constantInitializationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
@@ -303,8 +303,8 @@ usingStatement                       ::= USING expressionListWithRecover
 directiveStatement                   ::= directive
 
 // Procedure overloading
-procedureOverloadType                 ::= &procOverloadHead PROC EOS_TOKEN? procedureOverloadBody {pin=2}
-private procedureOverloadBody         ::= blockStart procedureRef (COMMA procedureRef)* (COMMA | EOS_TOKEN | &RBRACE) blockEnd
+procedureGroupType                 ::= &procOverloadHead PROC EOS_TOKEN? procedureGroupBody {pin=2}
+private procedureGroupBody         ::= blockStart procedureRef (COMMA procedureRef)* (COMMA | EOS_TOKEN | &RBRACE) blockEnd
 private procOverloadHead              ::= PROC EOS_TOKEN? blockStart
 procedureRef                          ::= qualifiedType | simpleRefType
 
@@ -322,7 +322,7 @@ type                                 ::= mapType
                                          | dynamicArrayType
                                          | arrayType
                                          | procedureType
-                                         | procedureOverloadType
+                                         | procedureGroupType
                                          | relativeType
                                          | structType
                                          | enumType

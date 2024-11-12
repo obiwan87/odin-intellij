@@ -501,8 +501,8 @@ public class OdinInsightUtils {
         return isTypeDeclaration(element, OdinProcedureType.class) || isTypeDeclaration(element, OdinProcedureLiteralType.class);
     }
 
-    public static boolean isProcedureOverloadDeclaration(PsiElement element) {
-        return isTypeDeclaration(element, OdinProcedureOverloadType.class);
+    public static boolean isProcedureGroupDeclaration(PsiElement element) {
+        return isTypeDeclaration(element, OdinProcedureGroupType.class);
     }
 
     public static boolean isConstantDeclaration(PsiElement element) {
@@ -606,7 +606,7 @@ public class OdinInsightUtils {
             return VARIABLE;
         } else if (isConstantDeclaration(element)) {
             return CONSTANT;
-        } else if (isProcedureOverloadDeclaration(element)) {
+        } else if (isProcedureGroupDeclaration(element)) {
             return PROCEDURE_OVERLOAD;
         } else if (isPackageDeclaration(element)) {
             return PACKAGE_REFERENCE;

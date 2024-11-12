@@ -325,7 +325,7 @@ public class OdinTypeResolver extends OdinVisitor {
                         declaredType instanceof OdinStructType
                                 || declaredType instanceof OdinBitFieldType
                                 || declaredType instanceof OdinUnionType
-                                || declaredType instanceof OdinProcedureOverloadType
+                                || declaredType instanceof OdinProcedureGroupType
                                 || declaredType instanceof OdinProcedureType
                                 || declaredType instanceof OdinProcedureLiteralType
                                 || declaredType instanceof OdinEnumType
@@ -757,7 +757,7 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     @Override
-    public void visitProcedureOverloadType(@NotNull OdinProcedureOverloadType o) {
+    public void visitProcedureGroupType(@NotNull OdinProcedureGroupType o) {
         TsOdinProcedureGroup tsOdinProcedureGroup = new TsOdinProcedureGroup();
         initializeNamedType(tsOdinProcedureGroup);
 

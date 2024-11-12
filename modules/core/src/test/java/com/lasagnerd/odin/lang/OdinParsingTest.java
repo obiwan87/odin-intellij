@@ -1555,65 +1555,65 @@ public class OdinParsingTest extends UsefulTestCase {
         System.out.println(tsOdinType.getLabel());
     }
 
-    public void test_typeInference_procedureOverload() throws IOException {
+    public void test_typeInference_procedureGroup() throws IOException {
         OdinFile odinFile = loadTypeInference();
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "x");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "x");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "s");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "s");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.F64);
         }
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "t");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "t");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "u");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "u");
             assertInstanceOf(tsOdinType, TsOdinStructType.class);
             assertEquals(tsOdinType.getName(), "Point");
         }
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "v");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "v");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "z");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "z");
             assertInstanceOf(tsOdinType, TsOdinStructType.class);
             assertEquals(tsOdinType.getName(), "Point");
         }
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "w");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "w");
             assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
             assertEquals(tsOdinType.getName(), "PointDistinctAlias");
         }
 
 
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureOverload", "y");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "y");
             assertInstanceOf(tsOdinType, TsOdinStringType.class);
             assertEquals(tsOdinType, TsOdinBuiltInTypes.STRING);
         }
     }
 
-    public void test_typeInference_polyProcedureOverload() throws IOException {
+    public void test_typeInference_polyProcedureGroup() throws IOException {
         OdinFile odinFile = loadTypeInference();
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_polyProcedureOverload", "x");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_polyProcedureGroup", "x");
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
         }
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_polyProcedureOverload", "y");
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_polyProcedureGroup", "y");
             assertEquals(tsOdinType, TsOdinBuiltInTypes.I64);
         }
     }
 
-    public void test_astNew_procedureOverload() throws IOException {
+    public void test_astNew_procedureGroup() throws IOException {
         OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_astNew", "a");
@@ -1641,7 +1641,7 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    public void test_typeInference_polyProcedureOverloadWithMake() throws IOException {
+    public void test_typeInference_polyProcedureGroupWithMake() throws IOException {
         OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "test_polyOverloadWithMake", "z");

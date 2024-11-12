@@ -459,8 +459,8 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
             // procedure group
             else if (representedMetaType == PROCEDURE_GROUP) {
-                TsOdinProcedureGroup procedureOverloadType = (TsOdinProcedureGroup) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
-                this.type = inferTypeOfBestProcedure(o, procedureOverloadType);
+                TsOdinProcedureGroup procedureGroupType = (TsOdinProcedureGroup) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
+                this.type = inferTypeOfBestProcedure(o, procedureGroupType);
             }
             // type casting
             else if (o.getExpression() instanceof OdinRefExpression) {
@@ -469,8 +469,8 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
     }
 
-    private TsOdinType inferTypeOfBestProcedure(@NotNull OdinCallExpression o, TsOdinProcedureGroup procedureOverloadType) {
-        ProcedureRankingResult result = findBestProcedure(symbolTable, procedureOverloadType, o.getArgumentList());
+    private TsOdinType inferTypeOfBestProcedure(@NotNull OdinCallExpression o, TsOdinProcedureGroup procedureGroupType) {
+        ProcedureRankingResult result = findBestProcedure(symbolTable, procedureGroupType, o.getArgumentList());
 
         if (result.bestProcedure() != null) {
             return inferTypeOfProcedureCall(o, result.bestProcedure(), symbolTable);
@@ -1234,7 +1234,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 declaredType instanceof OdinStructType
                         || declaredType instanceof OdinBitFieldType
                         || declaredType instanceof OdinUnionType
-                        || declaredType instanceof OdinProcedureOverloadType
+                        || declaredType instanceof OdinProcedureGroupType
                         || declaredType instanceof OdinProcedureType
                         || declaredType instanceof OdinProcedureLiteralType
                         || declaredType instanceof OdinEnumType) {

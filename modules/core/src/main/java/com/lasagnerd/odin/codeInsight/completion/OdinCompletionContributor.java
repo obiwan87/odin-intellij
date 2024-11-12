@@ -222,12 +222,12 @@ public class OdinCompletionContributor extends CompletionContributor {
                     }
                 }
                 case PROCEDURE_OVERLOAD -> {
-                    OdinProcedureOverloadType procedureOverloadType = OdinInsightUtils
-                            .getDeclaredType(declaredIdentifier, OdinProcedureOverloadType.class);
-                    if (procedureOverloadType == null)
+                    OdinProcedureGroupType procedureGroupType = OdinInsightUtils
+                            .getDeclaredType(declaredIdentifier, OdinProcedureGroupType.class);
+                    if (procedureGroupType == null)
                         break;
 
-                    for (var procedureRef : procedureOverloadType.getProcedureRefList()) {
+                    for (var procedureRef : procedureGroupType.getProcedureRefList()) {
                         OdinIdentifier odinIdentifier = OdinPsiUtil.getIdentifier(procedureRef);
 
                         if (odinIdentifier == null)

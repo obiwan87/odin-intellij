@@ -269,7 +269,7 @@ circular_reference_test :: proc(render_commands: ^ClaryArray(RenderCommand)) {
     x := command.config
 }
 
-typeInference_procedureOverload :: proc() {
+typeInference_procedureGroup :: proc() {
     PointDistinctAlias :: distinct Point
     PointAlias :: Point
 
@@ -327,7 +327,7 @@ typeInference_procedureOverload :: proc() {
     z := add_one(Point { })
 }
 
-typeInference_polyProcedureOverload :: proc() {
+typeInference_polyProcedureGroup :: proc() {
     my_make_slice :: proc($K: typeid/[]$E) -> i32 {
         return 1
     }
