@@ -7,14 +7,13 @@ import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
 import com.lasagnerd.odin.projectSettings.OdinProjectConfigurable;
+import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
 import com.lasagnerd.odin.projectSettings.OdinProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.function.Function;
 
 public class OdinRunConfiguration extends LocatableConfigurationBase<OdinRunConfigurationOptions>
         implements RunProfileWithCompileBeforeLaunchOption{
