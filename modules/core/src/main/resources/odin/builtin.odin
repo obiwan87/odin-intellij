@@ -48,10 +48,12 @@ Odin_OS_Type :: enum int {
     Linux,
     Essence,
     FreeBSD,
-    Haiku,
     OpenBSD,
+    NetBSD,
+    Haiku,
     WASI,
     JS,
+    Orca,
     Freestanding,
 }
 
@@ -63,10 +65,11 @@ Odin_Arch_Type :: enum int {
     Unknown,
     amd64,
     i386,
+    arm32,
     arm64,
     wasm32,
     wasm64p32,
-    riscv64
+    riscv64,
 }
 
 @builtin
