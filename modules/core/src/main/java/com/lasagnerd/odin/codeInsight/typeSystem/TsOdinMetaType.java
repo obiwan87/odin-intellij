@@ -47,7 +47,7 @@ public class TsOdinMetaType extends TsOdinType {
         UNION,
         UNKNOWN,
         VOID,
-        PROCEDURE_OVERLOAD,
+        PROCEDURE_GROUP,
         DISTINCT_TYPE,
         DYNAMIC_ARRAY,
         SOA_SLICE,

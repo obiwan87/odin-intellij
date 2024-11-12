@@ -1678,6 +1678,19 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinProcedureDefinition proc = findFirstProcedure(file, "testImplicitEnumExpression");
 
         {
+            OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "z");
+            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
+            assertInstanceOf(tsOdinType.baseType(true), TsOdinEnumType.class);
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testImplicitEnumExpression", "z");
+            TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
+            assertTrue(tsOdinTypeAlias.isDistinct());
+            assertInstanceOf(tsOdinTypeAlias.baseType(true), TsOdinEnumType.class);
+        }
+        {
             OdinCallExpression expression = (OdinCallExpression) findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "g");
             List<OdinArgument> arguments = PsiTreeUtil.findChildrenOfType(expression, OdinArgument.class).stream()
                     .toList();

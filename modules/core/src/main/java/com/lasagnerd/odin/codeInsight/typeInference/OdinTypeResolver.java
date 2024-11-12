@@ -758,17 +758,17 @@ public class OdinTypeResolver extends OdinVisitor {
 
     @Override
     public void visitProcedureOverloadType(@NotNull OdinProcedureOverloadType o) {
-        TsOdinProcedureOverloadType tsOdinProcedureOverloadType = new TsOdinProcedureOverloadType();
-        initializeNamedType(tsOdinProcedureOverloadType);
+        TsOdinProcedureGroup tsOdinProcedureGroup = new TsOdinProcedureGroup();
+        initializeNamedType(tsOdinProcedureGroup);
 
         for (OdinProcedureRef procedureRef : o.getProcedureRefList()) {
             TsOdinType tsOdinType = resolveType(symbolTable, procedureRef.getType());
             if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
-                tsOdinProcedureOverloadType.getTargetProcedures().add(tsOdinProcedureType);
+                tsOdinProcedureGroup.getProcedures().add(tsOdinProcedureType);
             }
         }
 
-        this.type = tsOdinProcedureOverloadType;
+        this.type = tsOdinProcedureGroup;
     }
 
     @Override

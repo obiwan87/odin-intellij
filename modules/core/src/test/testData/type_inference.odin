@@ -587,7 +587,7 @@ testImplicitEnumExpression :: proc() {
     }
 
     {
-        p1 :: proc(f: f32, d: Direction) -> i32 {
+        p1 :: proc(p: Point, d: Direction) -> i32 {
             return 1
         }
         p2 :: proc(i: i32, d: Direction) -> i32 {
@@ -601,8 +601,25 @@ testImplicitEnumExpression :: proc() {
         // implicit expressions in procedure overloads
         g := group(1, .East)
     }
+
+    {
+        Direction_Alias :: distinct Direction
+        z := Direction_Alias(.North)
+    }
 }
-// attributes
+// TODO
+// resolve references in attributes
+// implicit seelector not working in positional struct initialization (as opposed to named struct initialization)
+// bmp.odin: pixels.buf not working anymore
+// infer expected type for struct and union arguments (see chan.odin:122)
+// implicit selector inference not working csv/reader.odin:239
+// implicit selector inference for map and other collection-like-types (?)
+// objective-c types with "->"
+// check if inferring expected type with bit_set's works with +=
+// implicit selector not working in io.odin:111, where it calls procedure field of type "#type proc"
+// F_DUPFD :: FCntl_Command_DUPFD(.DUPFD) -> it might be casting!!
+// - what is the return type of calling an enum?
+// - what is the expected argument?
 
 testBitSetOperations :: proc() {
     Direction :: enum {

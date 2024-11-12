@@ -64,7 +64,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
                 }
             }
 
-            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE_OVERLOAD) {
+            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE_GROUP) {
                 OdinDeclaration declaration = tsOdinMetaType.getDeclaration();
                 OdinProcedureOverloadType procedureOverloadType = OdinInsightUtils.getDeclaredType(declaration, OdinProcedureOverloadType.class);
                 Objects.requireNonNull(procedureOverloadType);
