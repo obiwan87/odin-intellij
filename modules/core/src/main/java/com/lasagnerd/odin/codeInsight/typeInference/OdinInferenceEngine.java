@@ -237,7 +237,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         }
 
-        if(implicitSelectorType == null) {
+        if (implicitSelectorType == null) {
             implicitSelectorType = TsOdinBuiltInTypes.UNKNOWN;
         }
         return implicitSelectorType;
@@ -468,9 +468,56 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     private TsOdinType inferTypeOfBestProcedure(@NotNull OdinCallExpression o, TsOdinProcedureOverloadType procedureOverloadType) {
+        ProcedureRankingResult result = findBestProcedure(procedureOverloadType, o.getArgumentList());
+
+        if (result.bestProcedure() != null) {
+            return inferTypeOfProcedureCall(o, result.bestProcedure(), symbolTable);
+        }
+
+        if (!result.compatibleProcedures().isEmpty()) {
+            boolean sameReturnTypes = true;
+            outer:
+            for (int i = 0; i < result.compatibleProcedures().size() - 1; i++) {
+                TsOdinProcedureType a = result.compatibleProcedures().get(i).getFirst();
+                for (int j = i + 1; j < result.compatibleProcedures().size(); j++) {
+                    TsOdinProcedureType b = result.compatibleProcedures().get(i).getFirst();
+                    if (a.getReturnTypes().size() == b.getReturnTypes().size()) {
+                        for (int k = 0; k < a.getReturnTypes().size(); k++) {
+                            TsOdinType returnTypeA = a.getReturnTypes().get(k);
+                            TsOdinType returnTypeB = a.getReturnTypes().get(k);
+                            if (!OdinTypeChecker.checkTypesStrictly(returnTypeA, returnTypeB) &&
+                                    !OdinTypeChecker.checkTypesStrictly(returnTypeB, returnTypeA)
+                            ) {
+                                sameReturnTypes = false;
+                                break outer;
+                            }
+                        }
+                    } else {
+                        sameReturnTypes = false;
+                        break outer;
+                    }
+                }
+            }
+
+            if (sameReturnTypes) {
+                TsOdinProcedureType firstProcedure = result.compatibleProcedures().getFirst().getFirst();
+                if (!firstProcedure.getReturnTypes().isEmpty()) {
+                    return inferTypeOfProcedureCall(o, result.compatibleProcedures().getFirst().getFirst(), symbolTable);
+                } else {
+                    return TsOdinBuiltInTypes.VOID;
+                }
+            }
+            System.out.println("Could not determine best procedure for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
+        } else {
+            System.out.println("Could not find any compatible candidate for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
+        }
+        return TsOdinBuiltInTypes.UNKNOWN;
+    }
+
+    private @NotNull OdinInferenceEngine.ProcedureRankingResult findBestProcedure(TsOdinProcedureOverloadType procedureOverloadType, @NotNull List<OdinArgument> argumentList) {
         List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>>>> compatibleProcedures = new ArrayList<>();
         for (TsOdinProcedureType targetProcedure : procedureOverloadType.getTargetProcedures()) {
-            @Nullable Map<OdinExpression, TsOdinParameter> argumentExpressions = OdinInsightUtils.getArgumentToParameterMap(targetProcedure.getParameters(), o.getArgumentList());
+            @Nullable Map<OdinExpression, TsOdinParameter> argumentExpressions = OdinInsightUtils.getArgumentToParameterMap(targetProcedure.getParameters(), argumentList);
             if (argumentExpressions == null) continue;
 
             boolean allParametersCompatible = true;
@@ -499,52 +546,17 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         }
 
-
+        TsOdinProcedureType bestProcedure = null;
         if (compatibleProcedures.size() == 1) {
-            return inferTypeOfProcedureCall(o, compatibleProcedures.getFirst().getFirst(), symbolTable);
-        } else if (!compatibleProcedures.isEmpty()) {
-            TsOdinProcedureType bestProcedure = breakTie(compatibleProcedures);
-            if (bestProcedure != null) {
-                return inferTypeOfProcedureCall(o, bestProcedure, symbolTable);
-            } else {
-                boolean sameReturnTypes = true;
-                outer:
-                for (int i = 0; i < compatibleProcedures.size() - 1; i++) {
-                    TsOdinProcedureType a = compatibleProcedures.get(i).getFirst();
-                    for (int j = i + 1; j < compatibleProcedures.size(); j++) {
-                        TsOdinProcedureType b = compatibleProcedures.get(i).getFirst();
-                        if (a.getReturnTypes().size() == b.getReturnTypes().size()) {
-                            for (int k = 0; k < a.getReturnTypes().size(); k++) {
-                                TsOdinType returnTypeA = a.getReturnTypes().get(k);
-                                TsOdinType returnTypeB = a.getReturnTypes().get(k);
-                                if (!OdinTypeChecker.checkTypesStrictly(returnTypeA, returnTypeB) &&
-                                        !OdinTypeChecker.checkTypesStrictly(returnTypeB, returnTypeA)
-                                ) {
-                                    sameReturnTypes = false;
-                                    break outer;
-                                }
-                            }
-                        } else {
-                            sameReturnTypes = false;
-                            break outer;
-                        }
-                    }
-                }
+            bestProcedure = compatibleProcedures.getFirst().getFirst();
 
-                if (sameReturnTypes) {
-                    TsOdinProcedureType firstProcedure = compatibleProcedures.getFirst().getFirst();
-                    if (!firstProcedure.getReturnTypes().isEmpty()) {
-                        return inferTypeOfProcedureCall(o, compatibleProcedures.getFirst().getFirst(), symbolTable);
-                    } else {
-                        return TsOdinBuiltInTypes.VOID;
-                    }
-                }
-                System.out.println("Could not determine best procedure for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
-            }
-        } else {
-            System.out.println("Could not find any compatible candidate for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
+        } else if (!compatibleProcedures.isEmpty()) {
+            bestProcedure = breakTie(compatibleProcedures);
         }
-        return TsOdinBuiltInTypes.UNKNOWN;
+        return new ProcedureRankingResult(compatibleProcedures, bestProcedure);
+    }
+
+    private record ProcedureRankingResult(List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>>>> compatibleProcedures, TsOdinProcedureType bestProcedure) {
     }
 
     private static @Nullable TsOdinProcedureType breakTie(List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>>>> compatibleProcedures) {
@@ -1376,12 +1388,22 @@ public class OdinInferenceEngine extends OdinVisitor {
             return TsOdinBuiltInTypes.UNKNOWN;
         }
 
-        if(rhsContainer instanceof OdinParameterInitialization parameterInitialization) {
+        if (rhsContainer instanceof OdinParameterInitialization parameterInitialization) {
             OdinType declaredType = parameterInitialization.getTypeDefinition();
             if (declaredType != null) {
                 return OdinTypeResolver.resolveType(symbolTable, declaredType);
             }
             return TsOdinBuiltInTypes.UNKNOWN;
+        }
+
+        if (rhsContainer instanceof OdinCaseClause caseClause) {
+            OdinSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(caseClause, OdinSwitchBlock.class);
+            if (switchBlock != null) {
+                OdinExpression expression = switchBlock.getExpression();
+                if (expression != null) {
+                    return inferType(symbolTable, expression);
+                }
+            }
         }
 
         // TODO: add index
@@ -1413,7 +1435,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                         OdinVariableInitializationStatement.class,
                         OdinConstantInitializationStatement.class,
                         OdinParameterInitialization.class,
-                        OdinIndex.class
+                        OdinIndex.class,
+                        OdinCaseClause.class
                 },
                 new Class<?>[]{
                         OdinLhsExpressions.class,

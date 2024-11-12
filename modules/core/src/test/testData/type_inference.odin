@@ -567,13 +567,42 @@ testImplicitEnumExpression :: proc() {
         x = .North
     }
 
-    arr := [Direction]i32 {}
+    arr := [Direction]i32 { }
     arr[.North] = 1
 
     Directions :: bit_set[Direction; i32]
-    bs := Directions {}
+    bs := Directions { }
     b := .North in bs
+
+    // attribute-values
+
+
+    // case-clause (ok)
+    {
+        north : Direction = .NORTH
+        switch north {
+        case .North:
+            fmt.println("Hello")
+        }
+    }
+
+    {
+        p1 :: proc(f: f32, d: Direction) -> i32 {
+            return 1
+        }
+        p2 :: proc(i: i32, d: Direction) -> i32 {
+            return 2
+        }
+
+        group :: proc {
+        p1, p2
+        }
+
+        // implicit expressions in procedure overloads
+        g := group(1, .East)
+    }
 }
+// attributes
 
 testBitSetOperations :: proc() {
     Direction :: enum {
