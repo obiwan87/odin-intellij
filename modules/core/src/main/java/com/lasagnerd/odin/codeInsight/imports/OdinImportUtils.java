@@ -43,18 +43,12 @@ public class OdinImportUtils {
 
     public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinVisibility.PACKAGE_EXPORTED;
 
-    @Nullable
-    public static String getFileName(@NotNull PsiElement psiElement) {
-        VirtualFile virtualFile = getContainingVirtualFile(psiElement);
-        if (virtualFile != null) {
-            return virtualFile.getName();
-        }
+    public static @NotNull String getFileName(@NotNull PsiElement psiElement) {
+        return getContainingVirtualFile(psiElement).getName();
 
-        return null;
     }
 
-    @Nullable
-    public static VirtualFile getContainingVirtualFile(@NotNull PsiElement psiElement) {
+    public static @NotNull VirtualFile getContainingVirtualFile(@NotNull PsiElement psiElement) {
         VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
         if (virtualFile == null) {
             virtualFile = psiElement.getContainingFile().getOriginalFile().getVirtualFile();
@@ -472,8 +466,13 @@ public class OdinImportUtils {
         // Check if package is null. If yes log debug
         String fileName = getFileName(importStatement);
 
-        if (packagePath != null && fileName != null) {
-            String path = Path.of(packagePath, fileName).toString();
+        if (packagePath != null) {
+            String path;
+            if (packagePath.equals("/")) {
+                path = "/" + fileName;
+            } else {
+                path = Path.of(packagePath, fileName).toString();
+            }
             String name = importInfo.packageName();
             Project project = importStatement.getProject();
             return getSymbolsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);

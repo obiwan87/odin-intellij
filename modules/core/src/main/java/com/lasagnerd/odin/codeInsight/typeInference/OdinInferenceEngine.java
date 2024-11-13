@@ -153,13 +153,12 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitImplicitSelectorExpression(@NotNull OdinImplicitSelectorExpression o) {
         String enumValue = o.getIdentifier().getText();
-        PsiElement elementEntry = PsiTreeUtil.getParentOfType(o, OdinLhs.class, OdinRhs.class);
+        PsiElement expressionContainer = PsiTreeUtil.getParentOfType(o, true, OdinLhs.class, OdinRhs.class);
 
-        if (elementEntry != null) {
-            OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(elementEntry, OdinCompoundLiteral.class);
+        if (expressionContainer != null) {
+            OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(expressionContainer, OdinCompoundLiteral.class);
             TsOdinType tsOdinType = inferTypeOfCompoundLiteral(symbolTable, compoundLiteral).baseType(true);
 
-            PsiElement expressionContainer = PsiTreeUtil.getParentOfType(o, true, OdinLhs.class, OdinRhs.class);
 
             // for arrays this is only acceptable if it is the lhs
             if (tsOdinType instanceof TsOdinArrayType arrayType && expressionContainer instanceof OdinLhs) {
@@ -179,6 +178,11 @@ public class OdinInferenceEngine extends OdinVisitor {
         } else {
             // TODO fix this: with case clause expression ".A ..= .B" this won't work
             PsiElement parent = o.getParent();
+            PsiElement firstRhsExpression = findFirstRhsContainer(parent);
+
+            if(parent instanceof OdinExpression odinExpression) {
+                parent = odinExpression.unwrap();
+            }
 
             if (parent instanceof OdinBinaryExpression binaryExpression) {
                 OdinExpression otherExpression = binaryExpression.getLeft() == o ? binaryExpression.getRight() : binaryExpression.getLeft();
@@ -194,6 +198,17 @@ public class OdinInferenceEngine extends OdinVisitor {
                         if (tsOdinType.baseType(true) instanceof TsOdinBitSetType tsOdinBitSetType) {
                             if (tsOdinBitSetType.getElementType() instanceof TsOdinEnumType tsOdinEnumType) {
                                 if (enumContainsValue(tsOdinEnumType, enumValue)) {
+                                    this.type = tsOdinEnumType;
+                                }
+                            }
+                        }
+                    }
+
+                    if(operatorType == OdinTypes.RANGE_INCLUSIVE || operatorType == OdinTypes.RANGE_EXCLUSIVE) {
+                        if(firstRhsExpression instanceof OdinCaseClause) {
+                            TsOdinType caseClauseType = inferExpectedType(symbolTable, binaryExpression);
+                            if(caseClauseType.baseType(true) instanceof TsOdinEnumType tsOdinEnumType) {
+                                if(enumContainsValue(tsOdinEnumType, enumValue)) {
                                     this.type = tsOdinEnumType;
                                 }
                             }
@@ -327,7 +342,9 @@ public class OdinInferenceEngine extends OdinVisitor {
                     }
                 } else {
                     OdinSymbolTable symbolTableForTypeResolution;
+
                     symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
+                    symbolTableForTypeResolution.putAll(globalSymbolTable);
 
                     this.type = inferTypeOfDeclaredIdentifier(
                             symbolTableForTypeResolution,
@@ -1262,7 +1279,7 @@ public class OdinInferenceEngine extends OdinVisitor {
      */
     public static TsOdinType inferExpectedType(OdinSymbolTable symbolTable, OdinExpression position) {
         // Find the container of the rhs expression
-        PsiElement rhsContainer = findFirstRhsExpression(position);
+        PsiElement rhsContainer = findFirstRhsContainer(position);
         if (rhsContainer == null)
             return TsOdinBuiltInTypes.UNKNOWN;
 
@@ -1451,7 +1468,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private static @Nullable PsiElement findFirstRhsExpression(PsiElement psiElement) {
+    private static @Nullable PsiElement findFirstRhsContainer(PsiElement psiElement) {
         return OdinInsightUtils.findParentOfType(
                 psiElement,
                 false,

@@ -6,4 +6,11 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 public interface OdinPsiElement extends PsiElement {
     OdinSymbolTable getSymbolTable();
     void setSymbolTable(OdinSymbolTable symbolTable);
+
+    /**
+     * Unwraps parentheses and returns inner expression recursively.
+     * (((expr))) -> expr
+     * @return The unwrapped expression
+     */
+    OdinExpression unwrap();
 }

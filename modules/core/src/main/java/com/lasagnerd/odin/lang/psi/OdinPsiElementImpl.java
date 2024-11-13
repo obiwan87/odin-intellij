@@ -44,4 +44,19 @@ public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiE
     public void subtreeChanged() {
         symbolTable = null;
     }
+
+    @Override
+    public OdinExpression unwrap() {
+        if (this instanceof OdinParenthesizedExpression par) {
+            OdinExpression expression = par.getExpression();
+            if(expression != null) {
+                return expression.unwrap();
+            }
+        }
+
+        if(this instanceof OdinExpression odinExpression) {
+            return odinExpression;
+        }
+        return null;
+    }
 }

@@ -142,7 +142,6 @@ public class OdinSymbolTableResolver {
     }
 
     private static OdinSymbolTable findVisibleSymbols(@NotNull PsiElement element, String packagePath, Predicate<OdinSymbol> matcher) {
-        // when building the scope tree, just stop as soon as we find the first matching declaration
         Project project = element.getProject();
 
         OdinSymbolTable symbolTable = new OdinSymbolTable();
@@ -187,7 +186,12 @@ public class OdinSymbolTableResolver {
 
 
         // 3. Import symbols from the scope tree
-        OdinSymbolTable odinSymbolTable = doFindVisibleSymbols(packagePath, element, s -> false, false, symbolTable);
+        OdinSymbolTable odinSymbolTable = doFindVisibleSymbols(packagePath,
+                element,
+                s -> false,
+                false,
+                symbolTable);
+
         odinSymbolTable.setPackagePath(packagePath);
 
 

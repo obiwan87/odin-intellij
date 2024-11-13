@@ -6,7 +6,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.LightVirtualFile;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +29,10 @@ public class MockOdinImportService implements OdinImportService {
 
     @Override
     public String getPackagePath(PsiElement psiElement) {
-        VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
-        if(virtualFile != null) {
-            String path = virtualFile.getPath();
+        VirtualFile virtualFile = OdinImportUtils.getContainingVirtualFile(psiElement);
+        String path = virtualFile.getPath();
 
         return FileUtil.toSystemIndependentName(Path.of(path).getParent().toString());
-        }
-        return null;
     }
 
     @Override

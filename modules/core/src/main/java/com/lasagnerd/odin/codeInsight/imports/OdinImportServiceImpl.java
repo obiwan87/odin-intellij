@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 
 public class OdinImportServiceImpl implements OdinImportService {
@@ -32,7 +33,7 @@ public class OdinImportServiceImpl implements OdinImportService {
         if (containingDirectory != null) {
             return containingDirectory.getVirtualFile().getPath();
         }
-        return null;
+        return OdinImportUtils.getContainingVirtualFile(psiElement).getParent().getPath();
     }
 
     @Override
