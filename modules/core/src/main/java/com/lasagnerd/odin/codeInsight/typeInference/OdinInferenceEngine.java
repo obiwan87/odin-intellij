@@ -441,15 +441,8 @@ public class OdinInferenceEngine extends OdinVisitor {
         // Get type of expression. If it is callable, retrieve the return type and set that as result
         TsOdinType tsOdinType = doInferType(symbolTable, o.getExpression());
 
-        // Casting: (type_expr)(expr)
-        if (o.getExpression() instanceof OdinParenthesizedExpression) {
-            if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-                this.type = OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType);
-            }
-        }
 
-        // Calling: expr(args)
-        else if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
+        if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             // resolve to base type
             TsOdinMetaType tsOdinOriginalMetaType = tsOdinMetaType;
             if (tsOdinMetaType.getRepresentedMetaType() == ALIAS) {
@@ -484,7 +477,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 this.type = inferTypeOfBestProcedure(o, procedureGroupType);
             }
             // type casting
-            else if (o.getExpression() instanceof OdinRefExpression) {
+            else if (o.getExpression().unwrap() instanceof OdinRefExpression) {
                 this.type = tsOdinOriginalMetaType.representedType();
             }
         }
