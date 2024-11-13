@@ -1,13 +1,16 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class OdinTypeChecker {
 
@@ -35,6 +38,12 @@ public class OdinTypeChecker {
 
         if (parameterBaseType.isTypeId() && argumentType instanceof TsOdinMetaType) {
             return true;
+        }
+
+        if (parameterType instanceof TsOdinConstrainedType constrainedType && argumentType instanceof TsOdinMetaType metaType) {
+            if (constrainedType.getMainType().isTypeId()) {
+                return checkConstrainedType(constrainedType, metaType.representedType());
+            }
         }
 
         if (argumentBaseType instanceof TsOdinArrayType argArrayType
@@ -79,6 +88,29 @@ public class OdinTypeChecker {
         }
 
         return false;
+    }
+
+    /**
+     * Checks if a type is compatible with a constrained type
+     *
+     * @param constrainedType the constrained type
+     * @param typeToCheck     the type to check
+     * @return true if compatible, false otherwise
+     */
+    public static boolean checkConstrainedType(TsOdinConstrainedType constrainedType, TsOdinType typeToCheck) {
+        Map<String, TsOdinType> resolvedTypes = OdinTypeSpecializer.substituteTypes(typeToCheck.baseType(),
+                constrainedType.getSpecializedType().baseType());
+
+        Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(constrainedType.getPsiType(), OdinPolymorphicType.class);
+        boolean solved = true;
+        for (OdinPolymorphicType polymorphicType : polymorphicTypes) {
+            String name = polymorphicType.getDeclaredIdentifier().getName();
+            if (!resolvedTypes.containsKey(name)) {
+                solved = false;
+                break;
+            }
+        }
+        return solved;
     }
 
     public enum ConversionAction {
@@ -150,17 +182,17 @@ public class OdinTypeChecker {
 
         TsOdinType indistinctBaseType = type.baseType(true);
         TsOdinType indistinctExpectedBaseType = expectedType.baseType(true);
-        if(indistinctBaseType instanceof TsOdinMatrixType &&
-            indistinctExpectedBaseType instanceof TsOdinMatrixType) {
-            if(checkTypesStrictly(indistinctBaseType, indistinctExpectedBaseType)) {
+        if (indistinctBaseType instanceof TsOdinMatrixType &&
+                indistinctExpectedBaseType instanceof TsOdinMatrixType) {
+            if (checkTypesStrictly(indistinctBaseType, indistinctExpectedBaseType)) {
                 typeCheckResult.setCompatible(true);
                 return;
             }
         }
 
-        if(indistinctBaseType instanceof TsOdinProcedureType &&
-            indistinctExpectedBaseType instanceof TsOdinProcedureType) {
-            if(checkTypesStrictly(indistinctBaseType, indistinctExpectedBaseType)) {
+        if (indistinctBaseType instanceof TsOdinProcedureType &&
+                indistinctExpectedBaseType instanceof TsOdinProcedureType) {
+            if (checkTypesStrictly(indistinctBaseType, indistinctExpectedBaseType)) {
                 typeCheckResult.setCompatible(true);
                 return;
             }
@@ -198,16 +230,16 @@ public class OdinTypeChecker {
             if (type instanceof TsOdinNumericType numericType) {
                 if (TsOdinBuiltInTypes.getComplexTypes().contains(expectedType)) {
                     TsOdinNumericType complexType = (TsOdinNumericType) expectedType;
-                    if(numericType.getLength()*2 == complexType.getLength()) {
+                    if (numericType.getLength() * 2 == complexType.getLength()) {
                         typeCheckResult.getConversionActionList().add(ConversionAction.FLOAT_TO_COMPLEX);
                         typeCheckResult.setCompatible(true);
                         return;
                     }
                 }
 
-                if(TsOdinBuiltInTypes.getQuaternionTypes().contains(expectedType)) {
+                if (TsOdinBuiltInTypes.getQuaternionTypes().contains(expectedType)) {
                     TsOdinNumericType quaternionType = (TsOdinNumericType) expectedType;
-                    if(numericType.getLength()*4 == quaternionType.getLength()) {
+                    if (numericType.getLength() * 4 == quaternionType.getLength()) {
                         typeCheckResult.getConversionActionList().add(ConversionAction.FLOAT_TO_COMPLEX);
                         typeCheckResult.setCompatible(true);
                         return;
@@ -216,11 +248,11 @@ public class OdinTypeChecker {
             }
         }
 
-        if(TsOdinBuiltInTypes.getComplexTypes().contains(type)) {
-            if(TsOdinBuiltInTypes.getQuaternionTypes().contains(expectedType)) {
+        if (TsOdinBuiltInTypes.getComplexTypes().contains(type)) {
+            if (TsOdinBuiltInTypes.getQuaternionTypes().contains(expectedType)) {
                 if (type instanceof TsOdinNumericType complexType) {
                     TsOdinNumericType quaternionType = (TsOdinNumericType) expectedType;
-                    if(complexType.getLength()*2 == quaternionType.getLength()) {
+                    if (complexType.getLength() * 2 == quaternionType.getLength()) {
                         typeCheckResult.getConversionActionList().add(ConversionAction.COMPLEX_TO_QUATERNION);
                         typeCheckResult.setCompatible(true);
                         return;
@@ -294,31 +326,34 @@ public class OdinTypeChecker {
                 type instanceof TsOdinStructType structType) {
             OdinStructType psiStructType = (OdinStructType) structType.getPsiType();
             // Check if there is a field "using" the expected struct
-            OdinStructBody structBody = psiStructType.getStructBlock().getStructBody();
-            if (structBody != null) {
-                for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : structBody.getFieldDeclarationStatementList()) {
-                    if (odinFieldDeclarationStatement.getUsing() != null) {
-                        OdinType declarationType = odinFieldDeclarationStatement.getType();
-                        if (declarationType != null) {
-                            TsOdinType usedType = OdinTypeResolver.resolveType(
-                                    structType.getSymbolTable(),
-                                    declarationType
-                            );
+            OdinStructBlock structBlock = psiStructType.getStructBlock();
+            if (structBlock != null) {
+                OdinStructBody structBody = structBlock.getStructBody();
+                if (structBody != null) {
+                    for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : structBody.getFieldDeclarationStatementList()) {
+                        if (odinFieldDeclarationStatement.getUsing() != null) {
+                            OdinType declarationType = odinFieldDeclarationStatement.getType();
+                            if (declarationType != null) {
+                                TsOdinType usedType = OdinTypeResolver.resolveType(
+                                        structType.getSymbolTable(),
+                                        declarationType
+                                );
 
-                            if (usedType instanceof TsOdinPointerType pointerType) {
-                                usedType = pointerType.getDereferencedType();
-                            }
+                                if (usedType instanceof TsOdinPointerType pointerType) {
+                                    usedType = pointerType.getDereferencedType();
+                                }
 
-                            if (checkTypesStrictly(usedType, expectedType)) {
-                                addActionAndSetCompatible(ConversionAction.USING_SUBTYPE);
-                                return;
-                            } else if (usedType instanceof TsOdinStructType) {
-                                TypeCheckResult typeCheckResult = checkTypes(usedType, expectedType, false);
-                                if (typeCheckResult.isCompatible()) {
-                                    this.typeCheckResult.getConversionActionList().add(ConversionAction.USING_SUBTYPE);
-                                    this.typeCheckResult.getConversionActionList().addAll(typeCheckResult.getConversionActionList());
-                                    this.typeCheckResult.setCompatible(true);
+                                if (checkTypesStrictly(usedType, expectedType)) {
+                                    addActionAndSetCompatible(ConversionAction.USING_SUBTYPE);
                                     return;
+                                } else if (usedType instanceof TsOdinStructType) {
+                                    TypeCheckResult typeCheckResult = checkTypes(usedType, expectedType, false);
+                                    if (typeCheckResult.isCompatible()) {
+                                        this.typeCheckResult.getConversionActionList().add(ConversionAction.USING_SUBTYPE);
+                                        this.typeCheckResult.getConversionActionList().addAll(typeCheckResult.getConversionActionList());
+                                        this.typeCheckResult.setCompatible(true);
+                                        return;
+                                    }
                                 }
                             }
                         }

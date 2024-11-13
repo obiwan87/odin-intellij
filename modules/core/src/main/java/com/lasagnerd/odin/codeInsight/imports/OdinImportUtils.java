@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 public class OdinImportUtils {
 
 
-    public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> s.getVisibility() == OdinVisibility.PACKAGE_EXPORTED;
+    public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> true;
 
     public static @NotNull String getFileName(@NotNull PsiElement psiElement) {
         return getContainingVirtualFile(psiElement).getName();

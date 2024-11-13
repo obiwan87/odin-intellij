@@ -1,5 +1,5 @@
+#+build linux
 package net
-// +build linux
 
 /*
 	Package net implements cross-platform Berkeley Sockets, DNS resolution and associated procedures.
@@ -136,7 +136,7 @@ _dial_tcp_from_endpoint :: proc(endpoint: Endpoint, options := default_tcp_optio
 	os_sock: linux.Fd
 	os_sock, errno = linux.socket(_unwrap_os_family(family_from_endpoint(endpoint)), .STREAM, {.CLOEXEC}, .TCP)
 	if errno != .NONE {
-		// TODO(flysand): should return invalid file descriptor here casted as TCP_Socket
+	// TODO(flysand): should return invalid file descriptor here casted as TCP_Socket
 		return {}, Create_Socket_Error(errno)
 	}
 	// NOTE(tetra): This is so that if we crash while the socket is open, we can
@@ -147,7 +147,8 @@ _dial_tcp_from_endpoint :: proc(endpoint: Endpoint, options := default_tcp_optio
 	addr := _unwrap_os_addr(endpoint)
 	errno = linux.connect(linux.Fd(os_sock), &addr)
 	if errno != .NONE {
-		return cast(TCP_Socket) os_sock, Dial_Error(errno)
+		close(cast(TCP_Socket) os_sock)
+		return {}, Dial_Error(errno)
 	}
 	// NOTE(tetra): Not vital to succeed; error ignored
 	no_delay: b32 = cast(b32) options.no_delay
@@ -166,40 +167,61 @@ _bind :: proc(sock: Any_Socket, endpoint: Endpoint) -> (Network_Error) {
 }
 
 @(private)
-_listen_tcp :: proc(endpoint: Endpoint, backlog := 1000) -> (TCP_Socket, Network_Error) {
+_listen_tcp :: proc(endpoint: Endpoint, backlog := 1000) -> (socket: TCP_Socket, err: Network_Error) {
 	errno: linux.Errno
 	assert(backlog > 0 && i32(backlog) < max(i32))
+
 	// Figure out the address family and address of the endpoint
 	ep_family := _unwrap_os_family(family_from_endpoint(endpoint))
 	ep_address := _unwrap_os_addr(endpoint)
+
 	// Create TCP socket
 	os_sock: linux.Fd
 	os_sock, errno = linux.socket(ep_family, .STREAM, {.CLOEXEC}, .TCP)
 	if errno != .NONE {
-		// TODO(flysand): should return invalid file descriptor here casted as TCP_Socket
-		return {}, Create_Socket_Error(errno)
+		err = Create_Socket_Error(errno)
+		return
 	}
+	socket = cast(TCP_Socket)os_sock
+	defer if err != nil { close(socket) }
+
 	// NOTE(tetra): This is so that if we crash while the socket is open, we can
 	// bypass the cooldown period, and allow the next run of the program to
 	// use the same address immediately.
 	//
 	// TODO(tetra, 2022-02-15): Confirm that this doesn't mean other processes can hijack the address!
 	do_reuse_addr: b32 = true
-	errno = linux.setsockopt(os_sock, linux.SOL_SOCKET, linux.Socket_Option.REUSEADDR, &do_reuse_addr)
-	if errno != .NONE {
-		return cast(TCP_Socket) os_sock, Listen_Error(errno)
+	if errno = linux.setsockopt(os_sock, linux.SOL_SOCKET, linux.Socket_Option.REUSEADDR, &do_reuse_addr); errno != .NONE {
+		err = Listen_Error(errno)
+		return
 	}
+
 	// Bind the socket to endpoint address
-	errno = linux.bind(os_sock, &ep_address)
-	if errno != .NONE {
-		return cast(TCP_Socket) os_sock, Bind_Error(errno)
+	if errno = linux.bind(os_sock, &ep_address); errno != .NONE {
+		err = Bind_Error(errno)
+		return
 	}
+
 	// Listen on bound socket
-	errno = linux.listen(os_sock, cast(i32) backlog)
-	if errno != .NONE {
-		return cast(TCP_Socket) os_sock, Listen_Error(errno)
+	if errno = linux.listen(os_sock, cast(i32) backlog); errno != .NONE {
+		err = Listen_Error(errno)
+		return
 	}
-	return cast(TCP_Socket) os_sock, nil
+
+	return
+}
+
+@(private)
+_bound_endpoint :: proc(sock: Any_Socket) -> (ep: Endpoint, err: Network_Error) {
+	addr: linux.Sock_Addr_Any
+	errno := linux.getsockname(_unwrap_os_socket(sock), &addr)
+	if errno != .NONE {
+		err = Listen_Error(errno)
+		return
+	}
+
+	ep = _wrap_os_addr(addr)
+	return
 }
 
 @(private)
@@ -235,7 +257,7 @@ _recv_tcp :: proc(tcp_sock: TCP_Socket, buf: []byte) -> (int, Network_Error) {
 @(private)
 _recv_udp :: proc(udp_sock: UDP_Socket, buf: []byte) -> (int, Endpoint, Network_Error) {
 	if len(buf) <= 0 {
-		// NOTE(flysand): It was returning no error, I didn't change anything
+	// NOTE(flysand): It was returning no error, I didn't change anything
 		return 0, {}, {}
 	}
 	// NOTE(tetra): On Linux, if the buffer is too small to fit the entire datagram payload, the rest is silently discarded,
@@ -248,7 +270,7 @@ _recv_udp :: proc(udp_sock: UDP_Socket, buf: []byte) -> (int, Endpoint, Network_
 		return 0, {}, UDP_Recv_Error(errno)
 	}
 	if bytes_read > len(buf) {
-		// NOTE(tetra): The buffer has been filled, with a partial message.
+	// NOTE(tetra): The buffer has been filled, with a partial message.
 		return len(buf), {}, .Buffer_Too_Small
 	}
 	return bytes_read, _wrap_os_addr(from_addr), nil
@@ -262,8 +284,8 @@ _send_tcp :: proc(tcp_sock: TCP_Socket, buf: []byte) -> (int, Network_Error) {
 		remaining := buf[total_written:][:limit]
 		res, errno := linux.send(linux.Fd(tcp_sock), remaining, {.NOSIGNAL})
 		if errno == .EPIPE {
-			// If the peer is disconnected when we are trying to send we will get an `EPIPE` error,
-			// so we turn that into a clearer error
+		// If the peer is disconnected when we are trying to send we will get an `EPIPE` error,
+		// so we turn that into a clearer error
 			return total_written, TCP_Send_Error.Connection_Closed
 		} else if errno != .NONE {
 			return total_written, TCP_Send_Error(errno)
@@ -312,56 +334,56 @@ _set_option :: proc(sock: Any_Socket, option: Socket_Option, value: any, loc := 
 	errno: linux.Errno
 	switch option {
 	case
-		.Reuse_Address,
-		.Keep_Alive,
-		.Out_Of_Bounds_Data_Inline,
-		.TCP_Nodelay:
-		// TODO: verify whether these are options or not on Linux
-		// .Broadcast, <-- yes
-		// .Conditional_Accept,
-		// .Dont_Linger:
-			switch x in value {
-			case bool, b8:
-				x2 := x
-				bool_value = b32((^bool)(&x2)^)
-			case b16:
-				bool_value = b32(x)
-			case b32:
-				bool_value = b32(x)
-			case b64:
-				bool_value = b32(x)
-			case:
-				panic("set_option() value must be a boolean here", loc)
-			}
-			errno = linux.setsockopt(os_sock, level, int(option), &bool_value)
+	.Reuse_Address,
+	.Keep_Alive,
+	.Out_Of_Bounds_Data_Inline,
+	.TCP_Nodelay:
+	// TODO: verify whether these are options or not on Linux
+	// .Broadcast, <-- yes
+	// .Conditional_Accept,
+	// .Dont_Linger:
+		switch x in value {
+		case bool, b8:
+			x2 := x
+			bool_value = b32((^bool)(&x2)^)
+		case b16:
+			bool_value = b32(x)
+		case b32:
+			bool_value = b32(x)
+		case b64:
+			bool_value = b32(x)
+		case:
+			panic("set_option() value must be a boolean here", loc)
+		}
+		errno = linux.setsockopt(os_sock, level, int(option), &bool_value)
 	case
-		.Linger,
-		.Send_Timeout,
-		.Receive_Timeout:
-			t, ok := value.(time.Duration)
-			if !ok {
-				panic("set_option() value must be a time.Duration here", loc)
-			}
+	.Linger,
+	.Send_Timeout,
+	.Receive_Timeout:
+		t, ok := value.(time.Duration)
+		if !ok {
+			panic("set_option() value must be a time.Duration here", loc)
+		}
 
-			micros := cast(i64) (time.duration_microseconds(t))
-			timeval_value.microseconds = cast(int) (micros % 1e6)
-			timeval_value.seconds = cast(int) ((micros - i64(timeval_value.microseconds)) / 1e6)
-			errno = linux.setsockopt(os_sock, level, int(option), &timeval_value)
+		micros := cast(i64) (time.duration_microseconds(t))
+		timeval_value.microseconds = cast(int) (micros % 1e6)
+		timeval_value.seconds = cast(int) ((micros - i64(timeval_value.microseconds)) / 1e6)
+		errno = linux.setsockopt(os_sock, level, int(option), &timeval_value)
 	case
-		.Receive_Buffer_Size,
-		.Send_Buffer_Size:
-			// TODO: check for out of range values and return .Value_Out_Of_Range?
-			switch i in value {
-			case   i8,   u8: i2 := i; int_value = i32((^u8)(&i2)^)
-			case  i16,  u16: i2 := i; int_value = i32((^u16)(&i2)^)
-			case  i32,  u32: i2 := i; int_value = i32((^u32)(&i2)^)
-			case  i64,  u64: i2 := i; int_value = i32((^u64)(&i2)^)
-			case i128, u128: i2 := i; int_value = i32((^u128)(&i2)^)
-			case  int, uint: i2 := i; int_value = i32((^uint)(&i2)^)
-			case:
-				panic("set_option() value must be an integer here", loc)
-			}
-			errno = linux.setsockopt(os_sock, level, int(option), &int_value)
+	.Receive_Buffer_Size,
+	.Send_Buffer_Size:
+	// TODO: check for out of range values and return .Value_Out_Of_Range?
+		switch i in value {
+		case   i8,   u8: i2 := i; int_value = i32((^u8)(&i2)^)
+		case  i16,  u16: i2 := i; int_value = i32((^u16)(&i2)^)
+		case  i32,  u32: i2 := i; int_value = i32((^u32)(&i2)^)
+		case  i64,  u64: i2 := i; int_value = i32((^u64)(&i2)^)
+		case i128, u128: i2 := i; int_value = i32((^u128)(&i2)^)
+		case  int, uint: i2 := i; int_value = i32((^uint)(&i2)^)
+		case:
+			panic("set_option() value must be an integer here", loc)
+		}
+		errno = linux.setsockopt(os_sock, level, int(option), &int_value)
 	}
 	if errno != .NONE {
 		return Socket_Option_Error(errno)

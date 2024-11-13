@@ -7,15 +7,50 @@ import "core:os"
 import "core:thread"
 import "core:time"
 import "core:reflect"
-import "core:runtime"
-import "core:intrinsics"
+import "base:runtime"
+import "base:intrinsics"
 import "core:math/big"
+
+/*
+	Odin is a general-purpose programming language with distinct typing built
+	for high performance, modern systems and data-oriented programming.
+
+	Odin is the C alternative for the Joy of Programming.
+
+	# Installing Odin
+	Getting Started - https://odin-lang.org/docs/install/
+		Instructions for downloading and install the Odin compiler and libraries.
+
+	# Learning Odin
+	Getting Started - https://odin-lang.org/docs/install/
+		Getting Started with Odin. Downloading, installing, and getting your
+		first program to compile and run.
+	Overview of Odin - https://odin-lang.org/docs/overview/
+		An overview of the Odin programming language and its features.
+	Frequently Asked Questions (FAQ) - https://odin-lang.org/docs/faq/
+		Answers to common questions about Odin.
+	Packages - https://pkg.odin-lang.org/
+		Documentation for all the official packages part of the
+		core and vendor library collections.
+	Nightly Builds - https://odin-lang.org/docs/nightly/
+		Get the latest nightly builds of Odin.
+	More Odin Examples - https://github.com/odin-lang/examples
+		This repository contains examples of how certain things can be accomplished
+		in idiomatic Odin, allowing you learn its semantics, as well as how to use
+		parts of the core and vendor package collections.
+*/
 
 the_basics :: proc() {
 	fmt.println("\n# the basics")
 
 	{ // The Basics
-		fmt.println("Hellope")
+
+	// os.args holds the path to the current executable and any arguments passed to it.
+		if len(os.args) == 1 {
+			fmt.printf("Hellope from %v.\n", os.args[0])
+		} else if len(os.args) > 2 {
+			fmt.printf("%v, %v! from %v.\n", os.args[1], os.args[2], os.args[0])
+		}
 
 		// Lexical elements and literals
 		// A comment
@@ -69,9 +104,9 @@ the_basics :: proc() {
 
 		z: f64 // `z` is typed of type `f64` (64-bit floating point number)
 		z = 1  // `1` is an untyped integer literal which can be implicitly converted to `f64`
-				// No need for any suffixes or decimal places like in other languages
-				// (with the exception of negative zero, which must be given as `-0.0`)
-				// CONSTANTS JUST WORK!!!
+		// No need for any suffixes or decimal places like in other languages
+		// (with the exception of negative zero, which must be given as `-0.0`)
+		// CONSTANTS JUST WORK!!!
 
 
 		// Assignment statements
@@ -109,10 +144,10 @@ the_basics :: proc() {
 control_flow :: proc() {
 	fmt.println("\n# control flow")
 	{ // Control flow
-		// For loop
-		// Odin has only one loop statement, the `for` loop
+	// For loop
+	// Odin has only one loop statement, the `for` loop
 
-		// Basic for loop
+	// Basic for loop
 		for i := 0; i < 10; i += 1 {
 			fmt.println(i)
 		}
@@ -283,10 +318,10 @@ control_flow :: proc() {
 	}
 
 	{ // Defer statement
-		// A defer statement defers the execution of a statement until the end of
-		// the scope it is in.
+	// A defer statement defers the execution of a statement until the end of
+	// the scope it is in.
 
-		// The following will print 4 then 234:
+	// The following will print 4 then 234:
 		{
 			x := 123
 			defer fmt.println(x)
@@ -324,28 +359,28 @@ control_flow :: proc() {
 
 		if false {
 			f, err := os.open("my_file.txt")
-			if err != os.ERROR_NONE {
-				// handle error
+			if err != nil {
+			// handle error
 			}
 			defer os.close(f)
-			// rest of code
+		// rest of code
 		}
 	}
 
 	{ // When statement
-		/*
-			The when statement is almost identical to the if statement but with some differences:
+	/*
+        The when statement is almost identical to the if statement but with some differences:
 
-			* Each condition must be a constant expression as a when
-			  statement is evaluated at compile time.
-			* The statements within a branch do not create a new scope
-			* The compiler checks the semantics and code only for statements
-			  that belong to the first condition that is true
-			* An initial statement is not allowed in a when statement
-			* when statements are allowed at file scope
-		*/
+        * Each condition must be a constant expression as a when
+          statement is evaluated at compile time.
+        * The statements within a branch do not create a new scope
+        * The compiler checks the semantics and code only for statements
+          that belong to the first condition that is true
+        * An initial statement is not allowed in a when statement
+        * when statements are allowed at file scope
+    */
 
-		// Example
+	// Example
 		when ODIN_ARCH == .i386 {
 			fmt.println("32 bit")
 		} else when ODIN_ARCH == .amd64 {
@@ -353,9 +388,9 @@ control_flow :: proc() {
 		} else {
 			fmt.println("Unknown architecture")
 		}
-		// The when statement is very useful for writing platform specific code.
-		// This is akin to the #if construct in C’s preprocessor however, in Odin,
-		// it is type checked.
+	// The when statement is very useful for writing platform specific code.
+	// This is akin to the #if construct in C’s preprocessor however, in Odin,
+	// it is type checked.
 	}
 
 	{ // Branch statements
@@ -408,6 +443,7 @@ control_flow :: proc() {
 	}
 }
 
+
 named_proc_return_parameters :: proc() {
 	fmt.println("\n# named proc return parameters")
 
@@ -419,7 +455,7 @@ named_proc_return_parameters :: proc() {
 		return
 	}
 	foo2 :: proc() -> (a, b: int) {
-		// Named return values act like variables within the scope
+	// Named return values act like variables within the scope
 		a = 321
 		b = 567
 		return b, a
@@ -450,6 +486,7 @@ variadic_procedures :: proc() {
 	fmt.println("sum(..odds, init_value = 5) =", sum(..odds, init_value = 5))
 }
 
+
 explicit_procedure_overloading :: proc() {
 	fmt.println("\n# explicit procedure overloading")
 
@@ -479,9 +516,9 @@ explicit_procedure_overloading :: proc() {
 	add(1.0, 2.0) // untyped floats coerce to f32 tighter than int
 	add(1, 2, 3)  // three parameters
 
-	// Ambiguous answers
-	// add(1.0, 2)
-	// add(1, 2.0)
+// Ambiguous answers
+// add(1.0, 2)
+// add(1, 2.0)
 }
 
 struct_type :: proc() {
@@ -504,14 +541,14 @@ struct_type :: proc() {
 		p.x = 1335
 		fmt.println(v)
 
-		// We could write p^.x, however, it is to nice abstract the ability
-		// to not explicitly dereference the pointer. This is very useful when
-		// refactoring code to use a pointer rather than a value, and vice versa.
+	// We could write p^.x, however, it is nice to abstract the ability
+	// to not explicitly dereference the pointer. This is very useful when
+	// refactoring code to use a pointer rather than a value, and vice versa.
 	}
 	{
-		// A struct literal can be denoted by providing the struct’s type
-		// followed by {}. A struct literal must either provide all the
-		// arguments or none:
+	// A struct literal can be denoted by providing the struct’s type
+	// followed by {}. A struct literal must either provide all the
+	// arguments or none:
 		Vector3 :: struct {
 			x, y, z: f32,
 		}
@@ -527,7 +564,7 @@ struct_type :: proc() {
 		assert(v.z == 1)
 	}
 	{
-		// Structs can tagged with different memory layout and alignment requirements:
+	// Structs can tagged with different memory layout and alignment requirements:
 
 		a :: struct #align(4)  {} // align to 4 bytes
 		b :: struct #packed    {} // remove padding between fields
@@ -535,6 +572,7 @@ struct_type :: proc() {
 	}
 
 }
+
 
 union_type :: proc() {
 	fmt.println("\n# union type")
@@ -556,10 +594,10 @@ union_type :: proc() {
 		}
 	}
 	{
-		// There is a duality between `any` and `union`
-		// An `any` has a pointer to the data and allows for any type (open)
-		// A `union` has as binary blob to store the data and allows only certain types (closed)
-		// The following code is with `any` but has the same syntax
+	// There is a duality between `any` and `union`
+	// An `any` has a pointer to the data and allows for any type (open)
+	// A `union` has as binary blob to store the data and allows only certain types (closed)
+	// The following code is with `any` but has the same syntax
 		val: any
 		val = 137
 		if i, ok := val.(int); ok {
@@ -582,11 +620,11 @@ union_type :: proc() {
 
 	// More realistic examples
 	{
-		// NOTE(bill): For the above basic examples, you may not have any
-		// particular use for it. However, my main use for them is not for these
-		// simple cases. My main use is for hierarchical types. Many prefer
-		// subtyping, embedding the base data into the derived types. Below is
-		// an example of this for a basic game Entity.
+	// NOTE(bill): For the above basic examples, you may not have any
+	// particular use for it. However, my main use for them is not for these
+	// simple cases. My main use is for hierarchical types. Many prefer
+	// subtyping, embedding the base data into the derived types. Below is
+	// an example of this for a basic game Entity.
 
 		Entity :: struct {
 			id:          u64,
@@ -628,10 +666,10 @@ union_type :: proc() {
 	}
 
 	{
-		// NOTE(bill): A union can be used to achieve something similar. Instead
-		// of embedding the base data into the derived types, the derived data
-		// in embedded into the base type. Below is the same example of the
-		// basic game Entity but using an union.
+	// NOTE(bill): A union can be used to achieve something similar. Instead
+	// of embedding the base data into the derived types, the derived data
+	// in embedded into the base type. Below is the same example of the
+	// basic game Entity but using an union.
 
 		Entity :: struct {
 			id:          u64,
@@ -670,43 +708,43 @@ union_type :: proc() {
 			if e.is_zombie { fmt.println("Grrrr!")  }
 		}
 
-		// NOTE(bill): As you can see, the usage code has not changed, only its
-		// memory layout. Both approaches have their own advantages but they can
-		// be used together to achieve different results. The subtyping approach
-		// can allow for a greater control of the memory layout and memory
-		// allocation, e.g. storing the derivatives together. However, this is
-		// also its disadvantage. You must either preallocate arrays for each
-		// derivative separation (which can be easily missed) or preallocate a
-		// bunch of "raw" memory; determining the maximum size of the derived
-		// types would require the aid of metaprogramming. Unions solve this
-		// particular problem as the data is stored with the base data.
-		// Therefore, it is possible to preallocate, e.g. [100]Entity.
+	// NOTE(bill): As you can see, the usage code has not changed, only its
+	// memory layout. Both approaches have their own advantages but they can
+	// be used together to achieve different results. The subtyping approach
+	// can allow for a greater control of the memory layout and memory
+	// allocation, e.g. storing the derivatives together. However, this is
+	// also its disadvantage. You must either preallocate arrays for each
+	// derivative separation (which can be easily missed) or preallocate a
+	// bunch of "raw" memory; determining the maximum size of the derived
+	// types would require the aid of metaprogramming. Unions solve this
+	// particular problem as the data is stored with the base data.
+	// Therefore, it is possible to preallocate, e.g. [100]Entity.
 
-		// It should be noted that the union approach can have the same memory
-		// layout as the any and with the same type restrictions by using a
-		// pointer type for the derivatives.
+	// It should be noted that the union approach can have the same memory
+	// layout as the any and with the same type restrictions by using a
+	// pointer type for the derivatives.
 
-		/*
-			Entity :: struct {
-				...
-				derived: union{^Frog, ^Monster},
-			}
+	/*
+        Entity :: struct {
+            ...
+            derived: union{^Frog, ^Monster},
+        }
 
-			Frog :: struct {
-				using entity: Entity,
-				...
-			}
-			Monster :: struct {
-				using entity: Entity,
-				...
+        Frog :: struct {
+            using entity: Entity,
+            ...
+        }
+        Monster :: struct {
+            using entity: Entity,
+            ...
 
-			}
-			new_entity :: proc(T: type) -> ^Entity {
-				t := new(T)
-				t.derived = t
-				return t
-			}
-		*/
+        }
+        new_entity :: proc(T: type) -> ^Entity {
+            t := new(T)
+            t.derived = t
+            return t
+        }
+    */
 	}
 }
 
@@ -746,8 +784,8 @@ using_statement :: proc() {
 		}
 	}
 	{
-		// We can also apply the using statement to the struct fields directly,
-		// making all the fields of position appear as if they on Entity itself:
+	// We can also apply the using statement to the struct fields directly,
+	// making all the fields of position appear as if they on Entity itself:
 		Entity :: struct {
 			using position: Vector3,
 			orientation: quaternion128,
@@ -775,10 +813,10 @@ using_statement :: proc() {
 		foo(&frog)
 		frog.x = 123
 
-		// Note: using can be applied to arbitrarily many things, which allows
-		// the ability to have multiple subtype polymorphism (but also its issues).
+	// Note: using can be applied to arbitrarily many things, which allows
+	// the ability to have multiple subtype polymorphism (but also its issues).
 
-		// Note: using’d fields can still be referred by name.
+	// Note: using’d fields can still be referred by name.
 	}
 }
 
@@ -792,9 +830,9 @@ implicit_context_system :: proc() {
 
 	// The main purpose of the implicit context system is for the ability
 	// to intercept third-party code and libraries and modify their
-	// functionality. One such case is modifying how a collection allocates
+	// functionality. One such case is modifying how a library allocates
 	// something or logs something. In C, this was usually achieved with
-	// the collection defining macros which could be overridden so that the
+	// the library defining macros which could be overridden so that the
 	// user could define what he wanted. However, not many libraries
 	// supported this in many languages by default which meant intercepting
 	// third-party code to see what it does and to change how it does it is
@@ -815,7 +853,7 @@ implicit_context_system :: proc() {
 	what_a_fool_believes :: proc() {
 		c := context // this `context` is the same as the parent procedure that it was called from
 		// From this example, context.user_index == 123
-		// An context.allocator is assigned to the return value of `my_custom_allocator()`
+		// A context.allocator is assigned to the return value of `my_custom_allocator()`
 		assert(context.user_index == 123)
 
 		// The memory management procedure use the `context.allocator` by
@@ -829,11 +867,11 @@ implicit_context_system :: proc() {
 	my_custom_allocator :: mem.nil_allocator
 	_ = c
 
-	// By default, the context value has default values for its parameters which is
-	// decided in the package runtime. What the defaults are are compiler specific.
+// By default, the context value has default values for its parameters which is
+// decided in the package runtime. What the defaults are are compiler specific.
 
-	// To see what the implicit context value contains, please see the following
-	// definition in package runtime.
+// To see what the implicit context value contains, please see the following
+// definition in package runtime.
 }
 
 parametric_polymorphism :: proc() {
@@ -868,7 +906,7 @@ parametric_polymorphism :: proc() {
 
 	// This is how `new` is implemented
 	alloc_type :: proc($T: typeid) -> ^T {
-		t := cast(^T)alloc(size_of(T), align_of(T))
+		t := cast(^T)mem.alloc(size_of(T), align_of(T))
 		t^ = T{} // Use default initialization value
 		return t
 	}
@@ -1020,11 +1058,11 @@ parametric_polymorphism :: proc() {
 		found, _ = find(&table, "World!")
 		fmt.printf("`found` is %v\n", found)
 
-		// I would not personally design a hash table like this in production
-		// but this is a nice basic example
-		// A better approach would either use a `u64` or equivalent for the key
-		// and let the user specify the hashing function or make the user store
-		// the hashing procedure with the table
+	// I would not personally design a hash table like this in production
+	// but this is a nice basic example
+	// A better approach would either use a `u64` or equivalent for the key
+	// and let the user specify the hashing function or make the user store
+	// the hashing procedure with the table
 	}
 
 	{ // Parametric polymorphic union
@@ -1047,11 +1085,11 @@ parametric_polymorphism :: proc() {
 
 	{ // Polymorphic names
 		foo :: proc($N: $I, $T: typeid) -> (res: [N]T) {
-			// `N` is the constant value passed
-			// `I` is the type of N
-			// `T` is the type passed
+		// `N` is the constant value passed
+		// `I` is the type of N
+		// `T` is the type passed
 			fmt.printf("Generating an array of type %v from the value %v of type %v\n",
-					   typeid_of(type_of(res)), N, typeid_of(I))
+			typeid_of(type_of(res)), N, typeid_of(I))
 			for i in 0..<N {
 				res[i] = T(i*i)
 			}
@@ -1102,6 +1140,7 @@ prefix_table := [?]string{
 
 print_mutex := b64(false)
 
+@(disabled=!thread.IS_SUPPORTED)
 threading_example :: proc() {
 	fmt.println("\n# threading_example")
 
@@ -1170,14 +1209,14 @@ threading_example :: proc() {
 
 
 		for i in 0..<30 {
-			// be mindful of the allocator used for tasks. The allocator needs to be thread safe, or be owned by the task for exclusive use 
+		// be mindful of the allocator used for tasks. The allocator needs to be thread safe, or be owned by the task for exclusive use
 			thread.pool_add_task(&pool, allocator=context.allocator, procedure=task_proc, data=nil, user_index=i)
 		}
 
 		thread.pool_start(&pool)
 
 		{
-			// Wait a moment before we cancel a thread
+		// Wait a moment before we cancel a thread
 			time.sleep(5 * time.Millisecond)
 
 			// Allow one thread to print at a time.
@@ -1349,9 +1388,9 @@ cstring_example :: proc() {
 	fmt.println(x, y, z)
 	fmt.println(len(x), len(y), len(z))
 	fmt.println(len(W), len(X), len(Y))
-	// IMPORTANT NOTE for cstring variables
-	// len(cstring) is O(N)
-	// cast(string)cstring is O(N)
+// IMPORTANT NOTE for cstring variables
+// len(cstring) is O(N)
+// cast(string)cstring is O(N)
 }
 
 bit_set_type :: proc() {
@@ -1471,12 +1510,12 @@ reflection :: proc() {
 }
 
 quaternions :: proc() {
-	// Not just an April Fool's Joke any more, but a fully working thing!
+// Not just an April Fool's Joke any more, but a fully working thing!
 	fmt.println("\n# quaternions")
 
 	{ // Quaternion operations
 		q := 1 + 2i + 3j + 4k
-		r := quaternion(5, 6, 7, 8)
+		r := quaternion(real=5, imag=6, jmag=7, kmag=8)
 		t := q * r
 		fmt.printf("(%v) * (%v) = %v\n", q, r, t)
 		v := q / r
@@ -1489,8 +1528,10 @@ quaternions :: proc() {
 	{ // The quaternion types
 		q128: quaternion128 // 4xf32
 		q256: quaternion256 // 4xf64
-		q128 = quaternion(1, 0, 0, 0)
-		q256 = 1 // quaternion(1, 0, 0, 0)
+		q128 = quaternion(w=1, x=0, y=0, z=0)
+		q256 = 1 // quaternion(x=0, y=0, z=0, w=1)
+
+	// NOTE: The internal memory layout of a quaternion is xyzw
 	}
 	{ // Built-in procedures
 		q := 1 + 2i + 3j + 4k
@@ -1557,18 +1598,18 @@ where_clauses :: proc() {
 
 	{ // Sanity checks
 		simple_sanity_check :: proc(x: [2]int)
-			where len(x) > 1,
-				  type_of(x) == [2]int {
+		where len(x) > 1,
+		type_of(x) == [2]int {
 			fmt.println(x)
 		}
 	}
 	{ // Parametric polymorphism checks
 		cross_2d :: proc(a, b: $T/[2]$E) -> E
-			where intrinsics.type_is_numeric(E) {
+		where intrinsics.type_is_numeric(E) {
 			return a.x*b.y - a.y*b.x
 		}
 		cross_3d :: proc(a, b: $T/[3]$E) -> T
-			where intrinsics.type_is_numeric(E) {
+		where intrinsics.type_is_numeric(E) {
 			x := a.y*b.z - a.z*b.y
 			y := a.z*b.x - a.x*b.z
 			z := a.x*b.y - a.y*b.z
@@ -1583,23 +1624,23 @@ where_clauses :: proc() {
 		y := [3]f32{-5, 0, 3}
 		fmt.println(cross_3d(x, y))
 
-		// Failure case
-		// i := [2]bool{true, false}
-		// j := [2]bool{false, true}
-		// fmt.println(cross_2d(i, j))
+	// Failure case
+	// i := [2]bool{true, false}
+	// j := [2]bool{false, true}
+	// fmt.println(cross_2d(i, j))
 
 	}
 
 	{ // Procedure groups usage
 		foo :: proc(x: [$N]int) -> bool
-			where N > 2 {
+		where N > 2 {
 			fmt.println(#procedure, "was called with the parameter", x)
 			return true
 		}
 
 		bar :: proc(x: [$N]int) -> bool
-			where 0 < N,
-				  N <= 2 {
+		where 0 < N,
+		N <= 2 {
 			fmt.println(#procedure, "was called with the parameter", x)
 			return false
 		}
@@ -1616,8 +1657,8 @@ where_clauses :: proc() {
 
 	{ // Record types
 		Foo :: struct($T: typeid, $N: int)
-			where intrinsics.type_is_integer(T),
-				  N > 2 {
+		where intrinsics.type_is_integer(T),
+		N > 2 {
 			x: [N]T,
 			y: [N-2]T,
 		}
@@ -1637,14 +1678,14 @@ when ODIN_OS == .Windows {
 foreign_system :: proc() {
 	fmt.println("\n#foreign system")
 	when ODIN_OS == .Windows {
-		// It is sometimes necessarily to interface with foreign code,
-		// such as a C collection. In Odin, this is achieved through the
-		// foreign system. You can “import” a collection into the code
-		// using the same semantics as a normal import declaration.
+	// It is sometimes necessarily to interface with foreign code,
+	// such as a C library. In Odin, this is achieved through the
+	// foreign system. You can “import” a library into the code
+	// using the same semantics as a normal import declaration.
 
-		// This foreign import declaration will create a
-		// “foreign import name” which can then be used to associate
-		// entities within a foreign block.
+	// This foreign import declaration will create a
+	// “foreign import name” which can then be used to associate
+	// entities within a foreign block.
 
 		foreign kernel32 {
 			ExitProcess :: proc "stdcall" (exit_code: u32) ---
@@ -1727,8 +1768,8 @@ deprecated_attribute :: proc() {
 		fmt.println("foo_v2")
 	}
 
-	// NOTE: Uncomment to see the warning messages
-	// foo_v1(1)
+// NOTE: Uncomment to see the warning messages
+// foo_v1(1)
 }
 
 range_statements_with_multiple_return_values :: proc() {
@@ -1839,7 +1880,7 @@ soa_struct_layout :: proc() {
 		fmt.println(v_soa)
 	}
 	{
-		// Works with arrays of length <= 4 which have the implicit fields xyzw/rgba
+	// Works with arrays of length <= 4 which have the implicit fields xyzw/rgba
 		Vector3 :: distinct [3]f32
 
 		N :: 2
@@ -1855,8 +1896,8 @@ soa_struct_layout :: proc() {
 		v_soa[0].z = 9
 	}
 	{
-		// SOA Slices
-		// Vector3 :: struct {x, y, z: f32}
+	// SOA Slices
+	// Vector3 :: struct {x, y, z: f32}
 		Vector3 :: struct {x: i8, y: i16, z: f32}
 
 		N :: 3
@@ -2004,7 +2045,7 @@ dummy_procedure :: proc() {
 }
 
 explicit_context_definition :: proc "c" () {
-	// Try commenting the following statement out below
+// Try commenting the following statement out below
 	context = runtime.default_context()
 
 	fmt.println("\n#explicit context definition")
@@ -2043,8 +2084,8 @@ or_else_operator :: proc() {
 		assert(i == 123)
 	}
 	{
-		// 'or_else' can be used with type assertions too, as they
-		// have optional ok semantics
+	// 'or_else' can be used with type assertions too, as they
+	// have optional ok semantics
 		v: union{int, f64}
 		i: int
 		i = v.(int) or_else 123
@@ -2086,7 +2127,7 @@ or_return_operator :: proc() {
 	}
 
 	foo_1 :: proc() -> Error {
-		// This can be a common idiom in many code bases
+	// This can be a common idiom in many code bases
 		n0, err := caller_2()
 		if err != nil {
 			return err
@@ -2110,12 +2151,12 @@ or_return_operator :: proc() {
 		return .None
 	}
 	foo_2 :: proc() -> (n: int, err: Error) {
-		// It is more common that your procedure turns multiple values
-		// If 'or_return' is used within a procedure multiple parameters (2+),
-		// then all the parameters must be named so that the remaining parameters
-		// so that a bare 'return' statement can be used
+	// It is more common that your procedure turns multiple values
+	// If 'or_return' is used within a procedure multiple parameters (2+),
+	// then all the parameters must be named so that the remaining parameters
+	// so that a bare 'return' statement can be used
 
-		// This can be a common idiom in many code bases
+	// This can be a common idiom in many code bases
 		x: int
 		x, err = caller_2()
 		if err != nil {
@@ -2235,7 +2276,7 @@ arbitrary_precision_mathematics :: proc() {
 		}
 		fmt.printf(as)
 		if print_extra_info {
-		 	fmt.printf(" (base: %v, bits: %v, digits: %v)", base, cb, a.used)
+			fmt.printf(" (base: %v, bits: %v, digits: %v)", base, cb, a.used)
 		}
 		if newline {
 			fmt.println()
@@ -2299,7 +2340,7 @@ matrix_type :: proc() {
 	// arranged in rows and columns
 
 	{
-		// The following represents a matrix that has 2 rows and 3 columns
+	// The following represents a matrix that has 2 rows and 3 columns
 		m: matrix[2, 3]f32
 
 		m = matrix[2, 3]f32{
@@ -2345,7 +2386,7 @@ matrix_type :: proc() {
 
 		c := a * b
 		#assert(type_of(c) == matrix[2, 2]f32)
-		fmt.tprintln("c = a * b", c)
+		fmt.println("c = a * b", c)
 	}
 
 	{ // Matrices support multiplication between matrices and arrays
@@ -2376,8 +2417,8 @@ matrix_type :: proc() {
 	}
 
 	{ // Component-wise operations
-		// if the element type supports it
-		// Not support for '/', '%', or '%%' operations
+	// if the element type supports it
+	// Not support for '/', '%', or '%%' operations
 
 		a := matrix[2, 2]i32{
 			1, 2,
@@ -2386,7 +2427,7 @@ matrix_type :: proc() {
 
 		b := matrix[2, 2]i32{
 			-5,  1,
-			 9, -7,
+			9, -7,
 		}
 
 		c0 := a + b
@@ -2398,7 +2439,7 @@ matrix_type :: proc() {
 
 		// component-wise multiplication
 		// since a * b would be a standard matrix multiplication
-		c6 := hadamard_product(a, b)
+		c6 := intrinsics.hadamard_product(a, b)
 
 
 		fmt.println("a + b",  c0)
@@ -2411,12 +2452,12 @@ matrix_type :: proc() {
 	}
 
 	{ // Submatrix casting square matrices
-		// Casting a square matrix to another square matrix with same element type
-		// is supported.
-		// If the cast is to a smaller matrix type, the top-left submatrix is taken.
-		// If the cast is to a larger matrix type, the matrix is extended with zeros
-		// everywhere and ones in the diagonal for the unfilled elements of the
-		// extended matrix.
+	// Casting a square matrix to another square matrix with same element type
+	// is supported.
+	// If the cast is to a smaller matrix type, the top-left submatrix is taken.
+	// If the cast is to a larger matrix type, the matrix is extended with zeros
+	// everywhere and ones in the diagonal for the unfilled elements of the
+	// extended matrix.
 
 		mat2 :: distinct matrix[2, 2]f32
 		mat4 :: distinct matrix[4, 4]f32
@@ -2440,14 +2481,14 @@ matrix_type :: proc() {
 			5, 0, 6, 0,
 			0, 7, 0, 8,
 		}
-		fmt.println("b4", matrix_flatten(b4))
+		fmt.println("b4", intrinsics.matrix_flatten(b4))
 	}
 
 	{ // Casting non-square matrices
-		// Casting a matrix to another matrix is allowed as long as they share
-		// the same element type and the number of elements (rows*columns).
-		// Matrices in Odin are stored in column-major order, which means
-		// the casts will preserve this element order.
+	// Casting a matrix to another matrix is allowed as long as they share
+	// the same element type and the number of elements (rows*columns).
+	// Matrices in Odin are stored in column-major order, which means
+	// the casts will preserve this element order.
 
 		mat2x4 :: distinct matrix[2, 4]f32
 		mat4x2 :: distinct matrix[4, 2]f32
@@ -2462,61 +2503,105 @@ matrix_type :: proc() {
 		fmt.println("y", y)
 	}
 
-	// TECHNICAL INFORMATION: the internal representation of a matrix in Odin is stored
-	// in column-major format
-	// e.g. matrix[2, 3]f32 is internally [3][2]f32 (with different a alignment requirement)
-	// Column-major is used in order to utilize (SIMD) vector instructions effectively on
-	// modern hardware, if possible.
-	//
-	// Unlike normal arrays, matrices try to maximize alignment to allow for the (SIMD) vectorization
-	// properties whilst keeping zero padding (either between columns or at the end of the type).
-	//
-	// Zero padding is a compromise for use with third-party libraries, instead of optimizing for performance.
-	// Padding between columns was not taken even if that would have allowed each column to be loaded
-	// individually into a SIMD register with the correct alignment properties.
-	//
-	// Currently, matrices are limited to a maximum of 16 elements (rows*columns), and a minimum of 1 element.
-	// This is because matrices are stored as values (not a reference type), and thus operations on them will
-	// be stored on the stack. Restricting the maximum element count minimizing the possibility of stack overflows.
+// TECHNICAL INFORMATION: the internal representation of a matrix in Odin is stored
+// in column-major format
+// e.g. matrix[2, 3]f32 is internally [3][2]f32 (with different a alignment requirement)
+// Column-major is used in order to utilize (SIMD) vector instructions effectively on
+// modern hardware, if possible.
+//
+// Unlike normal arrays, matrices try to maximize alignment to allow for the (SIMD) vectorization
+// properties whilst keeping zero padding (either between columns or at the end of the type).
+//
+// Zero padding is a compromise for use with third-party libraries, instead of optimizing for performance.
+// Padding between columns was not taken even if that would have allowed each column to be loaded
+// individually into a SIMD register with the correct alignment properties.
+//
+// Currently, matrices are limited to a maximum of 16 elements (rows*columns), and a minimum of 1 element.
+// This is because matrices are stored as values (not a reference type), and thus operations on them will
+// be stored on the stack. Restricting the maximum element count minimizing the possibility of stack overflows.
 
-	// Built-in Procedures (Compiler Level)
-	// 	transpose(m)
-	//		transposes a matrix
-	// 	outer_product(a, b)
-	// 		takes two array-like data types and returns the outer product
-	//		of the values in a matrix
-	// 	hadamard_product(a, b)
-	// 		component-wise multiplication of two matrices of the same type
-	// 	matrix_flatten(m)
-	//		converts the matrix into a flatten array of elements
-	//		in column-major order
-	//		Example:
-	//		m := matrix[2, 2]f32{
-	//			x0, x1,
-	//			y0, y1,
-	//		}
-	//		array: [4]f32 = matrix_flatten(m)
-	//		assert(array == {x0, y0, x1, y1})
-	//	conj(x)
-	//		conjugates the elements of a matrix for complex element types only
+// 'intrinsics' Procedures (Compiler Level)
+// 	transpose(m)
+//		transposes a matrix
+// 	outer_product(a, b)
+// 		takes two array-like data types and returns the outer product
+//		of the values in a matrix
+// 	hadamard_product(a, b)
+// 		component-wise multiplication of two matrices of the same type
+// 	matrix_flatten(m)
+//		converts the matrix into a flatten array of elements
+//		in column-major order
+//		Example:
+//		m := matrix[2, 2]f32{
+//			x0, x1,
+//			y0, y1,
+//		}
+//		array: [4]f32 = matrix_flatten(m)
+//		assert(array == {x0, y0, x1, y1})
+//	conj(x)
+//		conjugates the elements of a matrix for complex element types only
 
-	// Built-in Procedures (Runtime Level) (all square matrix procedures)
-	// 	determinant(m)
-	// 	adjugate(m)
-	// 	inverse(m)
-	// 	inverse_transpose(m)
-	// 	hermitian_adjoint(m)
-	// 	matrix_trace(m)
-	// 	matrix_minor(m)
+// Procedures in "core:math/linalg" and related (Runtime Level) (all square matrix procedures)
+// 	determinant(m)
+// 	adjugate(m)
+// 	inverse(m)
+// 	inverse_transpose(m)
+// 	hermitian_adjoint(m)
+// 	trace(m)
+// 	matrix_minor(m)
+}
+
+bit_field_type :: proc() {
+	fmt.println("\n# bit_field type")
+	// A `bit_field` is a record type in Odin that is akin to a bit-packed struct.
+	// IMPORTNAT NOTE: `bit_field` is NOT equivalent to `bit_set` as it has different sematics and use cases.
+
+	{
+	// `bit_field` fields are accessed by using a dot:
+		Foo :: bit_field u16 {          // backing type must be an integer or array of integers
+			x: i32     | 3,             // signed integers will be signed extended on use
+			y: u16     | 2 + 3,         // general expressions
+			z: My_Enum | SOME_CONSTANT, // ability to define the bit-width elsewhere
+			w: bool    | 2 when SOME_CONSTANT > 10 else 1,
+		}
+
+		v := Foo{}
+		v.x = 3 // truncates the value to fit into 3 bits
+		fmt.println(v.x) // accessing will convert `v.x` to an `i32` and do an appropriate sign extension
+
+
+		My_Enum :: enum u8 {A, B, C, D}
+		SOME_CONSTANT :: 7
+	}
+
+	{
+	// A `bit_field` is different from a struct in that you must specify the backing type.
+	// This backing type must be an integer or a fixed-length array of integers.
+	// This is useful if there needs to be a specific alignment or access pattern for the record.
+
+		Bar :: bit_field u32   {}
+		Baz :: bit_field [4]u8 {}
+	}
+
+// IMPORTANT NOTES:
+//  * If _all_ of the fields in a bit_field are 1-bit in size and they are all booleans,
+//    please consider using a `bit_set` instead.
+//  * Odin's `bit_field` and C's bit-fields might not be compatible
+//     * Odin's `bit_field`s have a well defined layout (Least-Significant-Bit)
+//     * C's bit-fields on `struct`s are undefined and are not portable across targets and compilers
+//  * A `bit_field`'s field type can only be one of the following:
+//     * Integer
+//     * Boolean
+//     * Enum
 }
 
 main :: proc() {
-	/*
-		For More Odin Examples - https://github.com/odin-lang/examples
-			This repository contains examples of how certain things can be accomplished
-			in idiomatic Odin, allowing you learn its semantics, as well as how to use
-			parts of the core and vendor package collections.
-	*/
+/*
+    For More Odin Examples - https://github.com/odin-lang/examples
+        This repository contains examples of how certain things can be accomplished
+        in idiomatic Odin, allowing you learn its semantics, as well as how to use
+        parts of the core and vendor package collections.
+*/
 
 	when true {
 		the_basics()
@@ -2555,5 +2640,6 @@ main :: proc() {
 		or_break_and_or_continue_operators()
 		arbitrary_precision_mathematics()
 		matrix_type()
+		bit_field_type()
 	}
 }

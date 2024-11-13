@@ -33,7 +33,11 @@ public class OdinImportServiceImpl implements OdinImportService {
         if (containingDirectory != null) {
             return containingDirectory.getVirtualFile().getPath();
         }
-        return OdinImportUtils.getContainingVirtualFile(psiElement).getParent().getPath();
+        VirtualFile parent = OdinImportUtils.getContainingVirtualFile(psiElement).getParent();
+        if(parent != null) {
+            return parent.getPath();
+        }
+        return null;
     }
 
     @Override

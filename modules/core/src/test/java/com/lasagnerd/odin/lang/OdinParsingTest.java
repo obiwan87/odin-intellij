@@ -2125,12 +2125,12 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPsiFileAtOffset() throws IOException {
-        OdinFile file = load("D:\\dev\\code\\Odin\\core\\image\\tga\\tga.odin");
+        OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\sync\\chan\\chan.odin");
         {
-            PsiElement element = file.findElementAt(3056);
-            OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(element, OdinCallExpression.class);
+            PsiElement element = file.findElementAt(3179);
+            OdinExpression expression = PsiTreeUtil.getParentOfType(element, OdinImplicitSelectorExpression.class);
 
-            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(callExpression);
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
             System.out.println(tsOdinType);
         }
     }
