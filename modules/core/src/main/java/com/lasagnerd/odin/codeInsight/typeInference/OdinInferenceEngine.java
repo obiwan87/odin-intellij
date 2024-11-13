@@ -217,7 +217,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
             } else if (parent instanceof OdinIndex index && index.getParent() instanceof OdinIndexExpression indexExpression) {
                 TsOdinType tsOdinType = inferType(symbolTable, indexExpression.getExpression());
-                if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+                if (tsOdinType.baseType(true) instanceof TsOdinArrayType tsOdinArrayType) {
                     OdinArraySize psiSizeElement = tsOdinArrayType.getPsiSizeElement();
                     if (psiSizeElement != null && psiSizeElement.getExpression() != null) {
                         TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, psiSizeElement.getExpression());
@@ -225,6 +225,13 @@ public class OdinInferenceEngine extends OdinVisitor {
                             if (enumContainsValue(tsOdinEnumType, enumValue)) {
                                 this.type = tsOdinEnumType;
                             }
+                        }
+                    }
+                }
+                else if(tsOdinType.baseType(true) instanceof TsOdinMapType tsOdinMapType) {
+                    if(tsOdinMapType.getKeyType().baseType(true) instanceof TsOdinEnumType tsOdinEnumType) {
+                        if(enumContainsValue(tsOdinEnumType, enumValue)) {
+                            this.type = tsOdinEnumType;
                         }
                     }
                 }

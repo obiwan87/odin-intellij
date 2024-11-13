@@ -615,10 +615,7 @@ testImplicitEnumExpression :: proc() {
 // TODO
 // resolve references in attributes
 // implicit seelector not working in positional struct initialization (as opposed to named struct initialization)
-// bmp.odin: pixels.buf not working anymore
 // infer expected type for struct and union arguments (see chan.odin:122)
-// implicit selector inference not working csv/reader.odin:239
-// implicit selector inference for map and other collection-like-types (?)
 // objective-c types with "->"
 // check if inferring expected type with bit_set's works with +=
 // implicit selector not working in io.odin:111, where it calls procedure field of type "#type proc"
