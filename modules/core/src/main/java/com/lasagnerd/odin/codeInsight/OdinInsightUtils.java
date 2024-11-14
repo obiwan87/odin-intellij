@@ -762,6 +762,7 @@ public class OdinInsightUtils {
         ArrayList<TsOdinParameter> usedParameters = new ArrayList<>(parameters);
         boolean nameOnly = false;
         boolean invalidArguments = false;
+        boolean previousIsVariadic = false;
         for (OdinArgument odinArgument : argumentList) {
             if (odinArgument instanceof OdinUnnamedArgument unnamedArgument) {
                 if (nameOnly) {
@@ -776,18 +777,37 @@ public class OdinInsightUtils {
 
                 argumentExpressions.put(unnamedArgument.getExpression(), tsOdinParameter);
                 usedParameters.remove(tsOdinParameter);
+                if (!(tsOdinParameter.getPsiType() instanceof OdinVariadicType)) {
+                    previousIsVariadic = true;
+                    index++;
+                } else {
+                    previousIsVariadic = false;
+                }
+                continue;
             }
 
             if (odinArgument instanceof OdinNamedArgument namedArgument) {
+                if(previousIsVariadic) {
+                    previousIsVariadic = false;
+                    index++;
+                }
+
                 TsOdinParameter tsOdinParameter = parametersByName.get(namedArgument.getIdentifier().getText());
                 if (tsOdinParameter == null || !usedParameters.contains(tsOdinParameter)) {
                     invalidArguments = true;
                     break;
                 }
+
+                if(tsOdinParameter.getPsiType() instanceof OdinVariadicType) {
+                    invalidArguments = true;
+                    break;
+                }
+
                 nameOnly = true;
                 argumentExpressions.put(namedArgument.getExpression(), tsOdinParameter);
                 usedParameters.remove(tsOdinParameter);
             }
+
             index++;
         }
 
@@ -798,7 +818,7 @@ public class OdinInsightUtils {
                     argumentExpressions.put(tsOdinParameter.getDefaultValueExpression(), tsOdinParameter);
                 }
                 usedParameters.remove(tsOdinParameter);
-            } else {
+            } else if(!(tsOdinParameter.getPsiType() instanceof OdinVariadicType)) {
                 invalidArguments = true;
                 break;
             }
@@ -891,5 +911,9 @@ public class OdinInsightUtils {
 
     public static boolean isBitFieldFieldDeclaration(OdinDeclaredIdentifier declaredIdentifier) {
         return declaredIdentifier.getParent() instanceof OdinBitFieldFieldDeclaration;
+    }
+
+    public static List<OdinSymbol> getStructFields(TsOdinStructType tsOdinStructType) {
+        return getStructFields(tsOdinStructType.getSymbolTable(), (OdinStructType) tsOdinStructType.getPsiType());
     }
 }

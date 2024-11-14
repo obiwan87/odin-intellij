@@ -1678,6 +1678,14 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinProcedureDefinition proc = findFirstProcedure(file, "testImplicitEnumExpression");
 
         {
+            OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "field_proc_ret");
+            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("Direction", tsOdinEnumType.getName());
+        }
+
+        {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "b");
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
@@ -2113,6 +2121,16 @@ public class OdinParsingTest extends UsefulTestCase {
 
     }
 
+    public void testPositionalInitialization() throws IOException {
+        OdinFile file = loadTypeInference();
+        {
+            OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(file, "testPositionalInitialization", "s");
+            OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(var, OdinImplicitSelectorExpression.class);
+            TsOdinType tsOdinType = OdinInferenceEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(expression), expression);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("E", tsOdinEnumType.getName());
+        }
+    }
 
     public void testRecursiveStruct() throws IOException {
         OdinFile file = loadTypeInference();
@@ -2125,13 +2143,14 @@ public class OdinParsingTest extends UsefulTestCase {
     }
 
     public void testPsiFileAtOffset() throws IOException {
-        OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\sync\\chan\\chan.odin");
+        OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\sys\\orca\\macros.odin");
         {
-            PsiElement element = file.findElementAt(3179);
+            PsiElement element = file.findElementAt(399);
             OdinExpression expression = PsiTreeUtil.getParentOfType(element, OdinImplicitSelectorExpression.class);
 
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
-            System.out.println(tsOdinType);
+            assertInstanceOf(tsOdinType.baseType(true), TsOdinEnumType.class);
+
         }
     }
 

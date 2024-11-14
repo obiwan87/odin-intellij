@@ -208,7 +208,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         return;
                     }
                     // TODO: activate when finished with inference engine
-//                    highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
+                    highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
                 } else if (identifierTokenParent.getParent() instanceof OdinRefExpression refExpression) {
                     handleReferences(annotationHolder,
                             psiElement,

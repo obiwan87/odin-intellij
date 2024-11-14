@@ -560,7 +560,8 @@ testImplicitEnumExpression :: proc() {
     x := p(.North) // expecting direction from .North
 
     S :: struct {
-        x, y: Direction
+        x, y: Direction,
+        p: proc(d: Direction) -> Direction
     }
 
     s := S {
@@ -587,7 +588,7 @@ testImplicitEnumExpression :: proc() {
     }
 
     {
-        p1 :: proc(p: Point, d: Direction) -> i32 {
+        p1 :: proc(i: i64, d: Direction) -> i32 {
             return 1
         }
         p2 :: proc(i: i32, d: Direction) -> i32 {
@@ -611,14 +612,36 @@ testImplicitEnumExpression :: proc() {
         r, err := o.optional_ok()
         cmp := .Italian == err
     }
+
+    {
+        bitset := Directions{ }
+        bitset += { .North }
+    }
+
+    {
+        field_proc_ret := (S{}.p)(.North)
+    }
+
+    {
+
+    }
+}
+
+testPositionalInitialization :: proc() {
+    E :: enum {
+        A, B
+    }
+    S :: struct {
+        e: E
+    }
+
+    s : S = { .A }
 }
 // TODO
 // resolve references in attributes
-// implicit seelector not working in positional struct initialization (as opposed to named struct initialization)
-// infer expected type for struct and union arguments (see chan.odin:122)
 // objective-c types with "->"
-// check if inferring expected type with bit_set's works with +=
-// implicit selector not working in io.odin:111, where it calls procedure field of type "#type proc"
+// procedure group: when parameter is the same in all procedure groups, we can infer the argument's type even though there is no clear winner
+// support var_args in argument->parameter computation (test with log_ext in macros.odin)
 
 testBitSetOperations :: proc() {
     Direction :: enum {

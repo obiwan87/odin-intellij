@@ -442,7 +442,6 @@ public class OdinInferenceEngine extends OdinVisitor {
         // Get type of expression. If it is callable, retrieve the return type and set that as result
         TsOdinType tsOdinType = doInferType(symbolTable, o.getExpression());
 
-
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             // resolve to base type
             TsOdinMetaType tsOdinOriginalMetaType = tsOdinMetaType;
@@ -485,6 +484,12 @@ public class OdinInferenceEngine extends OdinVisitor {
                     this.type = tsOdinOriginalMetaType.representedType();
                 }
             }
+        }
+        // handles cases where the type was set in a field or a variable
+        else if (tsOdinType.baseType(true) instanceof TsOdinProcedureType procedureType) {
+            this.type = inferTypeOfProcedureCall(o, procedureType, symbolTable);
+        } else if (tsOdinType.baseType(true) instanceof TsOdinProcedureGroup procedureGroupType) {
+            this.type = inferTypeOfBestProcedure(o, procedureGroupType);
         }
     }
 
@@ -1133,7 +1138,9 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 // TODO Range expression should be treated differently. For now, just take the type the expression resolves to
                 OdinExpression expression = forInBlock.getForInParameterDeclaration().getExpression();
-                TsOdinType tsOdinType = OdinInsightUtils.getReferenceableType(inferType(parentSymbolTable, expression));
+                TsOdinType tsOdinType = OdinInsightUtils.getReferenceableType(inferType(parentSymbolTable, expression))
+                        .baseType(true);
+
                 if (tsOdinType instanceof TsOdinMapType mapType) {
                     if (index == 0) {
                         return createReferenceType(mapType.getKeyType(), isReference);
@@ -1202,6 +1209,15 @@ public class OdinInferenceEngine extends OdinVisitor {
                         return createReferenceType(soaSliceType.getSoaStructType(), isReference);
                     }
 
+                    if (index == 1) {
+                        return TsOdinBuiltInTypes.INT;
+                    }
+                }
+
+                if (tsOdinType instanceof TsOdinBitSetType bitSetType) {
+                    if (index == 0) {
+                        return createReferenceType(bitSetType.getElementType(), isReference);
+                    }
                     if (index == 1) {
                         return TsOdinBuiltInTypes.INT;
                     }
@@ -1349,7 +1365,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (rhsContainer instanceof OdinRhs) {
-            PsiElement compoundLiteral = PsiTreeUtil.getParentOfType(rhsContainer, OdinCompoundLiteralTyped.class, OdinCompoundLiteralUntyped.class);
+            OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(rhsContainer, OdinCompoundLiteralTyped.class, OdinCompoundLiteralUntyped.class);
             Objects.requireNonNull(compoundLiteral);
             OdinElementEntry elemEntry = (OdinElementEntry) rhsContainer.getParent();
 
@@ -1364,14 +1380,33 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             if (tsOdinType != null) {
                 TsOdinType tsOdinBaseType = tsOdinType.baseType(true);
-                if (tsOdinBaseType instanceof TsOdinStructType) {
-                    OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(rhsExpression.getProject(), tsOdinBaseType);
+                if (tsOdinBaseType instanceof TsOdinStructType tsOdinStructType) {
+
+                    List<OdinSymbol> structFields = OdinInsightUtils.getStructFields(tsOdinStructType);
                     // Named element entry
                     if (elemEntry.getLhs() != null) {
-                        OdinSymbol symbol = typeElements.getSymbol(elemEntry.getLhs().getText());
+                        String fieldName = elemEntry.getLhs().getText();
+                        OdinSymbol symbol = structFields.stream().filter(s -> s.getName().equals(fieldName))
+                                .findFirst()
+                                .orElse(null);
                         if (symbol != null && symbol.getPsiType() != null) {
                             TsOdinType fieldType = OdinTypeResolver.resolveType(tsOdinType.getSymbolTable(), symbol.getPsiType());
                             return unfoldExpression(fieldType, rhsExpression, position);
+                        }
+                    }
+                    // Positional initialization
+                    else {
+                        int index = compoundLiteral.getCompoundValue()
+                                .getCompoundValueBody()
+                                .getElementEntryList()
+                                .indexOf(elemEntry);
+
+                        if (structFields.size() > index) {
+                            OdinSymbol symbol = structFields.get(index);
+                            if (symbol != null && symbol.getPsiType() != null) {
+                                TsOdinType fieldType = OdinTypeResolver.resolveType(tsOdinType.getSymbolTable(), symbol.getPsiType());
+                                return unfoldExpression(fieldType, rhsExpression, position);
+                            }
                         }
                     }
                 } else if (tsOdinBaseType instanceof TsOdinArrayType tsOdinArrayType) {
@@ -1380,6 +1415,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                     return unfoldExpression(tsOdinSliceType.getElementType(), rhsExpression, position);
                 } else if (tsOdinBaseType instanceof TsOdinDynamicArray tsOdinDynamicArray) {
                     return unfoldExpression(tsOdinDynamicArray.getElementType(), rhsExpression, position);
+                } else if (tsOdinBaseType instanceof TsOdinBitSetType bitSetType) {
+                    return unfoldExpression(bitSetType.getElementType(), rhsExpression, position);
                 }
             }
         }
@@ -1394,7 +1431,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     // Here we have to get a meta type, otherwise the call expression does not make sense
                     if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
                         tsOdinType = tsOdinMetaType.representedType();
-                    } else {
+                    } else if (!(tsOdinType.baseType(true) instanceof TsOdinProcedureType)) {
                         tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
                     }
                     argumentList = odinCallExpression.getArgumentList();
@@ -1429,6 +1466,31 @@ public class OdinInferenceEngine extends OdinVisitor {
                             TsOdinParameter tsOdinParameter = argumentToParameterMap.get(rhsExpression);
                             return unfoldExpression(tsOdinParameter.getType(), rhsExpression, position);
                         }
+                    } else {
+                        boolean allUnnamed = argumentList.stream().allMatch(a -> a instanceof OdinUnnamedArgument);
+                        if (!allUnnamed)
+                            return TsOdinBuiltInTypes.UNKNOWN;
+
+                        int argumentIndex = argumentList.indexOf(argument);
+                        TsOdinType argumentType = null;
+                        for (var entry : result.compatibleProcedures()) {
+                            TsOdinProcedureType procedureType = entry.getFirst();
+                            TsOdinType previousArgument = argumentType;
+                            if (procedureType.getParameters().size() > argumentIndex) {
+                                argumentType = procedureType.getParameters().get(argumentIndex).getType().baseType();
+                            } else {
+                                return TsOdinBuiltInTypes.UNKNOWN;
+                            }
+
+                            if (previousArgument != null) {
+                                boolean argsCompatible = OdinTypeChecker.checkTypesStrictly(argumentType, previousArgument);
+                                if (!argsCompatible) {
+                                    return TsOdinBuiltInTypes.UNKNOWN;
+                                }
+                            }
+                        }
+
+                        return argumentType == null? TsOdinBuiltInTypes.UNKNOWN : argumentType;
                     }
                 } else if (metaType == STRUCT) {
                     TsOdinStructType structType = (TsOdinStructType) tsOdinType.baseType(true);

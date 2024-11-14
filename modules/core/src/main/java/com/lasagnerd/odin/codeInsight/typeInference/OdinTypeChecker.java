@@ -40,9 +40,20 @@ public class OdinTypeChecker {
             return true;
         }
 
-        if (parameterType instanceof TsOdinConstrainedType constrainedType && argumentType instanceof TsOdinMetaType metaType) {
+        if (parameterType instanceof TsOdinConstrainedType constrainedType) {
+
+
             if (constrainedType.getMainType().isTypeId()) {
-                return checkConstrainedType(constrainedType, metaType.representedType());
+                if (argumentType instanceof TsOdinMetaType metaType) {
+                    TsOdinType tsOdinType = metaType.representedType();
+                    return checkConstrainedType(tsOdinType, constrainedType);
+                }
+                return false;
+
+            } else if (constrainedType.getMainType().isPolymorphic()) {
+                return checkConstrainedType(argumentType, constrainedType);
+            } else {
+                return false;
             }
         }
 
@@ -87,7 +98,29 @@ public class OdinTypeChecker {
             return false;
         }
 
+        if (argumentBaseType instanceof TsOdinMapType argMapType && parameterBaseType instanceof TsOdinMapType parMapType) {
+            return checkTypesStrictly(argMapType.getKeyType(), parMapType.getKeyType()) &&
+                    checkTypesStrictly(argMapType.getValueType(), parMapType.getValueType());
+        }
+
         return false;
+    }
+
+    private static boolean checkConstrainedType(TsOdinType argumentType, TsOdinConstrainedType constrainedType) {
+        // is specialized type polymorphic? -> substitution compatibility
+        // none? -> strict compatibility
+        // rationale: there are no distinct type aliases that could take poly params, so we don't run the risk
+        // of matching a distinct type alias with less distinct compatible type. It means we have to take the indistinct base type of the
+        // argument type. E.g. when PointsDistinct :: []Point is checked against []$E we want to return true
+
+        // However, if type constraint does not contain poly params, then it means it wants to be checked explicitly against a type
+        // E.g. when []Points is checked against typeid/PointsDistinct we want to return false
+
+        if (hasPolymorphicTypes(constrainedType.getSpecializedType())) {
+            // substitution compatibility
+            return checkTypesStrictly(argumentType.baseType(true), constrainedType.getSpecializedType());
+        }
+        return checkTypesStrictly(argumentType, constrainedType.getSpecializedType());
     }
 
     /**
@@ -97,7 +130,7 @@ public class OdinTypeChecker {
      * @param typeToCheck     the type to check
      * @return true if compatible, false otherwise
      */
-    public static boolean checkConstrainedType(TsOdinConstrainedType constrainedType, TsOdinType typeToCheck) {
+    public static boolean checkConstrainedType_(TsOdinConstrainedType constrainedType, TsOdinType typeToCheck) {
         Map<String, TsOdinType> resolvedTypes = OdinTypeSpecializer.substituteTypes(typeToCheck.baseType(),
                 constrainedType.getSpecializedType().baseType());
 
@@ -111,6 +144,13 @@ public class OdinTypeChecker {
             }
         }
         return solved;
+    }
+
+    public static boolean hasPolymorphicTypes(TsOdinType type) {
+        if (type.getPsiType() != null) {
+            return !PsiTreeUtil.findChildrenOfType(type.getPsiType(), OdinPolymorphicType.class).isEmpty();
+        }
+        return false;
     }
 
     public enum ConversionAction {
