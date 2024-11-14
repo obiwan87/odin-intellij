@@ -12,5 +12,5 @@ public interface OdinPsiElement extends PsiElement {
      * (((expr))) -> expr
      * @return The unwrapped expression
      */
-    OdinExpression unwrap();
+    OdinExpression parenthesesUnwrap();
 }

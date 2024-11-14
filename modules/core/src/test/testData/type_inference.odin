@@ -642,6 +642,7 @@ testPositionalInitialization :: proc() {
 // objective-c types with "->"
 // procedure group: when parameter is the same in all procedure groups, we can infer the argument's type even though there is no clear winner
 // support var_args in argument->parameter computation (test with log_ext in macros.odin)
+// implicit selector for ternary expressions: D:\dev\code\Odin\core\testing\runner.odin
 
 testBitSetOperations :: proc() {
     Direction :: enum {

@@ -4,6 +4,7 @@ import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -42,9 +43,11 @@ public class OdinTypeSpecializer {
         List<OdinFieldDeclarationStatement> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(type);
         for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarations) {
             var fieldType = fieldDeclaration.getType();
-            TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, fieldType);
-            for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifiers()) {
-                specializedType.getFields().put(declaredIdentifier.getName(), tsOdinType);
+            if (fieldType != null) {
+                TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, fieldType);
+                for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifiers()) {
+                    specializedType.getFields().put(declaredIdentifier.getName(), tsOdinType);
+                }
             }
         }
 
@@ -57,6 +60,8 @@ public class OdinTypeSpecializer {
         List<TsOdinParameter> parameters = genericType.getParameters();
         if (parameters.isEmpty())
             return genericType;
+
+        // TODO OPTIMIZE: Check if it needs specialization?
 
         TsOdinProcedureType specializedType = new TsOdinProcedureType();
         specializedType.getSymbolTable().setPackagePath(genericType.getSymbolTable().getPackagePath());
@@ -72,12 +77,30 @@ public class OdinTypeSpecializer {
                 specializedType,
                 arguments);
 
+        for (TsOdinParameter tsOdinParameter : genericType.getParameters()) {
+            TsOdinType tsOdinType = OdinTypeResolver.resolveType(specializedType.getSymbolTable(), tsOdinParameter.getPsiType());
+            TsOdinParameter specializedParameter = cloneWithType(tsOdinParameter, tsOdinType);
+            specializedType.getParameters().add(specializedParameter);
+        }
+
         for (TsOdinParameter tsOdinReturnType : genericType.getReturnParameters()) {
             TsOdinType tsOdinType = OdinTypeResolver.resolveType(specializedType.getSymbolTable(), tsOdinReturnType.getPsiType());
             specializedType.getReturnTypes().add(tsOdinType);
         }
 
         return specializedType;
+    }
+
+    private static @NotNull TsOdinParameter cloneWithType(TsOdinParameter tsOdinParameter, TsOdinType tsOdinType) {
+        TsOdinParameter specializedParameter = new TsOdinParameter();
+        specializedParameter.setType(tsOdinType);
+        specializedParameter.setName(tsOdinParameter.getName());
+        specializedParameter.setIndex(tsOdinParameter.getIndex());
+        specializedParameter.setPsiType(tsOdinParameter.getPsiType());
+        specializedParameter.setExplicitPolymorphicParameter(tsOdinParameter.isExplicitPolymorphicParameter());
+        specializedParameter.setAnyInt(tsOdinParameter.isAnyInt());
+        specializedParameter.setDefaultValueExpression(tsOdinParameter.getDefaultValueExpression());
+        return specializedParameter;
     }
 
     public static boolean specializeUnion(OdinSymbolTable outerSymbolTable, List<OdinArgument> arguments, TsOdinUnionType genericType, TsOdinUnionType specializedType) {
@@ -123,6 +146,15 @@ public class OdinTypeSpecializer {
             for (Map.Entry<OdinExpression, TsOdinParameter> entry : argumentToParameterMap.entrySet()) {
                 OdinExpression argumentExpression = entry.getKey();
                 TsOdinParameter tsOdinParameter = entry.getValue();
+
+                // When an argument expression is implicit, we cannot use it
+                PsiElement element = PsiTreeUtil.findChildOfAnyType(argumentExpression,
+                        false,
+                        OdinCompoundLiteralUntyped.class,
+                        OdinImplicitSelectorExpression.class);
+                if(element != null)
+                    continue;
+
                 TsOdinType argumentType = resolveArgumentType(argumentExpression, tsOdinParameter, outerScope);
                 if (argumentType.isUnknown()) {
                     System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n in %s",
@@ -266,6 +298,7 @@ public class OdinTypeSpecializer {
 
     @NotNull
     private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, TsOdinParameter parameter, OdinSymbolTable symbolTable) {
+
 //        EvOdinValue evOdinValue = OdinExpressionEvaluator.evaluate(argumentExpression);
         TsOdinType parameterType = parameter.getType();
         TsOdinType argumentType = inferType(symbolTable, argumentExpression);

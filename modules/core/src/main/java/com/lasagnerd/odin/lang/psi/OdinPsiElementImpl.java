@@ -46,11 +46,11 @@ public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiE
     }
 
     @Override
-    public OdinExpression unwrap() {
+    public OdinExpression parenthesesUnwrap() {
         if (this instanceof OdinParenthesizedExpression par) {
             OdinExpression expression = par.getExpression();
             if(expression != null) {
-                return expression.unwrap();
+                return expression.parenthesesUnwrap();
             }
         }
 

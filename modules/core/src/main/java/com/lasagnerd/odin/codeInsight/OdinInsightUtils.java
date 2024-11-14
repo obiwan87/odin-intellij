@@ -340,7 +340,7 @@ public class OdinInsightUtils {
         OdinStructBlock structBlock = structType
                 .getStructBlock();
 
-        if(structBlock == null)
+        if (structBlock == null)
             return Collections.emptyList();
         OdinStructBody structBody = structBlock
                 .getStructBody();
@@ -746,10 +746,12 @@ public class OdinInsightUtils {
     public static @Nullable Map<OdinExpression, TsOdinParameter> getArgumentToParameterMap(List<TsOdinParameter> parameters,
                                                                                            @NotNull List<OdinArgument> argumentList,
                                                                                            boolean includeDefaultParameters) {
-        Map<String, TsOdinParameter> parametersByName = parameters.stream().collect(Collectors.toMap(
-                TsOdinParameter::getName,
-                v -> v
-        ));
+        Map<String, TsOdinParameter> parametersByName = parameters.stream()
+                .filter(p -> p.getName() != null)
+                .collect(Collectors.toMap(
+                        TsOdinParameter::getName,
+                        v -> v
+                ));
 
         Map<Integer, TsOdinParameter> parametersByIndex = parameters.stream().collect(Collectors.toMap(
                 TsOdinParameter::getIndex,
@@ -787,7 +789,7 @@ public class OdinInsightUtils {
             }
 
             if (odinArgument instanceof OdinNamedArgument namedArgument) {
-                if(previousIsVariadic) {
+                if (previousIsVariadic) {
                     previousIsVariadic = false;
                     index++;
                 }
@@ -798,7 +800,7 @@ public class OdinInsightUtils {
                     break;
                 }
 
-                if(tsOdinParameter.getPsiType() instanceof OdinVariadicType) {
+                if (tsOdinParameter.getPsiType() instanceof OdinVariadicType) {
                     invalidArguments = true;
                     break;
                 }
@@ -818,7 +820,7 @@ public class OdinInsightUtils {
                     argumentExpressions.put(tsOdinParameter.getDefaultValueExpression(), tsOdinParameter);
                 }
                 usedParameters.remove(tsOdinParameter);
-            } else if(!(tsOdinParameter.getPsiType() instanceof OdinVariadicType)) {
+            } else if (!(tsOdinParameter.getPsiType() instanceof OdinVariadicType)) {
                 invalidArguments = true;
                 break;
             }
