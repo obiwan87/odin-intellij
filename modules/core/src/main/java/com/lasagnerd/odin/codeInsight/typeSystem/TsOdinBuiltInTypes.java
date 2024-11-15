@@ -142,6 +142,8 @@ public class TsOdinBuiltInTypes {
         BUILTIN_IDENTIFIERS.put("false", new EvOdinValue(false, BOOL));
     }
     public static final TsOdinType UNKNOWN = new TsOdinUnknownType();
+    public static final TsOdinType UNDECIDED = new TsOdinUndecidedType();
+
     public static final EvOdinValue NULL = new EvNullValue();
     public static final TsOdinType VOID = new TsOdinVoidType();
     
@@ -314,6 +316,26 @@ public class TsOdinBuiltInTypes {
         @Override
         public String getName() {
             return "UNKNOWN";
+        }
+    }
+    private static class TsOdinUndecidedType extends TsOdinType {
+        {
+            this.symbolTable = OdinSymbolTable.EMPTY;
+        }
+
+        @Override
+        public String getLabel() {
+            return "UNDECIDED";
+        }
+
+        @Override
+        public TsOdinMetaType.MetaType getMetaType() {
+            return TsOdinMetaType.MetaType.UNDECIDED;
+        }
+
+        @Override
+        public String getName() {
+            return "UNDECIDED";
         }
     }
 

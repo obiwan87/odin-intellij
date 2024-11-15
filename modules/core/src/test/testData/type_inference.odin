@@ -623,7 +623,7 @@ testImplicitEnumExpression :: proc() {
     }
 
     {
-
+        ternary : Direction = .North if x > 1 else .South
     }
 }
 

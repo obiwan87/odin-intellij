@@ -699,11 +699,13 @@ public class OdinInsightUtils {
 
     public static PsiElement findParentOfType(PsiElement psiElement, boolean strict, Class<?>[] parentTypes, Class<?>[] stopAt) {
         boolean[] invalid = {false};
+        final PsiElement[] lastFoundElement = {null};
 
         PsiElement firstParent = PsiTreeUtil.findFirstParent(psiElement, strict, p -> {
             for (Class<?> clazz : stopAt) {
                 if (clazz.isInstance(p)) {
                     invalid[0] = true;
+                    lastFoundElement[0] = p;
                     return true;
                 }
             }
@@ -711,6 +713,7 @@ public class OdinInsightUtils {
             for (Class<?> clazz : parentTypes) {
                 if (clazz.isInstance(p)) {
                     invalid[0] = false;
+                    lastFoundElement[0] = p;
                     return true;
                 }
             }
@@ -719,6 +722,13 @@ public class OdinInsightUtils {
 
         if (!invalid[0]) {
             return firstParent;
+        }
+
+        if (lastFoundElement[0] != null) {
+            for (Class<?> parentType : parentTypes) {
+                if (parentType.isInstance(lastFoundElement[0]))
+                    return lastFoundElement[0];
+            }
         }
 
         return null;

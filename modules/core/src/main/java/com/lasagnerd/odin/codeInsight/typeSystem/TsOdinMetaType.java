@@ -46,6 +46,7 @@ public class TsOdinMetaType extends TsOdinType {
         STRUCT,
         UNION,
         UNKNOWN,
+        UNDECIDED,
         VOID,
         PROCEDURE_GROUP,
         DISTINCT_TYPE,

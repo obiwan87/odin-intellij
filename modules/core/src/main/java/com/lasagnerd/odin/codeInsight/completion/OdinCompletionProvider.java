@@ -17,6 +17,7 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.*;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinExpectedTypeEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -159,7 +160,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
         switch (parent) {
             case OdinImplicitSelectorExpression implicitSelectorExpression -> {
-                TsOdinType tsOdinType = OdinInferenceEngine
+                TsOdinType tsOdinType = OdinExpectedTypeEngine
                         .inferExpectedType(
                                 OdinSymbolTableResolver.computeSymbolTable(parameters.getPosition()),
                                 implicitSelectorExpression

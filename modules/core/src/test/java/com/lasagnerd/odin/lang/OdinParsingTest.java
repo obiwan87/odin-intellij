@@ -50,6 +50,7 @@ import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinExpectedTypeEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeChecker;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -1496,7 +1497,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinAssignmentStatement assignmentStatement = PsiTreeUtil.findChildOfType(procedure, OdinAssignmentStatement.class);
             OdinExpression odinExpression = Objects.requireNonNull(Objects.requireNonNull(assignmentStatement)
                     .getRhsExpressions()).getExpressionList().getFirst();
-            TsOdinType tsOdinType = OdinInferenceEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(odinExpression), odinExpression);
+            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(odinExpression), odinExpression);
             TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
             assertEquals(structType.getName(), "MyStruct");
         }
@@ -1678,6 +1679,15 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinProcedureDefinition proc = findFirstProcedure(file, "testImplicitEnumExpression");
 
         {
+            OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "ternary");
+            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("Direction", tsOdinEnumType.getName());
+        }
+
+
+        {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "field_proc_ret");
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
@@ -1745,7 +1755,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
             Objects.requireNonNull(implicitSelectorExpression);
-            TsOdinType tsOdinType = OdinInferenceEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(implicitSelectorExpression), implicitSelectorExpression);
+            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(implicitSelectorExpression), implicitSelectorExpression);
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
         }
@@ -2126,7 +2136,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(file, "testPositionalInitialization", "s");
             OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(var, OdinImplicitSelectorExpression.class);
-            TsOdinType tsOdinType = OdinInferenceEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(expression), expression);
+            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(expression), expression);
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("E", tsOdinEnumType.getName());
         }
