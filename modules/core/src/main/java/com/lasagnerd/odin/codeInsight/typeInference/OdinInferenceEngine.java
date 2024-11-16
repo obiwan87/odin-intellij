@@ -63,6 +63,31 @@ public class OdinInferenceEngine extends OdinVisitor {
         return doInferType(symbolTable, TsOdinBuiltInTypes.UNKNOWN, 1, expression);
     }
 
+    public static PsiElement findNextBinaryExpression(PsiElement element, boolean strict) {
+        return OdinInsightUtils.findParentOfType(
+                element,
+                strict,
+                new Class<?>[]{
+                        OdinBinaryExpression.class
+                },
+                new Class<?>[]{
+                        OdinLhsExpressions.class,
+                        OdinIndex.class,
+                        OdinLhs.class,
+                        OdinReturnStatement.class,
+                        OdinRhs.class,
+                        OdinLhs.class,
+                        OdinArgument.class,
+                        OdinRhsExpressions.class,
+                        OdinCaseClause.class,
+                        OdinVariableInitializationStatement.class,
+                        OdinConstantInitializationStatement.class,
+                        OdinParameterInitialization.class,
+                        OdinCaseClause.class,
+                }
+        );
+    }
+
     private TsOdinType inferType_(OdinSymbolTable symbolTable, OdinExpression expression) {
         OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable);
         odinInferenceEngine.explicitMode = this.explicitMode;
@@ -124,7 +149,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (explicitMode && compoundLiteral instanceof OdinCompoundLiteralUntyped)
             return TsOdinBuiltInTypes.UNDECIDED;
 
-        PsiElement context = OdinExpectedTypeEngine.findNextBinaryExpression(compoundLiteralExpression, true);
+        PsiElement context = findNextBinaryExpression(compoundLiteralExpression, true);
 
         TsOdinType tsOdinType;
 
@@ -234,7 +259,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         //  the type
 
         // This code belongs to propagate down
-        PsiElement context = OdinExpectedTypeEngine.findNextBinaryExpression(o, false);
+        PsiElement context = findNextBinaryExpression(o, false);
         TsOdinType type;
         OdinExpression expression = null;
 
@@ -271,7 +296,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (operandExpression != null) {
             TsOdinType tsOdinType = inferTypeInExplicitMode(symbolTable, operandExpression);
             if (tsOdinType.isUndecided()) {
-                PsiElement nextContext = OdinExpectedTypeEngine.findNextBinaryExpression(binaryExpression, true);
+                PsiElement nextContext = findNextBinaryExpression(binaryExpression, true);
                 if (nextContext instanceof OdinBinaryExpression nextBinaryExpression) {
                     OdinExpression otherExpression = getOtherExpression(implicitSelectorExpression, nextBinaryExpression);
                     return inferTypeOfImplicitSelectorBinaryOperand(implicitSelectorExpression, nextBinaryExpression, otherExpression, enumValue);
@@ -317,7 +342,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (operandExpression != null) {
             TsOdinType tsOdinType = inferTypeInExplicitMode(symbolTable, operandExpression);
             if (tsOdinType.isUndecided()) {
-                PsiElement nextContext = OdinExpectedTypeEngine.findNextBinaryExpression(binaryExpression, true);
+                PsiElement nextContext = findNextBinaryExpression(binaryExpression, true);
                 if (nextContext instanceof OdinBinaryExpression nextBinaryExpression) {
                     OdinExpression otherExpression = getOtherExpression(compoundLiteralExpression, nextBinaryExpression);
                     return inferTypeOfUntypedCompoundLiteralBinaryOperand(compoundLiteralExpression, nextBinaryExpression, otherExpression, symbolTable);

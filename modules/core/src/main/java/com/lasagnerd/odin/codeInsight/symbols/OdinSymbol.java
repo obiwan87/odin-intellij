@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class OdinSymbol {
-    //    private OdinDeclaration declaration;
+    // Psi stuff
     private PsiNamedElement declaredIdentifier;
     private OdinType psiType;
     private List<OdinAttributesDefinition> attributes;

@@ -67,7 +67,7 @@ public class OdinProjectConfigurable implements Configurable {
         OdinProjectSettingsState state = settingsService.getState();
 
         if (!Objects.equals(state.getSdkPath(), sdkSettings.getSdkPath())) {
-            OdinSdkService.getInstance(project).invalidateCache();
+            OdinSdkService.getInstance(project).refreshCache();
         }
 
         if (StringUtil.isNotEmpty(sdkSettings.getSdkPath())) {

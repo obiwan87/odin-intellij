@@ -297,7 +297,6 @@ public class OdinExpectedTypeEngine {
             }
         }
 
-        // TODO: add index
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
@@ -366,28 +365,4 @@ public class OdinExpectedTypeEngine {
         );
     }
 
-    public static PsiElement findNextBinaryExpression(PsiElement element, boolean strict) {
-        return OdinInsightUtils.findParentOfType(
-                element,
-                strict,
-                new Class<?>[]{
-                        OdinBinaryExpression.class
-                },
-                new Class<?>[]{
-                        OdinLhsExpressions.class,
-                        OdinIndex.class,
-                        OdinLhs.class,
-                        OdinReturnStatement.class,
-                        OdinRhs.class,
-                        OdinLhs.class,
-                        OdinArgument.class,
-                        OdinRhsExpressions.class,
-                        OdinCaseClause.class,
-                        OdinVariableInitializationStatement.class,
-                        OdinConstantInitializationStatement.class,
-                        OdinParameterInitialization.class,
-                        OdinCaseClause.class,
-                }
-        );
-    }
 }

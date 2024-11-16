@@ -43,4 +43,6 @@ public interface OdinSdkService {
     Map<OdinImport, List<OdinFile>> getSdkPackages();
 
     void invalidateCache();
+
+    void refreshCache();
 }

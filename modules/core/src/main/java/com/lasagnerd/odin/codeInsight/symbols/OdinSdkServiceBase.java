@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 
 public abstract class OdinSdkServiceBase implements OdinSdkService {
     private static final Logger log = Logger.getInstance(OdinSdkServiceBase.class);
+    private static final Object LOADING_MUTEX = new Object();
     protected final Project project;
     /**
      * These symbols are implicitly imported
@@ -48,7 +49,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     private final Map<String, TsOdinType> typesCache = new HashMap<>();
     private Map<OdinImport, List<OdinFile>> sdkImportsCache;
     private Map<String, EvOdinValue> builtInValues;
-    private List<OdinFile> syntheticFiles = new ArrayList<>();
+    private final List<OdinFile> syntheticFiles = new ArrayList<>();
 
 
     public OdinSdkServiceBase(Project project) {
@@ -93,11 +94,17 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
 
     @Override
     public List<OdinSymbol> getBuiltInSymbols() {
-        if (builtInSymbols == null) {
-            builtInSymbols = new ArrayList<>();
-            populateBuiltinSymbols(builtInSymbols);
-        }
+        loadBuiltinSymbols();
         return builtInSymbols;
+    }
+
+    protected void loadBuiltinSymbols() {
+        synchronized (LOADING_MUTEX) {
+            if (builtInSymbols == null) {
+                builtInSymbols = new ArrayList<>();
+                populateBuiltinSymbols(builtInSymbols);
+            }
+        }
     }
 
     @Override
@@ -124,17 +131,14 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     public EvOdinValue getValue(String name) {
         if (builtInValues == null) {
             builtInValues = new HashMap<>();
+            // This is not thread safe because it calls populate builtin symbols
             populateBuiltinValues(builtInValues);
         }
         return builtInValues.get(name);
     }
 
-    private void populateBuiltinValues(Map<String, EvOdinValue> valueMap) {
-        if (builtInSymbols == null) {
-            builtInSymbols = new ArrayList<>();
-            populateBuiltinSymbols(builtInSymbols);
-        }
-
+    protected void populateBuiltinValues(Map<String, EvOdinValue> valueMap) {
+        loadBuiltinSymbols();
         // ODIN_OS
         {
             setOdinOs(valueMap);
@@ -284,7 +288,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         return OdinInsightUtils.getDeclaredType(declaration, OdinStructType.class);
     }
 
-    private void populateBuiltinSymbols(List<OdinSymbol> builtinSymbols) {
+    protected void populateBuiltinSymbols(List<OdinSymbol> builtinSymbols) {
         // TODO Cache this stuff
         Collection<TsOdinType> builtInTypes = TsOdinBuiltInTypes.getBuiltInTypes();
         for (TsOdinType builtInType : builtInTypes) {

@@ -30,4 +30,9 @@ public class MockBuiltinSymbolsService extends OdinSdkServiceBase {
     public Optional<String> getSdkPath() {
         return Optional.of("src/test/sdk");
     }
+
+    @Override
+    public void refreshCache() {
+
+    }
 }

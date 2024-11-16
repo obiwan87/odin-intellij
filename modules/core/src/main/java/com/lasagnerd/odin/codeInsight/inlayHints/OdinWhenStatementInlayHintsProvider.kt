@@ -30,4 +30,8 @@ class OdinWhenStatementInlayHintsProvider : InlayHintsProvider {
             }
         }
     }
+
+    override fun isDumbAware(): Boolean {
+        return true
+    }
 }
