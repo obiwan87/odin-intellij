@@ -527,4 +527,8 @@ public class OdinPsiUtil {
     public static OdinRhsExpressions getRhsExpressions(OdinVariableInitializationStatement variableInitializationStatement) {
         return PsiTreeUtil.getChildOfType(variableInitializationStatement, OdinRhsExpressions.class);
     }
+
+    public static OdinExpression getExpression(OdinSwitchInClause switchInClause) {
+        return switchInClause.getSwitchInExpressionScope().getExpression();
+    }
 }

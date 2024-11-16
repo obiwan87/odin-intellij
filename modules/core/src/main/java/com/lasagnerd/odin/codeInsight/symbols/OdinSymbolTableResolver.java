@@ -506,7 +506,16 @@ public class OdinSymbolTableResolver {
             // Since odin does not support closures, all symbols above the current scope, are visible only if they are constants
             boolean isContainingBlockProcedure = containingScopeBlock instanceof OdinProcedureDefinition;
             boolean constantsOnlyNext = isContainingBlockProcedure || constantsOnly;
-            OdinSymbolTable parentSymbolTable = findSymbols(containingScopeBlock, constantsOnlyNext);
+
+            OdinScopeArea nextContainingScopeBlock = containingScopeBlock;
+            if(containingScopeBlock instanceof OdinSwitchInExpressionScope switchInExpressionScope) {
+                // In the AST the expression in "switch v in expr" is within the switch scope area, however,
+                // semantically the variable "v" does not belong in the scope of the expression. Hence, we skip
+                // it
+                nextContainingScopeBlock = PsiTreeUtil.getParentOfType(switchInExpressionScope, OdinScopeArea.class);
+            }
+
+            OdinSymbolTable parentSymbolTable = findSymbols(nextContainingScopeBlock, constantsOnlyNext);
             symbolTable.setParentSymbolTable(parentSymbolTable);
 
             // Bring field declarations and swizzle into scope

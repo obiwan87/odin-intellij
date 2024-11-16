@@ -886,7 +886,8 @@ else                                 ::= ELSE_TOKEN
 switchStatement                      ::= [directive] [labelDeclaration] switchBlock {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]}
 
 switchTypeVariableDeclaration        ::= AND? declaredIdentifier
-switchInClause                       ::= switchTypeVariableDeclaration IN expression
+switchInClause                       ::= switchTypeVariableDeclaration IN switchInExpressionScope {methods=[getExpression]}
+switchInExpressionScope              ::= expression {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 switchBlock                          ::= SWITCH [switchInClause | switchHead] switchBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea" pin=1 recoverWhile=switchRecover}
 private switchRecover                       ::= !(eos | SWITCH)
 private switchHead                   ::= <<enterNoBlockMode>> [[controlFlowInit SEMICOLON] [expression]] <<exitNoBlockMode>>

@@ -245,6 +245,13 @@ testTypeSwitch :: proc() {
     case Line:
         test2 := t
     }
+
+    switch x in x {
+    case Point:
+        test3 := x
+    case Line:
+        test4 := x
+    }
 }
 
 binary_operators_on_arrays :: proc() {
