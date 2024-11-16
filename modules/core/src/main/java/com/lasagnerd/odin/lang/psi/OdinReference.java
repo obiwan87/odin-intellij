@@ -47,8 +47,8 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
         if(getElement().getParent() instanceof OdinNamedArgument namedArgument) {
             OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(getElement());
-            OdinInsightUtils.OdinCall odinCall = OdinInsightUtils.getOdinCall(symbolTable, namedArgument);
-            if(odinCall.callingType() instanceof TsOdinParameterOwner parameterOwner) {
+            OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(symbolTable, namedArgument);
+            if(callInfo.callingType() instanceof TsOdinParameterOwner parameterOwner) {
                 List<TsOdinParameter> parameters = parameterOwner.getParameters();
                 TsOdinParameter tsOdinParameter = parameters.stream().filter(p -> p.getName().equals(namedArgument.getIdentifier().getText()))
                         .findFirst().orElse(null);

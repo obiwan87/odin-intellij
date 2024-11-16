@@ -383,14 +383,14 @@ public class OdinTypeSpecializer {
         return specializedType;
     }
 
-    public static @NotNull TsOdinType specializeUnionOrGetCached(OdinSymbolTable symbolTable,
+    public static @NotNull TsOdinUnionType specializeUnionOrGetCached(OdinSymbolTable symbolTable,
                                                                  TsOdinUnionType unionType,
                                                                  @NotNull List<OdinArgument> argumentList) {
         TsOdinType specializedType = symbolTable.getSpecializedType(unionType, new ArrayList<>(argumentList));
         if (specializedType == null) {
             specializedType = specializeAndCacheUnion(symbolTable, unionType, argumentList);
         }
-        return specializedType;
+        return (TsOdinUnionType) specializedType;
     }
 
     public static @NotNull TsOdinStructType specializeStructOrGetCached(OdinSymbolTable symbolTable,

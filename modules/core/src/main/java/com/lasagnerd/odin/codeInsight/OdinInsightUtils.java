@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import static com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType.*;
 
+@SuppressWarnings("unused")
 public class OdinInsightUtils {
 
     public static final List<Class<?>> OPERAND_BOUNDARY_CLASSES = List.of(
@@ -313,6 +314,19 @@ public class OdinInsightUtils {
             return;
         }
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, field.getType());
+        TsOdinStructType structType = unwrapFromPointerType(tsOdinType);
+
+        if (structType != null) {
+            OdinType psiType = structType.getPsiType();
+            if (psiType instanceof OdinStructType psiStructType) {// TODO This fails at models.odin in Engin3
+
+                List<OdinSymbol> structFields = getStructFields(structType.getSymbolTable(), psiStructType);
+                symbols.addAll(structFields);
+            }
+        }
+    }
+
+    private static @Nullable TsOdinStructType unwrapFromPointerType(TsOdinType tsOdinType) {
         TsOdinStructType structType;
         if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
             if (tsOdinPointerType.getDereferencedType() instanceof TsOdinStructType) {
@@ -325,15 +339,7 @@ public class OdinInsightUtils {
         } else {
             structType = null;
         }
-
-        if (structType != null) {
-            OdinType psiType = structType.getPsiType();
-            if (psiType instanceof OdinStructType psiStructType) {// TODO This fails at models.odin in Engin3
-
-                List<OdinSymbol> structFields = getStructFields(structType.getSymbolTable(), psiStructType);
-                symbols.addAll(structFields);
-            }
-        }
+        return structType;
     }
 
     public static @NotNull List<OdinFieldDeclarationStatement> getStructFieldsDeclarationStatements(OdinStructType structType) {
@@ -929,7 +935,7 @@ public class OdinInsightUtils {
         return getStructFields(tsOdinStructType.getSymbolTable(), (OdinStructType) tsOdinStructType.getPsiType());
     }
 
-    public static @NotNull OdinCall getOdinCall(OdinSymbolTable symbolTable, OdinArgument argument) {
+    public static @NotNull OdinInsightUtils.OdinCallInfo getCallInfo(OdinSymbolTable symbolTable, OdinArgument argument) {
         @Nullable OdinPsiElement callingElement = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class, OdinCallType.class);
         TsOdinType tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
         List<OdinArgument> argumentList = Collections.emptyList();
@@ -948,9 +954,29 @@ public class OdinInsightUtils {
                 argumentList = odinCallType.getArgumentList();
             }
         }
-        return new OdinCall(callingElement, tsOdinType, argumentList);
+        return new OdinCallInfo(callingElement, tsOdinType, argumentList);
     }
 
-    public record OdinCall(OdinPsiElement callingElement, TsOdinType callingType, List<OdinArgument> argumentList) {
+    public static <T extends PsiElement> T findPrevParent(PsiElement ancestor, PsiElement child, Class<T> clazz) {
+        return findPrevParent(ancestor, child, true, clazz);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends PsiElement> T findPrevParent(PsiElement ancestor, PsiElement child, boolean strict, Class<T> clazz) {
+        if (ancestor == child && !strict) {
+            if (clazz.isInstance(ancestor)) {
+                return (T) ancestor;
+            }
+        }
+
+        PsiElement prevParent = PsiTreeUtil.findPrevParent(ancestor, child);
+        if (clazz.isInstance(prevParent)) {
+            return (T) prevParent;
+        }
+
+        return null;
+    }
+
+    public record OdinCallInfo(OdinPsiElement callingElement, TsOdinType callingType, List<OdinArgument> argumentList) {
     }
 }
