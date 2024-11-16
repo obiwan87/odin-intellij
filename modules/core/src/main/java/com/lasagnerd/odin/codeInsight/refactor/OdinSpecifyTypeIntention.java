@@ -206,38 +206,38 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
             }
         }
 
-//        public void printType(TsOdinType tsOdinType) {
-//            if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
+//        public void printType(TsOdinType callingType) {
+//            if (callingType instanceof TsOdinArrayType tsOdinArrayType) {
 //                typePresentation.append("[");
 //                typePresentation.append(tsOdinArrayType.getPsiSizeElement().getText());
 //                typePresentation.append("]");
 //                printType(tsOdinArrayType.getElementType());
 //            }
 //
-//            if (tsOdinType instanceof TsOdinSliceType tsOdinSliceType) {
+//            if (callingType instanceof TsOdinSliceType tsOdinSliceType) {
 //                typePresentation.append("[]");
 //                printType(tsOdinSliceType.getElementType());
 //            }
 //
-//            if (tsOdinType instanceof TsOdinMapType tsOdinMapType) {
+//            if (callingType instanceof TsOdinMapType tsOdinMapType) {
 //                typePresentation.append("map[");
 //                printType(tsOdinMapType.getKeyType());
 //                typePresentation.append("]");
 //                printType(tsOdinMapType.getValueType());
 //            }
 //
-//            if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
+//            if (callingType instanceof TsOdinPointerType tsOdinPointerType) {
 //                typePresentation.append("^");
 //
 //                printType(tsOdinPointerType.getDereferencedType());
 //            }
 //
-//            if (tsOdinType instanceof TsOdinMultiPointerType tsOdinMultiPointerType) {
+//            if (callingType instanceof TsOdinMultiPointerType tsOdinMultiPointerType) {
 //                typePresentation.append("[^]");
 //                printType(tsOdinMultiPointerType.getDereferencedType());
 //            }
 //
-//            if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
+//            if (callingType instanceof TsOdinProcedureType tsOdinProcedureType) {
 //                List<TsOdinType> tsOdinTypes = new ArrayList<>();
 //                typePresentation.append("proc(");
 //                if (!tsOdinProcedureType.getParameters().isEmpty()) {
@@ -245,7 +245,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
 //                    for (TsOdinParameter parameter : tsOdinProcedureType.getParameters()) {
 //                        typePresentation.append(parameter.getName());
 //                        typePresentation.append(": ");
-//                        printType(tsOdinType);
+//                        printType(callingType);
 //                        if (last != parameter) {
 //                            typePresentation.append(", ");
 //                        }
@@ -271,11 +271,11 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
 //                }
 //            }
 //
-//            if (tsOdinType instanceof TsOdinStructType structType) {
+//            if (callingType instanceof TsOdinStructType structType) {
 //                structType.getP
 //            }
 //
-//            if (tsOdinType != null && !tsOdinType.isUnknown()) {
+//            if (callingType != null && !callingType.isUnknown()) {
 //                typePresentation.append("unknown");
 //            }
 //

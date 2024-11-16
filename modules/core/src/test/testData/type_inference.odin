@@ -641,8 +641,13 @@ testImplicitEnumExpression :: proc() {
         addition : Direction = (.East) + (.North)
         addition2 := Direction.North + (.East + (.North + .South))
         bit_set_operation : Directions = bitset | ({ .North } | { .North })
-        nested_ternary := bitset | bitset | (x? { +(((+.East))) } : y? { +(.South) } : { x? .North : .West }) | a
+        nested_ternary := bitset | bitset | (x? { + (((+ .East))) } : y? { + (.South) } : { x? .North : .West }) | a
 
+        is_superset := false
+        is_superset = get_bitset() >= {.East}
+        get_bitset :: proc() -> Directions {
+            return Directions{ }
+        }
     }
 }
 

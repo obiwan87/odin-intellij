@@ -55,6 +55,7 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeChecker;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.lang.psi.impl.OdinAssignmentStatementImpl;
 import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
@@ -1678,6 +1679,17 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = loadTypeInference();
         OdinProcedureDefinition proc = findFirstProcedure(file, "testImplicitEnumExpression");
 
+        {
+            OdinAssignmentStatementImpl supersetAssignment = PsiTreeUtil.findChildrenOfType(proc, OdinAssignmentStatementImpl.class).stream()
+                    .filter(a -> a.getLhsExpressions().getText().equals("is_superset"))
+                    .findFirst()
+                    .orElseThrow();
+
+            OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(supersetAssignment, OdinImplicitSelectorExpression.class);
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
+            assertEquals("Direction", tsOdinEnumType.getName());
+        }
 
         {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "nested_ternary");

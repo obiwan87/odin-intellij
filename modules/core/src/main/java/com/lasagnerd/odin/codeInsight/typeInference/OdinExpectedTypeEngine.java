@@ -9,7 +9,6 @@ import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -164,58 +163,39 @@ public class OdinExpectedTypeEngine {
         }
 
         if (context instanceof OdinArgument argument) {
-            @Nullable OdinPsiElement callExpression = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class, OdinCallType.class);
-            if (callExpression != null) {
-                TsOdinType tsOdinType;
-                List<OdinArgument> argumentList;
-                if (callExpression instanceof OdinCallExpression odinCallExpression) {
-                    tsOdinType = OdinInferenceEngine.doInferType(symbolTable, odinCallExpression.getExpression());
-                    // Here we have to get a meta type, otherwise the call expression does not make sense
-                    if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-                        tsOdinType = tsOdinMetaType.representedType();
-                    } else if (!(tsOdinType.baseType(true) instanceof TsOdinProcedureType)) {
-                        tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
-                    }
-                    argumentList = odinCallExpression.getArgumentList();
-                } else if (callExpression instanceof OdinCallType odinCallType) {
-                    tsOdinType = OdinTypeResolver.resolveType(symbolTable, odinCallType.getType());
+            OdinInsightUtils.OdinCall callingCall = OdinInsightUtils.getOdinCall(symbolTable, argument);
 
-                    argumentList = odinCallType.getArgumentList();
-                } else {
-                    tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
-                    argumentList = Collections.emptyList();
-                }
-
-                TsOdinMetaType.MetaType metaType = tsOdinType.getMetaType();
+            if (!callingCall.callingType().isUnknown()) {
+                TsOdinMetaType.MetaType metaType = callingCall.callingType().getMetaType();
                 if (metaType == ALIAS) {
-                    metaType = tsOdinType.baseType(true).getMetaType();
+                    metaType = callingCall.callingType().baseType(true).getMetaType();
                 }
 
                 if (metaType == PROCEDURE) {
-                    TsOdinProcedureType callingProcedure = (TsOdinProcedureType) tsOdinType.baseType(true);
-                    TsOdinProcedureType specializeProcedure = OdinTypeSpecializer.specializeProcedure(symbolTable, argumentList, callingProcedure);
-                    Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(specializeProcedure.getParameters(), argumentList);
+                    TsOdinProcedureType callingProcedure = (TsOdinProcedureType) callingCall.callingType().baseType(true);
+                    TsOdinProcedureType specializeProcedure = OdinTypeSpecializer.specializeProcedure(symbolTable, callingCall.argumentList(), callingProcedure);
+                    Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(specializeProcedure.getParameters(), callingCall.argumentList());
                     if (argumentToParameterMap != null) {
                         TsOdinParameter tsOdinParameter = argumentToParameterMap.get(topMostExpression);
                         return propagateTypeDown(tsOdinParameter.getType(), topMostExpression, expression);
                     }
                 } else if (metaType == PROCEDURE_GROUP) {
-                    TsOdinProcedureGroup callingProcedureGroup = (TsOdinProcedureGroup) tsOdinType.baseType(true);
-                    OdinInferenceEngine.ProcedureRankingResult result = OdinProcedureRanker.findBestProcedure(symbolTable, callingProcedureGroup, argumentList);
+                    TsOdinProcedureGroup callingProcedureGroup = (TsOdinProcedureGroup) callingCall.callingType().baseType(true);
+                    OdinInferenceEngine.ProcedureRankingResult result = OdinProcedureRanker.findBestProcedure(symbolTable, callingProcedureGroup, callingCall.argumentList());
                     TsOdinProcedureType callingProcedure = result.bestProcedure();
                     if (callingProcedure != null) {
                         // TODO get specialized parameter type instead
-                        Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(callingProcedure.getParameters(), argumentList);
+                        Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(callingProcedure.getParameters(), callingCall.argumentList());
                         if (argumentToParameterMap != null) {
                             TsOdinParameter tsOdinParameter = argumentToParameterMap.get(topMostExpression);
                             return propagateTypeDown(tsOdinParameter.getType(), topMostExpression, expression);
                         }
                     } else {
-                        boolean allUnnamed = argumentList.stream().allMatch(a -> a instanceof OdinUnnamedArgument);
+                        boolean allUnnamed = callingCall.argumentList().stream().allMatch(a -> a instanceof OdinUnnamedArgument);
                         if (!allUnnamed)
                             return TsOdinBuiltInTypes.UNKNOWN;
 
-                        int argumentIndex = argumentList.indexOf(argument);
+                        int argumentIndex = callingCall.argumentList().indexOf(argument);
                         TsOdinType argumentType = null;
                         for (var entry : result.compatibleProcedures()) {
                             TsOdinProcedureType procedureType = entry.getFirst();
@@ -238,24 +218,24 @@ public class OdinExpectedTypeEngine {
                     }
                 } else if (metaType == STRUCT) {
                     // TODO get specialized parameter type instead
-                    TsOdinStructType structType = (TsOdinStructType) tsOdinType.baseType(true);
-                    Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(structType.getParameters(), argumentList);
+                    TsOdinStructType structType = (TsOdinStructType) callingCall.callingType().baseType(true);
+                    Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(structType.getParameters(), callingCall.argumentList());
                     if (argumentToParameterMap != null) {
                         TsOdinParameter tsOdinParameter = argumentToParameterMap.get(topMostExpression);
                         return propagateTypeDown(tsOdinParameter.getType(), topMostExpression, expression);
                     }
                 } else if (metaType == UNION) {
                     // TODO get specialized parameter type instead
-                    TsOdinUnionType unionType = (TsOdinUnionType) tsOdinType.baseType(true);
-                    Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(unionType.getParameters(), argumentList);
+                    TsOdinUnionType unionType = (TsOdinUnionType) callingCall.callingType().baseType(true);
+                    Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(unionType.getParameters(), callingCall.argumentList());
                     if (argumentToParameterMap != null) {
                         TsOdinParameter tsOdinParameter = argumentToParameterMap.get(topMostExpression);
                         return propagateTypeDown(tsOdinParameter.getType(), topMostExpression, expression);
                     }
-                } else if (callExpression instanceof OdinCallExpression odinCallExpression &&
+                } else if (callingCall.callingElement() instanceof OdinCallExpression odinCallExpression &&
                         (odinCallExpression.getExpression().parenthesesUnwrap() instanceof OdinRefExpression
                                 || odinCallExpression.getExpression().parenthesesUnwrap() instanceof OdinTypeDefinitionExpression)) {
-                    return propagateTypeDown(tsOdinType, topMostExpression, expression);
+                    return propagateTypeDown(callingCall.callingType(), topMostExpression, expression);
                 }
             }
         }

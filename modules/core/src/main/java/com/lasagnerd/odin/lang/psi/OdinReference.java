@@ -12,9 +12,13 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameter;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameterOwner;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
     public static Logger LOG = Logger.getInstance(OdinReference.class);
@@ -39,6 +43,20 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
                 return symbol.getDeclaredIdentifier();
             }
             return null;
+        }
+
+        if(getElement().getParent() instanceof OdinNamedArgument namedArgument) {
+            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(getElement());
+            OdinInsightUtils.OdinCall odinCall = OdinInsightUtils.getOdinCall(symbolTable, namedArgument);
+            if(odinCall.callingType() instanceof TsOdinParameterOwner parameterOwner) {
+                List<TsOdinParameter> parameters = parameterOwner.getParameters();
+                TsOdinParameter tsOdinParameter = parameters.stream().filter(p -> p.getName().equals(namedArgument.getIdentifier().getText()))
+                        .findFirst().orElse(null);
+
+                if(tsOdinParameter != null) {
+                    return tsOdinParameter.getIdentifier();
+                }
+            }
         }
 
         try {

@@ -12,7 +12,7 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinStructType extends TsOdinGenericType {
+public class TsOdinStructType extends TsOdinGenericType implements TsOdinParameterOwner {
 
     private List<TsOdinParameter> parameters = new ArrayList<>();
     private Map<String, TsOdinType> fields = new HashMap<>();

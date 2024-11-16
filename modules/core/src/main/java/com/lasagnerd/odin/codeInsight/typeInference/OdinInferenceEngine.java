@@ -327,7 +327,8 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             IElementType operatorType = PsiUtilCore.getElementType(binaryExpression.getOperator());
-            if (OdinPsiUtil.SET_OPERATORS.contains(operatorType)) {
+            if (OdinPsiUtil.SET_OPERATORS.contains(operatorType)
+                    || OdinPsiUtil.COMPARISON_OPERATORS.contains(operatorType)) {
                 return tsOdinType;
             }
 

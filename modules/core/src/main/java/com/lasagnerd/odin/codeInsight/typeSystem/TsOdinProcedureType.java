@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinProcedureType extends TsOdinType {
+public class TsOdinProcedureType extends TsOdinType implements TsOdinParameterOwner {
     List<TsOdinType> returnTypes = new ArrayList<>();
     List<TsOdinParameter> parameters = new ArrayList<>();
     List<TsOdinParameter> returnParameters = new ArrayList<>();

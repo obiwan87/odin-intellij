@@ -10,7 +10,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinUnionType extends TsOdinGenericType {
+public class TsOdinUnionType extends TsOdinGenericType implements TsOdinParameterOwner {
     List<TsOdinUnionVariant> variants = new ArrayList<>();
     List<TsOdinParameter> parameters = new ArrayList<>();
 
