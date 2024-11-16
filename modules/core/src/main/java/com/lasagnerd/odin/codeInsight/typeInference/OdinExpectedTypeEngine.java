@@ -181,15 +181,17 @@ public class OdinExpectedTypeEngine {
                     }
                 } else if (metaType == PROCEDURE_GROUP) {
                     TsOdinProcedureGroup callingProcedureGroup = (TsOdinProcedureGroup) callInfo.callingType().baseType(true);
-                    OdinInferenceEngine.ProcedureRankingResult result = OdinProcedureRanker.findBestProcedure(symbolTable, callingProcedureGroup, callInfo.argumentList());
+                    OdinInferenceEngine.ProcedureRankingResult result = OdinProcedureRanker
+                            .findBestProcedure(symbolTable, callingProcedureGroup, callInfo.argumentList());
 
-                    TsOdinProcedureType callingProcedure = OdinTypeSpecializer.specializeProcedure(
-                            symbolTable,
-                            callInfo.argumentList(),
-                            result.bestProcedure()
-                    );
-                    if (!callingProcedure.isUnknown()) {
-                        Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(callingProcedure.getParameters(), callInfo.argumentList());
+
+                    if (result.bestProcedure() != null) {
+                        TsOdinProcedureType specializedProcedure = OdinTypeSpecializer.specializeProcedure(
+                                symbolTable,
+                                callInfo.argumentList(),
+                                result.bestProcedure()
+                        );
+                        Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(specializedProcedure.getParameters(), callInfo.argumentList());
                         if (argumentToParameterMap != null) {
                             TsOdinParameter tsOdinParameter = argumentToParameterMap.get(topMostExpression);
                             return propagateTypeDown(tsOdinParameter.getType(), topMostExpression, expression);
@@ -203,9 +205,14 @@ public class OdinExpectedTypeEngine {
                         TsOdinType argumentType = null;
                         for (var entry : result.compatibleProcedures()) {
                             TsOdinProcedureType procedureType = entry.getFirst();
+                            TsOdinProcedureType specializeProcedure = OdinTypeSpecializer.specializeProcedure(
+                                    symbolTable,
+                                    callInfo.argumentList(),
+                                    procedureType
+                            );
                             TsOdinType previousArgument = argumentType;
-                            if (procedureType.getParameters().size() > argumentIndex) {
-                                argumentType = procedureType.getParameters().get(argumentIndex).getType().baseType();
+                            if (specializeProcedure.getParameters().size() > argumentIndex) {
+                                argumentType = specializeProcedure.getParameters().get(argumentIndex).getType().baseType();
                             } else {
                                 return TsOdinBuiltInTypes.UNKNOWN;
                             }
