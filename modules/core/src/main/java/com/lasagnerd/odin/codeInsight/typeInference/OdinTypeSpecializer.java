@@ -4,7 +4,6 @@ import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -13,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.inferType;
+import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.inferTypeInExplicitMode;
 
 public class OdinTypeSpecializer {
 
@@ -94,6 +93,7 @@ public class OdinTypeSpecializer {
     private static @NotNull TsOdinParameter cloneWithType(TsOdinParameter tsOdinParameter, TsOdinType tsOdinType) {
         TsOdinParameter specializedParameter = new TsOdinParameter();
         specializedParameter.setType(tsOdinType);
+        specializedParameter.setParameterDeclaration(tsOdinParameter.getParameterDeclaration());
         specializedParameter.setName(tsOdinParameter.getName());
         specializedParameter.setIndex(tsOdinParameter.getIndex());
         specializedParameter.setPsiType(tsOdinParameter.getPsiType());
@@ -147,12 +147,7 @@ public class OdinTypeSpecializer {
                 OdinExpression argumentExpression = entry.getKey();
                 TsOdinParameter tsOdinParameter = entry.getValue();
 
-                // When an argument expression is implicit, we cannot use it
-                PsiElement element = PsiTreeUtil.findChildOfAnyType(argumentExpression,
-                        false,
-                        OdinCompoundLiteralUntyped.class,
-                        OdinImplicitSelectorExpression.class);
-                if(element != null)
+                if (!tsOdinParameter.hasPolymorphicDeclarations())
                     continue;
 
                 TsOdinType argumentType = resolveArgumentType(argumentExpression, tsOdinParameter, outerScope);
@@ -301,7 +296,7 @@ public class OdinTypeSpecializer {
 
 //        EvOdinValue evOdinValue = OdinExpressionEvaluator.evaluate(argumentExpression);
         TsOdinType parameterType = parameter.getType();
-        TsOdinType argumentType = inferType(symbolTable, argumentExpression);
+        TsOdinType argumentType = inferTypeInExplicitMode(symbolTable, argumentExpression);
         if (parameterType != null) {
             if (argumentType instanceof TsOdinMetaType metaType && (
                     parameterType.isTypeId() || parameterType.getMetaType() == metaType.getRepresentedMetaType() ||

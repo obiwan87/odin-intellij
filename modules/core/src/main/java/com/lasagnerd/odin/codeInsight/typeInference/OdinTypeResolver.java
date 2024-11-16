@@ -526,16 +526,19 @@ public class OdinTypeResolver extends OdinVisitor {
         List<TsOdinParameter> parameters = createParameters(tsOdinUnionType, unionType.getParamEntryList());
         tsOdinUnionType.setParameters(parameters);
         addKnownType(tsOdinUnionType, typeDeclaredIdentifier, typeDeclaration, tsOdinUnionType.getSymbolTable());
-        OdinUnionBody unionBody = unionType.getUnionBlock().getUnionBody();
-        if (unionBody != null) {
-            List<OdinType> types = unionBody.getTypeList();
-            for (OdinType type : types) {
-                TsOdinType tsOdinType = doResolveType(tsOdinUnionType.getSymbolTable(), type);
+        OdinUnionBlock unionBlock = unionType.getUnionBlock();
+        if (unionBlock != null) {
+            OdinUnionBody unionBody = unionBlock.getUnionBody();
+            if (unionBody != null) {
+                List<OdinType> types = unionBody.getTypeList();
+                for (OdinType type : types) {
+                    TsOdinType tsOdinType = doResolveType(tsOdinUnionType.getSymbolTable(), type);
 
-                TsOdinUnionVariant tsOdinUnionVariant = new TsOdinUnionVariant();
-                tsOdinUnionVariant.setPsiType(type);
-                tsOdinUnionVariant.setType(tsOdinType);
-                tsOdinUnionType.getVariants().add(tsOdinUnionVariant);
+                    TsOdinUnionVariant tsOdinUnionVariant = new TsOdinUnionVariant();
+                    tsOdinUnionVariant.setPsiType(type);
+                    tsOdinUnionVariant.setType(tsOdinType);
+                    tsOdinUnionType.getVariants().add(tsOdinUnionVariant);
+                }
             }
         }
         this.type = tsOdinUnionType;
@@ -670,6 +673,7 @@ public class OdinTypeResolver extends OdinVisitor {
             OdinDeclaredIdentifier declaredIdentifier = odinParameterInitialization.getParameter().getDeclaredIdentifier();
 
             TsOdinParameter tsOdinParameter = new TsOdinParameter();
+            tsOdinParameter.setParameterDeclaration(odinParameterInitialization);
             tsOdinParameter.setPsiType(odinParameterInitialization.getTypeDefinition());
             tsOdinParameter.setIdentifier(declaredIdentifier);
             tsOdinParameter.setExplicitPolymorphicParameter(isValuePolymorphic(declaredIdentifier));
@@ -686,6 +690,7 @@ public class OdinTypeResolver extends OdinVisitor {
             for (OdinParameter odinParameter : parameterDeclaration.getParameterList()) {
                 OdinDeclaredIdentifier declaredIdentifier = odinParameter.getDeclaredIdentifier();
                 TsOdinParameter tsOdinParameter = new TsOdinParameter();
+                tsOdinParameter.setParameterDeclaration(odinParameterDeclarator);
                 tsOdinParameter.setPsiType(odinParameterDeclarator.getTypeDefinition());
                 tsOdinParameter.setIdentifier(declaredIdentifier);
                 tsOdinParameter.setExplicitPolymorphicParameter(isValuePolymorphic(declaredIdentifier));
@@ -698,11 +703,12 @@ public class OdinTypeResolver extends OdinVisitor {
         }
 
         if (parameterDeclaration instanceof OdinUnnamedParameter unnamedParameter) {
-            TsOdinParameter tsOdinParameterSpec = new TsOdinParameter();
-            tsOdinParameterSpec.setPsiType(unnamedParameter.getTypeDefinition());
-            tsOdinParameterSpec.setIndex(k);
-            tsOdinParameterSpec.setAnyInt(anyInt);
-            return Collections.singletonList(tsOdinParameterSpec);
+            TsOdinParameter tsOdinParameter = new TsOdinParameter();
+            tsOdinParameter.setPsiType(unnamedParameter.getTypeDefinition());
+            tsOdinParameter.setIndex(k);
+            tsOdinParameter.setParameterDeclaration(unnamedParameter);
+            tsOdinParameter.setAnyInt(anyInt);
+            return Collections.singletonList(tsOdinParameter);
         }
 
         return Collections.emptyList();
