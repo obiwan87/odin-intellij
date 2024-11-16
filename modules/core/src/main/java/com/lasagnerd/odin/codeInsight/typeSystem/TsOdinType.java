@@ -49,6 +49,10 @@ public abstract class TsOdinType {
         return TsOdinBuiltInTypes.UNKNOWN == this;
     }
 
+    public boolean isUndecided() {
+        return TsOdinBuiltInTypes.UNDECIDED == this;
+    }
+
     @SuppressWarnings("unchecked")
     public <T extends OdinType> T type() {
         return (T) psiType;

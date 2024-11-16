@@ -14,9 +14,9 @@ public class TsOdinBitSetType extends TsOdinType {
     @Override
     public String getLabel() {
         if (backingType == null) {
-            return "bit_set[" + elementType.getLabel() + "]";
+            return "bit_set[" + label(elementType) + "]";
         }
-        return "bit_set[" + elementType.getLabel() + "; " + backingType.getLabel() + "]";
+        return "bit_set[" + label(elementType) + "; " + label(backingType) + "]";
     }
 
     @Override

@@ -93,8 +93,8 @@ class OdinPsiTestHelpers {
         return Objects.requireNonNull(shapeVariable.getRhsExpressions()).getExpressionList().getFirst();
     }
 
-    static @NotNull OdinProcedureDefinition findFirstProcedure(@NotNull OdinFile odinFile, String procedureName) {
-        Collection<OdinConstantInitializationStatement> constantInitializationStatements = PsiTreeUtil.findChildrenOfType(odinFile.getFileScope(),
+    static @NotNull OdinProcedureDefinition findFirstProcedure(@NotNull PsiElement element, String procedureName) {
+        Collection<OdinConstantInitializationStatement> constantInitializationStatements = PsiTreeUtil.findChildrenOfType(element,
                 OdinConstantInitializationStatement.class);
 
         return constantInitializationStatements.stream()

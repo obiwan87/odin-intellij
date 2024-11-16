@@ -503,6 +503,8 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitBitSetType(@NotNull OdinBitSetType o) {
         TsOdinBitSetType tsOdinBitSetType = new TsOdinBitSetType();
+        tsOdinBitSetType.setPsiType(o);
+        initializeNamedType(tsOdinBitSetType);
         OdinExpression elementTypeExpression = o.getExpression();
         TsOdinType tsOdinElementType = doResolveType(symbolTable, elementTypeExpression);
         tsOdinBitSetType.setElementType(tsOdinElementType);

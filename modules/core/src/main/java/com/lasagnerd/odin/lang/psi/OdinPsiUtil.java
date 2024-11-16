@@ -63,16 +63,89 @@ public class OdinPsiUtil {
             OdinTypes.ANDAND
     );
 
-    public static final TokenSet COMPARISON_OPERATORS = TokenSet.create(
+    // TokenSet for comparison operators
+    public static final @NotNull TokenSet COMPARISON_OPERATORS = TokenSet.create(
             OdinTypes.LT,
             OdinTypes.GT,
             OdinTypes.LTE,
             OdinTypes.GTE,
             OdinTypes.EQEQ,
-            OdinTypes.NEQ,
-            OdinTypes.OROR,
-            OdinTypes.ANDAND
+            OdinTypes.NEQ
     );
+
+    // TokenSet for integers
+    public static final @NotNull TokenSet INTEGER_ARITHMETIC_OPERATORS = TokenSet.create(
+            OdinTypes.PLUS,
+            OdinTypes.MINUS,
+            OdinTypes.STAR,
+            OdinTypes.DIV,
+            OdinTypes.MOD,
+            OdinTypes.REMAINDER
+    );
+
+    public static final @NotNull TokenSet INTEGER_BITWISE_OPERATORS = TokenSet.create(
+            OdinTypes.AND,
+            OdinTypes.PIPE,
+            OdinTypes.TILDE,
+            OdinTypes.ANDNOT,
+            OdinTypes.LSHIFT,
+            OdinTypes.RSHIFT
+    );
+
+    // TokenSet for floats
+    public static final @NotNull TokenSet FLOAT_ARITHMETIC_OPERATORS = TokenSet.create(
+            OdinTypes.PLUS,
+            OdinTypes.MINUS,
+            OdinTypes.STAR,
+            OdinTypes.DIV
+    );
+
+    // TokenSet for enums
+    public static final @NotNull TokenSet ENUM_ARITHMETIC_OPERATORS = TokenSet.create(
+            OdinTypes.PLUS,
+            OdinTypes.MINUS
+    );
+
+    public static final @NotNull TokenSet ENUM_BITWISE_OPERATORS = TokenSet.create(
+            OdinTypes.AND,
+            OdinTypes.PIPE,
+            OdinTypes.TILDE,
+            OdinTypes.ANDNOT
+    );
+
+    // TokenSet for arrays of numeric types
+    public static final @NotNull TokenSet ARRAY_ARITHMETIC_OPERATORS = TokenSet.create(
+            OdinTypes.PLUS,
+            OdinTypes.MINUS,
+            OdinTypes.STAR,
+            OdinTypes.DIV
+    );
+
+    // TokenSet for matrices
+    public static final @NotNull TokenSet MATRIX_ARITHMETIC_OPERATORS = TokenSet.create(
+            OdinTypes.PLUS,
+            OdinTypes.MINUS,
+            OdinTypes.STAR,
+            OdinTypes.DIV
+    );
+
+    // TokenSet for constant strings
+    public static final @NotNull TokenSet STRING_ARITHMETIC_OPERATORS = TokenSet.create(
+            OdinTypes.PLUS
+    );
+
+    // TokenSet for sets
+    public static final @NotNull TokenSet SET_OPERATORS = TokenSet.create(
+            OdinTypes.PLUS,
+            OdinTypes.MINUS,
+            OdinTypes.AND,
+            OdinTypes.PIPE,
+            OdinTypes.TILDE,
+            OdinTypes.ANDNOT,
+            OdinTypes.IN,
+            OdinTypes.NOT_IN
+    );
+
 
     public static boolean shouldAskParentForReferences(OdinImportPath ignored,
                                                        @NotNull PsiReferenceService.Hints ignored2) {

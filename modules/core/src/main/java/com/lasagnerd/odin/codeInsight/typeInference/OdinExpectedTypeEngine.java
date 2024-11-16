@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.inferTypeInExplicitMode;
 import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.inferTypeOfCompoundLiteral;
 import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType.*;
 
@@ -87,7 +88,7 @@ public class OdinExpectedTypeEngine {
                 List<OdinExpression> lhsExpressions = statement.getLhsExpressions().getExpressionList();
                 if (lhsExpressions.size() > index) {
                     OdinExpression lhsExpression = lhsExpressions.get(index);
-                    return OdinInferenceEngine.inferType(symbolTable, lhsExpression);
+                    return propagateTypeDown(OdinInferenceEngine.inferType(symbolTable, lhsExpression), topMostExpression, expression);
                 }
             }
 
@@ -108,9 +109,10 @@ public class OdinExpectedTypeEngine {
 
             TsOdinType tsOdinType = null;
             if (compoundLiteral instanceof OdinCompoundLiteralUntyped compoundLiteralUntyped) {
-                tsOdinType = inferExpectedType(symbolTable, (OdinExpression) compoundLiteralUntyped.getParent());
-
+                OdinCompoundLiteralExpression parent = (OdinCompoundLiteralExpression) compoundLiteralUntyped.getParent();
+                tsOdinType = OdinInferenceEngine.inferType(symbolTable, parent);
             }
+
             if (compoundLiteral instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
                 tsOdinType = OdinTypeResolver.resolveType(symbolTable, compoundLiteralTyped.getTypeContainer().getType());
             }
@@ -272,54 +274,102 @@ public class OdinExpectedTypeEngine {
         if (context instanceof OdinConstantInitializationStatement constantInitializationStatement) {
             OdinType type = constantInitializationStatement.getType();
             if (type != null) {
-                return OdinTypeResolver.resolveType(symbolTable, type);
+                return propagateTypeDown(OdinTypeResolver.resolveType(symbolTable, type), topMostExpression, expression);
             }
         }
 
         if (context instanceof OdinVariableInitializationStatement variableInitializationStatement) {
             OdinType type = variableInitializationStatement.getType();
             if (type != null) {
-                return OdinTypeResolver.resolveType(symbolTable, type);
+                return propagateTypeDown(OdinTypeResolver.resolveType(symbolTable, type), topMostExpression, expression);
             }
         }
 
         if (context instanceof OdinParameterInitialization parameterInitialization) {
             OdinType declaredType = parameterInitialization.getTypeDefinition();
             if (declaredType != null) {
-                return OdinTypeResolver.resolveType(symbolTable, declaredType);
+                return propagateTypeDown(OdinTypeResolver.resolveType(symbolTable, declaredType), topMostExpression, expression);
+            }
+        }
+        if (context instanceof OdinIndex index && index.getParent() instanceof OdinIndexExpression indexExpression) {
+            TsOdinType tsOdinType = OdinInferenceEngine.inferTypeInExplicitMode(symbolTable, indexExpression.getExpression());
+            TsOdinType baseType = tsOdinType.baseType(true);
+            if (baseType instanceof TsOdinArrayType tsOdinArrayType) {
+                OdinArraySize psiSizeElement = tsOdinArrayType.getPsiSizeElement();
+                if (psiSizeElement != null && psiSizeElement.getExpression() != null) {
+                    TsOdinType expectedType = inferTypeInExplicitMode(symbolTable, psiSizeElement.getExpression());
+                    if (expectedType instanceof TsOdinMetaType tsOdinMetaType) {
+                        return propagateTypeDown(tsOdinMetaType.representedType(), topMostExpression, expression);
+                    }
+                    return TsOdinBuiltInTypes.UNKNOWN;
+                }
+            } else if (baseType instanceof TsOdinMapType tsOdinMapType) {
+                return propagateTypeDown(tsOdinMapType.getKeyType(), topMostExpression, expression);
             }
         }
 
-        if (topMostExpression instanceof OdinBinaryExpression binaryExpression) {
-            TsOdinType expectedType = OdinInferenceEngine.inferType(symbolTable, binaryExpression);
-            return propagateTypeDown(expectedType, topMostExpression, expression);
-        }
-
         // TODO: add index
-        return TsOdinBuiltInTypes.VOID;
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private static TsOdinType propagateTypeDown(TsOdinType expectedType, OdinExpression rhsExpression, OdinExpression position) {
-        if (rhsExpression == position)
+    public static TsOdinType propagateTypeDown(TsOdinType expectedType, OdinExpression topExpression, OdinExpression targetExpression) {
+        if (topExpression == targetExpression)
             return expectedType;
 
 
-        if (expectedType instanceof TsOdinPointerType pointerType && rhsExpression instanceof OdinAddressExpression addressExpression) {
-            return propagateTypeDown(pointerType.getDereferencedType(), addressExpression.getExpression(), position);
-        } else if (expectedType instanceof TsOdinArrayType tsOdinArrayType && rhsExpression instanceof OdinIndexExpression indexExpression) {
-            return propagateTypeDown(tsOdinArrayType.getElementType(), indexExpression.getExpression(), position);
-        } else if (rhsExpression instanceof OdinBinaryExpression binaryExpression) {
-            PsiElement prevParent = PsiTreeUtil.findPrevParent(rhsExpression, position);
-            if (!(prevParent instanceof OdinExpression nextExpression))
+        if (expectedType instanceof TsOdinPointerType pointerType && topExpression instanceof OdinAddressExpression addressExpression) {
+            return propagateTypeDown(pointerType.getDereferencedType(), addressExpression.getExpression(), targetExpression);
+        } else if (expectedType instanceof TsOdinArrayType tsOdinArrayType && topExpression instanceof OdinIndexExpression indexExpression) {
+            return propagateTypeDown(tsOdinArrayType.getElementType(), indexExpression.getExpression(), targetExpression);
+        } else if (topExpression instanceof OdinBinaryExpression binaryExpression) {
+            OdinExpression nextExpression = findPrevParent(topExpression, targetExpression, false, OdinExpression.class);
+            if (nextExpression == null)
                 return TsOdinBuiltInTypes.UNKNOWN;
 
             if (binaryExpression.getLeft() == nextExpression || binaryExpression.getRight() == nextExpression) {
-                return propagateTypeDown(expectedType, nextExpression, position);
+                return propagateTypeDown(expectedType, nextExpression, targetExpression);
+            }
+        } else if (topExpression instanceof OdinParenthesizedExpression parenthesizedExpression) {
+            return propagateTypeDown(expectedType, parenthesizedExpression.getExpression(), targetExpression);
+        } else if (topExpression instanceof OdinTernaryExpression ternaryExpression) {
+            OdinExpression nextExpression = findPrevParent(topExpression, targetExpression, false, OdinExpression.class);
+            if (nextExpression == null)
+                return TsOdinBuiltInTypes.UNKNOWN;
+
+            if (ternaryExpression.getExpressionList().contains(targetExpression)) {
+                return propagateTypeDown(expectedType, nextExpression, targetExpression);
+            }
+        } else if (topExpression instanceof OdinUnaryExpression unaryExpression) {
+            OdinExpression nextExpression = findPrevParent(topExpression, targetExpression, false, OdinExpression.class);
+            if (nextExpression == null)
+                return TsOdinBuiltInTypes.UNKNOWN;
+
+            if (nextExpression == unaryExpression.getExpression()) {
+                return propagateTypeDown(expectedType, nextExpression, targetExpression);
             }
         }
 
         // TODO add more
         return TsOdinBuiltInTypes.UNKNOWN;
+    }
+
+    public static <T extends PsiElement> T findPrevParent(PsiElement ancestor, PsiElement child, Class<T> clazz) {
+        return findPrevParent(ancestor, child, true, clazz);
+    }
+
+    public static <T extends PsiElement> T findPrevParent(PsiElement ancestor, PsiElement child, boolean strict, Class<T> clazz) {
+        if (ancestor == child && !strict) {
+            if (clazz.isInstance(ancestor)) {
+                return (T) ancestor;
+            }
+        }
+
+        PsiElement prevParent = PsiTreeUtil.findPrevParent(ancestor, child);
+        if (clazz.isInstance(prevParent)) {
+            return (T) prevParent;
+        }
+
+        return null;
     }
 
     static @Nullable PsiElement findTypeExpectationContext(PsiElement psiElement) {
@@ -342,6 +392,31 @@ public class OdinExpectedTypeEngine {
                 new Class<?>[]{
                         OdinLhsExpressions.class,
                         OdinLhs.class,
+                }
+        );
+    }
+
+    public static PsiElement findNextBinaryExpression(PsiElement element, boolean strict) {
+        return OdinInsightUtils.findParentOfType(
+                element,
+                strict,
+                new Class<?>[]{
+                        OdinBinaryExpression.class
+                },
+                new Class<?>[]{
+                        OdinLhsExpressions.class,
+                        OdinIndex.class,
+                        OdinLhs.class,
+                        OdinReturnStatement.class,
+                        OdinRhs.class,
+                        OdinLhs.class,
+                        OdinArgument.class,
+                        OdinRhsExpressions.class,
+                        OdinCaseClause.class,
+                        OdinVariableInitializationStatement.class,
+                        OdinConstantInitializationStatement.class,
+                        OdinParameterInitialization.class,
+                        OdinCaseClause.class,
                 }
         );
     }

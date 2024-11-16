@@ -580,10 +580,20 @@ testImplicitEnumExpression :: proc() {
 
     // case-clause (ok)
     {
-        north : Direction = .NORTH
+        north : Direction = .North
         switch north {
         case .North:
             fmt.println("Hello")
+        }
+    }
+
+    south_proc :: proc() {
+        {
+            south : Direction = Direction.North
+            switch south {
+            case .North ..= .East:
+                fmt.printfln("hello")
+            }
         }
     }
 
@@ -619,11 +629,20 @@ testImplicitEnumExpression :: proc() {
     }
 
     {
-        field_proc_ret := (S{}.p)(.North)
+        field_proc_ret := (S{ }.p)(.North)
     }
 
     {
         ternary : Direction = .North if x > 1 else .South
+    }
+
+    {
+        bitset := Directions { }
+        addition : Direction = (.East) + (.North)
+        addition2 := Direction.North + (.East + (.North + .South))
+        bit_set_operation : Directions = bitset | ({ .North } | { .North })
+        nested_ternary := bitset | bitset | (x? { +(((+.East))) } : y? { +(.South) } : { x? .North : .West }) | a
+
     }
 }
 
