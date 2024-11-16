@@ -3,6 +3,17 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.7.5</h3>
+        <h4>Bugfixes</h4>
+        <ul>
+            <li>switch variables that shadow a previously defined symbol do not case stack overflow errors anymore</li>
+            <li>macros are now expanded in project directory and working directory</li>
+        </ul>
+        <h4>Improvements</h4>
+        <ul>
+            <li>implicit selector expressions have now full support</li>
+            <li>parameter hints are now shown upon completion</li>
+        </ul>
         <h3>0.7.4</h3>
         <h4>New Features</h4>
         <ul>
