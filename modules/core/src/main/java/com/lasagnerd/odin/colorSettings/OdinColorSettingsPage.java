@@ -104,7 +104,6 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             // Bit Field
             @(<ODIN_ATTRIBUTE_REF>private</ODIN_ATTRIBUTE_REF>="file")
             <ODIN_FILE_PRIVATE_BIT_FIELD>File_Private_Bit_Field</ODIN_FILE_PRIVATE_BIT_FIELD> :: bit_field <ODIN_BUILTIN_TYPE>i32</ODIN_BUILTIN_TYPE> {
-            
             }
             
             @<ODIN_ATTRIBUTE_REF>private</ODIN_ATTRIBUTE_REF>
@@ -156,6 +155,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             
             <ODIN_PKG_EXP_PROC>local_declarations</ODIN_PKG_EXP_PROC> :: proc() {
                 <ODIN_LOCAL_ENUM>Local_Enum</ODIN_LOCAL_ENUM> :: enum {
+                    <ODIN_ENUM_FIELD>A</ODIN_ENUM_FIELD>
                 }
                 <ODIN_LOCAL_STRUCT>Local_Struct</ODIN_LOCAL_STRUCT> :: struct {
                 }
@@ -167,6 +167,12 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                 <ODIN_LOCAL_CONSTANT>LOCAL_CONST</ODIN_LOCAL_CONSTANT> :: 1
             
                 <ODIN_LOCAL_VARIABLE>local_var</ODIN_LOCAL_VARIABLE> := 1
+            
+                <ODIN_LOCAL_VARIABLE_REF>local_bit_field</ODIN_LOCAL_VARIABLE_REF> := <ODIN_LOCAL_BIT_FIELD_REF>Local_Bit_Field</ODIN_LOCAL_BIT_FIELD_REF>{}
+                <ODIN_LOCAL_VARIABLE_REF>local_enum</ODIN_LOCAL_VARIABLE_REF> := <ODIN_LOCAL_ENUM_REF>Local_Enum</ODIN_LOCAL_ENUM_REF>{}
+                <ODIN_LOCAL_VARIABLE_REF>local_enum</ODIN_LOCAL_VARIABLE_REF>.<ODIN_ENUM_FIELD_REF>A</ODIN_ENUM_FIELD_REF>
+                <ODIN_LOCAL_VARIABLE_REF>local_struct</ODIN_LOCAL_VARIABLE_REF> := <ODIN_LOCAL_STRUCT_REF>Local_Struct</ODIN_LOCAL_STRUCT_REF>{}
+                <ODIN_LOCAL_VARIABLE_REF>local_union</ODIN_LOCAL_VARIABLE_REF> := <ODIN_LOCAL_UNION_REF>Local_Union</ODIN_LOCAL_UNION_REF>{}
             }
             
             <ODIN_PKG_EXP_PROC>references</ODIN_PKG_EXP_PROC> :: proc() {
@@ -257,7 +263,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                     <ODIN_LOCAL_VARIABLE>file_private_bit_field</ODIN_LOCAL_VARIABLE> := <ODIN_FILE_PRIVATE_BIT_FIELD_REF>File_Private_Bit_Field</ODIN_FILE_PRIVATE_BIT_FIELD_REF> { }
                     <ODIN_LOCAL_VARIABLE>package_private_bit_field</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_PRIVATE_BIT_FIELD_REF>Package_Private_Bit_Field</ODIN_PKG_PRIVATE_BIT_FIELD_REF> { }
                     <ODIN_LOCAL_VARIABLE>package_exported_bit_field</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_EXP_BIT_FIELD_REF>Package_Exported_Bit_Field</ODIN_PKG_EXP_BIT_FIELD_REF> { }
-            
+                    <ODIN_LOCAL_VARIABLE_REF>package_exported_bit_field</ODIN_LOCAL_VARIABLE_REF>.<ODIN_BIT_FIELD_FIELD_REF>package_exported_bit_field</ODIN_BIT_FIELD_FIELD_REF>
                     <ODIN_PACKAGE_REF>fmt</ODIN_PACKAGE_REF>.<ODIN_PKG_EXP_PROC>println</ODIN_PKG_EXP_PROC>(<ODIN_LOCAL_VARIABLE>package_exported_bit_field</ODIN_LOCAL_VARIABLE>.<ODIN_BIT_FIELD_FIELD>bit_field_field</ODIN_BIT_FIELD_FIELD>)
                 }
             
@@ -286,6 +292,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             
                     <ODIN_LOCAL_VARIABLE>s</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_EXP_STRUCT_REF>Package_Exported_Struct</ODIN_PKG_EXP_STRUCT_REF>{}
                     <ODIN_LOCAL_VARIABLE_REF>s</ODIN_LOCAL_VARIABLE_REF>.<ODIN_STRUCT_FIELD_CALL>p</ODIN_STRUCT_FIELD_CALL>()
+                    <ODIN_LOCAL_VARIABLE_REF>s</ODIN_LOCAL_VARIABLE_REF>.<ODIN_STRUCT_FIELD_REF>p</ODIN_STRUCT_FIELD_REF>
             
                     <ODIN_FILE_PRIVATE_PROC_CALL>file_private_proc</ODIN_FILE_PRIVATE_PROC_CALL>()
                     <ODIN_PKG_PRIVATE_PROC_CALL>package_private_proc</ODIN_PKG_PRIVATE_PROC_CALL>()
