@@ -288,7 +288,7 @@ bitFieldFieldDeclaration             ::= declaredIdentifier COLON type PIPE expr
 procedureLiteralType                 ::= procedureDefinition
 procedureDefinition                  ::= procedureSignature procedureBody {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 procedureSignature                   ::= procedureType
-procedureType                        ::= [directive] !procOverloadHead PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
+procedureType                        ::= [directive] !procedureGroupHead PROC stringLiteral? LPAREN [paramEntries] RPAREN [ARROW returnParameters] <<enterNoBlockMode>> [eos? whereClause eos?] <<exitNoBlockMode>>
                                             {pin="PROC" methods=[getParamEntryList]}
 whereClause                          ::= WHERE <<enterNoBlockMode>> expressionListWithRecover <<exitNoBlockMode>> {pin=1}
 procedureBody                        ::= (tripleDashBlock)
@@ -303,10 +303,11 @@ usingStatement                       ::= USING expressionListWithRecover
 directiveStatement                   ::= directive
 
 // Procedure overloading
-procedureGroupType                 ::= &procOverloadHead PROC EOS_TOKEN? procedureGroupBody {pin=2}
-private procedureGroupBody         ::= blockStart procedureRef (COMMA procedureRef)* (COMMA | EOS_TOKEN | &RBRACE) blockEnd
-private procOverloadHead              ::= PROC EOS_TOKEN? blockStart
-procedureRef                          ::= qualifiedType | simpleRefType
+procedureGroupType                 ::= &procedureGroupHead PROC EOS_TOKEN? procedureGroupBlock {pin=2 methods=[getProcedureRefList]}
+procedureGroupBlock                ::= blockStart procedureGroupBody blockEnd
+procedureGroupBody                 ::= procedureRef (COMMA procedureRef)* (COMMA | EOS_TOKEN | &RBRACE)
+private procedureGroupHead         ::= PROC EOS_TOKEN? blockStart
+procedureRef                       ::= qualifiedType | simpleRefType
 
 // TYPES
 

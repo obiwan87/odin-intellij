@@ -24,7 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class OdinPsiUtil {
 
@@ -530,5 +533,12 @@ public class OdinPsiUtil {
 
     public static OdinExpression getExpression(OdinSwitchInClause switchInClause) {
         return switchInClause.getSwitchInExpressionScope().getExpression();
+    }
+
+    public static List<OdinProcedureRef> getProcedureRefList(OdinProcedureGroupType procedureGroupType) {
+        if (procedureGroupType.getProcedureGroupBlock() != null) {
+            return procedureGroupType.getProcedureGroupBlock().getProcedureGroupBody().getProcedureRefList();
+        }
+        return Collections.emptyList();
     }
 }
