@@ -20,12 +20,17 @@
             <option name="FOREGROUND" value="AFBF7E"/>
         </value>
     </option>
-    <option name="ODIN_PROCEDURE">
+    <option name="ODIN_PKG_EXP_STRUCT_REF">
         <value>
-            <option name="FOREGROUND" value="61AFEF"/>
+            <option name="FOREGROUND" value="6FAFBD"/>
         </value>
     </option>
-    <option name="ODIN_STRUCT_REF">
+    <option name="ODIN_PKG_PRIVATE_STRUCT_REF">
+        <value>
+            <option name="FOREGROUND" value="6FAFBD"/>
+        </value>
+    </option>
+    <option name="ODIN_FILE_PRIVATE_STRUCT_REF">
         <value>
             <option name="FOREGROUND" value="6FAFBD"/>
         </value>
