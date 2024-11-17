@@ -49,8 +49,8 @@ import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinExpectedTypeEngine;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeChecker;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -727,6 +727,12 @@ public class OdinParsingTest extends UsefulTestCase {
                     "test2",
                     TsOdinStructType.class,
                     "Line");
+
+            assertExpressionIsOfTypeWithName(odinFile,
+                    "testTypeSwitch",
+                    "test3",
+                    TsOdinBuiltInTypes.I32.getClass(),
+                    "i32");
         }
     }
 

@@ -11,7 +11,9 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
-import com.lasagnerd.odin.codeInsight.typeSystem.*;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -502,7 +504,7 @@ public class OdinSymbolTableResolver {
             }
 
             OdinSymbolTable symbolTable = new OdinSymbolTable(packagePath);
-
+            symbolTable.setContainingElement(containingScopeBlock);
             // Since odin does not support closures, all symbols above the current scope, are visible only if they are constants
             boolean isContainingBlockProcedure = containingScopeBlock instanceof OdinProcedureDefinition;
             boolean constantsOnlyNext = isContainingBlockProcedure || constantsOnly;

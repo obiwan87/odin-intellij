@@ -1,7 +1,6 @@
 package main
 
 import "core:fmt"
-import "base:runtime"
 import o "otherpackage"
 
 Weapon :: struct {
@@ -248,7 +247,7 @@ testTypeSwitch :: proc() {
 
     switch x in x {
     case Point:
-        test3 := x
+        test3 := x.x
     case Line:
         test4 := x
     }

@@ -473,6 +473,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                         symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
                         symbolTableForTypeResolution.putAll(globalSymbolTable);
                     } else {
+
                         symbolTableForTypeResolution = globalSymbolTable;
                     }
 
@@ -1274,7 +1275,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (odinDeclaration instanceof OdinSwitchTypeVariableDeclaration && identifier != null) {
             OdinSwitchBlock switchInBlock = PsiTreeUtil.getParentOfType(odinDeclaration, OdinSwitchBlock.class, true);
             if (switchInBlock != null && switchInBlock.getSwitchInClause() != null) {
-                TsOdinType tsOdinType = inferType(parentSymbolTable, switchInBlock.getSwitchInClause().getExpression());
+                TsOdinType tsOdinType = doInferType(switchInBlock.getSwitchInClause().getExpression());
                 List<OdinSwitchCase> ancestors = new ArrayList<>();
                 OdinSwitchBody switchBody = switchInBlock.getSwitchBody();
                 if (switchBody != null) {
