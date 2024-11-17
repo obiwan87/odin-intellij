@@ -40,9 +40,6 @@ import java.util.stream.Stream;
 
 public class OdinImportUtils {
 
-
-    public static final Predicate<OdinSymbol> PUBLIC_ELEMENTS_MATCHER = s -> true;
-
     public static @NotNull String getFileName(@NotNull PsiElement psiElement) {
         return getContainingVirtualFile(psiElement).getName();
 
@@ -140,7 +137,7 @@ public class OdinImportUtils {
 
                 Collection<OdinSymbol> fileScopeDeclarations = importedFileScope
                         .getSymbolTable()
-                        .getFilteredSymbols(PUBLIC_ELEMENTS_MATCHER);
+                        .getSymbols();
 
                 packageDeclarations.addAll(fileScopeDeclarations);
             }
