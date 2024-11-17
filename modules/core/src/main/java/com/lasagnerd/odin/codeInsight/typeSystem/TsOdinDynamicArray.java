@@ -7,7 +7,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinDynamicArray extends TsOdinType {
+public class TsOdinDynamicArray extends TsOdinTypeBase implements TsOdinElementOwner {
     private TsOdinType elementType;
     private boolean soa;
 

@@ -12,7 +12,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinMetaType extends TsOdinType {
+public class TsOdinMetaType extends TsOdinTypeBase {
 
     public TsOdinMetaType(MetaType representedMetaType) {
         this.representedMetaType = representedMetaType;

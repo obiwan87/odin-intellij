@@ -7,7 +7,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinMapType extends TsOdinType {
+public class TsOdinMapType extends TsOdinTypeBase {
     TsOdinType keyType;
     TsOdinType valueType;
 

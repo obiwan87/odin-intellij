@@ -10,7 +10,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinProcedureGroup extends TsOdinType{
+public class TsOdinProcedureGroup extends TsOdinTypeBase {
     private List<TsOdinProcedureType> procedures = new ArrayList<>();
 
     @Override

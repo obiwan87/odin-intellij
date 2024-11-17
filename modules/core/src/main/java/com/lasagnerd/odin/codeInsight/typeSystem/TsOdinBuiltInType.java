@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinBuiltInType extends TsOdinType implements Comparable<TsOdinBuiltInType> {
+public class TsOdinBuiltInType extends TsOdinTypeBase implements Comparable<TsOdinBuiltInType> {
 
 
     TsOdinBuiltInType(String name) {

@@ -15,7 +15,7 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public abstract class TsOdinGenericType extends TsOdinType {
+public abstract class TsOdinGenericType extends TsOdinTypeBase {
 
     public static TsOdinGenericType NO_GENERIC_TYPE = new TsOdinGenericType() {
         @Override

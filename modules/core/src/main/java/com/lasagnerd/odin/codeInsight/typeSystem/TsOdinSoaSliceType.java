@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 @Getter
-public class TsOdinSoaSliceType extends TsOdinType {
+public class TsOdinSoaSliceType extends TsOdinTypeBase {
     Map<String, TsOdinType> slices = new TreeMap<>();
     TsOdinSoaStructType soaStructType;
 

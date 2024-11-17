@@ -7,7 +7,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinBitSetType extends TsOdinType {
+public class TsOdinBitSetType extends TsOdinTypeBase implements TsOdinElementOwner {
     TsOdinType elementType;
     TsOdinType backingType;
 

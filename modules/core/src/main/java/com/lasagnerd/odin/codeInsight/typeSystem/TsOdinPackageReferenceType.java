@@ -7,7 +7,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinPackageReferenceType extends TsOdinType {
+public class TsOdinPackageReferenceType extends TsOdinTypeBase {
 
     private final String referencingPackagePath;
 

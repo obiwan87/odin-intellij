@@ -7,7 +7,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinPolymorphicType extends TsOdinType {
+public class TsOdinPolymorphicType extends TsOdinTypeBase {
     @Override
     public String getLabel() {
         return "$" + super.getLabel();

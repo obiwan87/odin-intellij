@@ -298,7 +298,7 @@ public class TsOdinBuiltInTypes {
         return List.of(QUATERNION64, QUATERNION128, QUATERNION256);
     }
 
-    private static class TsOdinUnknownType extends TsOdinType {
+    private static class TsOdinUnknownType extends TsOdinTypeBase {
         {
             this.symbolTable = OdinSymbolTable.EMPTY;
         }
@@ -318,7 +318,8 @@ public class TsOdinBuiltInTypes {
             return "UNKNOWN";
         }
     }
-    private static class TsOdinUndecidedType extends TsOdinType {
+
+    private static class TsOdinUndecidedType extends TsOdinTypeBase {
         {
             this.symbolTable = OdinSymbolTable.EMPTY;
         }
@@ -339,7 +340,7 @@ public class TsOdinBuiltInTypes {
         }
     }
 
-    private static class TsOdinVoidType extends TsOdinType {
+    private static class TsOdinVoidType extends TsOdinTypeBase {
         {
             this.symbolTable = OdinSymbolTable.EMPTY;
         }

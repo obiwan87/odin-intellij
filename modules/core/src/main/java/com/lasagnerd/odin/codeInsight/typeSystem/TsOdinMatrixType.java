@@ -7,7 +7,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinMatrixType extends TsOdinType {
+public class TsOdinMatrixType extends TsOdinTypeBase implements TsOdinElementOwner {
     private TsOdinType elementType;
 
     @Override

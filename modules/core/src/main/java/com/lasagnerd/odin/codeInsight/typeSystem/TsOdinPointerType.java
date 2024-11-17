@@ -7,7 +7,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinPointerType extends TsOdinType {
+public class TsOdinPointerType extends TsOdinTypeBase {
     private TsOdinType dereferencedType;
 
     @Override

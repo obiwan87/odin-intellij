@@ -2,12 +2,11 @@ package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import lombok.Getter;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
 @Getter
-public class TsOdinSoaStructType extends TsOdinType{
+public class TsOdinSoaStructType extends TsOdinTypeBase {
     private final TsOdinSoaSliceType soaSliceType;
     private final Map<String, TsOdinType> fields = new TreeMap<>();
 

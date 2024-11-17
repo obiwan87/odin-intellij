@@ -7,7 +7,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinTypeAlias extends TsOdinType{
+public class TsOdinTypeAlias extends TsOdinTypeBase {
     private TsOdinType aliasedType;
 
     @Override

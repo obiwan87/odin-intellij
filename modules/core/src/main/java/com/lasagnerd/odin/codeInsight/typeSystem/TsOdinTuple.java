@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinTuple extends TsOdinType {
+public class TsOdinTuple extends TsOdinTypeBase {
     private final List<TsOdinType> types;
 
     public TsOdinTuple() {

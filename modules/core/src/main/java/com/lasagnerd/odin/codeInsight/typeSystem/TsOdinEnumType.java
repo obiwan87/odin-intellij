@@ -7,7 +7,7 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinEnumType extends TsOdinType {
+public class TsOdinEnumType extends TsOdinTypeBase {
     TsOdinBuiltInType backingType;
 
     @Override

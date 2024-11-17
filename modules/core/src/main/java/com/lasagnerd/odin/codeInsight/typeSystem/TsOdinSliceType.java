@@ -10,7 +10,7 @@ import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType.
 @EqualsAndHashCode(callSuper = true)
 @Getter
 @Setter
-public class TsOdinSliceType extends TsOdinType {
+public class TsOdinSliceType extends TsOdinTypeBase implements TsOdinElementOwner {
     TsOdinType elementType;
     boolean soa;
 
