@@ -1,11 +1,17 @@
 package com.lasagnerd.odin.projectStructure.module;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.NlsContexts;
 import com.lasagnerd.odin.OdinIcons;
+import com.lasagnerd.odin.projectSettings.OdinProjectSettings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,15 +58,49 @@ public class OdinModuleBuilder extends ModuleBuilder {
 
     @Override
     public boolean isOpenProjectSettingsAfter() {
-        return true;
+        return false;
     }
 
     @Override
     public boolean isTemplateBased() {
-        return true;
+        return false;
     }
 
+    @Override
+    public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
+        return new ModuleWizardStep[]{
+                new OdinModuleWizardStep()
+        };
+    }
 
+    @Override
+    public @Nullable ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
 
+        return new OdinModuleWizardStep();
+    }
 
+    private static class OdinModuleWizardStep extends ModuleWizardStep {
+
+        private OdinProjectSettings projectSettings;
+
+        @Override
+        public JComponent getComponent() {
+            projectSettings = new OdinProjectSettings();
+            return projectSettings.getComponent();
+        }
+
+        @Override
+        public void updateDataModel() {
+            System.out.println("Hello");
+        }
+
+        @Override
+        public void disposeUIResources() {
+            if (projectSettings != null) {
+                projectSettings.dispose();
+                projectSettings = null;
+            }
+            super.disposeUIResources();
+        }
+    }
 }
