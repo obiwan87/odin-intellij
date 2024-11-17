@@ -11,8 +11,6 @@ public class OdinMarkSourceRootAction extends MarkSourceRootAction {
 
     @Override
     protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
-        return true;
+        return super.isEnabled(selection, module);
     }
-
-
 }

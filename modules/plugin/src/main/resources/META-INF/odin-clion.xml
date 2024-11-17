@@ -1,0 +1,11 @@
+<idea-plugin package="com.lasagnerd.odin">
+    <depends>com.intellij.modules.clion.ide</depends>
+    <actions>
+        <action id="com.lasagnerd.odin.projectStructure.module.rootTypes.OdinUnmarkRootAction"
+                class="com.lasagnerd.odin.projectStructure.module.rootTypes.OdinUnmarkRootAction"
+                text="Unmark"
+                description="Unmarks an odin root directory">
+            <add-to-group group-id="MarkRootGroup" anchor="first"/>
+        </action>
+    </actions>
+</idea-plugin>

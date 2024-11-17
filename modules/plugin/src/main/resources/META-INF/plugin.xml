@@ -395,8 +395,6 @@
                           anchor="after"
                           relative-to-action="com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinMarkSourceRootAction"/>
         </action>
-
-
         <action id="com.lasagnerd.odin.projectStructure.OdinImportOlsConfigAction"
                 class="com.lasagnerd.odin.projectStructure.OdinImportOlsConfigAction"
                 text="Import Ols Config"
@@ -408,5 +406,5 @@
 
     <depends optional="true" config-file="odin-debugger.xml">com.intellij.modules.cidr.debugger</depends>
     <depends optional="true" config-file="odin-rider.xml">com.intellij.modules.rider</depends>
-
+    <depends optional="true" config-file="odin-clion.xml">com.intellij.modules.clion.ide</depends>
 </idea-plugin>
