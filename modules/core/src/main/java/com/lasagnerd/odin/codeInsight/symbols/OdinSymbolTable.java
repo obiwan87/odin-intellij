@@ -2,13 +2,10 @@ package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
-import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
 import com.lasagnerd.odin.lang.psi.OdinScopeArea;
 import lombok.Getter;
 import lombok.Setter;
@@ -213,25 +210,6 @@ public class OdinSymbolTable {
         newSymbolTable.packagePath = packagePath;
         newSymbolTable.parentSymbolTable = parentSymbolTable;
         return newSymbolTable;
-    }
-
-    /**
-     * Creates a new scope for a given package identifier defined within this scope.
-     *
-     * @param packageIdentifier The identifier that is used to reference the package
-     * @return A new scope with all the declared symbols of the referenced package
-     */
-
-    public OdinSymbolTable getScopeOfImport(String packageIdentifier) {
-        OdinSymbol odinSymbol = getSymbol(packageIdentifier);
-        if (odinSymbol != null) {
-            PsiNamedElement declaredIdentifier = odinSymbol.getDeclaredIdentifier();
-            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
-            if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return OdinImportUtils.getSymbolsOfImportedPackage(this.getPackagePath(), importDeclarationStatement);
-            }
-        }
-        return OdinSymbolTable.EMPTY;
     }
 
     public OdinSymbolTable flatten() {

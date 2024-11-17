@@ -4,6 +4,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
@@ -160,6 +161,26 @@ public class OdinTypeResolver extends OdinVisitor {
         this.symbolTable = symbolTable;
         this.typeDeclaration = typeDeclaration;
         this.typeDeclaredIdentifier = typeDeclaredIdentifier;
+    }
+
+    /**
+     * Creates a new scope for a given package identifier defined within this scope.
+     *
+     * @param symbolTable       The symbol table to use
+     * @param packageIdentifier The identifier that is used to reference the package
+     * @return A new scope with all the declared symbols of the referenced package
+     */
+
+    public static OdinSymbolTable getScopeOfImport(OdinSymbolTable symbolTable, String packageIdentifier) {
+        OdinSymbol odinSymbol = symbolTable.getSymbol(packageIdentifier);
+        if (odinSymbol != null) {
+            PsiNamedElement declaredIdentifier = odinSymbol.getDeclaredIdentifier();
+            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
+            if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+                return OdinImportUtils.getSymbolsOfImportedPackage(symbolTable.getPackagePath(), importDeclarationStatement);
+            }
+        }
+        return OdinSymbolTable.EMPTY;
     }
 
     // resolve type calls
@@ -403,7 +424,7 @@ public class OdinTypeResolver extends OdinVisitor {
     // Visitor methods
     @Override
     public void visitQualifiedType(@NotNull OdinQualifiedType qualifiedType) {
-        OdinSymbolTable packageScope = symbolTable.getScopeOfImport(qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
+        OdinSymbolTable packageScope = getScopeOfImport(symbolTable, qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
         OdinSimpleRefType simpleRefType = qualifiedType.getSimpleRefType();
         if (simpleRefType != null) {
             this.type = doResolveType(packageScope, simpleRefType);
