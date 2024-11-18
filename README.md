@@ -3,10 +3,6 @@
 This plugin provides support for the [Odin programming language](https://www.odin-lang.org) in IntelliJ IDEA. You can add the plugin to your JetBrains
 IDE via the "Plugin" settings panel or by visiting the [Odin Plugin Page](https://plugins.jetbrains.com/plugin/22933-odin-lang-support).
 
-## Getting Started
-
-To begin, ensure you have installed the plugin using the steps mentioned above.
-
 ### Compatibility with JetBrains Products
 
 This table summarizes the features supported by the Odin IntelliJ Plugin across various JetBrains IDEs, including debugging, project creation,
@@ -72,6 +68,13 @@ auto-completion, and free usage options.
 </table>
 
 \* Requires installing the free plugin "Native Debugging Support" (see section **Debugger Settings**).
+
+## Getting Started
+
+To begin, ensure you have installed the plugin using the steps mentioned above.
+
+
+
 ## SDK Setup
 
 Download the Odin SDK [here](https://github.com/odin-lang/Odin/releases) or build it from source by following the instructions on the official
