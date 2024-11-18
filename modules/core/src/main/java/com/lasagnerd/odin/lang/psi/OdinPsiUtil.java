@@ -29,6 +29,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.lasagnerd.odin.lang.psi.OdinTypes.BUILD_FLAG_IDENTIFIER_TOKEN;
+
 public class OdinPsiUtil {
 
     public static final TokenSet UNARY_OPERATORS = TokenSet.create(
@@ -540,5 +542,14 @@ public class OdinPsiUtil {
             return procedureGroupType.getProcedureGroupBlock().getProcedureGroupBody().getProcedureRefList();
         }
         return Collections.emptyList();
+    }
+
+    public static PsiElement getBuildFlagIdentifierToken(OdinBuildFlagIdentifier buildFlagIdentifier) {
+        ASTNode node = buildFlagIdentifier.getNode();
+        ASTNode[] children = node.getChildren(TokenSet.create(BUILD_FLAG_IDENTIFIER_TOKEN));
+        if (children.length > 0) {
+            return children[0].getPsi();
+        }
+        return null;
     }
 }

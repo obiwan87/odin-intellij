@@ -24,6 +24,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
 
     @Language("Odin")
     public static final String CODE = """
+            #+build <ODIN_BUILD_FLAG_IDENTIFIER>linux</ODIN_BUILD_FLAG_IDENTIFIER>
             package <ODIN_PACKAGE>testData</ODIN_PACKAGE>
             /*
                 This is a preview page. Click on the list above or directly in the code
@@ -325,6 +326,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("Attributes//'@' character", ODIN_AT),
 
             new AttributesDescriptor("Directive", ODIN_DIRECTIVE_REF),
+            new AttributesDescriptor("Build flag identifier", ODIN_BUILD_FLAG_IDENTIFIER),
 
             // Braces and operators
             new AttributesDescriptor("Braces and operators//Braces", ODIN_BRACES),
@@ -507,6 +509,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
         if (ADDITIONAL_TAGS.isEmpty()) {
             ADDITIONAL_TAGS.put("ODIN_KEYWORD", ODIN_KEYWORD);
             ADDITIONAL_TAGS.put("ODIN_IDENTIFIER", ODIN_IDENTIFIER);
+            ADDITIONAL_TAGS.put("ODIN_BUILD_FLAG_IDENTIFIER", ODIN_BUILD_FLAG_IDENTIFIER);
             ADDITIONAL_TAGS.put("ODIN_BAD_CHARACTER", ODIN_BAD_CHARACTER);
             ADDITIONAL_TAGS.put("ODIN_BIT_FIELD", ODIN_BIT_FIELD);
             ADDITIONAL_TAGS.put("ODIN_STRUCT_FIELD", ODIN_STRUCT_FIELD);

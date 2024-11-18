@@ -163,7 +163,7 @@
         SQ_STRING_START='SQ_STRING_START'
         SQ_STRING_END='SQ_STRING_END'
         BUILD_FLAG_PREFIX_TOKEN='regexp:'
-        BUILD_FLAG_CONTENT_TOKEN='BUILD_FLAG_CONTENT_TOKEN'
+        BUILD_FLAG_IDENTIFIER_TOKEN='BUILD_FLAG_IDENTIFIER_TOKEN'
   ]
 
   extends('.*Expression$') = expression
@@ -186,15 +186,19 @@ odinFile                             ::= fileScope
 // General recover rules
 private eos_recover ::= !eos
 
-fileScope                            ::= buildFlag* packageDeclaration eos importStatementsContainer? fileScopeStatementList <<eof>> {
+fileScope                            ::= buildFlagClause* packageDeclaration eos importStatementsContainer? fileScopeStatementList <<eof>> {
     methods=[getImportStatements getSymbolTable]
     mixin= "com.lasagnerd.odin.lang.psi.OdinFileScopeMixin"
     implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
 }
 
-buildFlag                            ::= buildFlagPrefix buildFlagContent?
+buildFlagClause                      ::= buildFlagPrefix [buildFlagArguments]
+private buildFlagArguments           ::= buildFlag (COMMA buildFlag)*
 buildFlagPrefix                      ::= BUILD_FLAG_PREFIX_TOKEN
-buildFlagContent                     ::= BUILD_FLAG_CONTENT_TOKEN
+buildFlagIdentifier                  ::= BUILD_FLAG_IDENTIFIER_TOKEN {extends=buildFlag methods=[getBuildFlagIdentifierToken]}
+buildFlagNegation                    ::= NOT buildFlag {extends=buildFlag}
+buildFlag                            ::= buildFlagIdentifier
+                                         | buildFlagNegation
 importStatementsContainer            ::= (importDeclarationStatement eos)+
 fileScopeStatementList               ::= (fileScopeStatement (eos|<<afterNewLine>>))*
 packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=1 recoverWhile=eos_recover}

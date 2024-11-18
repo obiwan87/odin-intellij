@@ -103,8 +103,6 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             return;
 
         VirtualFile sourceFile = OdinImportUtils.getContainingVirtualFile(parameters.getOriginalFile());
-        if (sourceFile == null)
-            return;
 
         if (!(parameters.getOriginalFile() instanceof OdinFile odinFile))
             return;
@@ -225,10 +223,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                     OdinSymbol symbol = localSymbols.getFirst();
                     if (symbol.getDeclaration() != null) {
                         VirtualFile targetFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaration());
-                        OdinImport odinImport = null;
-                        if (targetFile != null) {
-                            odinImport = OdinImportUtils.computeRelativeImport(project, sourceFile, targetFile);
-                        }
+                        OdinImport odinImport = OdinImportUtils.computeRelativeImport(project, sourceFile, targetFile);
                         addLookUpElement(odinFile,
                                 odinImport,
                                 sourceFile.getParent().getPath(),

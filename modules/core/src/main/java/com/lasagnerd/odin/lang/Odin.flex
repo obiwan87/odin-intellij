@@ -43,6 +43,7 @@ import static com.lasagnerd.odin.lang.psi.OdinTypes.*;
 NewLine=(\r|\n|\r\n)+
 WhiteSpace=[ \t\f]+
 Identifier = ([:letter:]|_)([:letter:]|[0-9_])*
+BuildFlagIdentifier = [:letter:]([[:letter:]0-9\-_])*
 
 LineComment = \/\/[^\r\n]*
 BlockCommentContent = ([^*\/\r\n]|\/[^*\r\n])
@@ -148,7 +149,7 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
         "["            { return LBRACKET; }
         "]"            { yybegin(NLSEMI_STATE); return RBRACKET; }
         "#"            { return HASH; }
-        "#+" [^ \t\f\r\n]+ { yybegin(BUILD_FLAG_STATE); return BUILD_FLAG_PREFIX_TOKEN; }
+        "#+" {BuildFlagIdentifier} { yybegin(BUILD_FLAG_STATE); return BUILD_FLAG_PREFIX_TOKEN; }
         "?"            { return QUESTION; }
         "^"            { yybegin(NLSEMI_STATE); return CARET; }
         "@"            { return AT; }
@@ -209,10 +210,13 @@ ExponentPart = [eE][+-]?[0-9][0-9_]*
     }
 
     <BUILD_FLAG_STATE> {
-        ([^\/\r\n]|\/[^\*\/\r\n])+          {return BUILD_FLAG_CONTENT_TOKEN; }
+        {WhiteSpace}                        { return WHITE_SPACE; }
+        {BuildFlagIdentifier}               { return BUILD_FLAG_IDENTIFIER_TOKEN; }
+        "!"                                 { return NOT; }
+        ","                                 { return COMMA; }
         "//" [^\r\n]*                       { yybegin(YYINITIAL); return LINE_COMMENT; }
-        "/*"                                { yybegin(BLOCK_COMMENT_STATE); newLineSeen=false; commentNestingDepth=1; previousState=NLSEMI_STATE; return BLOCK_COMMENT_START; }
-        [\r\n]                              {yybegin(YYINITIAL); return NEW_LINE;}
+        "/*"                                { yybegin(BLOCK_COMMENT_STATE); newLineSeen=false; commentNestingDepth=1; previousState=BUILD_FLAG_STATE; return BLOCK_COMMENT_START; }
+        [\r\n]                              { yybegin(YYINITIAL); return NEW_LINE;}
     }
     <NLSEMI_STATE> {
         [ \t]+                               { return WHITE_SPACE; }

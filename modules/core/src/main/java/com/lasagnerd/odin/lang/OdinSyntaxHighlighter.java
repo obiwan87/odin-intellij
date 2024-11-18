@@ -9,10 +9,6 @@ import com.lasagnerd.odin.colorSettings.OdinSyntaxTextAttributes;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey;
-
 public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
 
 
@@ -21,6 +17,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
     private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
     public static final TextAttributesKey[] STRINGS = {OdinSyntaxTextAttributes.ODIN_TEXT};
     public static final TextAttributesKey[] IDENTIFIERS = {OdinSyntaxTextAttributes.ODIN_IDENTIFIER};
+    public static final TextAttributesKey[] BUILD_FLAG_IDENTIFIER = {OdinSyntaxTextAttributes.ODIN_BUILD_FLAG_IDENTIFIER};
     public static final TextAttributesKey[] LINE_COMMENT = {OdinSyntaxTextAttributes.ODIN_LINE_COMMENT};
     public static final TextAttributesKey[] BLOCK_COMMENT = {OdinSyntaxTextAttributes.ODIN_BLOCK_COMMENT};
     public static final TextAttributesKey[] NUMBER = {OdinSyntaxTextAttributes.ODIN_NUMBER};
@@ -120,7 +117,6 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
     );
 
 
-
     @Override
     public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
 
@@ -128,7 +124,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             return KEYWORD_KEYS;
         }
 
-        if(OPERATORS.contains(tokenType)) {
+        if (OPERATORS.contains(tokenType)) {
             return OPERATOR_KEYS;
         }
 
@@ -141,6 +137,10 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
 
         if (tokenType.equals(OdinTypes.IDENTIFIER_TOKEN)) {
             return IDENTIFIERS;
+        }
+
+        if (tokenType.equals(OdinTypes.BUILD_FLAG_IDENTIFIER_TOKEN)) {
+            return BUILD_FLAG_IDENTIFIER;
         }
 
         if (tokenType.equals(OdinTypes.LINE_COMMENT)) {

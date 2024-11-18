@@ -215,23 +215,26 @@ public class OdinSymbolTableResolver {
             }
         }
 
-        OdinBuildFlag[] buildFlags = PsiTreeUtil.getChildrenOfType(fileScope, OdinBuildFlag.class);
-        if (buildFlags == null)
+        OdinBuildFlagClause[] buildFlagClauses = PsiTreeUtil.getChildrenOfType(fileScope, OdinBuildFlagClause.class);
+        if (buildFlagClauses == null)
             return OdinVisibility.PACKAGE_EXPORTED;
 
-        for (OdinBuildFlag buildFlag : buildFlags) {
+        for (OdinBuildFlagClause buildFlagClause : buildFlagClauses) {
 
-            String prefix = buildFlag.getBuildFlagPrefix().getText();
+            String prefix = buildFlagClause.getBuildFlagPrefix().getText();
             if (prefix.equals("#+private")) {
-                if (buildFlag.getBuildFlagContent() != null && buildFlag.getBuildFlagContent()
-                        .getText()
-                        .trim()
-                        .equals("file")) {
-                    return OdinVisibility.FILE_PRIVATE;
+                for (OdinBuildFlag buildFlag : buildFlagClause.getBuildFlagList()) {
+                    if (!(buildFlag instanceof OdinBuildFlagIdentifier buildFlagIdentifier))
+                        continue;
+                    if (buildFlagIdentifier.getBuildFlagIdentifierToken()
+                            .getText()
+                            .trim()
+                            .equals("file")) {
+                        return OdinVisibility.FILE_PRIVATE;
+                    }
                 }
                 return OdinVisibility.PACKAGE_PRIVATE;
             }
-
         }
 
         return OdinVisibility.PACKAGE_EXPORTED;
@@ -264,13 +267,13 @@ public class OdinSymbolTableResolver {
             } else {
                 symbolTable = parentSymbolTable;
             }
-        } else if(parent instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
-                TsOdinType tsOdinType = OdinInferenceEngine.doInferType(parentSymbolTable, implicitSelectorExpression);
-                if(!tsOdinType.isUnknown()) {
-                    symbolTable = OdinInsightUtils.getTypeElements(identifier.getProject(), tsOdinType);
-                } else {
-                    symbolTable = parentSymbolTable;
-                }
+        } else if (parent instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
+            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(parentSymbolTable, implicitSelectorExpression);
+            if (!tsOdinType.isUnknown()) {
+                symbolTable = OdinInsightUtils.getTypeElements(identifier.getProject(), tsOdinType);
+            } else {
+                symbolTable = parentSymbolTable;
+            }
         } else {
             OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, OdinQualifiedType.class);
             if (qualifiedType != null) {
@@ -510,7 +513,7 @@ public class OdinSymbolTableResolver {
             boolean constantsOnlyNext = isContainingBlockProcedure || constantsOnly;
 
             OdinScopeArea nextContainingScopeBlock = containingScopeBlock;
-            if(containingScopeBlock instanceof OdinSwitchInExpressionScope switchInExpressionScope) {
+            if (containingScopeBlock instanceof OdinSwitchInExpressionScope switchInExpressionScope) {
                 // In the AST the expression in "switch v in expr" is within the switch scope area, however,
                 // semantically the variable "v" does not belong in the scope of the expression. Hence, we skip
                 // it

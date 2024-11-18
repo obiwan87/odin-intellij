@@ -13,7 +13,7 @@ import static com.intellij.openapi.editor.colors.TextAttributesKey.createTextAtt
 public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_KEYWORD = createTextAttributesKey("ODIN_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
     public static final TextAttributesKey ODIN_IDENTIFIER = createTextAttributesKey("ODIN_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER);
-
+    public static final TextAttributesKey ODIN_BUILD_FLAG_IDENTIFIER = createTextAttributesKey("ODIN_BUILD_FLAG_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER);
     public static final TextAttributesKey ODIN_BAD_CHARACTER = createTextAttributesKey("ODIN_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
     public static final TextAttributesKey ODIN_BIT_FIELD = createTextAttributesKey("ODIN_BIT_FIELD", DefaultLanguageHighlighterColors.CLASS_NAME);
 
