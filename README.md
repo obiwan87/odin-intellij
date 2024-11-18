@@ -9,8 +9,6 @@ To begin, ensure you have installed the plugin using the steps mentioned above.
 
 ### Compatibility with JetBrains Products
 
-### Compatibility with JetBrains Products
-
 This table summarizes the features supported by the Odin IntelliJ Plugin across various JetBrains IDEs, including debugging, project creation,
 auto-completion, and free usage options.
 
