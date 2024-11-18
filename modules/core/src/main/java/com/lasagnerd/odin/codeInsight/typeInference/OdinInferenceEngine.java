@@ -2,12 +2,14 @@ package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -473,8 +475,13 @@ public class OdinInferenceEngine extends OdinVisitor {
                         symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
                         symbolTableForTypeResolution.putAll(globalSymbolTable);
                     } else {
-
-                        symbolTableForTypeResolution = globalSymbolTable;
+                        VirtualFile declaredIdentifierVirtualFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaredIdentifier());
+                        VirtualFile currentFile = OdinImportUtils.getContainingVirtualFile(refExpression);
+                        if (!declaredIdentifierVirtualFile.equals(currentFile)) {
+                            symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
+                        } else {
+                            symbolTableForTypeResolution = globalSymbolTable;
+                        }
                     }
 
                     this.type = inferTypeOfDeclaredIdentifier(
@@ -512,20 +519,20 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     private static @Nullable TsOdinType inferTypeOfDeclaredIdentifier(
-            OdinSymbolTable globalSymbolTable,
+            OdinSymbolTable symbolTable,
             PsiNamedElement namedElement,
             @NotNull OdinIdentifier identifier) {
         TsOdinType tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
         OdinImportDeclarationStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
         if (importDeclarationStatement != null) {
-            tsOdinType = createPackageReferenceType(globalSymbolTable.getPackagePath(), importDeclarationStatement);
+            tsOdinType = createPackageReferenceType(symbolTable.getPackagePath(), importDeclarationStatement);
         } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(namedElement,
                     false,
                     OdinDeclaration.class);
 
             tsOdinType = resolveTypeOfDeclaration(identifier,
-                    globalSymbolTable,
+                    symbolTable,
                     declaredIdentifier,
                     odinDeclaration
             );

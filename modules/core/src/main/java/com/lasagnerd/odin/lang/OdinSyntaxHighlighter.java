@@ -12,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
 
 
-    private static final TextAttributesKey[] KEYWORD_KEYS = new TextAttributesKey[]{OdinSyntaxTextAttributes.ODIN_KEYWORD};
+    public static final TextAttributesKey[] KEYWORD_KEYS = new TextAttributesKey[]{OdinSyntaxTextAttributes.ODIN_KEYWORD};
 
-    private static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
+    public static final TextAttributesKey[] EMPTY_KEYS = new TextAttributesKey[0];
     public static final TextAttributesKey[] STRINGS = {OdinSyntaxTextAttributes.ODIN_TEXT};
     public static final TextAttributesKey[] IDENTIFIERS = {OdinSyntaxTextAttributes.ODIN_IDENTIFIER};
     public static final TextAttributesKey[] BUILD_FLAG_IDENTIFIER = {OdinSyntaxTextAttributes.ODIN_BUILD_FLAG_IDENTIFIER};
