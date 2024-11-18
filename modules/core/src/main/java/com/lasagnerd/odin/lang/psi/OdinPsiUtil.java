@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService;
@@ -549,6 +550,30 @@ public class OdinPsiUtil {
         ASTNode[] children = node.getChildren(TokenSet.create(BUILD_FLAG_IDENTIFIER_TOKEN));
         if (children.length > 0) {
             return children[0].getPsi();
+        }
+        return null;
+    }
+
+    public static String getName(OdinForeignImportDeclarationStatement foreignImportDeclarationStatement) {
+        if (foreignImportDeclarationStatement.getAlias() != null)
+            return foreignImportDeclarationStatement.getAlias().getName();
+        if (foreignImportDeclarationStatement.getForeignImportPathList().size() == 1) {
+            OdinForeignImportPath importPath = foreignImportDeclarationStatement.getForeignImportPathList().getFirst();
+            return StringUtil.unquoteString(importPath.getText());
+        }
+        return null;
+    }
+
+    public static PsiElement setName(OdinForeignImportDeclarationStatement foreignImportDeclarationStatement, String name) {
+        return foreignImportDeclarationStatement;
+    }
+
+    public static PsiElement getNameIdentifier(OdinForeignImportDeclarationStatement foreignImportDeclarationStatement) {
+        if (foreignImportDeclarationStatement.getAlias() != null) {
+            return foreignImportDeclarationStatement.getAlias();
+        }
+        if (foreignImportDeclarationStatement.getForeignImportPathList().size() == 1) {
+            return foreignImportDeclarationStatement.getForeignImportPathList().getFirst();
         }
         return null;
     }

@@ -224,7 +224,7 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
 
 // @require foreign import entry "entryUnixNoCrtAmd64.asm"
 foreignImportDeclarationStatement    ::= (attributesDefinition EOS_TOKEN?)* FOREIGN IMPORT declaredIdentifier?
-                (foreignImportPath | foreignImportBlock) {methods=[alias="declaredIdentifier"]}
+                (foreignImportPath | foreignImportBlock) {methods=[alias="declaredIdentifier" getName setName getNameIdentifier] implements=["com.intellij.psi.PsiNameIdentifierOwner"]}
 foreignImportPath                    ::= DQ_STRING_LITERAL
 private foreignImportBlock           ::= blockStart foreignImportPath (COMMA foreignImportPath)* COMMA? blockEnd
 

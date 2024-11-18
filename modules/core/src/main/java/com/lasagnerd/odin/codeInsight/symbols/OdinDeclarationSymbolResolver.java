@@ -324,14 +324,20 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     @Override
     public void visitForeignImportDeclarationStatement(@NotNull OdinForeignImportDeclarationStatement o) {
         OdinScope scope = getScope(o);
-        for (OdinDeclaredIdentifier declaredIdentifier : o.getDeclaredIdentifiers()) {
-            OdinSymbol odinSymbol = new OdinSymbol(declaredIdentifier);
-            odinSymbol.setSymbolType(OdinSymbolType.FOREIGN_IMPORT);
-            odinSymbol.setScope(scope);
-            odinSymbol.setVisibility(OdinVisibility.NONE);
-            odinSymbol.setAttributes(o.getAttributesDefinitionList());
-            symbols.add(odinSymbol);
+
+        OdinSymbol odinSymbol = new OdinSymbol();
+        if (o.getAlias() != null) {
+            odinSymbol.setDeclaredIdentifier(o.getAlias());
+        } else {
+            odinSymbol.setDeclaredIdentifier(o);
         }
+        odinSymbol.setName(o.getName());
+        odinSymbol.setSymbolType(OdinSymbolType.FOREIGN_IMPORT);
+        odinSymbol.setScope(scope);
+        odinSymbol.setVisibility(OdinVisibility.NONE);
+        odinSymbol.setAttributes(o.getAttributesDefinitionList());
+        symbols.add(odinSymbol);
+
     }
 
     @Override
