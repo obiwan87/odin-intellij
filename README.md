@@ -107,8 +107,8 @@ To configure the project:
 
 ### Debugger Settings
 
-Debugger support is available in IntelliJ IDEA Ultimate, GoLand, CLion, PyCharm Professional, and RustRover. If you don't see the **Debugger Settings
-** section in the Odin settings, you need to install
+Debugger support is available in IntelliJ IDEA Ultimate, GoLand, CLion, PyCharm Professional, and RustRover. If you don't see the
+**Debugger Settings** section in the Odin settings, you need to install
 the [Native Debugging Support plugin](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) from the JetBrains marketplace.
 
 Here’s an example of what the settings panel will look like when properly configured:
