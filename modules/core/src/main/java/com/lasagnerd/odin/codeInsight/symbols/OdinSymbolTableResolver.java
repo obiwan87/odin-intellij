@@ -223,7 +223,11 @@ public class OdinSymbolTableResolver {
 
             String prefix = buildFlagClause.getBuildFlagPrefix().getText();
             if (prefix.equals("#+private")) {
-                for (OdinBuildFlag buildFlag : buildFlagClause.getBuildFlagList()) {
+                for (OdinBuildFlagArgument buildFlagArgument : buildFlagClause.getBuildFlagArgumentList()) {
+                    if (buildFlagArgument.getBuildFlagList().size() > 1)
+                        continue;
+
+                    OdinBuildFlag buildFlag = buildFlagArgument.getBuildFlagList().getFirst();
                     if (!(buildFlag instanceof OdinBuildFlagIdentifier buildFlagIdentifier))
                         continue;
                     if (buildFlagIdentifier.getBuildFlagIdentifierToken()

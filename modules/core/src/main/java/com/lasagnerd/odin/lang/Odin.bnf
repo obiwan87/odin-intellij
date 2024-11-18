@@ -193,7 +193,8 @@ fileScope                            ::= buildFlagClause* packageDeclaration eos
 }
 
 buildFlagClause                      ::= buildFlagPrefix [buildFlagArguments]
-private buildFlagArguments           ::= buildFlag (COMMA buildFlag)*
+private buildFlagArguments           ::= buildFlagArgument (COMMA buildFlagArgument)*
+buildFlagArgument                    ::= buildFlag+
 buildFlagPrefix                      ::= BUILD_FLAG_PREFIX_TOKEN
 buildFlagIdentifier                  ::= BUILD_FLAG_IDENTIFIER_TOKEN {extends=buildFlag methods=[getBuildFlagIdentifierToken]}
 buildFlagNegation                    ::= NOT buildFlag {extends=buildFlag}
@@ -222,10 +223,12 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | directiveStatement
 
 // @require foreign import entry "entryUnixNoCrtAmd64.asm"
-foreignImportDeclarationStatement    ::= (attributesDefinition EOS_TOKEN?)* FOREIGN IMPORT
-        ( (declaredIdentifier? DQ_STRING_LITERAL) | (declaredIdentifier? blockStart expressionListWithRecover blockEnd)) {methods=[alias="declaredIdentifier" paths="DQ_STRING_LITERAL"]}
+foreignImportDeclarationStatement    ::= (attributesDefinition EOS_TOKEN?)* FOREIGN IMPORT declaredIdentifier?
+                (foreignImportPath | foreignImportBlock) {methods=[alias="declaredIdentifier"]}
+foreignImportPath                    ::= DQ_STRING_LITERAL
+private foreignImportBlock           ::= blockStart foreignImportPath (COMMA foreignImportPath)* COMMA? blockEnd
 
-foreignStatement                     ::= (attributesDefinition EOS_TOKEN?)* FOREIGN IDENTIFIER_TOKEN? eos? foreignBlock {implements=["com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"]}
+foreignStatement                     ::= (attributesDefinition EOS_TOKEN?)* FOREIGN identifier? eos? foreignBlock {implements=["com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"]}
 
 foreignBlock                         ::= blockStart foreignStatementList? blockEnd {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 
