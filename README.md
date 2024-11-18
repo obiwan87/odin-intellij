@@ -38,9 +38,9 @@ auto-completion, and free usage options.
 <td>❌</td>
 </tr>
 <tr>
-<td>Rider</td>
+<td>Rider**</td>
 <td>✅</td>
-<td>✅</td>
+<td>❌</td>
 <td>❌</td>
 <td>✅</td>
 </tr>
@@ -68,6 +68,8 @@ auto-completion, and free usage options.
 </table>
 
 \* Requires installing the free plugin "Native Debugging Support" (see section **Debugger Settings**).
+
+\** *NOT RECOMMENDED*: Rider differs significantly from other IDEs, and achieving full support may be challenging or require extensive effort.
 
 ## Getting Started
 
