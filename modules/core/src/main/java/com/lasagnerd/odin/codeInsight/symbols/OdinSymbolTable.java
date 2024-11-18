@@ -31,6 +31,7 @@ public class OdinSymbolTable {
     public List<OdinSymbol> getDeclarationSymbols(@NotNull OdinDeclaration declaration) {
         return declarationSymbols.getOrDefault(declaration, Collections.emptyList());
     }
+
     @Setter
     private String packagePath;
     public static final OdinSymbolTable EMPTY = new OdinSymbolTable();
@@ -56,6 +57,7 @@ public class OdinSymbolTable {
     Map<OdinDeclaredIdentifier, TsOdinType> knownTypes = new HashMap<>();
 
     Map<TsOdinType, Map<List<? extends PsiElement>, TsOdinType>> specializedTypes = new HashMap<>();
+
     public OdinSymbolTable() {
 
     }
@@ -63,7 +65,7 @@ public class OdinSymbolTable {
 
     public TsOdinType getSpecializedType(TsOdinType genericType, List<PsiElement> arguments) {
         Map<List<? extends PsiElement>, TsOdinType> argumentsMap = this.specializedTypes.get(genericType);
-        if(argumentsMap != null) {
+        if (argumentsMap != null) {
             return argumentsMap.get(arguments);
         }
         return null;
@@ -77,31 +79,32 @@ public class OdinSymbolTable {
     public OdinSymbol getSymbol(String name) {
 
         OdinSymbol odinSymbol = symbolNameMap.get(name);
-        if(odinSymbol != null)
+        if (odinSymbol != null)
             return odinSymbol;
 
-        return parentSymbolTable != null? parentSymbolTable.getSymbol(name) : null;
+        return parentSymbolTable != null ? parentSymbolTable.getSymbol(name) : null;
     }
 
     public EvOdinValue getValue(String name) {
         EvOdinValue value = valueStorage.get(name);
-        if(value != null)
+        if (value != null)
             return value;
 
-        return parentSymbolTable != null? parentSymbolTable.getValue(name) : null;
+        return parentSymbolTable != null ? parentSymbolTable.getValue(name) : null;
     }
 
     @Nullable
     public PsiNamedElement getNamedElement(String name) {
         OdinSymbol odinSymbol = getSymbol(name);
-        if(odinSymbol != null)
+        if (odinSymbol != null)
             return odinSymbol.getDeclaredIdentifier();
         return null;
     }
+
     public TsOdinType getType(String polymorphicParameter) {
         TsOdinType tsOdinType = typeTable.get(polymorphicParameter);
-        if(tsOdinType == null) {
-            return parentSymbolTable != null? parentSymbolTable.getType(polymorphicParameter) : null;
+        if (tsOdinType == null) {
+            return parentSymbolTable != null ? parentSymbolTable.getType(polymorphicParameter) : null;
         }
         return tsOdinType;
     }
@@ -137,7 +140,7 @@ public class OdinSymbolTable {
 
     public void addAll(Collection<? extends OdinSymbol> symbols, boolean override) {
         for (OdinSymbol symbol : symbols) {
-            if(!symbolNameMap.containsKey(symbol.getName()) || override) {
+            if (!symbolNameMap.containsKey(symbol.getName()) || override) {
                 symbolNameMap.put(symbol.getName(), symbol);
             }
         }
@@ -148,8 +151,8 @@ public class OdinSymbolTable {
         typeTable.putAll(symbolTable.typeTable);
         knownTypes.putAll(symbolTable.knownTypes);
         specializedTypes.putAll(symbolTable.specializedTypes);
-        if(symbolTable.getParentSymbolTable() != null) {
-            if(parentSymbolTable == null) {
+        if (symbolTable.getParentSymbolTable() != null) {
+            if (parentSymbolTable == null) {
                 parentSymbolTable = new OdinSymbolTable();
             }
             parentSymbolTable.putAll(symbolTable.getParentSymbolTable());
@@ -169,9 +172,9 @@ public class OdinSymbolTable {
     }
 
     public void add(OdinSymbol symbol, boolean override) {
-        if(!override)
+        if (!override)
             symbolNameMap.put(symbol.getName(), symbol);
-        else if(!symbolNameMap.containsKey(symbol.getName())) {
+        else if (!symbolNameMap.containsKey(symbol.getName())) {
             symbolNameMap.put(symbol.getName(), symbol);
         }
 
@@ -220,16 +223,16 @@ public class OdinSymbolTable {
         do {
             odinSymbolTable.addAll(curr.getSymbols(), false);
             curr = curr.getParentSymbolTable();
-        } while(curr != null);
+        } while (curr != null);
 
         return odinSymbolTable;
     }
 
     public void setRoot(OdinSymbolTable symbolTable) {
-        if(parentSymbolTable != null) {
+        if (parentSymbolTable != null) {
             parentSymbolTable.setRoot(symbolTable);
         } else {
-            if(symbolTable != this) {
+            if (symbolTable != this) {
                 parentSymbolTable = symbolTable;
             }
         }
@@ -239,5 +242,9 @@ public class OdinSymbolTable {
         valueStorage.putAll(builtInValues);
     }
 
+    public boolean isShadowing(String name) {
+        return this.symbolNameMap.get(name) != null &&
+                (parentSymbolTable != null && parentSymbolTable.getSymbol(name) != null);
+    }
 
 }

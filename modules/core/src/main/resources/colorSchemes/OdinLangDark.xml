@@ -39,5 +39,17 @@
         <value>
             <option name="FOREGROUND" value="B09D79"/>
         </value>
+    </option> <!-- 7DBDA2 -->
+
+    <option name="ODIN_SHADOWING_VARIABLE">
+        <value>
+            <option name="FOREGROUND" value="7DBDA2"/>
+        </value>
+    </option>
+
+    <option name="ODIN_SHADOWING_VARIABLE_REF">
+        <value>
+            <option name="FOREGROUND" value="7DBDA2"/>
+        </value>
     </option>
 </list>

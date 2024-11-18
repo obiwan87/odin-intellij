@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.lasagnerd.odin.codeInsight.annotators.OdinAnnotationUtils.getUserData;
+import static com.lasagnerd.odin.colorSettings.OdinSyntaxTextAttributes.ODIN_SHADOWING_VARIABLE;
 import static com.lasagnerd.odin.colorSettings.OdinSyntaxTextAttributes.TEXT_ATTRIBUTES_MAP;
 import static com.lasagnerd.odin.lang.psi.OdinReference.logStackOverFlowError;
 
@@ -177,7 +178,6 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                             type);
                 }
             }
-
         }
 
         if (elementType == OdinTypes.IDENTIFIER_TOKEN) {
@@ -272,9 +272,17 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                     .findFirst()
                     .orElse(null);
             if (symbol != null) {
-                if (symbol.getSymbolType() == OdinSymbolType.VARIABLE && symbol.isStatic()) {
-                    highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_STATIC_VARIABLE);
-                    return;
+                if (symbol.getSymbolType() == OdinSymbolType.VARIABLE) {
+                    if (symbol.isStatic()) {
+                        highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_STATIC_VARIABLE);
+                        return;
+                    }
+
+                    OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(declaration);
+                    if (odinSymbolTable.getSymbol(declaredIdentifier.getName()) != null) {
+                        highlight(annotationHolder, psiElementRange, ODIN_SHADOWING_VARIABLE);
+                        return;
+                    }
                 }
                 TextAttributesKey textAttribute = TEXT_ATTRIBUTES_MAP.getDeclarationStyle(symbol);
                 if (textAttribute != null) {
@@ -329,6 +337,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
         // Symbol not found
         if (symbol == null) {
+
             // If we are being referenced from a polymorphic type, do not show any errors
             if (refExpression.getExpression() != null) {
                 TsOdinType type = OdinInferenceEngine.inferType(symbolTable, refExpression.getExpression());
@@ -364,6 +373,11 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             }
             if (symbol.isBuiltin()) {
                 highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_BUILTIN_VAR);
+                return;
+            }
+
+            if (symbolTable.isShadowing(symbol.getName())) {
+                highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_SHADOWING_VARIABLE_REF);
                 return;
             }
         }
