@@ -11,9 +11,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Query;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
@@ -284,6 +287,50 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         return;
                     }
                 }
+
+                // Track reassignment of variables and return parameters
+                // A conditional branch analysis is not necessary, because odin always initializes a variable or return parameter with its default value
+                if (symbol.getScope() == OdinScope.LOCAL && (symbol.getSymbolType() == OdinSymbolType.VARIABLE || isReturnParameter(declaration))) {
+
+                    OdinAnnotationSessionState annotationSessionState = getAnnotationSessionState(annotationHolder);
+                    PsiElement scope;
+                    scope = PsiTreeUtil.getParentOfType(declaredIdentifier,
+                            OdinStatementList.class,
+                            OdinProcedureLiteralType.class,
+                            OdinConditionalStatement.class,
+                            OdinWhenStatement.class,
+                            OdinForStatement.class,
+                            OdinSwitchBlock.class);
+                    if (scope != null) {
+                        HashMap<OdinDeclaredIdentifier, Integer> reassignmentCount = annotationSessionState.reassignmentCount;
+
+                        reassignmentCount.put(declaredIdentifier, 1);
+
+                        Query<PsiReference> search = ReferencesSearch.search(declaredIdentifier, new LocalSearchScope(scope));
+                        Collection<PsiReference> references = search.findAll();
+                        for (PsiReference reference : references) {
+                            PsiElement element = reference.getElement();
+                            if (element instanceof OdinIdentifier odinIdentifier) {
+                                annotationSessionState.usages.put(odinIdentifier, symbol);
+                                if (odinIdentifier.getParent() instanceof OdinRefExpression refExpression) {
+                                    if (refExpression.getParent() instanceof OdinLhsExpressions lhsExpressions) {
+                                        if (lhsExpressions.getParent() instanceof OdinAssignmentStatement) {
+                                            Integer count = reassignmentCount.getOrDefault(declaredIdentifier, 0);
+                                            reassignmentCount.put(declaredIdentifier, count + 1);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (reassignmentCount.getOrDefault(declaredIdentifier, 0) > 1) {
+                            highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_VAR_REASSIGNMENT);
+                            return;
+                        }
+                    }
+                }
+
+
                 TextAttributesKey textAttribute = TEXT_ATTRIBUTES_MAP.getDeclarationStyle(symbol);
                 if (textAttribute != null) {
                     highlight(annotationHolder, psiElementRange, textAttribute);
@@ -292,9 +339,19 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
     }
 
+    private static boolean isReturnParameter(OdinDeclaration declaration) {
+        if (declaration instanceof OdinParameterDeclaration) {
+            OdinReturnParameters returnParameters = PsiTreeUtil.getParentOfType(declaration, OdinReturnParameters.class);
+            return returnParameters != null;
+        }
+        return false;
+    }
+
     private static class OdinAnnotationSessionState {
         Map<PsiElement, OdinRefExpression> refExpressionMap = new HashMap<>();
         Set<OdinRefExpression> aborted = new HashSet<>();
+        Map<OdinIdentifier, OdinSymbol> usages = new HashMap<>();
+        HashMap<OdinDeclaredIdentifier, Integer> reassignmentCount = new HashMap<>();
     }
 
     private static OdinAnnotationSessionState getAnnotationSessionState(AnnotationHolder annotationHolder) {
@@ -352,6 +409,18 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange, "reference");
             annotationSessionState.aborted.add(topMostExpression);
             return;
+        }
+
+        if (symbol.getDeclaredIdentifier() instanceof OdinDeclaredIdentifier declaredIdentifier) {
+            Integer count = annotationSessionState.reassignmentCount.getOrDefault(declaredIdentifier, 0);
+            if (count > 1) {
+                if (symbol.getScope() == OdinScope.LOCAL) {
+                    if (symbol.getSymbolType() == OdinSymbolType.PARAMETER || symbol.getSymbolType() == OdinSymbolType.VARIABLE) {
+                        highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_VAR_REASSIGNMENT_REF);
+                        return;
+                    }
+                }
+            }
         }
 
         if (symbol.getSymbolType() == OdinSymbolType.PARAMETER) {
