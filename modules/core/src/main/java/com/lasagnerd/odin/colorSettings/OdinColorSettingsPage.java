@@ -400,7 +400,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("Declarations//Variables//Package exported global variable", ODIN_PKG_EXP_VARIABLE),
             new AttributesDescriptor("Declarations//Variables//File private global variable", ODIN_FILE_PRIVATE_VARIABLE),
             new AttributesDescriptor("Declarations//Variables//Package private global variable", ODIN_PKG_PRIVATE_VARIABLE),
-//            new AttributesDescriptor("Declarations//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
+            new AttributesDescriptor("Declarations//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
             new AttributesDescriptor("Declarations//Variables//Shadowing variable", ODIN_SHADOWING_VARIABLE),
 
             // Fields
@@ -463,7 +463,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("References//Constants//Package exported global constant", ODIN_PKG_EXP_CONSTANT_REF),
             new AttributesDescriptor("References//Constants//File private global constant", ODIN_FILE_PRIVATE_CONSTANT_REF),
             new AttributesDescriptor("References//Constants//Package private global constant", ODIN_PKG_PRIVATE_CONSTANT_REF),
-//            new AttributesDescriptor("References//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
+            new AttributesDescriptor("References//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
             new AttributesDescriptor("References//Variables//Shadowing variable", ODIN_SHADOWING_VARIABLE_REF),
 
 //            new AttributesDescriptor("References//Type alias//Package exported type alias reference", OdinSyntaxTextAttributes.ODIN_PKG_EXP_TYPE_ALIAS_REF),
