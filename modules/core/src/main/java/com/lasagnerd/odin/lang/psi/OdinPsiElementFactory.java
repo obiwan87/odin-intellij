@@ -149,7 +149,8 @@ public class OdinPsiElementFactory {
     @NotNull
     public OdinImportStatementsContainer createImportStatementsContainer(List<OdinImportDeclarationStatement> imports) {
         String importStatements = imports.stream()
-                .map(OdinImportDeclarationStatement::getText).reduce("", (a, b) -> a + "\n" + b);
+                .map(OdinImportDeclarationStatement::getText)
+                .reduce("", (a, b) -> a + "\n" + b);
         String dummyCode = """
                 package dummy;
                 

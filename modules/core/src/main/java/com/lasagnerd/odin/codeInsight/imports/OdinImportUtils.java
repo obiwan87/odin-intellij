@@ -555,7 +555,7 @@ public class OdinImportUtils {
         }
     }
 
-    public static void insertImport(Project project, String alias, String importPath, OdinFileScope fileScope) {
+    public static PsiElement insertImport(Project project, String alias, String importPath, OdinFileScope fileScope) {
         OdinImportDeclarationStatement anImport = OdinPsiElementFactory.getInstance(project)
                 .createImport(alias, importPath);
 
@@ -563,10 +563,10 @@ public class OdinImportUtils {
         if (importStatementsContainer == null) {
             OdinImportStatementsContainer templateImportStatementsContainer = OdinPsiElementFactory.getInstance(project)
                     .createImportStatementsContainer(List.of(anImport));
-            fileScope.addAfter(templateImportStatementsContainer, fileScope.getEos());
+            return fileScope.addAfter(templateImportStatementsContainer, fileScope.getEos());
         } else {
             OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatementsContainer().getImportDeclarationStatementList().getLast();
-            importStatementsContainer.addAfter(anImport, odinImportDeclarationStatement);
+            return importStatementsContainer.addAfter(anImport, odinImportDeclarationStatement);
         }
     }
 

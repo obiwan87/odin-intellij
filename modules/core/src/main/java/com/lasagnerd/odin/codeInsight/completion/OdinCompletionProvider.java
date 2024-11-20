@@ -341,7 +341,6 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         for (OdinSymbol symbol : symbols) {
             if (symbol.getDeclaredIdentifier() == null) {
                 visibleSymbols.add(symbol);
-                System.out.println();
             } else {
                 VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaredIdentifier());
                 VirtualFile virtualFile = parameters.getOriginalFile().getVirtualFile();
