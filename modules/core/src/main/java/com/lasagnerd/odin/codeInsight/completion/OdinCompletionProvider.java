@@ -331,9 +331,30 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         // Add symbols from local scope
         OdinSymbolTable flatSymbolTable = OdinSymbolTableResolver.computeSymbolTable(position)
                 .flatten();
-        addLookUpElements(result, flatSymbolTable.getSymbols().stream()
+        List<OdinSymbol> symbols = flatSymbolTable.getSymbols()
+                .stream()
                 .filter(symbolFilter::shouldInclude)
-                .toList(), 2000);
+                .toList();
+
+        List<OdinSymbol> visibleSymbols = new ArrayList<>();
+
+        for (OdinSymbol symbol : symbols) {
+            if (symbol.getDeclaredIdentifier() == null) {
+                visibleSymbols.add(symbol);
+                System.out.println();
+            } else {
+                VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaredIdentifier());
+                VirtualFile virtualFile = parameters.getOriginalFile().getVirtualFile();
+                if (!Objects.equals(containingVirtualFile, virtualFile)) {
+                    if (symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE)
+                        continue;
+                    visibleSymbols.add(symbol);
+                } else {
+                    visibleSymbols.add(symbol);
+                }
+            }
+        }
+        addLookUpElements(result, visibleSymbols, 2000);
 
         // Add symbols from other packages from this source root (the blue folder)
         ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
