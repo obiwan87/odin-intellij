@@ -16,7 +16,7 @@
         <ul>
             <li>Added full support for implicit selector expressions.</li>
             <li>Parameter hints are now displayed after confirming a suggestion.</li>
-            <li>Variable reassignment is now highlighted appropriately.</li>
+            <li>Variable reassignment and shadowing variables are now highlighted appropriately.</li>
         </ul>
 
         <h3>0.7.4</h3>
