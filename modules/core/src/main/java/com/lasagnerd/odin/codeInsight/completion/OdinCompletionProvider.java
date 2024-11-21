@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -68,14 +69,10 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         }
     }
 
-    private void addSelectorExpressionCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result, OdinRefExpression reference) {
+    private void addSelectorExpressionCompletions(@NotNull CompletionResultSet result, OdinRefExpression reference, OdinSymbolTable symbolTable) {
+        System.out.println("selector completion started");
         // This constitutes our scope
         {
-            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(reference, parameters
-                    .getOriginalFile()
-                    .getContainingDirectory()
-                    .getVirtualFile()
-                    .getPath());
 
             if (reference.getExpression() != null) {
                 // TODO at some point we should return the type of each symbol
@@ -99,7 +96,8 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
 
-        if (!(parameters.getPosition().getParent() instanceof OdinIdentifier identifier))
+        PsiElement position = parameters.getPosition();
+        if (!(position.getParent() instanceof OdinIdentifier identifier))
             return;
 
         VirtualFile sourceFile = OdinImportUtils.getContainingVirtualFile(parameters.getOriginalFile());
@@ -160,7 +158,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             case OdinImplicitSelectorExpression implicitSelectorExpression -> {
                 TsOdinType tsOdinType = OdinExpectedTypeEngine
                         .inferExpectedType(
-                                OdinSymbolTableResolver.computeSymbolTable(parameters.getPosition()),
+                                OdinSymbolTableResolver.computeSymbolTable(position),
                                 implicitSelectorExpression
                         );
 
@@ -174,11 +172,28 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                     addSelectorTypeCompletions(parameters, result, qualifiedType);
 
             // Expressions like 'a.b.c.<caret>'
-            case OdinRefExpression refExpression when refExpression.getExpression() != null ->
-                    addSelectorExpressionCompletions(parameters, result, refExpression);
-
+            case OdinRefExpression refExpression when refExpression.getExpression() != null -> {
+                OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(refExpression, parameters
+                        .getOriginalFile()
+                        .getContainingDirectory()
+                        .getVirtualFile()
+                        .getPath());
+                OdinSymbol symbol = symbolTable.getSymbol(refExpression.getText());
+                if (symbol != null) {
+                    addSelectorExpressionCompletions(result, refExpression, symbolTable);
+                } else {
+                    if (topMostRefExpression != null) {
+                        addIdentifierCompletions(parameters, result, topMostRefExpression.getText(), symbolTable);
+                    }
+                }
+            }
             // Identifiers like '<caret>'
-            case null, default -> addIdentifierCompletions(parameters, result);
+            case null, default -> {
+                OdinSymbolTable symbolTable = OdinSymbolTableResolver
+                        .computeSymbolTable(position)
+                        .flatten();
+                addIdentifierCompletions(parameters, result, position.getText(), symbolTable);
+            }
         }
     }
 
@@ -313,10 +328,8 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         return typeText;
     }
 
-    private void addIdentifierCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-        result.endBatch();
-        PsiElement position = parameters.getPosition();
-        String typed = position.getText().replaceAll(DUMMY_IDENTIFIER_TRIMMED + "$", "");
+    private void addIdentifierCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result, @NlsSafe String text, OdinSymbolTable symbolTable) {
+        String typed = text.replaceAll(DUMMY_IDENTIFIER_TRIMMED + "$", "");
 
         // Add symbols from all visible stuff in my project
         OdinFile thisOdinFile = (OdinFile) parameters.getOriginalFile();
@@ -326,12 +339,12 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
         if (typed.isBlank()) {
             result.restartCompletionOnAnyPrefixChange();
+        } else {
+            result = result.withPrefixMatcher(typed);
         }
 
         // Add symbols from local scope
-        OdinSymbolTable flatSymbolTable = OdinSymbolTableResolver.computeSymbolTable(position)
-                .flatten();
-        List<OdinSymbol> symbols = flatSymbolTable.getSymbols()
+        List<OdinSymbol> symbols = symbolTable.getSymbols()
                 .stream()
                 .filter(symbolFilter::shouldInclude)
                 .toList();

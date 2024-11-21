@@ -15,14 +15,16 @@ public class OdinReferenceResolver {
     public static OdinSymbolTable resolve(OdinSymbolTable symbolTable, OdinExpression valueExpression) {
         // Add filter for referenceable elements
         TsOdinType type = OdinInferenceEngine.inferType(symbolTable, valueExpression);
-        if(type instanceof TsOdinMetaType metaType) {
+        if (type instanceof TsOdinMetaType metaType) {
             TsOdinType tsOdinType = metaType.representedType().baseType(true);
-            if(tsOdinType instanceof TsOdinEnumType) {
+            if (tsOdinType instanceof TsOdinEnumType) {
                 return OdinInsightUtils.getTypeElements(valueExpression.getProject(), tsOdinType);
             }
         }
-        if(type instanceof TsOdinPackageReferenceType packageReferenceType) {
-            return OdinInsightUtils.getPackageReferenceSymbols(valueExpression.getProject(), packageReferenceType, false);
+        if (type instanceof TsOdinPackageReferenceType packageReferenceType) {
+            return OdinInsightUtils.getPackageReferenceSymbols(valueExpression.getProject(),
+                    packageReferenceType,
+                    false);
         }
         return OdinInsightUtils.getTypeElements(valueExpression.getProject(), type, true);
     }
