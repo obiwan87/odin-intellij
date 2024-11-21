@@ -317,7 +317,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                 builtinSymbols,
                 odinSymbol -> OdinAttributeUtils.containsAttribute(odinSymbol.getAttributes(), "builtin"));
 
-        List<String> resources = List.of("odin/builtin.odin", "odin/annotations.odin");
+        List<String> resources = List.of("odin/builtin.odin");
         for (String resource : resources) {
             OdinFile odinFile = createOdinFileFromResource(project, resource);
             syntheticFiles.add(odinFile);
