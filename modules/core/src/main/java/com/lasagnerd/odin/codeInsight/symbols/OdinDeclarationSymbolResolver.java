@@ -223,6 +223,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         var alias = o.getAlias();
         OdinSymbol odinSymbol = new OdinSymbol(Objects.requireNonNullElse(alias, o));
         odinSymbol.setSymbolType(OdinSymbolType.PACKAGE_REFERENCE);
+        odinSymbol.setVisibility(OdinVisibility.FILE_PRIVATE);
 
         symbols.add(odinSymbol);
     }

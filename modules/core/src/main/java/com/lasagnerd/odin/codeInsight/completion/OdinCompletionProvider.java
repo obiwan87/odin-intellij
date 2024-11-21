@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -183,7 +182,10 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                     addSelectorExpressionCompletions(result, refExpression, symbolTable);
                 } else {
                     if (topMostRefExpression != null) {
-                        addIdentifierCompletions(parameters, result, topMostRefExpression.getText(), symbolTable);
+                        addIdentifierCompletions(parameters,
+                                result,
+                                topMostRefExpression.getText(),
+                                symbolTable.flatten());
                     }
                 }
             }
@@ -328,7 +330,10 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         return typeText;
     }
 
-    private void addIdentifierCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result, @NlsSafe String text, OdinSymbolTable symbolTable) {
+    private void addIdentifierCompletions(@NotNull CompletionParameters parameters,
+                                          @NotNull CompletionResultSet result,
+                                          String text,
+                                          OdinSymbolTable symbolTable) {
         String typed = text.replaceAll(DUMMY_IDENTIFIER_TRIMMED + "$", "");
 
         // Add symbols from all visible stuff in my project

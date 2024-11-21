@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -975,6 +976,35 @@ public class OdinInsightUtils {
         }
 
         return null;
+    }
+
+    public static boolean isVisible(PsiElement reference,
+                                    OdinSymbol symbol) {
+        if (symbol.isBuiltin()
+                || symbol.getScope() == OdinScope.LOCAL
+                || symbol.getVisibility() == OdinVisibility.PACKAGE_EXPORTED)
+            return true;
+
+        if (symbol.getDeclaration() == null)
+            return true;
+
+        VirtualFile referenceFile = OdinImportUtils.getContainingVirtualFile(reference);
+        VirtualFile declarationFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaration());
+
+        if (referenceFile.equals(declarationFile))
+            return true;
+
+        if (symbol.getVisibility() == OdinVisibility.FILE_PRIVATE
+                || symbol.getSymbolType() == PACKAGE_REFERENCE)
+            return false;
+
+        if (symbol.getVisibility() == OdinVisibility.PACKAGE_PRIVATE) {
+            VirtualFile referencePackageFile = referenceFile.getParent();
+            VirtualFile declarationPackageFile = declarationFile.getParent();
+            return Objects.equals(referencePackageFile, declarationPackageFile);
+
+        }
+        return true;
     }
 
     public record OdinCallInfo(OdinPsiElement callingElement, TsOdinType callingType, List<OdinArgument> argumentList) {

@@ -428,7 +428,7 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinType type = inferTypeOfFirstExpressionInProcedure(odinFile, "testTypeInference");
 
             assertNotNull(type);
-            assertEquals(type.getName(), "Point");
+            assertEquals("Point", type.getName());
         }
     }
 
@@ -741,7 +741,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "binary_operators_on_arrays", "test");
             TsOdinArrayType arrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
-            assertEquals(arrayType.getElementType(), TsOdinBuiltInTypes.F32);
+            assertEquals(TsOdinBuiltInTypes.F32, arrayType.getElementType());
         }
     }
 
@@ -1011,7 +1011,7 @@ public class OdinParsingTest extends UsefulTestCase {
                 PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
                 OdinVariableInitializationStatement variableInitializationStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinVariableInitializationStatement.class);
                 assertNotNull(variableInitializationStatement);
-                assertEquals(variableInitializationStatement.getText(), "x := 1");
+                assertEquals("x := 1", variableInitializationStatement.getText());
             }
 
             // Check that expression of y, only sees inner x
@@ -1024,7 +1024,7 @@ public class OdinParsingTest extends UsefulTestCase {
                 PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
                 OdinVariableInitializationStatement variableInitializationStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinVariableInitializationStatement.class);
                 assertNotNull(variableInitializationStatement);
-                assertEquals(variableInitializationStatement.getText(), "x := x");
+                assertEquals("x := x", variableInitializationStatement.getText());
             }
         }
 
@@ -1208,9 +1208,9 @@ public class OdinParsingTest extends UsefulTestCase {
                     assertNull(odinSymbolTable.getSymbol("test_case_2"));
                 }
 
-                OdinSwitchCase odinSwitchCase = Objects.requireNonNull(odinSwitchBlock.getSwitchBody()).getSwitchCases().getSwitchCaseList().getFirst();
+                OdinSwitchCase odinSwitchCase = Objects.requireNonNull(Objects.requireNonNull(odinSwitchBlock.getSwitchBody()).getSwitchCases()).getSwitchCaseList().getFirst();
                 {
-                    OdinExpression expression = odinSwitchCase.getCaseClause()
+                    OdinExpression expression = Objects.requireNonNull(odinSwitchCase.getCaseClause())
                             .getExpressionList()
                             .getFirst();
                     OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
@@ -1246,7 +1246,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinProcedureDefinition proc = findFirstProcedure(odinFile, "structs_unions");
             OdinStructType struct = PsiTreeUtil.findChildOfType(proc, OdinStructType.class);
             assertNotNull(struct);
-            OdinStructBody structBody = struct.getStructBlock().getStructBody();
+            OdinStructBody structBody = Objects.requireNonNull(struct.getStructBlock()).getStructBody();
             OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(Objects.requireNonNull(structBody));
             assertNotNull(odinSymbolTable.getSymbol("Key"));
             assertNotNull(odinSymbolTable.getSymbol("Value"));
@@ -1255,7 +1255,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinProcedureDefinition proc = findFirstProcedure(odinFile, "structs_unions");
         OdinUnionType union = PsiTreeUtil.findChildOfType(proc, OdinUnionType.class);
         assertNotNull(union);
-        OdinUnionBody structBody = union.getUnionBlock().getUnionBody();
+        OdinUnionBody structBody = Objects.requireNonNull(union.getUnionBlock()).getUnionBody();
         OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(Objects.requireNonNull(structBody));
         assertNotNull(odinSymbolTable.getSymbol("T1"));
         assertNotNull(odinSymbolTable.getSymbol("T2"));
@@ -1275,12 +1275,12 @@ public class OdinParsingTest extends UsefulTestCase {
             {
                 OdinStructType structVar = PsiTreeUtil.findChildOfType(proc, OdinStructType.class);
                 assertNotNull(structVar);
-                OdinStructBody structBody = structVar.getStructBlock().getStructBody();
+                OdinStructBody structBody = Objects.requireNonNull(structVar.getStructBlock()).getStructBody();
                 assertNotNull(structBody);
                 List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
                 OdinFieldDeclarationStatement fieldDeclaration = fieldDeclarationStatementList.getFirst();
                 OdinType type = fieldDeclaration.getType();
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(type);
+                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(Objects.requireNonNull(type));
 
                 assertNotNull(odinSymbolTable.getSymbol("s"));
             }
@@ -1416,12 +1416,20 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(expression);
             assertNotNull(odinSymbolTable.getSymbol("a_mypublic_proc"));
             assertNotNull(odinSymbolTable.getSymbol("b_mypackage_private_proc"));
-            assertNull(odinSymbolTable.getSymbol("c_myfile_private_proc"));
+            {
+                OdinSymbol symbol = odinSymbolTable.getSymbol("c_myfile_private_proc");
+                assertNotNull(symbol);
+                assertSame(OdinVisibility.FILE_PRIVATE, symbol.getVisibility());
+            }
 
             assertNotNull(odinSymbolTable.getSymbol("my_private_proc"));
             assertNotNull(odinSymbolTable.getSymbol("my_private_struct"));
 
-            assertNull(odinSymbolTable.getSymbol("my_file_private_global"));
+            {
+                OdinSymbol symbol = odinSymbolTable.getSymbol("my_file_private_global");
+                assertNotNull(symbol);
+                assertSame(OdinVisibility.FILE_PRIVATE, symbol.getVisibility());
+            }
         }
 
         {
@@ -1429,7 +1437,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "main", "test");
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
             TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
-            assertEquals(structType.getName(), "a_ret");
+            assertEquals("a_ret", structType.getName());
         }
     }
 
@@ -1506,7 +1514,7 @@ public class OdinParsingTest extends UsefulTestCase {
                     .getRhsExpressions()).getExpressionList().getFirst();
             TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(odinExpression), odinExpression);
             TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
-            assertEquals(structType.getName(), "MyStruct");
+            assertEquals("MyStruct", structType.getName());
         }
     }
 
@@ -1533,11 +1541,11 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testTypeConversion() {
         {
             TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
         }
         {
             TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.STRING);
+            assertEquals(TsOdinBuiltInTypes.STRING, tsOdinType);
         }
 
         {
@@ -1568,44 +1576,44 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "x");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "s");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.F64);
+            assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "t");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "u");
             assertInstanceOf(tsOdinType, TsOdinStructType.class);
-            assertEquals(tsOdinType.getName(), "Point");
+            assertEquals("Point", tsOdinType.getName());
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "v");
             assertInstanceOf(tsOdinType, TsOdinNumericType.class);
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "z");
             assertInstanceOf(tsOdinType, TsOdinStructType.class);
-            assertEquals(tsOdinType.getName(), "Point");
+            assertEquals("Point", tsOdinType.getName());
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "w");
             assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
-            assertEquals(tsOdinType.getName(), "PointDistinctAlias");
+            assertEquals("PointDistinctAlias", tsOdinType.getName());
         }
 
 
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_procedureGroup", "y");
             assertInstanceOf(tsOdinType, TsOdinStringType.class);
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.STRING);
+            assertEquals(TsOdinBuiltInTypes.STRING, tsOdinType);
         }
     }
 
@@ -1613,11 +1621,11 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_polyProcedureGroup", "x");
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "typeInference_polyProcedureGroup", "y");
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I64);
+            assertEquals(TsOdinBuiltInTypes.I64, tsOdinType);
         }
     }
 
@@ -1887,7 +1895,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
             OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(tsOdinType, tsOdinExpectedType, false);
             assertTrue(typeCheckResult.isCompatible());
-            assertEquals(typeCheckResult.getConversionActionList().size(), 1);
+            assertEquals(1, typeCheckResult.getConversionActionList().size());
 
         }
     }
@@ -1959,7 +1967,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testNamelessStruct", "x");
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
 
         }
         {
@@ -2030,14 +2038,14 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testSwizzleFieldsAndArrays", "d");
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.F32);
+            assertEquals(TsOdinBuiltInTypes.F32, tsOdinType);
         }
 
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testSwizzleFieldsAndArrays", "c");
             TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
             TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinTypeAlias.baseType(true), TsOdinArrayType.class);
-            assertEquals(tsOdinArrayType.getElementType(), TsOdinBuiltInTypes.F32);
+            assertEquals(TsOdinBuiltInTypes.F32, tsOdinArrayType.getElementType());
         }
     }
 
@@ -2199,6 +2207,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(file, "testPositionalInitialization", "s");
             OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(var, OdinImplicitSelectorExpression.class);
+            assertNotNull(expression);
             TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(expression), expression);
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("E", tsOdinEnumType.getName());
@@ -2316,30 +2325,30 @@ public class OdinParsingTest extends UsefulTestCase {
 
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "d");
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "e");
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.F32);
+            assertEquals(TsOdinBuiltInTypes.F32, tsOdinType);
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "f");
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I64);
+            assertEquals(TsOdinBuiltInTypes.I64, tsOdinType);
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "a");
             TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinType, TsOdinSliceType.class);
-            assertEquals(tsOdinSliceType.getElementType(), TsOdinBuiltInTypes.I32);
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinSliceType.getElementType());
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "b");
             TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinType, TsOdinSliceType.class);
-            assertEquals(tsOdinSliceType.getElementType(), TsOdinBuiltInTypes.F32);
+            assertEquals(TsOdinBuiltInTypes.F32, tsOdinSliceType.getElementType());
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaSlices", "c");
             TsOdinSliceType tsOdinSliceType = assertInstanceOf(tsOdinType, TsOdinSliceType.class);
-            assertEquals(tsOdinSliceType.getElementType(), TsOdinBuiltInTypes.I64);
+            assertEquals(TsOdinBuiltInTypes.I64, tsOdinSliceType.getElementType());
         }
     }
 
@@ -2354,14 +2363,14 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = loadTypeInference();
 
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testUnionConversion", "x");
-        assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+        assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
     }
 
     public void testAnyTypeConversion() throws IOException {
         OdinFile file = loadTypeInference();
 
         TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testAnyTypeConversion", "x");
-        assertEquals(tsOdinType, TsOdinBuiltInTypes.I32);
+        assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
     }
 
     public void testRecoverRules() throws IOException {
@@ -2404,12 +2413,12 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = loadTypeInference();
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testFloatConversion", "x");
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.F64);
+            assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
         }
 
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testFloatConversion", "y");
-            assertEquals(tsOdinType, TsOdinBuiltInTypes.I64);
+            assertEquals(TsOdinBuiltInTypes.I64, tsOdinType);
         }
     }
 
@@ -2459,13 +2468,13 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_BUILD_MODE_DYNAMIC");
             @NotNull Boolean val = assertInstanceOf(evOdinValue.getValue(), Boolean.class);
-            assertEquals(false, val.booleanValue());
+            assertFalse(val);
         }
 
         {
             EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_WINDOWS");
             @NotNull Boolean val = assertInstanceOf(evOdinValue.getValue(), Boolean.class);
-            assertEquals(true, val.booleanValue());
+            assertTrue(val);
         }
 
 

@@ -165,7 +165,8 @@ public class OdinSymbolTableResolver {
 
         // 2. Import symbols from other files in the same package
         if (packagePath != null) {
-            // TODO actually include private symbols and rather don't suggest them in completion contributor. This way, we can show a different
+            // TODO actually include private symbols and rather don't suggest them in completion contributor.
+            //  This way, we can show a different
             //  kind of error when accessing private symbols as opposed to undefined symbols.
             // Filter out symbols declared with private="file" or do not include anything if comment //+private is in front of package declaration
             List<OdinFile> otherFilesInPackage = getOtherFilesInPackage(project, packagePath, OdinImportUtils.getFileName(element));
@@ -173,14 +174,10 @@ public class OdinSymbolTableResolver {
                 if (odinFile == null || odinFile.getFileScope() == null) {
                     continue;
                 }
-                OdinVisibility globalFileVisibility = getGlobalFileVisibility(odinFile.getFileScope());
-                if (globalFileVisibility == OdinVisibility.FILE_PRIVATE) continue;
                 Collection<OdinSymbol> fileScopeDeclarations = odinFile.getFileScope().getSymbolTable().getSymbolNameMap()
                         .values()
                         .stream()
-                        .filter(o -> !o.getVisibility().equals(OdinVisibility.FILE_PRIVATE))
                         .toList();
-
 
                 symbolTable.addAll(fileScopeDeclarations);
             }
@@ -257,9 +254,10 @@ public class OdinSymbolTableResolver {
     }
 
     public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier) {
-        return findSymbol(identifier, OdinSymbolTableResolver.computeSymbolTable(identifier)
-                .with(OdinImportService.getInstance(identifier.getProject())
-                        .getPackagePath(identifier)));
+        String packagePath = OdinImportService.getInstance(identifier.getProject()).getPackagePath(identifier);
+        return findSymbol(identifier, OdinSymbolTableResolver
+                .computeSymbolTable(identifier)
+                .with(packagePath));
     }
 
     public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier, OdinSymbolTable parentSymbolTable) {

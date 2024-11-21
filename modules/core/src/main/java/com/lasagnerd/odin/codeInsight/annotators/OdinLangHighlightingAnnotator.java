@@ -42,6 +42,7 @@ import static com.lasagnerd.odin.lang.psi.OdinReference.logStackOverFlowError;
 
 public class OdinLangHighlightingAnnotator implements Annotator {
 
+    public static final String UNRESOLVED_REFERENCE_ERROR_MESSAGE = "Unresolved reference '%s'";
     public static Logger LOG = Logger.getInstance(OdinLangHighlightingAnnotator.class);
     public static final List<String> RESERVED_TYPES = List.of(
             "bool",
@@ -141,7 +142,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     public static final String ALL_ESCAPE_SEQUENCES =
             "\\\\n|\\\\r|\\\\v|\\\\t|\\\\e|\\\\a|\\\\b|\\\\f|\\\\[0-7]{2}|\\\\x[0-9a-fA-F]{2}|\\\\u[0-9a-fA-F]{4}|\\\\U[0-9a-fA-F]{8}|\\\\\"|\\\\\\\\";
     private static final Key<OdinAnnotationSessionState> ANNOTATION_SESSION_STATE = Key.create("annotationSessionState");
-    public static Pattern ESCAPE_SEQUENCES_PATTERN = Pattern.compile(ALL_ESCAPE_SEQUENCES);
+    public static Pattern ESCAPE_SEQUENCES_PATTERN = Pattern.compile("\\\\n|\\\\r|\\\\v|\\\\t|\\\\e|\\\\a|\\\\b|\\\\f|\\\\[0-7]{2}|\\\\x[0-9a-fA-F]{2}|\\\\u[0-9a-fA-F]{4}|\\\\U[0-9a-fA-F]{8}|\\\\\"|\\\\\\\\");
 
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
@@ -174,11 +175,11 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                     } else {
                         type = "reference";
                     }
-                    highlightUnknownReference(psiElement.getProject(),
+                    highlightError(psiElement.getProject(),
                             annotationHolder,
                             packagePath,
                             textRange,
-                            type);
+                            "Unresolved " + type + " '%s'");
                 }
             }
         }
@@ -211,7 +212,11 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         return;
                     }
                     // TODO: activate when finished with inference engine
-                    highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
+                    highlightError(identifierTokenParent.getProject(),
+                            annotationHolder,
+                            identifierText,
+                            psiElementRange,
+                            UNRESOLVED_REFERENCE_ERROR_MESSAGE);
                 } else if (identifierTokenParent.getParent() instanceof OdinRefExpression refExpression) {
                     handleReferences(annotationHolder,
                             psiElement,
@@ -246,17 +251,22 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                                       PsiElement element,
                                       PsiElement identifierTokenParent,
                                       String identifierText,
-                                      TextRange psiElementRange) {
+                                      TextRange textRange) {
         OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
         OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
         if (symbol == null) {
-            highlightUnknownReference(element.getProject(), annotationHolder, identifierText, psiElementRange, "reference");
+            highlightError(element.getProject(), annotationHolder, identifierText, textRange, UNRESOLVED_REFERENCE_ERROR_MESSAGE);
+            return;
+        }
+
+        if (!OdinInsightUtils.isVisible(identifierTokenParent, symbol)) {
+            highlightNotVisible(annotationHolder, identifierText, identifierTokenParent, textRange, symbol);
             return;
         }
 
         TextAttributesKey textAttribute = TEXT_ATTRIBUTES_MAP.getReferenceTextAttribute(symbol);
         if (textAttribute != null) {
-            highlight(annotationHolder, psiElementRange, textAttribute);
+            highlight(annotationHolder, textRange, textAttribute);
         }
     }
 
@@ -406,8 +416,17 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             }
 
             // Otherwise, annotate as error
-            highlightUnknownReference(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange, "reference");
+            highlightError(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange, UNRESOLVED_REFERENCE_ERROR_MESSAGE);
             annotationSessionState.aborted.add(topMostExpression);
+            return;
+        }
+
+        if (!OdinInsightUtils.isVisible(identifierTokenParent, symbol)) {
+            highlightNotVisible(annotationHolder,
+                    identifierText,
+                    identifierTokenParent,
+                    textRange,
+                    symbol);
             return;
         }
 
@@ -482,6 +501,19 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
     }
 
+    private static void highlightNotVisible(@NotNull AnnotationHolder annotationHolder, String identifierText, PsiElement identifierTokenParent, TextRange textRange, OdinSymbol symbol) {
+        if (symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE) {
+            highlightError(identifierTokenParent.getProject(),
+                    annotationHolder,
+                    identifierText,
+                    textRange,
+                    UNRESOLVED_REFERENCE_ERROR_MESSAGE);
+            return;
+        }
+        highlightError(identifierTokenParent.getProject(), annotationHolder, identifierText, textRange,
+                "'%s' is not visible");
+    }
+
     private static OdinSymbolTable computeSymbolTable(PsiElement identifierTokenParent) {
         return OdinSymbolTableResolver.computeSymbolTable(identifierTokenParent)
                 .with(OdinImportService.getInstance(identifierTokenParent.getProject())
@@ -519,15 +551,15 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     }
 
     @SuppressWarnings("unused")
-    private static void highlightUnknownReference(Project project,
-                                                  @NotNull AnnotationHolder annotationHolder,
-                                                  String identifierText,
-                                                  TextRange textRange,
-                                                  String reference) {
+    private static void highlightError(Project project,
+                                       @NotNull AnnotationHolder annotationHolder,
+                                       String identifierText,
+                                       TextRange textRange,
+                                       String errorMessage) {
         OdinProjectSettingsService state = OdinProjectSettingsService.getInstance(project);
         if (state.isHighlightUnknownReferencesEnabled()) {
             annotationHolder
-                    .newAnnotation(HighlightSeverity.ERROR, ("Unresolved " + reference + " '%s'").formatted(identifierText))
+                    .newAnnotation(HighlightSeverity.ERROR, errorMessage.formatted(identifierText))
                     .range(textRange)
                     .textAttributes(OdinSyntaxTextAttributes.ODIN_UNKNOWN_REF)
                     .create();
@@ -544,7 +576,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             } else {
                 OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
                 if (odinDeclaration == null) {
-                    highlightUnknownReference(identifier.getProject(), annotationHolder, identifierText, textRange, "reference");
+                    highlightError(identifier.getProject(), annotationHolder, identifierText, textRange, UNRESOLVED_REFERENCE_ERROR_MESSAGE);
                 } else if (odinDeclaration instanceof OdinImportDeclarationStatement) {
                     highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE_REF);
                 }

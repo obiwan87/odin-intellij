@@ -11,6 +11,7 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameter;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameterOwner;
@@ -35,38 +36,43 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
     @Override
     public @Nullable PsiElement resolve() {
 
-        if(getElement().getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
+        if (getElement().getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
             TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
             OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(getElement().getProject(), tsOdinType);
             OdinSymbol symbol = typeElements.getSymbol(getElement().getText());
-            if(symbol != null) {
+            if (symbol != null) {
                 return symbol.getDeclaredIdentifier();
             }
             return null;
         }
 
-        if(getElement().getParent() instanceof OdinNamedArgument namedArgument) {
+        if (getElement().getParent() instanceof OdinNamedArgument namedArgument) {
             OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(getElement());
             OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(symbolTable, namedArgument);
-            if(callInfo.callingType() instanceof TsOdinParameterOwner parameterOwner) {
+            if (callInfo.callingType() instanceof TsOdinParameterOwner parameterOwner) {
                 List<TsOdinParameter> parameters = parameterOwner.getParameters();
-                TsOdinParameter tsOdinParameter = parameters.stream().filter(p -> p.getName().equals(namedArgument.getIdentifier().getText()))
+                TsOdinParameter tsOdinParameter = parameters.stream()
+                        .filter(p -> p.getName().equals(namedArgument.getIdentifier().getText()))
                         .findFirst().orElse(null);
 
-                if(tsOdinParameter != null) {
+                if (tsOdinParameter != null) {
                     return tsOdinParameter.getIdentifier();
                 }
             }
         }
 
         try {
-            OdinSymbol firstDeclaration = OdinSymbolTableResolver.findSymbol(getElement());
-            if (firstDeclaration != null) {
-                PsiNamedElement declaredIdentifier = firstDeclaration.getDeclaredIdentifier();
-                if(declaredIdentifier instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+            OdinSymbol symbol = OdinSymbolTableResolver.findSymbol(getElement());
+            if (symbol != null) {
+                if (!OdinInsightUtils.isVisible(getElement(), symbol) && symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE) {
+                    return null;
+                }
+                PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
+                if (declaredIdentifier instanceof OdinImportDeclarationStatement importDeclarationStatement) {
                     return OdinPackageReference.resolvePackagePathDirectory(importDeclarationStatement.getImportPath());
                 }
                 return declaredIdentifier;
+
             }
             return null;
         } catch (StackOverflowError e) {
@@ -102,7 +108,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-        if(element instanceof PsiDirectory) {
+        if (element instanceof PsiDirectory) {
             return element;
         }
         return super.bindToElement(element);
