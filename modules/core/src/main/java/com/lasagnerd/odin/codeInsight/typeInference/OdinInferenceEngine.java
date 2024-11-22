@@ -1321,6 +1321,8 @@ public class OdinInferenceEngine extends OdinVisitor {
     public static @Nullable TsOdinMetaType findMetaType(OdinSymbolTable symbolTable,
                                                         OdinDeclaredIdentifier declaredIdentifier,
                                                         OdinConstantInitializationStatement initializationStatement) {
+        if (initializationStatement.getExpressionList().isEmpty())
+            return null;
         OdinExpression firstExpression = initializationStatement.getExpressionList().getFirst();
         OdinType declaredType = OdinInsightUtils.getDeclaredType(initializationStatement);
         if (
