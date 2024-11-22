@@ -462,19 +462,18 @@ public class OdinImportUtils {
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         // Check if package is null. If yes log debug
         String fileName = getFileName(importStatement);
-
-        if (packagePath != null) {
-            String path;
-            if (packagePath.equals("/")) {
-                path = "/" + fileName;
-            } else {
-                path = Path.of(packagePath, fileName).toString();
-            }
-            String name = importInfo.packageName();
-            Project project = importStatement.getProject();
-            return getSymbolsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
+        if (packagePath == null) {
+            packagePath = "/";
         }
-        return OdinSymbolTable.EMPTY;
+        String path;
+        if (packagePath.equals("/")) {
+            path = "/" + fileName;
+        } else {
+            path = Path.of(packagePath, fileName).toString();
+        }
+        String name = importInfo.packageName();
+        Project project = importStatement.getProject();
+        return getSymbolsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
     }
 
 

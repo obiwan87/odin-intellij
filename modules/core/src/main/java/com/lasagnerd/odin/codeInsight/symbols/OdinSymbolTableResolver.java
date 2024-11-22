@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 
 public class OdinSymbolTableResolver {
     public static OdinSymbolTable computeSymbolTable(@NotNull PsiElement element) {
-        return findVisibleSymbols(element, OdinImportService.getInstance(element.getProject())
-                .getPackagePath(element), s -> true);
+        String packagePath = OdinImportService.getInstance(element.getProject()).getPackagePath(element);
+        return findVisibleSymbols(element, packagePath, s -> true);
     }
 
     public static OdinSymbolTable computeSymbolTable(@NotNull PsiElement element, Predicate<OdinSymbol> matcher) {
@@ -42,7 +42,6 @@ public class OdinSymbolTableResolver {
         List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
 
         Stack<PsiElement> statementStack = new Stack<>();
-        List<OdinDeclaration> declarations = new ArrayList<>();
         // do bfs
         statementStack.addAll(fileScope.getFileScopeStatementList().getStatementList());
         statementStack.addAll(fileScope.getImportStatements());
@@ -136,10 +135,13 @@ public class OdinSymbolTableResolver {
 
     private static List<OdinSymbol> getBuiltInSymbols(Project project) {
         OdinSdkService sdkService = OdinSdkService.getInstance(project);
-        if (sdkService != null)
-            return sdkService.getBuiltInSymbols().stream()
+        if (sdkService != null) {
+            ArrayList<OdinSymbol> symbols = sdkService.getBuiltInSymbols().stream()
                     .filter(s -> s.getVisibility() == OdinVisibility.PACKAGE_EXPORTED)
                     .collect(Collectors.toCollection(ArrayList::new));
+
+            return symbols;
+        }
         return Collections.emptyList();
     }
 
@@ -152,12 +154,14 @@ public class OdinSymbolTableResolver {
         List<OdinSymbol> builtInSymbols = getBuiltInSymbols(project);
 
         OdinSymbolTable builtinSymbolTable = OdinSymbolTable.from(builtInSymbols);
-
+        builtinSymbolTable.setPackagePath("");
         OdinSdkService sdkService = OdinSdkService.getInstance(element.getProject());
 
         // 0. Import built-in symbols
         if (!sdkService.isInSyntheticOdinFile(element)) {
             symbolTable.setRoot(builtinSymbolTable);
+        } else {
+            System.out.println("Synthetic");
         }
 
         // 1. Import symbols from this file
@@ -323,12 +327,13 @@ public class OdinSymbolTableResolver {
             this.initialSymbolTable = initialSymbolTable;
         }
 
-        private OdinSymbolTable findSymbols() {
+        // doesn't use cache
+        private OdinSymbolTable findSymbols2() {
             return findSymbols(originalPosition, false);
 //            return findSymbols2();
         }
 
-        private OdinSymbolTable findSymbols2() {
+        private OdinSymbolTable findSymbols() {
             OdinSymbolTable fullSymbolTable = findSymbols2(originalPosition);
             return trimToPosition(fullSymbolTable, false);
         }
@@ -364,24 +369,14 @@ public class OdinSymbolTableResolver {
             symbolTable.setParentSymbolTable(parentSymbolTable);
 
             // Bring field declarations and swizzle into scope
-            OdinLhs lhs = PsiTreeUtil.getParentOfType(element, OdinLhs.class, false);
-            if (lhs != null && containingScopeBlock instanceof OdinCompoundLiteral compoundLiteral) {
+            if (containingScopeBlock instanceof OdinCompoundLiteral compoundLiteral) {
                 TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(symbolTable, compoundLiteral);
                 List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, tsOdinType.getSymbolTable());
                 symbolTable.addAll(elementSymbols);
             }
 
             if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
-                OdinSdkService builtinSymbolService = OdinSdkService.getInstance(procedureDefinition.getProject());
-                if (builtinSymbolService != null) {
-                    // TODO check logic of "contextless"
-                    //OdinStringLiteral callConvention = procedureDefinition.getProcedureType().getStringLiteral();
-                    //                    String stringLiteralValue = OdinInsightUtils.getStringLiteralValue(callConvention);
-                    //                    if (stringLiteralValue == null && ) {
-                    //                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
-                    //                    }
-                    symbolTable.add(OdinSdkService.createContextSymbol(element.getProject()));
-                }
+                addContextParameter(element, procedureDefinition, symbolTable);
             }
 
             if (containingScopeBlock instanceof OdinArgument argument) {
@@ -432,6 +427,7 @@ public class OdinSymbolTableResolver {
                 return fullSymbolTable;
 
             OdinSymbolTable symbolTable = new OdinSymbolTable(packagePath);
+            symbolTable.setContainingElement(containingScopeBlock);
 
             // Since odin does not support closures, all symbols above the current scope, are visible only if they are constants
             boolean isContainingBlockProcedure = containingScopeBlock instanceof OdinProcedureDefinition;
@@ -447,7 +443,10 @@ public class OdinSymbolTableResolver {
             for (OdinDeclaration declaration : declarations) {
                 if (!(declaration instanceof OdinConstantDeclaration) && !isPolymorphicParameter(declaration) && !isStatic(declaration))
                     continue;
-                PositionCheckResult positionCheckResult = checkPosition(originalPosition, declaration);
+
+                PositionCheckResult positionCheckResult;
+                positionCheckResult = checkPosition(originalPosition, declaration);
+
                 if (!positionCheckResult.validPosition)
                     continue;
 
@@ -528,16 +527,7 @@ public class OdinSymbolTableResolver {
             }
 
             if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
-                OdinSdkService builtinSymbolService = OdinSdkService.getInstance(procedureDefinition.getProject());
-                if (builtinSymbolService != null) {
-                    // TODO check logic of "contextless"
-                    //OdinStringLiteral callConvention = procedureDefinition.getProcedureType().getStringLiteral();
-                    //                    String stringLiteralValue = OdinInsightUtils.getStringLiteralValue(callConvention);
-                    //                    if (stringLiteralValue == null && ) {
-                    //                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
-                    //                    }
-                    symbolTable.add(OdinSdkService.createContextSymbol(element.getProject()));
-                }
+                addContextParameter(element, procedureDefinition, symbolTable);
             }
 
             if (containingScopeBlock instanceof OdinArgument argument) {
@@ -592,6 +582,19 @@ public class OdinSymbolTableResolver {
             return symbolTable;
         }
 
+        private static void addContextParameter(PsiElement element, OdinProcedureDefinition procedureDefinition, OdinSymbolTable symbolTable) {
+            OdinSdkService builtinSymbolService = OdinSdkService.getInstance(procedureDefinition.getProject());
+            if (builtinSymbolService != null) {
+                // TODO check logic of "contextless"
+                //OdinStringLiteral callConvention = procedureDefinition.getProcedureType().getStringLiteral();
+                //                    String stringLiteralValue = OdinInsightUtils.getStringLiteralValue(callConvention);
+                //                    if (stringLiteralValue == null && ) {
+                //                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
+                //                    }
+                symbolTable.add(OdinSdkService.createContextSymbol(element.getProject()));
+            }
+        }
+
         private static @Nullable OdinScopeArea getNextContainingScopeBlock(OdinScopeArea containingScopeBlock) {
             OdinScopeArea nextContainingScopeBlock = containingScopeBlock;
             if (containingScopeBlock instanceof OdinSwitchInExpressionScope switchInExpressionScope) {
@@ -603,7 +606,7 @@ public class OdinSymbolTableResolver {
             return nextContainingScopeBlock;
         }
 
-        private void addOffsetOfSymbols(OdinArgument argument, OdinSymbolTable symbolTable) {
+        private static void addOffsetOfSymbols(OdinArgument argument, OdinSymbolTable symbolTable) {
             OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class);
             if (callExpression != null && callExpression.getArgumentList().size() == 2) {
                 if (argument == callExpression.getArgumentList().get(1)) {
@@ -837,7 +840,7 @@ public class OdinSymbolTableResolver {
         if (usageInsideDeclaration) {
             OdinType type = OdinInsightUtils.getDeclaredType(declaration);
             OdinProcedureDefinition procedureDefinition;
-            if (type instanceof OdinProcedureType procedureType) {
+            if (type instanceof OdinProcedureType) {
                 procedureDefinition = PsiTreeUtil.getParentOfType(type, OdinProcedureDefinition.class);
             } else if (type instanceof OdinProcedureLiteralType procedureLiteralType) {
                 procedureDefinition = procedureLiteralType.getProcedureDefinition();

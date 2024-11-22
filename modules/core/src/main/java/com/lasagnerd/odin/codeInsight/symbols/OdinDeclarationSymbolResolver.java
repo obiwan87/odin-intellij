@@ -237,13 +237,13 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     public void visitUsingStatement(@NotNull OdinUsingStatement o) {
         for (OdinExpression expression : o.getExpressionList()) {
 
-            List<OdinSymbol> typeSymbols = new ArrayList<>();
+            List<OdinSymbol> typeSymbols;
             TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, expression);
             if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
                 typeSymbols = getTypeElements(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType)
                         .baseType(true), symbolTable);
             } else {
-                var stream = getTypeElements(tsOdinType, symbolTable).stream();
+                var stream = getTypeElements(tsOdinType.baseType(true), symbolTable).stream();
                 if (tsOdinType.baseType(true) instanceof TsOdinPackageReferenceType)
                     stream = stream
                             .filter(s -> s.getVisibility() == OdinVisibility.PACKAGE_EXPORTED);

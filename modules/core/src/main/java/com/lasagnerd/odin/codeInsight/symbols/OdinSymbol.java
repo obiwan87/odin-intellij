@@ -3,8 +3,12 @@ package com.lasagnerd.odin.codeInsight.symbols;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
-import com.lasagnerd.odin.lang.psi.*;
-import lombok.*;
+import com.lasagnerd.odin.lang.psi.OdinAttributesDefinition;
+import com.lasagnerd.odin.lang.psi.OdinDeclaration;
+import com.lasagnerd.odin.lang.psi.OdinType;
+import com.lasagnerd.odin.lang.psi.OdinUsingStatement;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,6 +20,7 @@ public class OdinSymbol {
     private PsiNamedElement declaredIdentifier;
     private OdinType psiType;
     private List<OdinAttributesDefinition> attributes;
+    private OdinUsingStatement usingStatement;
 
     private String name;
     private String packagePath;
@@ -27,6 +32,7 @@ public class OdinSymbol {
     private boolean builtin;
     private boolean visibleThroughUsing;
     private boolean foreign;
+
 
     public OdinSymbol(PsiNamedElement declaredIdentifier, @NotNull OdinVisibility visibility) {
         this.declaredIdentifier = declaredIdentifier;

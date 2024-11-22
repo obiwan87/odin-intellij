@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
 
 public class OdinImportServiceImpl implements OdinImportService {
@@ -28,16 +27,18 @@ public class OdinImportServiceImpl implements OdinImportService {
         OdinFile containingFile = (OdinFile) psiElement.getContainingFile();
         if (containingFile == null)
             return null;
-        @NotNull PsiFile virtualFile = containingFile.getOriginalFile();
-        PsiDirectory containingDirectory = virtualFile.getContainingDirectory();
+        @NotNull PsiFile psiFile = containingFile.getOriginalFile();
+        PsiDirectory containingDirectory = psiFile.getContainingDirectory();
         if (containingDirectory != null) {
             return containingDirectory.getVirtualFile().getPath();
         }
-        VirtualFile parent = OdinImportUtils.getContainingVirtualFile(psiElement).getParent();
+        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(psiElement);
+        VirtualFile parent = containingVirtualFile.getParent();
         if(parent != null) {
             return parent.getPath();
         }
-        return null;
+
+        return "/";
     }
 
     @Override
