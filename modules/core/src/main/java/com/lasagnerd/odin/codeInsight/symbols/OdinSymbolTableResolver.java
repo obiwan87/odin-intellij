@@ -359,8 +359,8 @@ public class OdinSymbolTableResolver {
             symbolTable.setContainingElement(containingScopeBlock);
             containingScopeBlock.setSymbolTable(symbolTable);
 
-
-            OdinSymbolTable parentSymbolTable = findSymbols2(containingScopeBlock);
+            OdinScopeArea nextContainingScopeBlock = getNextContainingScopeBlock(containingScopeBlock);
+            OdinSymbolTable parentSymbolTable = findSymbols2(nextContainingScopeBlock);
             symbolTable.setParentSymbolTable(parentSymbolTable);
 
             // Bring field declarations and swizzle into scope
@@ -514,13 +514,7 @@ public class OdinSymbolTableResolver {
             boolean isContainingBlockProcedure = containingScopeBlock instanceof OdinProcedureDefinition;
             boolean constantsOnlyNext = isContainingBlockProcedure || constantsOnly;
 
-            OdinScopeArea nextContainingScopeBlock = containingScopeBlock;
-            if (containingScopeBlock instanceof OdinSwitchInExpressionScope switchInExpressionScope) {
-                // In the AST the expression in "switch v in expr" is within the switch scope area, however,
-                // semantically the variable "v" does not belong in the scope of the expression. Hence, we skip
-                // it
-                nextContainingScopeBlock = PsiTreeUtil.getParentOfType(switchInExpressionScope, OdinScopeArea.class);
-            }
+            OdinScopeArea nextContainingScopeBlock = getNextContainingScopeBlock(containingScopeBlock);
 
             OdinSymbolTable parentSymbolTable = findSymbols(nextContainingScopeBlock, constantsOnlyNext);
             symbolTable.setParentSymbolTable(parentSymbolTable);
@@ -596,6 +590,17 @@ public class OdinSymbolTableResolver {
             }
 
             return symbolTable;
+        }
+
+        private static @Nullable OdinScopeArea getNextContainingScopeBlock(OdinScopeArea containingScopeBlock) {
+            OdinScopeArea nextContainingScopeBlock = containingScopeBlock;
+            if (containingScopeBlock instanceof OdinSwitchInExpressionScope switchInExpressionScope) {
+                // In the AST the expression in "switch v in expr" is within the switch scope area, however,
+                // semantically the variable "v" does not belong in the scope of the expression. Hence, we skip
+                // it
+                nextContainingScopeBlock = PsiTreeUtil.getParentOfType(switchInExpressionScope, OdinScopeArea.class);
+            }
+            return nextContainingScopeBlock;
         }
 
         private void addOffsetOfSymbols(OdinArgument argument, OdinSymbolTable symbolTable) {

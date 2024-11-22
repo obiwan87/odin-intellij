@@ -7,8 +7,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPackageReferenceType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+
+import static com.lasagnerd.odin.codeInsight.OdinInsightUtils.getTypeElements;
 
 public class OdinDeclarationSymbolResolver extends OdinVisitor {
     private static final Logger LOG = Logger.getInstance(OdinDeclarationSymbolResolver.class);
@@ -84,9 +88,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         if (using && o.getDeclaredIdentifiers().size() == 1) {
             List<OdinSymbol> typeElements;
             if (type != null) {
-                typeElements = OdinInsightUtils.getTypeElements(type, symbolTable);
+                typeElements = getTypeElements(type, symbolTable);
             } else {
-                typeElements = OdinInsightUtils.getTypeElements(o.getExpression(), symbolTable);
+                typeElements = getTypeElements(o.getExpression(), symbolTable);
             }
             setVisibleThroughUsing(typeElements);
             symbols.addAll(typeElements);
@@ -124,7 +128,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         if (hasUsing) {
             if (o.getParameterList().size() == 1) {
                 if (psiType != null) {
-                    List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(psiType, symbolTable);
+                    List<OdinSymbol> typeElements = getTypeElements(psiType, symbolTable);
                     setVisibleThroughUsing(typeElements);
 
                     symbols.addAll(typeElements);
@@ -160,7 +164,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
         if (hasUsing) {
             if (o.getDeclaredIdentifiers().size() == 1) {
-                List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(o.getType(), symbolTable);
+                List<OdinSymbol> typeElements = getTypeElements(o.getType(), symbolTable);
                 setVisibleThroughUsing(typeElements);
                 symbols.addAll(typeElements);
             }
@@ -205,12 +209,12 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         if (hasUsing) {
             if (o.getDeclaredIdentifiers().size() == 1 && Objects.requireNonNull(o.getRhsExpressions()).getExpressionList().size() == 1) {
                 if (o.getType() != null) {
-                    List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(o.getType(), symbolTable);
+                    List<OdinSymbol> typeElements = getTypeElements(o.getType(), symbolTable);
                     setVisibleThroughUsing(typeElements);
                     symbols.addAll(typeElements);
                 } else {
                     OdinExpression odinExpression = o.getRhsExpressions().getExpressionList().getFirst();
-                    List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(odinExpression, symbolTable);
+                    List<OdinSymbol> typeElements = getTypeElements(odinExpression, symbolTable);
                     setVisibleThroughUsing(typeElements);
                     symbols.addAll(typeElements);
                 }
@@ -232,7 +236,19 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     @Override
     public void visitUsingStatement(@NotNull OdinUsingStatement o) {
         for (OdinExpression expression : o.getExpressionList()) {
-            List<OdinSymbol> typeSymbols = OdinInsightUtils.getTypeElements(expression, this.symbolTable);
+
+            List<OdinSymbol> typeSymbols = new ArrayList<>();
+            TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, expression);
+            if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
+                typeSymbols = getTypeElements(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType)
+                        .baseType(true), symbolTable);
+            } else {
+                var stream = getTypeElements(tsOdinType, symbolTable).stream();
+                if (tsOdinType.baseType(true) instanceof TsOdinPackageReferenceType)
+                    stream = stream
+                            .filter(s -> s.getVisibility() == OdinVisibility.PACKAGE_EXPORTED);
+                typeSymbols = stream.toList();
+            }
             setVisibleThroughUsing(typeSymbols);
             symbols.addAll(typeSymbols);
         }
