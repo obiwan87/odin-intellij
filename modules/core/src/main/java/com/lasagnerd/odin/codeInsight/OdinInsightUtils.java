@@ -10,7 +10,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.*;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -227,7 +226,7 @@ public class OdinInsightUtils {
         OdinExpression expression = psiSizeElement.getExpression();
 
         if (expression != null) {
-            TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, expression);
+            TsOdinType sizeType = expression.getInferredType(symbolTable);
             if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
                 List<OdinSymbol> enumFields = getEnumFields((OdinEnumType) sizeType.getPsiType());
                 symbolTable.addAll(enumFields);
@@ -362,7 +361,7 @@ public class OdinInsightUtils {
     }
 
     public static List<OdinSymbol> getTypeElements(OdinExpression expression, OdinSymbolTable symbolTable) {
-        TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, expression);
+        TsOdinType tsOdinType = expression.getInferredType(symbolTable);
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             return getTypeElements(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType)
                     .baseType(true), symbolTable);
@@ -645,7 +644,7 @@ public class OdinInsightUtils {
 
         OdinEnumType psiType;
         if (expression != null) {
-            TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, expression);
+            TsOdinType sizeType = expression.getInferredType(symbolTable);
             if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
                 psiType = (OdinEnumType) sizeType.getPsiType();
             } else {
@@ -942,7 +941,7 @@ public class OdinInsightUtils {
         List<OdinArgument> argumentList = Collections.emptyList();
         if (callingElement != null) {
             if (callingElement instanceof OdinCallExpression odinCallExpression) {
-                tsOdinType = OdinInferenceEngine.inferType(symbolTable, odinCallExpression.getExpression());
+                tsOdinType = odinCallExpression.getExpression().getInferredType(symbolTable);
                 // Here we have to get a meta type, otherwise the call expression does not make sense
                 if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
                     tsOdinType = tsOdinMetaType.representedType();

@@ -62,6 +62,8 @@ public class OdinTypeConverter {
                 if (baseTypeA instanceof TsOdinArrayType && baseTypeB instanceof TsOdinArrayType) {
                     return a;
                 }
+                if (!a.isUntyped() && !b.isUntyped())
+                    return a;
             }
             return convertToTyped(a, b);
         }

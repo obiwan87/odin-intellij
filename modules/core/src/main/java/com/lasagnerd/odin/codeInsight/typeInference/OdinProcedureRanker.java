@@ -77,7 +77,7 @@ public class OdinProcedureRanker {
                 argumentType = expectedType;
             }
         } else {
-            argumentType = OdinInferenceEngine.inferType(symbolTable, argumentExpression).baseType();
+            argumentType = argumentExpression.getInferredType(symbolTable).baseType();
         }
         return argumentType;
     }

@@ -94,7 +94,6 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
-
         PsiElement position = parameters.getPosition();
         if (!(position.getParent() instanceof OdinIdentifier identifier))
             return;
@@ -120,10 +119,12 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
         // Type assert
         if (parent instanceof OdinType && parent.getParent() instanceof OdinRefExpression refExpression) {
-            TsOdinType tsOdinType = OdinInferenceEngine.inferType(refExpression.getExpression());
-            if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
-                addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
-                return;
+            if (refExpression.getExpression() != null) {
+                TsOdinType tsOdinType = refExpression.getExpression().getInferredType();
+                if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
+                    addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
+                    return;
+                }
             }
         }
 
@@ -133,12 +134,12 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             if (switchBlock != null) {
                 if (switchBlock.getSwitchInClause() != null) {
                     OdinExpression expression = switchBlock.getSwitchInClause().getExpression();
-                    TsOdinType tsOdinType = OdinInferenceEngine.inferType(expression);
+                    TsOdinType tsOdinType = expression.getInferredType();
                     if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
                         addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
                     }
                 } else if (switchBlock.getExpression() != null) {
-                    TsOdinType tsOdinType = OdinInferenceEngine.inferType(switchBlock.getExpression());
+                    TsOdinType tsOdinType = switchBlock.getExpression().getInferredType();
                     if (tsOdinType.baseType(true) instanceof TsOdinEnumType tsOdinEnumType) {
                         List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType());
                         result.startBatch();
@@ -177,8 +178,8 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                         .getContainingDirectory()
                         .getVirtualFile()
                         .getPath());
-                OdinSymbol symbol = symbolTable.getSymbol(refExpression.getText());
-                if (symbol != null) {
+                OdinSymbol symbol = symbolTable.getSymbol(refExpression.getExpression().getText());
+                if (true) {
                     addSelectorExpressionCompletions(result, refExpression, symbolTable);
                 } else {
                     if (topMostRefExpression != null) {

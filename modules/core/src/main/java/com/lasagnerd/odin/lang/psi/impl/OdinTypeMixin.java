@@ -5,44 +5,45 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinQualifiedType;
 import com.lasagnerd.odin.lang.psi.OdinType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinType {
-    ParameterizedCachedValue<TsOdinType, OdinSymbolTable> cachedType;
+    ParameterizedCachedValue<TsOdinType, OdinTypeResolver.OdinTypeResolverParameters> cachedType;
 
     public OdinTypeMixin(@NotNull ASTNode node) {
         super(node);
     }
 
-    public TsOdinType getResolvedType(OdinSymbolTable symbolTable) {
+    public TsOdinType getResolvedType(OdinTypeResolver.OdinTypeResolverParameters typeResolverParameters) {
         if (cachedType == null) {
             cachedType = createCachedType();
         }
-        return cachedType.getValue(symbolTable);
+        return cachedType.getValue(typeResolverParameters);
+    }
+
+    public TsOdinType getResolvedType(OdinSymbolTable symbolTable) {
+        return getResolvedType(new OdinTypeResolver.OdinTypeResolverParameters(symbolTable, null, null));
     }
 
     public TsOdinType getResolvedType() {
-        if (cachedType == null) {
-            cachedType = createCachedType();
-        }
-        return cachedType.getValue(null);
+        OdinTypeResolver.OdinTypeResolverParameters typeResolverParameters = new OdinTypeResolver.OdinTypeResolverParameters(
+                null, null, null
+        );
+
+        return getResolvedType(typeResolverParameters);
     }
 
 
-    private CachedValueProvider.@NotNull Result<TsOdinType> computeCachedValue(OdinSymbolTable symbolTable) {
-        if (symbolTable == null) {
-            symbolTable = OdinSymbolTableResolver.computeSymbolTable(this);
-        }
-        TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, this);
-        List<Object> dependencies = new ArrayList<>();
+    private CachedValueProvider.@NotNull Result<TsOdinType> computeCachedValue(OdinTypeResolver.OdinTypeResolverParameters typeResolverParameters) {
+        TsOdinType tsOdinType = OdinTypeResolver.resolveType(typeResolverParameters, this);
+        Set<Object> dependencies = new HashSet<>();
         dependencies.add(this);
         if (this instanceof OdinQualifiedType qualifiedType) {
 
@@ -60,7 +61,7 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
         return CachedValueProvider.Result.create(tsOdinType, dependencies);
     }
 
-    public @NotNull ParameterizedCachedValue<TsOdinType, OdinSymbolTable> createCachedType() {
+    public @NotNull ParameterizedCachedValue<TsOdinType, OdinTypeResolver.OdinTypeResolverParameters> createCachedType() {
         return CachedValuesManager.getManager(getProject()).createParameterizedCachedValue(this::computeCachedValue, false);
     }
 }

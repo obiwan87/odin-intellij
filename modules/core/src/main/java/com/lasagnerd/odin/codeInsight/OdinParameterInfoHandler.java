@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinProcedureType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
@@ -52,7 +51,8 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
 
     public static List<PsiElement> findMatchingDeclarations(OdinCallExpression callExpression) {
         List<PsiElement> procedures = new ArrayList<>();
-        TsOdinType tsOdinType = OdinInferenceEngine.inferType(callExpression.getExpression());
+        OdinExpression expression = callExpression.getExpression();
+        TsOdinType tsOdinType = expression.getInferredType();
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
                 OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(tsOdinType.getDeclaration());

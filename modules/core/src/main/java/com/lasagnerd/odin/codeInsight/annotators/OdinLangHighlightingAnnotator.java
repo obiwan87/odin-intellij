@@ -21,7 +21,6 @@ import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPolymorphicType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.colorSettings.OdinSyntaxTextAttributes;
@@ -407,7 +406,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
             // If we are being referenced from a polymorphic type, do not show any errors
             if (refExpression.getExpression() != null) {
-                TsOdinType type = OdinInferenceEngine.inferType(symbolTable, refExpression.getExpression());
+                TsOdinType type = refExpression.getExpression().getInferredType(symbolTable);
                 TsOdinType referenceableType = OdinInsightUtils.getReferenceableType(type);
                 if (referenceableType instanceof TsOdinPolymorphicType) {
                     annotationSessionState.aborted.add(topMostExpression);
@@ -624,7 +623,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         PsiReference reference = identifier.getReference();
         if (reference instanceof OdinReference odinReference) {
             try {
-                return OdinSymbolTableResolver.findSymbol(odinReference.getElement(), symbolTable);
+                return OdinReference.findSymbol(odinReference.getElement(), symbolTable);
             } catch (StackOverflowError e) {
                 logStackOverFlowError(odinReference.getElement(), LOG);
                 return null;
