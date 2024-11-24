@@ -2298,7 +2298,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinRefExpression refExpression = Objects.requireNonNull(PsiTreeUtil.findChildOfType(whereClause, OdinRefExpression.class));
 
             OdinIdentifier identifier = Objects.requireNonNull(refExpression.getIdentifier());
-            OdinSymbol symbolTable = OdinReference.findSymbol(identifier);
+            OdinSymbol symbolTable = identifier.getReference().getSymbol();
 
             TsOdinType tsOdinType = OdinInferenceEngine.inferType(refExpression.getExpression());
             OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(project, tsOdinType);

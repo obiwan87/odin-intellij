@@ -620,17 +620,13 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             return null;
         }
 
-        PsiReference reference = identifier.getReference();
-        if (reference instanceof OdinReference odinReference) {
-            try {
-                return OdinReference.findSymbol(odinReference.getElement(), symbolTable);
-            } catch (StackOverflowError e) {
-                logStackOverFlowError(odinReference.getElement(), LOG);
-                return null;
-            }
+        try {
+            return identifier.getReference().getSymbol();
+        } catch (StackOverflowError e) {
+            logStackOverFlowError(identifier, LOG);
+            return null;
         }
 
-        return null;
     }
 
 }

@@ -137,11 +137,10 @@ public class OdinSymbolTableResolver {
     private static List<OdinSymbol> getBuiltInSymbols(Project project) {
         OdinSdkService sdkService = OdinSdkService.getInstance(project);
         if (sdkService != null) {
-            ArrayList<OdinSymbol> symbols = sdkService.getBuiltInSymbols().stream()
+
+            return sdkService.getBuiltInSymbols().stream()
                     .filter(s -> s.getVisibility() == OdinVisibility.PACKAGE_EXPORTED)
                     .collect(Collectors.toCollection(ArrayList::new));
-
-            return symbols;
         }
         return Collections.emptyList();
     }
@@ -286,11 +285,11 @@ public class OdinSymbolTableResolver {
         }
 
         private OdinSymbolTable findSymbols() {
-            OdinSymbolTable fullSymbolTable = findSymbols2(originalPosition);
+            OdinSymbolTable fullSymbolTable = findSymbols(originalPosition);
             return trimToPosition(fullSymbolTable, false);
         }
 
-        private OdinSymbolTable findSymbols2(PsiElement element) {
+        private OdinSymbolTable findSymbols(PsiElement element) {
             // 1. Find the starting point
             //  = a statement whose parent is a scope block
             // 2. Get the parent and get all declarations inside the scope block
@@ -298,7 +297,7 @@ public class OdinSymbolTableResolver {
             // 4. Add all non-constant declarations, depending on whether the position is before or after
             //    the declared symbol
 
-            OdinScopeArea containingScopeBlock = PsiTreeUtil.getParentOfType(element, OdinScopeArea.class);
+            OdinScopeBlock containingScopeBlock = PsiTreeUtil.getParentOfType(element, OdinScopeBlock.class);
 
             if (containingScopeBlock == null) {
                 return Objects.requireNonNullElseGet(initialSymbolTable, () -> new OdinSymbolTable(packagePath));
@@ -307,17 +306,22 @@ public class OdinSymbolTableResolver {
             if (containingScopeBlock.getFullSymbolTable() != null) {
                 // re-using symbol table
                 OdinSymbolTable symbolTable = containingScopeBlock.getFullSymbolTable();
-                OdinSymbolTable parentSymbolTable = findSymbols2(containingScopeBlock);
+                OdinSymbolTable parentSymbolTable = findSymbols(containingScopeBlock);
                 symbolTable.setParentSymbolTable(parentSymbolTable);
                 return symbolTable;
             }
 
+            OdinScopeBlock nextContainingScopeBlock = getNextContainingScopeBlock(containingScopeBlock);
+            OdinSymbolTable parentSymbolTable = findSymbols(nextContainingScopeBlock);
+
+            return computeScopeTable(containingScopeBlock, parentSymbolTable);
+        }
+
+        private @NotNull OdinSymbolTable computeScopeTable(OdinScopeBlock containingScopeBlock, OdinSymbolTable parentSymbolTable) {
             OdinSymbolTable symbolTable = new OdinSymbolTable(packagePath);
             symbolTable.setContainingElement(containingScopeBlock);
             containingScopeBlock.setFullSymbolTable(symbolTable);
 
-            OdinScopeArea nextContainingScopeBlock = getNextContainingScopeBlock(containingScopeBlock);
-            OdinSymbolTable parentSymbolTable = findSymbols2(nextContainingScopeBlock);
             symbolTable.setParentSymbolTable(parentSymbolTable);
 
             // Bring field declarations and swizzle into scope
@@ -327,8 +331,8 @@ public class OdinSymbolTableResolver {
                 symbolTable.addAll(elementSymbols);
             }
 
-            if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
-                addContextParameter(element, procedureDefinition, symbolTable);
+            if (containingScopeBlock instanceof OdinProcedureDefinition) {
+                addContextParameter(containingScopeBlock.getProject(), symbolTable);
             }
 
             if (containingScopeBlock instanceof OdinArgument argument) {
@@ -346,11 +350,11 @@ public class OdinSymbolTableResolver {
 
                 symbolTable.addAll(localSymbols);
             }
-
             return symbolTable;
         }
 
         private Collection<OdinSymbol> externalSymbols(OdinSymbolTable odinSymbolTable) {
+            // TODO causes concurrent modification exception occasionally
             Set<OdinSymbol> declarationSymbols = odinSymbolTable.declarationSymbols.values()
                     .stream()
                     .flatMap(List::stream)
@@ -370,7 +374,7 @@ public class OdinSymbolTableResolver {
             //    the declared symbol
             if (fullSymbolTable == null)
                 return null;
-            OdinScopeArea containingScopeBlock = fullSymbolTable.getContainingElement();
+            OdinScopeBlock containingScopeBlock = fullSymbolTable.getContainingElement();
 
             boolean fileScope = containingScopeBlock instanceof OdinFileScope;
             boolean foreignBlock = containingScopeBlock instanceof OdinForeignBlock;
@@ -407,6 +411,7 @@ public class OdinSymbolTableResolver {
             // Finds the child of the scope block, where of which this element is a child. If we find the parent, this is guaranteed
             // to be != null
             Set<OdinDeclaration> declarations = fullSymbolTable.getDeclarationSymbols().keySet();
+            // TODO causes concurrent modification exception occasionally
             for (OdinDeclaration declaration : declarations) {
                 if (!(declaration instanceof OdinConstantDeclaration)
                         && !isPolymorphicParameter(declaration)
@@ -459,7 +464,7 @@ public class OdinSymbolTableResolver {
         }
 
 
-        private OdinSymbolTable findSymbols(PsiElement element, boolean constantsOnly) {
+        private OdinSymbolTable findSymbolsLegacy(PsiElement element, boolean constantsOnly) {
             // 1. Find the starting point
             //  = a statement whose parent is a scope block
             // 2. Get the parent and get all declarations inside the scope block
@@ -467,7 +472,7 @@ public class OdinSymbolTableResolver {
             // 4. Add all non-constant declarations, depending on whether the position is before or after
             //    the declared symbol
 
-            OdinScopeArea containingScopeBlock = PsiTreeUtil.getParentOfType(element, OdinScopeArea.class);
+            OdinScopeBlock containingScopeBlock = PsiTreeUtil.getParentOfType(element, OdinScopeBlock.class);
 
             boolean fileScope = containingScopeBlock instanceof OdinFileScope;
             boolean foreignBlock = containingScopeBlock instanceof OdinForeignBlock;
@@ -482,9 +487,9 @@ public class OdinSymbolTableResolver {
             boolean isContainingBlockProcedure = containingScopeBlock instanceof OdinProcedureDefinition;
             boolean constantsOnlyNext = isContainingBlockProcedure || constantsOnly;
 
-            OdinScopeArea nextContainingScopeBlock = getNextContainingScopeBlock(containingScopeBlock);
+            OdinScopeBlock nextContainingScopeBlock = getNextContainingScopeBlock(containingScopeBlock);
 
-            OdinSymbolTable parentSymbolTable = findSymbols(nextContainingScopeBlock, constantsOnlyNext);
+            OdinSymbolTable parentSymbolTable = findSymbolsLegacy(nextContainingScopeBlock, constantsOnlyNext);
             symbolTable.setParentSymbolTable(parentSymbolTable);
 
             // Bring field declarations and swizzle into scope
@@ -495,8 +500,8 @@ public class OdinSymbolTableResolver {
                 symbolTable.addAll(elementSymbols);
             }
 
-            if (containingScopeBlock instanceof OdinProcedureDefinition procedureDefinition) {
-                addContextParameter(element, procedureDefinition, symbolTable);
+            if (containingScopeBlock instanceof OdinProcedureDefinition) {
+                addContextParameter(containingScopeBlock.getProject(), symbolTable);
             }
 
             if (containingScopeBlock instanceof OdinArgument argument) {
@@ -617,8 +622,8 @@ public class OdinSymbolTableResolver {
             return new PositionCheckResult(true, commonParent, declaration);
         }
 
-        private static void addContextParameter(PsiElement element, OdinProcedureDefinition procedureDefinition, OdinSymbolTable symbolTable) {
-            OdinSdkService builtinSymbolService = OdinSdkService.getInstance(procedureDefinition.getProject());
+        private static void addContextParameter(@NotNull Project project, OdinSymbolTable symbolTable) {
+            OdinSdkService builtinSymbolService = OdinSdkService.getInstance(project);
             if (builtinSymbolService != null) {
                 // TODO check logic of "contextless"
                 //OdinStringLiteral callConvention = procedureDefinition.getProcedureType().getStringLiteral();
@@ -626,17 +631,17 @@ public class OdinSymbolTableResolver {
                 //                    if (stringLiteralValue == null && ) {
                 //                        symbolTable.add(builtinSymbolService.createNewContextParameterSymbol());
                 //                    }
-                symbolTable.add(OdinSdkService.createContextSymbol(element.getProject()));
+                symbolTable.add(OdinSdkService.createContextSymbol(project));
             }
         }
 
-        private static @Nullable OdinScopeArea getNextContainingScopeBlock(OdinScopeArea containingScopeBlock) {
-            OdinScopeArea nextContainingScopeBlock = containingScopeBlock;
+        private static @Nullable OdinScopeBlock getNextContainingScopeBlock(OdinScopeBlock containingScopeBlock) {
+            OdinScopeBlock nextContainingScopeBlock = containingScopeBlock;
             if (containingScopeBlock instanceof OdinSwitchInExpressionScope switchInExpressionScope) {
                 // In the AST the expression in "switch v in expr" is within the switch scope area, however,
                 // semantically the variable "v" does not belong in the scope of the expression. Hence, we skip
                 // it
-                nextContainingScopeBlock = PsiTreeUtil.getParentOfType(switchInExpressionScope, OdinScopeArea.class);
+                nextContainingScopeBlock = PsiTreeUtil.getParentOfType(switchInExpressionScope, OdinScopeBlock.class);
             }
             return nextContainingScopeBlock;
         }
@@ -726,7 +731,7 @@ public class OdinSymbolTableResolver {
     }
 
 
-    public static @NotNull List<OdinDeclaration> getDeclarations(OdinScopeArea containingScopeBlock) {
+    public static @NotNull List<OdinDeclaration> getDeclarations(OdinScopeBlock containingScopeBlock) {
         List<OdinDeclaration> declarations = new ArrayList<>();
         if (containingScopeBlock instanceof OdinStatementList statementList) {
             List<OdinStatement> statements = statementList.getStatementList();
