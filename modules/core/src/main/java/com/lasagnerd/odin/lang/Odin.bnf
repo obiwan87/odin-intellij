@@ -189,7 +189,7 @@ private eos_recover ::= !eos
 fileScope                            ::= buildFlagClause* packageDeclaration eos importStatementsContainer? fileScopeStatementList <<eof>> {
     methods=[getImportStatements getFullSymbolTable]
     mixin= "com.lasagnerd.odin.lang.psi.impl.OdinFileScopeMixin"
-    implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
+    implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]
 }
 
 buildFlagClause                      ::= buildFlagPrefix [buildFlagArguments]
@@ -630,7 +630,7 @@ private refOperator ::= (DOT|ARROW)
 implicitSelectorExpression           ::= DOT identifier
 indexExpression                      ::= expression index
 sliceExpression                      ::= expression slice
-procedureExpression                  ::= DISTINCT? directive? procedureLiteralType {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
+procedureExpression                  ::= DISTINCT? directive? procedureLiteralType {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
 dereferenceExpression                ::= expression CARET
 identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference delete] mixin="com.lasagnerd.odin.lang.psi.impl.OdinReferenceOwnerMixin"}
 
@@ -832,7 +832,7 @@ expressionStatement                  ::= orReturnExpression
                                           | primaryGroup
 
 labelDeclaration                     ::= declaredIdentifier COLON
-blockStatement                       ::= [directive eos?] [labelDeclaration] block {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
+blockStatement                       ::= [directive eos?] [labelDeclaration] block {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
 
 deferStatement                       ::= DEFER deferrableStatement
 private deferrableStatement          ::= assignmentStatement
@@ -857,14 +857,14 @@ statementBody                        ::= block|doStatement
 // For
 forStatement                         ::= [labelDeclaration] [directive] forBlock {implements="com.lasagnerd.odin.lang.psi.OdinScopeArea"}
 //private forHead                      ::= <<enterNoBlockMode>> [[[controlFlowInit] SEMICOLON] condition? [SEMICOLON [forUpdate]]] <<exitNoBlockMode>>
-//forBlock                             ::= FOR forHead statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
+//forBlock                             ::= FOR forHead statementBody {implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
 forUpdate                            ::= assignmentStatement | callExpression
 
 forBlock                             ::= FOR <<enterNoBlockMode>> [forOrInClause | expression] <<exitNoBlockMode>> statementBody
                                                     {
                                                         pin(".*")="FOR|forOrInClause"
                                                         recoverWhile=forRecover
-                                                        implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
+                                                        implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]
                                                         methods = [  getSymbols ]
                                                     }
 private forRecover                  ::= !(eos | FOR)
@@ -882,11 +882,11 @@ conditionalStatement                 ::= [directive] [labelDeclaration] ifBlock 
 ifBlock                              ::= if conditionalHead eos? statementBody [sos elseBlock] {
                                                 pin=".*"
                                                 recoverWhile=ifRecover
-                                                implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
+                                                implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"]
                                                 methods = [  getSymbols ]
                                          }
 private ifRecover                   ::= !(eos | IF_TOKEN)
-elseBlock                            ::= else (statementBody|ifBlock) {pin=1 implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
+elseBlock                            ::= else (statementBody|ifBlock) {pin=1 implements=["com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
 if                                   ::= IF_TOKEN
 else                                 ::= ELSE_TOKEN
 
