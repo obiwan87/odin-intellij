@@ -6,7 +6,7 @@ import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
-import com.lasagnerd.odin.lang.psi.OdinScopeArea;
+import com.lasagnerd.odin.lang.psi.OdinScopeBlock;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.util.function.Predicate;
 public class OdinSymbolTable {
 
     @Setter
-    OdinScopeArea containingElement;
+    OdinScopeBlock containingElement;
 
     @Setter
     Map<OdinDeclaration, List<OdinSymbol>> declarationSymbols = new HashMap<>();

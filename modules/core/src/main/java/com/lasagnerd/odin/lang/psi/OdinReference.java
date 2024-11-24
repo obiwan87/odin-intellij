@@ -30,23 +30,27 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     boolean resolved = false;
 
+    private OdinSymbolTable symbolTable;
+
     public OdinReference(@NotNull OdinIdentifier element) {
         super(element);
     }
 
-    public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier) {
+    public OdinSymbol findSymbol() {
+        var element = getElement();
         String packagePath = OdinImportService
-                .getInstance(identifier.getProject())
-                .getPackagePath(identifier);
+                .getInstance(element.getProject())
+                .getPackagePath(element);
 
-        OdinSymbolTable symbolTable = OdinSymbolTableResolver
-                .computeSymbolTable(identifier)
+        this.symbolTable = OdinSymbolTableResolver
+                .computeSymbolTable(element)
                 .with(packagePath);
 
-        return findSymbol(identifier, symbolTable);
+        return findSymbol(symbolTable);
     }
 
-    public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier, OdinSymbolTable parentSymbolTable) {
+    public OdinSymbol findSymbol(OdinSymbolTable parentSymbolTable) {
+        @NotNull OdinIdentifier identifier = getElement();
         PsiElement parent = identifier.getParent();
         OdinSymbolTable symbolTable;
         if (parent instanceof OdinRefExpression refExpression) {
@@ -141,7 +145,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
         }
 
         try {
-            OdinSymbol symbol = findSymbol(getElement());
+            OdinSymbol symbol = findSymbol();
             if (symbol != null) {
                 if (!OdinInsightUtils.isVisible(getElement(), symbol) && symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE) {
                     return null;

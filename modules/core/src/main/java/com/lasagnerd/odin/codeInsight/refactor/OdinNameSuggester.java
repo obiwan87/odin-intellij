@@ -28,11 +28,11 @@ public class OdinNameSuggester {
 
         // Get the biggest scope this expression would be in. This way we can avoid clashes with other names
         OdinSymbolTable symbolTable = null;
-        OdinScopeArea scopeArea = PsiTreeUtil.getParentOfType(targetExpression, OdinScopeArea.class);
-        if (scopeArea != null) {
+        OdinScopeBlock scopeBlock = PsiTreeUtil.getParentOfType(targetExpression, OdinScopeBlock.class);
+        if (scopeBlock != null) {
             OdinStatementList statementList;
-            if (!(scopeArea instanceof OdinStatementList odinStatementList)) {
-                statementList = PsiTreeUtil.findChildOfType(scopeArea, OdinStatementList.class);
+            if (!(scopeBlock instanceof OdinStatementList odinStatementList)) {
+                statementList = PsiTreeUtil.findChildOfType(scopeBlock, OdinStatementList.class);
             } else {
                 statementList = odinStatementList;
             }

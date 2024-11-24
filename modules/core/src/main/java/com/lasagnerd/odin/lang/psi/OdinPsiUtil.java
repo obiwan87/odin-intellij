@@ -161,10 +161,11 @@ public class OdinPsiUtil {
         return true;
     }
 
-    public static PsiReference getReference(OdinIdentifier self) {
+    @NotNull
+    public static OdinReference getReference(OdinIdentifier self) {
         if (self instanceof OdinIdentifierImpl identifier) {
             if (identifier.getCachedReference() == null) {
-                CachedValue<PsiReference> cachedValue = CachedValuesManager.getManager(self.getProject()).createCachedValue(() -> {
+                CachedValue<OdinReference> cachedValue = CachedValuesManager.getManager(self.getProject()).createCachedValue(() -> {
                     OdinReference odinReference = new OdinReference(self);
                     odinReference.resolve();
                     OdinSymbol symbol = odinReference.getSymbol();
@@ -196,7 +197,7 @@ public class OdinPsiUtil {
             }
             return identifier.getCachedReference().getValue();
         }
-        return null;
+        throw new IllegalStateException("Unxpected type");
     }
 
     // Import path

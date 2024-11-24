@@ -1092,10 +1092,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
             for (OdinExpression odinExpression : expressionList) {
-                // TODO Only recompute if we know that the declared identifier is shadowing another one (maybe save this information
-                //  in the symbol?)
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
-                TsOdinType tsOdinType = odinExpression.getInferredType(new OdinInferenceEngineParameters(odinSymbolTable,
+                TsOdinType tsOdinType = odinExpression.getInferredType(new OdinInferenceEngineParameters(null,
                         null,
                         lhsValuesCount,
                         false));
