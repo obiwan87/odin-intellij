@@ -17,12 +17,17 @@ import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
-import com.lasagnerd.odin.codeInsight.typeSystem.*;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTuple;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
     @Override
@@ -44,7 +49,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
             return;
         OdinExpression expression = expressionList.getFirst();
 
-        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+        TsOdinType tsOdinType = OdinInferenceEngine.inferType(expression);
 
         if (tsOdinType.isUnknown()) {
             showErrorHint(project, editor);

@@ -274,7 +274,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
     private void createTypeVariableWithSuggestions(TemplateBuilderImpl builder, OdinVariableInitializationStatement varInit, TextRange rangeWithinElement) {
         OdinExpression targetExpression = this.target.getPlace();
         if (targetExpression != null) {
-            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(targetExpression);
+            TsOdinType tsOdinType = OdinInferenceEngine.inferType(targetExpression);
 
             if (!tsOdinType.isUnknown()) {
                 LinkedHashSet<String> names = new LinkedHashSet<>();

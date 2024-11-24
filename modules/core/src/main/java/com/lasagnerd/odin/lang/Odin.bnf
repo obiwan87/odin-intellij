@@ -1,7 +1,7 @@
 {
   parserClass="com.lasagnerd.odin.lang.OdinParser"
 
-  extends="com.lasagnerd.odin.lang.psi.OdinPsiElementImpl"
+  extends="com.lasagnerd.odin.lang.psi.impl.OdinPsiElementImpl"
   implements="com.lasagnerd.odin.lang.psi.OdinPsiElement"
 
   psiClassPrefix="Odin"
@@ -187,8 +187,8 @@ odinFile                             ::= fileScope
 private eos_recover ::= !eos
 
 fileScope                            ::= buildFlagClause* packageDeclaration eos importStatementsContainer? fileScopeStatementList <<eof>> {
-    methods=[getImportStatements getSymbolTable]
-    mixin= "com.lasagnerd.odin.lang.psi.OdinFileScopeMixin"
+    methods=[getImportStatements getFullSymbolTable]
+    mixin= "com.lasagnerd.odin.lang.psi.impl.OdinFileScopeMixin"
     implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"]
 }
 
@@ -223,9 +223,8 @@ fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | directiveStatement
 
 // @require foreign import entry "entryUnixNoCrtAmd64.asm"
-foreignImportDeclarationStatement    ::= (attributesDefinition EOS_TOKEN?)* FOREIGN IMPORT declaredIdentifier?
-                (foreignImportPath | foreignImportBlock) {methods=[alias="declaredIdentifier" getName setName getNameIdentifier] implements=["com.intellij.psi.PsiNameIdentifierOwner"]}
-foreignImportPath                    ::= DQ_STRING_LITERAL
+foreignImportDeclarationStatement    ::= (attributesDefinition EOS_TOKEN?)* FOREIGN IMPORT declaredIdentifier? (foreignImportPath | foreignImportBlock) {methods=[alias="declaredIdentifier" getName setName getNameIdentifier] implements=["com.intellij.psi.PsiNameIdentifierOwner"]}
+foreignImportPath                    ::= expression
 private foreignImportBlock           ::= blockStart foreignImportPath (COMMA foreignImportPath)* COMMA? blockEnd
 
 foreignStatement                     ::= (attributesDefinition EOS_TOKEN?)* FOREIGN identifier? eos? foreignBlock {implements=["com.lasagnerd.odin.lang.psi.OdinConstantDeclaration"]}
@@ -345,6 +344,7 @@ type                                 ::= mapType
                                          | ellipsisType
                                          | variadicType
                                          | simpleRefType
+{mixin="com.lasagnerd.odin.lang.psi.impl.OdinTypeMixin" methods=[getResolvedType]}
 
 relativeType                         ::= <<relativeTypeRule relativeDef>> type
 private relativeDef                  ::= qualifiedType|simpleRefType
@@ -538,7 +538,7 @@ expression                           ::= postfixGroup
                                          | compoundLiteralExpression
                                          | primaryGroup
 
-
+{mixin="com.lasagnerd.odin.lang.psi.impl.OdinExpressionMixin" methods=[getInferredType]}
 
 
 fake binaryExpression                ::= expression 'OP' expression {methods=[left="/expression[0]" getOperator right="/expression[1]"]}
@@ -560,7 +560,7 @@ lshiftExpression                     ::= expression LSHIFT          <<enterMode 
 rshiftExpression                     ::= expression RSHIFT          <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
 
 // or_else
-orElseExpression                     ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression                             }
+orElseExpression                     ::= expression OR_ELSE         <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
 
 // Range
 rangeInclusiveExpression             ::= expression RANGE_INCLUSIVE <<enterMode "OPERAND">>  expression <<exitMode "OPERAND" >>   { extends=binaryExpression}
@@ -632,7 +632,7 @@ indexExpression                      ::= expression index
 sliceExpression                      ::= expression slice
 procedureExpression                  ::= DISTINCT? directive? procedureLiteralType {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock" "com.lasagnerd.odin.lang.psi.OdinScopeArea"] methods = [  getSymbols ] }
 dereferenceExpression                ::= expression CARET
-identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference delete]}
+identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference delete] mixin="com.lasagnerd.odin.lang.psi.impl.OdinReferenceOwnerMixin"}
 
 callExpression                       ::= expression LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
 

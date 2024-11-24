@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.lang.psi;
+package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
@@ -8,6 +8,10 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.lang.psi.OdinExpression;
+import com.lasagnerd.odin.lang.psi.OdinImportPath;
+import com.lasagnerd.odin.lang.psi.OdinParenthesizedExpression;
+import com.lasagnerd.odin.lang.psi.OdinPsiElement;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 @Getter
 public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiElement {
 
-    protected OdinSymbolTable symbolTable;
+    protected OdinSymbolTable fullSymbolTable;
 
     public OdinPsiElementImpl(@NotNull ASTNode node) {
         super(node);
@@ -42,7 +46,7 @@ public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiE
 
     @Override
     public void subtreeChanged() {
-        symbolTable = null;
+        fullSymbolTable = null;
     }
 
     @Override

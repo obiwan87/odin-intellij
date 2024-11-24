@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.doInferType;
 import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.inferType;
 import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes.RESERVED_TYPES;
 
@@ -183,6 +182,11 @@ public class OdinTypeResolver extends OdinVisitor {
         return OdinSymbolTable.EMPTY;
     }
 
+    public static TsOdinType resolveType(OdinType type) {
+        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(type);
+        return resolveType(symbolTable, type);
+    }
+
     // resolve type calls
     public @NotNull TsOdinType doResolveType(OdinSymbolTable symbolTable,
                                              OdinDeclaredIdentifier declaredIdentifier,
@@ -201,7 +205,7 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     public @NotNull TsOdinType doResolveType(OdinSymbolTable symbolTable, OdinExpression odinExpression) {
-        TsOdinType tsOdinType = doInferType(symbolTable, odinExpression);
+        TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, odinExpression);
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             return doResolveMetaType(symbolTable, tsOdinMetaType);
         }
@@ -375,7 +379,7 @@ public class OdinTypeResolver extends OdinVisitor {
                     TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
                     typeAlias.setName(identifier.getText());
                     addKnownType(typeAlias, identifier, odinDeclaration, typeSymbolTable);
-                    TsOdinType tsOdinType = doInferType(typeSymbolTable, odinExpression);
+                    TsOdinType tsOdinType = OdinInferenceEngine.inferType(typeSymbolTable, odinExpression);
                     if (tsOdinType instanceof TsOdinMetaType metaType) {
                         TsOdinType resolvedMetaType = doResolveMetaType(metaType.getSymbolTable(), metaType);
                         typeAlias.setDistinct(OdinInsightUtils.isDistinct(odinExpression));

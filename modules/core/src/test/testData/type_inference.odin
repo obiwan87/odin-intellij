@@ -881,3 +881,8 @@ testSwizzleBuiltinProc :: proc() {
 
     x := swizzle(arr, 3, 2, 1)
 }
+
+vec2 :: [2]int
+testAbsenceOfFieldsInRhsAndLhs :: proc(x: vec2) {
+    x : vec2 = { x.x }
+}

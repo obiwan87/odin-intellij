@@ -98,7 +98,7 @@ public class OdinIntroduceVariableHandler extends IntroduceHandler<PsiIntroduceT
             PsiTreeUtil.treeWalkUp(odinExpression, null, (scope, prevParent) -> {
                 if(scope instanceof OdinRefExpression refExpression) {
                     if(refExpression.getExpression() == null) {
-                        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(refExpression);
+                        TsOdinType tsOdinType = OdinInferenceEngine.inferType(refExpression);
                         if(tsOdinType instanceof TsOdinPackageReferenceType) {
                             return true;
                         }

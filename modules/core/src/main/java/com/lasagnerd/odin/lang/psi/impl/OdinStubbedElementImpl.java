@@ -24,12 +24,12 @@ public class OdinStubbedElementImpl<T extends StubBase<?>> extends StubBasedPsiE
     }
 
     @Override
-    public OdinSymbolTable getSymbolTable() {
+    public OdinSymbolTable getFullSymbolTable() {
         return null;
     }
 
     @Override
-    public void setSymbolTable(OdinSymbolTable symbolTable) {
+    public void setFullSymbolTable(OdinSymbolTable fullSymbolTable) {
 
     }
 
