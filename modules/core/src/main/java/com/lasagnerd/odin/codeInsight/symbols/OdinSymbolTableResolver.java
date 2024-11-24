@@ -259,53 +259,6 @@ public class OdinSymbolTableResolver {
         return OdinImportUtils.getFilesInPackage(project, Path.of(packagePath), virtualFile -> !virtualFile.getName().equals(fileName));
     }
 
-    public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier) {
-        String packagePath = OdinImportService
-                .getInstance(identifier.getProject())
-                .getPackagePath(identifier);
-        return findSymbol(identifier, OdinSymbolTableResolver.computeSymbolTable(identifier).with(packagePath));
-    }
-
-    public static OdinSymbol findSymbol(@NotNull OdinIdentifier identifier, OdinSymbolTable parentSymbolTable) {
-        PsiElement parent = identifier.getParent();
-        OdinSymbolTable symbolTable;
-        if (parent instanceof OdinRefExpression refExpression) {
-            if (refExpression.getExpression() != null) {
-                symbolTable = OdinReferenceResolver.resolve(parentSymbolTable, refExpression.getExpression());
-            } else {
-                symbolTable = parentSymbolTable;
-            }
-        } else if (parent instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
-            TsOdinType tsOdinType = OdinInferenceEngine.inferType(parentSymbolTable, implicitSelectorExpression);
-            if (!tsOdinType.isUnknown()) {
-                symbolTable = OdinInsightUtils.getTypeElements(identifier.getProject(), tsOdinType);
-            } else {
-                symbolTable = parentSymbolTable;
-            }
-        } else {
-            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, OdinQualifiedType.class);
-            if (qualifiedType != null) {
-                if (qualifiedType.getPackageIdentifier() == identifier) {
-                    symbolTable = parentSymbolTable;
-                } else {
-                    symbolTable = OdinReferenceResolver.resolve(parentSymbolTable, qualifiedType);
-                }
-            } else {
-                symbolTable = parentSymbolTable;
-            }
-        }
-
-        if (symbolTable == OdinSymbolTable.EMPTY || symbolTable == null) {
-            symbolTable = parentSymbolTable;
-        }
-
-        if (symbolTable != null) {
-            return symbolTable.getSymbol(identifier.getIdentifierToken().getText());
-        }
-
-        return null;
-    }
-
     @TestOnly
     public static OdinSymbolTable doFindVisibleSymbols(@NotNull PsiElement position) {
         return doFindVisibleSymbols(position, symbolTable -> false);
@@ -330,12 +283,6 @@ public class OdinSymbolTableResolver {
             this.stopCondition = stopCondition;
             this.initialSymbolTable = initialSymbolTable;
             this.context = OdinExpectedTypeEngine.findTypeExpectationContext(originalPosition);
-        }
-
-        // doesn't use cache
-        private OdinSymbolTable findSymbols2() {
-            return findSymbols(originalPosition, false);
-//            return findSymbols2();
         }
 
         private OdinSymbolTable findSymbols() {
@@ -705,7 +652,7 @@ public class OdinSymbolTableResolver {
                         OdinArgument odinArgument = callExpression.getArgumentList().getFirst();
                         OdinExpression typeExpression = getArgumentExpression(odinArgument);
                         if (typeExpression != null) {
-                            TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, typeExpression);
+                            TsOdinType tsOdinType = typeExpression.getInferredType(symbolTable);
                             if (tsOdinType instanceof TsOdinMetaType metaType) {
                                 if (metaType.representedType() instanceof TsOdinStructType structType) {
                                     OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(argument.getProject(), structType);

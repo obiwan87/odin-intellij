@@ -22,7 +22,6 @@ import com.intellij.ui.ColorUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinLanguage;
 import com.lasagnerd.odin.lang.psi.*;
@@ -66,7 +65,7 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
             OdinExpression odinExpression = variableInitializationStatement.getRhsExpressions().getExpressionList().get(index);
             String type;
             if (variableInitializationStatement.getType() == null) {
-                TsOdinType tsOdinType = OdinInferenceEngine.inferType(odinExpression);
+                TsOdinType tsOdinType = odinExpression.getInferredType();
                 type = tsOdinType.getLabel();
             } else {
                 type = variableInitializationStatement.getType().getText();

@@ -16,7 +16,6 @@ import com.intellij.refactoring.introduce.PsiIntroduceTarget;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.usageView.UsageInfo;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPackageReferenceType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -98,7 +97,7 @@ public class OdinIntroduceVariableHandler extends IntroduceHandler<PsiIntroduceT
             PsiTreeUtil.treeWalkUp(odinExpression, null, (scope, prevParent) -> {
                 if(scope instanceof OdinRefExpression refExpression) {
                     if(refExpression.getExpression() == null) {
-                        TsOdinType tsOdinType = OdinInferenceEngine.inferType(refExpression);
+                        TsOdinType tsOdinType = refExpression.getInferredType();
                         if(tsOdinType instanceof TsOdinPackageReferenceType) {
                             return true;
                         }

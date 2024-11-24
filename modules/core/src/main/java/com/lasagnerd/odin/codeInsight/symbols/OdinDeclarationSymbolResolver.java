@@ -6,7 +6,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
@@ -238,7 +237,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         for (OdinExpression expression : o.getExpressionList()) {
 
             List<OdinSymbol> typeSymbols;
-            TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, expression);
+            TsOdinType tsOdinType = expression.getInferredType(symbolTable);
             if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
                 typeSymbols = getTypeElements(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType)
                         .baseType(true), symbolTable);
@@ -312,7 +311,8 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
                     List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields(enumType);
                     symbols.addAll(enumFields);
                 } else {
-                    TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, o.getExpressionList().getFirst());
+                    OdinExpression expression = o.getExpressionList().getFirst();
+                    TsOdinType tsOdinType = expression.getInferredType(symbolTable);
                     if (tsOdinType instanceof TsOdinMetaType metaType
                             && metaType.representedType().baseType(true) instanceof TsOdinEnumType enumType) {
                         List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields((OdinEnumType) enumType.getPsiType());

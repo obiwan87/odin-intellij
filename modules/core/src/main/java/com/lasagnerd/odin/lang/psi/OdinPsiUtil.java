@@ -22,7 +22,6 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.impl.OdinIdentifierImpl;
 import org.jetbrains.annotations.NotNull;
@@ -524,7 +523,7 @@ public class OdinPsiUtil {
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinUsingStatement usingStatement) {
         List<OdinDeclaredIdentifier> declaredIdentifiers = new ArrayList<>();
         for (OdinExpression expression : usingStatement.getExpressionList()) {
-            TsOdinType tsOdinType = OdinInferenceEngine.inferType(expression);
+            TsOdinType tsOdinType = expression.getInferredType();
 
             OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(usingStatement.getProject(), tsOdinType);
             typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)

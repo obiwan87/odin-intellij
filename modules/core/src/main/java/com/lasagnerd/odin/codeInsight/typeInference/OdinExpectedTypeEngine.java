@@ -47,7 +47,7 @@ public class OdinExpectedTypeEngine {
             if (tsOdinType instanceof TsOdinArrayType arrayType) {
                 OdinExpression psiTypeExpression = arrayType.getPsiSizeElement().getExpression();
                 if (psiTypeExpression != null) {
-                    TsOdinType sizeType = OdinInferenceEngine.inferType(symbolTable, psiTypeExpression);
+                    TsOdinType sizeType = psiTypeExpression.getInferredType(symbolTable);
                     if (sizeType instanceof TsOdinMetaType metaType) {
                         return metaType.representedType();
                     }
@@ -87,7 +87,8 @@ public class OdinExpectedTypeEngine {
                 List<OdinExpression> lhsExpressions = statement.getLhsExpressions().getExpressionList();
                 if (lhsExpressions.size() > index) {
                     OdinExpression lhsExpression = lhsExpressions.get(index);
-                    return propagateTypeDown(OdinInferenceEngine.inferType(symbolTable, lhsExpression), topMostExpression, expression);
+                    TsOdinType expectedType = lhsExpression.getInferredType(symbolTable);
+                    return propagateTypeDown(expectedType, topMostExpression, expression);
                 }
             }
 
@@ -109,7 +110,7 @@ public class OdinExpectedTypeEngine {
             TsOdinType tsOdinType = null;
             if (compoundLiteral instanceof OdinCompoundLiteralUntyped compoundLiteralUntyped) {
                 OdinCompoundLiteralExpression parent = (OdinCompoundLiteralExpression) compoundLiteralUntyped.getParent();
-                tsOdinType = OdinInferenceEngine.inferType(symbolTable, parent);
+                tsOdinType = parent.getInferredType(symbolTable);
             }
 
             if (compoundLiteral instanceof OdinCompoundLiteralTyped compoundLiteralTyped) {
@@ -256,7 +257,8 @@ public class OdinExpectedTypeEngine {
                 if (switchBlockExpression == null) {
                     return TsOdinBuiltInTypes.UNKNOWN;
                 }
-                return propagateTypeDown(OdinInferenceEngine.inferType(symbolTable, switchBlockExpression), topMostExpression, expression);
+                TsOdinType expectedType = switchBlockExpression.getInferredType(symbolTable);
+                return propagateTypeDown(expectedType, topMostExpression, expression);
             }
         }
 

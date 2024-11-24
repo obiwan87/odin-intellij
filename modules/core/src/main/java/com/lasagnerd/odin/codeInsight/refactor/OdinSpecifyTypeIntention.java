@@ -15,7 +15,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTuple;
@@ -49,7 +48,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
             return;
         OdinExpression expression = expressionList.getFirst();
 
-        TsOdinType tsOdinType = OdinInferenceEngine.inferType(expression);
+        TsOdinType tsOdinType = expression.getInferredType();
 
         if (tsOdinType.isUnknown()) {
             showErrorHint(project, editor);

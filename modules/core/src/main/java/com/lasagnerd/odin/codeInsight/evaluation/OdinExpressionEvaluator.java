@@ -204,7 +204,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
     @Override
     public void visitImplicitSelectorExpression(@NotNull OdinImplicitSelectorExpression o) {
-        TsOdinType tsOdinType = OdinInferenceEngine.inferType(symbolTable, o);
+        TsOdinType tsOdinType = o.getInferredType(symbolTable);
         if (tsOdinType instanceof TsOdinEnumType tsOdinEnumType) {
             EvEnumValue enumValue = getEnumValue(tsOdinEnumType, o.getIdentifier().getText());
             this.value = new EvOdinValue(enumValue, tsOdinType);
@@ -268,6 +268,10 @@ public class OdinExpressionEvaluator extends OdinVisitor {
                     this.value = evaluateBinaryStringOperation(operatorType, left, right, tsOdinType);
                 } else if (tsOdinType == TsOdinBuiltInTypes.BOOL) {
                     this.value = evaluateBinaryBoolOperation(operatorType, left.asBool(), right.asBool(), tsOdinType);
+                } else {
+                    if (left.isEnum() || right.isEnum()) {
+                        this.value = evaluateBinaryEnumOperation(operatorType, left, right);
+                    }
                 }
 
             } else {

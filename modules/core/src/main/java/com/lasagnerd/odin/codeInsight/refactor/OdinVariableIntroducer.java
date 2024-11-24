@@ -21,7 +21,6 @@ import com.intellij.refactoring.introduce.PsiIntroduceTarget;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.usageView.UsageInfo;
-import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -274,7 +273,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
     private void createTypeVariableWithSuggestions(TemplateBuilderImpl builder, OdinVariableInitializationStatement varInit, TextRange rangeWithinElement) {
         OdinExpression targetExpression = this.target.getPlace();
         if (targetExpression != null) {
-            TsOdinType tsOdinType = OdinInferenceEngine.inferType(targetExpression);
+            TsOdinType tsOdinType = targetExpression.getInferredType();
 
             if (!tsOdinType.isUnknown()) {
                 LinkedHashSet<String> names = new LinkedHashSet<>();

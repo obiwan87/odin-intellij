@@ -174,7 +174,7 @@ class OdinPsiTestHelpers {
 
         OdinExpression expression = odinExpressionStatement.getExpression();
         OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(Objects.requireNonNull(expression));
-        return OdinInferenceEngine.inferType(symbolTable, expression);
+        return expression.getInferredType(symbolTable);
     }
 
     static void doSanityChecks(PsiFile root) {
