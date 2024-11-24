@@ -6,6 +6,9 @@ import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public interface TsOdinType {
     // Getters and Setters for fields
     String getName();
@@ -71,4 +74,17 @@ public interface TsOdinType {
 
     @Override
     String toString();
+
+    default List<TsOdinType> baseTypes() {
+        List<TsOdinType> types = new ArrayList<>();
+        TsOdinType currentType = this;
+        while (currentType instanceof TsOdinTypeAlias alias) {
+            TsOdinType aliasedType = alias.getAliasedType();
+            if (aliasedType != null) {
+                types.add(aliasedType);
+                currentType = aliasedType;
+            }
+        }
+        return types;
+    }
 }

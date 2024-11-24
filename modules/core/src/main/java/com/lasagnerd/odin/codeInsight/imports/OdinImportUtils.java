@@ -136,7 +136,7 @@ public class OdinImportUtils {
                     continue;
 
                 Collection<OdinSymbol> fileScopeDeclarations = importedFileScope
-                        .getSymbolTable()
+                        .getFullSymbolTable()
                         .getSymbols();
 
                 packageDeclarations.addAll(fileScopeDeclarations);

@@ -10,6 +10,9 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
@@ -21,6 +24,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.lang.psi.impl.OdinIdentifierImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,7 +163,41 @@ public class OdinPsiUtil {
     }
 
     public static PsiReference getReference(OdinIdentifier self) {
-        return new OdinReference(self);
+        if (self instanceof OdinIdentifierImpl identifier) {
+            if (identifier.getCachedReference() == null) {
+                CachedValue<PsiReference> cachedValue = CachedValuesManager.getManager(self.getProject()).createCachedValue(() -> {
+                    OdinReference odinReference = new OdinReference(self);
+                    odinReference.resolve();
+                    OdinSymbol symbol = odinReference.getSymbol();
+
+                    List<Object> dependencies = new ArrayList<>();
+                    dependencies.add(self);
+                    if (symbol != null) {
+                        if (symbol.getDeclaration() != null) {
+                            dependencies.add(symbol.getDeclaration());
+                        }
+                        if (symbol.getPsiType() != null) {
+                            dependencies.add(symbol.getPsiType());
+                        }
+                    }
+
+                    if (self.getParent() instanceof OdinRefExpression) {
+                        List<OdinRefExpression> refExpressions = OdinInsightUtils.unfoldRefExpressions(self);
+                        dependencies.addAll(refExpressions);
+                    }
+
+                    if (self.getParent().getParent() instanceof OdinQualifiedType qualifiedType) {
+                        dependencies.add(qualifiedType.getIdentifier());
+                    }
+
+                    return CachedValueProvider.Result.create(odinReference, dependencies);
+                }, false);
+
+                identifier.setCachedReference(cachedValue);
+            }
+            return identifier.getCachedReference().getValue();
+        }
+        return null;
     }
 
     // Import path
@@ -486,7 +524,7 @@ public class OdinPsiUtil {
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinUsingStatement usingStatement) {
         List<OdinDeclaredIdentifier> declaredIdentifiers = new ArrayList<>();
         for (OdinExpression expression : usingStatement.getExpressionList()) {
-            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+            TsOdinType tsOdinType = OdinInferenceEngine.inferType(expression);
 
             OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(usingStatement.getProject(), tsOdinType);
             typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)

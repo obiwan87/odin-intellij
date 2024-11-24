@@ -120,7 +120,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
         // Type assert
         if (parent instanceof OdinType && parent.getParent() instanceof OdinRefExpression refExpression) {
-            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(refExpression.getExpression());
+            TsOdinType tsOdinType = OdinInferenceEngine.inferType(refExpression.getExpression());
             if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
                 addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
                 return;
@@ -133,12 +133,12 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             if (switchBlock != null) {
                 if (switchBlock.getSwitchInClause() != null) {
                     OdinExpression expression = switchBlock.getSwitchInClause().getExpression();
-                    TsOdinType tsOdinType = OdinInferenceEngine.doInferType(expression);
+                    TsOdinType tsOdinType = OdinInferenceEngine.inferType(expression);
                     if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
                         addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
                     }
                 } else if (switchBlock.getExpression() != null) {
-                    TsOdinType tsOdinType = OdinInferenceEngine.doInferType(switchBlock.getExpression());
+                    TsOdinType tsOdinType = OdinInferenceEngine.inferType(switchBlock.getExpression());
                     if (tsOdinType.baseType(true) instanceof TsOdinEnumType tsOdinEnumType) {
                         List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType());
                         result.startBatch();
@@ -430,7 +430,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                 if (file.getFileScope() == null)
                     continue;
                 OdinFileScope fileScope = file.getFileScope();
-                OdinSymbolTable fileScopeDeclarations = fileScope.getSymbolTable();
+                OdinSymbolTable fileScopeDeclarations = fileScope.getFullSymbolTable();
 
                 List<OdinSymbol> visibleSymbols = fileScopeDeclarations
                         .getSymbols(OdinVisibility.PACKAGE_EXPORTED)

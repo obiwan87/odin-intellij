@@ -52,7 +52,7 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
 
     public static List<PsiElement> findMatchingDeclarations(OdinCallExpression callExpression) {
         List<PsiElement> procedures = new ArrayList<>();
-        TsOdinType tsOdinType = OdinInferenceEngine.doInferType(callExpression.getExpression());
+        TsOdinType tsOdinType = OdinInferenceEngine.inferType(callExpression.getExpression());
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
                 OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(tsOdinType.getDeclaration());

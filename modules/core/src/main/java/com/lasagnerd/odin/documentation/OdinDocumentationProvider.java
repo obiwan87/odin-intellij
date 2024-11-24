@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
-import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class OdinDocumentationProvider extends AbstractDocumentationProvider {
     @Override
@@ -68,7 +66,7 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
             OdinExpression odinExpression = variableInitializationStatement.getRhsExpressions().getExpressionList().get(index);
             String type;
             if (variableInitializationStatement.getType() == null) {
-                TsOdinType tsOdinType = OdinInferenceEngine.doInferType(odinExpression);
+                TsOdinType tsOdinType = OdinInferenceEngine.inferType(odinExpression);
                 type = tsOdinType.getLabel();
             } else {
                 type = variableInitializationStatement.getType().getText();

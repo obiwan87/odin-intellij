@@ -942,7 +942,7 @@ public class OdinInsightUtils {
         List<OdinArgument> argumentList = Collections.emptyList();
         if (callingElement != null) {
             if (callingElement instanceof OdinCallExpression odinCallExpression) {
-                tsOdinType = OdinInferenceEngine.doInferType(symbolTable, odinCallExpression.getExpression());
+                tsOdinType = OdinInferenceEngine.inferType(symbolTable, odinCallExpression.getExpression());
                 // Here we have to get a meta type, otherwise the call expression does not make sense
                 if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
                     tsOdinType = tsOdinMetaType.representedType();

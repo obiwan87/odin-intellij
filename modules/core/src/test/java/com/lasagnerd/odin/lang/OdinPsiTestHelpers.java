@@ -78,7 +78,7 @@ class OdinPsiTestHelpers {
 
     static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         OdinExpression odinExpression = findFirstExpressionOfVariable(odinFile, procedureName, variableName);
-        return OdinInferenceEngine.doInferType(odinExpression);
+        return OdinInferenceEngine.inferType(odinExpression);
     }
 
     static EvOdinValue evaluateFirstRightHandExpressionOfConstant(OdinFile odinFile, String procedureName, String variableName) {

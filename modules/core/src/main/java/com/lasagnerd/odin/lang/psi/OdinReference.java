@@ -16,6 +16,7 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameter;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameterOwner;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,13 @@ import java.util.List;
 
 public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
     public static Logger LOG = Logger.getInstance(OdinReference.class);
+
+    @Getter
+    private OdinSymbol symbol;
+    @Getter
+    private PsiElement resolvedReference;
+
+    boolean resolved = false;
 
     public OdinReference(@NotNull OdinIdentifier element) {
         super(element);
@@ -35,15 +43,36 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public @Nullable PsiElement resolve() {
+        if (!this.resolved) {
+            this.symbol = doResolve();
+            this.resolvedReference = resolveSymbol(this.symbol);
+            this.resolved = true;
+        }
 
-        if (getElement().getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
-            TsOdinType tsOdinType = OdinInferenceEngine.doInferType(implicitSelectorExpression);
-            OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(getElement().getProject(), tsOdinType);
-            OdinSymbol symbol = typeElements.getSymbol(getElement().getText());
-            if (symbol != null) {
+        return this.resolvedReference;
+    }
+
+    private static PsiElement resolveSymbol(OdinSymbol symbol) {
+        if (symbol != null) {
+            if (symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE) {
+                PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
+                if (declaredIdentifier instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+                    return OdinPackageReference.resolvePackagePathDirectory(importDeclarationStatement.getImportPath());
+                } else {
+                    return declaredIdentifier;
+                }
+            } else {
                 return symbol.getDeclaredIdentifier();
             }
-            return null;
+        }
+        return null;
+    }
+
+    private @Nullable OdinSymbol doResolve() {
+        if (getElement().getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
+            TsOdinType tsOdinType = OdinInferenceEngine.inferType(implicitSelectorExpression);
+            OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(getElement().getProject(), tsOdinType);
+            return typeElements.getSymbol(getElement().getText());
         }
 
         if (getElement().getParent() instanceof OdinNamedArgument namedArgument) {
@@ -56,7 +85,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
                         .findFirst().orElse(null);
 
                 if (tsOdinParameter != null) {
-                    return tsOdinParameter.getIdentifier();
+                    return tsOdinParameter.toSymbol();
                 }
             }
         }
@@ -67,12 +96,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
                 if (!OdinInsightUtils.isVisible(getElement(), symbol) && symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE) {
                     return null;
                 }
-                PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
-                if (declaredIdentifier instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                    return OdinPackageReference.resolvePackagePathDirectory(importDeclarationStatement.getImportPath());
-                }
-                return declaredIdentifier;
-
+                return symbol;
             }
             return null;
         } catch (StackOverflowError e) {

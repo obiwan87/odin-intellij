@@ -341,7 +341,7 @@ public class OdinExpectedTypeEngine {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    static @Nullable PsiElement findTypeExpectationContext(PsiElement psiElement) {
+    public static @Nullable PsiElement findTypeExpectationContext(PsiElement psiElement) {
         return OdinInsightUtils.findParentOfType(
                 psiElement,
                 false,

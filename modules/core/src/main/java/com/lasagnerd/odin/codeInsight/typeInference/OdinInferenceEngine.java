@@ -30,39 +30,40 @@ public class OdinInferenceEngine extends OdinVisitor {
     final OdinSymbolTable symbolTable;
     private final TsOdinType expectedType;
     private final int lhsValuesCount;
-    private boolean explicitMode = false;
+    private final boolean explicitMode;
 
-
-    public OdinInferenceEngine(OdinSymbolTable symbolTable) {
-        this.symbolTable = symbolTable;
-        this.lhsValuesCount = 1;
-        this.expectedType = TsOdinBuiltInTypes.UNKNOWN;
-    }
-
-    public OdinInferenceEngine(OdinSymbolTable symbolTable, @NotNull TsOdinType expectedType, int lhsValuesCount) {
+    private OdinInferenceEngine(OdinSymbolTable symbolTable,
+                                TsOdinType expectedType,
+                                int lhsValuesCount,
+                                boolean explicitMode) {
         this.symbolTable = symbolTable;
         this.expectedType = expectedType;
         this.lhsValuesCount = lhsValuesCount;
+        this.explicitMode = explicitMode;
     }
 
-    @NotNull
-    public static TsOdinType inferType(OdinSymbolTable symbolTable, OdinExpression expression) {
-        OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable);
-        expression.accept(odinInferenceEngine);
-        return odinInferenceEngine.type != null ? odinInferenceEngine.type : TsOdinBuiltInTypes.UNKNOWN;
+
+    private OdinInferenceEngine(OdinSymbolTable symbolTable, boolean explicitMode) {
+        this.symbolTable = symbolTable;
+        this.explicitMode = explicitMode;
+        this.expectedType = null;
+        this.lhsValuesCount = 1;
     }
 
     @NotNull
     public static TsOdinType inferTypeInExplicitMode(OdinSymbolTable symbolTable, OdinExpression expression) {
-        OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable);
-        odinInferenceEngine.explicitMode = true;
+        OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable, true);
         expression.accept(odinInferenceEngine);
 
         return odinInferenceEngine.type != null ? odinInferenceEngine.type : TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    public static TsOdinType doInferType(OdinSymbolTable symbolTable, @NotNull OdinExpression expression) {
-        return doInferType(symbolTable, TsOdinBuiltInTypes.UNKNOWN, 1, expression);
+    public static TsOdinType inferType(OdinInferenceEngineParameters parameters, OdinExpression expression) {
+        return inferType(parameters.symbolTable(), parameters.expectedType(), parameters.lhsValuesCount(), parameters.explicitMode(), expression);
+    }
+
+    public static TsOdinType inferType(OdinSymbolTable symbolTable, @NotNull OdinExpression expression) {
+        return inferType(symbolTable, TsOdinBuiltInTypes.UNKNOWN, 1, expression);
     }
 
     public static PsiElement findNextBinaryExpression(PsiElement element, boolean strict) {
@@ -90,27 +91,22 @@ public class OdinInferenceEngine extends OdinVisitor {
         );
     }
 
-    private TsOdinType inferType_(OdinSymbolTable symbolTable, OdinExpression expression) {
-        OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable);
-        odinInferenceEngine.explicitMode = this.explicitMode;
-        expression.accept(odinInferenceEngine);
-        return odinInferenceEngine.type != null ? odinInferenceEngine.type : TsOdinBuiltInTypes.UNKNOWN;
+
+    public static TsOdinType inferType(OdinSymbolTable symbolTable,
+                                       TsOdinType expectedType,
+                                       int lhsValuesCount,
+                                       @NotNull OdinExpression expression) {
+        return inferType(symbolTable, expectedType, lhsValuesCount, false, expression);
     }
 
-    public static TsOdinType doInferType(OdinSymbolTable symbolTable,
-                                         TsOdinType expectedType,
-                                         int lhsValuesCount,
-                                         @NotNull OdinExpression expression) {
-        return doInferType(symbolTable, expectedType, lhsValuesCount, expression, false);
-    }
-
-    public static TsOdinType doInferType(OdinSymbolTable symbolTable,
-                                         TsOdinType expectedType,
-                                         int lhsValuesCount,
-                                         @NotNull OdinExpression expression,
-                                         boolean explicitMode) {
-        OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable, expectedType, lhsValuesCount);
-        odinInferenceEngine.explicitMode = explicitMode;
+    public static TsOdinType inferType(OdinSymbolTable symbolTable,
+                                       TsOdinType expectedType,
+                                       int lhsValuesCount,
+                                       boolean explicitMode, @NotNull OdinExpression expression) {
+        if (symbolTable == null) {
+            symbolTable = OdinSymbolTableResolver.computeSymbolTable(expression);
+        }
+        OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable, expectedType, lhsValuesCount, explicitMode);
         expression.accept(odinInferenceEngine);
         TsOdinType type = odinInferenceEngine.type;
         if (type == null) {
@@ -127,13 +123,13 @@ public class OdinInferenceEngine extends OdinVisitor {
         return packageType;
     }
 
-    public static TsOdinType doInferType(OdinSymbolTable symbolTable, int lhsValuesCount, @NotNull OdinExpression expression) {
-        return doInferType(symbolTable, TsOdinBuiltInTypes.UNKNOWN, lhsValuesCount, expression);
+    public static TsOdinType inferType(OdinSymbolTable symbolTable, int lhsValuesCount, @NotNull OdinExpression expression) {
+        return inferType(symbolTable, TsOdinBuiltInTypes.UNKNOWN, lhsValuesCount, expression);
     }
 
-    public static TsOdinType doInferType(OdinExpression odinExpression) {
+    public static TsOdinType inferType(OdinExpression odinExpression) {
         OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
-        return doInferType(symbolTable, odinExpression);
+        return inferType(symbolTable, odinExpression);
     }
 
     public static TsOdinType inferTypeOfCompoundLiteral(OdinSymbolTable symbolTable, OdinCompoundLiteral compoundLiteral) {
@@ -174,11 +170,23 @@ public class OdinInferenceEngine extends OdinVisitor {
         return tsOdinType;
     }
 
+
+    private TsOdinType doInferType(OdinSymbolTable symbolTable, OdinExpression expression) {
+//        OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable);
+//        odinInferenceEngine.explicitMode = this.explicitMode;
+//        expression.accept(odinInferenceEngine);
+//        return odinInferenceEngine.type != null ? odinInferenceEngine.type : TsOdinBuiltInTypes.UNKNOWN;
+        OdinInferenceEngineParameters inferenceEngineParameters = new OdinInferenceEngineParameters(
+                symbolTable, null, 1, explicitMode
+        );
+        return expression.getInferredType(inferenceEngineParameters);
+    }
+
     @Override
     public void visitUnaryExpression(@NotNull OdinUnaryExpression o) {
         PsiElement operator = OdinPsiUtil.getOperator(o);
         if (operator != null) {
-            this.type = inferType_(symbolTable, o.getExpression());
+            this.type = doInferType(symbolTable, o.getExpression());
         }
     }
 
@@ -308,6 +316,16 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             IElementType operatorType = PsiUtilCore.getElementType(binaryExpression.getOperator());
+            if (operatorType == OdinTypes.OR_ELSE) {
+                if (isOptionalOkTuple(tsOdinType)) {
+                    TsOdinTuple tsOdinTuple = (TsOdinTuple) tsOdinType;
+                    return findEnumValue(tsOdinTuple.get(0), enumValue);
+                }
+
+                if (tsOdinType instanceof TsOdinEnumType) {
+                    return findEnumValue(tsOdinType, enumValue);
+                }
+            }
             if (OdinPsiUtil.COMPARISON_OPERATORS.contains(operatorType)
                     || OdinPsiUtil.ENUM_ARITHMETIC_OPERATORS.contains(operatorType)
                     || OdinPsiUtil.ENUM_BITWISE_OPERATORS.contains(operatorType)) {
@@ -401,7 +419,9 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
             // extract symbol table<
-            tsOdinRefExpressionType = OdinInsightUtils.getReferenceableType(doInferType(symbolTable, refExpression.getExpression()));
+            TsOdinType refExpressionType = doInferType(symbolTable, refExpression.getExpression());
+
+            tsOdinRefExpressionType = OdinInsightUtils.getReferenceableType(refExpressionType);
             OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(refExpression.getProject(), tsOdinRefExpressionType, true);
 
             if (tsOdinRefExpressionType instanceof TsOdinPackageReferenceType) {
@@ -421,6 +441,8 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         if (refExpression.getIdentifier() != null) {
             // using current scope, find identifier declaration and extract type
+
+            // TODO Performance: May this use resolve() and use a cached result?
             String name = refExpression.getIdentifier().getText();
             OdinSymbol symbol = localSymbolTable.getSymbol(name);
             if (symbol != null) {
@@ -438,7 +460,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                                 this.type = swizzleArray;
                             }
                         } else if (swizzleArraySize == 1) {
-                            // TODO complex, quaternion
                             if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX32) {
                                 this.type = TsOdinBuiltInTypes.F16;
                             } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX64) {
@@ -686,7 +707,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             TsOdinSoaSliceType soaSlice = new TsOdinSoaSliceType();
             for (OdinArgument odinArgument : o.getArgumentList()) {
                 if (odinArgument instanceof OdinNamedArgument namedArgument) {
-                    TsOdinType sliceType = inferType_(symbolTable, namedArgument.getExpression());
+                    TsOdinType sliceType = doInferType(symbolTable, namedArgument.getExpression());
                     soaSlice.getSlices().put(namedArgument.getIdentifier().getText(), sliceType);
                 }
             }
@@ -696,7 +717,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             if (o.getArgumentList().size() == 1) {
                 if (o.getArgumentList().getFirst() instanceof OdinUnnamedArgument unnamedArgument) {
-                    TsOdinType tsOdinType = inferType_(symbolTable, unnamedArgument.getExpression());
+                    TsOdinType tsOdinType = doInferType(symbolTable, unnamedArgument.getExpression());
                     if (tsOdinType instanceof TsOdinSoaSliceType tsOdinSoaSliceType) {
                         tuple.getTypes().addAll(tsOdinSoaSliceType.getSlices().values());
                     }
@@ -707,7 +728,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (o.getArgumentList().size() > 1) {
                 OdinArgument first = o.getArgumentList().getFirst();
                 if (first instanceof OdinUnnamedArgument arrayArgument) {
-                    TsOdinType tsOdinType = inferType_(symbolTable, arrayArgument.getExpression());
+                    TsOdinType tsOdinType = doInferType(symbolTable, arrayArgument.getExpression());
                     if (tsOdinType.baseType(true) instanceof TsOdinArrayType tsOdinArrayType) {
                         tsOdinArrayType.setSize(o.getArgumentList().size() - 1);
                         return tsOdinArrayType;
@@ -719,7 +740,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (!argumentList.isEmpty()) {
                 OdinArgument first = argumentList.getFirst();
                 if (first instanceof OdinUnnamedArgument argument) {
-                    TsOdinType tsOdinType = OdinInferenceEngine.doInferType(argument.getExpression());
+                    TsOdinType tsOdinType = OdinInferenceEngine.inferType(argument.getExpression());
                     return OdinTypeResolver.createMetaType(tsOdinType, null);
                 }
             }
@@ -811,7 +832,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitAddressExpression(@NotNull OdinAddressExpression o) {
         OdinExpression expression = o.getExpression();
         if (expression != null) {
-            TsOdinType referencedType = inferType_(symbolTable, expression);
+            TsOdinType referencedType = doInferType(symbolTable, expression);
             // TODO check if reference type is actually referenceable (E.g. meta type and typeid aren't)
             TsOdinPointerType tsOdinPointerType = new TsOdinPointerType();
             tsOdinPointerType.setDereferencedType(referencedType);
@@ -823,7 +844,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitParenthesizedExpression(@NotNull OdinParenthesizedExpression o) {
         OdinExpression expression = o.getExpression();
         if (expression != null) {
-            this.type = inferType_(symbolTable, expression);
+            this.type = doInferType(symbolTable, expression);
         }
     }
 
@@ -857,7 +878,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitOrElseExpression(@NotNull OdinOrElseExpression o) {
         if (!o.getExpressionList().isEmpty()) {
             // TODO respect explicit mode
-            TsOdinType tsOdinType = doInferType(symbolTable, createOptionalOkTuple(expectedType), 2, o.getExpressionList().getFirst(), explicitMode);
+            TsOdinType tsOdinType = inferType(symbolTable, createOptionalOkTuple(expectedType), 2, explicitMode, o.getExpressionList().getFirst());
             if (isOptionalOkTuple(tsOdinType)) {
                 this.type = ((TsOdinTuple) tsOdinType).getTypes().getFirst();
             }
@@ -895,8 +916,8 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     private @Nullable TsOdinType evaluateConditionalBranchesType(OdinExpression trueBranchExpression, OdinExpression falseBranchExpression) {
-        TsOdinType tsOdinTrueType = inferType_(symbolTable, trueBranchExpression);
-        TsOdinType tsOdinFalseType = inferType_(symbolTable, falseBranchExpression);
+        TsOdinType tsOdinTrueType = doInferType(symbolTable, trueBranchExpression);
+        TsOdinType tsOdinFalseType = doInferType(symbolTable, falseBranchExpression);
 
         if (TsOdinUtils.areEqual(tsOdinTrueType, tsOdinFalseType)) {
             return tsOdinTrueType;
@@ -940,13 +961,13 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitRangeInclusiveExpression(@NotNull OdinRangeInclusiveExpression o) {
         OdinExpression odinExpression = o.getExpressionList().getFirst();
-        this.type = inferType_(symbolTable, odinExpression);
+        this.type = doInferType(symbolTable, odinExpression);
     }
 
     @Override
     public void visitRangeExclusiveExpression(@NotNull OdinRangeExclusiveExpression o) {
         OdinExpression odinExpression = o.getExpressionList().getFirst();
-        this.type = inferType_(symbolTable, odinExpression);
+        this.type = doInferType(symbolTable, odinExpression);
     }
 
     @Override
@@ -1021,7 +1042,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         OdinExpression expression = o.getExpression();
-        TsOdinType tsOdinType = inferType_(symbolTable, expression);
+        TsOdinType tsOdinType = doInferType(symbolTable, expression);
         if (tsOdinType instanceof TsOdinUnionType tsOdinUnionType) {
             if (tsOdinUnionType.getVariants().size() == 1) {
                 this.type = createOptionalOkTuple(tsOdinUnionType.getVariants().getFirst().getType());
@@ -1059,7 +1080,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 // TODO Only recompute if we know that the declared identifier is shadowing another one (maybe save this information
                 //  in the symbol?)
                 OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
-                TsOdinType tsOdinType = doInferType(odinSymbolTable, lhsValuesCount, odinExpression);
+                TsOdinType tsOdinType = inferType(odinSymbolTable, lhsValuesCount, odinExpression);
                 if (tsOdinType instanceof TsOdinTuple tuple) {
                     tsOdinTypes.addAll(tuple.getTypes());
                 } else {
@@ -1094,7 +1115,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
             for (OdinExpression odinExpression : expressionList) {
                 OdinSymbolTable nextSymbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
-                TsOdinType tsOdinType = doInferType(nextSymbolTable, odinExpression);
+                TsOdinType tsOdinType = inferType(nextSymbolTable, odinExpression);
                 if (tsOdinType instanceof TsOdinTuple tuple) {
                     tsOdinTypes.addAll(tuple.getTypes());
                 } else {
@@ -1146,7 +1167,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             OdinExpression odinExpression = parameterInitialization.getExpression();
-            return doInferType(parentSymbolTable, odinExpression);
+            return inferType(parentSymbolTable, odinExpression);
         }
 
         if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
@@ -1271,6 +1292,17 @@ public class OdinInferenceEngine extends OdinVisitor {
                     }
                 }
 
+                if (tsOdinType instanceof TsOdinMetaType metaType && metaType.representedType()
+                        .baseType(true) instanceof TsOdinEnumType enumType) {
+                    if (index == 0) {
+                        return enumType;
+                    }
+
+                    if (index == 1) {
+                        return TsOdinBuiltInTypes.INT;
+                    }
+                }
+
                 if (expression instanceof OdinRangeExclusiveExpression || expression instanceof OdinRangeInclusiveExpression) {
                     return tsOdinType;
                 }
@@ -1282,7 +1314,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (odinDeclaration instanceof OdinSwitchTypeVariableDeclaration && identifier != null) {
             OdinSwitchBlock switchInBlock = PsiTreeUtil.getParentOfType(odinDeclaration, OdinSwitchBlock.class, true);
             if (switchInBlock != null && switchInBlock.getSwitchInClause() != null) {
-                TsOdinType tsOdinType = doInferType(switchInBlock.getSwitchInClause().getExpression());
+                TsOdinType tsOdinType = inferType(switchInBlock.getSwitchInClause().getExpression());
                 List<OdinSwitchCase> ancestors = new ArrayList<>();
                 OdinSwitchBody switchBody = switchInBlock.getSwitchBody();
                 if (switchBody != null) {
@@ -1370,7 +1402,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     private void inferTypeOfOrStatements(OdinExpression expression) {
         // TODO respect explicit mode
-        TsOdinType tsOdinType = doInferType(symbolTable, TsOdinBuiltInTypes.UNKNOWN, 2, expression, explicitMode);
+        TsOdinType tsOdinType = inferType(symbolTable, TsOdinBuiltInTypes.UNKNOWN, 2, explicitMode, expression);
         if (tsOdinType instanceof TsOdinTuple tsOdinTuple) {
             if (tsOdinTuple.getTypes().size() == 2) {
                 this.type = tsOdinTuple.getTypes().getFirst();
