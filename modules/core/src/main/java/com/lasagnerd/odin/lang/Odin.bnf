@@ -632,7 +632,7 @@ indexExpression                      ::= expression index
 sliceExpression                      ::= expression slice
 procedureExpression                  ::= DISTINCT? directive? procedureLiteralType {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock"] methods = [  getSymbols ] }
 dereferenceExpression                ::= expression CARET
-identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference delete] mixin="com.lasagnerd.odin.lang.psi.impl.OdinReferenceOwnerMixin"}
+identifier                           ::= IDENTIFIER_TOKEN { methods = [getReference delete] mixin="com.lasagnerd.odin.lang.psi.impl.OdinReferenceOwnerMixin" implements=["OdinReferenceOwner"]}
 
 callExpression                       ::= expression LPAREN <<enterMode "PAR">> argumentList? <<exitMode "PAR">> EOS_TOKEN? RPAREN
 
