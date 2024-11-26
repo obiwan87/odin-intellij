@@ -308,7 +308,10 @@ public class OdinTypeResolver extends OdinVisitor {
         if (scopeType != null) {
             return scopeType;
         } else {
-            declaration = symbolTable.getNamedElement(typeIdentifier.getIdentifierToken().getText());
+            OdinSymbol symbol = typeIdentifier.getReferencedSymbol();
+
+            declaration = symbol != null ? symbol.getDeclaredIdentifier() : null;
+            // This check should happen in OdinReference
             if (!(declaration instanceof OdinDeclaredIdentifier declaredIdentifier)) {
                 if (RESERVED_TYPES.contains(identifierText)) {
                     return TsOdinBuiltInTypes.getBuiltInType(identifierText);
@@ -544,8 +547,10 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinBitSetType.setPsiType(o);
         initializeNamedType(tsOdinBitSetType);
         OdinExpression elementTypeExpression = o.getExpression();
-        TsOdinType tsOdinElementType = doResolveType(symbolTable, elementTypeExpression);
-        tsOdinBitSetType.setElementType(tsOdinElementType);
+        if (elementTypeExpression != null) {
+            TsOdinType tsOdinElementType = doResolveType(symbolTable, elementTypeExpression);
+            tsOdinBitSetType.setElementType(tsOdinElementType);
+        }
 
         if (o.getType() != null) {
             TsOdinType tsBackingType = doResolveType(symbolTable, o.getType());

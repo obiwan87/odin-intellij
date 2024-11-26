@@ -185,7 +185,8 @@ public class OdinImportUtils {
 
     public static Map<String, Path> getCollectionPaths(Project project, String sourceFilePath) {
         Map<String, Path> collectionPaths = new HashMap<>();
-        VirtualFile sourceFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(sourceFilePath));
+        VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+        VirtualFile sourceFile = virtualFileManager.findFileByNioPath(Path.of(sourceFilePath));
         if (sourceFile != null) {
             Module module = ModuleUtilCore.findModuleForFile(sourceFile, project);
             if (module != null) {
@@ -533,11 +534,15 @@ public class OdinImportUtils {
                     (element, offsetInElement) -> {
                         if (element instanceof OdinIdentifier identifier) {
                             PsiReference reference = identifier.getReference();
-                            if (reference != null) {
-                                PsiElement resolvedReference = reference.resolve();
-                                if (resolvedReference != null) {
-                                    return !resolvedReference.isEquivalentTo(psiDirectory);
+                            PsiElement resolvedReference = reference.resolve();
+                            if (resolvedReference != null) {
+                                if (resolvedReference instanceof OdinImportDeclarationStatement importDeclarationStatement1) {
+                                    return importDeclarationStatement1 != importDeclarationStatement;
                                 }
+                                if (resolvedReference instanceof OdinDeclaredIdentifier) {
+                                    return resolvedReference.getParent() != importDeclarationStatement;
+                                }
+                                return !resolvedReference.isEquivalentTo(psiDirectory);
                             }
                         }
                         return true;

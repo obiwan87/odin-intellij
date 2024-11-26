@@ -748,10 +748,10 @@ public class OdinInsightUtils {
 
             String text = callRefExpression.getIdentifier().getText();
             if (identifierPredicate.test(text)) {
-                symbol = symbolTable.getSymbol(text);
+                return callRefExpression.getIdentifier().getReferencedSymbol();
             }
         }
-        return symbol;
+        return null;
     }
 
     public static @Nullable Map<OdinExpression, TsOdinParameter> getArgumentToParameterMap(List<TsOdinParameter> parameters,

@@ -2,11 +2,14 @@ package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinImportPath;
@@ -62,5 +65,12 @@ public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiE
             return odinExpression;
         }
         return null;
+    }
+
+    public String getLocation() {
+        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(this);
+        String lineColumn = OdinInsightUtils.getLineColumn(this);
+
+        return "%s:%s".formatted(containingVirtualFile.getPath(), lineColumn);
     }
 }

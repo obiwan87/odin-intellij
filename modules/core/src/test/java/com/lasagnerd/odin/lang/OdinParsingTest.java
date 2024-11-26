@@ -137,6 +137,7 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(PsiManager.class, myPsiManager);
         project.registerService(PsiFileFactory.class, myFileFactory);
         project.registerService(TreeAspect.class, new TreeAspect());
+        project.registerService(SmartPointerManager.class, new MockSmartPointerManager());
 
         registerExtensionPoint(project.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
         registerExtensionPoint(app.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
@@ -414,7 +415,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
 
         OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(odinRefExpression);
-        OdinReferenceResolver.resolve(symbolTable, odinRefExpression);
+        OdinReferenceResolver.resolve(odinRefExpression);
 
     }
 
@@ -1382,7 +1383,11 @@ public class OdinParsingTest extends UsefulTestCase {
         String packagePath = OdinImportService.getInstance(project).getPackagePath(odinFile);
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_import", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(packagePath, expression, scope -> false, false, OdinSymbolTable.EMPTY);
+            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(packagePath,
+                    expression,
+                    scope -> false,
+                    false,
+                    OdinSymbolTable.EMPTY);
             assertNotNull(odinSymbolTable.getSymbol("a_mypublic_proc"));
             assertNotNull(odinSymbolTable.getSymbol("a_ret"));
         }
@@ -1444,6 +1449,12 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "main", "test");
             assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
+        }
+
+        {
+            TsOdinType tsOdinType1 = inferFirstRightHandExpressionOfVariable(odinFile, "main", "second");
+            TsOdinType tsOdinType2 = inferFirstRightHandExpressionOfVariable(odinFile, "main", "second");
+            assertTrue(OdinTypeChecker.checkTypesStrictly(tsOdinType1.baseType(true), tsOdinType2.baseType(true)));
         }
     }
 
@@ -2133,21 +2144,6 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    public void testStackOverflowErrors() throws IOException {
-        OdinFile file = load("src/test/sdk/core/image/netpbm/netpbm.odin");
-        {
-            PsiElement element = file.findElementAt(3119);
-            OdinIdentifier identifier = PsiTreeUtil.getParentOfType(element, OdinIdentifier.class);
-
-
-            PsiElement resolvedReference = Objects.requireNonNull(
-                            Objects.requireNonNull(identifier).getReference()
-                    )
-                    .resolve();
-
-        }
-    }
-
     public void testNestedWhenStatements() throws IOException {
         OdinFile file = loadTypeInference();
         {
@@ -2242,15 +2238,24 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testPsiFileAtOffset() throws IOException {
         {
-//            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\os\\os2\\file_stream.odin");
-//            PsiElement element = file.findElementAt(346);
-//            assertNotNull(element);
-//
+            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\encoding\\cbor\\coding.odin");
+            PsiElement element = file.findElementAt(18546);
+            assertNotNull(element);
+
+            OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
+            assertNotNull(refExpression);
+            TsOdinType inferredType = refExpression.getInferredType();
+            TsOdinSliceType tsOdinSliceType = assertInstanceOf(inferredType.baseType(), TsOdinSliceType.class);
+
+//            OdinIdentifier identifier = PsiTreeUtil.getParentOfType(element, OdinIdentifier.class);
+//            assertNotNull(identifier);
+//            OdinSymbol referencedSymbol = identifier.getReferencedSymbol();
+//            assertNotNull(referencedSymbol);
 //            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.getParentOfType(element, OdinImplicitSelectorExpression.class);
 //            assertNotNull(implicitSelectorExpression);
 //            TsOdinType inferredType = implicitSelectorExpression.getInferredType();
 //            assertInstanceOf(inferredType, TsOdinEnumType.class);
-
+//
 //            OdinIdentifier identifier = PsiTreeUtil.getParentOfType(element, OdinIdentifier.class);
 //            assertNotNull(identifier);
 //            PsiReference reference = identifier.getReference();
@@ -2531,9 +2536,14 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testOptimizedSymbolFinding() throws IOException {
+
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
         return load("src/test/testData/expression_eval.odin");
     }
+
     // TODO core/os/os2/file_windows.odin:177
 //    In file: D:/dev/code/Odin/core/crypto/_fiat/field_scalar25519/field64.odin
 //

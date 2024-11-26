@@ -58,7 +58,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                 .getContainingDirectory()
                 .getVirtualFile()
                 .getPath());
-        OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, parentType);
+        OdinSymbolTable completionScope = OdinReferenceResolver.resolve(parentType);
         if (completionScope != null) {
             addLookUpElements(result, completionScope.flatten()
                     .getSymbols()
@@ -75,7 +75,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
             if (reference.getExpression() != null) {
                 // TODO at some point we should return the type of each symbol
-                OdinSymbolTable completionScope = OdinReferenceResolver.resolve(symbolTable, reference.getExpression());
+                OdinSymbolTable completionScope = OdinReferenceResolver.resolve(reference.getExpression());
                 if (completionScope != null) {
                     Collection<OdinSymbol> visibleSymbols = completionScope.flatten()
                             .getSymbols()

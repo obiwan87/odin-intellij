@@ -32,7 +32,7 @@ public class OdinTypeChecker {
         }
 
         if (argumentBaseType.getPsiTypeExpression() != null && parameterBaseType.getPsiTypeExpression() != null) {
-            if (argumentBaseType.getPsiType() == parameterBaseType.getPsiType())
+            if (argumentBaseType.getPsiTypeExpression() == parameterBaseType.getPsiTypeExpression())
                 return true;
         }
 
