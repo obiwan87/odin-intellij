@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.LightVirtualFile;
-import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.OdinFile;
@@ -80,6 +79,11 @@ public class MockOdinImportService implements OdinImportService {
             return odinFile;
         }
         return null;
+    }
+
+    public PsiFile getPsiFile(Path path) {
+        LightVirtualFile virtualFile = getVirtualFile(path);
+        return createPsiFile(virtualFile);
     }
 
     @Override

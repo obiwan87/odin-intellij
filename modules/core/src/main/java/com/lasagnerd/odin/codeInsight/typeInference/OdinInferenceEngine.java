@@ -191,7 +191,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 //        expression.accept(odinInferenceEngine);
 //        return odinInferenceEngine.type != null ? odinInferenceEngine.type : TsOdinBuiltInTypes.UNKNOWN;
         OdinInferenceEngineParameters inferenceEngineParameters = new OdinInferenceEngineParameters(
-                symbolTable, null, 1, explicitMode
+                null, null, 1, explicitMode
         );
         return expression.getInferredType(inferenceEngineParameters);
     }
@@ -426,105 +426,45 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
-        OdinSymbolTable localSymbolTable;
         OdinSymbolTable globalSymbolTable;
 
         TsOdinType tsOdinRefExpressionType = TsOdinBuiltInTypes.UNKNOWN;
+        Project project = refExpression.getProject();
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
-            // extract symbol table<
-            TsOdinType refExpressionType = doInferType(symbolTable, refExpression.getExpression());
-
+            TsOdinType refExpressionType = refExpression.getExpression().getInferredType();
             tsOdinRefExpressionType = OdinInsightUtils.getReferenceableType(refExpressionType);
-            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(refExpression.getProject(), tsOdinRefExpressionType, true);
+            // Specialized types carry substituted types with them, that are needed to infer
+            // the correct type of e.g. a field in a specialized struct
+            // e.g
+            // Strict($T: typeid) :: struct {x: $T}
+            // s := S(int)
 
-            if (tsOdinRefExpressionType instanceof TsOdinPackageReferenceType) {
-                localSymbolTable = typeSymbols;
-                globalSymbolTable = typeSymbols;
-            } else {
-                globalSymbolTable = tsOdinRefExpressionType.getSymbolTable();
-                globalSymbolTable.getTypeTable().putAll(typeSymbols.getTypeTable());
-                localSymbolTable = typeSymbols;
-            }
-            // The resolved polymorphic types must be taken over from type scope
-            this.symbolTable.addTypes(localSymbolTable);
+            globalSymbolTable = tsOdinRefExpressionType.getSymbolTable();
+
         } else {
-            localSymbolTable = this.symbolTable;
             globalSymbolTable = this.symbolTable;
         }
 
-        if (refExpression.getIdentifier() != null) {
+        OdinIdentifier identifier = refExpression.getIdentifier();
+        if (identifier != null) {
             // using current scope, find identifier declaration and extract type
 
-            // TODO Performance: May this use resolve() and use a cached result?
-            String name = refExpression.getIdentifier().getText();
-            OdinSymbol symbol = localSymbolTable.getSymbol(name);
+            String name = identifier.getText();
+//            OdinSymbol symbol = localSymbolTable.getSymbol(name);
+            // If this is an identifier in a ref expression like ref.thisIdentifier
+            // getReferencedSymbol() will get the inferred type of 'ref' from the cache
+            // because it has been computed above. Then ,in OdinReference, the correct
+            // using the type elements of that type, it will correctly retrieve the symbol
+            OdinSymbol symbol = identifier.getReferencedSymbol();
             if (symbol != null) {
-                if (symbol.isImplicitlyDeclared()) {
-                    if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD) {
-                        int swizzleArraySize = symbol.getName().length();
-                        if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
-                            if (swizzleArraySize == 1) {
-                                this.type = tsOdinArrayType.getElementType();
-                            } else {
-                                TsOdinArrayType swizzleArray = new TsOdinArrayType();
-                                swizzleArray.setSymbolTable(tsOdinArrayType.getSymbolTable());
-                                swizzleArray.setElementType(tsOdinArrayType.getElementType());
-                                swizzleArray.setSize(swizzleArraySize);
-                                this.type = swizzleArray;
-                            }
-                        } else if (swizzleArraySize == 1) {
-                            if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX32) {
-                                this.type = TsOdinBuiltInTypes.F16;
-                            } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX64) {
-                                this.type = TsOdinBuiltInTypes.F32;
-                            } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX128) {
-                                this.type = TsOdinBuiltInTypes.F64;
-                            } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.QUATERNION64) {
-                                this.type = TsOdinBuiltInTypes.F16;
-                            } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.QUATERNION128) {
-                                this.type = TsOdinBuiltInTypes.F32;
-                            } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.QUATERNION256) {
-                                this.type = TsOdinBuiltInTypes.F64;
-                            }
-                        }
-
-                    } else if (symbol.getSymbolType() == OdinSymbolType.SOA_FIELD) {
-                        if (tsOdinRefExpressionType instanceof TsOdinSoaStructType soaStructType) {
-                            this.type = soaStructType.getFields().get(symbol.getName());
-                        }
-                    } else if (symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
-                        this.type = createBuiltinMetaType(name);
-                    } else {
-                        Project project = refExpression.getProject();
-                        OdinSdkService builtinSymbolService = OdinSdkService.getInstance(project);
-                        if (symbol.getPsiType() != null && builtinSymbolService != null) {
-                            String typeName = OdinInsightUtils.getTypeName(symbol.getPsiType());
-                            this.type = builtinSymbolService.getType(typeName);
-                        }
-                    }
-                } else {
-                    OdinSymbolTable symbolTableForTypeResolution;
-
-                    if (symbol.isVisibleThroughUsing()) {
-                        symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
-                        symbolTableForTypeResolution.putAll(globalSymbolTable);
-                    } else {
-                        VirtualFile declaredIdentifierVirtualFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaredIdentifier());
-                        VirtualFile currentFile = OdinImportUtils.getContainingVirtualFile(refExpression);
-                        if (!declaredIdentifierVirtualFile.equals(currentFile)) {
-                            symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
-                        } else {
-                            symbolTableForTypeResolution = globalSymbolTable;
-                        }
-                    }
-
-                    this.type = inferTypeOfDeclaredIdentifier(
-                            symbolTableForTypeResolution,
-                            symbol.getDeclaredIdentifier(),
-                            refExpression.getIdentifier()
-                    );
-                }
+                this.type = getSymbolType(
+                        project,
+                        symbol,
+                        tsOdinRefExpressionType,
+                        identifier,
+                        globalSymbolTable
+                );
             } else {
                 // TODO Add poly paras as symbols
                 TsOdinType polyParameter = symbolTable.getType(name);
@@ -551,6 +491,82 @@ public class OdinInferenceEngine extends OdinVisitor {
                 this.type = tsOdinType;
             }
         }
+    }
+
+    public static TsOdinType getSymbolType(@NotNull Project project,
+                                           OdinSymbol symbol,
+                                           TsOdinType tsOdinRefExpressionType,
+                                           OdinIdentifier identifier,
+                                           OdinSymbolTable globalSymbolTable) {
+
+        // Implicitly declared symbols, like swizzle fields
+        if (symbol.isImplicitlyDeclared()) {
+            if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD) {
+                int swizzleArraySize = symbol.getName().length();
+                if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
+                    if (swizzleArraySize == 1) {
+                        return tsOdinArrayType.getElementType();
+                    } else {
+                        TsOdinArrayType swizzleArray = new TsOdinArrayType();
+                        swizzleArray.setSymbolTable(tsOdinArrayType.getSymbolTable());
+                        swizzleArray.setElementType(tsOdinArrayType.getElementType());
+                        swizzleArray.setSize(swizzleArraySize);
+                        return swizzleArray;
+                    }
+                } else if (swizzleArraySize == 1) {
+                    if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX32) {
+                        return TsOdinBuiltInTypes.F16;
+                    } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX64) {
+                        return TsOdinBuiltInTypes.F32;
+                    } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.COMPLEX128) {
+                        return TsOdinBuiltInTypes.F64;
+                    } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.QUATERNION64) {
+                        return TsOdinBuiltInTypes.F16;
+                    } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.QUATERNION128) {
+                        return TsOdinBuiltInTypes.F32;
+                    } else if (tsOdinRefExpressionType == TsOdinBuiltInTypes.QUATERNION256) {
+                        return TsOdinBuiltInTypes.F64;
+                    }
+                }
+                // SOA fields
+            } else if (symbol.getSymbolType() == OdinSymbolType.SOA_FIELD) {
+                if (tsOdinRefExpressionType instanceof TsOdinSoaStructType soaStructType) {
+                    return soaStructType.getFields().get(symbol.getName());
+                }
+            }
+            // Built-in symbols
+            else if (symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
+                return createBuiltinMetaType(symbol.getName());
+            } else {
+                OdinSdkService builtinSymbolService = OdinSdkService.getInstance(project);
+                if (symbol.getPsiType() != null && builtinSymbolService != null) {
+                    String typeName = OdinInsightUtils.getTypeName(symbol.getPsiType());
+                    return builtinSymbolService.getType(typeName);
+                }
+            }
+        } else {
+            OdinSymbolTable symbolTableForTypeResolution;
+
+            if (symbol.isVisibleThroughUsing()) {
+                symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
+                symbolTableForTypeResolution.putAll(globalSymbolTable);
+            } else {
+                VirtualFile declaredIdentifierVirtualFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaredIdentifier());
+                VirtualFile currentFile = OdinImportUtils.getContainingVirtualFile(identifier);
+                if (!declaredIdentifierVirtualFile.equals(currentFile)) {
+                    symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
+                } else {
+                    symbolTableForTypeResolution = globalSymbolTable;
+                }
+            }
+
+            return inferTypeOfDeclaredIdentifier(
+                    symbolTableForTypeResolution,
+                    symbol.getDeclaredIdentifier(),
+                    identifier
+            );
+        }
+        return null;
     }
 
     private static @Nullable TsOdinType inferTypeOfDeclaredIdentifier(
@@ -1073,6 +1089,10 @@ public class OdinInferenceEngine extends OdinVisitor {
                                                       OdinSymbolTable parentSymbolTable,
                                                       OdinDeclaredIdentifier declaredIdentifier,
                                                       OdinDeclaration odinDeclaration) {
+        // NOTE: We cannot remove the symbol table because we might have to substitute types
+        // in the context of specialized structs, procedures and unions
+        // TODO How can we still use the cache?
+//        parentSymbolTable = null;
         if (odinDeclaration instanceof OdinVariableDeclarationStatement declarationStatement) {
             var mainType = declarationStatement.getType();
             return mainType.getResolvedType(parentSymbolTable);
@@ -1185,13 +1205,11 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
-            TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(POLYMORPHIC);
-            tsOdinMetaType.setSymbolTable(parentSymbolTable);
-            tsOdinMetaType.setDeclaration(polymorphicType);
-            tsOdinMetaType.setPsiType(polymorphicType);
-            tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
-            tsOdinMetaType.setName(declaredIdentifier.getName());
-            return tsOdinMetaType;
+            return OdinTypeResolver.findMetaType(null,
+                    declaredIdentifier,
+                    odinDeclaration,
+                    null,
+                    polymorphicType);
         }
 
         if (odinDeclaration instanceof OdinEnumValueDeclaration odinEnumValueDeclaration) {

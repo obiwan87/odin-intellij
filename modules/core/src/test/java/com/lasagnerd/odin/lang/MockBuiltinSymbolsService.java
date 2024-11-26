@@ -2,6 +2,7 @@ package com.lasagnerd.odin.lang;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFileFactory;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkServiceBase;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 
@@ -18,7 +19,8 @@ public class MockBuiltinSymbolsService extends OdinSdkServiceBase {
 
     @Override
     protected OdinFile createOdinFile(Project project, Path path) {
-        return MockFileUtils.createOdinFile(project, path);
+        MockOdinImportService mockImportService = (MockOdinImportService) OdinImportService.getInstance(project);
+        return (OdinFile) mockImportService.getPsiFile(path);
     }
 
     @Override

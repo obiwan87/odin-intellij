@@ -34,7 +34,7 @@ public class OdinImportServiceImpl implements OdinImportService {
         }
         VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(psiElement);
         VirtualFile parent = containingVirtualFile.getParent();
-        if(parent != null) {
+        if (parent != null) {
             return parent.getPath();
         }
 
@@ -52,7 +52,7 @@ public class OdinImportServiceImpl implements OdinImportService {
         if (packageDirectory != null) {
             children = packageDirectory.getChildren();
         }
-        if(children == null)
+        if (children == null)
             return new VirtualFile[0];
         return children;
     }

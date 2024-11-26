@@ -36,7 +36,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
         super(element);
     }
 
-    public OdinSymbol findSymbol() {
+    public OdinSymbol findSymbol2() {
         var element = getElement();
         String packagePath = OdinImportService
                 .getInstance(element.getProject())
@@ -49,21 +49,27 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
         return findSymbol(symbolTable);
     }
 
+    public OdinSymbol findSymbol() {
+        OdinSymbolTable symbolTable = OdinSymbolTableResolver.findSymbolTable(getElement());
+        return findSymbol(symbolTable);
+    }
+
     public OdinSymbol findSymbol(OdinSymbolTable parentSymbolTable) {
         @NotNull OdinIdentifier identifier = getElement();
         PsiElement parent = identifier.getParent();
         OdinSymbolTable symbolTable;
         if (parent instanceof OdinRefExpression refExpression) {
             if (refExpression.getExpression() != null) {
-                symbolTable = OdinReferenceResolver.resolve(parentSymbolTable, refExpression.getExpression());
+                symbolTable = OdinReferenceResolver.resolve(refExpression.getExpression());
             } else {
                 symbolTable = parentSymbolTable;
             }
         } else if (parent instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
-            TsOdinType tsOdinType = implicitSelectorExpression.getInferredType(parentSymbolTable);
+            TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
             if (!tsOdinType.isUnknown()) {
                 symbolTable = OdinInsightUtils.getTypeElements(identifier.getProject(), tsOdinType);
             } else {
+                // TODO This might lead to resolving to a wrong symbol that has the same name
                 symbolTable = parentSymbolTable;
             }
         } else {
@@ -72,7 +78,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
                 if (qualifiedType.getPackageIdentifier() == identifier) {
                     symbolTable = parentSymbolTable;
                 } else {
-                    symbolTable = OdinReferenceResolver.resolve(parentSymbolTable, qualifiedType);
+                    symbolTable = OdinReferenceResolver.resolve(qualifiedType);
                 }
             } else {
                 symbolTable = parentSymbolTable;
@@ -111,7 +117,10 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
             if (symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE) {
                 PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
                 if (declaredIdentifier instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                    return OdinPackageReference.resolvePackagePathDirectory(importDeclarationStatement.getImportPath());
+                    // TODO here we only resolve to import declaration, however, when wants to jump to declaration
+                    //  we want to open the path. How do do that? HintedReferenceHost?
+//                    return OdinPackageReference.resolvePackagePathDirectory(importDeclarationStatement.getImportPath());
+                    return importDeclarationStatement;
                 } else {
                     return declaredIdentifier;
                 }
