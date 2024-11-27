@@ -1,40 +1,56 @@
 package com.lasagnerd.odin.lang.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
-public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implements OdinDeclaredIdentifier, PsiNameIdentifierOwner {
+public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implements OdinDeclaredIdentifier {
     public OdinIdentifierOwner(@NotNull ASTNode node) {
         super(node);
     }
 
-    public static OdinSymbol createSymbol(OdinDeclaredIdentifier declaredIdentifier) {
-        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
+    public OdinSymbol createSymbol() {
+        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(this, OdinDeclaration.class);
 
         if (declaration != null) {
             List<OdinSymbol> symbols = OdinDeclarationSymbolResolver.getSymbols(declaration);
             return symbols.stream()
-                    .filter(s -> s.getName().equals(declaredIdentifier.getName()))
+                    .filter(s -> s.getName().equals(this.getName()))
                     .findFirst()
                     .orElse(null);
         }
         return null;
     }
+
+    public ItemPresentation getPresentation() {
+        OdinSymbolType symbolType = OdinInsightUtils.classify(this);
+        Icon icon = OdinCompletionContributor.getIcon(symbolType);
+        if (icon == null)
+            icon = AllIcons.Nodes.Property;
+        return new PresentationData(this.getName(), "", icon, null);
+    }
+
 
     @Override
     public @Nullable PsiElement getNameIdentifier() {
@@ -70,7 +86,7 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
     @Override
     public @NotNull SearchScope getUseScope() {
         // TODO
-        OdinSymbol symbol = createSymbol(this);
+        OdinSymbol symbol = createSymbol();
         switch (symbol.getVisibility()) {
             case NONE -> {
                 OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
@@ -90,13 +106,22 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
         return super.getUseScope();
     }
 
-    private OdinFile @NotNull [] getOdinFiles(List<VirtualFile> odinFilesInPackage) {
-        OdinFile[] packageFiles = new OdinFile[odinFilesInPackage.size()];
-        for (int i = 0; i < odinFilesInPackage.size(); i++) {
-            VirtualFile virtualFile = odinFilesInPackage.get(i);
-            PsiFile file = PsiManager.getInstance(getProject()).findFile(virtualFile);
-            packageFiles[i] = (OdinFile) file;
+    private CachedValue<TsOdinType> cachedValue;
+
+    public TsOdinType getType() {
+        if (cachedValue == null) {
+            cachedValue = createCachedValue();
         }
-        return packageFiles;
+        return cachedValue.getValue();
+    }
+
+    private CachedValue<TsOdinType> createCachedValue() {
+        return CachedValuesManager.getManager(getProject()).createCachedValue(
+                this::computeType
+        );
+    }
+
+    private CachedValueProvider.@Nullable Result<TsOdinType> computeType() {
+        return null;
     }
 }

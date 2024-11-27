@@ -44,7 +44,7 @@ public abstract class OdinExpressionMixin extends OdinPsiElementImpl implements 
     }
 
     public @NotNull ParameterizedCachedValue<TsOdinType, OdinInferenceEngineParameters> createCachedType() {
-        return CachedValuesManager.getManager(getProject()).createParameterizedCachedValue(this::createCachedValue, false);
+        return CachedValuesManager.getManager(getProject()).createParameterizedCachedValue(this::inferType, false);
     }
 
     public @NotNull Set<PsiElement> createTypeDependencies(TsOdinType tsOdinType) {
@@ -65,7 +65,7 @@ public abstract class OdinExpressionMixin extends OdinPsiElementImpl implements 
         return dependencies;
     }
 
-    private CachedValueProvider.Result<TsOdinType> createCachedValue(OdinInferenceEngineParameters inferenceEngineParameters) {
+    private CachedValueProvider.Result<TsOdinType> inferType(OdinInferenceEngineParameters inferenceEngineParameters) {
         TsOdinType originalType = OdinInferenceEngine.inferType(inferenceEngineParameters, this);
         TsOdinType tsOdinType;
         if (originalType instanceof TsOdinMetaType metaType) {

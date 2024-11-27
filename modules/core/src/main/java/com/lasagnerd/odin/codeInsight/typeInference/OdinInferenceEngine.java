@@ -560,35 +560,44 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
             }
 
-            return inferTypeOfDeclaredIdentifier(
+            TsOdinType tsOdinType = inferTypeOfDeclaredIdentifier(
                     symbolTableForTypeResolution,
-                    symbol.getDeclaredIdentifier(),
-                    identifier
+                    symbol.getDeclaredIdentifier()
             );
+
+            if (symbol.getDeclaration() instanceof OdinSwitchTypeVariableDeclaration switchTypeVariableDeclaration) {
+                OdinSwitchBlock switchInBlock = PsiTreeUtil.getParentOfType(switchTypeVariableDeclaration,
+                        OdinSwitchBlock.class,
+                        true);
+                if (switchInBlock != null) {
+                    return getSwitchInReferenceType(tsOdinType, identifier, symbolTableForTypeResolution, switchInBlock);
+                }
+            }
+            return tsOdinType;
         }
         return null;
     }
 
     private static @Nullable TsOdinType inferTypeOfDeclaredIdentifier(
             OdinSymbolTable symbolTable,
-            PsiNamedElement namedElement,
-            @NotNull OdinIdentifier identifier) {
+            PsiNamedElement namedElement) {
         TsOdinType tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
         OdinImportDeclarationStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
         if (importDeclarationStatement != null) {
             tsOdinType = createPackageReferenceType(symbolTable.getPackagePath(), importDeclarationStatement);
         } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
-            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(namedElement,
-                    false,
-                    OdinDeclaration.class);
 
-            tsOdinType = resolveTypeOfDeclaration(identifier,
-                    symbolTable,
-                    declaredIdentifier,
-                    odinDeclaration
-            );
-            tsOdinType = OdinTypeConverter.convertToTyped(tsOdinType);
+            tsOdinType = resolveTypeOfDeclaration(symbolTable, declaredIdentifier);
         }
+        return tsOdinType;
+    }
+
+    private static @Nullable TsOdinType resolveTypeOfDeclaration(OdinSymbolTable symbolTable,
+                                                                 OdinDeclaredIdentifier declaredIdentifier) {
+        TsOdinType tsOdinType;
+        tsOdinType = doResolveTypeOfDeclaration(symbolTable, declaredIdentifier);
+
+        tsOdinType = OdinTypeConverter.convertToTyped(tsOdinType);
         return tsOdinType;
     }
 
@@ -1085,10 +1094,10 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     }
 
-    public static TsOdinType resolveTypeOfDeclaration(@Nullable OdinIdentifier identifier,
-                                                      OdinSymbolTable parentSymbolTable,
-                                                      OdinDeclaredIdentifier declaredIdentifier,
-                                                      OdinDeclaration odinDeclaration) {
+    public static TsOdinType doResolveTypeOfDeclaration(OdinSymbolTable parentSymbolTable, OdinDeclaredIdentifier declaredIdentifier) {
+        OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier,
+                false,
+                OdinDeclaration.class);
         // NOTE: We cannot remove the symbol table because we might have to substitute types
         // in the context of specialized structs, procedures and unions
         // TODO How can we still use the cache?
@@ -1344,44 +1353,53 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         }
 
-        if (odinDeclaration instanceof OdinSwitchTypeVariableDeclaration && identifier != null) {
+        if (odinDeclaration instanceof OdinSwitchTypeVariableDeclaration) {
             OdinSwitchBlock switchInBlock = PsiTreeUtil.getParentOfType(odinDeclaration, OdinSwitchBlock.class, true);
             if (switchInBlock != null && switchInBlock.getSwitchInClause() != null) {
                 OdinExpression expression = switchInBlock.getSwitchInClause().getExpression();
-                TsOdinType tsOdinType = expression.getInferredType();
-                List<OdinSwitchCase> ancestors = new ArrayList<>();
-                OdinSwitchBody switchBody = switchInBlock.getSwitchBody();
-                if (switchBody != null) {
-                    OdinSwitchCases switchCases = switchBody.getSwitchCases();
-                    if (switchCases != null) {
-                        for (OdinSwitchCase odinSwitchCase : switchCases.getSwitchCaseList()) {
-                            if (PsiTreeUtil.isAncestor(odinSwitchCase, identifier, true)) {
-                                ancestors.add(odinSwitchCase);
-                            }
-                        }
-                    }
-                }
-                if (ancestors.size() != 1)
-                    return TsOdinBuiltInTypes.UNKNOWN;
-
-                OdinSwitchCase switchCase = ancestors.getFirst();
-                if (switchCase != null && switchCase.getCaseClause() != null) {
-                    @NotNull List<OdinExpression> expressionList = switchCase.getCaseClause().getExpressionList();
-
-                    if (expressionList.size() == 1) {
-                        OdinExpression odinExpression = expressionList.getFirst();
-                        TsOdinType caseType = odinExpression.getInferredType(parentSymbolTable);
-                        if (caseType instanceof TsOdinMetaType metaType) {
-                            return OdinTypeResolver.resolveMetaType(caseType.getSymbolTable(), metaType);
-                        }
-                    }
-                }
-                return tsOdinType;
+                return expression.getInferredType();
             }
         }
 
-
         return TsOdinBuiltInTypes.UNKNOWN;
+    }
+
+    private static TsOdinType getSwitchInReferenceType(
+            TsOdinType declarationType,
+            @NotNull OdinIdentifier identifier,
+            OdinSymbolTable parentSymbolTable,
+            OdinSwitchBlock switchInBlock) {
+        {
+            List<OdinSwitchCase> ancestors = new ArrayList<>();
+            OdinSwitchBody switchBody = switchInBlock.getSwitchBody();
+            if (switchBody != null) {
+                OdinSwitchCases switchCases = switchBody.getSwitchCases();
+                if (switchCases != null) {
+                    for (OdinSwitchCase odinSwitchCase : switchCases.getSwitchCaseList()) {
+                        // TODO remove from here and compute outside of this method
+                        if (PsiTreeUtil.isAncestor(odinSwitchCase, identifier, true)) {
+                            ancestors.add(odinSwitchCase);
+                        }
+                    }
+                }
+            }
+            if (ancestors.size() != 1)
+                return TsOdinBuiltInTypes.UNKNOWN;
+
+            OdinSwitchCase switchCase = ancestors.getFirst();
+            if (switchCase != null && switchCase.getCaseClause() != null) {
+                @NotNull List<OdinExpression> expressionList = switchCase.getCaseClause().getExpressionList();
+
+                if (expressionList.size() == 1) {
+                    OdinExpression odinExpression = expressionList.getFirst();
+                    TsOdinType caseType = odinExpression.getInferredType(parentSymbolTable);
+                    if (caseType instanceof TsOdinMetaType metaType) {
+                        return OdinTypeResolver.resolveMetaType(caseType.getSymbolTable(), metaType);
+                    }
+                }
+            }
+            return declarationType;
+        }
     }
 
     public static @Nullable TsOdinMetaType findMetaType(OdinSymbolTable symbolTable,
