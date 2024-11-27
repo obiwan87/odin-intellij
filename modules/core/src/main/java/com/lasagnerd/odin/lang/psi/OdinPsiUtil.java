@@ -1,9 +1,6 @@
 package com.lasagnerd.odin.lang.psi;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.ASTNode;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -12,18 +9,15 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -499,13 +493,6 @@ public class OdinPsiUtil {
         return Collections.singletonList(typeVariableDeclaration.getDeclaredIdentifier());
     }
 
-    public static ItemPresentation getPresentation(OdinDeclaredIdentifier declaredIdentifier) {
-        OdinSymbolType symbolType = OdinInsightUtils.classify(declaredIdentifier);
-        Icon icon = OdinCompletionContributor.getIcon(symbolType);
-        if (icon == null)
-            icon = AllIcons.Nodes.Property;
-        return new PresentationData(declaredIdentifier.getName(), "", icon, null);
-    }
 
     public static @Nullable OdinIdentifier getIdentifier(OdinProcedureRef procedureRef) {
         OdinType type = procedureRef.getType();

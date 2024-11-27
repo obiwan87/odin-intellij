@@ -41,7 +41,7 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
     }
 
 
-    private CachedValueProvider.@NotNull Result<TsOdinType> computeCachedValue(OdinTypeResolver.OdinTypeResolverParameters typeResolverParameters) {
+    private CachedValueProvider.@NotNull Result<TsOdinType> resolveType(OdinTypeResolver.OdinTypeResolverParameters typeResolverParameters) {
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(typeResolverParameters, this);
         Set<Object> dependencies = new HashSet<>();
         dependencies.add(this);
@@ -62,6 +62,6 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
     }
 
     public @NotNull ParameterizedCachedValue<TsOdinType, OdinTypeResolver.OdinTypeResolverParameters> createCachedType() {
-        return CachedValuesManager.getManager(getProject()).createParameterizedCachedValue(this::computeCachedValue, false);
+        return CachedValuesManager.getManager(getProject()).createParameterizedCachedValue(this::resolveType, false);
     }
 }

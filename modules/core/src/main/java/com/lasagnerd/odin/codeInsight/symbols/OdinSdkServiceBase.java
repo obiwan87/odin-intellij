@@ -84,7 +84,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             String sdkPath = sdkPathOptional.get();
             List<OdinSymbol> symbols = new ArrayList<>();
             Path coreOdinPath = Path.of(sdkPath, "base", "runtime", "core.odin");
-            doFindBuiltInSymbols(List.of(coreOdinPath), symbols);
+            findSymbolsWithBuiltinAttribute(List.of(coreOdinPath), symbols);
             runtimeCoreSymbols = symbols;
         }
         return runtimeCoreSymbols;
@@ -289,7 +289,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     }
 
     protected void populateBuiltinSymbols(List<OdinSymbol> builtinSymbols) {
-        // TODO Cache this stuff
+        // TODO Associate these types with builtin.odin in the SDK path
         Collection<TsOdinType> builtInTypes = TsOdinBuiltInTypes.getBuiltInTypes();
         for (TsOdinType builtInType : builtInTypes) {
             OdinSymbol odinSymbol = new OdinSymbol();
@@ -313,7 +313,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         Path coreBuiltinSoaPath = Path.of(sdkPath, "base", "runtime", "core_builtin_soa.odin");
 
         List<Path> builtinPaths = List.of(coreBuiltinPath, coreBuiltinSoaPath);
-        doFindBuiltInSymbols(builtinPaths,
+        findSymbolsWithBuiltinAttribute(builtinPaths,
                 builtinSymbols,
                 odinSymbol -> OdinAttributeUtils.containsAttribute(odinSymbol.getAttributes(), "builtin"));
 
@@ -337,11 +337,11 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
 
     }
 
-    private void doFindBuiltInSymbols(List<Path> builtinPaths, List<OdinSymbol> builtinSymbols) {
-        doFindBuiltInSymbols(builtinPaths, builtinSymbols, s -> true);
+    private void findSymbolsWithBuiltinAttribute(List<Path> builtinPaths, List<OdinSymbol> builtinSymbols) {
+        findSymbolsWithBuiltinAttribute(builtinPaths, builtinSymbols, s -> true);
     }
 
-    private void doFindBuiltInSymbols(List<Path> builtinPaths, List<OdinSymbol> builtinSymbols, Predicate<OdinSymbol> odinSymbolPredicate) {
+    private void findSymbolsWithBuiltinAttribute(List<Path> builtinPaths, List<OdinSymbol> builtinSymbols, Predicate<OdinSymbol> odinSymbolPredicate) {
         for (Path builtinPath : builtinPaths) {
             OdinFile odinFile = createOdinFile(project, builtinPath);
             if (odinFile != null) {

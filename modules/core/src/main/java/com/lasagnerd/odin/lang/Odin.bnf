@@ -389,7 +389,7 @@ variableInitializationStatement      ::= symbolDefinitionHead EQ <<guardedExpres
                                         }
 
 private identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
-declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation]}
+declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinIdentifierOwner' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation getType]}
 
 assignmentStatement                  ::= [directiveIdentifier] lhsExpressions assignmentOperator rhsExpressions
 lhsExpressions                       ::= expressionListWithRecover

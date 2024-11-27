@@ -53,10 +53,10 @@ class OdinPsiTestHelpers {
     }
 
     static TsOdinType inferTypeOfDeclaration(OdinDeclaration declaration) {
-        return OdinInferenceEngine.resolveTypeOfDeclaration(null,
+        return OdinInferenceEngine.doResolveTypeOfDeclaration(
                 OdinSymbolTableResolver.computeSymbolTable(declaration),
-                declaration.getDeclaredIdentifiers().getFirst(),
-                declaration);
+                declaration.getDeclaredIdentifiers().getFirst()
+        );
     }
 
     static void assertTopMostRefExpressionTextEquals(PsiElement odinStatement, String expected, String identifierName) {
