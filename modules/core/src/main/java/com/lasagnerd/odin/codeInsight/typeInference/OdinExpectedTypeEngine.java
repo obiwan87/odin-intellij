@@ -164,7 +164,7 @@ public class OdinExpectedTypeEngine {
         }
 
         if (context instanceof OdinArgument argument) {
-            OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(symbolTable, argument);
+            OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(argument);
 
             if (!callInfo.callingType().isUnknown()) {
                 TsOdinMetaType.MetaType metaType = callInfo.callingType().getMetaType();

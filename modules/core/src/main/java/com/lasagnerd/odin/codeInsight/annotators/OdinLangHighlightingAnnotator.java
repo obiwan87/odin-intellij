@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight.annotators;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
@@ -204,8 +205,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 } else if (identifierTokenParent instanceof OdinAttributeIdentifier) {
                     highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_ATTRIBUTE_REF);
                 } else if (identifierTokenParent.getParent() instanceof OdinImplicitSelectorExpression) {
-                    OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
-                    OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
+                    OdinSymbol symbol = resolveSymbol(identifierTokenParent);
                     if (symbol != null) {
                         highlight(annotationHolder, psiElementRange, OdinSyntaxTextAttributes.ODIN_IMPLICIT_ENUM_FIELD_REF);
                         return;
@@ -251,8 +251,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                                       PsiElement identifierTokenParent,
                                       String identifierText,
                                       TextRange textRange) {
-        OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
-        OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
+        OdinSymbol symbol = resolveSymbol(identifierTokenParent);
         if (symbol == null) {
             highlightError(element.getProject(), annotationHolder, identifierText, textRange, UNRESOLVED_REFERENCE_ERROR_MESSAGE);
             return;
@@ -399,7 +398,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             if (isInsideConfigDirective(refExpression)) return;
         }
 
-        OdinSymbol symbol = resolveSymbol(symbolTable, identifierTokenParent);
+        OdinSymbol symbol = resolveSymbol(identifierTokenParent);
 
         // Symbol not found
         if (symbol == null) {
@@ -568,23 +567,27 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     private void highlightPackageReference(@NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange, OdinIdentifier
             identifier) {
         PsiReference reference = identifier.getReference();
-        if (reference != null) {
-            PsiElement resolveReference = reference.resolve();
-            if (resolveReference instanceof PsiDirectory) {
+        PsiElement resolveReference = reference.resolve();
+        if (resolveReference instanceof PsiDirectory) {
+            highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE_REF);
+        } else {
+            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
+            if (odinDeclaration == null) {
+                highlightError(identifier.getProject(), annotationHolder, identifierText, textRange, UNRESOLVED_REFERENCE_ERROR_MESSAGE);
+            } else if (odinDeclaration instanceof OdinImportDeclarationStatement) {
                 highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE_REF);
-            } else {
-                OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
-                if (odinDeclaration == null) {
-                    highlightError(identifier.getProject(), annotationHolder, identifierText, textRange, UNRESOLVED_REFERENCE_ERROR_MESSAGE);
-                } else if (odinDeclaration instanceof OdinImportDeclarationStatement) {
-                    highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE_REF);
-                }
             }
         }
     }
 
     private static void highlight(@NotNull AnnotationHolder annotationHolder, TextRange textRange, TextAttributesKey constant) {
         annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                .problemGroup(new ProblemGroup() {
+                    @Override
+                    public String getProblemName() {
+                        return "Odin";
+                    }
+                })
                 .range(textRange)
                 .textAttributes(constant)
                 .create();
@@ -615,7 +618,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
     }
 
-    private static OdinSymbol resolveSymbol(OdinSymbolTable symbolTable, PsiElement psiElement) {
+    private static OdinSymbol resolveSymbol(PsiElement psiElement) {
         if (!(psiElement instanceof OdinIdentifier identifier)) {
             return null;
         }

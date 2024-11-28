@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameter;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameterOwner;
@@ -34,19 +33,6 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     public OdinReference(@NotNull OdinIdentifier element) {
         super(element);
-    }
-
-    public OdinSymbol findSymbol2() {
-        var element = getElement();
-        String packagePath = OdinImportService
-                .getInstance(element.getProject())
-                .getPackagePath(element);
-
-        this.symbolTable = OdinSymbolTableResolver
-                .computeSymbolTable(element)
-                .with(packagePath);
-
-        return findSymbol(symbolTable);
     }
 
     public OdinSymbol findSymbol() {
@@ -139,8 +125,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
         }
 
         if (getElement().getParent() instanceof OdinNamedArgument namedArgument) {
-            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(getElement());
-            OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(symbolTable, namedArgument);
+            OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(namedArgument);
             if (callInfo.callingType() instanceof TsOdinParameterOwner parameterOwner) {
                 List<TsOdinParameter> parameters = parameterOwner.getParameters();
                 TsOdinParameter tsOdinParameter = parameters.stream()

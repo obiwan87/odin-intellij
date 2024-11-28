@@ -2,7 +2,6 @@ package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
@@ -10,8 +9,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.codeInsight.symbols.*;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -105,9 +106,9 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (!calledFromCache) {
             throw new IllegalCallerException("Not called from cache");
         }
-        if (symbolTable == null) {
-            symbolTable = OdinSymbolTableResolver.computeSymbolTable(expression);
-        }
+
+        symbolTable = OdinTypeResolver.initializeSymbolTable(symbolTable, expression);
+
         OdinInferenceEngine odinInferenceEngine = new OdinInferenceEngine(symbolTable, expectedType, lhsValuesCount, explicitMode);
         expression.accept(odinInferenceEngine);
         TsOdinType type = odinInferenceEngine.type;
@@ -123,11 +124,6 @@ public class OdinInferenceEngine extends OdinVisitor {
         TsOdinPackageReferenceType packageType = new TsOdinPackageReferenceType(packagePath);
         packageType.setDeclaration(importDeclarationStatement);
         return packageType;
-    }
-
-    public static TsOdinType inferType(OdinExpression odinExpression) {
-        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
-        return odinExpression.getInferredType(symbolTable);
     }
 
     public static TsOdinType inferTypeOfCompoundLiteral(OdinSymbolTable symbolTable, OdinCompoundLiteral compoundLiteral) {
@@ -548,29 +544,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
             }
         } else {
-            OdinSymbolTable symbolTableForTypeResolution;
-
-            // Note on symbolTableForTypeResolution:
-            // This table serves the purpose of carrying type substitutions due to type specialization
-            // In order to completely decouple declaredIdentifier type resolution from
-            // the inference engine, we have to substitutes the type here.
-            // For that to happen, type parameters, that is polymorphic parameters $T: typeid, can't
-            // be resolved to typeid. Instead, they have to be resolved to polymorphic type.
-            // However, for that to work consistently, we have to recognize when a type is specialized using another
-            // polymorphic parameter.
-            //
-            if (symbol.isVisibleThroughUsing()) {
-                symbolTableForTypeResolution = OdinSymbolTableResolver.computeSymbolTable(symbol.getDeclaredIdentifier());
-                symbolTableForTypeResolution.putAll(globalSymbolTable);
-            } else {
-                VirtualFile declaredIdentifierVirtualFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaredIdentifier());
-                VirtualFile currentFile = OdinImportUtils.getContainingVirtualFile(identifier);
-                if (!declaredIdentifierVirtualFile.equals(currentFile)) {
-                    symbolTableForTypeResolution = null;
-                } else {
-                    symbolTableForTypeResolution = globalSymbolTable;
-                }
-            }
 
             TsOdinType tsOdinType = inferTypeOfDeclaredIdentifier(symbol.getDeclaredIdentifier());
             OdinDeclaration declaration = symbol.getDeclaration();
@@ -579,7 +552,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                         OdinSwitchBlock.class,
                         true);
                 if (switchInBlock != null) {
-                    return getSwitchInReferenceType(tsOdinType, identifier, symbolTableForTypeResolution, switchInBlock);
+                    return getSwitchInReferenceType(tsOdinType, identifier, switchInBlock);
                 }
             }
 
@@ -1380,7 +1353,6 @@ public class OdinInferenceEngine extends OdinVisitor {
     private static TsOdinType getSwitchInReferenceType(
             TsOdinType declarationType,
             @NotNull OdinIdentifier identifier,
-            OdinSymbolTable parentSymbolTable,
             OdinSwitchBlock switchInBlock) {
         {
             List<OdinSwitchCase> ancestors = new ArrayList<>();
@@ -1405,7 +1377,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 if (expressionList.size() == 1) {
                     OdinExpression odinExpression = expressionList.getFirst();
-                    TsOdinType caseType = odinExpression.getInferredType(parentSymbolTable);
+                    TsOdinType caseType = odinExpression.getInferredType();
                     if (caseType instanceof TsOdinMetaType metaType) {
                         return OdinTypeResolver.resolveMetaType(caseType.getSymbolTable(), metaType);
                     }
