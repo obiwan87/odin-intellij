@@ -87,4 +87,8 @@ public interface TsOdinType {
         }
         return types;
     }
+
+    default boolean isExplicitPolymorphic() {
+        return this instanceof TsOdinPolymorphicType p && p.isExplicit();
+    }
 }

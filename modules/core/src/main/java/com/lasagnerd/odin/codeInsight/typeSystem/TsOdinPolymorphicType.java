@@ -8,6 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TsOdinPolymorphicType extends TsOdinTypeBase {
+    boolean explicit;
+
     @Override
     public String getLabel() {
         return "$" + super.getLabel();
@@ -17,4 +19,5 @@ public class TsOdinPolymorphicType extends TsOdinTypeBase {
     public TsOdinMetaType.MetaType getMetaType() {
         return TsOdinMetaType.MetaType.POLYMORPHIC;
     }
+
 }

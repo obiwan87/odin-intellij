@@ -10,7 +10,10 @@ import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.inferTypeInExplicitMode;
 
@@ -150,7 +153,7 @@ public class OdinTypeSpecializer {
                 if (!tsOdinParameter.hasPolymorphicDeclarations())
                     continue;
 
-                TsOdinType argumentType = resolveArgumentType(argumentExpression, tsOdinParameter, outerScope);
+                TsOdinType argumentType = resolveArgumentType(argumentExpression, outerScope);
                 if (argumentType.isUnknown()) {
                     System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n in %s",
                             tsOdinParameter.getName(),
@@ -190,8 +193,8 @@ public class OdinTypeSpecializer {
      * The method substituteTypes maps $T -> Point as shown in the example below
      * declared type:         List($Item) { items: []$Item }
      * polymorphic parameter: List($T):       $Item -> $T
-     * |                   |
-     * v                   v
+     *                              |              |
+     *                              v              v
      * argument:              List(Point)   : $Item  -> Point
      *
      * @param argumentType  The argument type
@@ -292,39 +295,21 @@ public class OdinTypeSpecializer {
     }
 
     @NotNull
-    private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, TsOdinParameter parameter, OdinSymbolTable symbolTable) {
-
-//        EvOdinValue evOdinValue = OdinExpressionEvaluator.evaluate(argumentExpression);
-        TsOdinType parameterType = parameter.getType();
+    private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, OdinSymbolTable symbolTable) {
         TsOdinType argumentType = inferTypeInExplicitMode(symbolTable, argumentExpression);
-        if (parameterType != null) {
-            if (argumentType instanceof TsOdinMetaType metaType && (
-                    parameterType.isTypeId() || parameterType.getMetaType() == metaType.getRepresentedMetaType() ||
-                            (parameterType instanceof TsOdinConstrainedType constrainedType && constrainedType.getMainType().isTypeId()))
-            ) {
-                return OdinTypeResolver.resolveMetaType(metaType.getSymbolTable(), metaType);
+        if (argumentType instanceof TsOdinMetaType metaType) {
+            TsOdinType tsOdinType = metaType.representedType();
+            if (tsOdinType.isExplicitPolymorphic()) {
+                TsOdinPolymorphicType tsOdinPolymorphicType = (TsOdinPolymorphicType) tsOdinType;
+                TsOdinType type = symbolTable.getType(tsOdinPolymorphicType.getName());
+                if (type == null) {
+                    return TsOdinBuiltInTypes.UNKNOWN;
+                }
+                return type;
             }
-        } else {
-            System.out.printf("Parameter type was null for '%s' in %s", argumentExpression.getText(), getLocationWithinFile(argumentExpression));
+            return metaType.getRepresentedType();
         }
 
-        // TODO if argumentExpression is a reference to a polymorphic type we need to treat this as a polymorphic type
-        if (argumentExpression instanceof OdinRefExpression refExpression && argumentType == TsOdinBuiltInTypes.TYPEID) {
-            OdinIdentifier identifier = refExpression.getIdentifier();
-            if (identifier != null) {
-                TsOdinType tsOdinType = symbolTable.getType(identifier.getText());
-                return Objects.requireNonNullElse(tsOdinType, TsOdinBuiltInTypes.UNKNOWN);
-            }
-        }
-
-        // Case 2: The argumentExpression is a polymorphic type. In that case we know its type already and
-        // introduce a new unresolved polymorphic type and map the parameter to that
-        else if (argumentExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
-            if (typeDefinitionExpression.getType() instanceof OdinPolymorphicType polymorphicType) {
-                return createPolymorphicType(symbolTable, polymorphicType);
-            }
-            return TsOdinBuiltInTypes.UNKNOWN;
-        }
         // Case 3: The argument has been resolved to a proper type. Just add the mapping
         return argumentType;
     }
@@ -384,8 +369,8 @@ public class OdinTypeSpecializer {
     }
 
     public static @NotNull TsOdinUnionType specializeUnionOrGetCached(OdinSymbolTable symbolTable,
-                                                                 TsOdinUnionType unionType,
-                                                                 @NotNull List<OdinArgument> argumentList) {
+                                                                      TsOdinUnionType unionType,
+                                                                      @NotNull List<OdinArgument> argumentList) {
         TsOdinType specializedType = symbolTable.getSpecializedType(unionType, new ArrayList<>(argumentList));
         if (specializedType == null) {
             specializedType = specializeAndCacheUnion(symbolTable, unionType, argumentList);
