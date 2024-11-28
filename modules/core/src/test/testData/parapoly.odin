@@ -81,18 +81,20 @@ testParapoly_distinctAlias :: proc() {
 testTypeInference_withRecursivePolyPara :: proc() {
     Parent :: struct($T: typeid) {
         children: []Child(T),
-        data: T
+        data: ^T
     }
 
     Child :: struct($T: typeid) {
         parent: Parent(T),
         change_parent: proc(parent: Parent(T)),
-        data: T
+        data: ^T
     }
 
     t1 := Parent(Point) { }
     test := t1.data
 
+    t2 := Parent(Line) { }
+    test2 := t2.data
 }
 
 testTypeInference_withDoubleInstantiation :: proc() {

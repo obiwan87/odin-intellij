@@ -804,8 +804,18 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "testTypeInference_withRecursivePolyPara", "test");
             TsOdinType tsOdinType = expression.getInferredType();
-            TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            TsOdinPointerType pointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+            TsOdinStructType structType = assertInstanceOf(pointerType.getDereferencedType(), TsOdinStructType.class);
             assertEquals("Point", structType.getName());
+
+        }
+
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "testTypeInference_withRecursivePolyPara", "test2");
+            TsOdinType tsOdinType = expression.getInferredType();
+            TsOdinPointerType pointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+            TsOdinStructType structType = assertInstanceOf(pointerType.getDereferencedType(), TsOdinStructType.class);
+            assertEquals("Line", structType.getName());
 
         }
     }
