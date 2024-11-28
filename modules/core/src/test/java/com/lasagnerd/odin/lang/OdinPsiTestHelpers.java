@@ -77,13 +77,13 @@ class OdinPsiTestHelpers {
 
     static TsOdinType inferFirstRightHandExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {
         OdinExpression odinExpression = findFirstExpressionOfVariable(odinFile, procedureName, variableName);
-        return OdinInferenceEngine.inferType(odinExpression);
+        return odinExpression.getInferredType();
     }
 
     static EvOdinValue evaluateFirstRightHandExpressionOfConstant(OdinFile odinFile, String procedureName, String variableName) {
         OdinExpression odinExpression = findFirstExpressionOfConstant(odinFile, procedureName, variableName);
 
-        return OdinExpressionEvaluator.evaluate(OdinSymbolTableResolver.computeSymbolTable(odinExpression), odinExpression);
+        return OdinExpressionEvaluator.evaluate(odinExpression);
     }
 
     static OdinExpression findFirstExpressionOfVariable(OdinFile odinFile, String procedureName, String variableName) {

@@ -1,14 +1,15 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import lombok.EqualsAndHashCode;
@@ -65,13 +66,25 @@ public class OdinTypeResolver extends OdinVisitor {
         if (type == null)
             return TsOdinBuiltInTypes.UNKNOWN;
 
-        if (symbolTable == null) {
-            symbolTable = OdinSymbolTableResolver.computeSymbolTable(type);
-        }
+        symbolTable = initializeSymbolTable(symbolTable, type);
 
         OdinTypeResolver typeResolver = new OdinTypeResolver(level, symbolTable, declaration, declaredIdentifier);
         type.accept(typeResolver);
         return Objects.requireNonNullElse(typeResolver.type, TsOdinBuiltInTypes.UNKNOWN);
+    }
+
+    public static @NotNull OdinSymbolTable initializeSymbolTable(OdinSymbolTable symbolTable, PsiElement element) {
+        if (symbolTable == null) {
+            symbolTable = new OdinSymbolTable(OdinImportService.getInstance(element.getProject()).getPackagePath(element));
+        } else {
+            OdinSymbolTable newSymbolTable = new OdinSymbolTable(OdinImportService.getInstance(element.getProject()).getPackagePath(element));
+            newSymbolTable.addTypes(symbolTable);
+            newSymbolTable.getKnownTypes().putAll(symbolTable.getKnownTypes());
+            newSymbolTable.getSpecializedTypes().putAll(symbolTable.getSpecializedTypes());
+            newSymbolTable.getValueStorage().putAll(symbolTable.getValueStorage());
+            symbolTable = newSymbolTable;
+        }
+        return symbolTable;
     }
 
     public static @NotNull TsOdinMetaType findMetaType(OdinSymbolTable symbolTable,
@@ -195,11 +208,6 @@ public class OdinTypeResolver extends OdinVisitor {
         return OdinSymbolTable.EMPTY;
     }
 
-    public static TsOdinType resolveType(OdinType type) {
-        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(type);
-        return resolveType(symbolTable, type);
-    }
-
     // resolve type calls
     public @NotNull TsOdinType doResolveType(OdinSymbolTable symbolTable,
                                              OdinDeclaredIdentifier declaredIdentifier,
@@ -275,8 +283,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
                     tsOdinParameter.setType(tsOdinType);
                 } else if (tsOdinParameter.getDefaultValueExpression() != null) {
-                    OdinSymbolTable paramSymbolTable = OdinSymbolTableResolver.computeSymbolTable(tsOdinParameter.getDefaultValueExpression());
-                    TsOdinType tsOdinType = tsOdinParameter.getDefaultValueExpression().getInferredType(paramSymbolTable);
+                    TsOdinType tsOdinType = tsOdinParameter.getDefaultValueExpression().getInferredType();
                     tsOdinParameter.setType(tsOdinType);
                     tsOdinParameter.setPsiType(tsOdinType.getPsiType());
                 }
@@ -355,9 +362,7 @@ public class OdinTypeResolver extends OdinVisitor {
         // TODO: do we need to recompute the symbol table for each declaration type?
         OdinSymbolTable typeSymbolTable;
         if (odinDeclaration != null) {
-            typeSymbolTable = OdinSymbolTableResolver.computeSymbolTable(odinDeclaration);
-            typeSymbolTable.getKnownTypes().putAll(symbolTable.getKnownTypes());
-            typeSymbolTable.getSpecializedTypes().putAll(symbolTable.getSpecializedTypes());
+            typeSymbolTable = initializeSymbolTable(symbolTable, odinDeclaration);
         } else {
             typeSymbolTable = OdinSymbolTable.EMPTY;
         }
@@ -609,7 +614,7 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinArrayType.setPsiSizeElement(arraySize);
         tsOdinArrayType.setPsiType(arrayType);
         if (arraySize.getExpression() != null) {
-            Integer sizeValue = OdinExpressionEvaluator.evaluate(symbolTable, arraySize.getExpression()).asInt();
+            Integer sizeValue = OdinExpressionEvaluator.evaluate(arraySize.getExpression()).asInt();
             tsOdinArrayType.setSize(sizeValue);
         }
 

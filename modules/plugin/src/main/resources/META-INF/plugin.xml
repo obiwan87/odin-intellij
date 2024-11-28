@@ -317,7 +317,9 @@
         <annotator language="Odin" implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinUnusedAnnotator" id="OdinUnusedAnnotator"
                    order="after OdinAnnotator"/>
         <annotator language="Odin"
-                   implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinLangHighlightingAnnotator" order="after OdinUnusedAnnotator"/>
+                   implementationClass="com.lasagnerd.odin.codeInsight.annotators.OdinLangHighlightingAnnotator"
+                   order="after OdinUnusedAnnotator"/>
+
         <externalAnnotator
                 language="Odin"
                 implementationClass="com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator.OdinBuildErrorsExternalAnnotator" order="last"/>

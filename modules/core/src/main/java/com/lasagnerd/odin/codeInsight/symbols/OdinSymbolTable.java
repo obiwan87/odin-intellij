@@ -62,7 +62,6 @@ public class OdinSymbolTable {
 
     }
 
-
     public TsOdinType getSpecializedType(TsOdinType genericType, List<PsiElement> arguments) {
         Map<List<? extends PsiElement>, TsOdinType> argumentsMap = this.specializedTypes.get(genericType);
         if (argumentsMap != null) {

@@ -9,7 +9,6 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeChecker;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
@@ -29,23 +28,21 @@ public class OdinExpressionEvaluator extends OdinVisitor {
     EvOdinValue value;
     OdinSymbolTable symbolTable;
 
-    public static EvOdinValue evaluate(OdinSymbolTable symbolTable, OdinExpression expression) {
+    public static EvOdinValue evaluate(OdinExpression expression) {
         OdinExpressionEvaluator expressionEvaluator = new OdinExpressionEvaluator();
-        expressionEvaluator.symbolTable = symbolTable;
         expression.accept(expressionEvaluator);
         if (expressionEvaluator.value == null) {
             return TsOdinBuiltInTypes.NULL;
-        } else if(expressionEvaluator.value.type == null && expressionEvaluator.value.value == null) {
+        } else if (expressionEvaluator.value.type == null && expressionEvaluator.value.value == null) {
             return TsOdinBuiltInTypes.NULL;
         }
 
         return expressionEvaluator.value;
     }
 
-    public static EvOdinValue evaluate(OdinExpression expression) {
-        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(expression);
-        return evaluate(symbolTable, expression);
-    }
+//    public static EvOdinValue evaluate(OdinExpression expression) {
+//        return evaluate( expression);
+//    }
 
     @Override
     public void visitRefExpression(@NotNull OdinRefExpression o) {
@@ -59,7 +56,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         // Only refExpression allowed
         TsOdinType expressionType = TsOdinBuiltInTypes.UNKNOWN;
         if (o.getExpression() instanceof OdinRefExpression) {
-            EvOdinValue refExpressionValue = evaluate(symbolTable, o.getExpression());
+            EvOdinValue refExpressionValue = evaluate(o.getExpression());
             expressionType = refExpressionValue.asBaseType();
             if (expressionType instanceof TsOdinPackageReferenceType ||
                     expressionType instanceof TsOdinEnumType) {
@@ -74,7 +71,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             localSymbolTable = symbolTable;
         }
 
-        OdinSymbol symbol = localSymbolTable.getSymbol(o.getIdentifier().getText());
+        OdinSymbol symbol = o.getIdentifier().getReferencedSymbol();
         if (symbol != null) {
             this.value = evaluateConstantDeclaration(o.getProject(), symbol, localSymbolTable, expressionType);
         } else {
@@ -133,7 +130,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
             if (expressionList.size() > index) {
                 OdinExpression expression = expressionList.get(index);
-                return evaluate(OdinSymbolTableResolver.computeSymbolTable(expression), expression);
+                return evaluate(expression);
             }
         } else if (declaration instanceof OdinEnumValueDeclaration && expressionType instanceof TsOdinEnumType enumType) {
             EvEnumValue enumValue = getEnumValue(enumType, declaredIdentifier.getName());
@@ -169,7 +166,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             return null;
 
         if (enumValueDeclaration.getExpression() != null) {
-            numericValue = evaluate(enumType.getSymbolTable(), enumValueDeclaration.getExpression());
+            numericValue = evaluate(enumValueDeclaration.getExpression());
         } else {
 
             // Go back until you find a set expression.
@@ -178,7 +175,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             for (int index = currentIndex - 1; index > 0; index--) {
                 OdinEnumValueDeclaration previousDeclaration = enumValueDeclarations.get(index);
                 if (previousDeclaration.getExpression() != null) {
-                    EvOdinValue previousValue = evaluate(enumType.getSymbolTable(), previousDeclaration.getExpression());
+                    EvOdinValue previousValue = evaluate(previousDeclaration.getExpression());
 
                     // Enum may be set to other enum value
                     EvEnumValue previousEnumValue = previousValue.asEnum();
@@ -204,7 +201,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
     @Override
     public void visitImplicitSelectorExpression(@NotNull OdinImplicitSelectorExpression o) {
-        TsOdinType tsOdinType = o.getInferredType(symbolTable);
+        TsOdinType tsOdinType = o.getInferredType();
         if (tsOdinType instanceof TsOdinEnumType tsOdinEnumType) {
             EvEnumValue enumValue = getEnumValue(tsOdinEnumType, o.getIdentifier().getText());
             this.value = new EvOdinValue(enumValue, tsOdinType);
@@ -254,10 +251,10 @@ public class OdinExpressionEvaluator extends OdinVisitor {
     @Override
     public void visitBinaryExpression(@NotNull OdinBinaryExpression o) {
         IElementType operatorType = PsiUtilCore.getElementType(o.getOperator());
-        EvOdinValue left = evaluate(symbolTable, o.getLeft());
+        EvOdinValue left = evaluate(o.getLeft());
         if (o.getRight() != null) {
-            EvOdinValue right = evaluate(symbolTable, o.getRight());
-            if(left.type == null || right.type == null) {
+            EvOdinValue right = evaluate(o.getRight());
+            if (left.type == null || right.type == null) {
                 return;
             }
             TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(left.type, right.type);
@@ -285,7 +282,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
     @Override
     public void visitUnaryExpression(@NotNull OdinUnaryExpression o) {
         IElementType operatorType = PsiUtilCore.getElementType(o.getOperator());
-        EvOdinValue value = evaluate(symbolTable, o.getExpression());
+        EvOdinValue value = evaluate(o.getExpression());
 
         TsOdinType tsOdinType = value.getType();
         if (tsOdinType.isUnknown())
@@ -306,7 +303,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         Boolean n = newValue.asBool();
         if (n != null) {
             Boolean result = null;
-             if (operatorType == OdinTypes.NOT) {
+            if (operatorType == OdinTypes.NOT) {
                 result = !n;
             }
 
@@ -389,7 +386,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             EvEnumValue leftEnum = left.asEnum();
             EvEnumValue rightEnum = right.asEnum();
 
-            if(leftEnum == null || rightEnum == null) {
+            if (leftEnum == null || rightEnum == null) {
                 return TsOdinBuiltInTypes.NULL;
             }
 
