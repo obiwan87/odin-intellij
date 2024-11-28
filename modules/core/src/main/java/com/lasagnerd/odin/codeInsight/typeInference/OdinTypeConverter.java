@@ -156,7 +156,7 @@ public class OdinTypeConverter {
         return Stream.of(typedA, typedB).max(NUMERIC_TYPE_COMPARATOR).get();
     }
 
-    public static TsOdinType convertToTyped(TsOdinType tsOdinType) {
+    public static @NotNull TsOdinType convertToTyped(@NotNull TsOdinType tsOdinType) {
         if (tsOdinType instanceof TsOdinBuiltInType) {
             if (tsOdinType == TsOdinBuiltInTypes.UNTYPED_STRING) {
                 return TsOdinBuiltInTypes.STRING;

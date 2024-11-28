@@ -258,6 +258,7 @@ public class OdinTypeResolver extends OdinVisitor {
                     String name = declaredIdentifier.getName();
                     valuePolymorphicType.setName(name);
                     valuePolymorphicType.setDeclaredIdentifier(declaredIdentifier);
+                    valuePolymorphicType.setDeclaration(parameterDeclaration);
                     localSymbolTable.addType(valuePolymorphicType.getName(), valuePolymorphicType);
                     localSymbolTable.add(declaredIdentifier);
                     if (baseType instanceof TsOdinGenericType tsOdinGenericType) {
@@ -269,7 +270,9 @@ public class OdinTypeResolver extends OdinVisitor {
             List<TsOdinParameter> parameters = createParameters(paramEntry, parameterDeclaration, k);
             for (var tsOdinParameter : parameters) {
                 if (tsOdinParameter.getPsiType() != null) {
-                    TsOdinType tsOdinType = doResolveType(localSymbolTable, tsOdinParameter.getPsiType());
+                    TsOdinType tsOdinType = doResolveType(localSymbolTable,
+                            tsOdinParameter.getPsiType());
+
                     tsOdinParameter.setType(tsOdinType);
                 } else if (tsOdinParameter.getDefaultValueExpression() != null) {
                     OdinSymbolTable paramSymbolTable = OdinSymbolTableResolver.computeSymbolTable(tsOdinParameter.getDefaultValueExpression());
@@ -337,7 +340,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
     @Override
     public void visitProcedureLiteralType(@NotNull OdinProcedureLiteralType o) {
-        this.type = resolveType(level + 1,
+        this.type = doResolveType(
                 symbolTable,
                 this.typeDeclaredIdentifier,
                 this.typeDeclaration,

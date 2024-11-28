@@ -54,7 +54,6 @@ class OdinPsiTestHelpers {
 
     static TsOdinType inferTypeOfDeclaration(OdinDeclaration declaration) {
         return OdinInferenceEngine.doResolveTypeOfDeclaration(
-                OdinSymbolTableResolver.computeSymbolTable(declaration),
                 declaration.getDeclaredIdentifiers().getFirst()
         );
     }
