@@ -29,12 +29,12 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
     }
 
     public TsOdinType getResolvedType(OdinSymbolTable symbolTable) {
-        return getResolvedType(new OdinTypeResolver.OdinTypeResolverParameters(symbolTable, null, null));
+        return getResolvedType(new OdinTypeResolver.OdinTypeResolverParameters(symbolTable, null, null, false));
     }
 
     public TsOdinType getResolvedType() {
         OdinTypeResolver.OdinTypeResolverParameters typeResolverParameters = new OdinTypeResolver.OdinTypeResolverParameters(
-                null, null, null
+                null, null, null, false
         );
 
         return getResolvedType(typeResolverParameters);

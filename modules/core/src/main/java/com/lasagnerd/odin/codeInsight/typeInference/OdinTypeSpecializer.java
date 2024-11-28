@@ -46,7 +46,7 @@ public class OdinTypeSpecializer {
         for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarations) {
             var fieldType = fieldDeclaration.getType();
             if (fieldType != null) {
-                TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, fieldType);
+                TsOdinType tsOdinType = resolveType(newScope, fieldType);
                 for (OdinDeclaredIdentifier declaredIdentifier : fieldDeclaration.getDeclaredIdentifiers()) {
                     specializedType.getFields().put(declaredIdentifier.getName(), tsOdinType);
                 }
@@ -80,17 +80,21 @@ public class OdinTypeSpecializer {
                 arguments);
 
         for (TsOdinParameter tsOdinParameter : genericType.getParameters()) {
-            TsOdinType tsOdinType = OdinTypeResolver.resolveType(specializedType.getSymbolTable(), tsOdinParameter.getPsiType());
+            TsOdinType tsOdinType = resolveType(specializedType.getSymbolTable(), tsOdinParameter.getPsiType());
             TsOdinParameter specializedParameter = cloneWithType(tsOdinParameter, tsOdinType);
             specializedType.getParameters().add(specializedParameter);
         }
 
         for (TsOdinParameter tsOdinReturnType : genericType.getReturnParameters()) {
-            TsOdinType tsOdinType = OdinTypeResolver.resolveType(specializedType.getSymbolTable(), tsOdinReturnType.getPsiType());
+            TsOdinType tsOdinType = resolveType(specializedType.getSymbolTable(), tsOdinReturnType.getPsiType());
             specializedType.getReturnTypes().add(tsOdinType);
         }
 
         return specializedType;
+    }
+
+    private static TsOdinType resolveType(OdinSymbolTable symbolTable, OdinType type) {
+        return OdinTypeResolver.resolveType(new OdinTypeResolver.OdinTypeResolverParameters(symbolTable, null, null, true), type);
     }
 
     private static @NotNull TsOdinParameter cloneWithType(TsOdinParameter tsOdinParameter, TsOdinType tsOdinType) {
@@ -126,7 +130,7 @@ public class OdinTypeSpecializer {
 
 
         for (TsOdinUnionVariant baseField : genericType.getVariants()) {
-            TsOdinType specializedFieldType = OdinTypeResolver.resolveType(specializedType.getSymbolTable(), baseField.getPsiType());
+            TsOdinType specializedFieldType = resolveType(specializedType.getSymbolTable(), baseField.getPsiType());
             TsOdinUnionVariant specializedField = new TsOdinUnionVariant();
             specializedField.setPsiType(baseField.getPsiType());
             specializedField.setType(specializedFieldType);
@@ -325,7 +329,7 @@ public class OdinTypeSpecializer {
     }
 
     private static @NotNull TsOdinType createPolymorphicType(OdinSymbolTable newScope, OdinPolymorphicType polymorphicType) {
-        TsOdinType tsOdinType = OdinTypeResolver.resolveType(newScope, polymorphicType);
+        TsOdinType tsOdinType = resolveType(newScope, polymorphicType);
         OdinDeclaredIdentifier declaredIdentifier = polymorphicType.getDeclaredIdentifier();
         tsOdinType.setDeclaration(polymorphicType);
         tsOdinType.setDeclaredIdentifier(declaredIdentifier);
