@@ -52,12 +52,6 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     }
 
     private void addSelectorTypeCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result, @NotNull OdinQualifiedType parentType) {
-
-        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(parentType, parameters
-                .getOriginalFile()
-                .getContainingDirectory()
-                .getVirtualFile()
-                .getPath());
         OdinSymbolTable completionScope = OdinReferenceResolver.resolve(parentType);
         if (completionScope != null) {
             addLookUpElements(result, completionScope.flatten()
@@ -68,24 +62,35 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         }
     }
 
-    private void addSelectorExpressionCompletions(@NotNull CompletionResultSet result, OdinRefExpression reference, OdinSymbolTable symbolTable) {
-        System.out.println("selector completion started");
-        // This constitutes our scope
-        {
+    private void addSelectorExpressionCompletions(OdinFile odinFile, @NotNull CompletionResultSet result, OdinRefExpression reference, OdinSymbolTable symbolTable) {
+        OdinExpression expression = reference.getExpression();
+        if (expression != null) {
+            Project project = expression.getProject();
+            TsOdinType refExpressionType = expression.getInferredType();
+            OdinSymbolTable completionScope = OdinReferenceResolver.resolve(expression);
+            if (completionScope != null) {
+                Collection<OdinSymbol> visibleSymbols = completionScope.flatten()
+                        .getSymbols()
+                        .stream()
+                        .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
+                        .filter(symbolFilter::shouldInclude)
+                        .collect(Collectors.toList());
 
-            if (reference.getExpression() != null) {
-                // TODO at some point we should return the type of each symbol
-                OdinSymbolTable completionScope = OdinReferenceResolver.resolve(reference.getExpression());
-                if (completionScope != null) {
-                    Collection<OdinSymbol> visibleSymbols = completionScope.flatten()
-                            .getSymbols()
-                            .stream()
-                            .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
-                            .filter(symbolFilter::shouldInclude)
-                            .collect(Collectors.toList());
+                addLookUpElements(odinFile,
+                        null,
+                        "",
+                        result,
+                        visibleSymbols,
+                        0,
+                        false,
+                        (lookupElement, symbol) -> {
+                            if (symbol.getSymbolType() == OdinSymbolType.STRUCT_FIELD) {
+                                TsOdinType symbolType = OdinInferenceEngine.getSymbolType(project, symbol, refExpressionType, expression);
+                                return lookupElement.withTypeText(symbolType.getLabel());
+                            }
+                            return lookupElement;
+                        });
 
-                    addLookUpElements(result, visibleSymbols);
-                }
             }
         }
     }
@@ -178,9 +183,14 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                         .getContainingDirectory()
                         .getVirtualFile()
                         .getPath());
-                OdinSymbol symbol = symbolTable.getSymbol(refExpression.getExpression().getText());
-                if (true) {
-                    addSelectorExpressionCompletions(result, refExpression, symbolTable);
+
+                TsOdinType inferredType = TsOdinBuiltInTypes.UNKNOWN;
+                if (refExpression.getExpression() != null) {
+                    inferredType = refExpression.getExpression().getInferredType();
+                }
+
+                if (!inferredType.isUnknown()) {
+                    addSelectorExpressionCompletions(odinFile, result, refExpression, symbolTable);
                 } else {
                     if (topMostRefExpression != null) {
                         addIdentifierCompletions(parameters,
@@ -189,6 +199,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                                 symbolTable.flatten());
                     }
                 }
+
             }
             // Identifiers like '<caret>'
             case null, default -> {
@@ -248,7 +259,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                                 result,
                                 localSymbols.getFirst(),
                                 10000 + variants.size() - i,
-                                lookupElementBuilder -> {
+                                (lookupElementBuilder, __) -> {
                                     LookupElementBuilder bold = lookupElementBuilder.bold();
                                     if (insertHandler != null) {
                                         InsertHandler<LookupElement> currentInsertHandler
@@ -372,7 +383,15 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                 }
             }
         }
-        addLookUpElements(result, visibleSymbols, 2000);
+        addLookUpElements(result, visibleSymbols, 2000, (l, s) -> {
+            TsOdinType symbolType = OdinInferenceEngine.getSymbolType(project, s, null, parameters.getPosition());
+            if (!symbolType.isUnknown()) {
+                if (s.getSymbolType() == OdinSymbolType.VARIABLE || s.getSymbolType() == OdinSymbolType.CONSTANT) {
+                    return l.withTypeText(symbolType.getLabel());
+                }
+            }
+            return l;
+        });
 
         // Add symbols from other packages from this source root (the blue folder)
         ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);

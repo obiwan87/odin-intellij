@@ -85,14 +85,6 @@ public class OdinTypeResolver extends OdinVisitor {
                                                   OdinDeclaration declaration,
                                                   boolean substitutionMode,
                                                   OdinType type) {
-//        if (type == null)
-//            return TsOdinBuiltInTypes.UNKNOWN;
-//
-//        symbolTable = initializeSymbolTable(symbolTable, type);
-//
-//        OdinTypeResolver typeResolver = new OdinTypeResolver(level, symbolTable, declaration, declaredIdentifier);
-//        type.accept(typeResolver);
-//        return Objects.requireNonNullElse(typeResolver.type, TsOdinBuiltInTypes.UNKNOWN);
         OdinTypeResolverParameters typeResolverParameters = new OdinTypeResolverParameters(symbolTable, declaredIdentifier, declaration, substitutionMode);
         if (!substitutionMode) {
             return type.getResolvedType(typeResolverParameters);

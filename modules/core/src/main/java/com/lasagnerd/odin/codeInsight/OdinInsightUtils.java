@@ -167,19 +167,19 @@ public class OdinInsightUtils {
         if (includeReferenceableSymbols && TsOdinBuiltInTypes.getComplexTypes().contains(type)) {
             if (type == TsOdinBuiltInTypes.COMPLEX32) {
                 List<OdinSymbol> odinSymbols = generateSwizzleFields(RGB, TsOdinBuiltInTypes.F16);
-                odinSymbols.addAll(generateSwizzleFields(XYZ, TsOdinBuiltInTypes.F16));
+                odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F16));
                 return OdinSymbolTable.from(odinSymbols);
             }
 
             if (type == TsOdinBuiltInTypes.COMPLEX64) {
                 List<OdinSymbol> odinSymbols = generateSwizzleFields(RGB, TsOdinBuiltInTypes.F32);
-                odinSymbols.addAll(generateSwizzleFields(XYZ, TsOdinBuiltInTypes.F32));
+                odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F32));
                 return OdinSymbolTable.from(odinSymbols);
             }
 
             if (type == TsOdinBuiltInTypes.COMPLEX128) {
                 List<OdinSymbol> odinSymbols = generateSwizzleFields(RGB, TsOdinBuiltInTypes.F64);
-                odinSymbols.addAll(generateSwizzleFields(XYZ, TsOdinBuiltInTypes.F64));
+                odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F64));
                 return OdinSymbolTable.from(odinSymbols);
             }
         }
