@@ -414,25 +414,14 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
-        OdinSymbolTable globalSymbolTable;
-
         TsOdinType tsOdinRefExpressionType = TsOdinBuiltInTypes.UNKNOWN;
         Project project = refExpression.getProject();
         if (refExpression.getExpression() != null) {
             // solve for expression first. This defines the scope
             TsOdinType refExpressionType = refExpression.getExpression().getInferredType();
             tsOdinRefExpressionType = OdinInsightUtils.getReferenceableType(refExpressionType);
-            // Specialized types carry substituted types with them, that are needed to infer
-            // the correct type of e.g. a field in a specialized struct
-            // e.g
-            // Strict($T: typeid) :: struct {x: $T}
-            // s := S(int)
-
-            globalSymbolTable = tsOdinRefExpressionType.getSymbolTable();
-
-        } else {
-            globalSymbolTable = this.symbolTable;
         }
+
 
         OdinIdentifier identifier = refExpression.getIdentifier();
         if (identifier != null) {
@@ -449,10 +438,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                         project,
                         symbol,
                         tsOdinRefExpressionType,
-                        identifier,
-                        globalSymbolTable
+                        identifier
                 );
-
             } else {
                 // TODO Add poly paras as symbols
                 TsOdinType polyParameter = symbolTable.getType(name);
@@ -485,16 +472,15 @@ public class OdinInferenceEngine extends OdinVisitor {
         return tsOdinMetaType;
     }
 
-    public static TsOdinType getSymbolType(@NotNull Project project,
+    public static @NotNull TsOdinType getSymbolType(@NotNull Project project,
                                            OdinSymbol symbol,
-                                           TsOdinType tsOdinRefExpressionType,
-                                           OdinIdentifier identifier,
-                                           OdinSymbolTable globalSymbolTable) {
+                                                    @Nullable TsOdinType tsOdinRefExpressionType,
+                                                    PsiElement position) {
 
         // Check for specialized types
-        if (tsOdinRefExpressionType.baseType(true) instanceof TsOdinStructType tsOdinStructType) {
-            if (tsOdinStructType.getFields().containsKey(identifier.getText())) {
-                return tsOdinStructType.getFields().get(identifier.getText());
+        if (tsOdinRefExpressionType != null && tsOdinRefExpressionType.baseType(true) instanceof TsOdinStructType tsOdinStructType) {
+            if (tsOdinStructType.getFields().containsKey(symbol.getName())) {
+                return tsOdinStructType.getFields().get(symbol.getName());
             }
         }
 
@@ -552,19 +538,21 @@ public class OdinInferenceEngine extends OdinVisitor {
                         OdinSwitchBlock.class,
                         true);
                 if (switchInBlock != null) {
-                    return getSwitchInReferenceType(tsOdinType, identifier, switchInBlock);
+                    return getSwitchInReferenceType(tsOdinType, position, switchInBlock);
                 }
             }
 
             if (isExplicitPolymorphicParameter(tsOdinType, symbol.getDeclaredIdentifier())) {
-                return createPolymorphicMetaType(createExplicitPolymorphicType(
-                        (OdinDeclaredIdentifier) symbol.getDeclaredIdentifier(),
-                        symbol.getDeclaration())
+                return createPolymorphicMetaType(
+                        createExplicitPolymorphicType(
+                                (OdinDeclaredIdentifier) symbol.getDeclaredIdentifier(),
+                                symbol.getDeclaration()
+                        )
                 );
             }
             return tsOdinType;
         }
-        return null;
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     private static @NotNull TsOdinType inferTypeOfDeclaredIdentifier(PsiNamedElement namedElement) {
@@ -1352,39 +1340,37 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     private static TsOdinType getSwitchInReferenceType(
             TsOdinType declarationType,
-            @NotNull OdinIdentifier identifier,
+            @NotNull PsiElement position,
             OdinSwitchBlock switchInBlock) {
-        {
-            List<OdinSwitchCase> ancestors = new ArrayList<>();
-            OdinSwitchBody switchBody = switchInBlock.getSwitchBody();
-            if (switchBody != null) {
-                OdinSwitchCases switchCases = switchBody.getSwitchCases();
-                if (switchCases != null) {
-                    for (OdinSwitchCase odinSwitchCase : switchCases.getSwitchCaseList()) {
-                        // TODO remove from here and compute outside of this method
-                        if (PsiTreeUtil.isAncestor(odinSwitchCase, identifier, true)) {
-                            ancestors.add(odinSwitchCase);
-                        }
+        List<OdinSwitchCase> ancestors = new ArrayList<>();
+        OdinSwitchBody switchBody = switchInBlock.getSwitchBody();
+        if (switchBody != null) {
+            OdinSwitchCases switchCases = switchBody.getSwitchCases();
+            if (switchCases != null) {
+                for (OdinSwitchCase odinSwitchCase : switchCases.getSwitchCaseList()) {
+                    // TODO remove from here and compute outside of this method
+                    if (PsiTreeUtil.isAncestor(odinSwitchCase, position, true)) {
+                        ancestors.add(odinSwitchCase);
                     }
                 }
             }
-            if (ancestors.size() != 1)
-                return TsOdinBuiltInTypes.UNKNOWN;
-
-            OdinSwitchCase switchCase = ancestors.getFirst();
-            if (switchCase != null && switchCase.getCaseClause() != null) {
-                @NotNull List<OdinExpression> expressionList = switchCase.getCaseClause().getExpressionList();
-
-                if (expressionList.size() == 1) {
-                    OdinExpression odinExpression = expressionList.getFirst();
-                    TsOdinType caseType = odinExpression.getInferredType();
-                    if (caseType instanceof TsOdinMetaType metaType) {
-                        return OdinTypeResolver.resolveMetaType(caseType.getSymbolTable(), metaType);
-                    }
-                }
-            }
-            return declarationType;
         }
+        if (ancestors.size() != 1)
+            return TsOdinBuiltInTypes.UNKNOWN;
+
+        OdinSwitchCase switchCase = ancestors.getFirst();
+        if (switchCase != null && switchCase.getCaseClause() != null) {
+            @NotNull List<OdinExpression> expressionList = switchCase.getCaseClause().getExpressionList();
+
+            if (expressionList.size() == 1) {
+                OdinExpression odinExpression = expressionList.getFirst();
+                TsOdinType caseType = odinExpression.getInferredType();
+                if (caseType instanceof TsOdinMetaType metaType) {
+                    return OdinTypeResolver.resolveMetaType(caseType.getSymbolTable(), metaType);
+                }
+            }
+        }
+        return declarationType;
     }
 
     public static @Nullable TsOdinMetaType findMetaType(OdinSymbolTable symbolTable,

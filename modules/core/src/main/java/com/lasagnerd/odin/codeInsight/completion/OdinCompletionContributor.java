@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -114,7 +114,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                 Collections.singleton(symbol),
                 priority,
                 false,
-                Function.identity());
+                (e, s) -> e);
     }
 
     public static List<LookupElement> addLookUpElement(OdinFile sourceFile,
@@ -123,7 +123,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                        @NotNull CompletionResultSet result,
                                                        OdinSymbol symbol,
                                                        int priority,
-                                                       Function<LookupElementBuilder, LookupElementBuilder> transformer) {
+                                                       BiFunction<LookupElementBuilder, OdinSymbol, LookupElementBuilder> transformer) {
         return addLookUpElements(sourceFile,
                 odinImport,
                 sourcePackagePath,
@@ -148,6 +148,17 @@ public class OdinCompletionContributor extends CompletionContributor {
                 priority);
     }
 
+    public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols, int priority, BiFunction<LookupElementBuilder, OdinSymbol, LookupElementBuilder> transformer) {
+        return addLookUpElements(null,
+                null,
+                "",
+                result,
+                symbols,
+                priority,
+                false,
+                transformer);
+    }
+
     public static List<LookupElement> addLookUpElements(OdinFile sourceFile,
                                                         OdinImport odinImport,
                                                         String sourcePackagePath,
@@ -162,7 +173,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                 symbols,
                 priority,
                 false,
-                Function.identity());
+                (e, s) -> e);
     }
 
     public static List<LookupElement> addLookUpElements(OdinFile sourceFile,
@@ -172,7 +183,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                         Collection<OdinSymbol> symbols,
                                                         int priority,
                                                         boolean batchMode,
-                                                        @NotNull Function<LookupElementBuilder, LookupElementBuilder> transformer
+                                                        @NotNull BiFunction<LookupElementBuilder, OdinSymbol, LookupElementBuilder> transformer
     ) {
         List<LookupElement> lookupElements = new ArrayList<>();
         String prefix = "";
@@ -188,6 +199,7 @@ public class OdinCompletionContributor extends CompletionContributor {
         if (batchMode) {
             result.startBatch();
         }
+
         for (var symbol : symbols) {
             LookupElement lookupElement = null;
             Icon icon = getIcon(symbol.getSymbolType());
@@ -217,7 +229,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                         )
                                 );
                         lookupElement = PrioritizedLookupElement
-                                .withPriority(transformer.apply(element), priority);
+                                .withPriority(transformer.apply(element, symbol), priority);
 
                     }
                 }
@@ -234,26 +246,23 @@ public class OdinCompletionContributor extends CompletionContributor {
                             continue;
 
                         PsiReference resolvedReference = odinIdentifier.getReference();
-
-                        if (resolvedReference != null) {
-                            PsiElement resolved = resolvedReference.resolve();
-                            if (resolved instanceof OdinDeclaredIdentifier) {
-                                OdinProcedureType declaringProcedure = OdinInsightUtils.getProcedureType(resolved);
-                                if (declaringProcedure != null) {
-                                    LookupElementBuilder element = LookupElementBuilder
-                                            .create(resolved, lookupString)
-                                            .withLookupString(unprefixedLookupString)
-                                            .withItemTextItalic(true)
-                                            .withIcon(icon)
-                                            .withInsertHandler(
-                                                    new CombinedInsertHandler(
-                                                            new OdinInsertSymbolHandler(symbol.getSymbolType()),
-                                                            new OdinInsertImportHandler(odinImport, sourcePackagePath, sourceFile)
-                                                    )
-                                            );
-                                    element = transformer.apply(procedureLookupElement(element, declaringProcedure));
-                                    lookupElement = PrioritizedLookupElement.withPriority(element, priority);
-                                }
+                        PsiElement resolved = resolvedReference.resolve();
+                        if (resolved instanceof OdinDeclaredIdentifier) {
+                            OdinProcedureType declaringProcedure = OdinInsightUtils.getProcedureType(resolved);
+                            if (declaringProcedure != null) {
+                                LookupElementBuilder element = LookupElementBuilder
+                                        .create(resolved, lookupString)
+                                        .withLookupString(unprefixedLookupString)
+                                        .withItemTextItalic(true)
+                                        .withIcon(icon)
+                                        .withInsertHandler(
+                                                new CombinedInsertHandler(
+                                                        new OdinInsertSymbolHandler(symbol.getSymbolType()),
+                                                        new OdinInsertImportHandler(odinImport, sourcePackagePath, sourceFile)
+                                                )
+                                        );
+                                element = transformer.apply(procedureLookupElement(element, declaringProcedure), symbol);
+                                lookupElement = PrioritizedLookupElement.withPriority(element, priority);
                             }
                         }
                     }
@@ -272,7 +281,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                             element = element.withTailText(" -> " + info.collection());
                         }
 
-                        lookupElement = PrioritizedLookupElement.withPriority(transformer.apply(element), priority + 100);
+                        lookupElement = PrioritizedLookupElement.withPriority(transformer.apply(element, symbol), priority + 100);
                     }
                 }
                 default -> {
@@ -285,7 +294,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                                             new OdinInsertImportHandler(odinImport, sourcePackagePath, sourceFile)
                                     )
                             );
-                    lookupElement = PrioritizedLookupElement.withPriority(transformer.apply(element), priority);
+
+                    lookupElement = PrioritizedLookupElement.withPriority(transformer.apply(element, symbol), priority);
                 }
             }
 
