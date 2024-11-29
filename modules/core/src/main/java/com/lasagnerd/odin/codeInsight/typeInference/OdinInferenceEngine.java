@@ -531,7 +531,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         } else {
 
-            TsOdinType tsOdinType = inferTypeOfDeclaredIdentifier(symbol.getDeclaredIdentifier());
+            TsOdinType tsOdinType = resolveTypeOfNamedElement(symbol.getDeclaredIdentifier());
             OdinDeclaration declaration = symbol.getDeclaration();
             if (declaration instanceof OdinSwitchTypeVariableDeclaration switchTypeVariableDeclaration) {
                 OdinSwitchBlock switchInBlock = PsiTreeUtil.getParentOfType(switchTypeVariableDeclaration,
@@ -555,14 +555,14 @@ public class OdinInferenceEngine extends OdinVisitor {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private static @NotNull TsOdinType inferTypeOfDeclaredIdentifier(PsiNamedElement namedElement) {
+    private static @NotNull TsOdinType resolveTypeOfNamedElement(PsiNamedElement namedElement) {
         OdinImportDeclarationStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
         if (importDeclarationStatement != null) {
             return createPackageReferenceType(OdinImportService
                     .getInstance(namedElement.getProject())
                     .getPackagePath(importDeclarationStatement), importDeclarationStatement);
         } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
-            TsOdinType tsOdinType = doResolveTypeOfDeclaration(declaredIdentifier);
+            TsOdinType tsOdinType = doResolveTypeOfDeclaredIdentifier(declaredIdentifier);
             return OdinTypeConverter.convertToTyped(tsOdinType);
 
         }
@@ -1062,7 +1062,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     }
 
-    public static @NotNull TsOdinType doResolveTypeOfDeclaration(OdinDeclaredIdentifier declaredIdentifier) {
+    public static @NotNull TsOdinType resolveTypeOfDeclaredIdentifier(OdinDeclaredIdentifier declaredIdentifier) {
         OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier,
                 false,
                 OdinDeclaration.class);
@@ -1326,6 +1326,10 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         return TsOdinBuiltInTypes.UNKNOWN;
+    }
+
+    private static @NotNull TsOdinType doResolveTypeOfDeclaredIdentifier(OdinDeclaredIdentifier declaredIdentifier) {
+        return declaredIdentifier.getType();
     }
 
     public static @NotNull TsOdinPolymorphicType createExplicitPolymorphicType(OdinDeclaredIdentifier declaredIdentifier, OdinDeclaration odinDeclaration) {

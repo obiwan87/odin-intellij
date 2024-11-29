@@ -18,15 +18,17 @@ import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
-public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implements OdinDeclaredIdentifier {
-    public OdinIdentifierOwner(@NotNull ASTNode node) {
+public abstract class OdinDeclaredIdentifierMixin extends ASTWrapperPsiElement implements OdinDeclaredIdentifier {
+    public OdinDeclaredIdentifierMixin(@NotNull ASTNode node) {
         super(node);
     }
 
@@ -121,7 +123,9 @@ public abstract class OdinIdentifierOwner extends ASTWrapperPsiElement implement
         );
     }
 
-    private CachedValueProvider.@Nullable Result<TsOdinType> computeType() {
-        return null;
+    private CachedValueProvider.Result<TsOdinType> computeType() {
+        List<Object> dependencies = new ArrayList<>();
+        dependencies.add(this);
+        return CachedValueProvider.Result.create(OdinInferenceEngine.resolveTypeOfDeclaredIdentifier(this), dependencies);
     }
 }
