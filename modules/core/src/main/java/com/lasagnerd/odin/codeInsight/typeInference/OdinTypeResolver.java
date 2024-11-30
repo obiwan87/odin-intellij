@@ -381,6 +381,11 @@ public class OdinTypeResolver extends OdinVisitor {
                 false,
                 OdinDeclaration.class);
 
+        TsOdinType builtinType = OdinDeclaredIdentifierMixin.tryGetBuiltinType(identifier);
+        if (builtinType instanceof TsOdinMetaType metaType) {
+            return metaType.representedType();
+        }
+
         // TODO: do we need to recompute the symbol table for each declaration type?
         OdinSymbolTable typeSymbolTable;
         if (odinDeclaration != null) {
@@ -390,27 +395,14 @@ public class OdinTypeResolver extends OdinVisitor {
         }
         switch (odinDeclaration) {
             case OdinConstantInitializationStatement constantInitializationStatement -> {
-                TsOdinType t = identifier.getType();
-                if (t instanceof TsOdinMetaType metaType
-                        && metaType.representedType() instanceof TsOdinBuiltInType) {
-                    return metaType.representedType();
-                }
-
+                OdinExpression firstExpression = constantInitializationStatement.getExpressionList().getFirst();
                 OdinType declaredType = OdinInsightUtils.getDeclaredType(constantInitializationStatement);
-                if ((
-                        declaredType instanceof OdinStructType
-                                || declaredType instanceof OdinBitFieldType
-                                || declaredType instanceof OdinUnionType
-                                || declaredType instanceof OdinProcedureGroupType
-                                || declaredType instanceof OdinProcedureType
-                                || declaredType instanceof OdinProcedureLiteralType
-                                || declaredType instanceof OdinEnumType
-                ) && (t instanceof TsOdinMetaType metaType)
-                ) {
+                if (isTypeDefinition(declaredType)) {
                     // check distinct
-                    return metaType.representedType();
+                    TsOdinType tsOdinType = doResolveType(typeSymbolTable, identifier, odinDeclaration, declaredType);
+                    tsOdinType.setDistinct(OdinInsightUtils.isDistinct(firstExpression));
+                    return tsOdinType;
                 }
-
 
                 // Ref expression: it's a type alias
                 List<OdinExpression> expressionList = constantInitializationStatement.getExpressionList();
@@ -429,8 +421,8 @@ public class OdinTypeResolver extends OdinVisitor {
                     TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
                     typeAlias.setName(identifier.getText());
                     addKnownType(typeAlias, identifier, odinDeclaration, typeSymbolTable);
-
-                    if (t instanceof TsOdinMetaType metaType) {
+                    TsOdinType tsOdinType = odinExpression.getInferredType(typeSymbolTable);
+                    if (tsOdinType instanceof TsOdinMetaType metaType) {
                         TsOdinType resolvedMetaType = doResolveMetaType(metaType.getSymbolTable(), metaType);
                         typeAlias.setDistinct(OdinInsightUtils.isDistinct(odinExpression));
                         return createTypeAliasFromMetaType(typeAlias, identifier, resolvedMetaType, odinDeclaration, odinExpression);
@@ -452,6 +444,16 @@ public class OdinTypeResolver extends OdinVisitor {
         }
 
         return TsOdinBuiltInTypes.UNKNOWN;
+    }
+
+    private static boolean isTypeDefinition(OdinType declaredType) {
+        return declaredType instanceof OdinStructType
+                || declaredType instanceof OdinBitFieldType
+                || declaredType instanceof OdinUnionType
+                || declaredType instanceof OdinProcedureGroupType
+                || declaredType instanceof OdinProcedureType
+                || declaredType instanceof OdinProcedureLiteralType
+                || declaredType instanceof OdinEnumType;
     }
 
     public static @NotNull TsOdinTypeAlias createTypeAliasFromMetaType(TsOdinTypeAlias typeAlias,

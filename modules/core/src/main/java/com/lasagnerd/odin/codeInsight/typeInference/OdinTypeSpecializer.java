@@ -29,7 +29,6 @@ public class OdinTypeSpecializer {
         specializedType.setGenericType(genericType);
         specializedType.getSymbolTable().setPackagePath(genericType.getSymbolTable().getPackagePath());
         specializedType.getSymbolTable().putAll(genericType.getSymbolTable());
-        specializedType.getSymbolTable().putAll(outerScope);
         OdinSymbolTable newScope = specializedType.getSymbolTable();
         resolveArguments(outerScope,
                 genericType,
@@ -344,7 +343,6 @@ public class OdinTypeSpecializer {
         TsOdinStructType specializedType = new TsOdinStructType();
         ArrayList<PsiElement> arguments = new ArrayList<>(argumentList);
         structType.getSymbolTable().addSpecializedType(structType, specializedType, arguments);
-        symbolTable.addSpecializedType(structType, specializedType, arguments);
 
         boolean specializationCreated = specializeStruct(symbolTable,
                 argumentList,
