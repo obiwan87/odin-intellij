@@ -177,7 +177,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
 
-    private TsOdinType doInferType(OdinExpression expression) {
+    TsOdinType doInferType(OdinExpression expression) {
         OdinInferenceEngineParameters inferenceEngineParameters = new OdinInferenceEngineParameters(
                 null, null, 1, explicitMode
         );
@@ -633,6 +633,10 @@ public class OdinInferenceEngine extends OdinVisitor {
             else if (representedMetaType == PROCEDURE_GROUP) {
                 TsOdinProcedureGroup procedureGroupType = (TsOdinProcedureGroup) OdinTypeResolver.resolveMetaType(tsOdinType.getSymbolTable(), tsOdinMetaType);
                 this.type = inferTypeOfBestProcedure(o, procedureGroupType);
+            }
+            // Builtin procedures
+            else if (representedMetaType == BUILTIN && tsOdinMetaType.representedType() instanceof TsOdinBuiltinProc proc) {
+                this.type = OdinBuiltinProcedures.inferType(this, proc, o);
             }
             // type casting
             else {

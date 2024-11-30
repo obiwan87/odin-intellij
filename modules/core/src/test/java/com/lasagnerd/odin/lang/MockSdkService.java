@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.lang;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkServiceBase;
@@ -9,10 +10,10 @@ import com.lasagnerd.odin.lang.psi.OdinFile;
 import java.nio.file.Path;
 import java.util.Optional;
 
-public class MockBuiltinSymbolsService extends OdinSdkServiceBase {
+public class MockSdkService extends OdinSdkServiceBase {
     private final PsiFileFactory fileFactory;
 
-    public MockBuiltinSymbolsService(Project project, PsiFileFactory fileFactory) {
+    public MockSdkService(Project project, PsiFileFactory fileFactory) {
         super(project);
         this.fileFactory = fileFactory;
     }
@@ -36,5 +37,12 @@ public class MockBuiltinSymbolsService extends OdinSdkServiceBase {
     @Override
     public void refreshCache() {
 
+    }
+
+    @Override
+    public VirtualFile getBuiltinVirtualFile() {
+        Path path = Path.of(getSdkPath().get(), "base", "builtin", "builtin.odin");
+        MockOdinImportService mockImportService = (MockOdinImportService) OdinImportService.getInstance(project);
+        return mockImportService.getVirtualFile(path);
     }
 }

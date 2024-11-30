@@ -174,9 +174,9 @@ public class OdinSymbolTableResolver {
         OdinSdkService sdkService = OdinSdkService.getInstance(element.getProject());
 
         // 0. Import built-in symbols
-        if (!sdkService.isInSyntheticOdinFile(element)) {
+//        if (!sdkService.isInSyntheticOdinFile(element)) {
             symbolTable.setRoot(builtinSymbolTable);
-        }
+//        }
 
         // 1. Import symbols from this file
         // Will be done organically by going up tree
