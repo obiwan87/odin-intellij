@@ -1,6 +1,9 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import lombok.Getter;
+
 public class TsOdinAnyType extends TsOdinBuiltInType {
+    @Getter
     TsOdinStructType backingType;
 
     public TsOdinAnyType(TsOdinStructType backingType) {

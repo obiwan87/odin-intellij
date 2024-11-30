@@ -93,6 +93,9 @@ public class OdinInsightUtils {
             case TsOdinConstrainedType constrainedType -> {
                 return getTypeElements(project, constrainedType.getSpecializedType(), includeReferenceableSymbols);
             }
+            case TsOdinAnyType anyType -> {
+                return getTypeElements(project, anyType.getBackingType(), includeReferenceableSymbols);
+            }
             case TsOdinMetaType metaType when metaType.representedType() instanceof TsOdinPolymorphicType polymorphicType -> {
                 OdinType psiType = polymorphicType.getPsiType();
                 if (psiType != null) {
