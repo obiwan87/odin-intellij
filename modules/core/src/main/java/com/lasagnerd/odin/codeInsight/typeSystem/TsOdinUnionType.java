@@ -18,9 +18,4 @@ public class TsOdinUnionType extends TsOdinGenericType implements TsOdinParamete
     public TsOdinMetaType.MetaType getMetaType() {
         return TsOdinMetaType.MetaType.UNION;
     }
-
-    @Override
-    public String getLabel() {
-        return super.getLabel() + TsOdinUtils.parametersStringIfNonEmpty(parameters);
-    }
 }

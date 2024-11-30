@@ -113,7 +113,3 @@ testTypeInference_withDoubleInstantiation :: proc() {
     w := Whole(Point){ }
     test := w.part.data.other
 }
-
-testExpressionEvaluation :: proc() {
-
-}

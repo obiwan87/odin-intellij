@@ -5,6 +5,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -166,6 +168,13 @@ public class OdinTypeSpecializer {
                             getLocationWithinFile(argumentExpression)
                     );
                     continue;
+                }
+
+                if (!argumentType.isExplicitPolymorphic()) {
+                    EvOdinValue value = OdinExpressionEvaluator.evaluate(outerScope, argumentExpression);
+                    if (!value.isNull()) {
+                        instantiationScope.getValueStorage().put(tsOdinParameter.getName(), value);
+                    }
                 }
 
                 TsOdinType parameterType = tsOdinParameter.getType();

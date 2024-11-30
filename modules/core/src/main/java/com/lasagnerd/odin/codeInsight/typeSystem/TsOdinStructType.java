@@ -22,8 +22,5 @@ public class TsOdinStructType extends TsOdinGenericType implements TsOdinParamet
         return TsOdinMetaType.MetaType.STRUCT;
     }
 
-    @Override
-    public String getLabel() {
-        return super.getLabel() + TsOdinUtils.parametersStringIfNonEmpty(parameters);
-    }
+
 }

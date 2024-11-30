@@ -17,7 +17,7 @@ public class TsOdinArrayType extends TsOdinTypeBase implements TsOdinElementOwne
 
     @Override
     public String getLabel() {
-        String text = psiSizeElement != null? psiSizeElement.getText() : (size != null? String.valueOf(size) : "undefined");
+        String text = size != null ? String.valueOf(size) : (psiSizeElement != null ? psiSizeElement.getText() : "undefined");
         return "[" + text + "]" + (elementType != null ? elementType.getLabel() : "<undefined>");
     }
 

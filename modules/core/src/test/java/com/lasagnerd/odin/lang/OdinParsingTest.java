@@ -2575,6 +2575,23 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testParapolyExpressionEval() throws IOException {
+        OdinFile file = loadExpressionEval();
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testParapolyExpressionEval", "elem3");
+            TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
+            assertNotNull(tsOdinArrayType.getSize());
+            assertEquals(3, tsOdinArrayType.getSize().intValue());
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testParapolyExpressionEval", "elem4");
+            TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinType, TsOdinArrayType.class);
+            assertNotNull(tsOdinArrayType.getSize());
+            assertEquals(4, tsOdinArrayType.getSize().intValue());
+        }
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
         return load("src/test/testData/expression_eval.odin");
     }

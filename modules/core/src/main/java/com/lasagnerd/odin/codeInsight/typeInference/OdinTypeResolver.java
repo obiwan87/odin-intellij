@@ -643,7 +643,7 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinArrayType.setPsiSizeElement(arraySize);
         tsOdinArrayType.setPsiType(arrayType);
         if (arraySize.getExpression() != null) {
-            Integer sizeValue = OdinExpressionEvaluator.evaluate(arraySize.getExpression()).asInt();
+            Integer sizeValue = OdinExpressionEvaluator.evaluate(symbolTable, arraySize.getExpression()).asInt();
             tsOdinArrayType.setSize(sizeValue);
         }
 
