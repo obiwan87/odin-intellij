@@ -2250,14 +2250,16 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testPsiFileAtOffset() throws IOException {
         {
-            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\encoding\\cbor\\coding.odin");
-            PsiElement element = file.findElementAt(18546);
+            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\testing\\runner.odin");
+            PsiElement element = file.findElementAt(20244);
             assertNotNull(element);
 
             OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
             assertNotNull(refExpression);
-            TsOdinType inferredType = refExpression.getInferredType();
-            TsOdinSliceType tsOdinSliceType = assertInstanceOf(inferredType.baseType(), TsOdinSliceType.class);
+            EvOdinValue value = OdinExpressionEvaluator.evaluate(refExpression);
+            assertFalse(value.asBool());
+//            TsOdinType inferredType = refExpression.getInferredType();
+//            TsOdinSliceType tsOdinSliceType = assertInstanceOf(inferredType.baseType(), TsOdinSliceType.class);
 
 //            OdinIdentifier identifier = PsiTreeUtil.getParentOfType(element, OdinIdentifier.class);
 //            assertNotNull(identifier);

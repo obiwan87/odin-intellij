@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.evaluation;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNamedElement;
@@ -25,19 +26,26 @@ import java.util.Objects;
  * This class evaluates compile time expressions, such as where-constraints and constant expressions
  */
 public class OdinExpressionEvaluator extends OdinVisitor {
+    public static Logger LOG = Logger.getInstance(OdinExpressionEvaluator.class);
+
     EvOdinValue value;
     OdinSymbolTable symbolTable;
 
     public static EvOdinValue evaluate(OdinExpression expression) {
-        OdinExpressionEvaluator expressionEvaluator = new OdinExpressionEvaluator();
-        expression.accept(expressionEvaluator);
-        if (expressionEvaluator.value == null) {
-            return TsOdinBuiltInTypes.NULL;
-        } else if (expressionEvaluator.value.type == null && expressionEvaluator.value.value == null) {
-            return TsOdinBuiltInTypes.NULL;
-        }
+        try {
+            OdinExpressionEvaluator expressionEvaluator = new OdinExpressionEvaluator();
+            expression.accept(expressionEvaluator);
+            if (expressionEvaluator.value == null) {
+                return TsOdinBuiltInTypes.NULL;
+            } else if (expressionEvaluator.value.type == null && expressionEvaluator.value.value == null) {
+                return TsOdinBuiltInTypes.NULL;
+            }
 
-        return expressionEvaluator.value;
+            return expressionEvaluator.value;
+        } catch (StackOverflowError e) {
+            OdinInsightUtils.logStackOverFlowError(expression, LOG);
+        }
+        return TsOdinBuiltInTypes.NULL;
     }
 
 //    public static EvOdinValue evaluate(OdinExpression expression) {
