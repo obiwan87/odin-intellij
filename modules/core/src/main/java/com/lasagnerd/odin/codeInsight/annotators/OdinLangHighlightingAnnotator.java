@@ -391,13 +391,11 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
         PsiElement refExpressionParent = refExpression.getParent();
 
-        OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
-
-
         if (refExpression == topMostExpression) {
             // The first parameter of #config(DEF, val) is not defined in code
             if (isInsideConfigDirective(refExpression)) return;
         }
+
 
         OdinSymbol symbol = resolveSymbol(identifierTokenParent);
 
@@ -406,6 +404,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
             // If we are being referenced from a polymorphic type, do not show any errors
             if (refExpression.getExpression() != null) {
+                OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
                 TsOdinType type = refExpression.getExpression().getInferredType(symbolTable);
                 TsOdinType referenceableType = OdinInsightUtils.getReferenceableType(type);
                 if (referenceableType instanceof TsOdinPolymorphicType) {
@@ -463,6 +462,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 return;
             }
 
+            OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
             if (symbolTable.isShadowing(symbol.getName())) {
                 highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_SHADOWING_VARIABLE_REF);
                 return;

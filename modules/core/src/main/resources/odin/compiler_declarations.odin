@@ -1,41 +1,6 @@
 package builtin
 
-import "base:runtime"
-
 // Procedures
-
-@builtin len :: proc(array: Array_Type) -> int ---
-@builtin cap :: proc(array: Array_Type) -> int ---
-@builtin soa_zip :: proc(slices: ...) -> #soa[]Struct ---
-@builtin soa_unzip :: proc(value: $S/#soa[]$E) -> (slices: ...) ---
-@builtin size_of      :: proc($T: typeid) -> int ---
-@builtin align_of     :: proc($T: typeid) -> int ---
-@builtin type_of      :: proc(x: expr) -> type ---
-@builtin type_info_of :: proc($T: typeid) -> ^runtime.Type_Info ---
-@builtin typeid_of    :: proc($T: typeid) -> typeid ---
-
-@builtin offset_of_selector :: proc(selector: $T) -> uintptr ---
-@builtin offset_of_member   :: proc($T: typeid, #member member: $M) -> uintptr ---
-
-@builtin offset_of :: proc{offset_of_selector, offset_of_member}
-
-@builtin offset_of_by_string :: proc($T: typeid, member: string) -> uintptr ---
-
-@builtin swizzle :: proc(x: [N]T, indices: ..int) -> [len(indices)]T ---
-
-complex    :: proc(real, imag: Float) -> Complex_Type ---
-quaternion :: proc(real, imag, jmag, kmag: Float) -> Quaternion_Type ---
-real       :: proc(value: Complex_Or_Quaternion) -> Float ---
-imag       :: proc(value: Complex_Or_Quaternion) -> Float ---
-jmag       :: proc(value: Quaternion) -> Float ---
-kmag       :: proc(value: Quaternion) -> Float ---
-conj       :: proc(value: Complex_Or_Quaternion) -> Complex_Or_Quaternion ---
-
-@builtin min   :: proc(values: ..T) -> T ---
-@builtin max   :: proc(values: ..T) -> T ---
-@builtin abs   :: proc(value: T) -> T ---
-@builtin clamp :: proc(value, minimum, maximum: T) -> T ---
-
 /*
 	This is interally from the compiler
 */
@@ -126,12 +91,6 @@ ODIN_NO_RTTI: bool : true // TODO add to builtin value collection
 ODIN_DISABLE_ASSERT: bool : true // TODO add to builtin value collection
 
 @builtin
-true: bool : true // TODO add to builtin value collection
-
-@builtin
-false: bool : false // TODO add to builtin value collection
-
-@builtin
 ODIN_VERSION : string : "" // TODO add to builtin value collection
 
 @builtin
@@ -193,12 +152,6 @@ Any_Type :: struct {
     data: rawptr,
     id: typeid
 }
-
-@builtin
-any :: distinct Any_Type
-
-@builtin
-unreachable :: proc() -> ! ---
 
 @builtin
 Odin_Optimization_Mode :: enum int {

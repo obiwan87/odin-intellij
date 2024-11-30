@@ -22,6 +22,7 @@ import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import org.apache.commons.lang3.ArchUtils;
 import org.apache.commons.lang3.arch.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,34 @@ import java.util.function.Predicate;
 import static com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver.createMetaType;
 
 public abstract class OdinSdkServiceBase implements OdinSdkService {
+
+    // Prone to changes
+    private static final List<String> SYNTHETIC_CONSTANTS = List.of(
+            "ODIN_BUILD_MODE",
+            "ODIN_ENDIAN",
+            "ODIN_PLATFORM_SUBTARGET",
+            "ODIN_SANITIZER_FLAGS",
+            "ODIN_NO_RTTI",
+            "ODIN_DISABLE_ASSERT",
+            "ODIN_OS_STRING",
+            "ODIN_ENDIAN_STRING",
+            "ODIN_ARCH_STRING",
+            "ODIN_ERROR_POS_STYLE",
+            "ODIN_DEFAULT_TO_NIL_ALLOCATOR",
+            "ODIN_NO_DYNAMIC_LITERALS",
+            "ODIN_NO_CRT",
+            "ODIN_USE_SEPARATE_MODULES",
+            "ODIN_TEST",
+            "ODIN_NO_ENTRY_POINT",
+            "ODIN_FOREIGN_ERROR_PROCEDURES",
+            "ODIN_NO_RTTI",
+            "ODIN_BUILD_PROJECT_NAME",
+            "ODIN_VALGRIND_SUPPORT",
+            "ODIN_OPTIMIZATION_MODE",
+            "ODIN_DEFAULT_TO_PANIC_ALLOCATOR",
+            "ODIN_NO_BOUNDS_CHECK",
+            "ODIN_MINIMUM_OS_VERSION"
+    );
     private static final Logger log = Logger.getInstance(OdinSdkServiceBase.class);
     private static final Object LOADING_MUTEX = new Object();
     protected final Project project;
@@ -144,6 +173,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         {
             setOdinOs(valueMap);
             setOdinArch(valueMap);
+            valueMap.put("ODIN_DEBUG", TsOdinBuiltInTypes.BUILTIN_IDENTIFIERS.get("false"));
         }
     }
 
@@ -302,28 +332,14 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         if (sdkPathOptional.isEmpty())
             return;
 
+        // Built-in primitive types (i32, i64, ...)
         String sdkPath = sdkPathOptional.get();
-
         Collection<TsOdinType> builtInTypes = TsOdinBuiltInTypes.getBuiltInTypes();
-        List<OdinSymbol> syntheticBuiltinSymbols = new ArrayList<>();
-        List<String> resources = List.of("odin/builtin.odin");
-        for (String resource : resources) {
-            OdinFile odinFile = createOdinFileFromResource(project, resource);
-            syntheticFiles.add(odinFile);
-            if (odinFile != null) {
-                OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getFullSymbolTable();
-                fileScopeDeclarations
-                        .getSymbolNameMap().values()
-                        .stream()
-                        .filter(odinSymbol1 -> OdinAttributeUtils.containsAttribute(odinSymbol1.getAttributes(), "builtin")
-                                || odinSymbol1.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE)
-                        .forEach(symbol -> {
-                            symbol.setBuiltin(true);
-                            syntheticBuiltinSymbols.add(symbol);
-                        });
-            }
+        for (TsOdinType builtInType : builtInTypes) {
+            typesCache.put(builtInType.getName(), createMetaType(builtInType, false));
         }
 
+        List<OdinSymbol> syntheticCompilerDeclarations = loadSyntheticCompilerDeclarations();
         Path builtinOdinPath = Path.of(sdkPath, "base", "builtin", "builtin.odin");
         Path coreOdinPath = Path.of(sdkPath, "base", "runtime", "core.odin");
 
@@ -334,15 +350,11 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         loadSymbols(List.of(coreOdinPath), coreOdinSymbols);
         builtinSymbols.addAll(builtinOdinSymbols);
 
-
-        OdinSymbolTable syntheticSymbolTable = OdinSymbolTable.from(syntheticBuiltinSymbols);
+        OdinSymbolTable syntheticSymbolTable = OdinSymbolTable.from(syntheticCompilerDeclarations);
         OdinSymbolTable builtinOdinSymbolTable = OdinSymbolTable.from(builtinOdinSymbols);
         OdinSymbolTable coreOdinSymbolTable = OdinSymbolTable.from(coreOdinSymbols);
 
-        for (TsOdinType builtInType : builtInTypes) {
-            typesCache.put(builtInType.getName(), createMetaType(builtInType, false));
-        }
-
+        // Add byte alias
         {
             OdinSymbol byteSymbol = builtinOdinSymbolTable.getSymbol("byte");
             Objects.requireNonNull(byteSymbol);
@@ -351,6 +363,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             ));
         }
 
+        // Add any with the backing type Raw_Any
         {
             OdinSymbol anyTypeSymbol = coreOdinSymbolTable.getSymbol("Raw_Any");
             Objects.requireNonNull(anyTypeSymbol);
@@ -359,16 +372,22 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             typesCache.put("any", createMetaType(new TsOdinAnyType((TsOdinStructType) anyStructType.representedType()), false));
         }
 
-        addConstant(syntheticSymbolTable, "ODIN_OS", "Odin_OS_Type");
-        addConstant(syntheticSymbolTable, "ODIN_ARCH", "Odin_Arch_Type");
-        addConstant(syntheticSymbolTable, "ODIN_BUILD_MODE", "Odin_Build_Mode_Type");
+        // Add boolean constants
+        addConstant("false", "bool");
+        addConstant("true", "bool");
+
+        // Add synthetic types & symbols
         addConstant("ODIN_VENDOR", "string");
         addConstant("ODIN_VERSION", "string");
         addConstant("ODIN_ROOT", "string");
         addConstant("ODIN_DEBUG", "bool");
-        addConstant("false", "bool");
-        addConstant("true", "bool");
 
+        // Defined in builtin.odin, but type is loaded from compiler_declarations.odin
+        addConstantWithSyntheticType(syntheticSymbolTable, "ODIN_OS", "Odin_OS_Type");
+        addConstantWithSyntheticType(syntheticSymbolTable, "ODIN_ARCH", "Odin_Arch_Type");
+        addConstantWithSyntheticType(syntheticSymbolTable, "ODIN_BUILD_MODE", "Odin_Build_Mode_Type");
+
+        // Entirely defined in compiler_declarations.odin
         builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_BUILD_MODE"));
         builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_ENDIAN"));
         builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_PLATFORM_SUBTARGET"));
@@ -394,6 +413,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_NO_BOUNDS_CHECK"));
         builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_MINIMUM_OS_VERSION"));
 
+        // Load symbols marked with @builtin
         Path coreBuiltinPath = Path.of(sdkPath, "base", "runtime", "core_builtin.odin");
         Path coreBuiltinSoaPath = Path.of(sdkPath, "base", "runtime", "core_builtin_soa.odin");
 
@@ -403,7 +423,29 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                 odinSymbol -> OdinAttributeUtils.containsAttribute(odinSymbol.getAttributes(), "builtin"));
     }
 
-    private void addConstant(OdinSymbolTable syntheticSymbolTable, String constantIdentifier, String constantTypeIdentifier) {
+    private @NotNull List<OdinSymbol> loadSyntheticCompilerDeclarations() {
+        List<OdinSymbol> syntheticCompilerDeclarations = new ArrayList<>();
+        List<String> resources = List.of("odin/compiler_declarations.odin");
+        for (String resource : resources) {
+            OdinFile odinFile = createOdinFileFromResource(project, resource);
+            syntheticFiles.add(odinFile);
+            if (odinFile != null) {
+                OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getFullSymbolTable();
+                fileScopeDeclarations
+                        .getSymbolNameMap().values()
+                        .stream()
+                        .filter(odinSymbol1 -> OdinAttributeUtils.containsAttribute(odinSymbol1.getAttributes(), "builtin")
+                                || odinSymbol1.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE)
+                        .forEach(symbol -> {
+                            symbol.setBuiltin(true);
+                            syntheticCompilerDeclarations.add(symbol);
+                        });
+            }
+        }
+        return syntheticCompilerDeclarations;
+    }
+
+    private void addConstantWithSyntheticType(OdinSymbolTable syntheticSymbolTable, String constantIdentifier, String constantTypeIdentifier) {
         OdinSymbol odinOsType = syntheticSymbolTable.getSymbol(constantTypeIdentifier);
         Objects.requireNonNull(odinOsType);
         OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) odinOsType.getDeclaredIdentifier();

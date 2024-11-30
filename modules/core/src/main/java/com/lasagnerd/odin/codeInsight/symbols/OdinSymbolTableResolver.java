@@ -171,12 +171,11 @@ public class OdinSymbolTableResolver {
 
         OdinSymbolTable builtinSymbolTable = OdinSymbolTable.from(builtInSymbols);
         builtinSymbolTable.setPackagePath("");
-        OdinSdkService sdkService = OdinSdkService.getInstance(element.getProject());
 
         // 0. Import built-in symbols
-//        if (!sdkService.isInSyntheticOdinFile(element)) {
+        if (!OdinSdkService.isInBuiltinOdinFile(element)) {
             symbolTable.setRoot(builtinSymbolTable);
-//        }
+        }
 
         // 1. Import symbols from this file
         // Will be done organically by going up tree
