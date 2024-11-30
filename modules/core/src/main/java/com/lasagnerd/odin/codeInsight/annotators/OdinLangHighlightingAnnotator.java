@@ -135,7 +135,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             "clamp",
             "soa_zip",
             "soa_unzip",
-            "raw_data"
+            "raw_data",
+            "unreachable"
     );
 
     public static final String ALL_ESCAPE_SEQUENCES =

@@ -45,11 +45,11 @@ public abstract class TsOdinTypeBase implements TsOdinType {
 
 
     public boolean isUnknown() {
-        return TsOdinBuiltInTypes.UNKNOWN == this;
+        return false;
     }
 
     public boolean isUndecided() {
-        return TsOdinBuiltInTypes.UNDECIDED == this;
+        return false;
     }
 
     @SuppressWarnings("unchecked")

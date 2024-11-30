@@ -473,7 +473,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     public static @NotNull TsOdinType getSymbolType(@NotNull Project project,
-                                           OdinSymbol symbol,
+                                                    OdinSymbol symbol,
                                                     @Nullable TsOdinType tsOdinRefExpressionType,
                                                     PsiElement position) {
 
@@ -710,52 +710,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     private TsOdinType inferTypeOfProcedureCall(@NotNull OdinCallExpression o,
                                                 TsOdinProcedureType procedureType,
                                                 OdinSymbolTable symbolTable) {
-        OdinSymbol soaZip = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("soa_zip"));
-        OdinSymbol soaUnzip = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("soa_unzip"));
-        OdinSymbol swizzle = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("swizzle"));
-        OdinSymbol typeOf = OdinInsightUtils.findBuiltinSymbolOfCallExpression(symbolTable, o, text -> text.equals("type_of"));
-        if (soaZip != null) {
-            TsOdinSoaSliceType soaSlice = new TsOdinSoaSliceType();
-            for (OdinArgument odinArgument : o.getArgumentList()) {
-                if (odinArgument instanceof OdinNamedArgument namedArgument) {
-                    TsOdinType sliceType = doInferType(namedArgument.getExpression());
-                    soaSlice.getSlices().put(namedArgument.getIdentifier().getText(), sliceType);
-                }
-            }
-            return soaSlice;
-        } else if (soaUnzip != null) {
-            TsOdinTuple tuple = new TsOdinTuple();
-
-            if (o.getArgumentList().size() == 1) {
-                if (o.getArgumentList().getFirst() instanceof OdinUnnamedArgument unnamedArgument) {
-                    TsOdinType tsOdinType = doInferType(unnamedArgument.getExpression());
-                    if (tsOdinType instanceof TsOdinSoaSliceType tsOdinSoaSliceType) {
-                        tuple.getTypes().addAll(tsOdinSoaSliceType.getSlices().values());
-                    }
-                }
-            }
-            return tuple;
-        } else if (swizzle != null) {
-            if (o.getArgumentList().size() > 1) {
-                OdinArgument first = o.getArgumentList().getFirst();
-                if (first instanceof OdinUnnamedArgument arrayArgument) {
-                    TsOdinType tsOdinType = doInferType(arrayArgument.getExpression());
-                    if (tsOdinType.baseType(true) instanceof TsOdinArrayType tsOdinArrayType) {
-                        tsOdinArrayType.setSize(o.getArgumentList().size() - 1);
-                        return tsOdinArrayType;
-                    }
-                }
-            }
-        } else if (typeOf != null) {
-            List<OdinArgument> argumentList = o.getArgumentList();
-            if (!argumentList.isEmpty()) {
-                OdinArgument first = argumentList.getFirst();
-                if (first instanceof OdinUnnamedArgument argument) {
-                    TsOdinType tsOdinType = argument.getExpression().getInferredType();
-                    return OdinTypeResolver.createMetaType(tsOdinType, null);
-                }
-            }
-        } else if (!procedureType.getReturnTypes().isEmpty()) {
+        if (!procedureType.getReturnTypes().isEmpty()) {
             TsOdinProcedureType specializedType = OdinTypeSpecializer
                     .specializeProcedure(symbolTable, o.getArgumentList(), procedureType);
             if (specializedType.getReturnTypes().size() == 1) {

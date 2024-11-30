@@ -168,16 +168,18 @@ public class TsOdinBuiltInTypes {
     );
 
     public static final Map<String, EvOdinValue> BUILTIN_IDENTIFIERS = new HashMap<>();
+
     static {
         BUILTIN_IDENTIFIERS.put("true", new EvOdinValue(true, BOOL));
         BUILTIN_IDENTIFIERS.put("false", new EvOdinValue(false, BOOL));
     }
+
     public static final TsOdinType UNKNOWN = new TsOdinUnknownType();
     public static final TsOdinType UNDECIDED = new TsOdinUndecidedType();
 
     public static final EvOdinValue NULL = new EvNullValue();
     public static final TsOdinType VOID = new TsOdinVoidType();
-    
+
     private static final Map<String, TsOdinBuiltInType> builtInTypeMap = new HashMap<>();
     private static List<TsOdinType> integerTypes;
     private static List<TsOdinType> numericTypes;
@@ -316,7 +318,7 @@ public class TsOdinBuiltInTypes {
     }
 
     public static Collection<TsOdinType> getStringTypes() {
-        if(stringTypes == null) {
+        if (stringTypes == null) {
             stringTypes = List.of(STRING, C_STRING, RUNE);
         }
         return stringTypes;
@@ -358,12 +360,41 @@ public class TsOdinBuiltInTypes {
     public static Collection<TsOdinType> getFloatingPointTypes() {
         if (floatingPointTypes == null) {
             floatingPointTypes = builtInTypeMap.values().stream()
-                    .filter(t -> t instanceof TsOdinNumericType)
+                    .filter(t -> t instanceof TsOdinNumericType n && n.isFloatingPoint())
                     .map(t -> (TsOdinType) t)
                     .toList();
         }
 
         return floatingPointTypes;
+    }
+
+    public static Collection<TsOdinType> getSimpleFloatingPointTypes() {
+        return List.of(F16, F32, F64);
+    }
+
+    public static TsOdinType getBackingTypeOfComplexOrQuaternion(TsOdinType type) {
+        if (!(type instanceof TsOdinNumericType numericType))
+            return UNKNOWN;
+
+        int length = numericType.getLength();
+        if (numericType.isComplex()) {
+            if (length == 32) {
+                return F16;
+            } else if (length == 64) {
+                return F32;
+            } else if (length == 128) {
+                return F64;
+            }
+        } else if (numericType.isQuaternion()) {
+            if (length == 64) {
+                return F16;
+            } else if (length == 128) {
+                return F32;
+            } else if (length == 256) {
+                return F64;
+            }
+        }
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     public static Collection<TsOdinType> getBuiltInTypes() {
@@ -397,6 +428,11 @@ public class TsOdinBuiltInTypes {
         public String getName() {
             return "UNKNOWN";
         }
+
+        @Override
+        public boolean isUnknown() {
+            return true;
+        }
     }
 
     private static class TsOdinUndecidedType extends TsOdinTypeBase {
@@ -417,6 +453,11 @@ public class TsOdinBuiltInTypes {
         @Override
         public String getName() {
             return "UNDECIDED";
+        }
+
+        @Override
+        public boolean isUndecided() {
+            return true;
         }
     }
 

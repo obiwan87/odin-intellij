@@ -6,7 +6,11 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes.getBackingTypeOfComplexOrQuaternion;
+import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes.getSimpleFloatingPointTypes;
 
 public class OdinBuiltinProcedures {
     private final OdinInferenceEngine engine;
@@ -52,35 +56,35 @@ public class OdinBuiltinProcedures {
         };
     }
 
-    private TsOdinType len(OdinCallExpression callExpression) {
+    private TsOdinType len(OdinCallExpression ignoredCallExpression) {
         return TsOdinBuiltInTypes.INT;
     }
 
-    private TsOdinType cap(OdinCallExpression callExpression) {
+    private TsOdinType cap(OdinCallExpression ignoredCallExpression) {
         return TsOdinBuiltInTypes.INT;
     }
 
-    private TsOdinType sizeOf(OdinCallExpression callExpression) {
+    private TsOdinType sizeOf(OdinCallExpression ignoredCallExpression) {
         return TsOdinBuiltInTypes.INT;
     }
 
-    private TsOdinType alignOf(OdinCallExpression callExpression) {
+    private TsOdinType alignOf(OdinCallExpression ignoredCallExpression) {
         return TsOdinBuiltInTypes.INT;
     }
 
-    private TsOdinType offsetOfSelector(OdinCallExpression callExpression) {
+    private TsOdinType offsetOfSelector(OdinCallExpression ignoredCallExpression) {
         return TsOdinBuiltInTypes.UINTPTR;
     }
 
-    private TsOdinType offsetOfMember(OdinCallExpression callExpression) {
+    private TsOdinType offsetOfMember(OdinCallExpression ignoredCallExpression) {
         return TsOdinBuiltInTypes.UINTPTR;
     }
 
-    private TsOdinType offsetOf(OdinCallExpression callExpression) {
+    private TsOdinType offsetOf(OdinCallExpression ignoredCallExpression) {
         return TsOdinBuiltInTypes.UINTPTR;
     }
 
-    private TsOdinType offsetOfByString(OdinCallExpression callExpression) {
+    private TsOdinType offsetOfByString(OdinCallExpression ignoredCallExpression) {
         return TsOdinBuiltInTypes.UINTPTR;
     }
 
@@ -98,60 +102,149 @@ public class OdinBuiltinProcedures {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private TsOdinType typeidOf(OdinCallExpression callExpression) {
+    private TsOdinType typeidOf(OdinCallExpression ignored__) {
         return TsOdinBuiltInTypes.TYPEID;
     }
 
+    private TsOdinNumericType getCompatibleFloatingType(OdinCallExpression callExpression) {
+        TsOdinNumericType expectedType = TsOdinBuiltInTypes.F64;
+        List<TsOdinType> types = inferTypeOfArguments(callExpression);
+        // Gather all arguments
+        if (callExpression.getArgumentList().size() != 2)
+            return null;
+
+        // Get all distinct typed numeric arguments
+        List<TsOdinType> typedTypes = types.stream()
+                .map(TsOdinType::baseType)
+                .filter(t -> t.isNumeric() && !t.isUntyped())
+                .distinct()
+                .toList();
+
+        // If there's more than one typed type we can abort, because all arguments must be equally typed
+        if (typedTypes.size() > 1)
+            return null;
+
+        // If there is one, then it must be a floating type
+
+        if (!typedTypes.isEmpty()) {
+            if (!getSimpleFloatingPointTypes().contains(typedTypes.getFirst())) {
+                return null;
+            }
+            expectedType = (TsOdinNumericType) typedTypes.getFirst();
+        }
+
+        return expectedType;
+    }
+
     private TsOdinType complex(OdinCallExpression callExpression) {
+        TsOdinNumericType numericType = getCompatibleFloatingType(callExpression);
+
+        if (numericType != null) {
+            return switch (numericType.getLength()) {
+                case 16 -> TsOdinBuiltInTypes.COMPLEX32;
+                case 32 -> TsOdinBuiltInTypes.COMPLEX64;
+                case 64 -> TsOdinBuiltInTypes.COMPLEX128;
+                default -> TsOdinBuiltInTypes.UNKNOWN;
+            };
+        }
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     private TsOdinType quaternion(OdinCallExpression callExpression) {
+        TsOdinNumericType numericType = getCompatibleFloatingType(callExpression);
+        if (numericType != null) {
+            return switch (numericType.getLength()) {
+                case 16 -> TsOdinBuiltInTypes.QUATERNION64;
+                case 32 -> TsOdinBuiltInTypes.QUATERNION128;
+                case 64 -> TsOdinBuiltInTypes.QUATERNION256;
+                default -> TsOdinBuiltInTypes.UNKNOWN;
+            };
+        }
+        return TsOdinBuiltInTypes.UNKNOWN;
+    }
+
+    private TsOdinType complexOrQuaternionComponent(OdinCallExpression callExpression) {
+        TsOdinType tsOdinType = inferTypeOfFirstArgument(callExpression).baseType();
+        if (tsOdinType instanceof TsOdinNumericType numericType && (numericType.isQuaternion() || numericType.isComplex())) {
+            return getBackingTypeOfComplexOrQuaternion(tsOdinType);
+        }
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     private TsOdinType real(OdinCallExpression callExpression) {
-        return TsOdinBuiltInTypes.UNKNOWN;
+        return complexOrQuaternionComponent(callExpression);
     }
 
     private TsOdinType imag(OdinCallExpression callExpression) {
-        return TsOdinBuiltInTypes.UNKNOWN;
+        return complexOrQuaternionComponent(callExpression);
     }
 
-    private TsOdinType jmag(OdinCallExpression callExpression) {
+    private TsOdinType quaternionComponent(OdinCallExpression callExpression) {
+        TsOdinType tsOdinType = inferTypeOfFirstArgument(callExpression).baseType();
+        if (tsOdinType instanceof TsOdinNumericType numericType && numericType.isQuaternion()) {
+            return getBackingTypeOfComplexOrQuaternion(tsOdinType);
+        }
         return TsOdinBuiltInTypes.UNKNOWN;
+    }
+    private TsOdinType jmag(OdinCallExpression callExpression) {
+        return quaternionComponent(callExpression);
     }
 
     private TsOdinType kmag(OdinCallExpression callExpression) {
-        return TsOdinBuiltInTypes.UNKNOWN;
+        return quaternionComponent(callExpression);
     }
 
     private TsOdinType conj(OdinCallExpression callExpression) {
-        return TsOdinBuiltInTypes.UNKNOWN;
+        return complexOrQuaternionComponent(callExpression);
     }
 
-    private TsOdinType expandValues(OdinCallExpression callExpression) {
+    private TsOdinType expandValues(OdinCallExpression ignoredCallExpression) {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     private TsOdinType min(OdinCallExpression callExpression) {
-        return TsOdinBuiltInTypes.UNKNOWN;
+        // TODO very annoying implementation
+        return inferTypeOfFirstArgument(callExpression).typed().baseType();
     }
 
     private TsOdinType max(OdinCallExpression callExpression) {
-        return TsOdinBuiltInTypes.UNKNOWN;
+        // TODO very annoying implementation
+        return inferTypeOfFirstArgument(callExpression).typed().baseType();
     }
 
     private TsOdinType abs(OdinCallExpression callExpression) {
-        return TsOdinBuiltInTypes.UNKNOWN;
+        return inferTypeOfFirstArgument(callExpression).typed().baseType();
     }
 
     private TsOdinType clamp(OdinCallExpression callExpression) {
+        return inferTypeOfFirstArgument(callExpression);
+    }
+
+    private TsOdinType unreachable(OdinCallExpression ignoredCallExpression) {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private TsOdinType unreachable(OdinCallExpression callExpression) {
+    private TsOdinType inferTypeOfFirstArgument(OdinCallExpression callExpression) {
+        List<OdinArgument> argumentList = callExpression.getArgumentList();
+        if (!argumentList.isEmpty()) {
+            OdinArgument first = argumentList.getFirst();
+            if (first instanceof OdinUnnamedArgument argument) {
+                return argument.getExpression().getInferredType();
+            }
+        }
         return TsOdinBuiltInTypes.UNKNOWN;
+    }
+
+    private List<TsOdinType> inferTypeOfArguments(OdinCallExpression callExpression) {
+        List<TsOdinType> types = new ArrayList<>();
+        List<OdinArgument> argumentList = callExpression.getArgumentList();
+        if (!argumentList.isEmpty()) {
+            OdinArgument first = argumentList.getFirst();
+            if (first instanceof OdinUnnamedArgument argument) {
+                types.add(argument.getExpression().getInferredType());
+            }
+        }
+        return types;
     }
 
     private TsOdinType typeOf(OdinCallExpression callExpression) {

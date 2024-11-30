@@ -85,7 +85,10 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                         false,
                         (lookupElement, symbol) -> {
                             if (symbol.getSymbolType() == OdinSymbolType.STRUCT_FIELD) {
-                                TsOdinType symbolType = OdinInferenceEngine.getSymbolType(project, symbol, refExpressionType, expression);
+                                TsOdinType symbolType = OdinInferenceEngine.getSymbolType(project,
+                                        symbol,
+                                        refExpressionType,
+                                        expression);
                                 return lookupElement.withTypeText(symbolType.getLabel());
                             }
                             return lookupElement;

@@ -28,7 +28,7 @@ public class OdinTypeConverter {
         {
             HashSet<TsOdinType> supportedTypes = new HashSet<>();
             UNTYPED_CONVERSION_TABLE.put(TsOdinBuiltInTypes.UNTYPED_FLOAT, supportedTypes);
-            supportedTypes.addAll(TsOdinBuiltInTypes.getFloatingPointTypes());
+            supportedTypes.addAll(TsOdinBuiltInTypes.getNumericTypes());
         }
 
         // Untyped float

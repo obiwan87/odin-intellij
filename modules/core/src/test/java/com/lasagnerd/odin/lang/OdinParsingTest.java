@@ -1563,6 +1563,12 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
             assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
         }
+
+        {
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.F32);
+            assertEquals(TsOdinBuiltInTypes.F32, tsOdinType);
+        }
+
         {
             TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
             assertEquals(TsOdinBuiltInTypes.STRING, tsOdinType);
@@ -2459,13 +2465,13 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testFloatTypeConversion() throws IOException {
         OdinFile file = loadTypeInference();
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testFloatConversion", "x");
-            assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testFloatConversion", "y");
+            assertEquals(TsOdinBuiltInTypes.I64, tsOdinType);
         }
 
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testFloatConversion", "y");
-            assertEquals(TsOdinBuiltInTypes.I64, tsOdinType);
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testFloatConversion", "x");
+            assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
         }
     }
 
