@@ -47,3 +47,22 @@ testWhenStatement :: proc() {
     Y :: X
 }
 
+
+testParapolyExpressionEval :: proc() {
+    Vector :: struct($D: int) {
+        elements: [D]int
+    }
+
+    vec3 := Vector(3) {
+
+    }
+
+    elem3 := vec3.elements
+
+    vec4 := Vector(4) {
+
+    }
+
+    elem4 := vec4.elements
+}
+

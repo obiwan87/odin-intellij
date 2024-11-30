@@ -1,11 +1,12 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * NOTE: Even though a procedure can be used with polymorphic parameters,
@@ -18,6 +19,11 @@ import java.util.Map;
 public abstract class TsOdinGenericType extends TsOdinTypeBase {
 
     public static TsOdinGenericType NO_GENERIC_TYPE = new TsOdinGenericType() {
+        @Override
+        public List<TsOdinParameter> getParameters() {
+            return Collections.emptyList();
+        }
+
         @Override
         public TsOdinMetaType.MetaType getMetaType() {
             return TsOdinMetaType.MetaType.UNKNOWN;
@@ -82,4 +88,31 @@ public abstract class TsOdinGenericType extends TsOdinTypeBase {
         return this;
     }
 
+    public abstract List<TsOdinParameter> getParameters();
+
+    @Override
+    public String getLabel() {
+        if (!isSpecialized()) {
+            return super.getLabel() + TsOdinUtils.parametersStringIfNonEmpty(getParameters());
+        } else {
+            String paramList = getSpecializedParameterList();
+            return super.getLabel() + paramList;
+        }
+    }
+
+    private @NotNull String getSpecializedParameterList() {
+        List<String> labels = new ArrayList<>();
+        TsOdinStructType genericType = (TsOdinStructType) getGenericType();
+        for (TsOdinParameter parameter : genericType.getParameters()) {
+            if (parameter.getType().isExplicitPolymorphic()) {
+                TsOdinType tsOdinType = getResolvedPolymorphicParameters().get(parameter.getName());
+                labels.add(tsOdinType.getLabel());
+            } else {
+                EvOdinValue value = getSymbolTable().getValue(parameter.getName());
+                labels.add(value.getValue().toString());
+            }
+        }
+
+        return "(" + String.join(",", labels) + ")";
+    }
 }

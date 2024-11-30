@@ -51,6 +51,27 @@ public class OdinInsightUtils {
     public static final char[] XY = {'x', 'y'};
     public static final char[] X = {'x'};
 
+    public static final char[][][] ARRAY_SWIZZLE_FIELDS = {
+            {X, R},
+            {XY, RG},
+            {XYZ, RGB},
+            {XYZW, RGBA}
+    };
+
+    public static List<OdinSymbol> generateArraySwizzleFields(int arraySize, TsOdinType elementType) {
+        if (arraySize < 1 || arraySize > 4) {
+            return Collections.emptyList();
+        }
+
+        List<OdinSymbol> symbols = new ArrayList<>();
+        char[][] arraySwizzleField = ARRAY_SWIZZLE_FIELDS[arraySize - 1];
+        for (char[] combinations : arraySwizzleField) {
+            symbols.addAll(generateSwizzleFields(combinations, elementType));
+        }
+
+        return symbols;
+    }
+
     public static String getStringLiteralValue(OdinExpression odinExpression) {
         if (odinExpression instanceof OdinLiteralExpression literalExpression) {
             if (literalExpression.getBasicLiteral() instanceof OdinStringLiteral stringLiteral) {
@@ -168,19 +189,19 @@ public class OdinInsightUtils {
 
         if (includeReferenceableSymbols && TsOdinBuiltInTypes.getComplexTypes().contains(type)) {
             if (type == TsOdinBuiltInTypes.COMPLEX32) {
-                List<OdinSymbol> odinSymbols = generateSwizzleFields(RGB, TsOdinBuiltInTypes.F16);
+                List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F16);
                 odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F16));
                 return OdinSymbolTable.from(odinSymbols);
             }
 
             if (type == TsOdinBuiltInTypes.COMPLEX64) {
-                List<OdinSymbol> odinSymbols = generateSwizzleFields(RGB, TsOdinBuiltInTypes.F32);
+                List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F32);
                 odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F32));
                 return OdinSymbolTable.from(odinSymbols);
             }
 
             if (type == TsOdinBuiltInTypes.COMPLEX128) {
-                List<OdinSymbol> odinSymbols = generateSwizzleFields(RGB, TsOdinBuiltInTypes.F64);
+                List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F64);
                 odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F64));
                 return OdinSymbolTable.from(odinSymbols);
             }
@@ -440,10 +461,13 @@ public class OdinInsightUtils {
     // Swizzle field generator
 
     public static @NotNull List<OdinSymbol> getSwizzleFields(TsOdinArrayType tsOdinArrayType) {
-        List<OdinSymbol> symbols = new ArrayList<>();
-        symbols.addAll(generateSwizzleFields(RGBA, tsOdinArrayType.getElementType()));
-        symbols.addAll(generateSwizzleFields(XYZW, tsOdinArrayType.getElementType()));
-        return symbols;
+        if (tsOdinArrayType.getSize() == null) {
+            List<OdinSymbol> symbols = new ArrayList<>();
+            symbols.addAll(generateSwizzleFields(RGBA, tsOdinArrayType.getElementType()));
+            symbols.addAll(generateSwizzleFields(XYZW, tsOdinArrayType.getElementType()));
+            return symbols;
+        }
+        return generateArraySwizzleFields(tsOdinArrayType.getSize(), tsOdinArrayType.getElementType());
     }
 
 
