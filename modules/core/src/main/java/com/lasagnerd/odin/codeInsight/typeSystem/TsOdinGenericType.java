@@ -77,12 +77,12 @@ public abstract class TsOdinGenericType extends TsOdinTypeBase {
      */
     public boolean isSpecialized() {
         return getPolymorphicParameters().isEmpty() &&
-               genericType.getPolymorphicParameters()
+                genericType.getPolymorphicParameters()
                         .keySet().stream().allMatch(k -> getResolvedPolymorphicParameters().containsKey(k));
     }
 
     public TsOdinGenericType genericType() {
-        if(this.getGenericType() != NO_GENERIC_TYPE) {
+        if (this.getGenericType() != NO_GENERIC_TYPE) {
             return this.getGenericType();
         }
         return this;
@@ -102,14 +102,24 @@ public abstract class TsOdinGenericType extends TsOdinTypeBase {
 
     private @NotNull String getSpecializedParameterList() {
         List<String> labels = new ArrayList<>();
-        TsOdinStructType genericType = (TsOdinStructType) getGenericType();
+        TsOdinGenericType genericType = getGenericType();
+        if (genericType == null)
+            return "()";
+
         for (TsOdinParameter parameter : genericType.getParameters()) {
-            if (parameter.getType().isExplicitPolymorphic()) {
-                TsOdinType tsOdinType = getResolvedPolymorphicParameters().get(parameter.getName());
-                labels.add(tsOdinType.getLabel());
-            } else {
-                EvOdinValue value = getSymbolTable().getValue(parameter.getName());
-                labels.add(value.getValue().toString());
+            TsOdinType type = parameter.getType();
+            if (type != null) {
+                if (type.isExplicitPolymorphic()) {
+                    TsOdinType tsOdinType = getResolvedPolymorphicParameters().get(parameter.getName());
+                    if (tsOdinType != null) {
+                        labels.add(tsOdinType.getLabel());
+                    }
+                } else {
+                    EvOdinValue value = getSymbolTable().getValue(parameter.getName());
+                    if (value != null) {
+                        labels.add(value.getValue().toString());
+                    }
+                }
             }
         }
 
