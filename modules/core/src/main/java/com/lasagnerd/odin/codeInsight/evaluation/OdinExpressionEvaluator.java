@@ -29,7 +29,6 @@ public class OdinExpressionEvaluator extends OdinVisitor {
     public static Logger LOG = Logger.getInstance(OdinExpressionEvaluator.class);
 
     EvOdinValue value;
-    OdinSymbolTable symbolTable;
 
     public static EvOdinValue evaluate(OdinExpression expression) {
         try {
@@ -48,13 +47,9 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         return TsOdinBuiltInTypes.NULL;
     }
 
-//    public static EvOdinValue evaluate(OdinExpression expression) {
-//        return evaluate( expression);
-//    }
-
     @Override
     public void visitRefExpression(@NotNull OdinRefExpression o) {
-        OdinSymbolTable localSymbolTable;
+        OdinSymbolTable localSymbolTable = null;
         if (o.getType() != null)
             return;
 
@@ -75,8 +70,6 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
         } else if (o.getExpression() != null) {
             return;
-        } else {
-            localSymbolTable = symbolTable;
         }
 
         OdinSymbol symbol = o.getIdentifier().getReferencedSymbol();
