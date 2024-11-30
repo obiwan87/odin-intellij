@@ -215,7 +215,10 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     public TsOdinType getType(String typeName) {
         if (typesCache.get(typeName) == null) {
             OdinSymbol symbol = getSymbol(typeName);
-
+            if (symbol == null) {
+                System.out.printf("No builtin type with name %s%n", typeName);
+                return TsOdinBuiltInTypes.UNKNOWN;
+            }
             PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
             if (declaredIdentifier instanceof OdinDeclaredIdentifier odinDeclaredIdentifier) {
                 OdinSymbolTable builtinSymbols = OdinSymbolTable.from(getBuiltInSymbols());
@@ -369,6 +372,8 @@ ODIN_DEBUG   :: ODIN_DEBUG
         addConstant("ODIN_VERSION", "string");
         addConstant("ODIN_ROOT", "string");
         addConstant("ODIN_DEBUG", "bool");
+        addConstant("false", "bool");
+        addConstant("true", "bool");
 
         builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_BUILD_MODE"));
         builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_ENDIAN"));
