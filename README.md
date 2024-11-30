@@ -126,7 +126,7 @@ To set up LLDB-DAP:
 1. Download the LLVM 18.1.x binaries for your platform.
 2. In the Odin settings page, select the `lldb-dap` executable from the `bin` directory.
 
-> **Important:**  
+> [!IMPORTANT]
 > LLDB-DAP requires Python 3.10. Ensure Python 3.10 is installed and accessible by LLDB-DAP. On Windows, the easiest approach is to download the
 > embeddable Python 3.10 package and extract its contents into the LLVM `bin` directory.
 
