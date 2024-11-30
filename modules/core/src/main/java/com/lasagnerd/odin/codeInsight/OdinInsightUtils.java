@@ -1,8 +1,7 @@
 package com.lasagnerd.odin.codeInsight;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.LineColumn;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -635,8 +634,8 @@ public class OdinInsightUtils {
     public static String getLineColumn(@NotNull PsiElement element) {
         PsiFile containingFile = element.getContainingFile();
         if (containingFile != null) {
-            LineColumn lineColumn = StringUtil.offsetToLineColumn(containingFile.getText(), element.getTextOffset());
-            return (lineColumn.line + 1) + ":" + (lineColumn.column + 1);
+            LineColumn lineColumn = offsetToLineColumn(containingFile.getText(), element.getTextOffset());
+            return (lineColumn.line) + ":" + (lineColumn.column);
         }
         return "<unknown>:<unknown>";
     }
@@ -1007,6 +1006,59 @@ public class OdinInsightUtils {
 
         }
         return true;
+    }
+
+    public static void logStackOverFlowError(@NotNull PsiElement element, Logger log) {
+        String text = element.getText();
+        int textOffset = element.getTextOffset();
+        PsiFile containingFile = element.getContainingFile();
+        String fileName = "UNKNOWN";
+        if (containingFile != null) {
+            VirtualFile virtualFile = containingFile.getVirtualFile();
+            if (virtualFile != null) {
+                fileName = virtualFile.getCanonicalPath();
+            }
+            LineColumn lineColumn = offsetToLineColumn(containingFile.getText(), textOffset);
+            log.error("Stack overflow caused by element with text '%s' in %s:%d:%d".formatted(text,
+                    fileName,
+                    lineColumn.line,
+                    lineColumn.column));
+        } else {
+            log.error("Stack overflow caused by element with text '%s'".formatted(text));
+        }
+    }
+
+    // Record to hold the result
+    public record LineColumn(int line, int column) {
+    }
+
+    /**
+     * Finds the line and column of a given offset in the input string.
+     *
+     * @param input  The input string.
+     * @param offset The offset within the string.
+     * @return A LineColumn record containing the line and column of the offset.
+     * @throws IllegalArgumentException If the offset is invalid.
+     */
+    public static LineColumn offsetToLineColumn(String input, int offset) {
+        if (offset < 0 || offset > input.length()) {
+            throw new IllegalArgumentException("Offset is out of bounds.");
+        }
+
+        int line = 1; // Line numbers start from 1
+        int column = 1; // Column numbers start from 1
+
+        for (int i = 0; i < offset; i++) {
+            char currentChar = input.charAt(i);
+            if (currentChar == '\n') {
+                line++;
+                column = 1; // Reset column to 1 after a newline
+            } else {
+                column++;
+            }
+        }
+
+        return new LineColumn(line, column);
     }
 
     public record OdinCallInfo(OdinPsiElement callingElement, TsOdinType callingType, List<OdinArgument> argumentList) {

@@ -13,6 +13,7 @@ import com.intellij.psi.PsiManager;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -61,11 +62,20 @@ public class OdinSdkServiceImpl extends OdinSdkServiceBase {
 
     @Override
     public VirtualFile getBuiltinVirtualFile() {
+        return findSdkFile(Path.of("base", "builtin", "builtin.odin"));
+    }
+
+    @Override
+    public VirtualFile getIntrinsicsFile() {
+        return findSdkFile(Path.of("base", "intrinsics", "intrinsics.odin"));
+    }
+
+    private @Nullable VirtualFile findSdkFile(Path path) {
         Optional<String> validSdkPathOptional = OdinSdkUtils.getSdkPath(project);
         VirtualFile virtualFile;
         if (validSdkPathOptional.isPresent()) {
             String validSdkPath = validSdkPathOptional.get();
-            Path builtinOdinPath = Path.of(validSdkPath, "base", "builtin", "builtin.odin");
+            Path builtinOdinPath = Path.of(validSdkPath).resolve(path);
             virtualFile = VirtualFileManager.getInstance().findFileByNioPath(builtinOdinPath);
         } else {
             virtualFile = null;

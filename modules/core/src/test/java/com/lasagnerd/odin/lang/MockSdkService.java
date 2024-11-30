@@ -45,4 +45,11 @@ public class MockSdkService extends OdinSdkServiceBase {
         MockOdinImportService mockImportService = (MockOdinImportService) OdinImportService.getInstance(project);
         return mockImportService.getVirtualFile(path);
     }
+
+    @Override
+    public VirtualFile getIntrinsicsFile() {
+        Path path = Path.of(getSdkPath().get(), "base", "intrinsics", "intrinsics.odin");
+        MockOdinImportService mockImportService = (MockOdinImportService) OdinImportService.getInstance(project);
+        return mockImportService.getVirtualFile(path);
+    }
 }

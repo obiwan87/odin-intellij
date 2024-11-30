@@ -5,11 +5,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public interface OdinSdkService {
     static OdinSdkService getInstance(Project project) {
@@ -23,6 +26,30 @@ public interface OdinSdkService {
 
     static OdinSymbol createContextSymbol(Project project) {
         return getInstance(project).createImplicitStructSymbol("context", "Context", OdinSymbolType.PARAMETER, OdinScope.LOCAL, OdinVisibility.NONE);
+    }
+
+    static boolean isInDocumentationPurposeFile(PsiElement element) {
+        OdinSdkService instance = OdinSdkService.getInstance(element.getProject());
+        if (instance == null)
+            return false;
+
+        @NotNull VirtualFile containingFile = OdinImportUtils.getContainingVirtualFile(element);
+        if (!Objects.equals(instance.getBuiltinVirtualFile(), containingFile)) {
+            VirtualFile intrinsicsFile = instance.getIntrinsicsFile();
+            return Objects.equals(intrinsicsFile, containingFile);
+        }
+        return true;
+    }
+
+    static boolean isInBuiltinOdinFile(PsiElement element) {
+        OdinSdkService instance = OdinSdkService.getInstance(element.getProject());
+        if (instance == null)
+            return false;
+
+        @NotNull VirtualFile containingFile = OdinImportUtils.getContainingVirtualFile(element);
+
+        VirtualFile builtinVirtualFile = instance.getBuiltinVirtualFile();
+        return Objects.equals(builtinVirtualFile, containingFile);
     }
 
     List<OdinSymbol> getRuntimeCoreSymbols();
@@ -48,4 +75,6 @@ public interface OdinSdkService {
     void refreshCache();
 
     VirtualFile getBuiltinVirtualFile();
+
+    VirtualFile getIntrinsicsFile();
 }
