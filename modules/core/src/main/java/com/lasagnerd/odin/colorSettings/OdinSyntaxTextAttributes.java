@@ -142,11 +142,13 @@ public class OdinSyntaxTextAttributes {
 
     // Type references
     public static final TextAttributesKey ODIN_PKG_EXP_STRUCT_REF = createTextAttributesKey("ODIN_PKG_EXP_STRUCT_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    public static final TextAttributesKey ODIN_USING_PKG_EXP_STRUCT_REF = createTextAttributesKey("ODIN_USING_PKG_EXP_STRUCT_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_STRUCT_REF = createTextAttributesKey("ODIN_PKG_PRIVATE_STRUCT_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_FILE_PRIVATE_STRUCT_REF = createTextAttributesKey("ODIN_FILE_PRIVATE_STRUCT_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_LOCAL_STRUCT_REF = createTextAttributesKey("ODIN_LOCAL_STRUCT_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
 
     public static final TextAttributesKey ODIN_PKG_EXP_UNION_REF = createTextAttributesKey("ODIN_PKG_EXP_UNION_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    public static final TextAttributesKey ODIN_USING_PKG_EXP_UNION_REF = createTextAttributesKey("ODIN_USING_PKG_EXP_UNION_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_UNION_REF = createTextAttributesKey("ODIN_PKG_PRIVATE_UNION_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_FILE_PRIVATE_UNION_REF = createTextAttributesKey("ODIN_FILE_PRIVATE_UNION_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_LOCAL_UNION_REF = createTextAttributesKey("ODIN_LOCAL_UNION_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
@@ -157,6 +159,7 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_LOCAL_BIT_FIELD_REF = createTextAttributesKey("ODIN_LOCAL_BIT_FIELD_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
 
     public static final TextAttributesKey ODIN_PKG_EXP_ENUM_REF = createTextAttributesKey("ODIN_PKG_EXP_ENUM_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    public static final TextAttributesKey ODIN_USING_PKG_EXP_ENUM_REF = createTextAttributesKey("ODIN_USING_PKG_EXP_ENUM_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_FILE_PRIVATE_ENUM_REF = createTextAttributesKey("ODIN_FILE_PRIVATE_ENUM_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_PKG_PRIVATE_ENUM_REF = createTextAttributesKey("ODIN_PKG_PRIVATE_ENUM_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
     public static final TextAttributesKey ODIN_LOCAL_ENUM_REF = createTextAttributesKey("ODIN_LOCAL_ENUM_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
@@ -303,18 +306,21 @@ public class OdinSyntaxTextAttributes {
 
         // Struct
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.STRUCT, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, ODIN_PKG_EXP_STRUCT_REF);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.STRUCT, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, OdinSymbolOrigin.USING, ODIN_USING_PKG_EXP_STRUCT_REF);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.STRUCT, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_PKG_PRIVATE_STRUCT_REF);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.STRUCT, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_STRUCT_REF);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.STRUCT, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_STRUCT_REF);
 
         // Enum
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.ENUM, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, ODIN_PKG_EXP_ENUM_REF);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.ENUM, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, OdinSymbolOrigin.USING, ODIN_USING_PKG_EXP_ENUM_REF);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.ENUM, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_PKG_PRIVATE_ENUM_REF);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.ENUM, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_ENUM_REF);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.ENUM, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_ENUM_REF);
 
         // Union
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.UNION, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, ODIN_PKG_EXP_UNION_REF);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.UNION, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, OdinSymbolOrigin.USING, ODIN_USING_PKG_EXP_UNION_REF);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.UNION, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_PKG_PRIVATE_UNION_REF);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.UNION, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_UNION_REF);
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.UNION, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_UNION_REF);
