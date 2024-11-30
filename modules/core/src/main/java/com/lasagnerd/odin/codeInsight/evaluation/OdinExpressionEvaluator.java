@@ -98,10 +98,14 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         }
 
         if (symbol.isBuiltin() && symbol.getName().startsWith("ODIN_")) {
+
             OdinSdkService sdkService = OdinSdkService.getInstance(project);
             EvOdinValue builtinValue = sdkService.getValue(symbol.getName());
             if (builtinValue != null) {
                 return builtinValue;
+            }
+            if (OdinSdkService.isInBuiltinOdinFile(symbol.getDeclaredIdentifier())) {
+                return TsOdinBuiltInTypes.NULL;
             }
         }
         PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();

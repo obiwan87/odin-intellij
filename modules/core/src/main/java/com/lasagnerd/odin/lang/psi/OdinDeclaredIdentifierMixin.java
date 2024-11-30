@@ -138,7 +138,7 @@ public abstract class OdinDeclaredIdentifierMixin extends ASTWrapperPsiElement i
     public static @Nullable TsOdinType tryGetBuiltinType(OdinDeclaredIdentifier declaredIdentifier) {
         Project project = declaredIdentifier.getProject();
         OdinSdkService instance = OdinSdkService.getInstance(project);
-        Boolean builtinDeclaration = OdinSdkService.isInBuiltinOdinFile(declaredIdentifier);
+        boolean builtinDeclaration = OdinSdkService.isInBuiltinOdinFile(declaredIdentifier);
         if (builtinDeclaration) {
             return instance.getType(declaredIdentifier.getName());
         }

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public interface OdinSdkService {
+
     static OdinSdkService getInstance(Project project) {
         return project.getService(OdinSdkService.class);
     }
