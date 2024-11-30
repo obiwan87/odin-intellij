@@ -423,11 +423,13 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
 
             // References
             new AttributesDescriptor("References//Struct//Package exported struct reference", ODIN_PKG_EXP_STRUCT_REF),
+            new AttributesDescriptor("References//Struct//Struct reference through using", ODIN_USING_PKG_EXP_STRUCT_REF),
             new AttributesDescriptor("References//Struct//Package private struct reference", ODIN_PKG_PRIVATE_STRUCT_REF),
             new AttributesDescriptor("References//Struct//File private struct reference", ODIN_FILE_PRIVATE_STRUCT_REF),
             new AttributesDescriptor("References//Struct//Local struct reference", ODIN_LOCAL_STRUCT_REF),
 
             new AttributesDescriptor("References//Union//Package exported union reference", ODIN_PKG_EXP_UNION_REF),
+            new AttributesDescriptor("References//Union//Union reference through using", ODIN_USING_PKG_EXP_UNION_REF),
             new AttributesDescriptor("References//Union//Package private union reference", ODIN_PKG_PRIVATE_UNION_REF),
             new AttributesDescriptor("References//Union//File private union reference", ODIN_FILE_PRIVATE_UNION_REF),
             new AttributesDescriptor("References//Union//Local union reference", ODIN_LOCAL_UNION_REF),
@@ -438,6 +440,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("References//Bit field//Local bit field reference", ODIN_LOCAL_BIT_FIELD_REF),
 
             new AttributesDescriptor("References//Enum//Package exported enum reference", ODIN_PKG_EXP_ENUM_REF),
+            new AttributesDescriptor("References//Enum//Enum reference through using", ODIN_USING_PKG_EXP_ENUM_REF),
             new AttributesDescriptor("References//Enum//Package private enum reference", ODIN_PKG_PRIVATE_ENUM_REF),
             new AttributesDescriptor("References//Enum//File private enum reference", ODIN_FILE_PRIVATE_ENUM_REF),
             new AttributesDescriptor("References//Enum//Local enum reference", ODIN_LOCAL_ENUM_REF),

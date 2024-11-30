@@ -886,3 +886,9 @@ vec2 :: [2]int
 testAbsenceOfFieldsInRhsAndLhs :: proc(x: vec2) {
     x : vec2 = { x.x }
 }
+
+testUsingVsNonUsing :: proc() {
+    using o
+    s1 := o.S1 { }
+    s1_using := S1 { }
+}

@@ -7,14 +7,17 @@ import com.lasagnerd.odin.lang.psi.OdinAttributesDefinition;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinType;
 import com.lasagnerd.odin.lang.psi.OdinUsingStatement;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.With;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 @NoArgsConstructor
 @Data
+@AllArgsConstructor
 public class OdinSymbol {
     // Psi stuff
     private PsiNamedElement declaredIdentifier;
@@ -30,6 +33,7 @@ public class OdinSymbol {
     private boolean hasUsing;
     private boolean implicitlyDeclared;
     private boolean builtin;
+    @With
     private boolean visibleThroughUsing;
     private boolean foreign;
 
