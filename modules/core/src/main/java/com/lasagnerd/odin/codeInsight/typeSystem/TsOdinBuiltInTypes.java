@@ -1,7 +1,10 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.lang.psi.OdinDeclaration;
+import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 
 import java.util.*;
 
@@ -13,7 +16,7 @@ public class TsOdinBuiltInTypes {
     public static final TsOdinBuiltInType B64 = new TsOdinBoolType("b64", 64);
 
     // TODO this is an alias, and doesn't need to be defined here. Add to symbols 
-    public static final TsOdinBuiltInType BYTE = new TsOdinBuiltInType("byte");
+//    public static final TsOdinBuiltInType BYTE = new TsOdinBuiltInType("byte");
 
     public static final TsOdinNumericType INT = new TsOdinNumericType("int", 32, false, true, false, false, true, TsOdinNumericType.Endian.UNSPECIFIED);
     public static final TsOdinNumericType I8 = new TsOdinNumericType("i8", 8, false, true, false, false, true, TsOdinNumericType.Endian.UNSPECIFIED);
@@ -76,6 +79,34 @@ public class TsOdinBuiltInTypes {
     public static final TsOdinUntypedType UNTYPED_FLOAT = new TsOdinUntypedType("untyped float", TsOdinMetaType.MetaType.NUMERIC);
     public static final TsOdinUntypedType UNTYPED_COMPLEX = new TsOdinUntypedType("untyped complex", TsOdinMetaType.MetaType.NUMERIC);
     public static final TsOdinUntypedType UNTYPED_QUATERNION = new TsOdinUntypedType("untyped quaternion", TsOdinMetaType.MetaType.NUMERIC);
+
+    public static final TsOdinBuiltinProc LEN = new TsOdinBuiltinProc("len");
+    public static final TsOdinBuiltinProc CAP = new TsOdinBuiltinProc("cap");
+    public static final TsOdinBuiltinProc SIZE_OF = new TsOdinBuiltinProc("size_of");
+    public static final TsOdinBuiltinProc ALIGN_OF = new TsOdinBuiltinProc("align_of");
+    public static final TsOdinBuiltinProc OFFSET_OF_SELECTOR = new TsOdinBuiltinProc("offset_of_selector");
+    public static final TsOdinBuiltinProc OFFSET_OF_MEMBER = new TsOdinBuiltinProc("offset_of_member");
+    public static final TsOdinBuiltinProc OFFSET_OF = new TsOdinBuiltinProc("offset_of");
+    public static final TsOdinBuiltinProc OFFSET_OF_BY_STRING = new TsOdinBuiltinProc("offset_of_by_string");
+    public static final TsOdinBuiltinProc TYPE_OF = new TsOdinBuiltinProc("type_of");
+    public static final TsOdinBuiltinProc TYPE_INFO_OF = new TsOdinBuiltinProc("type_info_of");
+    public static final TsOdinBuiltinProc TYPEID_OF = new TsOdinBuiltinProc("typeid_of");
+    public static final TsOdinBuiltinProc SWIZZLE = new TsOdinBuiltinProc("swizzle");
+    public static final TsOdinBuiltinProc COMPLEX = new TsOdinBuiltinProc("complex");
+    public static final TsOdinBuiltinProc QUATERNION = new TsOdinBuiltinProc("quaternion");
+    public static final TsOdinBuiltinProc REAL = new TsOdinBuiltinProc("real");
+    public static final TsOdinBuiltinProc IMAG = new TsOdinBuiltinProc("imag");
+    public static final TsOdinBuiltinProc JMAG = new TsOdinBuiltinProc("jmag");
+    public static final TsOdinBuiltinProc KMAG = new TsOdinBuiltinProc("kmag");
+    public static final TsOdinBuiltinProc CONJ = new TsOdinBuiltinProc("conj");
+    public static final TsOdinBuiltinProc EXPAND_VALUES = new TsOdinBuiltinProc("expand_values");
+    public static final TsOdinBuiltinProc MIN = new TsOdinBuiltinProc("min");
+    public static final TsOdinBuiltinProc MAX = new TsOdinBuiltinProc("max");
+    public static final TsOdinBuiltinProc ABS = new TsOdinBuiltinProc("abs");
+    public static final TsOdinBuiltinProc CLAMP = new TsOdinBuiltinProc("clamp");
+    public static final TsOdinBuiltinProc SOA_ZIP = new TsOdinBuiltinProc("soa_zip");
+    public static final TsOdinBuiltinProc SOA_UNZIP = new TsOdinBuiltinProc("soa_unzip");
+    public static final TsOdinBuiltinProc UNREACHABLE = new TsOdinBuiltinProc("unreachable");
 
     public static final List<String> RESERVED_TYPES = List.of(
             "bool",
@@ -153,6 +184,7 @@ public class TsOdinBuiltInTypes {
     private static List<TsOdinType> floatingPointTypes;
     private static List<TsOdinType> stringTypes;
     private static List<TsOdinType> boolTypes;
+    private static List<TsOdinType> procedures;
 
     static {
         // Boolean types
@@ -163,7 +195,7 @@ public class TsOdinBuiltInTypes {
         builtInTypeMap.put(B64.getName(), B64);
 
         // Numeric types
-        builtInTypeMap.put(BYTE.getName(), U8);
+//        builtInTypeMap.put(BYTE.getName(), U8);
         builtInTypeMap.put(INT.getName(), INT);
         builtInTypeMap.put(I8.getName(), I8);
         builtInTypeMap.put(I16.getName(), I16);
@@ -225,8 +257,45 @@ public class TsOdinBuiltInTypes {
         // Nil "type"
         builtInTypeMap.put(NIL.getName(), NIL);
 
-        //Any
-//        builtInTypeMap.put(ANY.getName(), ANY);
+        // Procedures
+        builtInTypeMap.put(LEN.getName(), LEN);
+        builtInTypeMap.put(CAP.getName(), CAP);
+        builtInTypeMap.put(SIZE_OF.getName(), SIZE_OF);
+        builtInTypeMap.put(ALIGN_OF.getName(), ALIGN_OF);
+        builtInTypeMap.put(OFFSET_OF_SELECTOR.getName(), OFFSET_OF_SELECTOR);
+        builtInTypeMap.put(OFFSET_OF_MEMBER.getName(), OFFSET_OF_MEMBER);
+        builtInTypeMap.put(OFFSET_OF.getName(), OFFSET_OF);
+        builtInTypeMap.put(OFFSET_OF_BY_STRING.getName(), OFFSET_OF_BY_STRING);
+        builtInTypeMap.put(TYPE_OF.getName(), TYPE_OF);
+        builtInTypeMap.put(TYPE_INFO_OF.getName(), TYPE_INFO_OF);
+        builtInTypeMap.put(TYPEID_OF.getName(), TYPEID_OF);
+        builtInTypeMap.put(SWIZZLE.getName(), SWIZZLE);
+        builtInTypeMap.put(COMPLEX.getName(), COMPLEX);
+        builtInTypeMap.put(QUATERNION.getName(), QUATERNION);
+        builtInTypeMap.put(REAL.getName(), REAL);
+        builtInTypeMap.put(IMAG.getName(), IMAG);
+        builtInTypeMap.put(JMAG.getName(), JMAG);
+        builtInTypeMap.put(KMAG.getName(), KMAG);
+        builtInTypeMap.put(CONJ.getName(), CONJ);
+        builtInTypeMap.put(EXPAND_VALUES.getName(), EXPAND_VALUES);
+        builtInTypeMap.put(MIN.getName(), MIN);
+        builtInTypeMap.put(MAX.getName(), MAX);
+        builtInTypeMap.put(ABS.getName(), ABS);
+        builtInTypeMap.put(CLAMP.getName(), CLAMP);
+        builtInTypeMap.put(SOA_ZIP.getName(), SOA_ZIP);
+        builtInTypeMap.put(SOA_UNZIP.getName(), SOA_UNZIP);
+        builtInTypeMap.put(UNREACHABLE.getName(), UNREACHABLE);
+    }
+
+    public static TsOdinTypeAlias createByteAlias(OdinDeclaredIdentifier declaredIdentifier) {
+        TsOdinTypeAlias alias = new TsOdinTypeAlias();
+        alias.setName("byte");
+        alias.setAliasedType(U8);
+        alias.setDeclaredIdentifier(declaredIdentifier);
+        OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
+        alias.setDeclaration(declaration);
+        alias.setDistinct(false);
+        return alias;
     }
 
     public static TsOdinBuiltInType getBuiltInType(String identifierText) {
@@ -273,6 +342,17 @@ public class TsOdinBuiltInTypes {
         }
 
         return boolTypes;
+    }
+
+    public static Collection<TsOdinType> getProcedures() {
+        if (procedures == null) {
+            procedures = builtInTypeMap.values().stream()
+                    .filter(t -> t instanceof TsOdinNumericType)
+                    .map(t -> (TsOdinType) t)
+                    .toList();
+        }
+
+        return procedures;
     }
 
     public static Collection<TsOdinType> getFloatingPointTypes() {

@@ -55,7 +55,7 @@ public class MockOdinImportService implements OdinImportService {
         return virtualFiles.toArray(new VirtualFile[0]);
     }
 
-    private @NotNull LightVirtualFile getVirtualFile(Path filePath) {
+    public @NotNull LightVirtualFile getVirtualFile(Path filePath) {
         String absolutePath = FileUtil.toSystemIndependentName(filePath.toAbsolutePath().toString());
         LightVirtualFile virtualFile = virtualFileMap.get(absolutePath);
 

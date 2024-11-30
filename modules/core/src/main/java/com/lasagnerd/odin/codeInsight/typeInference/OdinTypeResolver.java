@@ -18,8 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes.RESERVED_TYPES;
-
 @EqualsAndHashCode(callSuper = true)
 public class OdinTypeResolver extends OdinVisitor {
 
@@ -123,6 +121,11 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     public static @NotNull TsOdinMetaType createMetaType(TsOdinType tsOdinType, OdinExpression firstExpression) {
+        boolean distinct = OdinInsightUtils.isDistinct(firstExpression);
+        return createMetaType(tsOdinType, distinct);
+    }
+
+    public static @NotNull TsOdinMetaType createMetaType(TsOdinType tsOdinType, boolean distinct) {
         TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(tsOdinType.getMetaType());
         tsOdinMetaType.setName(tsOdinType.getName());
         tsOdinMetaType.setDeclaredIdentifier(tsOdinMetaType.getDeclaredIdentifier());
@@ -130,7 +133,7 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinMetaType.setSymbolTable(tsOdinType.getSymbolTable());
         tsOdinMetaType.setRepresentedType(tsOdinType);
         tsOdinMetaType.setPsiType(tsOdinType.getPsiType());
-        tsOdinMetaType.setDistinct(OdinInsightUtils.isDistinct(firstExpression));
+        tsOdinMetaType.setDistinct(distinct);
         return tsOdinMetaType;
     }
 
@@ -333,7 +336,7 @@ public class OdinTypeResolver extends OdinVisitor {
         PsiNamedElement declaration;
         String identifierText = typeIdentifier.getText();
 
-        TsOdinType scopeType = symbolTable.getType(typeIdentifier.getIdentifierToken().getText());
+        TsOdinType scopeType = symbolTable.getType(identifierText);
         if (scopeType != null) {
             return scopeType;
         } else {
@@ -342,9 +345,9 @@ public class OdinTypeResolver extends OdinVisitor {
             declaration = symbol != null ? symbol.getDeclaredIdentifier() : null;
             // This check should happen in OdinReference
             if (!(declaration instanceof OdinDeclaredIdentifier declaredIdentifier)) {
-                if (RESERVED_TYPES.contains(identifierText)) {
-                    return TsOdinBuiltInTypes.getBuiltInType(identifierText);
-                }
+//                if (RESERVED_TYPES.contains(identifierText)) {
+//                    return TsOdinBuiltInTypes.getBuiltInType(identifierText);
+//                }
                 return TsOdinBuiltInTypes.UNKNOWN;
             } else {
                 var knownType = symbolTable.getKnownTypes().get(declaredIdentifier);
@@ -387,7 +390,12 @@ public class OdinTypeResolver extends OdinVisitor {
         }
         switch (odinDeclaration) {
             case OdinConstantInitializationStatement constantInitializationStatement -> {
-                OdinExpression firstExpression = constantInitializationStatement.getExpressionList().getFirst();
+                TsOdinType t = identifier.getType();
+                if (t instanceof TsOdinMetaType metaType
+                        && metaType.representedType() instanceof TsOdinBuiltInType) {
+                    return metaType.representedType();
+                }
+
                 OdinType declaredType = OdinInsightUtils.getDeclaredType(constantInitializationStatement);
                 if ((
                         declaredType instanceof OdinStructType
@@ -397,13 +405,12 @@ public class OdinTypeResolver extends OdinVisitor {
                                 || declaredType instanceof OdinProcedureType
                                 || declaredType instanceof OdinProcedureLiteralType
                                 || declaredType instanceof OdinEnumType
-                )
+                ) && (t instanceof TsOdinMetaType metaType)
                 ) {
                     // check distinct
-                    TsOdinType tsOdinType = resolveType(typeSymbolTable, identifier, odinDeclaration, declaredType);
-                    tsOdinType.setDistinct(OdinInsightUtils.isDistinct(firstExpression));
-                    return tsOdinType;
+                    return metaType.representedType();
                 }
+
 
                 // Ref expression: it's a type alias
                 List<OdinExpression> expressionList = constantInitializationStatement.getExpressionList();
@@ -422,8 +429,8 @@ public class OdinTypeResolver extends OdinVisitor {
                     TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
                     typeAlias.setName(identifier.getText());
                     addKnownType(typeAlias, identifier, odinDeclaration, typeSymbolTable);
-                    TsOdinType tsOdinType = odinExpression.getInferredType(typeSymbolTable);
-                    if (tsOdinType instanceof TsOdinMetaType metaType) {
+
+                    if (t instanceof TsOdinMetaType metaType) {
                         TsOdinType resolvedMetaType = doResolveMetaType(metaType.getSymbolTable(), metaType);
                         typeAlias.setDistinct(OdinInsightUtils.isDistinct(odinExpression));
                         return createTypeAliasFromMetaType(typeAlias, identifier, resolvedMetaType, odinDeclaration, odinExpression);

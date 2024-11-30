@@ -5,6 +5,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -15,7 +17,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -26,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class OdinDeclaredIdentifierMixin extends ASTWrapperPsiElement implements OdinDeclaredIdentifier {
     public OdinDeclaredIdentifierMixin(@NotNull ASTNode node) {
@@ -126,6 +131,26 @@ public abstract class OdinDeclaredIdentifierMixin extends ASTWrapperPsiElement i
     private CachedValueProvider.Result<TsOdinType> computeType() {
         List<Object> dependencies = new ArrayList<>();
         dependencies.add(this);
-        return CachedValueProvider.Result.create(OdinInferenceEngine.resolveTypeOfDeclaredIdentifier(this), dependencies);
+        TsOdinType tsOdinType = tryGetBuiltinType(this);
+        if (tsOdinType == null) {
+            return CachedValueProvider.Result.create(OdinInferenceEngine.resolveTypeOfDeclaredIdentifier(this), dependencies);
+        }
+        return CachedValueProvider.Result.create(tsOdinType, dependencies);
+    }
+
+    public static @Nullable TsOdinType tryGetBuiltinType(OdinDeclaredIdentifier declaredIdentifier) {
+        Project project = declaredIdentifier.getProject();
+        OdinSdkService instance = OdinSdkService.getInstance(project);
+        if (instance == null)
+            return null;
+
+        VirtualFile builtinVirtualFile = instance.getBuiltinVirtualFile();
+        @NotNull VirtualFile containingFile = OdinImportUtils.getContainingVirtualFile(declaredIdentifier);
+
+        boolean builtinDeclaration = Objects.equals(builtinVirtualFile, containingFile);
+        if (builtinDeclaration) {
+            return instance.getType(declaredIdentifier.getName());
+        }
+        return null;
     }
 }

@@ -80,12 +80,12 @@ testParapoly_distinctAlias :: proc() {
 
 testTypeInference_withRecursivePolyPara :: proc() {
     Parent :: struct($T: typeid) {
-        children: []Child(T),
+        children: []Child(T), // Calls CallType(SimpleRefType)
         data: ^T
     }
 
     Child :: struct($T: typeid) {
-        parent: Parent(T),
+        parent: Parent(T), // From there to Parent, the specialized types table gets lost. How?
         change_parent: proc(parent: Parent(T)),
         data: ^T
     }

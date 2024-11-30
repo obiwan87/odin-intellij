@@ -146,7 +146,7 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(project, new PsiCachedValuesFactory(project)));
         project.registerService(StartupManager.class, new StartupManagerImpl(project, project.getCoroutineScope()));
         project.registerService(OdinImportService.class, new MockOdinImportService(myFileFactory));
-        project.registerService(OdinSdkService.class, new MockBuiltinSymbolsService(project, myFileFactory));
+        project.registerService(OdinSdkService.class, new MockSdkService(project, myFileFactory));
         project.registerService(OdinProjectSettingsService.class, new OdinProjectSettingsService());
         registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
         registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
@@ -714,6 +714,13 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testTypeSwitch() throws IOException {
         OdinFile odinFile = loadTypeInference();
         {
+
+            assertExpressionIsOfTypeWithName(odinFile,
+                    "testTypeSwitch",
+                    "test3",
+                    TsOdinBuiltInTypes.I32.getClass(),
+                    "i32");
+
             assertExpressionIsOfTypeWithName(odinFile,
                     "testTypeSwitch",
                     "test1",
@@ -726,11 +733,6 @@ public class OdinParsingTest extends UsefulTestCase {
                     TsOdinStructType.class,
                     "Line");
 
-            assertExpressionIsOfTypeWithName(odinFile,
-                    "testTypeSwitch",
-                    "test3",
-                    TsOdinBuiltInTypes.I32.getClass(),
-                    "i32");
         }
     }
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.Task.Backgroundable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.lasagnerd.odin.lang.psi.OdinFile;
@@ -56,5 +57,19 @@ public class OdinSdkServiceImpl extends OdinSdkServiceBase {
                 });
             }
         });
+    }
+
+    @Override
+    public VirtualFile getBuiltinVirtualFile() {
+        Optional<String> validSdkPathOptional = OdinSdkUtils.getSdkPath(project);
+        VirtualFile virtualFile;
+        if (validSdkPathOptional.isPresent()) {
+            String validSdkPath = validSdkPathOptional.get();
+            Path builtinOdinPath = Path.of(validSdkPath, "base", "builtin", "builtin.odin");
+            virtualFile = VirtualFileManager.getInstance().findFileByNioPath(builtinOdinPath);
+        } else {
+            virtualFile = null;
+        }
+        return virtualFile;
     }
 }
