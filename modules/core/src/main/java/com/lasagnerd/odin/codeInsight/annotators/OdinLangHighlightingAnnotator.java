@@ -291,8 +291,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         return;
                     }
 
-                    OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(declaration);
-                    if (odinSymbolTable.getSymbol(declaredIdentifier.getName()) != null) {
+                    OdinContext odinContext = OdinContextBuilder.buildContext(declaration);
+                    if (odinContext.getSymbol(declaredIdentifier.getName()) != null) {
                         highlight(annotationHolder, psiElementRange, ODIN_SHADOWING_VARIABLE);
                         return;
                     }
@@ -405,8 +405,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
             // If we are being referenced from a polymorphic type, do not show any errors
             if (refExpression.getExpression() != null) {
-                OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
-                TsOdinType type = refExpression.getExpression().getInferredType(symbolTable);
+                OdinContext context = computeContext(identifierTokenParent);
+                TsOdinType type = refExpression.getExpression().getInferredType(context);
                 TsOdinType referenceableType = OdinInsightUtils.getReferenceableType(type);
                 if (referenceableType instanceof TsOdinPolymorphicType) {
                     annotationSessionState.aborted.add(topMostExpression);
@@ -463,8 +463,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 return;
             }
 
-            OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
-            if (symbolTable.isShadowing(symbol.getName())) {
+            OdinContext context = computeContext(identifierTokenParent);
+            if (context.isShadowing(symbol.getName())) {
                 highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_SHADOWING_VARIABLE_REF);
                 return;
             }
@@ -515,8 +515,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 "'%s' is not visible");
     }
 
-    private static OdinSymbolTable computeSymbolTable(PsiElement identifierTokenParent) {
-        return OdinSymbolTableResolver.computeSymbolTable(identifierTokenParent)
+    private static OdinContext computeContext(PsiElement identifierTokenParent) {
+        return OdinContextBuilder.buildContext(identifierTokenParent)
                 .with(OdinImportService.getInstance(identifierTokenParent.getProject())
                         .getPackagePath(identifierTokenParent));
     }

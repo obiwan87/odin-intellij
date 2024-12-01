@@ -57,7 +57,7 @@ public interface OdinSdkService {
 
     List<OdinSymbol> getBuiltInSymbols();
 
-    OdinSymbolTable getBuiltInSymbolTable();
+    OdinContext getBuiltInContext();
 
     boolean isInSyntheticOdinFile(PsiElement element);
 

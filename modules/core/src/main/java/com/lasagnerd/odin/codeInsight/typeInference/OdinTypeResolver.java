@@ -7,9 +7,9 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import lombok.EqualsAndHashCode;
@@ -23,7 +23,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
     private boolean substitutionMode;
 
-    public record OdinTypeResolverParameters(OdinSymbolTable symbolTable,
+    public record OdinTypeResolverParameters(OdinContext context,
                                              OdinDeclaredIdentifier declaredIdentifier,
                                              OdinDeclaration declaration,
                                              boolean substitutionMode) {
@@ -34,10 +34,10 @@ public class OdinTypeResolver extends OdinVisitor {
         if (type == null)
             return TsOdinBuiltInTypes.UNKNOWN;
 
-        OdinSymbolTable symbolTable = initializeSymbolTable(typeResolverParameters.symbolTable(), type);
+        OdinContext context = initializeContext(typeResolverParameters.context(), type);
 
         OdinTypeResolver typeResolver = new OdinTypeResolver(0,
-                symbolTable,
+                context,
                 typeResolverParameters.declaration(),
                 typeResolverParameters.declaredIdentifier());
         typeResolver.substitutionMode = typeResolverParameters.substitutionMode;
@@ -45,7 +45,7 @@ public class OdinTypeResolver extends OdinVisitor {
         return Objects.requireNonNullElse(typeResolver.type, TsOdinBuiltInTypes.UNKNOWN);
     }
 
-    public static @NotNull TsOdinType resolveType(OdinSymbolTable symbolTable, OdinSymbol symbol) {
+    public static @NotNull TsOdinType resolveType(OdinContext context, OdinSymbol symbol) {
         OdinType type = symbol.getPsiType();
         OdinDeclaration declaration = symbol.getDeclaration();
         OdinDeclaredIdentifier declaredIdentifier;
@@ -55,68 +55,68 @@ public class OdinTypeResolver extends OdinVisitor {
             declaredIdentifier = null;
         }
 
-        return resolveType(0, symbolTable, declaredIdentifier, declaration, type);
+        return resolveType(0, context, declaredIdentifier, declaration, type);
     }
 
-    public static @NotNull TsOdinType resolveType(OdinSymbolTable symbolTable, @NotNull OdinType type) {
-        return resolveType(0, symbolTable, null, null, type);
+    public static @NotNull TsOdinType resolveType(OdinContext context, @NotNull OdinType type) {
+        return resolveType(0, context, null, null, type);
     }
 
-    public static @NotNull TsOdinType resolveType(OdinSymbolTable symbolTable,
+    public static @NotNull TsOdinType resolveType(OdinContext context,
                                                   OdinDeclaredIdentifier declaredIdentifier,
                                                   OdinDeclaration declaration,
                                                   @NotNull OdinType type) {
-        return resolveType(0, symbolTable, declaredIdentifier, declaration, type);
+        return resolveType(0, context, declaredIdentifier, declaration, type);
     }
 
     public static @NotNull TsOdinType resolveType(int level,
-                                                  OdinSymbolTable symbolTable,
+                                                  OdinContext context,
                                                   OdinDeclaredIdentifier declaredIdentifier,
                                                   OdinDeclaration declaration,
                                                   OdinType type) {
-        return resolveType(level, symbolTable, declaredIdentifier, declaration, false, type);
+        return resolveType(level, context, declaredIdentifier, declaration, false, type);
     }
 
     public static @NotNull TsOdinType resolveType(int level,
-                                                  OdinSymbolTable symbolTable,
+                                                  OdinContext context,
                                                   OdinDeclaredIdentifier declaredIdentifier,
                                                   OdinDeclaration declaration,
                                                   boolean substitutionMode,
                                                   OdinType type) {
-        OdinTypeResolverParameters typeResolverParameters = new OdinTypeResolverParameters(symbolTable, declaredIdentifier, declaration, substitutionMode);
+        OdinTypeResolverParameters typeResolverParameters = new OdinTypeResolverParameters(context, declaredIdentifier, declaration, substitutionMode);
         if (!substitutionMode) {
             return type.getResolvedType(typeResolverParameters);
         }
         return resolveType(typeResolverParameters, type);
     }
 
-    public static @NotNull OdinSymbolTable initializeSymbolTable(OdinSymbolTable symbolTable, PsiElement element) {
-        if (symbolTable == null) {
-            symbolTable = new OdinSymbolTable(OdinImportService.getInstance(element.getProject()).getPackagePath(element));
+    public static @NotNull OdinContext initializeContext(OdinContext context, PsiElement element) {
+        if (context == null) {
+            context = new OdinContext(OdinImportService.getInstance(element.getProject()).getPackagePath(element));
         } else {
-            OdinSymbolTable newSymbolTable = new OdinSymbolTable(OdinImportService.getInstance(element.getProject()).getPackagePath(element));
-            newSymbolTable.addTypes(symbolTable);
-            newSymbolTable.getKnownTypes().putAll(symbolTable.getKnownTypes());
-            newSymbolTable.getSpecializedTypes().putAll(symbolTable.getSpecializedTypes());
-            newSymbolTable.getValueStorage().putAll(symbolTable.getValueStorage());
-            symbolTable = newSymbolTable;
+            OdinContext newContext = new OdinContext(OdinImportService.getInstance(element.getProject()).getPackagePath(element));
+            newContext.addTypes(context);
+            newContext.getKnownTypes().putAll(context.getKnownTypes());
+            newContext.getSpecializedTypes().putAll(context.getSpecializedTypes());
+            newContext.getValueStorage().putAll(context.getValueStorage());
+            context = newContext;
         }
-        return symbolTable;
+        return context;
     }
 
-    public static @NotNull TsOdinMetaType findMetaType(OdinSymbolTable symbolTable,
+    public static @NotNull TsOdinMetaType findMetaType(OdinContext context,
                                                        OdinTypeDefinitionExpression expression,
                                                        @NotNull OdinType type) {
-        return findMetaType(symbolTable, null, null, expression, type);
+        return findMetaType(context, null, null, expression, type);
     }
 
-    public static @NotNull TsOdinMetaType findMetaType(OdinSymbolTable symbolTable,
+    public static @NotNull TsOdinMetaType findMetaType(OdinContext context,
                                                        OdinDeclaredIdentifier declaredIdentifier,
                                                        OdinDeclaration declaration,
                                                        OdinExpression firstExpression,
                                                        @NotNull OdinType type) {
 
-        TsOdinType tsOdinType = type.getResolvedType(new OdinTypeResolverParameters(symbolTable, declaredIdentifier, declaration, false));
+        TsOdinType tsOdinType = type.getResolvedType(new OdinTypeResolverParameters(context, declaredIdentifier, declaration, false));
         return createMetaType(tsOdinType, firstExpression);
     }
 
@@ -130,18 +130,18 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinMetaType.setName(tsOdinType.getName());
         tsOdinMetaType.setDeclaredIdentifier(tsOdinMetaType.getDeclaredIdentifier());
         tsOdinMetaType.setDeclaration(tsOdinType.getDeclaration());
-        tsOdinMetaType.setSymbolTable(tsOdinType.getSymbolTable());
+        tsOdinMetaType.setContext(tsOdinType.getContext());
         tsOdinMetaType.setRepresentedType(tsOdinType);
         tsOdinMetaType.setPsiType(tsOdinType.getPsiType());
         tsOdinMetaType.setDistinct(distinct);
         return tsOdinMetaType;
     }
 
-    public static @NotNull TsOdinType resolveMetaType(OdinSymbolTable symbolTable, TsOdinMetaType metaType) {
-        return resolveMetaType(0, symbolTable, metaType);
+    public static @NotNull TsOdinType resolveMetaType(OdinContext context, TsOdinMetaType metaType) {
+        return resolveMetaType(0, context, metaType);
     }
 
-    public static TsOdinType resolveMetaType(int level, OdinSymbolTable symbolTable, TsOdinMetaType metaType) {
+    public static TsOdinType resolveMetaType(int level, OdinContext context, TsOdinMetaType metaType) {
         if (metaType.getRepresentedType() instanceof TsOdinBuiltInType) {
             return TsOdinBuiltInTypes.getBuiltInType(metaType.getName());
         } else {
@@ -151,17 +151,17 @@ public class OdinTypeResolver extends OdinVisitor {
             } else if (metaType.getPsiType() != null) {
                 OdinDeclaredIdentifier declaredIdentifier = metaType.getDeclaredIdentifier();
                 tsOdinType = resolveType(level,
-                        symbolTable,
+                        context,
                         declaredIdentifier,
                         metaType.getDeclaration(),
                         metaType.getPsiType());
                 tsOdinType.setDeclaration(metaType.getDeclaration());
                 tsOdinType.setDeclaredIdentifier(declaredIdentifier);
-                symbolTable.addKnownType(declaredIdentifier, tsOdinType);
+                context.addKnownType(declaredIdentifier, tsOdinType);
                 if (declaredIdentifier != null) {
                     tsOdinType.setName(declaredIdentifier.getName());
                 }
-                tsOdinType.getSymbolTable().putAll(symbolTable);
+                tsOdinType.getContext().putAll(context);
                 metaType.setRepresentedType(tsOdinType);
                 return tsOdinType;
             } else if (metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
@@ -178,10 +178,10 @@ public class OdinTypeResolver extends OdinVisitor {
 
                 typeAlias.setDeclaration(metaType.getDeclaration());
                 typeAlias.setName(metaType.getName());
-                typeAlias.setSymbolTable(metaType.getSymbolTable());
+                typeAlias.setContext(metaType.getContext());
 
                 TsOdinType aliasedType = resolveMetaType(level + 1,
-                        metaType.getAliasedMetaType().getSymbolTable(),
+                        metaType.getAliasedMetaType().getContext(),
                         metaType.getAliasedMetaType());
                 typeAlias.setAliasedType(aliasedType);
 
@@ -195,7 +195,7 @@ public class OdinTypeResolver extends OdinVisitor {
     TsOdinType type;
 
     private final int level;
-    private final OdinSymbolTable symbolTable;
+    private final OdinContext context;
     private final OdinDeclaration typeDeclaration;
     private final OdinDeclaredIdentifier typeDeclaredIdentifier;
 
@@ -203,9 +203,9 @@ public class OdinTypeResolver extends OdinVisitor {
     private final Set<OdinDeclaredIdentifier> visitedDeclaredIdentifiers = new HashSet<>();
 
 
-    public OdinTypeResolver(int level, OdinSymbolTable symbolTable, OdinDeclaration typeDeclaration, OdinDeclaredIdentifier typeDeclaredIdentifier) {
+    public OdinTypeResolver(int level, OdinContext context, OdinDeclaration typeDeclaration, OdinDeclaredIdentifier typeDeclaredIdentifier) {
         this.level = level;
-        this.symbolTable = symbolTable;
+        this.context = context;
         this.typeDeclaration = typeDeclaration;
         this.typeDeclaredIdentifier = typeDeclaredIdentifier;
     }
@@ -213,44 +213,44 @@ public class OdinTypeResolver extends OdinVisitor {
     /**
      * Creates a new scope for a given package identifier defined within this scope.
      *
-     * @param symbolTable       The symbol table to use
+     * @param context       The symbol table to use
      * @param packageIdentifier The identifier that is used to reference the package
      * @return A new scope with all the declared symbols of the referenced package
      */
 
-    public static OdinSymbolTable getScopeOfImport(OdinSymbolTable symbolTable, String packageIdentifier) {
-        OdinSymbol odinSymbol = symbolTable.getSymbol(packageIdentifier);
+    public static OdinContext getScopeOfImport(OdinContext context, String packageIdentifier) {
+        OdinSymbol odinSymbol = context.getSymbol(packageIdentifier);
         if (odinSymbol != null) {
             PsiNamedElement declaredIdentifier = odinSymbol.getDeclaredIdentifier();
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return OdinImportUtils.getSymbolsOfImportedPackage(symbolTable.getPackagePath(), importDeclarationStatement);
+                return OdinImportUtils.getContextOfImportedPackage(context.getPackagePath(), importDeclarationStatement);
             }
         }
-        return OdinSymbolTable.EMPTY;
+        return OdinContext.EMPTY;
     }
 
     // resolve type calls
-    public @NotNull TsOdinType doResolveType(OdinSymbolTable symbolTable,
+    public @NotNull TsOdinType doResolveType(OdinContext context,
                                              OdinDeclaredIdentifier declaredIdentifier,
                                              OdinDeclaration declaration,
                                              @NotNull OdinType type) {
-        return resolveType(level + 1, symbolTable, declaredIdentifier, declaration, this.substitutionMode, type);
+        return resolveType(level + 1, context, declaredIdentifier, declaration, this.substitutionMode, type);
     }
 
-    public @NotNull TsOdinType doResolveType(OdinSymbolTable symbolTable,
+    public @NotNull TsOdinType doResolveType(OdinContext context,
                                              @NotNull OdinType type) {
-        return resolveType(level + 1, symbolTable, null, null, this.substitutionMode, type);
+        return resolveType(level + 1, context, null, null, this.substitutionMode, type);
     }
 
-    public @NotNull TsOdinType doResolveMetaType(OdinSymbolTable symbolTable, TsOdinMetaType metaType) {
-        return resolveMetaType(level + 1, symbolTable, metaType);
+    public @NotNull TsOdinType doResolveMetaType(OdinContext context, TsOdinMetaType metaType) {
+        return resolveMetaType(level + 1, context, metaType);
     }
 
-    public @NotNull TsOdinType doResolveType(OdinSymbolTable symbolTable, OdinExpression odinExpression) {
-        TsOdinType tsOdinType = odinExpression.getInferredType(symbolTable);
+    public @NotNull TsOdinType doResolveType(OdinContext context, OdinExpression odinExpression) {
+        TsOdinType tsOdinType = odinExpression.getInferredType(context);
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            return doResolveMetaType(symbolTable, tsOdinMetaType);
+            return doResolveMetaType(context, tsOdinMetaType);
         }
         return tsOdinType;
     }
@@ -262,7 +262,7 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     private List<TsOdinParameter> createParameters(TsOdinType baseType, List<OdinParamEntry> paramEntries) {
-        OdinSymbolTable localSymbolTable = baseType.getSymbolTable();
+        OdinContext localContext = baseType.getContext();
         List<TsOdinParameter> typeParameters = new ArrayList<>();
         int k = 0;
         for (var paramEntry : paramEntries) {
@@ -272,9 +272,9 @@ public class OdinTypeResolver extends OdinVisitor {
 
             // Value polymorphism
             for (OdinPolymorphicType odinPolymorphicType : PsiTreeUtil.findChildrenOfType(paramEntry, OdinPolymorphicType.class)) {
-                TsOdinType tsOdinType = doResolveType(localSymbolTable, odinPolymorphicType);
-                localSymbolTable.addType(tsOdinType.getName(), tsOdinType);
-                localSymbolTable.add(odinPolymorphicType.getDeclaredIdentifier());
+                TsOdinType tsOdinType = doResolveType(localContext, odinPolymorphicType);
+                localContext.addType(tsOdinType.getName(), tsOdinType);
+                localContext.add(odinPolymorphicType.getDeclaredIdentifier());
                 if (baseType instanceof TsOdinGenericType tsOdinGenericType) {
                     tsOdinGenericType.getPolymorphicParameters().put(tsOdinType.getName(), tsOdinType);
                 }
@@ -289,8 +289,8 @@ public class OdinTypeResolver extends OdinVisitor {
                     valuePolymorphicType.setName(name);
                     valuePolymorphicType.setDeclaredIdentifier(declaredIdentifier);
                     valuePolymorphicType.setDeclaration(parameterDeclaration);
-                    localSymbolTable.addType(valuePolymorphicType.getName(), valuePolymorphicType);
-                    localSymbolTable.add(declaredIdentifier);
+                    localContext.addType(valuePolymorphicType.getName(), valuePolymorphicType);
+                    localContext.add(declaredIdentifier);
                     if (baseType instanceof TsOdinGenericType tsOdinGenericType) {
                         tsOdinGenericType.getPolymorphicParameters().put(valuePolymorphicType.getName(), valuePolymorphicType);
                     }
@@ -300,7 +300,7 @@ public class OdinTypeResolver extends OdinVisitor {
             List<TsOdinParameter> parameters = createParameters(paramEntry, parameterDeclaration, k);
             for (var tsOdinParameter : parameters) {
                 if (tsOdinParameter.getPsiType() != null) {
-                    TsOdinType tsOdinType = doResolveType(localSymbolTable,
+                    TsOdinType tsOdinType = doResolveType(localContext,
                             tsOdinParameter.getPsiType());
 
                     tsOdinParameter.setType(tsOdinType);
@@ -325,18 +325,18 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinType.setName(name);
         tsOdinType.setDeclaration(typeDeclaration);
         if (typeDeclaredIdentifier != null) {
-            this.symbolTable.addKnownType(typeDeclaredIdentifier, tsOdinType);
+            this.context.addKnownType(typeDeclaredIdentifier, tsOdinType);
         }
-        tsOdinType.getSymbolTable().putAll(symbolTable);
-        tsOdinType.getSymbolTable().setPackagePath(symbolTable.getPackagePath());
+        tsOdinType.getContext().putAll(context);
+        tsOdinType.getContext().setPackagePath(context.getPackagePath());
         log("Initialized " + tsOdinType.getClass().getSimpleName() + " with name " + name);
     }
 
-    private TsOdinType resolveIdentifier(OdinIdentifier typeIdentifier, OdinSymbolTable symbolTable) {
+    private TsOdinType resolveIdentifier(OdinIdentifier typeIdentifier, OdinContext context) {
         PsiNamedElement declaration;
         String identifierText = typeIdentifier.getText();
 
-        TsOdinType scopeType = symbolTable.getType(identifierText);
+        TsOdinType scopeType = context.getType(identifierText);
         if (scopeType != null) {
             return scopeType;
         } else {
@@ -350,33 +350,33 @@ public class OdinTypeResolver extends OdinVisitor {
 //                }
                 return TsOdinBuiltInTypes.UNKNOWN;
             } else {
-                var knownType = symbolTable.getKnownTypes().get(declaredIdentifier);
+                var knownType = context.getKnownTypes().get(declaredIdentifier);
                 if (knownType != null) {
                     log("Cache hit for type: " + knownType.getLabel());
                     return knownType;
                 } else {
-                    return resolveTypeFromDeclaredIdentifier(symbolTable, declaredIdentifier);
+                    return resolveTypeFromDeclaredIdentifier(context, declaredIdentifier);
                 }
             }
         }
     }
 
-    public static TsOdinType resolveType(OdinSymbolTable symbolTable, OdinDeclaredIdentifier identifier) {
+    public static TsOdinType resolveType(OdinContext context, OdinDeclaredIdentifier identifier) {
         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(identifier, OdinDeclaration.class);
-        OdinTypeResolver typeResolver = new OdinTypeResolver(0, symbolTable, declaration, identifier);
-        return typeResolver.resolveTypeFromDeclaredIdentifier(symbolTable, identifier);
+        OdinTypeResolver typeResolver = new OdinTypeResolver(0, context, declaration, identifier);
+        return typeResolver.resolveTypeFromDeclaredIdentifier(context, identifier);
     }
 
     @Override
     public void visitProcedureLiteralType(@NotNull OdinProcedureLiteralType o) {
         this.type = doResolveType(
-                symbolTable,
+                context,
                 this.typeDeclaredIdentifier,
                 this.typeDeclaration,
                 o.getProcedureDefinition().getProcedureSignature().getProcedureType());
     }
 
-    private TsOdinType resolveTypeFromDeclaredIdentifier(OdinSymbolTable symbolTable, OdinDeclaredIdentifier declaredIdentifier) {
+    private TsOdinType resolveTypeFromDeclaredIdentifier(OdinContext context, OdinDeclaredIdentifier declaredIdentifier) {
         OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier,
                 false,
                 OdinDeclaration.class);
@@ -386,11 +386,11 @@ public class OdinTypeResolver extends OdinVisitor {
             return metaType.representedType();
         }
 
-        OdinSymbolTable typeSymbolTable;
+        OdinContext typeContext;
         if (odinDeclaration != null) {
-            typeSymbolTable = initializeSymbolTable(symbolTable, odinDeclaration);
+            typeContext = initializeContext(context, odinDeclaration);
         } else {
-            typeSymbolTable = OdinSymbolTable.EMPTY;
+            typeContext = OdinContext.EMPTY;
         }
         switch (odinDeclaration) {
             case OdinConstantInitializationStatement constantInitializationStatement -> {
@@ -400,7 +400,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 // Check whether this constant is a "pure" type definition, or if it is a type alias
                 if (isTypeDefinition(declaredType)) {
                     // check distinct
-                    TsOdinType tsOdinType = doResolveType(typeSymbolTable, declaredIdentifier, odinDeclaration, declaredType);
+                    TsOdinType tsOdinType = doResolveType(typeContext, declaredIdentifier, odinDeclaration, declaredType);
                     tsOdinType.setDistinct(OdinInsightUtils.isDistinct(firstExpression));
                     return tsOdinType;
                 }
@@ -421,10 +421,10 @@ public class OdinTypeResolver extends OdinVisitor {
                     //  that will be needed by odinExpression as well
                     TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
                     typeAlias.setName(declaredIdentifier.getText());
-                    addKnownType(typeAlias, declaredIdentifier, odinDeclaration, typeSymbolTable);
-                    TsOdinType tsOdinType = odinExpression.getInferredType(typeSymbolTable);
+                    addKnownType(typeAlias, declaredIdentifier, odinDeclaration, typeContext);
+                    TsOdinType tsOdinType = odinExpression.getInferredType(typeContext);
                     if (tsOdinType instanceof TsOdinMetaType metaType) {
-                        TsOdinType resolvedMetaType = doResolveMetaType(metaType.getSymbolTable(), metaType);
+                        TsOdinType resolvedMetaType = doResolveMetaType(metaType.getContext(), metaType);
                         typeAlias.setDistinct(OdinInsightUtils.isDistinct(odinExpression));
                         return createTypeAliasFromMetaType(typeAlias, declaredIdentifier, resolvedMetaType, odinDeclaration, odinExpression);
                     }
@@ -432,12 +432,12 @@ public class OdinTypeResolver extends OdinVisitor {
                 }
             }
             case OdinPolymorphicType polymorphicType -> {
-                return doResolveType(symbolTable, declaredIdentifier, odinDeclaration, polymorphicType);
+                return doResolveType(context, declaredIdentifier, odinDeclaration, polymorphicType);
             }
             case OdinParameterDeclarator odinParameterDeclarator -> {
                 // Look for polymorphic type definitions like $C: typeid/...
                 if (declaredIdentifier.getDollar() != null) {
-                    return doResolveType(symbolTable, odinParameterDeclarator.getTypeDefinition());
+                    return doResolveType(context, odinParameterDeclarator.getTypeDefinition());
                 }
             }
             case null, default -> {
@@ -474,14 +474,14 @@ public class OdinTypeResolver extends OdinVisitor {
             typeAlias.setDistinct(typeDefinitionExpression.getDistinct() != null);
             typeAlias.setPsiType(typeDefinitionExpression.getType());
         }
-        typeAlias.setSymbolTable(resolvedMetaType.getSymbolTable());
+        typeAlias.setContext(resolvedMetaType.getContext());
         return typeAlias;
     }
 
     // Visitor methods
     @Override
     public void visitQualifiedType(@NotNull OdinQualifiedType qualifiedType) {
-        OdinSymbolTable packageScope = getScopeOfImport(symbolTable, qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
+        OdinContext packageScope = getScopeOfImport(context, qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
         OdinSimpleRefType simpleRefType = qualifiedType.getSimpleRefType();
         if (simpleRefType != null) {
             this.type = doResolveType(packageScope, simpleRefType);
@@ -491,7 +491,7 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitSimpleRefType(@NotNull OdinSimpleRefType o) {
         OdinIdentifier identifier = o.getIdentifier();
-        this.type = resolveIdentifier(identifier, symbolTable);
+        this.type = resolveIdentifier(identifier, context);
     }
 
     @Override
@@ -505,17 +505,17 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitCallType(@NotNull OdinCallType o) {
         OdinType type = o.getType();
-        this.type = doResolveType(symbolTable, type);
+        this.type = doResolveType(context, type);
 
         if (this.type instanceof TsOdinStructType structType) {
             // This should not be called again if type is already been visited
             // it might be a better idea to specialize the type at inference time and not at resolution time
-            this.type = OdinTypeSpecializer.specializeStructOrGetCached(symbolTable, structType, o.getArgumentList());
+            this.type = OdinTypeSpecializer.specializeStructOrGetCached(context, structType, o.getArgumentList());
         }
 
         if (this.type instanceof TsOdinUnionType unionType) {
             // This should not be called again if type is already been visited
-            this.type = OdinTypeSpecializer.specializeUnionOrGetCached(symbolTable, unionType, o.getArgumentList());
+            this.type = OdinTypeSpecializer.specializeUnionOrGetCached(context, unionType, o.getArgumentList());
         }
     }
 
@@ -523,10 +523,10 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitMatrixType(@NotNull OdinMatrixType o) {
         if (o.getType() != null) {
             TsOdinMatrixType tsOdinMatrixType = new TsOdinMatrixType();
-            TsOdinType elementType = doResolveType(symbolTable, o.getType());
+            TsOdinType elementType = doResolveType(context, o.getType());
             tsOdinMatrixType.setElementType(elementType);
             tsOdinMatrixType.setPsiType(o);
-            tsOdinMatrixType.setSymbolTable(symbolTable);
+            tsOdinMatrixType.setContext(context);
             this.type = tsOdinMatrixType;
         }
     }
@@ -536,9 +536,9 @@ public class OdinTypeResolver extends OdinVisitor {
         OdinType elementPsiType = o.getType();
         TsOdinSliceType tsOdinSliceType = new TsOdinSliceType();
         if (elementPsiType != null) {
-            TsOdinType tsOdinElementType = doResolveType(symbolTable, elementPsiType);
+            TsOdinType tsOdinElementType = doResolveType(context, elementPsiType);
             tsOdinSliceType.setElementType(tsOdinElementType);
-            tsOdinSliceType.setSymbolTable(symbolTable);
+            tsOdinSliceType.setContext(context);
             tsOdinSliceType.setPsiType(o);
             tsOdinSliceType.setSoa(checkDirective(o.getDirectiveIdentifier(), "#soa"));
 
@@ -559,9 +559,9 @@ public class OdinTypeResolver extends OdinVisitor {
         OdinType elementPsiType = o.getType();
         TsOdinDynamicArray tsOdinDynamicArray = new TsOdinDynamicArray();
         if (elementPsiType != null) {
-            TsOdinType tsOdinElementType = doResolveType(symbolTable, elementPsiType);
+            TsOdinType tsOdinElementType = doResolveType(context, elementPsiType);
             tsOdinDynamicArray.setElementType(tsOdinElementType);
-            tsOdinDynamicArray.setSymbolTable(symbolTable);
+            tsOdinDynamicArray.setContext(context);
             tsOdinDynamicArray.setPsiType(o);
             tsOdinDynamicArray.setSoa(checkDirective(o.getDirectiveIdentifier(), "#soa"));
             this.type = tsOdinDynamicArray;
@@ -572,9 +572,9 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitMultiPointerType(@NotNull OdinMultiPointerType o) {
         TsOdinMultiPointerType tsOdinMultiPointerType = new TsOdinMultiPointerType();
         tsOdinMultiPointerType.setPsiType(o);
-        TsOdinType dereferencedType = doResolveType(symbolTable, Objects.requireNonNull(o.getType()));
+        TsOdinType dereferencedType = doResolveType(context, Objects.requireNonNull(o.getType()));
         tsOdinMultiPointerType.setDereferencedType(dereferencedType);
-        tsOdinMultiPointerType.setSymbolTable(symbolTable);
+        tsOdinMultiPointerType.setContext(context);
         this.type = tsOdinMultiPointerType;
     }
 
@@ -585,12 +585,12 @@ public class OdinTypeResolver extends OdinVisitor {
         initializeNamedType(tsOdinBitSetType);
         OdinExpression elementTypeExpression = o.getExpression();
         if (elementTypeExpression != null) {
-            TsOdinType tsOdinElementType = doResolveType(symbolTable, elementTypeExpression);
+            TsOdinType tsOdinElementType = doResolveType(context, elementTypeExpression);
             tsOdinBitSetType.setElementType(tsOdinElementType);
         }
 
         if (o.getType() != null) {
-            TsOdinType tsBackingType = doResolveType(symbolTable, o.getType());
+            TsOdinType tsBackingType = doResolveType(context, o.getType());
             tsOdinBitSetType.setBackingType(tsBackingType);
         }
         this.type = tsOdinBitSetType;
@@ -605,14 +605,14 @@ public class OdinTypeResolver extends OdinVisitor {
 
         List<TsOdinParameter> parameters = createParameters(tsOdinUnionType, unionType.getParamEntryList());
         tsOdinUnionType.setParameters(parameters);
-        addKnownType(tsOdinUnionType, typeDeclaredIdentifier, typeDeclaration, tsOdinUnionType.getSymbolTable());
+        addKnownType(tsOdinUnionType, typeDeclaredIdentifier, typeDeclaration, tsOdinUnionType.getContext());
         OdinUnionBlock unionBlock = unionType.getUnionBlock();
         if (unionBlock != null) {
             OdinUnionBody unionBody = unionBlock.getUnionBody();
             if (unionBody != null) {
                 List<OdinType> types = unionBody.getTypeList();
                 for (OdinType type : types) {
-                    TsOdinType tsOdinType = doResolveType(tsOdinUnionType.getSymbolTable(), type);
+                    TsOdinType tsOdinType = doResolveType(tsOdinUnionType.getContext(), type);
 
                     TsOdinUnionVariant tsOdinUnionVariant = new TsOdinUnionVariant();
                     tsOdinUnionVariant.setPsiType(type);
@@ -627,30 +627,30 @@ public class OdinTypeResolver extends OdinVisitor {
     private static void addKnownType(TsOdinType tsOdinType,
                                      OdinDeclaredIdentifier declaredIdentifier,
                                      OdinDeclaration declaration,
-                                     OdinSymbolTable symbolTable) {
+                                     OdinContext context) {
         if (declaredIdentifier != null) {
-            symbolTable.addKnownType(declaredIdentifier, tsOdinType);
+            context.addKnownType(declaredIdentifier, tsOdinType);
             List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getSymbols(declaration);
-            symbolTable.add(localSymbols.getFirst());
+            context.add(localSymbols.getFirst());
         }
     }
 
     @Override
     public void visitArrayType(@NotNull OdinArrayType arrayType) {
         TsOdinArrayType tsOdinArrayType = new TsOdinArrayType();
-        tsOdinArrayType.setSymbolTable(symbolTable);
+        tsOdinArrayType.setContext(context);
         OdinArraySize arraySize = arrayType.getArraySize();
         tsOdinArrayType.setPsiSizeElement(arraySize);
         tsOdinArrayType.setPsiType(arrayType);
         if (arraySize.getExpression() != null) {
-            Integer sizeValue = OdinExpressionEvaluator.evaluate(symbolTable, arraySize.getExpression()).asInt();
+            Integer sizeValue = OdinExpressionEvaluator.evaluate(context, arraySize.getExpression()).asInt();
             tsOdinArrayType.setSize(sizeValue);
         }
 
         tsOdinArrayType.setSoa(checkDirective(arrayType.getDirectiveIdentifier(), "#soa"));
         tsOdinArrayType.setSimd(checkDirective(arrayType.getDirectiveIdentifier(), "#simd"));
 
-        TsOdinType elementType = doResolveType(symbolTable, arrayType.getTypeDefinition());
+        TsOdinType elementType = doResolveType(context, arrayType.getTypeDefinition());
         tsOdinArrayType.setElementType(elementType);
 
 
@@ -660,12 +660,12 @@ public class OdinTypeResolver extends OdinVisitor {
     @Override
     public void visitMapType(@NotNull OdinMapType mapType) {
         TsOdinMapType tsOdinMapType = new TsOdinMapType();
-        tsOdinMapType.setSymbolTable(symbolTable);
+        tsOdinMapType.setContext(context);
         tsOdinMapType.setPsiType(mapType);
-        TsOdinType keyType = doResolveType(symbolTable, mapType.getKeyType());
+        TsOdinType keyType = doResolveType(context, mapType.getKeyType());
         tsOdinMapType.setKeyType(keyType);
 
-        TsOdinType valueType = doResolveType(symbolTable, mapType.getValueType());
+        TsOdinType valueType = doResolveType(context, mapType.getValueType());
         tsOdinMapType.setValueType(valueType);
         this.type = tsOdinMapType;
     }
@@ -675,10 +675,10 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinPointerType tsOdinPointerType = new TsOdinPointerType();
         tsOdinPointerType.setPsiType(odinPointerType);
 
-        TsOdinType elementType = doResolveType(symbolTable, Objects.requireNonNull(odinPointerType.getType()));
+        TsOdinType elementType = doResolveType(context, Objects.requireNonNull(odinPointerType.getType()));
         tsOdinPointerType.setDereferencedType(elementType);
-        tsOdinPointerType.getSymbolTable().putAll(symbolTable);
-        tsOdinPointerType.getSymbolTable().setPackagePath(symbolTable.getPackagePath());
+        tsOdinPointerType.getContext().putAll(context);
+        tsOdinPointerType.getContext().setPackagePath(context.getPackagePath());
         this.type = tsOdinPointerType;
     }
 
@@ -697,7 +697,7 @@ public class OdinTypeResolver extends OdinVisitor {
             // Single return value
             OdinType type = returnParameters.getType();
             if (type != null) {
-                TsOdinType tsOdinType = doResolveType(tsOdinProcedureType.getSymbolTable(), type);
+                TsOdinType tsOdinType = doResolveType(tsOdinProcedureType.getContext(), type);
 
                 TsOdinParameter tsOdinParameter = new TsOdinParameter();
                 tsOdinParameter.setType(tsOdinType);
@@ -707,8 +707,8 @@ public class OdinTypeResolver extends OdinVisitor {
                 tsOdinProcedureType.setReturnTypes(List.of(tsOdinType));
                 tsOdinProcedureType.setReturnParameters(List.of(tsOdinParameter));
                 if (type instanceof OdinPolymorphicType polymorphicType) {
-                    tsOdinProcedureType.getSymbolTable().addType(tsOdinType.getName(), tsOdinType);
-                    tsOdinProcedureType.getSymbolTable().add(polymorphicType.getDeclaredIdentifier());
+                    tsOdinProcedureType.getContext().addType(tsOdinType.getName(), tsOdinType);
+                    tsOdinProcedureType.getContext().add(polymorphicType.getDeclaredIdentifier());
                 }
             } else {
                 List<OdinParamEntry> returnParameterEntries = returnParameters.getParamEntryList();
@@ -728,7 +728,7 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinStructType tsOdinStructType = new TsOdinStructType();
         tsOdinStructType.setPsiType(structType);
         initializeNamedType(tsOdinStructType);
-        addKnownType(tsOdinStructType, this.typeDeclaredIdentifier, this.typeDeclaration, tsOdinStructType.getSymbolTable());
+        addKnownType(tsOdinStructType, this.typeDeclaredIdentifier, this.typeDeclaration, tsOdinStructType.getContext());
         List<OdinParamEntry> paramEntries = structType.getParamEntryList();
 
         List<TsOdinParameter> parameters = createParameters(tsOdinStructType, paramEntries);
@@ -801,7 +801,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
         OdinType backingType = o.getType();
         if (backingType != null) {
-            TsOdinType tsOdinType = doResolveType(symbolTable, backingType);
+            TsOdinType tsOdinType = doResolveType(context, backingType);
             if (tsOdinType instanceof TsOdinBuiltInType tsOdinBuiltInType) {
                 tsOdinEnumType.setBackingType(tsOdinBuiltInType);
             }
@@ -821,7 +821,7 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinPolymorphicType.setDeclaredIdentifier(polymorphicType.getDeclaredIdentifier());
         tsOdinPolymorphicType.setName(polymorphicType.getDeclaredIdentifier().getName());
 
-        tsOdinPolymorphicType.setSymbolTable(symbolTable);
+        tsOdinPolymorphicType.setContext(context);
 
         tsOdinPolymorphicType.setPsiType(polymorphicType);
         this.type = tsOdinPolymorphicType;
@@ -835,8 +835,8 @@ public class OdinTypeResolver extends OdinVisitor {
         tsOdinConstrainedType.setPsiType(constrainedType);
         initializeNamedType(tsOdinConstrainedType);
 
-        TsOdinType tsOdinMainType = doResolveType(tsOdinConstrainedType.getSymbolTable(), mainType);
-        TsOdinType tsOdinSpecializedType = doResolveType(tsOdinConstrainedType.getSymbolTable(), specializedType);
+        TsOdinType tsOdinMainType = doResolveType(tsOdinConstrainedType.getContext(), mainType);
+        TsOdinType tsOdinSpecializedType = doResolveType(tsOdinConstrainedType.getContext(), specializedType);
 
         tsOdinConstrainedType.setMainType(tsOdinMainType);
         tsOdinConstrainedType.setSpecializedType(tsOdinSpecializedType);
@@ -850,7 +850,7 @@ public class OdinTypeResolver extends OdinVisitor {
         initializeNamedType(tsOdinProcedureGroup);
 
         for (OdinProcedureRef procedureRef : o.getProcedureRefList()) {
-            TsOdinType tsOdinType = doResolveType(symbolTable, procedureRef.getType());
+            TsOdinType tsOdinType = doResolveType(context, procedureRef.getType());
             if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
                 tsOdinProcedureGroup.getProcedures().add(tsOdinProcedureType);
             }
@@ -863,10 +863,10 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitVariadicType(@NotNull OdinVariadicType o) {
         OdinType psiElementType = o.getType();
         if (psiElementType != null) {
-            TsOdinType tsOdinElementType = doResolveType(symbolTable, psiElementType);
+            TsOdinType tsOdinElementType = doResolveType(context, psiElementType);
             TsOdinSliceType tsOdinSliceType = new TsOdinSliceType();
             tsOdinSliceType.setElementType(tsOdinElementType);
-            tsOdinSliceType.setSymbolTable(symbolTable);
+            tsOdinSliceType.setContext(context);
             tsOdinSliceType.setPsiType(o);
             this.type = tsOdinSliceType;
         }

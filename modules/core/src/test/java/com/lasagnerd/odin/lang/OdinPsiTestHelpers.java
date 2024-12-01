@@ -18,8 +18,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContextBuilder;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -172,8 +172,8 @@ class OdinPsiTestHelpers {
                         .orElseThrow();
 
         OdinExpression expression = odinExpressionStatement.getExpression();
-        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(Objects.requireNonNull(expression));
-        return expression.getInferredType(symbolTable);
+        OdinContext context = OdinContextBuilder.buildContext(Objects.requireNonNull(expression));
+        return expression.getInferredType(context);
     }
 
     static void doSanityChecks(PsiFile root) {

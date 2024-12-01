@@ -2,7 +2,7 @@ package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.intellij.openapi.util.Pair;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public class OdinProcedureRanker {
-    public static @NotNull OdinInferenceEngine.ProcedureRankingResult findBestProcedure(OdinSymbolTable symbolTable, TsOdinProcedureGroup procedureGroup, @NotNull List<OdinArgument> argumentList) {
+    public static @NotNull OdinInferenceEngine.ProcedureRankingResult findBestProcedure(OdinContext context, TsOdinProcedureGroup procedureGroup, @NotNull List<OdinArgument> argumentList) {
         List<Pair<TsOdinProcedureType, List<Pair<TsOdinType, OdinTypeChecker.TypeCheckResult>>>> compatibleProcedures = new ArrayList<>();
         for (TsOdinProcedureType targetProcedure : procedureGroup.getProcedures()) {
             @Nullable Map<OdinExpression, TsOdinParameter> argumentExpressions = OdinInsightUtils.getArgumentToParameterMap(targetProcedure.getParameters(), argumentList);
@@ -28,7 +28,7 @@ public class OdinProcedureRanker {
                 OdinExpression argumentExpression = entry.getKey();
 
                 TsOdinType parameterType = tsOdinParameter.getType().baseType();
-                TsOdinType argumentType = inferArgumentType(symbolTable, argumentExpression, parameterType);
+                TsOdinType argumentType = inferArgumentType(context, argumentExpression, parameterType);
 
                 OdinTypeChecker.TypeCheckResult compatibilityResult = OdinTypeChecker.checkTypes(argumentType,
                         parameterType,
@@ -55,7 +55,7 @@ public class OdinProcedureRanker {
         return new OdinInferenceEngine.ProcedureRankingResult(compatibleProcedures, bestProcedure);
     }
 
-    public static TsOdinType inferArgumentType(OdinSymbolTable symbolTable,
+    public static TsOdinType inferArgumentType(OdinContext context,
                                                OdinExpression argumentExpression,
                                                TsOdinType expectedType) {
         TsOdinType argumentType = TsOdinBuiltInTypes.UNKNOWN;

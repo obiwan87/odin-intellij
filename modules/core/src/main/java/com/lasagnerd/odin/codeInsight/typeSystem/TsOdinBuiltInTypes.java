@@ -2,7 +2,7 @@ package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 
@@ -411,7 +411,7 @@ public class TsOdinBuiltInTypes {
 
     private static class TsOdinUnknownType extends TsOdinTypeBase {
         {
-            this.symbolTable = OdinSymbolTable.EMPTY;
+            this.context = OdinContext.EMPTY;
         }
 
         @Override
@@ -437,7 +437,7 @@ public class TsOdinBuiltInTypes {
 
     private static class TsOdinUndecidedType extends TsOdinTypeBase {
         {
-            this.symbolTable = OdinSymbolTable.EMPTY;
+            this.context = OdinContext.EMPTY;
         }
 
         @Override
@@ -463,7 +463,7 @@ public class TsOdinBuiltInTypes {
 
     private static class TsOdinVoidType extends TsOdinTypeBase {
         {
-            this.symbolTable = OdinSymbolTable.EMPTY;
+            this.context = OdinContext.EMPTY;
         }
 
         @Override

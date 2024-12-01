@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.tree.IElementType;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinPsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +24,12 @@ public class OdinStubbedElementImpl<T extends StubBase<?>> extends StubBasedPsiE
     }
 
     @Override
-    public OdinSymbolTable getFullSymbolTable() {
+    public OdinContext getFullContext() {
         return null;
     }
 
     @Override
-    public void setFullSymbolTable(OdinSymbolTable fullSymbolTable) {
+    public void setFullContext(OdinContext fullContext) {
 
     }
 

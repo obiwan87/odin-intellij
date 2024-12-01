@@ -1,6 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
@@ -35,9 +35,9 @@ public interface TsOdinType {
 
     void setDistinct(boolean distinct);
 
-    OdinSymbolTable getSymbolTable();
+    OdinContext getContext();
 
-    void setSymbolTable(OdinSymbolTable symbolTable);
+    void setContext(OdinContext context);
 
     // Public methods
     boolean isUnknown();

@@ -95,7 +95,7 @@ public class OdinStructureViewElement implements StructureViewTreeElement, Sorta
         if (fileScope != null) {
             List<OdinStructureViewElement> treeElements = new ArrayList<>();
 
-            List<OdinSymbol> symbols = fileScope.getFullSymbolTable()
+            List<OdinSymbol> symbols = fileScope.getFullContext()
                     .getSymbols()
                     .stream()
                     .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)

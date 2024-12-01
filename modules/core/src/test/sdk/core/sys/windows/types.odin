@@ -3451,7 +3451,7 @@ IMAGE_FILE_HEADER :: struct {
 	Machine:              WORD,
 	NumberOfSections:     WORD,
 	TimeDateStamp:        DWORD,
-	PointerToSymbolTable: DWORD,
+    PointerToContext: DWORD,
 	NumberOfSymbols:      DWORD,
 	SizeOfOptionalHeader: WORD,
 	Characteristics:      WORD,

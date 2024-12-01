@@ -1,10 +1,10 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 
 public record OdinInferenceEngineParameters(
-        OdinSymbolTable symbolTable,
+        OdinContext context,
         TsOdinType expectedType,
         int lhsValuesCount,
         boolean explicitMode

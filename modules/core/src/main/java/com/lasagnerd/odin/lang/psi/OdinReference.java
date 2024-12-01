@@ -7,9 +7,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.IncorrectOperationException;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     boolean resolved = false;
 
-    private OdinSymbolTable symbolTable;
+    private OdinContext context;
 
     public OdinReference(@NotNull OdinIdentifier element) {
         super(element);

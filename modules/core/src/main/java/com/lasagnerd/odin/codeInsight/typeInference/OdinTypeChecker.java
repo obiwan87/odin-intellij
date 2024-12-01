@@ -258,7 +258,7 @@ public class OdinTypeChecker {
             if (type instanceof TsOdinMetaType metaType) {
                 TsOdinType representedType = metaType.getRepresentedType();
                 if (representedType == null) {
-                    representedType = OdinTypeResolver.resolveMetaType(metaType.getSymbolTable(), metaType);
+                    representedType = OdinTypeResolver.resolveMetaType(metaType.getContext(), metaType);
                 }
 
                 doCheckTypes(representedType.baseType(true), constrainedType.getSpecializedType());
@@ -375,7 +375,7 @@ public class OdinTypeChecker {
                             OdinType declarationType = odinFieldDeclarationStatement.getType();
                             if (declarationType != null) {
                                 TsOdinType usedType = OdinTypeResolver.resolveType(
-                                        structType.getSymbolTable(),
+                                        structType.getContext(),
                                         declarationType
                                 );
 

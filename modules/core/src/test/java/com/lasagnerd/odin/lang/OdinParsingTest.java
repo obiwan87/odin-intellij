@@ -413,7 +413,7 @@ public class OdinParsingTest extends UsefulTestCase {
         Objects.requireNonNull(refExpressions);
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
 
-        OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(odinRefExpression);
+        OdinContext context = OdinContextBuilder.buildContext(odinRefExpression);
         OdinInsightUtils.getReferenceableSymbols(odinRefExpression);
 
     }
@@ -871,7 +871,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinFile odinFile = load("src/test/testData/mypackage/visibility_annotations.odin");
             OdinProcedureDefinition proc = PsiTreeUtil.findChildOfType(odinFile, OdinProcedureDefinition.class);
             OdinFileScope odinFileScope = odinFile.getFileScope();
-            List<OdinSymbol> symbols = new ArrayList<>(OdinSymbolTableResolver.getFileScopeSymbols(odinFileScope, OdinSymbolTableResolver.getGlobalFileVisibility(odinFileScope))
+            List<OdinSymbol> symbols = new ArrayList<>(OdinContextBuilder.getFileScopeContext(odinFileScope, OdinContextBuilder.getGlobalFileVisibility(odinFileScope))
                     .getFilteredSymbols(e -> true));
             symbols.sort(Comparator.comparing(OdinSymbol::getName));
             assertEquals(4, symbols.size());
@@ -883,13 +883,13 @@ public class OdinParsingTest extends UsefulTestCase {
 
         {
             OdinFile odinFile = load("src/test/testData/mypackage/package_private.odin");
-            OdinVisibility globalVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(odinFile.getFileScope());
+            OdinVisibility globalVisibility = OdinContextBuilder.getGlobalFileVisibility(odinFile.getFileScope());
             assertEquals(OdinVisibility.PACKAGE_PRIVATE, globalVisibility);
         }
 
         {
             OdinFile odinFile = load("src/test/testData/mypackage/file_private.odin");
-            OdinVisibility globalVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(odinFile.getFileScope());
+            OdinVisibility globalVisibility = OdinContextBuilder.getGlobalFileVisibility(odinFile.getFileScope());
             assertEquals(OdinVisibility.FILE_PRIVATE, globalVisibility);
         }
     }
@@ -904,18 +904,18 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(odinFile, "assignment", "test");
             OdinExpression odinExpression = Objects.requireNonNull(var.getRhsExpressions()).getExpressionList().getFirst();
 
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(odinExpression);
-            assertNull(odinSymbolTable.getSymbol("test"));
-            assertNotNull(odinSymbolTable.getSymbol("x"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(odinExpression);
+            assertNull(odinContext.getSymbol("test"));
+            assertNotNull(odinContext.getSymbol("x"));
         }
 
         // Partial scope
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "partial_scope", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
 
-            assertNotNull(odinSymbolTable.getSymbol("x"));
-            assertNull(odinSymbolTable.getSymbol("y"));
+            assertNotNull(odinContext.getSymbol("x"));
+            assertNull(odinContext.getSymbol("y"));
         }
 
         // Conditional block
@@ -924,31 +924,31 @@ public class OdinParsingTest extends UsefulTestCase {
             // if branch
             {
                 OdinExpression expression = findFirstExpressionOfVariable(odinFile, "conditional_block", "test_if");
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+                OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
 
-                assertNotNull(odinSymbolTable.getSymbol("y"));
-                assertNotNull(odinSymbolTable.getSymbol("x"));
+                assertNotNull(odinContext.getSymbol("y"));
+                assertNotNull(odinContext.getSymbol("x"));
             }
 
             // else-if branch
             {
                 OdinExpression expression = findFirstExpressionOfVariable(odinFile, "conditional_block", "test_else_if");
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+                OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
 
-                assertNotNull(odinSymbolTable.getSymbol("z"));
-                assertNotNull(odinSymbolTable.getSymbol("x"));
-                assertNull(odinSymbolTable.getSymbol("y"));
+                assertNotNull(odinContext.getSymbol("z"));
+                assertNotNull(odinContext.getSymbol("x"));
+                assertNull(odinContext.getSymbol("y"));
             }
 
             // else branch
             {
                 OdinExpression expression = findFirstExpressionOfVariable(odinFile, "conditional_block", "test_else");
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+                OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
 
-                assertNotNull(odinSymbolTable.getSymbol("z"));
-                assertNotNull(odinSymbolTable.getSymbol("x"));
-                assertNotNull(odinSymbolTable.getSymbol("w"));
-                assertNull(odinSymbolTable.getSymbol("y"));
+                assertNotNull(odinContext.getSymbol("z"));
+                assertNotNull(odinContext.getSymbol("x"));
+                assertNotNull(odinContext.getSymbol("w"));
+                assertNull(odinContext.getSymbol("y"));
             }
 
 
@@ -961,13 +961,13 @@ public class OdinParsingTest extends UsefulTestCase {
                     assertNotNull(odinIfBlock);
                     assertNotNull(odinIfBlock.getCondition());
                     {
-                        OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(odinIfBlock.getCondition());
-                        assertNotNull(odinSymbolTable.getSymbol("x"));
+                        OdinContext odinContext = OdinContextBuilder.doBuildFullContext(odinIfBlock.getCondition());
+                        assertNotNull(odinContext.getSymbol("x"));
                     }
                     assertNotNull(odinIfBlock.getControlFlowInit());
                     {
-                        OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(odinIfBlock.getControlFlowInit());
-                        assertNull(odinSymbolTable.getSymbol("x"));
+                        OdinContext odinContext = OdinContextBuilder.doBuildFullContext(odinIfBlock.getControlFlowInit());
+                        assertNull(odinContext.getSymbol("x"));
                     }
                 }
 
@@ -977,16 +977,16 @@ public class OdinParsingTest extends UsefulTestCase {
                 assertNotNull(odinElseBlock.getIfBlock());
                 assertNotNull(odinElseBlock.getIfBlock().getCondition());
                 {
-                    OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(odinElseBlock.getIfBlock().getCondition());
-                    assertNotNull(odinSymbolTable.getSymbol("x"));
-                    assertNotNull(odinSymbolTable.getSymbol("z"));
+                    OdinContext odinContext = OdinContextBuilder.doBuildFullContext(odinElseBlock.getIfBlock().getCondition());
+                    assertNotNull(odinContext.getSymbol("x"));
+                    assertNotNull(odinContext.getSymbol("z"));
                 }
 
                 assertNotNull(odinElseBlock.getIfBlock().getControlFlowInit());
                 {
-                    OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(odinElseBlock.getIfBlock().getControlFlowInit());
-                    assertNotNull(odinSymbolTable.getSymbol("x"));
-                    assertNull(odinSymbolTable.getSymbol("z"));
+                    OdinContext odinContext = OdinContextBuilder.doBuildFullContext(odinElseBlock.getIfBlock().getControlFlowInit());
+                    assertNotNull(odinContext.getSymbol("x"));
+                    assertNull(odinContext.getSymbol("z"));
                 }
             }
 
@@ -996,8 +996,8 @@ public class OdinParsingTest extends UsefulTestCase {
                 OdinDoStatement doStatement = PsiTreeUtil.findChildOfType(procedureDeclarationStatement, OdinDoStatement.class);
                 assertNotNull(doStatement);
 
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(doStatement);
-                assertNotNull(odinSymbolTable.getSymbol("x"));
+                OdinContext odinContext = OdinContextBuilder.doBuildFullContext(doStatement);
+                assertNotNull(odinContext.getSymbol("x"));
             }
         }
 
@@ -1015,8 +1015,8 @@ public class OdinParsingTest extends UsefulTestCase {
                 OdinVariableInitializationStatement shadowingX = PsiTreeUtil.findChildOfType(shadowingBlock, OdinVariableInitializationStatement.class);
                 assertNotNull(shadowingX);
                 OdinExpression odinExpression = Objects.requireNonNull(shadowingX.getRhsExpressions()).getExpressionList().getFirst();
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(odinExpression);
-                OdinSymbol symbol = odinSymbolTable.getSymbol("x");
+                OdinContext odinContext = OdinContextBuilder.doBuildFullContext(odinExpression);
+                OdinSymbol symbol = odinContext.getSymbol("x");
                 assertNotNull(symbol);
                 PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
                 OdinVariableInitializationStatement variableInitializationStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinVariableInitializationStatement.class);
@@ -1028,8 +1028,8 @@ public class OdinParsingTest extends UsefulTestCase {
             {
                 OdinVariableInitializationStatement y = findFirstVariable(shadowingBlock, "y");
                 OdinExpression odinExpression = Objects.requireNonNull(y.getRhsExpressions()).getExpressionList().getFirst();
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(odinExpression);
-                OdinSymbol symbol = odinSymbolTable.getSymbol("x");
+                OdinContext odinContext = OdinContextBuilder.doBuildFullContext(odinExpression);
+                OdinSymbol symbol = odinContext.getSymbol("x");
                 assertNotNull(symbol);
                 PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
                 OdinVariableInitializationStatement variableInitializationStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinVariableInitializationStatement.class);
@@ -1041,16 +1041,16 @@ public class OdinParsingTest extends UsefulTestCase {
         // File scope
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "file_scope", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
 
-            assertNotNull(odinSymbolTable.getSymbol("assignment"));
-            assertNotNull(odinSymbolTable.getSymbol("partial_scope"));
-            assertNotNull(odinSymbolTable.getSymbol("conditional_block"));
-            assertNotNull(odinSymbolTable.getSymbol("shadowing"));
-            assertNotNull(odinSymbolTable.getSymbol("file_scope"));
-            assertNotNull(odinSymbolTable.getSymbol("fmt"));
-            assertNotNull(odinSymbolTable.getSymbol("MyStruct"));
-            assertNotNull(odinSymbolTable.getSymbol("g_point"));
+            assertNotNull(odinContext.getSymbol("assignment"));
+            assertNotNull(odinContext.getSymbol("partial_scope"));
+            assertNotNull(odinContext.getSymbol("conditional_block"));
+            assertNotNull(odinContext.getSymbol("shadowing"));
+            assertNotNull(odinContext.getSymbol("file_scope"));
+            assertNotNull(odinContext.getSymbol("fmt"));
+            assertNotNull(odinContext.getSymbol("MyStruct"));
+            assertNotNull(odinContext.getSymbol("g_point"));
         }
 
 
@@ -1061,7 +1061,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "params", "test");
-            OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+            OdinContext visibleSymbols = OdinContextBuilder.doBuildFullContext(expression);
             assertNotNull(visibleSymbols.getSymbol("x"));
             assertNotNull(visibleSymbols.getSymbol("y"));
             assertNotNull(visibleSymbols.getSymbol("z"));
@@ -1083,7 +1083,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "poly_params", "test");
-            OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
+            OdinContext visibleSymbols = OdinContextBuilder.doBuildFullContext(expression);
             assertNotNull(visibleSymbols.getSymbol("T"));
             assertNotNull(visibleSymbols.getSymbol("Key"));
             assertNotNull(visibleSymbols.getSymbol("Val"));
@@ -1097,7 +1097,7 @@ public class OdinParsingTest extends UsefulTestCase {
             {
                 OdinParamEntry paramEntry = parameters.get(1); // param "t"
                 {
-                    OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(paramEntry);
+                    OdinContext visibleSymbols = OdinContextBuilder.doBuildFullContext(paramEntry);
                     assertNotNull(visibleSymbols.getSymbol("T"));
                     assertNull(visibleSymbols.getSymbol("Key"));
                     assertNull(visibleSymbols.getSymbol("Val"));
@@ -1105,7 +1105,7 @@ public class OdinParsingTest extends UsefulTestCase {
                 // Constrained type $Val/Key
                 {
                     OdinConstrainedType constrainedType = PsiTreeUtil.findChildOfType(paramEntry, OdinConstrainedType.class);
-                    OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(Objects.requireNonNull(constrainedType));
+                    OdinContext visibleSymbols = OdinContextBuilder.doBuildFullContext(Objects.requireNonNull(constrainedType));
                     assertNotNull(visibleSymbols.getSymbol("T"));
                     assertNotNull(visibleSymbols.getSymbol("Key"));
                     assertNull(visibleSymbols.getSymbol("Value"));
@@ -1115,7 +1115,7 @@ public class OdinParsingTest extends UsefulTestCase {
             // proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val)
             {
                 OdinParamEntry paramEntry = parameters.getFirst(); // param "$T"
-                OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(paramEntry);
+                OdinContext visibleSymbols = OdinContextBuilder.doBuildFullContext(paramEntry);
                 assertNull(visibleSymbols.getSymbol("T"));
                 assertNull(visibleSymbols.getSymbol("Key"));
                 assertNull(visibleSymbols.getSymbol("Val"));
@@ -1125,7 +1125,7 @@ public class OdinParsingTest extends UsefulTestCase {
             // proc($T: typeid, t: Table($Key, $Val/Key), k: Key, v: Val)
             {
                 OdinParamEntry paramEntry = parameters.get(2); // param "k"
-                OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(paramEntry);
+                OdinContext visibleSymbols = OdinContextBuilder.doBuildFullContext(paramEntry);
                 assertNotNull(visibleSymbols.getSymbol("T"));
                 assertNotNull(visibleSymbols.getSymbol("Key"));
                 assertNotNull(visibleSymbols.getSymbol("Val"));
@@ -1138,7 +1138,7 @@ public class OdinParsingTest extends UsefulTestCase {
             List<OdinParamEntry> returnParams = returnParameters.getParamEntries().getParamEntryList();
             {
                 for (OdinParamEntry returnParam : returnParams) {
-                    OdinSymbolTable visibleSymbols = OdinSymbolTableResolver.doFindVisibleSymbols(returnParam);
+                    OdinContext visibleSymbols = OdinContextBuilder.doBuildFullContext(returnParam);
                     assertNotNull(visibleSymbols.getSymbol("T"));
                     assertNotNull(visibleSymbols.getSymbol("Key"));
                     assertNotNull(visibleSymbols.getSymbol("Val"));
@@ -1152,19 +1152,19 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "constants", "test_outer");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("K"));
-            assertNotNull(odinSymbolTable.getSymbol("p"));
-            assertNotNull(odinSymbolTable.getSymbol("S"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("K"));
+            assertNotNull(odinContext.getSymbol("p"));
+            assertNotNull(odinContext.getSymbol("S"));
         }
 
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "constants", "test_inner");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("Kinner"));
-            assertNotNull(odinSymbolTable.getSymbol("K"));
-            assertNotNull(odinSymbolTable.getSymbol("p"));
-            assertNotNull(odinSymbolTable.getSymbol("S"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("Kinner"));
+            assertNotNull(odinContext.getSymbol("K"));
+            assertNotNull(odinContext.getSymbol("p"));
+            assertNotNull(odinContext.getSymbol("S"));
         }
     }
 
@@ -1172,16 +1172,16 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "for_block", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("i"));
-            assertNotNull(odinSymbolTable.getSymbol("j"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("i"));
+            assertNotNull(odinContext.getSymbol("j"));
         }
 
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "for_in_block", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("index"));
-            assertNotNull(odinSymbolTable.getSymbol("val"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("index"));
+            assertNotNull(odinContext.getSymbol("val"));
         }
     }
 
@@ -1189,19 +1189,19 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "switch_block", "test_case_1");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("x"));
-            assertNotNull(odinSymbolTable.getSymbol("y"));
-            assertNotNull(odinSymbolTable.getSymbol("s"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("x"));
+            assertNotNull(odinContext.getSymbol("y"));
+            assertNotNull(odinContext.getSymbol("s"));
         }
 
         {
             {
                 OdinExpression expression = findFirstExpressionOfVariable(odinFile, "switch_block", "test_case_2");
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-                assertNull(odinSymbolTable.getSymbol("x"));
-                assertNotNull(odinSymbolTable.getSymbol("y"));
-                assertNotNull(odinSymbolTable.getSymbol("s"));
+                OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+                assertNull(odinContext.getSymbol("x"));
+                assertNotNull(odinContext.getSymbol("y"));
+                assertNotNull(odinContext.getSymbol("s"));
             }
 
             {
@@ -1210,12 +1210,12 @@ public class OdinParsingTest extends UsefulTestCase {
                 assertNotNull(odinSwitchBlock);
                 {
                     OdinExpression expression = odinSwitchBlock.getExpression();
-                    OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(Objects.requireNonNull(expression));
-                    assertNull(odinSymbolTable.getSymbol("x"));
-                    assertNotNull(odinSymbolTable.getSymbol("u"));
-                    assertNotNull(odinSymbolTable.getSymbol("s"));
-                    assertNull(odinSymbolTable.getSymbol("test_case_1"));
-                    assertNull(odinSymbolTable.getSymbol("test_case_2"));
+                    OdinContext odinContext = OdinContextBuilder.doBuildFullContext(Objects.requireNonNull(expression));
+                    assertNull(odinContext.getSymbol("x"));
+                    assertNotNull(odinContext.getSymbol("u"));
+                    assertNotNull(odinContext.getSymbol("s"));
+                    assertNull(odinContext.getSymbol("test_case_1"));
+                    assertNull(odinContext.getSymbol("test_case_2"));
                 }
 
                 OdinSwitchCase odinSwitchCase = Objects.requireNonNull(Objects.requireNonNull(odinSwitchBlock.getSwitchBody()).getSwitchCases()).getSwitchCaseList().getFirst();
@@ -1223,30 +1223,30 @@ public class OdinParsingTest extends UsefulTestCase {
                     OdinExpression expression = Objects.requireNonNull(odinSwitchCase.getCaseClause())
                             .getExpressionList()
                             .getFirst();
-                    OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-                    assertNull(odinSymbolTable.getSymbol("x"));
-                    assertNotNull(odinSymbolTable.getSymbol("u"));
-                    assertNotNull(odinSymbolTable.getSymbol("s"));
-                    assertNull(odinSymbolTable.getSymbol("test_case_1"));
-                    assertNull(odinSymbolTable.getSymbol("test_case_2"));
+                    OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+                    assertNull(odinContext.getSymbol("x"));
+                    assertNotNull(odinContext.getSymbol("u"));
+                    assertNotNull(odinContext.getSymbol("s"));
+                    assertNull(odinContext.getSymbol("test_case_1"));
+                    assertNull(odinContext.getSymbol("test_case_2"));
                 }
             }
         }
 
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "switch_in_block", "test_f32");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("x"));
-            assertNotNull(odinSymbolTable.getSymbol("t"));
-            assertNull(odinSymbolTable.getSymbol("test_i32"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("x"));
+            assertNotNull(odinContext.getSymbol("t"));
+            assertNull(odinContext.getSymbol("test_i32"));
         }
 
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "switch_in_block", "test_i32");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("x"));
-            assertNotNull(odinSymbolTable.getSymbol("t"));
-            assertNull(odinSymbolTable.getSymbol("test_f32"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("x"));
+            assertNotNull(odinContext.getSymbol("t"));
+            assertNull(odinContext.getSymbol("test_f32"));
         }
     }
 
@@ -1257,18 +1257,18 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinStructType struct = PsiTreeUtil.findChildOfType(proc, OdinStructType.class);
             assertNotNull(struct);
             OdinStructBody structBody = Objects.requireNonNull(struct.getStructBlock()).getStructBody();
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(Objects.requireNonNull(structBody));
-            assertNotNull(odinSymbolTable.getSymbol("Key"));
-            assertNotNull(odinSymbolTable.getSymbol("Value"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(Objects.requireNonNull(structBody));
+            assertNotNull(odinContext.getSymbol("Key"));
+            assertNotNull(odinContext.getSymbol("Value"));
         }
 
         OdinProcedureDefinition proc = findFirstProcedure(odinFile, "structs_unions");
         OdinUnionType union = PsiTreeUtil.findChildOfType(proc, OdinUnionType.class);
         assertNotNull(union);
         OdinUnionBody structBody = Objects.requireNonNull(union.getUnionBlock()).getUnionBody();
-        OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(Objects.requireNonNull(structBody));
-        assertNotNull(odinSymbolTable.getSymbol("T1"));
-        assertNotNull(odinSymbolTable.getSymbol("T2"));
+        OdinContext odinContext = OdinContextBuilder.doBuildFullContext(Objects.requireNonNull(structBody));
+        assertNotNull(odinContext.getSymbol("T1"));
+        assertNotNull(odinContext.getSymbol("T2"));
     }
 
     public void testScoping_recursiveLocalDefs() throws IOException {
@@ -1279,8 +1279,8 @@ public class OdinParsingTest extends UsefulTestCase {
             {
                 OdinVariableInitializationStatement testVar = findFirstVariable(localProc, "test");
                 OdinExpression odinExpression = Objects.requireNonNull(testVar.getRhsExpressions()).getExpressionList().getFirst();
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(odinExpression);
-                assertNotNull(odinSymbolTable.getSymbol("p"));
+                OdinContext odinContext = OdinContextBuilder.doBuildFullContext(odinExpression);
+                assertNotNull(odinContext.getSymbol("p"));
             }
             {
                 OdinStructType structVar = PsiTreeUtil.findChildOfType(proc, OdinStructType.class);
@@ -1290,9 +1290,9 @@ public class OdinParsingTest extends UsefulTestCase {
                 List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
                 OdinFieldDeclarationStatement fieldDeclaration = fieldDeclarationStatementList.getFirst();
                 OdinType type = fieldDeclaration.getType();
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(Objects.requireNonNull(type));
+                OdinContext odinContext = OdinContextBuilder.doBuildFullContext(Objects.requireNonNull(type));
 
-                assertNotNull(odinSymbolTable.getSymbol("s"));
+                assertNotNull(odinContext.getSymbol("s"));
             }
         }
     }
@@ -1301,40 +1301,40 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_statement", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("x"));
-            assertNotNull(odinSymbolTable.getSymbol("y"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("x"));
+            assertNotNull(odinContext.getSymbol("y"));
         }
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_statement", "test_line");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNull(odinSymbolTable.getSymbol("x"));
-            assertNull(odinSymbolTable.getSymbol("y"));
-            assertNotNull(odinSymbolTable.getSymbol("p1"));
-            assertNotNull(odinSymbolTable.getSymbol("p2"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNull(odinContext.getSymbol("x"));
+            assertNull(odinContext.getSymbol("y"));
+            assertNotNull(odinContext.getSymbol("p1"));
+            assertNotNull(odinContext.getSymbol("p2"));
         }
 
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_statement", "test_triangle");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNull(odinSymbolTable.getSymbol("x"));
-            assertNull(odinSymbolTable.getSymbol("y"));
-            assertNotNull(odinSymbolTable.getSymbol("p1"));
-            assertNotNull(odinSymbolTable.getSymbol("p2"));
-            assertNotNull(odinSymbolTable.getSymbol("p3"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNull(odinContext.getSymbol("x"));
+            assertNull(odinContext.getSymbol("y"));
+            assertNotNull(odinContext.getSymbol("p1"));
+            assertNotNull(odinContext.getSymbol("p2"));
+            assertNotNull(odinContext.getSymbol("p3"));
         }
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_statement", "test_proc");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("x"));
-            assertNotNull(odinSymbolTable.getSymbol("y"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("x"));
+            assertNotNull(odinContext.getSymbol("y"));
         }
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_statement", "test_enum");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("R"));
-            assertNotNull(odinSymbolTable.getSymbol("G"));
-            assertNotNull(odinSymbolTable.getSymbol("B"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("R"));
+            assertNotNull(odinContext.getSymbol("G"));
+            assertNotNull(odinContext.getSymbol("B"));
         }
     }
 
@@ -1346,12 +1346,12 @@ public class OdinParsingTest extends UsefulTestCase {
             {
                 OdinVariableInitializationStatement testVar = findFirstVariable(nestedProc, "test");
                 OdinExpression odinExpression = Objects.requireNonNull(testVar.getRhsExpressions()).getExpressionList().getFirst();
-                OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(odinExpression);
-                assertNotNull(odinSymbolTable.getSymbol("S"));
-                assertNotNull(odinSymbolTable.getSymbol("nested_procs"));
-                assertNotNull(odinSymbolTable.getSymbol("r"));
-                assertNotNull(odinSymbolTable.getSymbol("p"));
-                assertNull(odinSymbolTable.getSymbol("invisible"));
+                OdinContext odinContext = OdinContextBuilder.doBuildFullContext(odinExpression);
+                assertNotNull(odinContext.getSymbol("S"));
+                assertNotNull(odinContext.getSymbol("nested_procs"));
+                assertNotNull(odinContext.getSymbol("r"));
+                assertNotNull(odinContext.getSymbol("p"));
+                assertNull(odinContext.getSymbol("invisible"));
             }
         }
     }
@@ -1360,32 +1360,32 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "labels", "test_1");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("label1"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("label1"));
         }
 
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "labels", "test_2");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("label1"));
-            assertNotNull(odinSymbolTable.getSymbol("label2"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("label1"));
+            assertNotNull(odinContext.getSymbol("label2"));
         }
 
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "labels", "test_3");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("label1"));
-            assertNotNull(odinSymbolTable.getSymbol("label2"));
-            assertNotNull(odinSymbolTable.getSymbol("label3"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("label1"));
+            assertNotNull(odinContext.getSymbol("label2"));
+            assertNotNull(odinContext.getSymbol("label3"));
         }
 
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "labels", "test_4");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(odinSymbolTable.getSymbol("label1"));
-            assertNotNull(odinSymbolTable.getSymbol("label2"));
-            assertNotNull(odinSymbolTable.getSymbol("label3"));
-            assertNotNull(odinSymbolTable.getSymbol("label4"));
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(odinContext.getSymbol("label1"));
+            assertNotNull(odinContext.getSymbol("label2"));
+            assertNotNull(odinContext.getSymbol("label3"));
+            assertNotNull(odinContext.getSymbol("label4"));
         }
     }
 
@@ -1394,13 +1394,12 @@ public class OdinParsingTest extends UsefulTestCase {
         String packagePath = OdinImportService.getInstance(project).getPackagePath(odinFile);
         {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_import", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(packagePath,
+            OdinContext odinContext = OdinContextBuilder.doBuildFullContext(packagePath,
                     expression,
                     scope -> false,
-                    false,
-                    OdinSymbolTable.EMPTY);
-            assertNotNull(odinSymbolTable.getSymbol("a_mypublic_proc"));
-            assertNotNull(odinSymbolTable.getSymbol("a_ret"));
+                    OdinContext.EMPTY);
+            assertNotNull(odinContext.getSymbol("a_mypublic_proc"));
+            assertNotNull(odinContext.getSymbol("a_ret"));
         }
     }
 
@@ -1427,20 +1426,20 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinFile odinFile = load("src/test/testData/mypackage/packages.odin");
 
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "main", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(expression);
-            assertNotNull(odinSymbolTable.getSymbol("a_mypublic_proc"));
-            assertNotNull(odinSymbolTable.getSymbol("b_mypackage_private_proc"));
+            OdinContext odinContext = OdinContextBuilder.buildContext(expression);
+            assertNotNull(odinContext.getSymbol("a_mypublic_proc"));
+            assertNotNull(odinContext.getSymbol("b_mypackage_private_proc"));
             {
-                OdinSymbol symbol = odinSymbolTable.getSymbol("c_myfile_private_proc");
+                OdinSymbol symbol = odinContext.getSymbol("c_myfile_private_proc");
                 assertNotNull(symbol);
                 assertSame(OdinVisibility.FILE_PRIVATE, symbol.getVisibility());
             }
 
-            assertNotNull(odinSymbolTable.getSymbol("my_private_proc"));
-            assertNotNull(odinSymbolTable.getSymbol("my_private_struct"));
+            assertNotNull(odinContext.getSymbol("my_private_proc"));
+            assertNotNull(odinContext.getSymbol("my_private_struct"));
 
             {
-                OdinSymbol symbol = odinSymbolTable.getSymbol("my_file_private_global");
+                OdinSymbol symbol = odinContext.getSymbol("my_file_private_global");
                 assertNotNull(symbol);
                 assertSame(OdinVisibility.FILE_PRIVATE, symbol.getVisibility());
             }
@@ -1532,7 +1531,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinAssignmentStatement assignmentStatement = PsiTreeUtil.findChildOfType(procedure, OdinAssignmentStatement.class);
             OdinExpression odinExpression = Objects.requireNonNull(Objects.requireNonNull(assignmentStatement)
                     .getRhsExpressions()).getExpressionList().getFirst();
-            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(odinExpression), odinExpression);
+            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinContextBuilder.buildContext(odinExpression), odinExpression);
             TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
             assertEquals("MyStruct", structType.getName());
         }
@@ -1854,7 +1853,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
             Objects.requireNonNull(implicitSelectorExpression);
-            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(implicitSelectorExpression), implicitSelectorExpression);
+            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinContextBuilder.buildContext(implicitSelectorExpression), implicitSelectorExpression);
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
         }
@@ -1969,10 +1968,10 @@ public class OdinParsingTest extends UsefulTestCase {
                         .map(OdinLhs::getExpression)
                         .orElseThrow();
 
-                OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
-                assertNotNull(symbolTable.getSymbol("alpha"));
-                assertNotNull(symbolTable.getSymbol("beta"));
-                assertNotNull(symbolTable.getSymbol("gamma"));
+                OdinContext context = OdinContextBuilder.buildContext(odinExpression);
+                assertNotNull(context.getSymbol("alpha"));
+                assertNotNull(context.getSymbol("beta"));
+                assertNotNull(context.getSymbol("gamma"));
             }
 
             {
@@ -1982,9 +1981,9 @@ public class OdinParsingTest extends UsefulTestCase {
                         .map(OdinLhs::getExpression)
                         .orElseThrow();
 
-                OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(odinExpression);
-                assertNotNull(symbolTable.getSymbol("x"));
-                assertNotNull(symbolTable.getSymbol("y"));
+                OdinContext context = OdinContextBuilder.buildContext(odinExpression);
+                assertNotNull(context.getSymbol("x"));
+                assertNotNull(context.getSymbol("y"));
             }
 
 
@@ -1994,8 +1993,8 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinLhs lhs = PsiTreeUtil.findChildOfType(proc, OdinLhs.class);
             Objects.requireNonNull(lhs);
             OdinExpression expression = lhs.getExpression();
-            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(expression);
-            assertNotNull(symbolTable.getSymbol("x"));
+            OdinContext context = OdinContextBuilder.buildContext(expression);
+            assertNotNull(context.getSymbol("x"));
         }
     }
 
@@ -2068,11 +2067,11 @@ public class OdinParsingTest extends UsefulTestCase {
                     assertInstanceOf(tsOdinType, TsOdinEnumType.class);
                 }
                 {
-                    OdinSymbolTable odinSymbolTable = OdinSymbolTableResolver.computeSymbolTable(Objects.requireNonNull(implicitExpression));
-                    assertNotNull(odinSymbolTable.getSymbol("North"));
-                    assertNotNull(odinSymbolTable.getSymbol("South"));
-                    assertNotNull(odinSymbolTable.getSymbol("East"));
-                    assertNotNull(odinSymbolTable.getSymbol("West"));
+                    OdinContext odinContext = OdinContextBuilder.buildContext(Objects.requireNonNull(implicitExpression));
+                    assertNotNull(odinContext.getSymbol("North"));
+                    assertNotNull(odinContext.getSymbol("South"));
+                    assertNotNull(odinContext.getSymbol("East"));
+                    assertNotNull(odinContext.getSymbol("West"));
                 }
             }
 
@@ -2166,8 +2165,8 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = loadTypeInference();
         {
             OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(file, "testNestedWhenStatements", "x");
-            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(var);
-            assertNotNull(symbolTable.getSymbol("CONST"));
+            OdinContext context = OdinContextBuilder.buildContext(var);
+            assertNotNull(context.getSymbol("CONST"));
         }
     }
 
@@ -2177,9 +2176,9 @@ public class OdinParsingTest extends UsefulTestCase {
             var proc = findFirstProcedure(file, "testArrayOfStructs");
             OdinLhs lhs = PsiTreeUtil.findChildOfType(proc, OdinLhs.class);
             Objects.requireNonNull(lhs);
-            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(lhs);
-            assertNotNull(symbolTable.getSymbol("x"));
-            assertNotNull(symbolTable.getSymbol("y"));
+            OdinContext context = OdinContextBuilder.buildContext(lhs);
+            assertNotNull(context.getSymbol("x"));
+            assertNotNull(context.getSymbol("y"));
         }
     }
 
@@ -2194,9 +2193,9 @@ public class OdinParsingTest extends UsefulTestCase {
 
             OdinLhs lhs = PsiTreeUtil.findChildOfType(addressExpression, OdinLhs.class);
             OdinExpression expression = Objects.requireNonNull(lhs).getExpression();
-            OdinSymbolTable symbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(symbolTable.getSymbol("x"));
-            assertNotNull(symbolTable.getSymbol("y"));
+            OdinContext context = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(context.getSymbol("x"));
+            assertNotNull(context.getSymbol("y"));
         }
         {
             OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file,
@@ -2207,9 +2206,9 @@ public class OdinParsingTest extends UsefulTestCase {
 
             OdinLhs lhs = PsiTreeUtil.findChildOfType(addressExpression, OdinLhs.class);
             OdinExpression expression = Objects.requireNonNull(lhs).getExpression();
-            OdinSymbolTable symbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(symbolTable.getSymbol("x"));
-            assertNotNull(symbolTable.getSymbol("y"));
+            OdinContext context = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(context.getSymbol("x"));
+            assertNotNull(context.getSymbol("y"));
         }
         {
             OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file, "testPointerToCompoundLiteral", "nested_points");
@@ -2217,17 +2216,17 @@ public class OdinParsingTest extends UsefulTestCase {
 
             OdinLhs lhs = PsiTreeUtil.findChildOfType(addressExpression, OdinLhs.class);
             OdinExpression expression = Objects.requireNonNull(lhs).getExpression();
-            OdinSymbolTable symbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(symbolTable.getSymbol("x"));
-            assertNotNull(symbolTable.getSymbol("y"));
+            OdinContext context = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(context.getSymbol("x"));
+            assertNotNull(context.getSymbol("y"));
         }
         {
             OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file, "testPointerToCompoundLiteral", "points");
             OdinLhs lhs = PsiTreeUtil.findChildOfType(firstVariableDeclarationStatement, OdinLhs.class);
             OdinExpression expression = Objects.requireNonNull(lhs).getExpression();
-            OdinSymbolTable symbolTable = OdinSymbolTableResolver.doFindVisibleSymbols(expression);
-            assertNotNull(symbolTable.getSymbol("x"));
-            assertNotNull(symbolTable.getSymbol("y"));
+            OdinContext context = OdinContextBuilder.doBuildFullContext(expression);
+            assertNotNull(context.getSymbol("x"));
+            assertNotNull(context.getSymbol("y"));
         }
 
     }
@@ -2238,7 +2237,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(file, "testPositionalInitialization", "s");
             OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(var, OdinImplicitSelectorExpression.class);
             assertNotNull(expression);
-            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinSymbolTableResolver.computeSymbolTable(expression), expression);
+            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinContextBuilder.buildContext(expression), expression);
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("E", tsOdinEnumType.getName());
         }
@@ -2295,9 +2294,9 @@ public class OdinParsingTest extends UsefulTestCase {
 
             OdinUnnamedArgument argument = (OdinUnnamedArgument) Objects.requireNonNull(arguments)[1];
             assertEquals("x", argument.getText());
-            OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(argument.getExpression());
-            assertNotNull(symbolTable.getSymbol("x"));
-            assertNotNull(symbolTable.getSymbol("y"));
+            OdinContext context = OdinContextBuilder.buildContext(argument.getExpression());
+            assertNotNull(context.getSymbol("x"));
+            assertNotNull(context.getSymbol("y"));
         }
     }
 
@@ -2323,11 +2322,11 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinRefExpression refExpression = Objects.requireNonNull(PsiTreeUtil.findChildOfType(whereClause, OdinRefExpression.class));
 
             OdinIdentifier identifier = Objects.requireNonNull(refExpression.getIdentifier());
-            OdinSymbol symbolTable = identifier.getReference().getSymbol();
+            OdinSymbol context = identifier.getReference().getSymbol();
 
             OdinExpression odinExpression = refExpression.getExpression();
             TsOdinType tsOdinType = odinExpression.getInferredType();
-            OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(project, tsOdinType);
+            OdinContext typeElements = OdinInsightUtils.getTypeElements(project, tsOdinType);
             assertNotNull(typeElements.getSymbol("Key"));
             assertNotNull(typeElements.getSymbol("Value"));
         }
@@ -2359,8 +2358,8 @@ public class OdinParsingTest extends UsefulTestCase {
             if (typeDefinition instanceof OdinArrayType arrayType) {
                 OdinType type = arrayType.getType();
                 assert type != null;
-                OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(type);
-                assertNotNull(symbolTable.getSymbol("T"));
+                OdinContext context = OdinContextBuilder.buildContext(type);
+                assertNotNull(context.getSymbol("T"));
             }
         }
     }

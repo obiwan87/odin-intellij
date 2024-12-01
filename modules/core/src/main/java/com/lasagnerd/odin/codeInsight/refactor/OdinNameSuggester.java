@@ -2,8 +2,8 @@ package com.lasagnerd.odin.codeInsight.refactor;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContextBuilder;
 import com.lasagnerd.odin.lang.psi.*;
 
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public class OdinNameSuggester {
         List<String> names = new ArrayList<>();
 
         // Get the biggest scope this expression would be in. This way we can avoid clashes with other names
-        OdinSymbolTable symbolTable = null;
+        OdinContext context = null;
         OdinScopeBlock scopeBlock = PsiTreeUtil.getParentOfType(targetExpression, OdinScopeBlock.class);
         if (scopeBlock != null) {
             OdinStatementList statementList;
@@ -38,19 +38,19 @@ public class OdinNameSuggester {
             }
             if (statementList != null) {
                 PsiElement lastChild = statementList.getLastChild();
-                symbolTable = OdinSymbolTableResolver.computeSymbolTable(lastChild);
+                context = OdinContextBuilder.buildContext(lastChild);
             }
         }
 
-        if (symbolTable == null) {
-            symbolTable = OdinSymbolTableResolver.computeSymbolTable(targetExpression);
+        if (context == null) {
+            context = OdinContextBuilder.buildContext(targetExpression);
         }
 
         if (targetExpression instanceof OdinRefExpression refExpression) {
             OdinIdentifier identifier = refExpression.getIdentifier();
             if (identifier != null) {
                 String name = identifier.getText();
-                addName(symbolTable, name, names, blacklist);
+                addName(context, name, names, blacklist);
             }
         }
 
@@ -58,12 +58,12 @@ public class OdinNameSuggester {
             var  type = compoundLiteralExpression.getCompoundLiteral().getTypeContainer();
             if (type.getType() instanceof OdinQualifiedType qualifiedType) {
                 String text = qualifiedType.getTypeIdentifier().getText();
-                addName(symbolTable, text, names, blacklist);
+                addName(context, text, names, blacklist);
             }
 
             if (type.getType() instanceof OdinSimpleRefType simpleRefType) {
                 String text = simpleRefType.getIdentifier().getText();
-                addName(symbolTable, text, names, blacklist);
+                addName(context, text, names, blacklist);
             }
         }
 
@@ -79,11 +79,11 @@ public class OdinNameSuggester {
                 }
             }
             String name = suggestVariableForProcedure(normalizeName(text));
-            addName(symbolTable, name, names, blacklist);
+            addName(context, name, names, blacklist);
         }
 
         if (names.isEmpty()) {
-            addName(symbolTable, "value", names, blacklist);
+            addName(context, "value", names, blacklist);
         }
 
         if (names.isEmpty()) {
@@ -93,16 +93,16 @@ public class OdinNameSuggester {
         return names;
     }
 
-    private static void addName(OdinSymbolTable symbolTable, String name, List<String> names, List<String> blacklist) {
+    private static void addName(OdinContext context, String name, List<String> names, List<String> blacklist) {
         name = normalizeName(name);
-        if (symbolTable.getSymbol(name) == null && !names.contains(name) && !blacklist.contains(name)) {
+        if (context.getSymbol(name) == null && !names.contains(name) && !blacklist.contains(name)) {
             names.add(name);
         } else {
             String originalName = name;
 
             for (int i = 1; i <= 9; i++) {
                 name = originalName + i;
-                if (symbolTable.getSymbol(name) == null && !names.contains(name) && !blacklist.contains(name)) {
+                if (context.getSymbol(name) == null && !names.contains(name) && !blacklist.contains(name)) {
                     names.add(name);
                     break;
                 }

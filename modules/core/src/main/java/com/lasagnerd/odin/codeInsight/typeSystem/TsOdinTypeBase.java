@@ -1,7 +1,7 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
@@ -41,7 +41,7 @@ public abstract class TsOdinTypeBase implements TsOdinType {
      * the reference to struct C.
      * of C.
      */
-    OdinSymbolTable symbolTable = new OdinSymbolTable();
+    OdinContext context = new OdinContext();
 
 
     public boolean isUnknown() {

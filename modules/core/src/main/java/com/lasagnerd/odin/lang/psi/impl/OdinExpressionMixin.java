@@ -6,7 +6,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngineParameters;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
@@ -26,8 +26,8 @@ public abstract class OdinExpressionMixin extends OdinPsiElementImpl implements 
         super(node);
     }
 
-    public TsOdinType getInferredType(OdinSymbolTable symbolTable) {
-        OdinInferenceEngineParameters parameters = new OdinInferenceEngineParameters(symbolTable, null, 1, false);
+    public TsOdinType getInferredType(OdinContext context) {
+        OdinInferenceEngineParameters parameters = new OdinInferenceEngineParameters(context, null, 1, false);
         return getInferredType(parameters);
     }
 

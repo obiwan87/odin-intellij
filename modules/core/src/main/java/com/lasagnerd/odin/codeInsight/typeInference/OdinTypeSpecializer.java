@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ import static com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine.i
 
 public class OdinTypeSpecializer {
 
-    public static boolean specializeStruct(OdinSymbolTable outerScope,
+    public static boolean specializeStruct(OdinContext outerScope,
                                            @NotNull List<OdinArgument> arguments,
                                            TsOdinStructType genericType, TsOdinStructType specializedType) {
         List<TsOdinParameter> parameters = genericType.getParameters();
@@ -29,9 +29,9 @@ public class OdinTypeSpecializer {
             return false;
 
         specializedType.setGenericType(genericType);
-        specializedType.getSymbolTable().setPackagePath(genericType.getSymbolTable().getPackagePath());
-        specializedType.getSymbolTable().putAll(genericType.getSymbolTable());
-        OdinSymbolTable newScope = specializedType.getSymbolTable();
+        specializedType.getContext().setPackagePath(genericType.getContext().getPackagePath());
+        specializedType.getContext().putAll(genericType.getContext());
+        OdinContext newScope = specializedType.getContext();
         resolveArguments(outerScope,
                 genericType,
                 genericType.getParameters(),
@@ -58,7 +58,7 @@ public class OdinTypeSpecializer {
         return true;
     }
 
-    public static @NotNull TsOdinProcedureType specializeProcedure(@NotNull OdinSymbolTable outerScope,
+    public static @NotNull TsOdinProcedureType specializeProcedure(@NotNull OdinContext outerScope,
                                                                    List<OdinArgument> arguments,
                                                                    TsOdinProcedureType genericType) {
         List<TsOdinParameter> parameters = genericType.getParameters();
@@ -68,8 +68,8 @@ public class OdinTypeSpecializer {
         // TODO OPTIMIZE: Check if it needs specialization?
 
         TsOdinProcedureType specializedType = new TsOdinProcedureType();
-        specializedType.getSymbolTable().setPackagePath(genericType.getSymbolTable().getPackagePath());
-        specializedType.getSymbolTable().putAll(genericType.getSymbolTable());
+        specializedType.getContext().setPackagePath(genericType.getContext().getPackagePath());
+        specializedType.getContext().putAll(genericType.getContext());
         specializedType.setPsiType(genericType.getPsiType());
         specializedType.setName(genericType.getName());
         specializedType.setDeclaration(genericType.getDeclaration());
@@ -82,21 +82,21 @@ public class OdinTypeSpecializer {
                 arguments);
 
         for (TsOdinParameter tsOdinParameter : genericType.getParameters()) {
-            TsOdinType tsOdinType = resolveType(specializedType.getSymbolTable(), tsOdinParameter.getPsiType());
+            TsOdinType tsOdinType = resolveType(specializedType.getContext(), tsOdinParameter.getPsiType());
             TsOdinParameter specializedParameter = cloneWithType(tsOdinParameter, tsOdinType);
             specializedType.getParameters().add(specializedParameter);
         }
 
         for (TsOdinParameter tsOdinReturnType : genericType.getReturnParameters()) {
-            TsOdinType tsOdinType = resolveType(specializedType.getSymbolTable(), tsOdinReturnType.getPsiType());
+            TsOdinType tsOdinType = resolveType(specializedType.getContext(), tsOdinReturnType.getPsiType());
             specializedType.getReturnTypes().add(tsOdinType);
         }
 
         return specializedType;
     }
 
-    private static TsOdinType resolveType(OdinSymbolTable symbolTable, OdinType type) {
-        return OdinTypeResolver.resolveType(new OdinTypeResolver.OdinTypeResolverParameters(symbolTable, null, null, true), type);
+    private static TsOdinType resolveType(OdinContext context, OdinType type) {
+        return OdinTypeResolver.resolveType(new OdinTypeResolver.OdinTypeResolverParameters(context, null, null, true), type);
     }
 
     private static @NotNull TsOdinParameter cloneWithType(TsOdinParameter tsOdinParameter, TsOdinType tsOdinType) {
@@ -112,19 +112,19 @@ public class OdinTypeSpecializer {
         return specializedParameter;
     }
 
-    public static boolean specializeUnion(OdinSymbolTable outerSymbolTable, List<OdinArgument> arguments, TsOdinUnionType genericType, TsOdinUnionType specializedType) {
+    public static boolean specializeUnion(OdinContext outerContext, List<OdinArgument> arguments, TsOdinUnionType genericType, TsOdinUnionType specializedType) {
         List<TsOdinParameter> parameters = genericType.getParameters();
         if (parameters.isEmpty())
             return false;
 
-        specializedType.getSymbolTable().setPackagePath(genericType.getSymbolTable().getPackagePath());
+        specializedType.getContext().setPackagePath(genericType.getContext().getPackagePath());
         specializedType.setGenericType(genericType);
-        specializedType.getSymbolTable().putAll(genericType.getSymbolTable());
+        specializedType.getContext().putAll(genericType.getContext());
         specializedType.setPsiType(genericType.getPsiType());
         specializedType.setName(genericType.getName());
         specializedType.setDeclaration(genericType.getDeclaration());
         specializedType.setDeclaredIdentifier(genericType.getDeclaredIdentifier());
-        resolveArguments(outerSymbolTable,
+        resolveArguments(outerContext,
                 genericType,
                 genericType.getParameters(),
                 specializedType,
@@ -132,7 +132,7 @@ public class OdinTypeSpecializer {
 
 
         for (TsOdinUnionVariant baseField : genericType.getVariants()) {
-            TsOdinType specializedFieldType = resolveType(specializedType.getSymbolTable(), baseField.getPsiType());
+            TsOdinType specializedFieldType = resolveType(specializedType.getContext(), baseField.getPsiType());
             TsOdinUnionVariant specializedField = new TsOdinUnionVariant();
             specializedField.setPsiType(baseField.getPsiType());
             specializedField.setType(specializedFieldType);
@@ -143,13 +143,13 @@ public class OdinTypeSpecializer {
     }
 
     private static void resolveArguments(
-            OdinSymbolTable outerScope,
+            OdinContext outerScope,
             TsOdinType genericType,
             List<TsOdinParameter> parameters,
             TsOdinType specializedType,
             List<OdinArgument> arguments
     ) {
-        OdinSymbolTable instantiationScope = specializedType.getSymbolTable();
+        OdinContext instantiationScope = specializedType.getContext();
         Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(parameters, arguments, true);
         if (argumentToParameterMap != null) {
             for (Map.Entry<OdinExpression, TsOdinParameter> entry : argumentToParameterMap.entrySet()) {
@@ -308,13 +308,13 @@ public class OdinTypeSpecializer {
     }
 
     @NotNull
-    private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, OdinSymbolTable symbolTable) {
-        TsOdinType argumentType = inferTypeInExplicitMode(symbolTable, argumentExpression);
+    private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, OdinContext context) {
+        TsOdinType argumentType = inferTypeInExplicitMode(context, argumentExpression);
         if (argumentType instanceof TsOdinMetaType metaType) {
             TsOdinType tsOdinType = metaType.representedType();
             if (tsOdinType.isExplicitPolymorphic()) {
                 TsOdinPolymorphicType tsOdinPolymorphicType = (TsOdinPolymorphicType) tsOdinType;
-                TsOdinType type = symbolTable.getType(tsOdinPolymorphicType.getName());
+                TsOdinType type = context.getType(tsOdinPolymorphicType.getName());
                 if (type == null) {
                     return TsOdinBuiltInTypes.UNKNOWN;
                 }
@@ -337,7 +337,7 @@ public class OdinTypeSpecializer {
         return "<unknown location>";
     }
 
-    private static @NotNull TsOdinType createPolymorphicType(OdinSymbolTable newScope, OdinPolymorphicType polymorphicType) {
+    private static @NotNull TsOdinType createPolymorphicType(OdinContext newScope, OdinPolymorphicType polymorphicType) {
         TsOdinType tsOdinType = resolveType(newScope, polymorphicType);
         OdinDeclaredIdentifier declaredIdentifier = polymorphicType.getDeclaredIdentifier();
         tsOdinType.setDeclaration(polymorphicType);
@@ -346,57 +346,57 @@ public class OdinTypeSpecializer {
     }
 
 
-    public static @NotNull TsOdinStructType specializeAndCacheStruct(OdinSymbolTable symbolTable,
+    public static @NotNull TsOdinStructType specializeAndCacheStruct(OdinContext context,
                                                                      TsOdinStructType structType,
                                                                      @NotNull List<OdinArgument> argumentList) {
         TsOdinStructType specializedType = new TsOdinStructType();
         ArrayList<PsiElement> arguments = new ArrayList<>(argumentList);
-        structType.getSymbolTable().addSpecializedType(structType, specializedType, arguments);
+        structType.getContext().addSpecializedType(structType, specializedType, arguments);
 
-        boolean specializationCreated = specializeStruct(symbolTable,
+        boolean specializationCreated = specializeStruct(context,
                 argumentList,
                 structType,
                 specializedType);
         if (!specializationCreated) {
-            structType.getSymbolTable().getSpecializedTypes().get(structType).remove(argumentList);
+            structType.getContext().getSpecializedTypes().get(structType).remove(argumentList);
             return structType;
         }
         return specializedType;
     }
 
-    public static @NotNull TsOdinUnionType specializeAndCacheUnion(OdinSymbolTable symbolTable,
+    public static @NotNull TsOdinUnionType specializeAndCacheUnion(OdinContext context,
                                                                    TsOdinUnionType unionType,
                                                                    @NotNull List<OdinArgument> argumentList) {
         TsOdinUnionType specializedType = new TsOdinUnionType();
         ArrayList<PsiElement> arguments = new ArrayList<>(argumentList);
-        unionType.getSymbolTable().addSpecializedType(unionType, specializedType, arguments);
-        boolean specializationCreated = specializeUnion(symbolTable,
+        unionType.getContext().addSpecializedType(unionType, specializedType, arguments);
+        boolean specializationCreated = specializeUnion(context,
                 argumentList,
                 unionType,
                 specializedType);
         if (!specializationCreated) {
-            unionType.getSymbolTable().getSpecializedTypes().get(unionType).remove(argumentList);
+            unionType.getContext().getSpecializedTypes().get(unionType).remove(argumentList);
             return unionType;
         }
         return specializedType;
     }
 
-    public static @NotNull TsOdinUnionType specializeUnionOrGetCached(OdinSymbolTable symbolTable,
+    public static @NotNull TsOdinUnionType specializeUnionOrGetCached(OdinContext context,
                                                                       TsOdinUnionType unionType,
                                                                       @NotNull List<OdinArgument> argumentList) {
-        TsOdinType specializedType = symbolTable.getSpecializedType(unionType, new ArrayList<>(argumentList));
+        TsOdinType specializedType = context.getSpecializedType(unionType, new ArrayList<>(argumentList));
         if (specializedType == null) {
-            specializedType = specializeAndCacheUnion(symbolTable, unionType, argumentList);
+            specializedType = specializeAndCacheUnion(context, unionType, argumentList);
         }
         return (TsOdinUnionType) specializedType;
     }
 
-    public static @NotNull TsOdinStructType specializeStructOrGetCached(OdinSymbolTable symbolTable,
+    public static @NotNull TsOdinStructType specializeStructOrGetCached(OdinContext context,
                                                                         TsOdinStructType structType,
                                                                         @NotNull List<OdinArgument> argumentList) {
-        TsOdinType specializedType = symbolTable.getSpecializedType(structType, new ArrayList<>(argumentList));
+        TsOdinType specializedType = context.getSpecializedType(structType, new ArrayList<>(argumentList));
         if (specializedType == null) {
-            specializedType = specializeAndCacheStruct(symbolTable, structType, argumentList);
+            specializedType = specializeAndCacheStruct(context, structType, argumentList);
         }
         return (TsOdinStructType) specializedType;
     }

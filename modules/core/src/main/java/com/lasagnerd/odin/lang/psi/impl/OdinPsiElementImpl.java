@@ -10,7 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinImportPath;
 import com.lasagnerd.odin.lang.psi.OdinParenthesizedExpression;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 @Getter
 public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiElement {
 
-    protected OdinSymbolTable fullSymbolTable;
+    protected OdinContext fullContext;
 
     public OdinPsiElementImpl(@NotNull ASTNode node) {
         super(node);
@@ -49,7 +49,7 @@ public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiE
 
     @Override
     public void subtreeChanged() {
-        fullSymbolTable = null;
+        fullContext = null;
     }
 
     @Override

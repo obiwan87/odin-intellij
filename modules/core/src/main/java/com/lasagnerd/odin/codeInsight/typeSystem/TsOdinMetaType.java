@@ -63,7 +63,7 @@ public class TsOdinMetaType extends TsOdinTypeBase {
 
     public TsOdinType representedType() {
         if(representedType == null) {
-            representedType = OdinTypeResolver.resolveMetaType(symbolTable, this);
+            representedType = OdinTypeResolver.resolveMetaType(context, this);
         }
         return representedType;
     }

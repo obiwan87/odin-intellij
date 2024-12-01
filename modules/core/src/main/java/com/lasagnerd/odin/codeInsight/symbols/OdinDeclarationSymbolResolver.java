@@ -27,25 +27,25 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     private static final Logger LOG = Logger.getInstance(OdinDeclarationSymbolResolver.class);
     List<OdinSymbol> symbols = new ArrayList<>();
     private final OdinVisibility defaultVisibility;
-    private final OdinSymbolTable symbolTable;
+    private final OdinContext context;
 
-    public OdinDeclarationSymbolResolver(OdinVisibility defaultVisibility, OdinSymbolTable symbolTable) {
+    public OdinDeclarationSymbolResolver(OdinVisibility defaultVisibility, OdinContext context) {
         this.defaultVisibility = defaultVisibility;
-        this.symbolTable = symbolTable;
+        this.context = context;
     }
 
     public static List<OdinSymbol> getSymbols(OdinDeclaration odinDeclaration) {
-        return getSymbols(OdinVisibility.PACKAGE_EXPORTED, odinDeclaration, OdinSymbolTable.EMPTY);
+        return getSymbols(OdinVisibility.PACKAGE_EXPORTED, odinDeclaration, OdinContext.EMPTY);
     }
 
-    public static List<OdinSymbol> getSymbols(OdinDeclaration odinDeclaration, OdinSymbolTable odinSymbolTable) {
-        return getSymbols(OdinVisibility.NONE, odinDeclaration, odinSymbolTable);
+    public static List<OdinSymbol> getSymbols(OdinDeclaration odinDeclaration, OdinContext odinContext) {
+        return getSymbols(OdinVisibility.NONE, odinDeclaration, odinContext);
     }
 
     public static List<OdinSymbol> getSymbols(@NotNull OdinVisibility defaultVisibility,
                                               OdinDeclaration odinDeclaration,
-                                              OdinSymbolTable symbolTable) {
-        OdinDeclarationSymbolResolver odinDeclarationSymbolResolver = new OdinDeclarationSymbolResolver(defaultVisibility, symbolTable);
+                                              OdinContext context) {
+        OdinDeclarationSymbolResolver odinDeclarationSymbolResolver = new OdinDeclarationSymbolResolver(defaultVisibility, context);
         odinDeclaration.accept(odinDeclarationSymbolResolver);
         if (odinDeclarationSymbolResolver.symbols.isEmpty()) {
             LOG.debug("No symbols found for declaration with type " + odinDeclaration.getClass().getSimpleName());
@@ -88,9 +88,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         if (using && o.getDeclaredIdentifiers().size() == 1) {
             List<OdinSymbol> typeElements;
             if (type != null) {
-                typeElements = getTypeElements(type, symbolTable);
+                typeElements = getTypeElements(type, context);
             } else {
-                typeElements = getTypeElements(symbolTable, o.getExpression());
+                typeElements = getTypeElements(context, o.getExpression());
             }
             typeElements = setVisibleThroughUsing(typeElements);
             symbols.addAll(typeElements);
@@ -126,7 +126,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         if (hasUsing) {
             if (o.getParameterList().size() == 1) {
                 if (psiType != null) {
-                    List<OdinSymbol> typeElements = getTypeElements(psiType, symbolTable);
+                    List<OdinSymbol> typeElements = getTypeElements(psiType, context);
                     typeElements = setVisibleThroughUsing(typeElements);
 
                     symbols.addAll(typeElements);
@@ -162,7 +162,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
         if (hasUsing) {
             if (o.getDeclaredIdentifiers().size() == 1) {
-                List<OdinSymbol> typeElements = getTypeElements(o.getType(), symbolTable);
+                List<OdinSymbol> typeElements = getTypeElements(o.getType(), context);
                 typeElements = setVisibleThroughUsing(typeElements);
                 symbols.addAll(typeElements);
             }
@@ -207,12 +207,12 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         if (hasUsing) {
             if (o.getDeclaredIdentifiers().size() == 1 && Objects.requireNonNull(o.getRhsExpressions()).getExpressionList().size() == 1) {
                 if (o.getType() != null) {
-                    List<OdinSymbol> typeElements = getTypeElements(o.getType(), symbolTable);
+                    List<OdinSymbol> typeElements = getTypeElements(o.getType(), context);
                     typeElements = setVisibleThroughUsing(typeElements);
                     symbols.addAll(typeElements);
                 } else {
                     OdinExpression odinExpression = o.getRhsExpressions().getExpressionList().getFirst();
-                    List<OdinSymbol> typeElements = getTypeElements(symbolTable, odinExpression);
+                    List<OdinSymbol> typeElements = getTypeElements(context, odinExpression);
                     typeElements = setVisibleThroughUsing(typeElements);
                     symbols.addAll(typeElements);
                 }
@@ -236,12 +236,12 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         for (OdinExpression expression : o.getExpressionList()) {
 
             List<OdinSymbol> typeSymbols;
-            TsOdinType tsOdinType = expression.getInferredType(symbolTable);
+            TsOdinType tsOdinType = expression.getInferredType(context);
             if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-                typeSymbols = getTypeElements(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType)
-                        .baseType(true), symbolTable);
+                typeSymbols = getTypeElements(OdinTypeResolver.resolveMetaType(context, tsOdinMetaType)
+                        .baseType(true), context);
             } else {
-                var stream = getTypeElements(tsOdinType.baseType(true), symbolTable).stream();
+                var stream = getTypeElements(tsOdinType.baseType(true), context).stream();
                 if (tsOdinType.baseType(true) instanceof TsOdinPackageReferenceType)
                     stream = stream
                             .filter(s -> s.getVisibility() == OdinVisibility.PACKAGE_EXPORTED);
@@ -311,7 +311,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
                     symbols.addAll(enumFields);
                 } else {
                     OdinExpression expression = o.getExpressionList().getFirst();
-                    TsOdinType tsOdinType = expression.getInferredType(symbolTable);
+                    TsOdinType tsOdinType = expression.getInferredType(context);
                     if (tsOdinType instanceof TsOdinMetaType metaType
                             && metaType.representedType().baseType(true) instanceof TsOdinEnumType enumType) {
                         List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields((OdinEnumType) enumType.getPsiType());
@@ -385,7 +385,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         }
         if (o.getDeclaredIdentifierList().size() == 1 && hasUsing) {
             List<OdinSymbol> symbolsVisibleThroughUsing = new ArrayList<>();
-            OdinInsightUtils.getSymbolsOfFieldWithUsing(symbolTable, o, symbolsVisibleThroughUsing);
+            OdinInsightUtils.getSymbolsOfFieldWithUsing(context, o, symbolsVisibleThroughUsing);
             symbolsVisibleThroughUsing = setVisibleThroughUsing(symbolsVisibleThroughUsing);
             symbols.addAll(symbolsVisibleThroughUsing);
         }
@@ -401,7 +401,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         OdinForeignStatementList foreignStatementList = o.getForeignBlock().getForeignStatementList();
         if (foreignStatementList != null) {
             for (OdinStatement odinStatement : foreignStatementList.getStatementList()) {
-                OdinDeclarationSymbolResolver declarationSymbolResolver = new OdinDeclarationSymbolResolver(defaultVisibility, symbolTable);
+                OdinDeclarationSymbolResolver declarationSymbolResolver = new OdinDeclarationSymbolResolver(defaultVisibility, context);
                 odinStatement.accept(declarationSymbolResolver);
                 declarationSymbolResolver.symbols.forEach(s -> {
                     s.setForeign(true);
@@ -422,7 +422,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
 //        EvOdinValue conditionValue = TsOdinBuiltInTypes.NULL;
 //        if (condition != null) {
-//            conditionValue = OdinExpressionEvaluator.evaluate(symbolTable, condition.getExpression());
+//            conditionValue = OdinExpressionEvaluator.evaluate(context, condition.getExpression());
 //        }
 
 //        boolean ifConditionTrue = conditionValue.asBool() == Boolean.TRUE;

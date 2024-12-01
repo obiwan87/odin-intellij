@@ -21,7 +21,6 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.lasagnerd.odin.codeInsight.imports.OdinImportUtils.getSymbolsOfImportedPackage;
 import static com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType.*;
 
 @SuppressWarnings("unused")
@@ -93,19 +92,19 @@ public class OdinInsightUtils {
         return null;
     }
 
-    public static OdinSymbolTable getTypeElements(Project project, TsOdinType type) {
+    public static OdinContext getTypeElements(Project project, TsOdinType type) {
         return getTypeElements(project, type, false);
     }
 
-    public static OdinSymbolTable getTypeElements(Project project, TsOdinType type, boolean includeReferenceableSymbols) {
+    public static OdinContext getTypeElements(Project project, TsOdinType type, boolean includeReferenceableSymbols) {
 
         type = type.baseType(true);
 
         if (type instanceof TsOdinPackageReferenceType packageType) {
             return getPackageReferenceSymbols(project, packageType, true);
         }
-        OdinSymbolTable typeSymbolTable = type.getSymbolTable();
-        OdinSymbolTable symbolTable = new OdinSymbolTable();
+        OdinContext typeContext = type.getContext();
+        OdinContext context = new OdinContext();
         switch (type) {
             case TsOdinPointerType pointerType -> {
                 return getTypeElements(project, pointerType.getDereferencedType(), includeReferenceableSymbols);
@@ -121,7 +120,7 @@ public class OdinInsightUtils {
                 if (psiType != null) {
                     if (psiType.getParent() instanceof OdinConstrainedType constrainedType) {
                         OdinType specializedType = constrainedType.getTypeList().get(1);
-                        TsOdinType tsOdinType = OdinTypeResolver.resolveType(typeSymbolTable, specializedType);
+                        TsOdinType tsOdinType = OdinTypeResolver.resolveType(typeContext, specializedType);
                         if (tsOdinType instanceof TsOdinGenericType tsOdinGenericType) {
                             List<TsOdinParameter> typeParameters = getTypeParameters(tsOdinGenericType.genericType());
                             for (TsOdinParameter typeParameter : typeParameters) {
@@ -130,7 +129,7 @@ public class OdinInsightUtils {
                                 symbol.setSymbolType(PARAMETER);
                                 symbol.setPsiType(typeParameter.getPsiType());
                                 symbol.setDeclaredIdentifier(typeParameter.getIdentifier());
-                                symbolTable.add(symbol);
+                                context.add(symbol);
                             }
                         }
                     }
@@ -141,11 +140,11 @@ public class OdinInsightUtils {
         }
 
         if (type.getPsiType() instanceof OdinStructType structType) {
-            var structFields = OdinInsightUtils.getStructFields(type.getSymbolTable(), structType);
+            var structFields = OdinInsightUtils.getStructFields(type.getContext(), structType);
 
-            symbolTable.addAll(structFields);
-            symbolTable.addTypes(typeSymbolTable);
-            return symbolTable;
+            context.addAll(structFields);
+            context.addTypes(typeContext);
+            return context;
         }
 
         if (type instanceof TsOdinSoaStructType tsOdinSoaStructType) {
@@ -158,52 +157,52 @@ public class OdinInsightUtils {
                 symbol.setPsiType(sliceType.getPsiType());
                 symbol.setImplicitlyDeclared(true);
                 symbol.setScope(OdinScope.TYPE);
-                symbolTable.add(symbol);
+                context.add(symbol);
             }
 
-            return symbolTable;
+            return context;
         }
 
         if (type.getPsiType() instanceof OdinEnumType enumType) {
-            return symbolTable.with(getEnumFields(enumType));
+            return context.with(getEnumFields(enumType));
         }
 
         if (type instanceof TsOdinMetaType metaType && metaType.representedType().baseType(true) instanceof TsOdinBitSetType tsOdinBitSetType) {
             if (tsOdinBitSetType.getElementType() instanceof TsOdinEnumType tsOdinEnumType) {
-                return symbolTable.with(getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType()));
+                return context.with(getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType()));
             }
         }
 
         if (type.getPsiType() instanceof OdinBitFieldType bitFieldType) {
-            return symbolTable.with(getBitFieldFields(bitFieldType));
+            return context.with(getBitFieldFields(bitFieldType));
         }
 
         if (includeReferenceableSymbols && type instanceof TsOdinArrayType arrayType) {
-            return OdinSymbolTable.from(getSwizzleFields(arrayType));
+            return OdinContext.from(getSwizzleFields(arrayType));
         }
 
         if (includeReferenceableSymbols && (type instanceof TsOdinDynamicArray || type instanceof TsOdinMapType)) {
             OdinSymbol implicitStructSymbol = OdinSdkService.createAllocatorSymbol(project);
-            return OdinSymbolTable.from(Collections.singletonList(implicitStructSymbol));
+            return OdinContext.from(Collections.singletonList(implicitStructSymbol));
         }
 
         if (includeReferenceableSymbols && TsOdinBuiltInTypes.getComplexTypes().contains(type)) {
             if (type == TsOdinBuiltInTypes.COMPLEX32) {
                 List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F16);
                 odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F16));
-                return OdinSymbolTable.from(odinSymbols);
+                return OdinContext.from(odinSymbols);
             }
 
             if (type == TsOdinBuiltInTypes.COMPLEX64) {
                 List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F32);
                 odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F32));
-                return OdinSymbolTable.from(odinSymbols);
+                return OdinContext.from(odinSymbols);
             }
 
             if (type == TsOdinBuiltInTypes.COMPLEX128) {
                 List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F64);
                 odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F64));
-                return OdinSymbolTable.from(odinSymbols);
+                return OdinContext.from(odinSymbols);
             }
         }
 
@@ -211,48 +210,48 @@ public class OdinInsightUtils {
             if (type == TsOdinBuiltInTypes.QUATERNION64) {
                 List<OdinSymbol> odinSymbols = generateSwizzleFields(RGBA, TsOdinBuiltInTypes.F16);
                 odinSymbols.addAll(generateSwizzleFields(XYZW, TsOdinBuiltInTypes.F16));
-                return OdinSymbolTable.from(odinSymbols);
+                return OdinContext.from(odinSymbols);
             }
 
             if (type == TsOdinBuiltInTypes.QUATERNION128) {
                 List<OdinSymbol> odinSymbols = generateSwizzleFields(RGBA, TsOdinBuiltInTypes.F32);
                 odinSymbols.addAll(generateSwizzleFields(XYZW, TsOdinBuiltInTypes.F32));
-                return OdinSymbolTable.from(odinSymbols);
+                return OdinContext.from(odinSymbols);
             }
 
             if (type == TsOdinBuiltInTypes.QUATERNION256) {
                 List<OdinSymbol> odinSymbols = generateSwizzleFields(RGBA, TsOdinBuiltInTypes.F64);
                 odinSymbols.addAll(generateSwizzleFields(XYZW, TsOdinBuiltInTypes.F64));
-                return OdinSymbolTable.from(odinSymbols);
+                return OdinContext.from(odinSymbols);
             }
         }
-        return symbolTable;
+        return context;
     }
 
-    public static @NotNull OdinSymbolTable getPackageReferenceSymbols(Project project,
+    public static @NotNull OdinContext getPackageReferenceSymbols(Project project,
                                                                       TsOdinPackageReferenceType packageType,
                                                                       boolean includeBuiltin) {
-        OdinSymbolTable symbolsOfImportedPackage = OdinImportUtils
-                .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
+        OdinContext contextOfImportedPackage = OdinImportUtils
+                .getContextOfImportedPackage(packageType.getReferencingPackagePath(),
                         (OdinImportDeclarationStatement) packageType.getDeclaration());
         if (includeBuiltin) {
             List<OdinSymbol> builtInSymbols = OdinSdkService.getInstance(project).getBuiltInSymbols();
-            OdinSymbolTable odinBuiltinSymbolsTable = OdinSymbolTable.from(builtInSymbols);
-            symbolsOfImportedPackage.setRoot(odinBuiltinSymbolsTable);
+            OdinContext odinBuiltinSymbolsTable = OdinContext.from(builtInSymbols);
+            contextOfImportedPackage.setRoot(odinBuiltinSymbolsTable);
         }
-        return symbolsOfImportedPackage;
+        return contextOfImportedPackage;
     }
 
     @SuppressWarnings("unused")
-    public static boolean getEnumeratedArraySymbols(OdinSymbolTable symbolTable, TsOdinArrayType tsOdinArrayType) {
+    public static boolean getEnumeratedArraySymbols(OdinContext context, TsOdinArrayType tsOdinArrayType) {
         var psiSizeElement = tsOdinArrayType.getPsiSizeElement();
         OdinExpression expression = psiSizeElement.getExpression();
 
         if (expression != null) {
-            TsOdinType sizeType = expression.getInferredType(symbolTable);
+            TsOdinType sizeType = expression.getInferredType(context);
             if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
                 List<OdinSymbol> enumFields = getEnumFields((OdinEnumType) sizeType.getPsiType());
-                symbolTable.addAll(enumFields);
+                context.addAll(enumFields);
                 return true;
             }
         }
@@ -310,7 +309,7 @@ public class OdinInsightUtils {
         return symbols;
     }
 
-    public static List<OdinSymbol> getStructFields(OdinSymbolTable symbolTable, @NotNull OdinStructType structType) {
+    public static List<OdinSymbol> getStructFields(OdinContext context, @NotNull OdinStructType structType) {
         List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structType);
         List<OdinSymbol> symbols = new ArrayList<>();
         for (OdinFieldDeclarationStatement field : fieldDeclarationStatementList) {
@@ -323,27 +322,27 @@ public class OdinInsightUtils {
                 odinSymbol.setHasUsing(hasUsing);
                 symbols.add(odinSymbol);
                 if (field.getDeclaredIdentifiers().size() == 1 && hasUsing) {
-                    getSymbolsOfFieldWithUsing(symbolTable, field, symbols);
+                    getSymbolsOfFieldWithUsing(context, field, symbols);
                 }
             }
         }
         return symbols;
     }
 
-    public static void getSymbolsOfFieldWithUsing(OdinSymbolTable symbolTable,
+    public static void getSymbolsOfFieldWithUsing(OdinContext context,
                                                   OdinFieldDeclarationStatement field,
                                                   List<OdinSymbol> symbols) {
         if (field.getType() == null) {
             return;
         }
-        TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, field.getType());
+        TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, field.getType());
         TsOdinStructType structType = unwrapFromPointerType(tsOdinType);
 
         if (structType != null) {
             OdinType psiType = structType.getPsiType();
             if (psiType instanceof OdinStructType psiStructType) {// TODO This fails at models.odin in Engin3
 
-                List<OdinSymbol> structFields = getStructFields(structType.getSymbolTable(), psiStructType);
+                List<OdinSymbol> structFields = getStructFields(structType.getContext(), psiStructType);
                 symbols.addAll(structFields);
             }
         }
@@ -383,29 +382,29 @@ public class OdinInsightUtils {
         return fieldDeclarationStatementList;
     }
 
-    public static List<OdinSymbol> getTypeElements(OdinSymbolTable symbolTable, OdinExpression expression) {
-        TsOdinType tsOdinType = expression.getInferredType(symbolTable);
+    public static List<OdinSymbol> getTypeElements(OdinContext context, OdinExpression expression) {
+        TsOdinType tsOdinType = expression.getInferredType(context);
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            return getTypeElements(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType)
-                    .baseType(true), symbolTable);
+            return getTypeElements(OdinTypeResolver.resolveMetaType(context, tsOdinMetaType)
+                    .baseType(true), context);
         }
-        return getTypeElements(tsOdinType.baseType(true), symbolTable);
+        return getTypeElements(tsOdinType.baseType(true), context);
     }
 
-    public static List<OdinSymbol> getTypeElements(OdinType type, OdinSymbolTable symbolTable) {
-        TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable, type);
-        return getTypeElements(tsOdinType, symbolTable);
+    public static List<OdinSymbol> getTypeElements(OdinType type, OdinContext context) {
+        TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, type);
+        return getTypeElements(tsOdinType, context);
     }
 
-    public static @NotNull List<OdinSymbol> getTypeElements(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
+    public static @NotNull List<OdinSymbol> getTypeElements(TsOdinType tsOdinType, OdinContext context) {
         if (tsOdinType instanceof TsOdinStructType structType) {
             if (structType.getPsiType() instanceof OdinStructType psiStructType) {
-                return getStructFields(symbolTable, psiStructType);
+                return getStructFields(context, psiStructType);
             }
         }
 
         if (tsOdinType instanceof TsOdinPointerType pointerType) {
-            return getTypeElements(pointerType.getDereferencedType(), symbolTable);
+            return getTypeElements(pointerType.getDereferencedType(), context);
         }
 
         if (tsOdinType instanceof TsOdinEnumType enumType) {
@@ -420,8 +419,8 @@ public class OdinInsightUtils {
         }
 
         if (tsOdinType instanceof TsOdinPackageReferenceType packageReferenceType) {
-            OdinSymbolTable symbolsOfImportedPackage = OdinImportUtils
-                    .getSymbolsOfImportedPackage(packageReferenceType.getReferencingPackagePath(),
+            OdinContext symbolsOfImportedPackage = OdinImportUtils
+                    .getContextOfImportedPackage(packageReferenceType.getReferencingPackagePath(),
                             (OdinImportDeclarationStatement) packageReferenceType.getDeclaration());
             return new ArrayList<>(symbolsOfImportedPackage.getSymbols());
         }
@@ -664,13 +663,13 @@ public class OdinInsightUtils {
         return "<unknown>:<unknown>";
     }
 
-    public static @Nullable OdinEnumType getEnumTypeOfArray(OdinSymbolTable symbolTable, TsOdinArrayType tsOdinArrayType) {
+    public static @Nullable OdinEnumType getEnumTypeOfArray(OdinContext context, TsOdinArrayType tsOdinArrayType) {
         var psiSizeElement = tsOdinArrayType.getPsiSizeElement();
         OdinExpression expression = psiSizeElement.getExpression();
 
         OdinEnumType psiType;
         if (expression != null) {
-            TsOdinType sizeType = expression.getInferredType(symbolTable);
+            TsOdinType sizeType = expression.getInferredType(context);
             if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
                 psiType = (OdinEnumType) sizeType.getPsiType();
             } else {
@@ -702,21 +701,21 @@ public class OdinInsightUtils {
         return swizzleSymbols;
     }
 
-    public static List<OdinSymbol> getElementSymbols(TsOdinType tsOdinType, OdinSymbolTable symbolTable) {
+    public static List<OdinSymbol> getElementSymbols(TsOdinType tsOdinType, OdinContext context) {
         List<OdinSymbol> elementSymbols = new ArrayList<>();
         tsOdinType = tsOdinType.baseType(true);
         if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
-            List<OdinSymbol> typeSymbols = getTypeElements(tsOdinStructType, symbolTable);
+            List<OdinSymbol> typeSymbols = getTypeElements(tsOdinStructType, context);
             elementSymbols.addAll(typeSymbols);
         }
 
         if (tsOdinType instanceof TsOdinBitFieldType tsOdinBitFieldType) {
-            List<OdinSymbol> typeSymbols = getTypeElements(tsOdinBitFieldType, symbolTable);
+            List<OdinSymbol> typeSymbols = getTypeElements(tsOdinBitFieldType, context);
             elementSymbols.addAll(typeSymbols);
         }
 
         if (tsOdinType instanceof TsOdinArrayType tsOdinArrayType) {
-            OdinEnumType enumTypeOfArray = getEnumTypeOfArray(symbolTable, tsOdinArrayType);
+            OdinEnumType enumTypeOfArray = getEnumTypeOfArray(context, tsOdinArrayType);
             if (enumTypeOfArray != null) {
                 elementSymbols.addAll(getEnumFields(enumTypeOfArray));
 
@@ -766,7 +765,7 @@ public class OdinInsightUtils {
         return null;
     }
 
-    public static @Nullable OdinSymbol findBuiltinSymbolOfCallExpression(OdinSymbolTable symbolTable, OdinCallExpression callExpression, Predicate<String> identifierPredicate) {
+    public static @Nullable OdinSymbol findBuiltinSymbolOfCallExpression(OdinContext context, OdinCallExpression callExpression, Predicate<String> identifierPredicate) {
         OdinSymbol symbol = null;
         if (callExpression.getExpression() instanceof OdinRefExpression callRefExpression
                 && callRefExpression.getExpression() == null
@@ -958,7 +957,7 @@ public class OdinInsightUtils {
     }
 
     public static List<OdinSymbol> getStructFields(TsOdinStructType tsOdinStructType) {
-        return getStructFields(tsOdinStructType.getSymbolTable(), (OdinStructType) tsOdinStructType.getPsiType());
+        return getStructFields(tsOdinStructType.getContext(), (OdinStructType) tsOdinStructType.getPsiType());
     }
 
     public static @NotNull OdinCallInfo getCallInfo(OdinArgument argument) {
@@ -976,7 +975,7 @@ public class OdinInsightUtils {
                 }
                 argumentList = odinCallExpression.getArgumentList();
             } else if (callingElement instanceof OdinCallType odinCallType) {
-                tsOdinType = OdinTypeResolver.resolveType((OdinSymbolTable) null, odinCallType.getType());
+                tsOdinType = OdinTypeResolver.resolveType((OdinContext) null, odinCallType.getType());
                 argumentList = odinCallType.getArgumentList();
             }
         }
@@ -1053,7 +1052,7 @@ public class OdinInsightUtils {
     }
 
     // This is a variant of getTypeElements()
-    public static OdinSymbolTable getReferenceableSymbols(OdinExpression valueExpression) {
+    public static OdinContext getReferenceableSymbols(OdinExpression valueExpression) {
         // Add filter for referenceable elements
         TsOdinType type = valueExpression.getInferredType();
         if (type instanceof TsOdinMetaType metaType) {
@@ -1071,16 +1070,16 @@ public class OdinInsightUtils {
     }
 
     // This is a variant  of getTypeElements()
-    public static OdinSymbolTable getReferenceableSymbols(OdinQualifiedType qualifiedType) {
+    public static OdinContext getReferenceableSymbols(OdinQualifiedType qualifiedType) {
         OdinIdentifier identifier = qualifiedType.getIdentifier();
         OdinSymbol odinSymbol = identifier.getReferencedSymbol();
         if (odinSymbol != null) {
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return getSymbolsOfImportedPackage(OdinImportService.getInstance(qualifiedType.getProject()).getPackagePath(qualifiedType), importDeclarationStatement);
+                return OdinImportUtils.getContextOfImportedPackage(OdinImportService.getInstance(qualifiedType.getProject()).getPackagePath(qualifiedType), importDeclarationStatement);
             }
         }
-        return OdinSymbolTable.EMPTY;
+        return OdinContext.EMPTY;
     }
 
     // Record to hold the result

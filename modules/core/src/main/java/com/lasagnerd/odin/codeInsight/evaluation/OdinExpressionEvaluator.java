@@ -7,9 +7,9 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeChecker;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
@@ -27,17 +27,17 @@ import java.util.Objects;
  */
 public class OdinExpressionEvaluator extends OdinVisitor {
     public static Logger LOG = Logger.getInstance(OdinExpressionEvaluator.class);
-    OdinSymbolTable symbolTable;
+    OdinContext context;
     EvOdinValue value;
 
     public static EvOdinValue evaluate(OdinExpression expression) {
-        return evaluate(OdinSymbolTable.EMPTY, expression);
+        return evaluate(OdinContext.EMPTY, expression);
     }
 
-    public static EvOdinValue evaluate(OdinSymbolTable symbolTable, OdinExpression expression) {
+    public static EvOdinValue evaluate(OdinContext context, OdinExpression expression) {
         try {
             OdinExpressionEvaluator expressionEvaluator = new OdinExpressionEvaluator();
-            expressionEvaluator.symbolTable = symbolTable;
+            expressionEvaluator.context = context;
             expression.accept(expressionEvaluator);
             if (expressionEvaluator.value == null) {
                 return TsOdinBuiltInTypes.NULL;
@@ -54,7 +54,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
     @Override
     public void visitRefExpression(@NotNull OdinRefExpression o) {
-        OdinSymbolTable localSymbolTable = this.symbolTable;
+        OdinContext localContext = this.context;
         if (o.getType() != null)
             return;
 
@@ -64,11 +64,11 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         // Only refExpression allowed
         TsOdinType expressionType = TsOdinBuiltInTypes.UNKNOWN;
         if (o.getExpression() instanceof OdinRefExpression) {
-            EvOdinValue refExpressionValue = evaluate(symbolTable, o.getExpression());
+            EvOdinValue refExpressionValue = evaluate(context, o.getExpression());
             expressionType = refExpressionValue.asBaseType();
             if (expressionType instanceof TsOdinPackageReferenceType ||
                     expressionType instanceof TsOdinEnumType) {
-                localSymbolTable = OdinInsightUtils.getTypeElements(o.getProject(), expressionType);
+                localContext = OdinInsightUtils.getTypeElements(o.getProject(), expressionType);
             } else {
                 return;
             }
@@ -79,7 +79,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
         OdinSymbol symbol = o.getIdentifier().getReferencedSymbol();
         if (symbol != null) {
-            this.value = evaluateConstantDeclaration(o.getProject(), symbol, localSymbolTable, expressionType);
+            this.value = evaluateConstantDeclaration(o.getProject(), symbol, localContext, expressionType);
         } else {
             if (o.getExpression() == null) {
                 String name = o.getIdentifier().getText();
@@ -90,13 +90,13 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
     public static EvOdinValue evaluateConstantDeclaration(@NotNull Project project,
                                                           OdinSymbol symbol,
-                                                          OdinSymbolTable symbolTable,
+                                                          OdinContext context,
                                                           TsOdinType expressionType) {
         if (symbol == null) {
             return TsOdinBuiltInTypes.NULL;
         }
 
-        EvOdinValue storedValue = symbolTable.getValue(symbol.getName());
+        EvOdinValue storedValue = context.getValue(symbol.getName());
         if (storedValue != null) {
             return storedValue;
         }
@@ -126,7 +126,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         if (declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
 
             TsOdinMetaType declaredType = OdinInferenceEngine.findMetaType(
-                    symbolTable,
+                    context,
                     odinDeclaredIdentifier,
                     constantInitializationStatement);
 
@@ -145,7 +145,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
             if (expressionList.size() > index) {
                 OdinExpression expression = expressionList.get(index);
-                return evaluate(symbolTable, expression);
+                return evaluate(context, expression);
             }
         } else if (declaration instanceof OdinEnumValueDeclaration && expressionType instanceof TsOdinEnumType enumType) {
             EvEnumValue enumValue = getEnumValue(enumType, declaredIdentifier.getName());
@@ -266,9 +266,9 @@ public class OdinExpressionEvaluator extends OdinVisitor {
     @Override
     public void visitBinaryExpression(@NotNull OdinBinaryExpression o) {
         IElementType operatorType = PsiUtilCore.getElementType(o.getOperator());
-        EvOdinValue left = evaluate(symbolTable, o.getLeft());
+        EvOdinValue left = evaluate(context, o.getLeft());
         if (o.getRight() != null) {
-            EvOdinValue right = evaluate(symbolTable, o.getRight());
+            EvOdinValue right = evaluate(context, o.getRight());
             if (left.type == null || right.type == null) {
                 return;
             }
@@ -297,7 +297,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
     @Override
     public void visitUnaryExpression(@NotNull OdinUnaryExpression o) {
         IElementType operatorType = PsiUtilCore.getElementType(o.getOperator());
-        EvOdinValue value = evaluate(symbolTable, o.getExpression());
+        EvOdinValue value = evaluate(context, o.getExpression());
 
         TsOdinType tsOdinType = value.getType();
         if (tsOdinType.isUnknown())

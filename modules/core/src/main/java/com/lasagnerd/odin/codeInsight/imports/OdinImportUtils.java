@@ -17,9 +17,9 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
 import com.lasagnerd.odin.codeInsight.refactor.OdinNameSuggester;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContextBuilder;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -58,7 +58,7 @@ public class OdinImportUtils {
     }
 
 
-    public static OdinSymbolTable getSymbolsOfImportedPackage(OdinImportDeclarationStatement importStatement) {
+    public static OdinContext getContextOfImportedPackage(OdinImportDeclarationStatement importStatement) {
         OdinImport importInfo = importStatement.getImportInfo();
 
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
@@ -72,7 +72,7 @@ public class OdinImportUtils {
         String path = OdinImportService.getInstance(importStatement.getProject()).getCanonicalPath(virtualFile);
         String name = importInfo.packageName();
         Project project = importStatement.getProject();
-        return getSymbolsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
+        return getContextOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
     }
 
 
@@ -82,12 +82,12 @@ public class OdinImportUtils {
      * @param project        Project
      * @return Scope
      */
-    public static OdinSymbolTable getSymbolsOfImportedPackage(OdinImport importInfo, String sourceFilePath, Project project) {
+    public static OdinContext getContextOfImportedPackage(OdinImport importInfo, String sourceFilePath, Project project) {
         List<OdinSymbol> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
             Path packagePath = getFirstAbsoluteImportPath(importInfo, sourceFilePath, project);
             if (packagePath == null)
-                return OdinSymbolTable.EMPTY;
+                return OdinContext.EMPTY;
 
             List<OdinFile> importedFiles = getFilesInPackage(project, packagePath);
 
@@ -130,24 +130,24 @@ public class OdinImportUtils {
                     System.out.printf("File scope is null for file %s%n", importedFile.getVirtualFile().getPath());
                     continue;
                 }
-                OdinVisibility globalFileVisibility = OdinSymbolTableResolver.getGlobalFileVisibility(importedFileScope);
+                OdinVisibility globalFileVisibility = OdinContextBuilder.getGlobalFileVisibility(importedFileScope);
                 if (globalFileVisibility == OdinVisibility.PACKAGE_PRIVATE
                         || globalFileVisibility == OdinVisibility.FILE_PRIVATE)
                     continue;
 
                 Collection<OdinSymbol> fileScopeDeclarations = importedFileScope
-                        .getFullSymbolTable()
+                        .getFullContext()
                         .getSymbols();
 
                 packageDeclarations.addAll(fileScopeDeclarations);
             }
 
             if (!importedFiles.isEmpty()) {
-                return OdinSymbolTable.from(packageDeclarations, packagePath.toString());
+                return OdinContext.from(packageDeclarations, packagePath.toString());
             }
 
         }
-        return OdinSymbolTable.EMPTY;
+        return OdinContext.EMPTY;
     }
 
     /**
@@ -458,7 +458,7 @@ public class OdinImportUtils {
         return files;
     }
 
-    public static OdinSymbolTable getSymbolsOfImportedPackage(String packagePath, OdinImportDeclarationStatement importStatement) {
+    public static OdinContext getContextOfImportedPackage(String packagePath, OdinImportDeclarationStatement importStatement) {
         OdinImport importInfo = importStatement.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         // Check if package is null. If yes log debug
@@ -474,7 +474,7 @@ public class OdinImportUtils {
         }
         String name = importInfo.packageName();
         Project project = importStatement.getProject();
-        return getSymbolsOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
+        return getContextOfImportedPackage(getImportStatementsInfo(fileScope).get(name), path, project);
     }
 
 

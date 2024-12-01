@@ -11,9 +11,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
+import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -476,7 +476,7 @@ public class OdinPsiUtil {
         for (OdinExpression expression : usingStatement.getExpressionList()) {
             TsOdinType tsOdinType = expression.getInferredType();
 
-            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(usingStatement.getProject(), tsOdinType);
+            OdinContext typeSymbols = OdinInsightUtils.getTypeElements(usingStatement.getProject(), tsOdinType);
             typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
                     .map(OdinDeclaredIdentifier.class::cast)
                     .forEach(declaredIdentifiers::add);
