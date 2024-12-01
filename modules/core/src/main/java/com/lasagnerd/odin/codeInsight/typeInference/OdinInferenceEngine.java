@@ -563,8 +563,11 @@ public class OdinInferenceEngine extends OdinVisitor {
                     .getPackagePath(importDeclarationStatement), importDeclarationStatement);
         } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
             TsOdinType tsOdinType = doResolveTypeOfDeclaredIdentifier(declaredIdentifier);
-            return OdinTypeConverter.convertToTyped(tsOdinType);
-
+            OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
+            if (!(declaration instanceof OdinConstantInitializationStatement)) {
+                return OdinTypeConverter.convertToTyped(tsOdinType);
+            }
+            return tsOdinType;
         }
         return TsOdinBuiltInTypes.UNKNOWN;
     }

@@ -90,7 +90,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             if (type != null) {
                 typeElements = getTypeElements(type, symbolTable);
             } else {
-                typeElements = getTypeElements(o.getExpression(), symbolTable);
+                typeElements = getTypeElements(symbolTable, o.getExpression());
             }
             typeElements = setVisibleThroughUsing(typeElements);
             symbols.addAll(typeElements);
@@ -212,7 +212,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
                     symbols.addAll(typeElements);
                 } else {
                     OdinExpression odinExpression = o.getRhsExpressions().getExpressionList().getFirst();
-                    List<OdinSymbol> typeElements = getTypeElements(odinExpression, symbolTable);
+                    List<OdinSymbol> typeElements = getTypeElements(symbolTable, odinExpression);
                     typeElements = setVisibleThroughUsing(typeElements);
                     symbols.addAll(typeElements);
                 }

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
+// TODO This is more of a context, containing a symbol table, rather than just being a symbol table
 @Getter
 public class OdinSymbolTable {
 

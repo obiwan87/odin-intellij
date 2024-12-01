@@ -414,7 +414,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
 
         OdinSymbolTable symbolTable = OdinSymbolTableResolver.computeSymbolTable(odinRefExpression);
-        OdinReferenceResolver.resolve(odinRefExpression);
+        OdinInsightUtils.getReferenceableSymbols(odinRefExpression);
 
     }
 

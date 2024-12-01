@@ -104,7 +104,7 @@ public abstract class TsOdinGenericType extends TsOdinTypeBase {
         List<String> labels = new ArrayList<>();
         TsOdinGenericType genericType = getGenericType();
         if (genericType == null)
-            return "()";
+            return "";
 
         for (TsOdinParameter parameter : genericType.getParameters()) {
             TsOdinType type = parameter.getType();
@@ -122,7 +122,8 @@ public abstract class TsOdinGenericType extends TsOdinTypeBase {
                 }
             }
         }
-
-        return "(" + String.join(",", labels) + ")";
+        if (!labels.isEmpty())
+            return "(" + String.join(",", labels) + ")";
+        return "";
     }
 }

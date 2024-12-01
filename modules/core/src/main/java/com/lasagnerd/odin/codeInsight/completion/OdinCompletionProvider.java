@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -52,7 +53,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     }
 
     private void addSelectorTypeCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result, @NotNull OdinQualifiedType parentType) {
-        OdinSymbolTable completionScope = OdinReferenceResolver.resolve(parentType);
+        OdinSymbolTable completionScope = OdinInsightUtils.getReferenceableSymbols(parentType);
         if (completionScope != null) {
             addLookUpElements(result, completionScope.flatten()
                     .getSymbols()
@@ -67,7 +68,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         if (expression != null) {
             Project project = expression.getProject();
             TsOdinType refExpressionType = expression.getInferredType();
-            OdinSymbolTable completionScope = OdinReferenceResolver.resolve(expression);
+            OdinSymbolTable completionScope = OdinInsightUtils.getReferenceableSymbols(expression);
             if (completionScope != null) {
                 Collection<OdinSymbol> visibleSymbols = completionScope.flatten()
                         .getSymbols()
@@ -389,6 +390,9 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         addLookUpElements(result, visibleSymbols, 2000, (l, s) -> {
             TsOdinType symbolType = OdinInferenceEngine.getSymbolType(project, s, null, parameters.getPosition());
             if (!symbolType.isUnknown()) {
+                if (symbolType instanceof TsOdinMetaType metaType && metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
+                    return l.withIcon(AllIcons.Nodes.Type);
+                }
                 if (s.getSymbolType() == OdinSymbolType.VARIABLE || s.getSymbolType() == OdinSymbolType.CONSTANT) {
                     return l.withTypeText(symbolType.getLabel());
                 }

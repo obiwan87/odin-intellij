@@ -31,4 +31,12 @@ public class TsOdinTypeAlias extends TsOdinTypeBase {
         }
         return this;
     }
+
+    @Override
+    public String getLabel() {
+        if (aliasedType != null) {
+            return (isDistinct() ? "distinct " : "") + aliasedType.getLabel();
+        }
+        return "";
+    }
 }

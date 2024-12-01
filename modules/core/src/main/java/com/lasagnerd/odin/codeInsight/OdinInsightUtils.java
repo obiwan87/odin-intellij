@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
@@ -20,6 +21,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static com.lasagnerd.odin.codeInsight.imports.OdinImportUtils.getSymbolsOfImportedPackage;
 import static com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType.*;
 
 @SuppressWarnings("unused")
@@ -41,13 +43,11 @@ public class OdinInsightUtils {
     public static final char[] RGBA = {'r', 'g', 'b', 'a'};
     public static final char[] RGB = {'r', 'g', 'b'};
 
-    @SuppressWarnings("unused")
     public static final char[] RG = {'r', 'g',};
     public static final char[] R = {'r'};
     public static final char[] XYZW = {'x', 'y', 'z', 'w'};
     public static final char[] XYZ = {'x', 'y', 'z'};
 
-    @SuppressWarnings("unused")
     public static final char[] XY = {'x', 'y'};
     public static final char[] X = {'x'};
 
@@ -383,7 +383,7 @@ public class OdinInsightUtils {
         return fieldDeclarationStatementList;
     }
 
-    public static List<OdinSymbol> getTypeElements(OdinExpression expression, OdinSymbolTable symbolTable) {
+    public static List<OdinSymbol> getTypeElements(OdinSymbolTable symbolTable, OdinExpression expression) {
         TsOdinType tsOdinType = expression.getInferredType(symbolTable);
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
             return getTypeElements(OdinTypeResolver.resolveMetaType(symbolTable, tsOdinMetaType)
@@ -1050,6 +1050,37 @@ public class OdinInsightUtils {
         } else {
             log.error("Stack overflow caused by element with text '%s'".formatted(text));
         }
+    }
+
+    // This is a variant of getTypeElements()
+    public static OdinSymbolTable getReferenceableSymbols(OdinExpression valueExpression) {
+        // Add filter for referenceable elements
+        TsOdinType type = valueExpression.getInferredType();
+        if (type instanceof TsOdinMetaType metaType) {
+            TsOdinType tsOdinType = metaType.representedType().baseType(true);
+            if (tsOdinType instanceof TsOdinEnumType) {
+                return getTypeElements(valueExpression.getProject(), tsOdinType);
+            }
+        }
+        if (type instanceof TsOdinPackageReferenceType packageReferenceType) {
+            return getPackageReferenceSymbols(valueExpression.getProject(),
+                    packageReferenceType,
+                    false);
+        }
+        return getTypeElements(valueExpression.getProject(), type, true);
+    }
+
+    // This is a variant  of getTypeElements()
+    public static OdinSymbolTable getReferenceableSymbols(OdinQualifiedType qualifiedType) {
+        OdinIdentifier identifier = qualifiedType.getIdentifier();
+        OdinSymbol odinSymbol = identifier.getReferencedSymbol();
+        if (odinSymbol != null) {
+            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
+            if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+                return getSymbolsOfImportedPackage(OdinImportService.getInstance(qualifiedType.getProject()).getPackagePath(qualifiedType), importDeclarationStatement);
+            }
+        }
+        return OdinSymbolTable.EMPTY;
     }
 
     // Record to hold the result
