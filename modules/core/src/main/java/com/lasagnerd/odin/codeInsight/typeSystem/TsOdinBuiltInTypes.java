@@ -2,6 +2,7 @@ package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValueSet;
 import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
@@ -178,7 +179,16 @@ public class TsOdinBuiltInTypes {
     public static final TsOdinType UNDECIDED = new TsOdinUndecidedType();
 
     public static final EvOdinValue NULL = new EvNullValue();
+    public static final EvOdinValue NULL_SET = new EvNullSet();
     public static final TsOdinType VOID = new TsOdinVoidType();
+
+    public static <V, T extends TsOdinType> EvOdinValue<V, T> nullValue() {
+        return (EvOdinValue<V, T>) NULL;
+    }
+
+    public static <V, T extends TsOdinType> EvOdinValueSet<V, T> nullSet() {
+        return (EvOdinValueSet<V, T>) NULL_SET;
+    }
 
     private static final Map<String, TsOdinBuiltInType> builtInTypeMap = new HashMap<>();
     private static List<TsOdinType> integerTypes;
@@ -482,7 +492,7 @@ public class TsOdinBuiltInTypes {
         }
     }
 
-    private static class EvNullValue extends EvOdinValue {
+    public static class EvNullValue<T> extends EvOdinValue<T, TsOdinType> {
 
         public EvNullValue() {
             super(null, TsOdinBuiltInTypes.UNKNOWN);
@@ -499,7 +509,7 @@ public class TsOdinBuiltInTypes {
         }
 
         @Override
-        public Object getValue() {
+        public T getValue() {
             return null;
         }
 
@@ -508,5 +518,35 @@ public class TsOdinBuiltInTypes {
 
         }
 
+        @Override
+        public boolean isNull() {
+            return true;
+        }
+    }
+
+    private static class EvNullSet<E, T extends TsOdinType> extends EvOdinValueSet<E, T> {
+        public EvNullSet() {
+            super(null, null, null);
+        }
+
+        @Override
+        public EvOdinValueSet<E, T> doCombine(EvOdinValueSet<E, T> other) {
+            return nullSet();
+        }
+
+        @Override
+        public EvOdinValueSet<E, T> doIntersect(EvOdinValueSet<E, T> other) {
+            return nullSet();
+        }
+
+        @Override
+        public EvOdinValueSet<E, T> complement() {
+            return nullSet();
+        }
+
+        @Override
+        public boolean isNull() {
+            return true;
+        }
     }
 }

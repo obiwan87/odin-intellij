@@ -45,7 +45,9 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.evaluation.EvEnumValue;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.evaluation.OdinBuildFlagEvaluator;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
@@ -1721,6 +1723,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "addition2");
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            assert implicitSelectorExpression != null;
             TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
@@ -1733,6 +1736,7 @@ public class OdinParsingTest extends UsefulTestCase {
                     .orElseThrow();
 
             OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(supersetAssignment, OdinImplicitSelectorExpression.class);
+            assert expression != null;
             TsOdinType tsOdinType = expression.getInferredType();
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
@@ -1752,6 +1756,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinProcedureDefinition southProc = findFirstProcedure(proc, "south_proc");
             OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(southProc, OdinImplicitSelectorExpression.class);
+            assert expression != null;
             TsOdinType tsOdinType = expression.getInferredType();
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
@@ -1762,6 +1767,7 @@ public class OdinParsingTest extends UsefulTestCase {
             // Array index
             OdinAssignmentStatement assignmentStatement = PsiTreeUtil.findChildOfType(proc, OdinAssignmentStatement.class);
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(assignmentStatement, OdinImplicitSelectorExpression.class);
+            assert implicitSelectorExpression != null;
             TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
@@ -1770,6 +1776,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "ternary");
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            assert implicitSelectorExpression != null;
             TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
@@ -1778,6 +1785,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "bit_set_operation");
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            assert implicitSelectorExpression != null;
             TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
@@ -1787,6 +1795,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "addition");
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            assert implicitSelectorExpression != null;
             TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
@@ -1795,6 +1804,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "field_proc_ret");
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            assert implicitSelectorExpression != null;
             TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
@@ -1803,6 +1813,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "b");
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            assert implicitSelectorExpression != null;
             TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
@@ -1818,6 +1829,7 @@ public class OdinParsingTest extends UsefulTestCase {
         {
             OdinExpression expression = findFirstExpressionOfVariable(file, "testImplicitEnumExpression", "z");
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(expression, OdinImplicitSelectorExpression.class);
+            assert implicitSelectorExpression != null;
             TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
             assertInstanceOf(tsOdinType.baseType(true), TsOdinEnumType.class);
         }
@@ -2063,6 +2075,7 @@ public class OdinParsingTest extends UsefulTestCase {
             {
                 OdinImplicitSelectorExpression implicitExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
                 {
+                    assert implicitExpression != null;
                     TsOdinType tsOdinType = implicitExpression.getInferredType();
                     assertInstanceOf(tsOdinType, TsOdinEnumType.class);
                 }
@@ -2261,7 +2274,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
             OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
             assertNotNull(refExpression);
-            EvOdinValue value = OdinExpressionEvaluator.evaluate(refExpression);
+            EvOdinValue<?, ?> value = OdinExpressionEvaluator.evaluate(refExpression);
             assertFalse(value.asBool());
 //            TsOdinType inferredType = refExpression.getInferredType();
 //            TsOdinSliceType tsOdinSliceType = assertInstanceOf(inferredType.baseType(), TsOdinSliceType.class);
@@ -2325,6 +2338,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinSymbol context = identifier.getReference().getSymbol();
 
             OdinExpression odinExpression = refExpression.getExpression();
+            assert odinExpression != null;
             TsOdinType tsOdinType = odinExpression.getInferredType();
             OdinContext typeElements = OdinInsightUtils.getTypeElements(project, tsOdinType);
             assertNotNull(typeElements.getSymbol("Key"));
@@ -2488,13 +2502,13 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testIntegerValue() throws IOException {
         OdinFile file = loadExpressionEval();
         {
-            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testIntegerValue", "Y");
+            EvOdinValue<?, ?> evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testIntegerValue", "Y");
             Long l = assertInstanceOf(evOdinValue.getValue(), Long.class);
             assertEquals(1, l.longValue());
         }
 
         {
-            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testIntegerValue", "X");
+            EvOdinValue<?, ?> evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testIntegerValue", "X");
             Long l = assertInstanceOf(evOdinValue.getValue(), Long.class);
             assertEquals(1, l.longValue());
         }
@@ -2509,7 +2523,7 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testAddingIntegers() throws IOException {
         OdinFile file = loadExpressionEval();
         {
-            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testAddingIntegers", "Y");
+            EvOdinValue<?, ?> evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testAddingIntegers", "Y");
             Long l = assertInstanceOf(evOdinValue.getValue(), Long.class);
             assertEquals(4, l.longValue());
         }
@@ -2518,13 +2532,13 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testOdinConstants() throws IOException {
         OdinFile file = loadExpressionEval();
         {
-            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_BUILD_MODE_DYNAMIC");
+            EvOdinValue<?, ?> evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_BUILD_MODE_DYNAMIC");
             @NotNull Boolean val = assertInstanceOf(evOdinValue.getValue(), Boolean.class);
             assertFalse(val);
         }
 
         {
-            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_WINDOWS");
+            EvOdinValue<?, ?> evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_WINDOWS");
             @NotNull Boolean val = assertInstanceOf(evOdinValue.getValue(), Boolean.class);
             assertTrue(val);
         }
@@ -2541,7 +2555,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
 
                     OdinExpression expression = condition.getExpression();
-                    EvOdinValue value = OdinExpressionEvaluator.evaluate(expression);
+                    EvOdinValue<?, ?> value = OdinExpressionEvaluator.evaluate(expression);
                     System.out.printf("%s -> %s%n", expression.getText(), value);
                 } catch (StackOverflowError t) {
                     System.out.println(condition.getExpression().getText() + " caused a stack overflow");
@@ -2550,7 +2564,7 @@ public class OdinParsingTest extends UsefulTestCase {
         }
 
         {
-            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testWhenStatement", "Y");
+            EvOdinValue<?, ?> evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testWhenStatement", "Y");
             @NotNull Long val = assertInstanceOf(evOdinValue.getValue(), Long.class);
             assertEquals(5, val.longValue());
         }
@@ -2597,8 +2611,131 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testEvaluateBuildFlags() throws IOException {
+        OdinFile file = loadTestData("evaluation/build_flags.odin");
+        {
+            // windows i386
+            var clauses = file.getFileScope().getBuildFlagClauseList().subList(4, 5);
+            OdinBuildFlagEvaluator buildFlagEvaluator = new OdinBuildFlagEvaluator();
+            var values = buildFlagEvaluator.evaluate(clauses);
+            {
+                var odinOs = values.entrySet().stream()
+                        .filter(e -> e.getKey().getName().equals("ODIN_OS"))
+                        .findFirst().orElseThrow();
+                EvOdinValue<? extends Set<?>, ?> value = odinOs.getValue();
+                assertContainsElements(value.getValue(),
+                        new EvEnumValue("Windows", 1)
+                );
+            }
+
+            {
+                var odinOs = values.entrySet().stream()
+                        .filter(e -> e.getKey().getName().equals("ODIN_ARCH"))
+                        .findFirst().orElseThrow();
+                EvOdinValue<? extends Set<?>, ?> value = odinOs.getValue();
+                assertContainsElements(value.getValue(),
+                        new EvEnumValue("i386", 2)
+                );
+            }
+        }
+
+        {
+            // !darwin && !freestanding
+            var clauses = file.getFileScope().getBuildFlagClauseList().subList(2, 4);
+            OdinBuildFlagEvaluator buildFlagEvaluator = new OdinBuildFlagEvaluator();
+            var values = buildFlagEvaluator.evaluate(clauses);
+            var odinOs = values.entrySet().stream()
+                    .filter(e -> e.getKey().getName().equals("ODIN_OS"))
+                    .findFirst().orElseThrow();
+            EvOdinValue<? extends Set<?>, ?> value = odinOs.getValue();
+            assertDoesntContain(value.getValue(), new EvEnumValue("Darwin", 2));
+            assertDoesntContain(value.getValue(), new EvEnumValue("Freestanding", 12));
+            assertContainsElements(value.getValue(),
+                    new EvEnumValue("Windows", 1),
+                    new EvEnumValue("Linux", 3),
+                    new EvEnumValue("Essence", 4),
+                    new EvEnumValue("FreeBSD", 5),
+                    new EvEnumValue("OpenBSD", 6),
+                    new EvEnumValue("NetBSD", 7),
+                    new EvEnumValue("Haiku", 8),
+                    new EvEnumValue("WASI", 9),
+                    new EvEnumValue("JS", 10),
+                    new EvEnumValue("Orca", 11)
+            );
+        }
+
+        {
+            // !darwin
+            OdinBuildFlagClause buildFlagClause = file.getFileScope().getBuildFlagClauseList().get(2);
+            OdinBuildFlagEvaluator buildFlagEvaluator = new OdinBuildFlagEvaluator();
+            var values = buildFlagEvaluator.evaluateBuildFlagClause(buildFlagClause);
+            var odinOs = values.entrySet().stream()
+                    .filter(e -> e.getKey().getName().equals("ODIN_OS"))
+                    .findFirst().orElseThrow();
+            EvOdinValue<? extends Set<?>, ?> value = odinOs.getValue();
+            assertDoesntContain(value.getValue(), new EvEnumValue("Darwin", 1));
+            assertContainsElements(value.getValue(),
+                    new EvEnumValue("Windows", 1),
+                    new EvEnumValue("Linux", 3),
+                    new EvEnumValue("Essence", 4),
+                    new EvEnumValue("FreeBSD", 5),
+                    new EvEnumValue("OpenBSD", 6),
+                    new EvEnumValue("NetBSD", 7),
+                    new EvEnumValue("Haiku", 8),
+                    new EvEnumValue("WASI", 9),
+                    new EvEnumValue("JS", 10),
+                    new EvEnumValue("Orca", 11),
+                    new EvEnumValue("Freestanding", 12)
+            );
+        }
+
+        {
+            OdinBuildFlagClause buildFlagClause = file.getFileScope().getBuildFlagClauseList().get(1);
+            OdinBuildFlagEvaluator buildFlagEvaluator = new OdinBuildFlagEvaluator();
+            var values = buildFlagEvaluator.evaluateBuildFlagClause(buildFlagClause);
+            var odinOs = values.entrySet().stream()
+                    .filter(e -> e.getKey().getName().equals("ODIN_OS"))
+                    .findFirst().orElseThrow();
+            EvOdinValue<? extends Set<?>, ?> value = odinOs.getValue();
+            assertDoesntContain(value.getValue(), new EvEnumValue("Windows", 1));
+            assertContainsElements(value.getValue(),
+                    new EvEnumValue("Darwin", 2),
+                    new EvEnumValue("Linux", 3),
+                    new EvEnumValue("Essence", 4),
+                    new EvEnumValue("FreeBSD", 5),
+                    new EvEnumValue("OpenBSD", 6),
+                    new EvEnumValue("NetBSD", 7),
+                    new EvEnumValue("Haiku", 8),
+                    new EvEnumValue("WASI", 9),
+                    new EvEnumValue("JS", 10),
+                    new EvEnumValue("Orca", 11),
+                    new EvEnumValue("Freestanding", 12)
+            );
+        }
+
+        {
+            OdinBuildFlagClause buildFlagClause = file.getFileScope().getBuildFlagClauseList().getFirst();
+            OdinBuildFlagEvaluator buildFlagEvaluator = new OdinBuildFlagEvaluator();
+            var values = buildFlagEvaluator.evaluateBuildFlagClause(buildFlagClause);
+            String constantName = "ODIN_OS";
+            assertContainsElements(values.keySet().stream()
+                    .map(OdinSymbol::getName).toList(), constantName);
+            var entry = values.entrySet().stream().findFirst().orElseThrow();
+            EvOdinValue<? extends Set<?>, ?> value = entry.getValue();
+            Object firstValue = value.getValue().stream().findFirst().orElseThrow();
+            EvEnumValue evEnumValue = assertInstanceOf(firstValue, EvEnumValue.class);
+            assertEquals(new EvEnumValue("Windows", 1), evEnumValue);
+        }
+
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
-        return load("src/test/testData/expression_eval.odin");
+        String filePath = "expression_eval.odin";
+        return loadTestData(filePath);
+    }
+
+    private OdinFile loadTestData(String filePath) throws IOException {
+        return load("src/test/testData/" + filePath);
     }
 
 }

@@ -37,7 +37,7 @@ public class OdinContext {
     public static final OdinContext EMPTY = new OdinContext();
 
     Map<String, OdinSymbol> symbolTable = new HashMap<>();
-    Map<String, EvOdinValue> valueStorage = new HashMap<>();
+    Map<String, EvOdinValue<?, ?>> valueStorage = new HashMap<>();
 
 
     public OdinContext(String packagePath) {
@@ -229,7 +229,7 @@ public class OdinContext {
         }
     }
 
-    public void addAll(Map<String, EvOdinValue> builtInValues) {
+    public void addAll(Map<String, EvOdinValue<?, ?>> builtInValues) {
         valueStorage.putAll(builtInValues);
     }
 

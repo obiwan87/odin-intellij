@@ -57,13 +57,19 @@ public interface OdinSdkService {
 
     List<OdinSymbol> getBuiltInSymbols();
 
+    default OdinSymbol getBuiltinSymbol(String name) {
+        return getBuiltInSymbols().stream()
+                .filter(s -> Objects.equals(name, s.getName())).findFirst()
+                .orElse(null);
+    }
+
     OdinContext getBuiltInContext();
 
     boolean isInSyntheticOdinFile(PsiElement element);
 
-    EvOdinValue getValue(String name);
+    EvOdinValue<?, ?> getValue(String name);
 
-    OdinSymbol getSymbol(String symbolName);
+    OdinSymbol getRuntimeCoreSymbol(String symbolName);
 
     TsOdinType getType(String typeName);
 

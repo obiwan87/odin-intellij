@@ -91,4 +91,11 @@ public interface TsOdinType {
     default boolean isExplicitPolymorphic() {
         return this instanceof TsOdinPolymorphicType p && p.isExplicit();
     }
+
+    default TsOdinType dereference() {
+        if (this instanceof TsOdinMetaType metaType) {
+            return metaType.representedType();
+        }
+        return this;
+    }
 }

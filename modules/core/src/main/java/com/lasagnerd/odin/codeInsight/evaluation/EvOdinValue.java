@@ -1,33 +1,39 @@
 package com.lasagnerd.odin.codeInsight.evaluation;
 
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
-public class EvOdinValue {
+public class EvOdinValue<VALUE, TYPE extends TsOdinType> {
 
-    TsOdinType type;
-    Object value;
+    TYPE type;
+    VALUE value;
 
-    public EvOdinValue(Object value, TsOdinType type) {
+    public EvOdinValue() {
+    }
+
+    public EvOdinValue(VALUE value, TYPE type) {
         this.value = value;
         this.type = type;
     }
 
     public boolean isNull() {
-        return this == TsOdinBuiltInTypes.NULL;
+        return false;
     }
 
     public TsOdinType asType() {
-        if(value instanceof TsOdinType tsOdinType) {
+        if (value instanceof TsOdinType tsOdinType) {
             return tsOdinType;
         }
         return null;
     }
 
     public Boolean asBool() {
-        if(value instanceof Boolean) {
+        if (value instanceof Boolean) {
             return (Boolean) value;
         }
 
@@ -35,35 +41,35 @@ public class EvOdinValue {
     }
 
     public TsOdinType asBaseType() {
-        if(value instanceof TsOdinType tsOdinType) {
+        if (value instanceof TsOdinType tsOdinType) {
             return tsOdinType.baseType(true);
         }
         return null;
     }
 
     public Integer asInt() {
-        if(value instanceof Long l) {
+        if (value instanceof Long l) {
             return l.intValue();
         }
         return null;
     }
 
     public Long asLong() {
-        if(value instanceof Long l) {
+        if (value instanceof Long l) {
             return l;
         }
         return null;
     }
 
     public Long toLong() {
-        if(value instanceof Number n) {
+        if (value instanceof Number n) {
             return n.longValue();
         }
         return null;
     }
 
     public EvEnumValue asEnum() {
-        if(value instanceof EvEnumValue enumValue)
+        if (value instanceof EvEnumValue enumValue)
             return enumValue;
 
         return null;
@@ -74,7 +80,7 @@ public class EvOdinValue {
     }
 
     public Integer toInt() {
-        if(value instanceof Number n) {
+        if (value instanceof Number n) {
             return n.intValue();
         }
 
@@ -83,15 +89,24 @@ public class EvOdinValue {
 
     public int toInt(int defaultValue) {
         Integer intValue = toInt();
-        if(intValue == null)
+        if (intValue == null)
             return defaultValue;
         return intValue;
     }
 
     public String asString() {
-        if(value instanceof String) {
+        if (value instanceof String) {
             return (String) value;
         }
         return null;
+    }
+
+    public EvOdinValueSet<?, ? extends TsOdinType> asSet() {
+        if (value instanceof EvEnumValue enumValue) {
+            Set<EvEnumValue> enumValues = new java.util.HashSet<>();
+            enumValues.add(enumValue);
+            return new EvOdinEnumSet(enumValues, (TsOdinEnumType) type);
+        }
+        return TsOdinBuiltInTypes.nullSet();
     }
 }

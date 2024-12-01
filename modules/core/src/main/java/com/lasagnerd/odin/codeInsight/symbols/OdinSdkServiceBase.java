@@ -78,7 +78,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     private final Map<String, OdinSymbol> symbolsCache = new HashMap<>();
     private final Map<String, TsOdinType> typesCache = new HashMap<>();
     private Map<OdinImport, List<OdinFile>> sdkImportsCache;
-    private Map<String, EvOdinValue> builtInValues;
+    private Map<String, EvOdinValue<?, ?>> builtInValues;
     private final List<OdinFile> syntheticFiles = new ArrayList<>();
 
 
@@ -158,7 +158,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     }
 
     @Override
-    public EvOdinValue getValue(String name) {
+    public EvOdinValue<?, ?> getValue(String name) {
         if (builtInValues == null) {
             builtInValues = new HashMap<>();
             // This is not thread safe because it calls populate builtin symbols
@@ -167,7 +167,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         return builtInValues.get(name);
     }
 
-    protected void populateBuiltinValues(Map<String, EvOdinValue> valueMap) {
+    protected void populateBuiltinValues(Map<String, EvOdinValue<?, ?>> valueMap) {
         loadBuiltinSymbols();
         // ODIN_OS
         {
@@ -177,7 +177,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         }
     }
 
-    private void setOdinArch(Map<String, EvOdinValue> valueMap) {
+    private void setOdinArch(Map<String, EvOdinValue<?, ?>> valueMap) {
         TsOdinType odinArchType = getType("Odin_Arch_Type");
         Processor processor = ArchUtils.getProcessor();
         Processor.Type type = processor.getType();
@@ -190,12 +190,12 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             case null -> new EvEnumValue("Unknown", 0);
         };
 
-        EvOdinValue value = new EvOdinValue(enumName, odinArchType);
+        EvOdinValue<?, ?> value = new EvOdinValue<>(enumName, odinArchType);
         valueMap.put("ODIN_ARCH", value);
-        valueMap.put("ODIN_ARCH_STRING", new EvOdinValue(enumName.getName().toLowerCase(), TsOdinBuiltInTypes.STRING));
+        valueMap.put("ODIN_ARCH_STRING", new EvOdinValue<>(enumName.getName().toLowerCase(), TsOdinBuiltInTypes.STRING));
     }
 
-    private void setOdinOs(Map<String, EvOdinValue> valueMap) {
+    private void setOdinOs(Map<String, EvOdinValue<?, ?>> valueMap) {
         TsOdinType odinOsType = getType("Odin_OS_Type");
         /*
         	    Unknown,
@@ -219,17 +219,17 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         } else {
             enumValue = new EvEnumValue("Unknown", 0);
         }
-        EvOdinValue value = new EvOdinValue(enumValue, odinOsType);
+        EvOdinValue<?, ?> value = new EvOdinValue<>(enumValue, odinOsType);
         valueMap.put("ODIN_OS", value);
 
-        EvOdinValue stringValue = new EvOdinValue(enumValue
+        EvOdinValue<?, ?> stringValue = new EvOdinValue<>(enumValue
                 .getName()
                 .toLowerCase(), TsOdinBuiltInTypes.STRING);
         valueMap.put("ODIN_OS_STRING", stringValue);
     }
 
     @Override
-    public OdinSymbol getSymbol(String symbolName) {
+    public OdinSymbol getRuntimeCoreSymbol(String symbolName) {
         if (symbolsCache.get(symbolName) == null) {
             List<OdinSymbol> builtInSymbols = getRuntimeCoreSymbols();
             var symbol = builtInSymbols.stream()
@@ -244,7 +244,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     @Override
     public TsOdinType getType(String typeName) {
         if (typesCache.get(typeName) == null) {
-            OdinSymbol symbol = getSymbol(typeName);
+            OdinSymbol symbol = getRuntimeCoreSymbol(typeName);
             if (symbol == null) {
                 System.out.printf("No builtin type with name %s%n", typeName);
                 return TsOdinBuiltInTypes.UNKNOWN;
@@ -316,7 +316,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     }
 
     private OdinStructType findStructType(String typeName) {
-        OdinSymbol symbol = getSymbol(typeName);
+        OdinSymbol symbol = getRuntimeCoreSymbol(typeName);
         if (symbol == null)
             return null;
 

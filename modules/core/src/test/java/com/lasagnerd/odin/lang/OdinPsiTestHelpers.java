@@ -80,7 +80,7 @@ class OdinPsiTestHelpers {
         return odinExpression.getInferredType();
     }
 
-    static EvOdinValue evaluateFirstRightHandExpressionOfConstant(OdinFile odinFile, String procedureName, String variableName) {
+    static EvOdinValue<?, ?> evaluateFirstRightHandExpressionOfConstant(OdinFile odinFile, String procedureName, String variableName) {
         OdinExpression odinExpression = findFirstExpressionOfConstant(odinFile, procedureName, variableName);
 
         return OdinExpressionEvaluator.evaluate(odinExpression);

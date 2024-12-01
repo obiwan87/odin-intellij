@@ -193,8 +193,8 @@ fileScope                            ::= buildFlagClause* packageDeclaration eos
 }
 
 buildFlagClause                      ::= buildFlagPrefix [buildFlagArguments]
-private buildFlagArguments           ::= buildFlagArgument (COMMA buildFlagArgument)*
-buildFlagArgument                    ::= buildFlag+
+private buildFlagArguments           ::= buildFlagArgument (COMMA buildFlagArgument)* // disjunction
+buildFlagArgument                    ::= buildFlag+ // conjunction
 buildFlagPrefix                      ::= BUILD_FLAG_PREFIX_TOKEN
 buildFlagIdentifier                  ::= BUILD_FLAG_IDENTIFIER_TOKEN {extends=buildFlag methods=[getBuildFlagIdentifierToken]}
 buildFlagNegation                    ::= NOT buildFlag {extends=buildFlag}
