@@ -670,7 +670,7 @@ compoundLiteralUntyped               ::= compoundValueUntyped                   
 index                                ::= LBRACKET expression [COMMA expression] RBRACKET
 slice                                ::= LBRACKET expression? COLON expression? RBRACKET
 
-fake ternaryExpression                    ::= expression 'OP' expression 'OP' expression
+fake ternaryExpression               ::= expression 'OP' expression 'OP' expression
 elvisExpression                      ::= expression QUESTION <<enterMode "OPERAND">> expression EOS_TOKEN? COLON expression <<exitMode "OPERAND">> {extends=ternaryExpression}
 ternaryIfExpression                  ::= expression IF_TOKEN <<enterMode "OPERAND">> expression EOS_TOKEN? ELSE_TOKEN expression  <<exitMode "OPERAND">> {extends=ternaryExpression}
 ternaryWhenExpression                ::= expression WHEN     <<enterMode "OPERAND">> expression EOS_TOKEN? ELSE_TOKEN expression  <<exitMode "OPERAND">> {extends=ternaryExpression}
@@ -806,7 +806,7 @@ statement                            ::= assignmentStatement
                                          | variableInitializationStatement
                                          | variableDeclarationStatement
                                          | blockStatement
-                                         | conditionalStatement
+                                         | ifStatement
                                          | whenStatement
                                          | switchStatement
                                          | deferStatement
@@ -838,7 +838,7 @@ deferStatement                       ::= DEFER deferrableStatement
 private deferrableStatement          ::= assignmentStatement
                                          | forStatement
                                          | switchStatement
-                                         | conditionalStatement
+                                         | ifStatement
                                          | block
                                          | expression
 
@@ -877,7 +877,7 @@ private forClause                            ::= controlFlowInit? SEMICOLON expr
 // Conditional statement (=if-elseif-else)
 private conditionalHead              ::= <<enterNoBlockMode>> [[controlFlowInit] SEMICOLON] condition <<exitNoBlockMode>>
 
-conditionalStatement                 ::= [directive] [labelDeclaration] ifBlock {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock"]}
+ifStatement                          ::= [directive] [labelDeclaration] ifBlock {implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock"]}
 
 ifBlock                              ::= if conditionalHead eos? statementBody [sos elseBlock] {
                                                 pin=".*"

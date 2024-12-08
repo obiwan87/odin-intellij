@@ -10,9 +10,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.evaluation.EvEnumValue;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValues;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
@@ -78,7 +80,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     private final Map<String, OdinSymbol> symbolsCache = new HashMap<>();
     private final Map<String, TsOdinType> typesCache = new HashMap<>();
     private Map<OdinImport, List<OdinFile>> sdkImportsCache;
-    private Map<String, EvOdinValue<?, ?>> builtInValues;
+    private Map<String, EvOdinValue> builtInValues;
     private final List<OdinFile> syntheticFiles = new ArrayList<>();
 
 
@@ -158,7 +160,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     }
 
     @Override
-    public EvOdinValue<?, ?> getValue(String name) {
+    public EvOdinValue getValue(String name) {
         if (builtInValues == null) {
             builtInValues = new HashMap<>();
             // This is not thread safe because it calls populate builtin symbols
@@ -167,17 +169,17 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         return builtInValues.get(name);
     }
 
-    protected void populateBuiltinValues(Map<String, EvOdinValue<?, ?>> valueMap) {
+    protected void populateBuiltinValues(Map<String, EvOdinValue> valueMap) {
         loadBuiltinSymbols();
         // ODIN_OS
         {
             setOdinOs(valueMap);
             setOdinArch(valueMap);
-            valueMap.put("ODIN_DEBUG", TsOdinBuiltInTypes.BUILTIN_IDENTIFIERS.get("false"));
+            valueMap.put("ODIN_DEBUG", EvOdinValues.BUILTIN_IDENTIFIERS.get("false"));
         }
     }
 
-    private void setOdinArch(Map<String, EvOdinValue<?, ?>> valueMap) {
+    private void setOdinArch(Map<String, EvOdinValue> valueMap) {
         TsOdinType odinArchType = getType("Odin_Arch_Type");
         Processor processor = ArchUtils.getProcessor();
         Processor.Type type = processor.getType();
@@ -190,12 +192,12 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             case null -> new EvEnumValue("Unknown", 0);
         };
 
-        EvOdinValue<?, ?> value = new EvOdinValue<>(enumName, odinArchType);
+        EvOdinValue value = new EvOdinValue(enumName, odinArchType);
         valueMap.put("ODIN_ARCH", value);
-        valueMap.put("ODIN_ARCH_STRING", new EvOdinValue<>(enumName.getName().toLowerCase(), TsOdinBuiltInTypes.STRING));
+        valueMap.put("ODIN_ARCH_STRING", new EvOdinValue(enumName.getName().toLowerCase(), TsOdinBuiltInTypes.STRING));
     }
 
-    private void setOdinOs(Map<String, EvOdinValue<?, ?>> valueMap) {
+    private void setOdinOs(Map<String, EvOdinValue> valueMap) {
         TsOdinType odinOsType = getType("Odin_OS_Type");
         /*
         	    Unknown,
@@ -219,10 +221,10 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         } else {
             enumValue = new EvEnumValue("Unknown", 0);
         }
-        EvOdinValue<?, ?> value = new EvOdinValue<>(enumValue, odinOsType);
+        EvOdinValue value = new EvOdinValue(enumValue, odinOsType);
         valueMap.put("ODIN_OS", value);
 
-        EvOdinValue<?, ?> stringValue = new EvOdinValue<>(enumValue
+        EvOdinValue stringValue = new EvOdinValue(enumValue
                 .getName()
                 .toLowerCase(), TsOdinBuiltInTypes.STRING);
         valueMap.put("ODIN_OS_STRING", stringValue);

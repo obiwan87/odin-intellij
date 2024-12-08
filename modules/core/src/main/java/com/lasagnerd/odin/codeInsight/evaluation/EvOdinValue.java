@@ -1,22 +1,26 @@
 package com.lasagnerd.odin.codeInsight.evaluation;
 
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Set;
 
-@Data
-public class EvOdinValue<VALUE, TYPE extends TsOdinType> {
+// TODO make abstract
+@Getter
+@Setter
+@EqualsAndHashCode
+public class EvOdinValue {
 
-    TYPE type;
-    VALUE value;
+    TsOdinType type;
+    Object value;
 
     public EvOdinValue() {
     }
 
-    public EvOdinValue(VALUE value, TYPE type) {
+    public EvOdinValue(Object value, TsOdinType type) {
         this.value = value;
         this.type = type;
     }
@@ -101,12 +105,24 @@ public class EvOdinValue<VALUE, TYPE extends TsOdinType> {
         return null;
     }
 
-    public EvOdinValueSet<?, ? extends TsOdinType> asSet() {
+    public EvOdinValueSet asSet() {
         if (value instanceof EvEnumValue enumValue) {
             Set<EvEnumValue> enumValues = new java.util.HashSet<>();
             enumValues.add(enumValue);
             return new EvOdinEnumSet(enumValues, (TsOdinEnumType) type);
         }
-        return TsOdinBuiltInTypes.nullSet();
+        return EvOdinValues.bottom();
+    }
+
+    @Override
+    public String toString() {
+        String s = "";
+        if (type != null) {
+            s += "(" + type.getLabel() + ") ";
+        }
+        if (value != null) {
+            s += value.toString();
+        }
+        return s;
     }
 }

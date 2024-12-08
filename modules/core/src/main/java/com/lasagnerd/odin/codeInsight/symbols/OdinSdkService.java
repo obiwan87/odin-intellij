@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight.symbols;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
@@ -67,7 +68,7 @@ public interface OdinSdkService {
 
     boolean isInSyntheticOdinFile(PsiElement element);
 
-    EvOdinValue<?, ?> getValue(String name);
+    EvOdinValue getValue(String name);
 
     OdinSymbol getRuntimeCoreSymbol(String symbolName);
 

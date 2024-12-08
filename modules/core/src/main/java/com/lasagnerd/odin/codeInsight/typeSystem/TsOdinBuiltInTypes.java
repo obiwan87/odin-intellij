@@ -1,9 +1,7 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
-import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValueSet;
-import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 
@@ -168,27 +166,11 @@ public class TsOdinBuiltInTypes {
             "nil"
     );
 
-    public static final Map<String, EvOdinValue> BUILTIN_IDENTIFIERS = new HashMap<>();
-
-    static {
-        BUILTIN_IDENTIFIERS.put("true", new EvOdinValue(true, BOOL));
-        BUILTIN_IDENTIFIERS.put("false", new EvOdinValue(false, BOOL));
-    }
 
     public static final TsOdinType UNKNOWN = new TsOdinUnknownType();
     public static final TsOdinType UNDECIDED = new TsOdinUndecidedType();
 
-    public static final EvOdinValue NULL = new EvNullValue();
-    public static final EvOdinValue NULL_SET = new EvNullSet();
     public static final TsOdinType VOID = new TsOdinVoidType();
-
-    public static <V, T extends TsOdinType> EvOdinValue<V, T> nullValue() {
-        return (EvOdinValue<V, T>) NULL;
-    }
-
-    public static <V, T extends TsOdinType> EvOdinValueSet<V, T> nullSet() {
-        return (EvOdinValueSet<V, T>) NULL_SET;
-    }
 
     private static final Map<String, TsOdinBuiltInType> builtInTypeMap = new HashMap<>();
     private static List<TsOdinType> integerTypes;
@@ -492,61 +474,4 @@ public class TsOdinBuiltInTypes {
         }
     }
 
-    public static class EvNullValue<T> extends EvOdinValue<T, TsOdinType> {
-
-        public EvNullValue() {
-            super(null, TsOdinBuiltInTypes.UNKNOWN);
-        }
-
-        @Override
-        public TsOdinType getType() {
-            return TsOdinBuiltInTypes.UNKNOWN;
-        }
-
-        @Override
-        public void setType(TsOdinType type) {
-
-        }
-
-        @Override
-        public T getValue() {
-            return null;
-        }
-
-        @Override
-        public void setValue(Object value) {
-
-        }
-
-        @Override
-        public boolean isNull() {
-            return true;
-        }
-    }
-
-    private static class EvNullSet<E, T extends TsOdinType> extends EvOdinValueSet<E, T> {
-        public EvNullSet() {
-            super(null, null, null);
-        }
-
-        @Override
-        public EvOdinValueSet<E, T> doCombine(EvOdinValueSet<E, T> other) {
-            return nullSet();
-        }
-
-        @Override
-        public EvOdinValueSet<E, T> doIntersect(EvOdinValueSet<E, T> other) {
-            return nullSet();
-        }
-
-        @Override
-        public EvOdinValueSet<E, T> complement() {
-            return nullSet();
-        }
-
-        @Override
-        public boolean isNull() {
-            return true;
-        }
-    }
 }

@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
@@ -307,7 +308,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                     scope = PsiTreeUtil.getParentOfType(declaredIdentifier,
                             OdinStatementList.class,
                             OdinProcedureLiteralType.class,
-                            OdinConditionalStatement.class,
+                            OdinIfStatement.class,
                             OdinWhenStatement.class,
                             OdinForStatement.class,
                             OdinSwitchBlock.class);

@@ -2,6 +2,7 @@ package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameter;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameterOwner;

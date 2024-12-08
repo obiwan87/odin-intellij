@@ -15,10 +15,10 @@ import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
-import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.symbols.OdinContextBuilder;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
@@ -80,7 +80,7 @@ class OdinPsiTestHelpers {
         return odinExpression.getInferredType();
     }
 
-    static EvOdinValue<?, ?> evaluateFirstRightHandExpressionOfConstant(OdinFile odinFile, String procedureName, String variableName) {
+    static EvOdinValue evaluateFirstRightHandExpressionOfConstant(OdinFile odinFile, String procedureName, String variableName) {
         OdinExpression odinExpression = findFirstExpressionOfConstant(odinFile, procedureName, variableName);
 
         return OdinExpressionEvaluator.evaluate(odinExpression);

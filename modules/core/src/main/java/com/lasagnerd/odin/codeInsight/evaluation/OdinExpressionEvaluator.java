@@ -6,8 +6,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -27,28 +27,28 @@ import java.util.*;
 public class OdinExpressionEvaluator extends OdinVisitor {
     public static Logger LOG = Logger.getInstance(OdinExpressionEvaluator.class);
     OdinContext context;
-    EvOdinValue<?, ?> value;
+    EvOdinValue value;
 
-    public static EvOdinValue<?, ?> evaluate(OdinExpression expression) {
+    public static EvOdinValue evaluate(OdinExpression expression) {
         return evaluate(OdinContext.EMPTY, expression);
     }
 
-    public static EvOdinValue<?, ?> evaluate(OdinContext context, OdinExpression expression) {
+    public static EvOdinValue evaluate(OdinContext context, OdinExpression expression) {
         try {
             OdinExpressionEvaluator expressionEvaluator = new OdinExpressionEvaluator();
             expressionEvaluator.context = context;
             expression.accept(expressionEvaluator);
             if (expressionEvaluator.value == null) {
-                return TsOdinBuiltInTypes.nullValue();
+                return EvOdinValues.nullValue();
             } else if (expressionEvaluator.value.type == null && expressionEvaluator.value.value == null) {
-                return TsOdinBuiltInTypes.nullValue();
+                return EvOdinValues.nullValue();
             }
 
             return expressionEvaluator.value;
         } catch (StackOverflowError e) {
             OdinInsightUtils.logStackOverFlowError(expression, LOG);
         }
-        return TsOdinBuiltInTypes.nullValue();
+        return EvOdinValues.nullValue();
     }
 
     @Override
@@ -63,7 +63,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         // Only refExpression allowed
         TsOdinType expressionType = TsOdinBuiltInTypes.UNKNOWN;
         if (o.getExpression() instanceof OdinRefExpression) {
-            EvOdinValue<?, ?> refExpressionValue = evaluate(context, o.getExpression());
+            EvOdinValue refExpressionValue = evaluate(context, o.getExpression());
             expressionType = refExpressionValue.asBaseType();
             if (expressionType instanceof TsOdinPackageReferenceType ||
                     expressionType instanceof TsOdinEnumType) {
@@ -82,17 +82,17 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         } else {
             if (o.getExpression() == null) {
                 String name = o.getIdentifier().getText();
-                this.value = TsOdinBuiltInTypes.BUILTIN_IDENTIFIERS.getOrDefault(name, TsOdinBuiltInTypes.nullValue());
+                this.value = EvOdinValues.BUILTIN_IDENTIFIERS.getOrDefault(name, EvOdinValues.nullValue());
             }
         }
     }
 
-    public static EvOdinValue<?, ?> evaluateConstantDeclaration(@NotNull Project project,
-                                                                OdinSymbol symbol,
-                                                                OdinContext context,
-                                                                TsOdinType expressionType) {
+    public static EvOdinValue evaluateConstantDeclaration(@NotNull Project project,
+                                                          OdinSymbol symbol,
+                                                          OdinContext context,
+                                                          TsOdinType expressionType) {
         if (symbol == null) {
-            return TsOdinBuiltInTypes.nullValue();
+            return EvOdinValues.nullValue();
         }
 
         EvOdinValue storedValue = context.getValue(symbol.getName());
@@ -103,7 +103,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         OdinDeclaration declaration = symbol.getDeclaration();
         boolean isConstantDeclaration = !(declaration instanceof OdinConstantDeclaration) && !(declaration instanceof OdinEnumValueDeclaration);
         if (isConstantDeclaration) {
-            return TsOdinBuiltInTypes.nullValue();
+            return EvOdinValues.nullValue();
         }
 
         if (symbol.isBuiltin() && symbol.getName().startsWith("ODIN_")) {
@@ -114,12 +114,12 @@ public class OdinExpressionEvaluator extends OdinVisitor {
                 return builtinValue;
             }
             if (OdinSdkService.isInBuiltinOdinFile(symbol.getDeclaredIdentifier())) {
-                return TsOdinBuiltInTypes.nullValue();
+                return EvOdinValues.nullValue();
             }
         }
         PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
         if (!(declaredIdentifier instanceof OdinDeclaredIdentifier odinDeclaredIdentifier)) {
-            return TsOdinBuiltInTypes.nullValue();
+            return EvOdinValues.nullValue();
         }
 
         if (declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
@@ -131,7 +131,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
             if (declaredType != null) {
                 // This is a type declaration, set EvOdinValue<?> accordingly
-                return new EvOdinValue<>(declaredType.representedType(), declaredType);
+                return new EvOdinValue(declaredType.representedType(), declaredType);
             }
 
             // This is not a type
@@ -148,11 +148,11 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             }
         } else if (declaration instanceof OdinEnumValueDeclaration && expressionType instanceof TsOdinEnumType enumType) {
             EvEnumValue enumValue = getEnumValue(enumType, declaredIdentifier.getName());
-            if (enumValue == null) return TsOdinBuiltInTypes.nullValue();
-            return new EvOdinValue<>(enumValue, enumType);
+            if (enumValue == null) return EvOdinValues.nullValue();
+            return new EvOdinValue(enumValue, enumType);
         }
 
-        return TsOdinBuiltInTypes.nullValue();
+        return EvOdinValues.nullValue();
     }
 
     static EvEnumValue getEnumValue(TsOdinEnumType enumType, @Nullable String name) {
@@ -170,7 +170,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         if (enumType.getBackingType() != null) {
             backingType = enumType.getBackingType();
         }
-        EvOdinValue<?, ?> numericValue = TsOdinBuiltInTypes.nullValue();
+        EvOdinValue numericValue = EvOdinValues.nullValue();
         if (enumValueDeclaration.getExpression() != null) {
             numericValue = evaluate(enumValueDeclaration.getExpression());
         } else {
@@ -180,17 +180,17 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             for (int index = currentIndex - 1; index > 0; index--) {
                 OdinEnumValueDeclaration previousDeclaration = enumValueDeclarations.get(index);
                 if (previousDeclaration.getExpression() != null) {
-                    EvOdinValue<?, ?> previousValue = evaluate(previousDeclaration.getExpression());
+                    EvOdinValue previousValue = evaluate(previousDeclaration.getExpression());
 
                     // Enum may be set to other enum value
                     EvEnumValue previousEnumValue = previousValue.asEnum();
                     if (previousEnumValue != null) {
-                        numericValue = new EvOdinValue<>(previousEnumValue.getValue() + 1, backingType);
+                        numericValue = new EvOdinValue(previousEnumValue.getValue() + 1, backingType);
                     } else {
                         // ... or to a number
                         Integer previousIntValue = previousValue.asInt();
                         if (previousIntValue != null) {
-                            numericValue = new EvOdinValue<>(previousIntValue + 1, backingType);
+                            numericValue = new EvOdinValue(previousIntValue + 1, backingType);
                         }
                     }
                 }
@@ -198,7 +198,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
             // If no expression was set on previous enums, set the current index as value
             if (numericValue.isNull()) {
-                numericValue = new EvOdinValue<>(currentIndex, backingType);
+                numericValue = new EvOdinValue(currentIndex, backingType);
             }
         }
         return new EvEnumValue(name, numericValue.toInt(0));
@@ -219,14 +219,14 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         return enumBody.getEnumValueDeclarationList();
     }
 
-    static EvOdinValue<Set<EvEnumValue>, TsOdinEnumType> getEnumValues(TsOdinEnumType enumType) {
+    public static EvOdinEnumSet getEnumValues(TsOdinEnumType enumType) {
         Set<EvEnumValue> enumValues = new HashSet<>();
         for (OdinEnumValueDeclaration enumValueDeclaration : getEnumValueDeclarations(enumType)) {
             String name = enumValueDeclaration.getDeclaredIdentifier().getName();
             EvEnumValue enumValue = getEnumValue(enumType, name);
             enumValues.add(enumValue);
         }
-        return new EvOdinValue<>(enumValues, enumType);
+        return new EvOdinEnumSet(enumValues, enumType);
     }
 
     @Override
@@ -234,7 +234,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         TsOdinType tsOdinType = o.getInferredType();
         if (tsOdinType instanceof TsOdinEnumType tsOdinEnumType) {
             EvEnumValue enumValue = getEnumValue(tsOdinEnumType, o.getIdentifier().getText());
-            this.value = new EvOdinValue<>(enumValue, tsOdinType);
+            this.value = new EvOdinValue(enumValue, tsOdinType);
         }
     }
 
@@ -252,7 +252,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             text = text.replaceAll("_", "");
 
             long intVal = Long.parseLong(text);
-            this.value = new EvOdinValue<>(intVal, TsOdinBuiltInTypes.UNTYPED_INT);
+            this.value = new EvOdinValue(intVal, TsOdinBuiltInTypes.UNTYPED_INT);
         }
     }
 
@@ -261,29 +261,29 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         if (o.getDqStringLiteral() != null) {
             String unquotedString = StringUtil.unquoteString(o.getText());
             String value = StringEscapeUtils.unescapeJava(unquotedString);
-            this.value = new EvOdinValue<>(value, TsOdinBuiltInTypes.UNTYPED_STRING);
+            this.value = new EvOdinValue(value, TsOdinBuiltInTypes.UNTYPED_STRING);
         }
 
         if (o.getSqStringLiteral() != null) {
             String unquotedString = StringUtil.unquoteString(o.getText(), '\'');
             String value = StringEscapeUtils.unescapeJava(unquotedString);
             if (!value.isEmpty()) {
-                this.value = new EvOdinValue<>(value.charAt(0), TsOdinBuiltInTypes.UNTYPED_RUNE);
+                this.value = new EvOdinValue(value.charAt(0), TsOdinBuiltInTypes.UNTYPED_RUNE);
             }
         }
 
         if (o.getRawStringLiteral() != null) {
             String value = StringUtil.unquoteString(o.getText(), '`');
-            this.value = new EvOdinValue<>(value, TsOdinBuiltInTypes.UNTYPED_STRING);
+            this.value = new EvOdinValue(value, TsOdinBuiltInTypes.UNTYPED_STRING);
         }
     }
 
     @Override
     public void visitBinaryExpression(@NotNull OdinBinaryExpression o) {
         IElementType operatorType = PsiUtilCore.getElementType(o.getOperator());
-        EvOdinValue<?, ?> left = evaluate(context, o.getLeft());
+        EvOdinValue left = evaluate(context, o.getLeft());
         if (o.getRight() != null) {
-            EvOdinValue<?, ?> right = evaluate(context, o.getRight());
+            EvOdinValue right = evaluate(context, o.getRight());
             if (left.type == null || right.type == null) {
                 return;
             }
@@ -312,7 +312,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
     @Override
     public void visitUnaryExpression(@NotNull OdinUnaryExpression o) {
         IElementType operatorType = PsiUtilCore.getElementType(o.getOperator());
-        EvOdinValue<?, ?> value = evaluate(context, o.getExpression());
+        EvOdinValue value = evaluate(context, o.getExpression());
 
         TsOdinType tsOdinType = value.getType();
         if (tsOdinType.isUnknown())
@@ -328,8 +328,8 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         }
     }
 
-    private EvOdinValue<Boolean, ?> evaluateUnaryBoolOperation(IElementType operatorType, EvOdinValue<?, ?> value) {
-        EvOdinValue<Boolean, ?> newValue = TsOdinBuiltInTypes.nullValue();
+    private EvOdinValue evaluateUnaryBoolOperation(IElementType operatorType, EvOdinValue value) {
+        EvOdinValue newValue = EvOdinValues.nullValue();
         Boolean n = newValue.asBool();
         if (n != null) {
             Boolean result = null;
@@ -338,14 +338,14 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             }
 
             if (result != null) {
-                newValue = new EvOdinValue<>(result, value.getType());
+                newValue = new EvOdinValue(result, value.getType());
             }
         }
         return newValue;
     }
 
-    private static @NotNull EvOdinValue<?, ?> evaluateUnaryIntegerOperation(IElementType operatorType, EvOdinValue<?, ?> value) {
-        EvOdinValue<Object, TsOdinType> newValue = TsOdinBuiltInTypes.nullValue();
+    private static @NotNull EvOdinValue evaluateUnaryIntegerOperation(IElementType operatorType, EvOdinValue value) {
+        EvOdinValue newValue = EvOdinValues.nullValue();
         Long n = newValue.toLong();
         if (n != null) {
             Long result = null;
@@ -358,15 +358,15 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             }
 
             if (result != null) {
-                newValue = new EvOdinValue<>(result, value.getType());
+                newValue = new EvOdinValue(result, value.getType());
             }
         }
         return newValue;
     }
 
-    private EvOdinValue<?, ?> evaluateBinaryBoolOperation(IElementType operatorType, Boolean left, Boolean right) {
+    private EvOdinValue evaluateBinaryBoolOperation(IElementType operatorType, Boolean left, Boolean right) {
         if (left == null || right == null)
-            return TsOdinBuiltInTypes.nullValue();
+            return EvOdinValues.nullValue();
 
         Boolean result = null;
         if (operatorType == OdinTypes.ANDAND) {
@@ -376,19 +376,19 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         }
 
         if (result == null)
-            return TsOdinBuiltInTypes.nullValue();
+            return EvOdinValues.nullValue();
 
-        return new EvOdinValue<>(result, TsOdinBuiltInTypes.BOOL);
+        return new EvOdinValue(result, TsOdinBuiltInTypes.BOOL);
     }
 
-    private EvOdinValue<?, ?> evaluateBinaryStringOperation(IElementType operatorType, EvOdinValue<?, ?> left, EvOdinValue<?, ?> right) {
+    private EvOdinValue evaluateBinaryStringOperation(IElementType operatorType, EvOdinValue left, EvOdinValue right) {
         Object result = null;
 
         String leftString = left.asString();
         String rightString = right.asString();
 
         if (leftString == null || rightString == null)
-            return TsOdinBuiltInTypes.nullValue();
+            return EvOdinValues.nullValue();
 
         else if (operatorType == OdinTypes.EQEQ) {
             result = Objects.equals(leftString, rightString);
@@ -399,25 +399,25 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         }
 
         if (result == null)
-            return TsOdinBuiltInTypes.nullValue();
+            return EvOdinValues.nullValue();
 
         TsOdinType expressionType = left.getType();
         if (OdinPsiUtil.COMPARISON_OPERATORS.contains(operatorType)) {
             expressionType = TsOdinBuiltInTypes.BOOL;
         }
 
-        return new EvOdinValue<>(result, expressionType);
+        return new EvOdinValue(result, expressionType);
     }
 
-    private static @NotNull EvOdinValue<?, ?> evaluateBinaryEnumOperation(IElementType operatorType, EvOdinValue<?, ?> left, EvOdinValue<?, ?> right) {
-        EvOdinValue<Object, TsOdinType> value = TsOdinBuiltInTypes.nullValue();
+    private static @NotNull EvOdinValue evaluateBinaryEnumOperation(IElementType operatorType, EvOdinValue left, EvOdinValue right) {
+        EvOdinValue value = EvOdinValues.nullValue();
         if (OdinTypeChecker.checkTypesStrictly(left.getType(), right.getType())) {
             Object result = null;
             EvEnumValue leftEnum = left.asEnum();
             EvEnumValue rightEnum = right.asEnum();
 
             if (leftEnum == null || rightEnum == null) {
-                return TsOdinBuiltInTypes.nullValue();
+                return EvOdinValues.nullValue();
             }
 
             if (operatorType == OdinTypes.EQEQ) {
@@ -429,20 +429,20 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             }
 
             if (result == null)
-                return TsOdinBuiltInTypes.nullValue();
+                return EvOdinValues.nullValue();
 
             TsOdinType expressionType = left.getType();
             if (OdinPsiUtil.COMPARISON_OPERATORS.contains(operatorType)) {
                 expressionType = TsOdinBuiltInTypes.BOOL;
             }
 
-            value = new EvOdinValue<>(result, expressionType);
+            value = new EvOdinValue(result, expressionType);
         }
         return value;
     }
 
-    private static @NotNull EvOdinValue<?, ?> evaluateBinaryIntegerOperation(IElementType operatorType, EvOdinValue<?, ?> left, EvOdinValue<?, ?> right, TsOdinType commonType) {
-        EvOdinValue<Object, TsOdinType> value = TsOdinBuiltInTypes.nullValue();
+    private static @NotNull EvOdinValue evaluateBinaryIntegerOperation(IElementType operatorType, EvOdinValue left, EvOdinValue right, TsOdinType commonType) {
+        EvOdinValue value = EvOdinValues.nullValue();
         Long leftLong = left.toLong();
         Long rightLong = right.toLong();
         if (leftLong != null && right.asLong() != null) {
@@ -489,14 +489,14 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             }
 
             if (result == null)
-                return TsOdinBuiltInTypes.nullValue();
+                return EvOdinValues.nullValue();
 
             TsOdinType expressionType = commonType;
             if (OdinPsiUtil.COMPARISON_OPERATORS.contains(operatorType)) {
                 expressionType = TsOdinBuiltInTypes.BOOL;
             }
 
-            value = new EvOdinValue<>(result, expressionType);
+            value = new EvOdinValue(result, expressionType);
         }
         return value;
     }

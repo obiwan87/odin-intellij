@@ -27,6 +27,8 @@ public class OdinBuildFlagEvaluator {
 
     public static final String ODIN_OS_TYPE = "Odin_OS_Type";
 
+    public static final String ODIN_ARCH_TYPE = "Odin_Arch_Type";
+
     static {
 
         VALUES.put("windows", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Windows"));
@@ -42,16 +44,16 @@ public class OdinBuildFlagEvaluator {
         VALUES.put("orca", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Orca"));
         VALUES.put("freestanding", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Freestanding"));
 
-        VALUES.put("amd64", project -> getSdkEnumValue(project, ODIN_ARCH, "Odin_Arch_Type", "amd64"));
-        VALUES.put("i386", project -> getSdkEnumValue(project, ODIN_ARCH, "Odin_Arch_Type", "i386"));
-        VALUES.put("arm32", project -> getSdkEnumValue(project, ODIN_ARCH, "Odin_Arch_Type", "arm32"));
-        VALUES.put("arm64", project -> getSdkEnumValue(project, ODIN_ARCH, "Odin_Arch_Type", "arm64"));
-        VALUES.put("wasm32", project -> getSdkEnumValue(project, ODIN_ARCH, "Odin_Arch_Type", "wasm32"));
-        VALUES.put("wasm64p32", project -> getSdkEnumValue(project, ODIN_ARCH, "Odin_Arch_Type", "wasm64p32"));
-        VALUES.put("riscv64", project -> getSdkEnumValue(project, ODIN_ARCH, "Odin_Arch_Type", "riscv64"));
+        VALUES.put("amd64", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "amd64"));
+        VALUES.put("i386", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "i386"));
+        VALUES.put("arm32", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "arm32"));
+        VALUES.put("arm64", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "arm64"));
+        VALUES.put("wasm32", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "wasm32"));
+        VALUES.put("wasm64p32", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "wasm64p32"));
+        VALUES.put("riscv64", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "riscv64"));
     }
 
-    record OdinSymbolValue(OdinSymbol symbol, EvOdinValue<?, ?> value) {
+    record OdinSymbolValue(OdinSymbol symbol, EvOdinValue value) {
 
     }
 
@@ -61,28 +63,28 @@ public class OdinBuildFlagEvaluator {
         TsOdinEnumType enumType = (TsOdinEnumType) type.dereference().baseType(true);
         EvEnumValue enumValue = OdinExpressionEvaluator.getEnumValue(enumType, value);
         OdinSymbol symbol = sdkService.getBuiltinSymbol(constantName);
-        return new OdinSymbolValue(symbol, new EvOdinValue<>(enumValue, enumType));
+        return new OdinSymbolValue(symbol, new EvOdinValue(enumValue, enumType));
     }
 
-    public Map<OdinSymbol, EvOdinValueSet<?, ?>> evaluate(List<OdinBuildFlagClause> buildFlagClauses) {
-        Map<OdinSymbol, EvOdinValueSet<?, ?>> conjunctions = new HashMap<>();
+    public Map<OdinSymbol, EvOdinValueSet> evaluate(List<OdinBuildFlagClause> buildFlagClauses) {
+        Map<OdinSymbol, EvOdinValueSet> conjunctions = new HashMap<>();
         for (OdinBuildFlagClause buildFlagClause : buildFlagClauses) {
-            Map<OdinSymbol, EvOdinValueSet<?, ?>> buildFlagClauseValues = evaluateBuildFlagClause(buildFlagClause);
+            Map<OdinSymbol, EvOdinValueSet> buildFlagClauseValues = evaluateBuildFlagClause(buildFlagClause);
             processConjunctions(buildFlagClauseValues, conjunctions);
         }
 
         return conjunctions;
     }
 
-    public Map<OdinSymbol, EvOdinValueSet<?, ?>> evaluateBuildFlagClause(OdinBuildFlagClause buildFlagClause) {
-        Map<OdinSymbol, EvOdinValueSet<?, ?>> disjunctions = new HashMap<>();
+    public Map<OdinSymbol, EvOdinValueSet> evaluateBuildFlagClause(OdinBuildFlagClause buildFlagClause) {
+        Map<OdinSymbol, EvOdinValueSet> disjunctions = new HashMap<>();
 
         // OR's
         for (OdinBuildFlagArgument buildFlagArgument : buildFlagClause.getBuildFlagArgumentList()) {
             // AND's
-            Map<OdinSymbol, EvOdinValueSet<?, ?>> conjunctions = new HashMap<>();
+            Map<OdinSymbol, EvOdinValueSet> conjunctions = new HashMap<>();
             for (OdinBuildFlag buildFlag : buildFlagArgument.getBuildFlagList()) {
-                Map<OdinSymbol, EvOdinValueSet<?, ?>> buildFlagValueSet = evaluateBuildFlag(buildFlag);
+                Map<OdinSymbol, EvOdinValueSet> buildFlagValueSet = evaluateBuildFlag(buildFlag);
                 processConjunctions(buildFlagValueSet, conjunctions);
             }
 
@@ -101,8 +103,8 @@ public class OdinBuildFlagEvaluator {
         return disjunctions;
     }
 
-    private static void processConjunctions(Map<OdinSymbol, EvOdinValueSet<?, ?>> newValues,
-                                            Map<OdinSymbol, EvOdinValueSet<?, ?>> conjunctions) {
+    private static void processConjunctions(Map<OdinSymbol, EvOdinValueSet> newValues,
+                                            Map<OdinSymbol, EvOdinValueSet> conjunctions) {
         for (var entry : newValues.entrySet()) {
             if (!conjunctions.containsKey(entry.getKey())) {
                 conjunctions.put(entry.getKey(), entry.getValue());
@@ -116,7 +118,7 @@ public class OdinBuildFlagEvaluator {
         }
     }
 
-    private Map<OdinSymbol, EvOdinValueSet<?, ?>> evaluateBuildFlag(OdinBuildFlag buildFlag) {
+    private Map<OdinSymbol, EvOdinValueSet> evaluateBuildFlag(OdinBuildFlag buildFlag) {
         if (buildFlag instanceof OdinBuildFlagIdentifier identifier) {
             return evaluateBuildFlagIdentifier(identifier);
         }
@@ -127,18 +129,18 @@ public class OdinBuildFlagEvaluator {
         return Collections.emptyMap();
     }
 
-    private Map<OdinSymbol, EvOdinValueSet<?, ?>> evaluateBuildFlagNegation(OdinBuildFlagNegation negation) {
-        Map<OdinSymbol, EvOdinValueSet<?, ?>> complementaryValueMap = new HashMap<>();
-        Map<OdinSymbol, EvOdinValueSet<?, ?>> symbolValues = evaluateBuildFlag(negation.getBuildFlag());
-        for (Map.Entry<OdinSymbol, EvOdinValueSet<?, ?>> entry : symbolValues.entrySet()) {
+    private Map<OdinSymbol, EvOdinValueSet> evaluateBuildFlagNegation(OdinBuildFlagNegation negation) {
+        Map<OdinSymbol, EvOdinValueSet> complementaryValueMap = new HashMap<>();
+        Map<OdinSymbol, EvOdinValueSet> symbolValues = evaluateBuildFlag(negation.getBuildFlag());
+        for (Map.Entry<OdinSymbol, EvOdinValueSet> entry : symbolValues.entrySet()) {
             OdinSymbol symbol = entry.getKey();
-            EvOdinValueSet<?, ?> valueSet = entry.getValue();
+            EvOdinValueSet valueSet = entry.getValue();
             complementaryValueMap.put(symbol, valueSet.complement());
         }
         return complementaryValueMap;
     }
 
-    private Map<OdinSymbol, EvOdinValueSet<?, ?>> evaluateBuildFlagIdentifier(OdinBuildFlagIdentifier identifier) {
+    private Map<OdinSymbol, EvOdinValueSet> evaluateBuildFlagIdentifier(OdinBuildFlagIdentifier identifier) {
         Function<Project, OdinSymbolValue> value = VALUES.get(identifier.getText());
         if (value != null) {
             OdinSymbolValue symbolValue = value.apply(identifier.getProject());

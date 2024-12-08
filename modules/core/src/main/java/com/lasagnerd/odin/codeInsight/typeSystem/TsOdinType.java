@@ -1,6 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
-import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinExpression;

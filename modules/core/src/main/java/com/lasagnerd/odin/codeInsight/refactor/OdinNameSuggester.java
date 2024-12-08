@@ -2,7 +2,7 @@ package com.lasagnerd.odin.codeInsight.refactor;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.symbols.OdinContextBuilder;
 import com.lasagnerd.odin.lang.psi.*;
 

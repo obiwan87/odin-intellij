@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
@@ -431,7 +432,7 @@ public class OdinContextBuilder {
 
         private Collection<OdinSymbol> externalSymbols(OdinContext odinContext) {
             // TODO causes concurrent modification exception occasionally
-            Set<OdinSymbol> declarationSymbols = odinContext.declarationSymbols.values()
+            Set<OdinSymbol> declarationSymbols = odinContext.getDeclarationSymbols().values()
                     .stream()
                     .flatMap(List::stream)
                     .collect(Collectors.toSet());
@@ -851,7 +852,7 @@ public class OdinContextBuilder {
             addParamEntries(paramEntries, declarations);
         }
 
-        if (containingScopeBlock instanceof OdinConditionalStatement conditionalStatement) {
+        if (containingScopeBlock instanceof OdinIfStatement conditionalStatement) {
             OdinLabelDeclaration labelDeclaration = conditionalStatement.getLabelDeclaration();
             if (labelDeclaration != null) {
                 declarations.add(labelDeclaration);

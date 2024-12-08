@@ -1,34 +1,78 @@
 package com.lasagnerd.odin.codeInsight.evaluation;
 
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class EvOdinEnumSet extends EvOdinValueSet<EvEnumValue, TsOdinEnumType> {
+@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+public class EvOdinEnumSet extends EvOdinValueSet {
     public EvOdinEnumSet(Set<EvEnumValue> evEnumValues, TsOdinEnumType type) {
         super(EvEnumValue.class, evEnumValues, type);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public EvOdinValueSet<EvEnumValue, TsOdinEnumType> doCombine(EvOdinValueSet<EvEnumValue, TsOdinEnumType> other) {
-        Set<EvEnumValue> newValues = new HashSet<>(getValue());
-        newValues.addAll(other.getValue());
-        return new EvOdinEnumSet(newValues, type);
+    public Set<EvEnumValue> getValue() {
+        return (Set<EvEnumValue>) super.getValue();
     }
 
     @Override
-    public EvOdinValueSet<EvEnumValue, TsOdinEnumType> doIntersect(EvOdinValueSet<EvEnumValue, TsOdinEnumType> other) {
+    public EvOdinValueSet doCombine(EvOdinValueSet other) {
+        if (!(other instanceof EvOdinEnumSet otherEnumSet))
+            return EvOdinValues.bottom();
         Set<EvEnumValue> newValues = new HashSet<>(getValue());
-        newValues.retainAll(other.getValue());
-        return new EvOdinEnumSet(newValues, type);
+        newValues.addAll(otherEnumSet.getValue());
+        return new EvOdinEnumSet(newValues, (TsOdinEnumType) getType());
     }
 
     @Override
-    public EvOdinValueSet<EvEnumValue, TsOdinEnumType> complement() {
-        EvOdinValue<Set<EvEnumValue>, TsOdinEnumType> enumValues = OdinExpressionEvaluator.getEnumValues(type);
+    public TsOdinEnumType getType() {
+        return (TsOdinEnumType) super.getType();
+    }
+
+    @Override
+    public EvOdinValueSet doIntersect(EvOdinValueSet other) {
+        if (!(other instanceof EvOdinEnumSet otherEnumSet))
+            return EvOdinValues.bottom();
+
+        Set<EvEnumValue> newValues = new HashSet<>(getValue());
+        newValues.retainAll(otherEnumSet.getValue());
+        return new EvOdinEnumSet(newValues, getType());
+    }
+
+    @Override
+    public EvOdinValueSet complement() {
+        EvOdinEnumSet enumValues = OdinExpressionEvaluator.getEnumValues(getType());
         Set<EvEnumValue> complement = new HashSet<>(enumValues.getValue());
-        complement.removeAll(value);
-        return new EvOdinEnumSet(complement, type);
+        complement.removeAll(getValue());
+        return new EvOdinEnumSet(complement, getType());
+    }
+
+    @Override
+    public EvOdinValueSet any() {
+        return OdinExpressionEvaluator.getEnumValues(getType());
+    }
+
+    @Override
+    public EvOdinValueSet doDiff(EvOdinValueSet other) {
+        if (!(other instanceof EvOdinEnumSet otherEnumSet))
+            return EvOdinValues.bottom();
+
+        Set<EvEnumValue> diff = new HashSet<>(getValue());
+        diff.removeAll(otherEnumSet.getValue());
+        return new EvOdinEnumSet(diff, this.getType());
+    }
+
+    @Override
+    public String toString() {
+        String vals = getValue().stream().map(EvEnumValue::toString).collect(Collectors.joining(", "));
+        return "{%s}".formatted(vals);
     }
 }

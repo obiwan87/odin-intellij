@@ -1,7 +1,7 @@
 package com.lasagnerd.odin.lang.psi;
 
 import com.intellij.psi.PsiElement;
-import com.lasagnerd.odin.codeInsight.symbols.OdinContext;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 
 public interface OdinPsiElement extends PsiElement {
     OdinContext getFullContext();

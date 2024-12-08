@@ -1,8 +1,10 @@
-package com.lasagnerd.odin.codeInsight.symbols;
+package com.lasagnerd.odin.codeInsight;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
@@ -37,7 +39,9 @@ public class OdinContext {
     public static final OdinContext EMPTY = new OdinContext();
 
     Map<String, OdinSymbol> symbolTable = new HashMap<>();
-    Map<String, EvOdinValue<?, ?>> valueStorage = new HashMap<>();
+
+    // Used for specialization
+    Map<String, EvOdinValue> valueStorage = new HashMap<>();
 
 
     public OdinContext(String packagePath) {
@@ -52,7 +56,7 @@ public class OdinContext {
     Map<String, TsOdinType> typeTable = new HashMap<>();
 
     /**
-     * Acts as a cache for already defined types.
+     * Acts as a cache for already defined types. Prevents stackoverflow in circular references
      */
     Map<OdinDeclaredIdentifier, TsOdinType> knownTypes = new HashMap<>();
 
@@ -229,7 +233,7 @@ public class OdinContext {
         }
     }
 
-    public void addAll(Map<String, EvOdinValue<?, ?>> builtInValues) {
+    public void addAll(Map<String, EvOdinValue> builtInValues) {
         valueStorage.putAll(builtInValues);
     }
 
