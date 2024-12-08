@@ -277,7 +277,8 @@ public class OdinContextBuilder {
                 null
         );
 
-        return resolver.buildMinimalContext(identifier, false);
+        OdinContext odinContext = resolver.buildMinimalContext(identifier, false);
+        return odinContext == null ? OdinContext.EMPTY : odinContext;
     }
 
     private static class OdinStatefulContextBuilder {
