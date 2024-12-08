@@ -27,7 +27,7 @@ import static com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType.*;
 public class OdinInsightUtils {
 
     public static final List<Class<?>> OPERAND_BOUNDARY_CLASSES = List.of(
-            OdinOperator.class,
+            OdinOperation.class,
 
             OdinArgument.class,
             OdinDeclaration.class,

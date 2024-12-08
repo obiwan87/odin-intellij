@@ -172,7 +172,7 @@
 
   methods('.*([iI]nitialization|[dD]eclaration).*') = [getDeclaredIdentifiers]
 
-  implements("binaryExpression|unaryExpression|castExpression|transmuteExpression|autoCastExpression|orElseExpression|orReturnExpression|orBreakExpression|orContinueExpression|ternaryExpression") = 'com.lasagnerd.odin.lang.psi.OdinOperator'
+  implements("binaryExpression|unaryExpression|castExpression|transmuteExpression|autoCastExpression|orElseExpression|orReturnExpression|orBreakExpression|orContinueExpression|ternaryExpression") = 'com.lasagnerd.odin.lang.psi.OdinOperation'
   implements('.*([iI]nitialization|[dD]eclaration).*') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
   implements('(procedure|enum|bitField|bitset|struct|union|procedureGroup|import)DeclarationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
   implements('usingStatement') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
