@@ -441,7 +441,10 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         return value;
     }
 
-    private static @NotNull EvOdinValue evaluateBinaryIntegerOperation(IElementType operatorType, EvOdinValue left, EvOdinValue right, TsOdinType commonType) {
+    private static @NotNull EvOdinValue evaluateBinaryIntegerOperation(IElementType operatorType,
+                                                                       EvOdinValue left,
+                                                                       EvOdinValue right,
+                                                                       TsOdinType commonType) {
         EvOdinValue value = EvOdinValues.nullValue();
         Long leftLong = left.toLong();
         Long rightLong = right.toLong();

@@ -23,7 +23,7 @@ public class OdinReferenceResolver {
     //  Same as above, but with build flags (?)
 
     // see https://odin-lang.org/docs/overview/#file-suffixes
-    public static @Nullable OdinSymbol resolve(@NotNull OdinIdentifier element) {
+    public static @Nullable OdinSymbol resolve(OdinContext context, @NotNull OdinIdentifier element) {
         if (element.getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
             TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
             OdinContext typeElements = OdinInsightUtils.getTypeElements(element.getProject(), tsOdinType);
@@ -60,11 +60,6 @@ public class OdinReferenceResolver {
     }
 
     static OdinSymbol findSymbol(@NotNull OdinIdentifier element) {
-        OdinContext context = OdinContextBuilder.buildIdentifierContext(element);
-        return findSymbol(context, element);
-    }
-
-    static OdinSymbol findSymbol(OdinContext parentContext, @NotNull OdinIdentifier element) {
         @NotNull OdinIdentifier identifier = element;
         PsiElement parent = identifier.getParent();
         OdinContext context;
@@ -72,38 +67,27 @@ public class OdinReferenceResolver {
             if (refExpression.getExpression() != null) {
                 context = OdinInsightUtils.getReferenceableSymbols(refExpression.getExpression());
             } else {
-                context = parentContext;
-            }
-        } else if (parent instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
-            TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
-            if (!tsOdinType.isUnknown()) {
-                context = OdinInsightUtils.getTypeElements(identifier.getProject(), tsOdinType);
-            } else {
-                // TODO This might lead to resolving to a wrong symbol that has the same name
-                context = parentContext;
+                context = OdinContextBuilder.buildIdentifierContext(element);
             }
         } else {
             OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, OdinQualifiedType.class);
             if (qualifiedType != null) {
                 if (qualifiedType.getPackageIdentifier() == identifier) {
-                    context = parentContext;
+                    context = OdinContextBuilder.buildIdentifierContext(element);
                 } else {
                     context = OdinInsightUtils.getReferenceableSymbols(qualifiedType);
                 }
+            } else if (parent instanceof OdinSimpleRefType) {
+                context = OdinContextBuilder.buildIdentifierContext(element);
             } else {
-                context = parentContext;
+                context = null;
             }
         }
 
         if (context == OdinContext.EMPTY || context == null) {
-            context = parentContext;
+            return null;
         }
-
-        if (context != null) {
-            return context.getSymbol(identifier.getIdentifierToken().getText());
-        }
-
-        return null;
+        return context.getSymbol(identifier.getIdentifierToken().getText());
     }
 
 }
