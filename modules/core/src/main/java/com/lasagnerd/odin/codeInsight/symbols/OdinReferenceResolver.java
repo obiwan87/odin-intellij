@@ -23,14 +23,14 @@ public class OdinReferenceResolver {
     //  Same as above, but with build flags (?)
 
     // see https://odin-lang.org/docs/overview/#file-suffixes
-    public static @Nullable OdinSymbol resolve(OdinContext context, @NotNull OdinIdentifier element) {
+    public static @Nullable OdinSymbol resolve(@NotNull OdinContext context, @NotNull OdinIdentifier element) {
         try {
             if (element.getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
-                TsOdinType tsOdinType = implicitSelectorExpression.getInferredType();
+                TsOdinType tsOdinType = implicitSelectorExpression.getInferredType(context);
                 OdinContext typeElements = OdinInsightUtils.getTypeElements(element.getProject(), tsOdinType);
                 return typeElements.getSymbol(element.getText());
             } else if (element.getParent() instanceof OdinNamedArgument namedArgument) {
-                OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(namedArgument);
+                OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(context, namedArgument);
                 if (callInfo.callingType() instanceof TsOdinParameterOwner parameterOwner) {
                     List<TsOdinParameter> parameters = parameterOwner.getParameters();
                     TsOdinParameter tsOdinParameter = parameters.stream()
@@ -66,18 +66,18 @@ public class OdinReferenceResolver {
             if (refExpression.getExpression() != null) {
                 return OdinInsightUtils.getReferenceableSymbols(refExpression.getExpression());
             } else {
-                return OdinContextBuilder.buildIdentifierContext(element);
+                return OdinContextBuilder.buildIdentifierContext(context, element);
             }
         } else {
             OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, OdinQualifiedType.class);
             if (qualifiedType != null) {
                 if (qualifiedType.getPackageIdentifier() == identifier) {
-                    return OdinContextBuilder.buildIdentifierContext(element);
+                    return OdinContextBuilder.buildIdentifierContext(context, element);
                 } else {
                     return OdinInsightUtils.getReferenceableSymbols(context, qualifiedType);
                 }
             } else if (parent instanceof OdinSimpleRefType) {
-                return OdinContextBuilder.buildIdentifierContext(element);
+                return OdinContextBuilder.buildIdentifierContext(context, element);
             } else {
                 return OdinContext.EMPTY;
             }

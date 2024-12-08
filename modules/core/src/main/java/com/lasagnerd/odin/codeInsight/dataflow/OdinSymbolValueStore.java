@@ -14,7 +14,6 @@ import java.util.Objects;
 public class OdinSymbolValueStore {
     Map<OdinSymbol, EvOdinValue> values = new HashMap<>();
 
-
     public EvOdinValue getValue(String name) {
         return values.keySet().stream()
                 .filter(s -> Objects.equals(name, s.getName()))

@@ -188,6 +188,9 @@ public class OdinContextBuilder {
                 if (odinFile == null || odinFile.getFileScope() == null) {
                     continue;
                 }
+
+                // TODO Import only if it doesn't contradict current knowledge
+                //  Also, only import declarations under when statements that satisfy current knowledge
                 Collection<OdinSymbol> fileScopeDeclarations = odinFile.getFileScope()
                         .getFullContext()
                         .getSymbolTable()
@@ -268,13 +271,21 @@ public class OdinContextBuilder {
         return doBuildFullContext(null, position, stopCondition, null);
     }
 
-    public static OdinContext buildIdentifierContext(OdinIdentifier identifier) {
+    public static OdinContext buildIdentifierContext(OdinContext context, OdinIdentifier identifier) {
+
+        // Compute knowledge at identifier and combine with context knowledge
+//        OdinLattice odinLattice = OdinWhenConstraintsSolver
+//                .solveLattice(OdinLattice.fromContext(context), identifier);
+//
+//        OdinSymbolValueStore symbolValueStore = odinLattice.getSymbolValueStore();
+//        symbolValueStore.intersect(context.getSymbolValueStore());
+
         String packagePath = OdinImportService.getInstance(identifier.getProject()).getPackagePath(identifier);
         OdinStatefulContextBuilder resolver = new OdinStatefulContextBuilder(
                 identifier,
                 packagePath,
                 s -> s.getSymbol(identifier.getText()) != null,
-                null
+                context
         );
 
         OdinContext odinContext = resolver.buildMinimalContext(identifier, false);
@@ -377,7 +388,7 @@ public class OdinContextBuilder {
             OdinScopeBlock containingScopeBlock = getNextContainingScopeBlock(element);
 
             if (containingScopeBlock == null) {
-                return Objects.requireNonNullElseGet(initialContext, () -> new OdinContext(packagePath));
+                return Objects.requireNonNullElseGet(getRootContext(element, this.packagePath), () -> new OdinContext(packagePath));
             }
 
             if (containingScopeBlock.getFullContext() != null) {

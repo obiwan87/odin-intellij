@@ -9,7 +9,6 @@ public interface OdinReferenceOwner extends OdinPsiElement {
     @NotNull
     OdinReference getReference();
 
-    // TODO add getReferencedSymbol() with OdinContext
     default OdinSymbol getReferencedSymbol() {
         return getReference().getSymbol();
     }
@@ -17,7 +16,7 @@ public interface OdinReferenceOwner extends OdinPsiElement {
     @NotNull
     OdinReference getReference(OdinContext context);
 
-    default OdinSymbol getReferencedSymbol(OdinContext context) {
+    default OdinSymbol getReferencedSymbol(@NotNull OdinContext context) {
         return getReference(context).getSymbol();
     }
 }

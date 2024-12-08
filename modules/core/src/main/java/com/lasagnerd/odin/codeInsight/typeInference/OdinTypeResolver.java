@@ -98,7 +98,7 @@ public class OdinTypeResolver extends OdinVisitor {
             newContext.addTypes(context);
             newContext.getKnownTypes().putAll(context.getKnownTypes());
             newContext.getSpecializedTypes().putAll(context.getSpecializedTypes());
-            newContext.getValueStorage().putAll(context.getValueStorage());
+            newContext.getPolyParaValueStorage().putAll(context.getPolyParaValueStorage());
             context = newContext;
         }
         return context;

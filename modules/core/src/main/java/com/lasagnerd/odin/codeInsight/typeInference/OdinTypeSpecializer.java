@@ -173,7 +173,7 @@ public class OdinTypeSpecializer {
                 if (!argumentType.isExplicitPolymorphic()) {
                     EvOdinValue value = OdinExpressionEvaluator.evaluate(outerScope, argumentExpression);
                     if (!value.isNull()) {
-                        instantiationScope.getValueStorage().put(tsOdinParameter.getName(), value);
+                        instantiationScope.getPolyParaValueStorage().put(tsOdinParameter.getName(), value);
                     }
                 }
 

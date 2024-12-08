@@ -27,7 +27,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     private final OdinContext context;
 
-    public OdinReference(OdinContext context, @NotNull OdinIdentifier element) {
+    public OdinReference(@NotNull OdinContext context, @NotNull OdinIdentifier element) {
         super(element);
         this.context = context;
     }

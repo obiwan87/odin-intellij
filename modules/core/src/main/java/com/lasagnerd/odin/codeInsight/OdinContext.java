@@ -2,6 +2,7 @@ package com.lasagnerd.odin.codeInsight;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
@@ -9,14 +10,17 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinScopeBlock;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.With;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
 
+@AllArgsConstructor
 @Getter
 public class OdinContext {
 
@@ -41,8 +45,10 @@ public class OdinContext {
     Map<String, OdinSymbol> symbolTable = new HashMap<>();
 
     // Used for specialization
-    Map<String, EvOdinValue> valueStorage = new HashMap<>();
+    Map<String, EvOdinValue> polyParaValueStorage = new HashMap<>();
 
+    @With
+    OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
 
     public OdinContext(String packagePath) {
         this.packagePath = packagePath;
@@ -89,7 +95,7 @@ public class OdinContext {
     }
 
     public EvOdinValue getValue(String name) {
-        EvOdinValue value = valueStorage.get(name);
+        EvOdinValue value = polyParaValueStorage.get(name);
         if (value != null)
             return value;
 
@@ -234,7 +240,7 @@ public class OdinContext {
     }
 
     public void addAll(Map<String, EvOdinValue> builtInValues) {
-        valueStorage.putAll(builtInValues);
+        polyParaValueStorage.putAll(builtInValues);
     }
 
     public boolean isShadowing(String name) {

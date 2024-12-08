@@ -960,13 +960,13 @@ public class OdinInsightUtils {
         return getStructFields(tsOdinStructType.getContext(), (OdinStructType) tsOdinStructType.getPsiType());
     }
 
-    public static @NotNull OdinCallInfo getCallInfo(OdinArgument argument) {
+    public static @NotNull OdinCallInfo getCallInfo(OdinContext context, OdinArgument argument) {
         @Nullable OdinPsiElement callingElement = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class, OdinCallType.class);
         TsOdinType tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
         List<OdinArgument> argumentList = Collections.emptyList();
         if (callingElement != null) {
             if (callingElement instanceof OdinCallExpression odinCallExpression) {
-                tsOdinType = odinCallExpression.getExpression().getInferredType();
+                tsOdinType = odinCallExpression.getExpression().getInferredType(context);
                 // Here we have to get a meta type, otherwise the call expression does not make sense
                 if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
                     tsOdinType = tsOdinMetaType.representedType();
@@ -975,7 +975,7 @@ public class OdinInsightUtils {
                 }
                 argumentList = odinCallExpression.getArgumentList();
             } else if (callingElement instanceof OdinCallType odinCallType) {
-                tsOdinType = OdinTypeResolver.resolveType((OdinContext) null, odinCallType.getType());
+                tsOdinType = OdinTypeResolver.resolveType(context, odinCallType.getType());
                 argumentList = odinCallType.getArgumentList();
             }
         }

@@ -13,6 +13,7 @@ import java.util.Map;
 
 @Getter
 public class OdinLattice {
+
     public static final OdinLattice EMPTY = new OdinLattice(OdinContext.EMPTY);
     // Facts
     OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
@@ -22,6 +23,12 @@ public class OdinLattice {
 
     public OdinLattice() {
         this(OdinContext.EMPTY);
+    }
+
+    public static OdinLattice fromContext(OdinContext context) {
+        OdinLattice lattice = new OdinLattice(context);
+        lattice.symbolValueStore = context.getSymbolValueStore().copy();
+        return lattice;
     }
 
     public OdinLattice(OdinContext context) {
