@@ -54,7 +54,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     }
 
     private void addSelectorTypeCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result, @NotNull OdinQualifiedType parentType) {
-        OdinContext completionScope = OdinInsightUtils.getReferenceableSymbols(parentType);
+        OdinContext completionScope = OdinInsightUtils.getReferenceableSymbols(OdinContext.EMPTY, parentType);
         if (completionScope != null) {
             addLookUpElements(result, completionScope.flatten()
                     .getSymbols()

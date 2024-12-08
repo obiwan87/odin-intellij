@@ -33,7 +33,7 @@ public class OdinContextBuilder {
         return buildFullContext(element);
     }
 
-    public static OdinContext getFileScopeContext(@NotNull OdinFileScope fileScope, @NotNull OdinVisibility globalVisibility) {
+    public static OdinContext buildFileScopeContext(@NotNull OdinFileScope fileScope, @NotNull OdinVisibility globalVisibility) {
         OdinContext context = new OdinContext();
         // Find all blocks that are not in a procedure
         List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
@@ -347,7 +347,7 @@ public class OdinContextBuilder {
                 }
             }
 
-            boolean stopped = computeScopeWithCheck(constantsOnly, containingScopeBlock, context, forceAddVar);
+            boolean stopped = buildContextWithPredicate(constantsOnly, containingScopeBlock, context, forceAddVar);
             if (stopped) {
                 return context;
             }
@@ -549,10 +549,10 @@ public class OdinContextBuilder {
                     || containingScopeBlock instanceof OdinForeignBlock;
         }
 
-        private boolean computeScopeWithCheck(boolean constantsOnly,
-                                              OdinScopeBlock containingScopeBlock,
-                                              OdinContext context,
-                                              boolean forceAddVar) {
+        private boolean buildContextWithPredicate(boolean constantsOnly,
+                                                  OdinScopeBlock containingScopeBlock,
+                                                  OdinContext context,
+                                                  boolean forceAddVar) {
             if (containingScopeBlock instanceof OdinProcedureDefinition) {
                 addContextParameter(containingScopeBlock.getProject(), context);
             }
@@ -574,7 +574,6 @@ public class OdinContextBuilder {
                 if (checkStopCondition(context))
                     return true;
             }
-
 
             if (constantsOnly && !forceAddVar)
                 return false;

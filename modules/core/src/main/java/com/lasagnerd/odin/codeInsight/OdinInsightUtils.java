@@ -773,7 +773,7 @@ public class OdinInsightUtils {
 
             String text = callRefExpression.getIdentifier().getText();
             if (identifierPredicate.test(text)) {
-                return callRefExpression.getIdentifier().getReferencedSymbol();
+                return callRefExpression.getIdentifier().getReferencedSymbol(context);
             }
         }
         return null;
@@ -1070,9 +1070,9 @@ public class OdinInsightUtils {
     }
 
     // This is a variant  of getTypeElements()
-    public static OdinContext getReferenceableSymbols(OdinQualifiedType qualifiedType) {
+    public static OdinContext getReferenceableSymbols(OdinContext context, OdinQualifiedType qualifiedType) {
         OdinIdentifier identifier = qualifiedType.getIdentifier();
-        OdinSymbol odinSymbol = identifier.getReferencedSymbol();
+        OdinSymbol odinSymbol = identifier.getReferencedSymbol(context);
         if (odinSymbol != null) {
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {

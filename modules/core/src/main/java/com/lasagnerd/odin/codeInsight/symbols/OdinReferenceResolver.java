@@ -42,7 +42,7 @@ public class OdinReferenceResolver {
                     }
                 }
             } else {
-                OdinContext symbolContext = findIdentifierContext(element);
+                OdinContext symbolContext = findIdentifierContext(context, element);
                 OdinSymbol symbol = symbolContext.getSymbol(element.getIdentifierToken().getText());
                 if (symbol != null) {
                     if (!OdinInsightUtils.isVisible(element, symbol) && symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE) {
@@ -58,8 +58,8 @@ public class OdinReferenceResolver {
         }
     }
 
-    // Computes the context under which the identifier is defined
-    static OdinContext findIdentifierContext(@NotNull OdinIdentifier element) {
+    // Computes the context under which the identifier is expected to be defined
+    static OdinContext findIdentifierContext(OdinContext context, @NotNull OdinIdentifier element) {
         @NotNull OdinIdentifier identifier = element;
         PsiElement parent = identifier.getParent();
         if (parent instanceof OdinRefExpression refExpression) {
@@ -74,7 +74,7 @@ public class OdinReferenceResolver {
                 if (qualifiedType.getPackageIdentifier() == identifier) {
                     return OdinContextBuilder.buildIdentifierContext(element);
                 } else {
-                    return OdinInsightUtils.getReferenceableSymbols(qualifiedType);
+                    return OdinInsightUtils.getReferenceableSymbols(context, qualifiedType);
                 }
             } else if (parent instanceof OdinSimpleRefType) {
                 return OdinContextBuilder.buildIdentifierContext(element);

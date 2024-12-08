@@ -1,14 +1,10 @@
 package com.lasagnerd.odin.lang.psi;
 
-import com.intellij.psi.util.CachedValue;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import org.jetbrains.annotations.NotNull;
 
 public interface OdinReferenceOwner extends OdinPsiElement {
-
-    CachedValue<OdinReference> getCachedReference();
-
-    void setCachedReference(CachedValue<OdinReference> cachedReference);
 
     @NotNull
     OdinReference getReference();
@@ -16,5 +12,12 @@ public interface OdinReferenceOwner extends OdinPsiElement {
     // TODO add getReferencedSymbol() with OdinContext
     default OdinSymbol getReferencedSymbol() {
         return getReference().getSymbol();
+    }
+
+    @NotNull
+    OdinReference getReference(OdinContext context);
+
+    default OdinSymbol getReferencedSymbol(OdinContext context) {
+        return getReference(context).getSymbol();
     }
 }

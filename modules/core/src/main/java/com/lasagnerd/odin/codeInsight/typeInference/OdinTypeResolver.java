@@ -340,7 +340,7 @@ public class OdinTypeResolver extends OdinVisitor {
         if (scopeType != null) {
             return scopeType;
         } else {
-            OdinSymbol symbol = typeIdentifier.getReferencedSymbol();
+            OdinSymbol symbol = typeIdentifier.getReferencedSymbol(context);
 
             declaration = symbol != null ? symbol.getDeclaredIdentifier() : null;
             // This check should happen in OdinReference

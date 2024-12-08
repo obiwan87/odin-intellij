@@ -90,11 +90,11 @@ public class ConditionExtractor extends OdinVisitor {
         throw new UnsupportedOperationException("AST Nodes of type " + o.getClass().getSimpleName() + " are not supported");
     }
 
-    private static @Nullable Operand createValueOrSymbol(OdinExpression o) {
+    private @Nullable Operand createValueOrSymbol(OdinExpression o) {
         if (o == null)
             return null;
         if (o instanceof OdinRefExpression refExpression && refExpression.getIdentifier() != null) {
-            return new SymbolicOperand(refExpression.getIdentifier().getReferencedSymbol());
+            return new SymbolicOperand(refExpression.getIdentifier().getReferencedSymbol(context));
         }
         if (o instanceof OdinLiteralExpression || o instanceof OdinImplicitSelectorExpression) {
             return new ValueOperand(OdinExpressionEvaluator.evaluate(o));

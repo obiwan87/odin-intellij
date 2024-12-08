@@ -1,9 +1,10 @@
 package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.lang.psi.*;
@@ -17,7 +18,7 @@ import java.util.List;
 @Setter
 @Getter
 public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl implements OdinReferenceOwner, OdinIdentifier {
-    private CachedValue<OdinReference> cachedReference;
+    private ParameterizedCachedValue<OdinReference, OdinContext> cachedReference;
 
     public OdinReferenceOwnerMixin(@NotNull ASTNode node) {
         super(node);
@@ -26,19 +27,11 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     @NotNull
     @Override
     public OdinReference getReference() {
-
-        if (getCachedReference() == null) {
-            CachedValue<OdinReference> cachedValue = CachedValuesManager
-                    .getManager(getProject())
-                    .createCachedValue(this::computeReference, false);
-
-            setCachedReference(cachedValue);
-        }
-        return getCachedReference().getValue();
+        return getReference(OdinContext.EMPTY);
     }
 
-    CachedValueProvider.Result<OdinReference> computeReference() {
-        OdinReference odinReference = new OdinReference(this);
+    CachedValueProvider.Result<OdinReference> computeReference(OdinContext context) {
+        OdinReference odinReference = new OdinReference(context, this);
         odinReference.resolve();
         OdinSymbol symbol = odinReference.getSymbol();
 
@@ -63,5 +56,16 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
         }
 
         return CachedValueProvider.Result.create(odinReference, dependencies);
+    }
+
+    public @NotNull OdinReference getReference(OdinContext context) {
+        if (getCachedReference() == null) {
+            @NotNull ParameterizedCachedValue<OdinReference, OdinContext> cachedValue = CachedValuesManager
+                    .getManager(getProject())
+                    .createParameterizedCachedValue(this::computeReference, false);
+
+            setCachedReference(cachedValue);
+        }
+        return getCachedReference().getValue(context);
     }
 }

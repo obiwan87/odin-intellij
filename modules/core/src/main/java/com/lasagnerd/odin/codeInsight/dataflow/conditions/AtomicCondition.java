@@ -55,7 +55,6 @@ public class AtomicCondition extends Condition {
 
     public boolean hasSymbol() {
         return Arrays.stream(this.operands).anyMatch(o -> o instanceof SymbolicOperand);
-
     }
 
     public boolean hasValue() {

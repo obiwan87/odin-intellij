@@ -78,7 +78,7 @@ public class CNFFormula {
             simplified.addClause(disjunctions);
         }
 
-        // TODO Apply rule: (P || Q) && !P <=> Q
+        // TODO Apply rule: (P || Q) && !P <=> Q && !P
 
         return simplified;
     }

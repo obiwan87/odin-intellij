@@ -76,7 +76,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             return;
         }
 
-        OdinSymbol symbol = o.getIdentifier().getReferencedSymbol();
+        OdinSymbol symbol = o.getIdentifier().getReferencedSymbol(context);
         if (symbol != null) {
             this.value = evaluateConstantDeclaration(o.getProject(), symbol, localContext, expressionType);
         } else {

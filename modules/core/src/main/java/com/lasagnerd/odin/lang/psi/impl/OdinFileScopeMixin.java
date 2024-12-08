@@ -22,7 +22,7 @@ public abstract class OdinFileScopeMixin extends OdinPsiElementImpl {
     public OdinContext getFullContext() {
         if (this instanceof OdinFileScope odinFileScope) {
             if (context == null) {
-                context = OdinContextBuilder.getFileScopeContext(
+                context = OdinContextBuilder.buildFileScopeContext(
                         odinFileScope,
                         OdinContextBuilder.getGlobalFileVisibility(odinFileScope)
                 );

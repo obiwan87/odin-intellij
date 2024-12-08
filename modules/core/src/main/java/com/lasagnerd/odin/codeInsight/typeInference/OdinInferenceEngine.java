@@ -432,7 +432,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             // getReferencedSymbol() will get the inferred type of 'ref' from the cache
             // because it has been computed above. Then ,in OdinReference, the correct
             // using the type elements of that type, it will correctly retrieve the symbol
-            OdinSymbol symbol = identifier.getReferencedSymbol();
+            OdinSymbol symbol = identifier.getReferencedSymbol(context);
             if (symbol != null) {
                 this.type = getSymbolType(
                         project,

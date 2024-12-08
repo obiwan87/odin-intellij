@@ -25,10 +25,11 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     boolean resolved = false;
 
-    private OdinContext context;
+    private final OdinContext context;
 
-    public OdinReference(@NotNull OdinIdentifier element) {
+    public OdinReference(OdinContext context, @NotNull OdinIdentifier element) {
         super(element);
+        this.context = context;
     }
 
     @Override
@@ -38,10 +39,6 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public @Nullable PsiElement resolve() {
-        return resolveWithContext(OdinContext.EMPTY);
-    }
-
-    private PsiElement resolveWithContext(OdinContext context) {
         if (!this.resolved) {
             this.symbol = OdinReferenceResolver.resolve(context, getElement());
             this.resolvedReference = getDeclaredIdentifier(this.symbol);
