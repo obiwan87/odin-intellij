@@ -1,69 +1,71 @@
-**Odin Support License (OSL)**  
-*Copyright © [2024] Antonino Simone Di Stefano*  
+ODIN SUPPORT LICENSE (OSL)
+Copyright © [2023-2024] Antonino Simone Di Stefano
 
-This license governs the use, distribution, and modification of Odin Support ("the Software"). By using, copying, modifying, or distributing the Software, you agree to the terms set forth below.
+This license governs the use, distribution, and modification of Odin Support ("the Software").
+By using, copying, modifying, or distributing the Software, you agree to the terms set forth below.
 
----
+1. OWNERSHIP
+   The Software, including its source code, binary forms, and all associated materials, is the
+   exclusive intellectual property of Antonino Simone Di Stefano. All rights not explicitly
+   granted by this license are reserved.
 
-### 1. **Ownership**
-The Software, including its source code, binary forms, and all associated materials, is the exclusive intellectual property of Antonino Simone Di Stefano. All rights not explicitly granted by this license are reserved.
+2. PERMITTED USE
+   a. Personal and Non-Commercial Use:
+      You may use the Software for personal or non-commercial purposes without prior authorization.
 
----
+   b. Use in Commercial Software Development:
+      You are permitted to use the Software as a development tool to create, test, or distribute
+      your own commercial software.
+      Example: Using Odin Support to enhance development of a product you sell is allowed.
 
-### 2. **Permitted Use**
-1. **Personal and Non-Commercial Use**: You may use the Software for personal or non-commercial purposes without prior authorization.
-2. **Educational Use**: You may use the Software for teaching, learning, or research purposes without prior authorization.
+3. RESTRICTED USE
+   a. Integration, Redistribution, and Modification:
+      - You may not integrate the Software into another product, distribute it as part of a package,
+        or create derivative works based on the Software for public or commercial use without prior
+        written permission from Antonino Simone Di Stefano.
+      - Redistribution, whether for free or for profit, requires explicit approval and may involve
+        a licensing fee.
 
----
+   b. Selling the Plugin:
+      Selling, sublicensing, or otherwise monetizing the Software itself (including derived or
+      modified versions) is strictly prohibited without prior written authorization and a negotiated
+      financial agreement.
 
-### 3. **Restricted Use**
-1. **Commercial Use**:
-   - Any commercial use of the Software, including but not limited to bundling it with other products, distributing it through a marketplace, or integrating it into a commercial product, requires prior written permission from Antonino Simone Di Stefano.
-   - Commercial use agreements must include a financial arrangement, negotiated in good faith.
-2. **JetBrains-Specific Clause**:
-   - JetBrains or any of its subsidiaries must seek explicit written approval from Antonino Simone Di Stefano before using, modifying, distributing, or integrating the Software into any JetBrains product or service.
-3. **Use of Older Versions**:
-   - Versions of the Software released before [New License Date] may remain subject to their original license. However, commercial use of these versions by entities such as JetBrains or its subsidiaries requires renegotiation of licensing terms with Antonino Simone Di Stefano.
+   c. JetBrains-Specific Clause:
+      JetBrains or any of its subsidiaries must seek explicit written approval from Antonino Simone
+      Di Stefano before using, modifying, distributing, or integrating the Software into any
+      JetBrains product or service.
 
----
+4. PROHIBITED ACTIVITIES
+   - You may not sublicense, sell, or otherwise transfer the Software to third parties without
+     prior authorization.
+   - You may not remove, alter, or obscure copyright or licensing notices included in the Software.
 
-### 4. **Prohibited Activities**
-- You may not sublicense, sell, or otherwise transfer the Software to third parties without prior authorization.
-- You may not remove, alter, or obscure copyright or licensing notices included in the Software.
+5. LICENSE FOR OLDER VERSIONS
+   While the terms of this license apply to all versions of the Software released after 2024-12-09,
+   this license does not retroactively alter the permissions granted by prior licenses for versions
+   released before this date.
+   However, users or entities wishing to use older versions for integration, redistribution, or other
+   commercial purposes must seek approval and may be subject to renegotiation of terms.
 
----
+6. CONTRIBUTIONS
+   Contributions made to the Software by third parties are governed by this license unless otherwise
+   agreed in writing. Contributors affirm that they have the legal right to grant these permissions.
 
-### 5. **License for Older Versions**
-While the terms of this license apply to all versions of the Software released after [2024-12-09], this license does not retroactively alter the permissions granted by prior licenses for versions released before this date.  
-However, users or entities wishing to use older versions for commercial purposes must seek approval and may be subject to renegotiation of terms.
+7. LIABILITY AND WARRANTY
+   - The Software is provided "as-is," without warranty of any kind, express or implied.
+   - In no event shall Antonino Simone Di Stefano be held liable for any damages arising from the
+     use or inability to use the Software.
 
----
+8. TERMINATION
+   This license is automatically terminated if you breach any of its terms. Upon termination, you must
+   cease all use of the Software and destroy any copies in your possession.
 
-### 6. **Contributions**
-Contributions made to the Software by third parties are governed by this license unless otherwise agreed in writing. Contributors affirm that they have the legal right to grant these permissions.
+9. GOVERNING LAW
+   This license is governed by the laws of Italy. Any disputes arising under this license shall be
+   resolved exclusively in the courts of Catania, Italy.
 
----
-
-### 7. **Liability and Warranty**
-- The Software is provided "as-is," without warranty of any kind, express or implied.
-- In no event shall Antonino Simone Di Stefano be held liable for any damages arising from the use or inability to use the Software.
-
----
-
-### 8. **Termination**
-This license is automatically terminated if you breach any of its terms. Upon termination, you must cease all use of the Software and destroy any copies in your possession.
-
----
-
-### 9. **Governing Law**
-This license is governed by the laws of Italy. Any disputes arising under this license shall be resolved exclusively in the courts of Catania, Italy.
-
----
-
-### 10. **Contact**
-For commercial use, licensing inquiries, or other questions, contact:  
-Antonino Simone Di Stefano  
-[Catania, Italy]  
-Email: [Your Email Address]
-
----
+10. CONTACT
+    For commercial use, licensing inquiries, or other questions, contact:
+    Antonino Simone Di Stefano
+   
