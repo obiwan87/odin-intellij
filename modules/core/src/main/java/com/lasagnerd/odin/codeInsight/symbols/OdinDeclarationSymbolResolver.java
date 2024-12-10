@@ -419,16 +419,6 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     private void addWhenBlockDeclarations(OdinWhenBlock whenBlock) {
-//        OdinCondition condition = whenBlock.getCondition();
-
-//        EvOdinValue conditionValue = TsOdinBuiltInTypes.NULL;
-//        if (condition != null) {
-//            conditionValue = OdinExpressionEvaluator.evaluate(context, condition.getExpression());
-//        }
-
-//        boolean ifConditionTrue = conditionValue.asBool() == Boolean.TRUE;
-//        boolean ignoreCondition = conditionValue.isNull();
-
         boolean ifConditionTrue = true;
         boolean ignoreCondition = true;
 

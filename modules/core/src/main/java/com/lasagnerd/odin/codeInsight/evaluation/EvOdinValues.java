@@ -88,6 +88,16 @@ public class EvOdinValues {
         }
 
         @Override
+        public boolean isSubset(EvOdinValueSet set) {
+            return true;
+        }
+
+        @Override
+        public boolean isBottom() {
+            return true;
+        }
+
+        @Override
         public boolean isNull() {
             return true;
         }

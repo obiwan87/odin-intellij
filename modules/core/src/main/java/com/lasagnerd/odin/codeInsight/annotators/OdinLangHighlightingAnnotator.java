@@ -292,7 +292,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         return;
                     }
 
-                    OdinContext odinContext = OdinContextBuilder.buildContext(declaration);
+                    OdinContext odinContext = OdinContextBuilder.buildFullContext(declaration);
                     if (odinContext.getSymbol(declaredIdentifier.getName()) != null) {
                         highlight(annotationHolder, psiElementRange, ODIN_SHADOWING_VARIABLE);
                         return;
@@ -517,7 +517,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     }
 
     private static OdinContext computeContext(PsiElement identifierTokenParent) {
-        return OdinContextBuilder.buildContext(identifierTokenParent)
+        return OdinContextBuilder.buildFullContext(identifierTokenParent)
                 .with(OdinImportService.getInstance(identifierTokenParent.getProject())
                         .getPackagePath(identifierTokenParent));
     }

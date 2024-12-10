@@ -17,12 +17,17 @@ public class ConditionExtractor extends OdinVisitor {
 
     }
 
-    public static Condition toCondition(OdinExpression expression) {
+    public static Condition toCondition(OdinContext context, OdinExpression expression) {
         if (expression == null)
             return Condition.EMPTY;
         ConditionExtractor conditionExtractor = new ConditionExtractor();
+        conditionExtractor.context = context;
         expression.accept(conditionExtractor);
         return conditionExtractor.result;
+    }
+
+    public Condition toCondition(OdinExpression expression) {
+        return toCondition(this.context, expression);
     }
 
     @Override

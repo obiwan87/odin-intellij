@@ -26,6 +26,8 @@ public class OdinLattice {
     }
 
     public static OdinLattice fromContext(OdinContext context) {
+        if (context == null)
+            context = OdinContext.EMPTY;
         OdinLattice lattice = new OdinLattice(context);
         lattice.symbolValueStore = context.getSymbolValueStore().copy();
         return lattice;
@@ -45,12 +47,26 @@ public class OdinLattice {
         return lattice;
     }
 
+    public OdinContext getContext() {
+        return this.context.withSymbolValueStore(symbolValueStore);
+    }
+
     public void combine(OdinLattice lattice) {
         this.symbolValueStore.combine(lattice.symbolValueStore);
     }
 
     public void intersect(OdinLattice lattice) {
         this.symbolValueStore.intersect(lattice.symbolValueStore);
+    }
+
+    public OdinLattice intersected(OdinLattice lattice) {
+        OdinLattice copy = this.copy();
+        copy.intersect(lattice);
+        return lattice;
+    }
+
+    public boolean isSubset(OdinLattice lattice) {
+        return this.symbolValueStore.isSubset(lattice.symbolValueStore);
     }
 
     public void printValues() {

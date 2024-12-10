@@ -66,4 +66,21 @@ public class OdinSymbolValueStore {
             System.out.println(entry.getKey().getName() + ":=" + entry.getValue().toString());
         }
     }
+
+    // An absence of value means ALL values
+    // So if
+    public boolean isSubset(OdinSymbolValueStore symbolValueStore) {
+        for (var entry : this.values.entrySet()) {
+            OdinSymbol symbol = entry.getKey();
+            EvOdinValue thisValue = entry.getValue();
+            EvOdinValue otherValue = symbolValueStore.values.get(symbol);
+            if (otherValue == null)
+                continue;
+
+            if (!thisValue.asSet().isSubset(otherValue.asSet())) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

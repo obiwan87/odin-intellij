@@ -24,6 +24,23 @@ public class EvOdinEnumSet extends EvOdinValueSet {
     }
 
     @Override
+    public boolean isSubset(EvOdinValueSet otherSet) {
+        if (!(otherSet instanceof EvOdinEnumSet otherEnumSet)) {
+            return false;
+        }
+
+        if (!isCompatible(otherEnumSet)) {
+            return false;
+        }
+
+        if (otherSet.isBottom()) {
+            return false;
+        }
+
+        return otherEnumSet.getValue().containsAll(this.getValue());
+    }
+
+    @Override
     public EvOdinValueSet doCombine(EvOdinValueSet other) {
         if (!(other instanceof EvOdinEnumSet otherEnumSet))
             return EvOdinValues.bottom();

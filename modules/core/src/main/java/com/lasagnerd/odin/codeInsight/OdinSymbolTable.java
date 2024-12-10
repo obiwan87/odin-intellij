@@ -1,14 +1,11 @@
 package com.lasagnerd.odin.codeInsight;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
-import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinScopeBlock;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,7 +19,7 @@ import java.util.function.Predicate;
 
 @AllArgsConstructor
 @Getter
-public class OdinContext {
+public class OdinSymbolTable {
 
     @Setter
     OdinScopeBlock scopeBlock;
@@ -31,7 +28,7 @@ public class OdinContext {
     Map<OdinDeclaration, List<OdinSymbol>> declarationSymbols = new HashMap<>();
 
     @Setter
-    OdinContext parentContext;
+    OdinSymbolTable parentSymbolTable;
 
 
     public List<OdinSymbol> getDeclarationSymbols(@NotNull OdinDeclaration declaration) {
@@ -40,7 +37,7 @@ public class OdinContext {
 
     @Setter
     private String packagePath;
-    public static final OdinContext EMPTY = new OdinContext();
+    public static final OdinSymbolTable EMPTY = new OdinSymbolTable();
 
     Map<String, List<OdinSymbol>> symbolTable = new HashMap<>();
 
@@ -50,38 +47,13 @@ public class OdinContext {
     @With
     OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
 
-    public OdinContext(String packagePath) {
+    public OdinSymbolTable(String packagePath) {
         this.packagePath = packagePath;
     }
 
 
-    /**
-     * Used substituting polymorphic types. The key
-     * is the name of the polymorphic type
-     */
-    Map<String, TsOdinType> typeTable = new HashMap<>();
+    public OdinSymbolTable() {
 
-    /**
-     * Acts as a cache for already defined types. Prevents stackoverflow in circular references
-     */
-    Map<OdinDeclaredIdentifier, TsOdinType> knownTypes = new HashMap<>();
-
-    Map<TsOdinType, Map<List<? extends PsiElement>, TsOdinType>> specializedTypes = new HashMap<>();
-
-    public OdinContext() {
-
-    }
-
-    public TsOdinType getSpecializedType(TsOdinType genericType, List<PsiElement> arguments) {
-        Map<List<? extends PsiElement>, TsOdinType> argumentsMap = this.specializedTypes.get(genericType);
-        if (argumentsMap != null) {
-            return argumentsMap.get(arguments);
-        }
-        return null;
-    }
-
-    public void addSpecializedType(TsOdinType genericType, TsOdinType specializedType, List<PsiElement> arguments) {
-        specializedTypes.computeIfAbsent(genericType, t -> new HashMap<>()).put(arguments, specializedType);
     }
 
     @Nullable
@@ -90,14 +62,14 @@ public class OdinContext {
         if (symbols != null && !symbols.isEmpty())
             return symbols.getFirst();
 
-        return parentContext != null ? parentContext.getSymbol(name) : null;
+        return parentSymbolTable != null ? parentSymbolTable.getSymbol(name) : null;
     }
 
     @NotNull
     public List<OdinSymbol> getSymbols(String name) {
         List<OdinSymbol> symbols = symbolTable.get(name);
         if (symbols == null) {
-            return parentContext != null ? parentContext.getSymbols(name) : Collections.emptyList();
+            return parentSymbolTable != null ? parentSymbolTable.getSymbols(name) : Collections.emptyList();
         }
         return symbols;
     }
@@ -107,24 +79,9 @@ public class OdinContext {
         if (value != null)
             return value;
 
-        return parentContext != null ? parentContext.getValue(name) : null;
+        return parentSymbolTable != null ? parentSymbolTable.getValue(name) : null;
     }
 
-    public TsOdinType getType(String polymorphicParameter) {
-        TsOdinType tsOdinType = typeTable.get(polymorphicParameter);
-        if (tsOdinType == null) {
-            return parentContext != null ? parentContext.getType(polymorphicParameter) : null;
-        }
-        return tsOdinType;
-    }
-
-    public void addType(String typeName, TsOdinType type) {
-        typeTable.put(typeName, type);
-    }
-
-    public void addTypes(OdinContext context) {
-        typeTable.putAll(context.typeTable);
-    }
 
     public Collection<PsiNamedElement> getNamedElements() {
         return symbolTable.values().stream()
@@ -163,21 +120,14 @@ public class OdinContext {
         }
     }
 
-    public void putAll(OdinContext context) {
+    public void putAll(OdinSymbolTable context) {
         this.symbolTable.putAll(context.symbolTable);
-        typeTable.putAll(context.typeTable);
-        knownTypes.putAll(context.knownTypes);
-        specializedTypes.putAll(context.specializedTypes);
-        if (context.getParentContext() != null) {
-            if (parentContext == null) {
-                parentContext = new OdinContext();
+        if (context.getParentSymbolTable() != null) {
+            if (parentSymbolTable == null) {
+                parentSymbolTable = new OdinSymbolTable();
             }
-            parentContext.putAll(context.getParentContext());
+            parentSymbolTable.putAll(context.getParentSymbolTable());
         }
-    }
-
-    public void addKnownType(OdinDeclaredIdentifier declaredIdentifier, TsOdinType type) {
-        knownTypes.put(declaredIdentifier, type);
     }
 
     public void add(OdinSymbol odinSymbol) {
@@ -189,17 +139,14 @@ public class OdinContext {
     }
 
     public void add(OdinSymbol symbol, boolean override) {
-
         symbolTable.computeIfAbsent(symbol.getName(), s -> new ArrayList<>()).add(symbol);
-
-
     }
 
-    public static OdinContext from(Collection<OdinSymbol> symbols) {
+    public static OdinSymbolTable from(Collection<OdinSymbol> symbols) {
         if (symbols.isEmpty())
-            return OdinContext.EMPTY;
+            return OdinSymbolTable.EMPTY;
 
-        OdinContext newContext = new OdinContext();
+        OdinSymbolTable newContext = new OdinSymbolTable();
         for (var symbol : symbols) {
             newContext.symbolTable
                     .computeIfAbsent(symbol.getName(), s -> new ArrayList<>())
@@ -210,47 +157,47 @@ public class OdinContext {
     }
 
 
-    public static OdinContext from(List<OdinSymbol> identifiers, String packagePath) {
-        OdinContext newContext = from(identifiers);
+    public static OdinSymbolTable from(List<OdinSymbol> identifiers, String packagePath) {
+        OdinSymbolTable newContext = from(identifiers);
         newContext.packagePath = packagePath;
 
         return newContext;
     }
 
-    public OdinContext with(List<OdinSymbol> identifiers) {
-        OdinContext newContext = from(identifiers);
+    public OdinSymbolTable with(List<OdinSymbol> identifiers) {
+        OdinSymbolTable newContext = from(identifiers);
         newContext.packagePath = this.packagePath;
 
         return newContext;
     }
 
-    public OdinContext with(String packagePath) {
-        OdinContext newContext = new OdinContext();
+    public OdinSymbolTable with(String packagePath) {
+        OdinSymbolTable newContext = new OdinSymbolTable();
         newContext.symbolTable = this.symbolTable;
         newContext.packagePath = packagePath;
-        newContext.parentContext = parentContext;
+        newContext.parentSymbolTable = parentSymbolTable;
         return newContext;
     }
 
-    public OdinContext flatten() {
-        OdinContext odinContext = new OdinContext();
+    public OdinSymbolTable flatten() {
+        OdinSymbolTable odinContext = new OdinSymbolTable();
         odinContext.setPackagePath(packagePath);
 
-        OdinContext curr = this;
+        OdinSymbolTable curr = this;
         do {
             odinContext.addAll(curr.getSymbols(), false);
-            curr = curr.getParentContext();
+            curr = curr.getParentSymbolTable();
         } while (curr != null);
 
         return odinContext;
     }
 
-    public void setRoot(OdinContext context) {
-        if (parentContext != null) {
-            parentContext.setRoot(context);
+    public void setRoot(OdinSymbolTable context) {
+        if (parentSymbolTable != null) {
+            parentSymbolTable.setRoot(context);
         } else {
             if (context != this) {
-                parentContext = context;
+                parentSymbolTable = context;
             }
         }
     }
@@ -261,7 +208,7 @@ public class OdinContext {
 
     public boolean isShadowing(String name) {
         return this.symbolTable.get(name) != null &&
-                (parentContext != null && parentContext.getSymbol(name) != null);
+                (parentSymbolTable != null && parentSymbolTable.getSymbol(name) != null);
     }
 
 

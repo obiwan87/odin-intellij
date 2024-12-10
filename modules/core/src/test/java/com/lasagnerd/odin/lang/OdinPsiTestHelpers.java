@@ -172,7 +172,7 @@ class OdinPsiTestHelpers {
                         .orElseThrow();
 
         OdinExpression expression = odinExpressionStatement.getExpression();
-        OdinContext context = OdinContextBuilder.buildContext(Objects.requireNonNull(expression));
+        OdinContext context = OdinContextBuilder.buildFullContext(Objects.requireNonNull(expression));
         return expression.getInferredType(context);
     }
 

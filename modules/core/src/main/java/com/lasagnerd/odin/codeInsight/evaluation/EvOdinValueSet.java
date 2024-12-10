@@ -23,7 +23,7 @@ public abstract class EvOdinValueSet extends EvOdinValue {
 
     }
 
-    private boolean isCompatible(EvOdinValueSet other) {
+    protected boolean isCompatible(EvOdinValueSet other) {
         return other.getElementType() == elementType && OdinTypeChecker.checkTypesStrictly(type, other.getType());
     }
 
@@ -56,4 +56,7 @@ public abstract class EvOdinValueSet extends EvOdinValue {
     public Set<?> getValue() {
         return (Set<?>) super.getValue();
     }
+
+    public abstract boolean isSubset(EvOdinValueSet set);
+
 }

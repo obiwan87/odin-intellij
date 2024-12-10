@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.dataflow.conditions;
 
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -16,5 +17,10 @@ public class AndCondition extends Condition {
     @Override
     public Condition toCNF() {
         return null;
+    }
+
+    @Override
+    public boolean canBeTrue(OdinContext context) {
+        return left.canBeTrue(context) && right.canBeTrue(context);
     }
 }

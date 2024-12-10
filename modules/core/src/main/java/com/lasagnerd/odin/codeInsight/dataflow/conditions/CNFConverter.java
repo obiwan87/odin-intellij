@@ -1,7 +1,6 @@
 package com.lasagnerd.odin.codeInsight.dataflow.conditions;
 
 import com.intellij.psi.tree.IElementType;
-import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 
 import java.util.Collections;
@@ -9,11 +8,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class CNFConverter {
-
-    public CNFFormula toCNF(OdinExpression expression) {
-        Condition condition = ConditionExtractor.toCondition(expression);
-        return toCNF(condition);
-    }
 
     public CNFFormula toCNF(Condition condition) {
         if (condition instanceof AtomicCondition) {

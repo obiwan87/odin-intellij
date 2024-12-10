@@ -38,12 +38,12 @@ public class OdinNameSuggester {
             }
             if (statementList != null) {
                 PsiElement lastChild = statementList.getLastChild();
-                context = OdinContextBuilder.buildContext(lastChild);
+                context = OdinContextBuilder.buildFullContext(lastChild);
             }
         }
 
         if (context == null) {
-            context = OdinContextBuilder.buildContext(targetExpression);
+            context = OdinContextBuilder.buildFullContext(targetExpression);
         }
 
         if (targetExpression instanceof OdinRefExpression refExpression) {

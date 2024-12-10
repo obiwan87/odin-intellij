@@ -29,6 +29,10 @@ public class EvOdinValue {
         return false;
     }
 
+    public boolean isBottom() {
+        return false;
+    }
+
     public TsOdinType asType() {
         if (value instanceof TsOdinType tsOdinType) {
             return tsOdinType;

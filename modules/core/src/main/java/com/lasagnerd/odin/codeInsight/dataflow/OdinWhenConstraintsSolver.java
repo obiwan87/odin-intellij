@@ -2,6 +2,7 @@ package com.lasagnerd.odin.codeInsight.dataflow;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.dataflow.cfg.OdinWhenBranchBlock;
 import com.lasagnerd.odin.codeInsight.dataflow.cfg.OdinWhenInstruction;
 import com.lasagnerd.odin.codeInsight.dataflow.cfg.OdinWhenTreeBuilder;
@@ -25,7 +26,8 @@ public class OdinWhenConstraintsSolver extends OdinVisitor {
         this.inLattice = inLattice;
     }
 
-    public static OdinLattice solveLattice(OdinLattice lattice, PsiElement element) {
+    public static OdinLattice solveLattice(OdinContext context, PsiElement element) {
+        OdinLattice lattice = OdinLattice.fromContext(context);
         OdinWhenInstruction odinConditionalBlock = OdinWhenTreeBuilder.buildTree(element);
         return doSolveLattice(lattice, element, odinConditionalBlock);
     }
@@ -58,11 +60,24 @@ public class OdinWhenConstraintsSolver extends OdinVisitor {
         OdinLattice outLattice = lattice.copy();
 
         List<Condition> conditions = outLattice.getConditions();
+
+        boolean foundAncestor = false;
+        for (OdinWhenBranchBlock branch : odinConditionalBlock.getBranches()) {
+            boolean isAncestor = PsiTreeUtil.isAncestor(branch.getPsiElement(), element, true);
+            if (isAncestor) {
+                foundAncestor = true;
+                break;
+            }
+        }
+        if (!foundAncestor)
+            return outLattice;
+
         for (OdinWhenBranchBlock branch : odinConditionalBlock.getBranches()) {
 
             boolean isAncestor = PsiTreeUtil.isAncestor(branch.getPsiElement(), element, true);
             if (branch.getCondition() != null) {
-                Condition condition = ConditionExtractor.toCondition(branch.getCondition());
+                // Careful, ConditionExtractor uses reference resolver
+                Condition condition = ConditionExtractor.toCondition(lattice.getContext(), branch.getCondition());
                 if (isAncestor) {
                     conditions.add(condition);
                 } else {

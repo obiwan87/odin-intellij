@@ -254,7 +254,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
             if (declaredIdentifier instanceof OdinDeclaredIdentifier odinDeclaredIdentifier) {
                 OdinContext builtinSymbols = OdinContext.from(getBuiltInSymbols());
-                OdinContext context = OdinContextBuilder.buildContext(declaredIdentifier);
+                OdinContext context = OdinContextBuilder.buildFullContext(declaredIdentifier);
                 context.setParentContext(builtinSymbols);
 
                 TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, odinDeclaredIdentifier);
@@ -436,6 +436,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                 fileScopeDeclarations
                         .getSymbolTable().values()
                         .stream()
+                        .flatMap(List::stream)
                         .filter(odinSymbol1 -> OdinAttributeUtils.containsAttribute(odinSymbol1.getAttributes(), "builtin")
                                 || odinSymbol1.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE)
                         .forEach(symbol -> {
@@ -480,6 +481,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                     fileScopeDeclarations
                             .getSymbolTable().values()
                             .stream()
+                            .flatMap(List::stream)
                             .filter(odinSymbolPredicate)
                             .forEach(symbol -> {
                                 symbol.setBuiltin(true);

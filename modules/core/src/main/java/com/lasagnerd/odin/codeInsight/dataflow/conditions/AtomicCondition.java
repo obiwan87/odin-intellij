@@ -1,6 +1,8 @@
 package com.lasagnerd.odin.codeInsight.dataflow.conditions;
 
 import com.intellij.psi.tree.IElementType;
+import com.lasagnerd.odin.codeInsight.OdinContext;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import lombok.EqualsAndHashCode;
@@ -47,6 +49,19 @@ public class AtomicCondition extends Condition {
     @Override
     public Condition toCNF() {
         return this;
+    }
+
+    @Override
+    public boolean canBeTrue(OdinContext context) {
+        if (this.isTautology())
+            return true;
+
+        if (this.hasSymbol() && this.hasValue()) {
+            EvOdinValue value = context.getSymbolValueStore().getValue(getFirstSymbolicOperand().getSymbol());
+            return value.asSet().intersect(value.asSet()).isNull();
+        }
+
+        return false;
     }
 
     public boolean hasOnlySymbols() {

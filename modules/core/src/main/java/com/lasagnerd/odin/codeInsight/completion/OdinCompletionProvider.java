@@ -168,7 +168,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             case OdinImplicitSelectorExpression implicitSelectorExpression -> {
                 TsOdinType tsOdinType = OdinExpectedTypeEngine
                         .inferExpectedType(
-                                OdinContextBuilder.buildContext(position),
+                                OdinContextBuilder.buildFullContext(position),
                                 implicitSelectorExpression
                         );
 
@@ -183,7 +183,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
             // Expressions like 'a.b.c.<caret>'
             case OdinRefExpression refExpression when refExpression.getExpression() != null -> {
-                OdinContext context = OdinContextBuilder.buildContext(refExpression, parameters
+                OdinContext context = OdinContextBuilder.buildFullContext(refExpression, parameters
                         .getOriginalFile()
                         .getContainingDirectory()
                         .getVirtualFile()
@@ -209,7 +209,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             // Identifiers like '<caret>'
             case null, default -> {
                 OdinContext context = OdinContextBuilder
-                        .buildContext(position)
+                        .buildFullContext(position)
                         .flatten();
                 addIdentifierCompletions(parameters, result, position.getText(), context);
             }
@@ -292,7 +292,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     }
 
     private static void addCompoundLiteralCompletions(@NotNull CompletionResultSet result, OdinRefExpression topMostRefExpression, OdinCompoundLiteral compoundLiteral) {
-        OdinContext context = OdinContextBuilder.buildContext(topMostRefExpression);
+        OdinContext context = OdinContextBuilder.buildFullContext(topMostRefExpression);
         TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(context, compoundLiteral);
 
         List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, context);

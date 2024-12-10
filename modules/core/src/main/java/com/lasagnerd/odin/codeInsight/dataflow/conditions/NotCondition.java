@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.dataflow.conditions;
 
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -21,5 +22,10 @@ public class NotCondition extends Condition {
             return new OrCondition(new NotCondition(andCondition.getLeft()), new NotCondition(andCondition.getRight())).toCNF();
         }
         return null;
+    }
+
+    @Override
+    public boolean canBeTrue(OdinContext context) {
+        return !inner.canBeTrue(context);
     }
 }
