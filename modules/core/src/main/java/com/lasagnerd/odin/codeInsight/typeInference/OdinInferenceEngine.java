@@ -30,8 +30,6 @@ public class OdinInferenceEngine extends OdinVisitor {
     TsOdinType type;
 
     // Input fields
-    // TODO the symbol table can be replaced with an inference context at some point
-    //  there we hold recursion guards.
     final OdinContext context;
     private final TsOdinType expectedType;
     private final int lhsValuesCount;

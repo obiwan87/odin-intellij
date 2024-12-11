@@ -42,7 +42,7 @@ public class OdinContext {
     }
 
     public String getPackagePath() {
-        return symbolTable.getPackagePath();
+        return getSymbolTable().getPackagePath();
     }
 
     /**

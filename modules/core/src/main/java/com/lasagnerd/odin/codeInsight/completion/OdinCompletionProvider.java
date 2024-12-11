@@ -169,7 +169,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             case OdinImplicitSelectorExpression implicitSelectorExpression -> {
                 TsOdinType tsOdinType = OdinExpectedTypeEngine
                         .inferExpectedType(
-                                OdinSymbolTableBuilder.buildFullSymbolTable(position).asContext(),
+                                OdinSymbolTableHelper.buildFullSymbolTable(position).asContext(),
                                 implicitSelectorExpression
                         );
 
@@ -184,7 +184,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
             // Expressions like 'a.b.c.<caret>'
             case OdinRefExpression refExpression when refExpression.getExpression() != null -> {
-                OdinSymbolTable symbolTable = OdinSymbolTableBuilder.buildFullSymbolTable(refExpression, parameters
+                OdinSymbolTable symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(refExpression, parameters
                         .getOriginalFile()
                         .getContainingDirectory()
                         .getVirtualFile()
@@ -209,7 +209,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             }
             // Identifiers like '<caret>'
             case null, default -> {
-                OdinSymbolTable symbolTable = OdinSymbolTableBuilder
+                OdinSymbolTable symbolTable = OdinSymbolTableHelper
                         .buildFullSymbolTable(position)
                         .flatten();
                 addIdentifierCompletions(parameters, result, position.getText(), symbolTable);
@@ -293,7 +293,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     }
 
     private static void addCompoundLiteralCompletions(@NotNull CompletionResultSet result, OdinRefExpression topMostRefExpression, OdinCompoundLiteral compoundLiteral) {
-        OdinSymbolTable symbolTable = OdinSymbolTableBuilder.buildFullSymbolTable(topMostRefExpression);
+        OdinSymbolTable symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(topMostRefExpression);
         TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(symbolTable.asContext(), compoundLiteral);
 
         List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, symbolTable.asContext());

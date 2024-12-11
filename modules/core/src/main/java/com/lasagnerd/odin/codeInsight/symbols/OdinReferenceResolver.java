@@ -27,7 +27,7 @@ public class OdinReferenceResolver {
 
     // see https://odin-lang.org/docs/overview/#file-suffixes
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context, @NotNull OdinIdentifier element) {
-        return resolve(context, element, OdinSymbolTableBuilder::buildMinimalSymbolTable, false);
+        return resolve(context, element, OdinSymbolTableHelper::buildMinimalSymbolTable, false);
     }
 
     // see https://odin-lang.org/docs/overview/#file-suffixes

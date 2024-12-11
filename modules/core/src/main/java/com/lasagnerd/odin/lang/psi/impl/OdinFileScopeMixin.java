@@ -2,7 +2,7 @@ package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableBuilder;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableHelper;
 import com.lasagnerd.odin.lang.psi.OdinFileScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,9 +22,9 @@ public abstract class OdinFileScopeMixin extends OdinPsiElementImpl {
     public OdinSymbolTable getFullSymbolTable() {
         if (this instanceof OdinFileScope odinFileScope) {
             if (symbolTable == null) {
-                symbolTable = OdinSymbolTableBuilder.buildFileScopeSymbolTable(
+                symbolTable = OdinSymbolTableHelper.buildFileScopeSymbolTable(
                         odinFileScope,
-                        OdinSymbolTableBuilder.getGlobalFileVisibility(odinFileScope)
+                        OdinSymbolTableHelper.getGlobalFileVisibility(odinFileScope)
                 );
             }
 

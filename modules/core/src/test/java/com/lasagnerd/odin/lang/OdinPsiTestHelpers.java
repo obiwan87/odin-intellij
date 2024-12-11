@@ -19,7 +19,7 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableBuilder;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableHelper;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
@@ -172,7 +172,7 @@ class OdinPsiTestHelpers {
                         .orElseThrow();
 
         OdinExpression expression = odinExpressionStatement.getExpression();
-        OdinSymbolTable context = OdinSymbolTableBuilder.buildFullSymbolTable(Objects.requireNonNull(expression));
+        OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(Objects.requireNonNull(expression));
         return expression.getInferredType(context.asContext());
     }
 

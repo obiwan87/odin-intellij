@@ -291,7 +291,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         return;
                     }
 
-                    var odinContext = OdinSymbolTableBuilder.buildFullSymbolTable(declaration);
+                    var odinContext = OdinSymbolTableHelper.buildFullSymbolTable(declaration);
                     if (odinContext.getSymbol(declaredIdentifier.getName()) != null) {
                         highlight(annotationHolder, psiElementRange, ODIN_SHADOWING_VARIABLE);
                         return;
@@ -516,7 +516,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     }
 
     private static OdinSymbolTable computeSymbolTable(PsiElement identifierTokenParent) {
-        return OdinSymbolTableBuilder.buildFullSymbolTable(identifierTokenParent)
+        return OdinSymbolTableHelper.buildFullSymbolTable(identifierTokenParent)
                 .with(OdinImportService.getInstance(identifierTokenParent.getProject())
                         .getPackagePath(identifierTokenParent));
     }

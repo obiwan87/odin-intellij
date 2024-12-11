@@ -91,7 +91,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     protected abstract OdinFile createOdinFile(Project project, Path path);
 
     private OdinFile createOdinFileFromResource(Project project, String resourcePath) {
-        InputStream resource = OdinSymbolTableBuilder.class.getClassLoader().getResourceAsStream(resourcePath);
+        InputStream resource = OdinSymbolTableHelper.class.getClassLoader().getResourceAsStream(resourcePath);
         if (resource == null)
             return null;
         try (resource) {
@@ -254,7 +254,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
             if (declaredIdentifier instanceof OdinDeclaredIdentifier odinDeclaredIdentifier) {
                 OdinSymbolTable builtinSymbols = OdinSymbolTable.from(getBuiltInSymbols());
-                OdinSymbolTable symbolTable = OdinSymbolTableBuilder.buildFullSymbolTable(declaredIdentifier);
+                OdinSymbolTable symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(declaredIdentifier);
                 symbolTable.setParentSymbolTable(builtinSymbols);
 
                 TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable.asContext(), odinDeclaredIdentifier);

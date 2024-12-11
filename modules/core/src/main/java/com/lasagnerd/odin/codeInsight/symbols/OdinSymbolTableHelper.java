@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class OdinSymbolTableBuilder {
+public class OdinSymbolTableHelper {
 
     public static OdinSymbolTable buildFullSymbolTable(@NotNull PsiElement element) {
         return buildFullSymbolTable(OdinContext.EMPTY, element);
