@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinContext;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.*;
@@ -19,14 +20,14 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class OdinContextBuilder {
+public class OdinSymbolTableBuilder {
 
-    public static OdinContext buildFullContext(@NotNull PsiElement element) {
-        return buildFullContext(OdinContext.EMPTY, element);
+    public static OdinSymbolTable buildFullSymbolTable(@NotNull PsiElement element) {
+        return buildFullSymbolTable(OdinContext.EMPTY, element);
     }
 
-    public static OdinContext buildFileScopeContext(@NotNull OdinFileScope fileScope, @NotNull OdinVisibility globalVisibility) {
-        OdinContext context = new OdinContext();
+    public static OdinSymbolTable buildFileScopeSymbolTable(@NotNull OdinFileScope fileScope, @NotNull OdinVisibility globalVisibility) {
+        OdinSymbolTable context = new OdinSymbolTable();
         // Find all blocks that are not in a procedure
         List<OdinSymbol> fileScopeSymbols = new ArrayList<>();
 
@@ -133,13 +134,13 @@ public class OdinContextBuilder {
         return Collections.emptyList();
     }
 
-    public static @NotNull OdinContext getRootContext(@NotNull PsiElement element, String packagePath) {
-        OdinContext context = new OdinContext();
+    public static @NotNull OdinSymbolTable getRootContext(@NotNull PsiElement element, String packagePath) {
+        OdinSymbolTable context = new OdinSymbolTable();
         context.setPackagePath(packagePath);
 
         List<OdinSymbol> builtInSymbols = getBuiltInSymbols(element.getProject());
 
-        OdinContext builtinContext = OdinContext.from(builtInSymbols);
+        OdinSymbolTable builtinContext = OdinSymbolTable.from(builtInSymbols);
         builtinContext.setPackagePath("");
 
         // 0. Import built-in symbols
@@ -160,7 +161,7 @@ public class OdinContextBuilder {
                 }
 
                 Collection<OdinSymbol> fileScopeDeclarations = odinFile.getFileScope()
-                        .getFullContext()
+                        .getFullSymbolTable()
                         .getSymbolTable()
                         .values()
                         .stream()
@@ -231,47 +232,47 @@ public class OdinContextBuilder {
     }
 
     @TestOnly
-    public static OdinContext doBuildFullContext(@NotNull PsiElement position) {
-        return doBuildFullContext(position, OdinStatefulContextBuilder.ALWAYS_FALSE);
+    public static OdinSymbolTable doBuildFullSymbolTable(@NotNull PsiElement position) {
+        return doBuildFullSymbolTable(position, OdinStatefulSymbolTableBuilder.ALWAYS_FALSE);
     }
 
     @TestOnly
-    public static OdinContext doBuildFullContext(@NotNull PsiElement position, StopCondition stopCondition) {
-        return doBuildFullContext(null, position, stopCondition, null);
+    public static OdinSymbolTable doBuildFullSymbolTable(@NotNull PsiElement position, StopCondition stopCondition) {
+        return doBuildFullSymbolTable(null, position, stopCondition, null);
     }
 
-    public static OdinContext buildMinimalContext(OdinContext context, PsiElement identifier) {
+    public static OdinSymbolTable buildMinimalSymbolTable(OdinContext context, PsiElement identifier) {
         String packagePath = OdinImportService.getInstance(identifier.getProject()).getPackagePath(identifier);
-        OdinStatefulContextBuilder resolver = new OdinStatefulContextBuilder(
+        OdinStatefulSymbolTableBuilder resolver = new OdinStatefulSymbolTableBuilder(
                 identifier,
                 packagePath,
                 s -> s.getSymbol(identifier.getText()) != null,
                 context
         );
 
-        OdinContext odinContext = resolver.buildMinimalContext(identifier, false);
-        return odinContext == null ? OdinContext.EMPTY : odinContext;
+        OdinSymbolTable symbolTable = resolver.buildMinimalContext(identifier, false);
+        return symbolTable == null ? OdinSymbolTable.EMPTY : symbolTable;
     }
 
-    public static OdinContext buildFullContext(OdinContext context, PsiElement element) {
+    public static OdinSymbolTable buildFullSymbolTable(OdinContext context, PsiElement element) {
         String packagePath = OdinImportService.getInstance(element.getProject()).getPackagePath(element);
 
         // 3. Import symbols from the scope tree
-        OdinContext odinContext = doBuildFullContext(packagePath,
+        OdinSymbolTable symbolTable = doBuildFullSymbolTable(packagePath,
                 element,
-                OdinStatefulContextBuilder.ALWAYS_FALSE,
+                OdinStatefulSymbolTableBuilder.ALWAYS_FALSE,
                 context);
 
-        odinContext.setPackagePath(packagePath);
+        symbolTable.setPackagePath(packagePath);
 
-        return odinContext;
+        return symbolTable;
     }
 
-    public static OdinContext doBuildFullContext(String packagePath,
-                                                 @NotNull PsiElement position,
-                                                 StopCondition stopCondition,
-                                                 OdinContext root) {
-        return new OdinStatefulContextBuilder(
+    public static OdinSymbolTable doBuildFullSymbolTable(String packagePath,
+                                                         @NotNull PsiElement position,
+                                                         StopCondition stopCondition,
+                                                         OdinContext root) {
+        return new OdinStatefulSymbolTableBuilder(
                 position,
                 packagePath,
                 stopCondition,
@@ -415,13 +416,13 @@ public class OdinContextBuilder {
     }
 
 
-    public static OdinContext buildFullContext(PsiElement reference, @NonNls @NotNull String originalFilePath) {
-        return buildFullContext(reference).with(originalFilePath);
+    public static OdinSymbolTable buildFullSymbolTable(PsiElement reference, @NonNls @NotNull String originalFilePath) {
+        return buildFullSymbolTable(reference).with(originalFilePath);
     }
 
     @FunctionalInterface
     public interface StopCondition {
-        boolean match(OdinContext context);
+        boolean match(OdinSymbolTable context);
     }
 
 }

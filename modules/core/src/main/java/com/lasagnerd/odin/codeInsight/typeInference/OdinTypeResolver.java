@@ -98,7 +98,7 @@ public class OdinTypeResolver extends OdinVisitor {
             newContext.addTypes(context);
             newContext.getKnownTypes().putAll(context.getKnownTypes());
             newContext.getSpecializedTypes().putAll(context.getSpecializedTypes());
-            newContext.getPolyParaValueStorage().putAll(context.getPolyParaValueStorage());
+            newContext.getPolymorphicValues().putAll(context.getPolymorphicValues());
             context = newContext;
         }
         return context;
@@ -161,7 +161,7 @@ public class OdinTypeResolver extends OdinVisitor {
                 if (declaredIdentifier != null) {
                     tsOdinType.setName(declaredIdentifier.getName());
                 }
-                tsOdinType.getContext().putAll(context);
+                tsOdinType.getContext().merge(context);
                 metaType.setRepresentedType(tsOdinType);
                 return tsOdinType;
             } else if (metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
@@ -213,18 +213,18 @@ public class OdinTypeResolver extends OdinVisitor {
     /**
      * Creates a new scope for a given package identifier defined within this scope.
      *
-     * @param context       The symbol table to use
+     * @param context           The symbol table to use
      * @param packageIdentifier The identifier that is used to reference the package
      * @return A new scope with all the declared symbols of the referenced package
      */
 
-    public static OdinContext getScopeOfImport(OdinContext context, String packageIdentifier) {
+    public static OdinContext getImportContext(OdinContext context, String packageIdentifier) {
         OdinSymbol odinSymbol = context.getSymbol(packageIdentifier);
         if (odinSymbol != null) {
             PsiNamedElement declaredIdentifier = odinSymbol.getDeclaredIdentifier();
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return OdinImportUtils.getContextOfImportedPackage(context.getPackagePath(), importDeclarationStatement);
+                return OdinImportUtils.getSymbolsOfImportedPackage(context.getPackagePath(), importDeclarationStatement).asContext();
             }
         }
         return OdinContext.EMPTY;
@@ -273,8 +273,9 @@ public class OdinTypeResolver extends OdinVisitor {
             // Value polymorphism
             for (OdinPolymorphicType odinPolymorphicType : PsiTreeUtil.findChildrenOfType(paramEntry, OdinPolymorphicType.class)) {
                 TsOdinType tsOdinType = doResolveType(localContext, odinPolymorphicType);
-                localContext.addType(tsOdinType.getName(), tsOdinType);
-                localContext.add(odinPolymorphicType.getDeclaredIdentifier());
+                localContext.addPolymorphicType(tsOdinType.getName(), tsOdinType);
+                PsiNamedElement namedElement = odinPolymorphicType.getDeclaredIdentifier();
+                localContext.getSymbolTable().add(namedElement);
                 if (baseType instanceof TsOdinGenericType tsOdinGenericType) {
                     tsOdinGenericType.getPolymorphicParameters().put(tsOdinType.getName(), tsOdinType);
                 }
@@ -289,8 +290,8 @@ public class OdinTypeResolver extends OdinVisitor {
                     valuePolymorphicType.setName(name);
                     valuePolymorphicType.setDeclaredIdentifier(declaredIdentifier);
                     valuePolymorphicType.setDeclaration(parameterDeclaration);
-                    localContext.addType(valuePolymorphicType.getName(), valuePolymorphicType);
-                    localContext.add(declaredIdentifier);
+                    localContext.addPolymorphicType(valuePolymorphicType.getName(), valuePolymorphicType);
+                    localContext.getSymbolTable().add(declaredIdentifier);
                     if (baseType instanceof TsOdinGenericType tsOdinGenericType) {
                         tsOdinGenericType.getPolymorphicParameters().put(valuePolymorphicType.getName(), valuePolymorphicType);
                     }
@@ -327,7 +328,7 @@ public class OdinTypeResolver extends OdinVisitor {
         if (typeDeclaredIdentifier != null) {
             this.context.addKnownType(typeDeclaredIdentifier, tsOdinType);
         }
-        tsOdinType.getContext().putAll(context);
+        tsOdinType.getContext().merge(context);
         tsOdinType.getContext().setPackagePath(context.getPackagePath());
         log("Initialized " + tsOdinType.getClass().getSimpleName() + " with name " + name);
     }
@@ -336,7 +337,7 @@ public class OdinTypeResolver extends OdinVisitor {
         PsiNamedElement declaration;
         String identifierText = typeIdentifier.getText();
 
-        TsOdinType scopeType = context.getType(identifierText);
+        TsOdinType scopeType = context.getPolymorphicType(identifierText);
         if (scopeType != null) {
             return scopeType;
         } else {
@@ -481,7 +482,7 @@ public class OdinTypeResolver extends OdinVisitor {
     // Visitor methods
     @Override
     public void visitQualifiedType(@NotNull OdinQualifiedType qualifiedType) {
-        OdinContext packageScope = getScopeOfImport(context, qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
+        OdinContext packageScope = getImportContext(context, qualifiedType.getPackageIdentifier().getIdentifierToken().getText());
         OdinSimpleRefType simpleRefType = qualifiedType.getSimpleRefType();
         if (simpleRefType != null) {
             this.type = doResolveType(packageScope, simpleRefType);
@@ -631,7 +632,8 @@ public class OdinTypeResolver extends OdinVisitor {
         if (declaredIdentifier != null) {
             context.addKnownType(declaredIdentifier, tsOdinType);
             List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getSymbols(declaration);
-            context.add(localSymbols.getFirst());
+            OdinSymbol odinSymbol = localSymbols.getFirst();
+            context.getSymbolTable().add(odinSymbol, true);
         }
     }
 
@@ -677,7 +679,7 @@ public class OdinTypeResolver extends OdinVisitor {
 
         TsOdinType elementType = doResolveType(context, Objects.requireNonNull(odinPointerType.getType()));
         tsOdinPointerType.setDereferencedType(elementType);
-        tsOdinPointerType.getContext().putAll(context);
+        tsOdinPointerType.getContext().merge(context);
         tsOdinPointerType.getContext().setPackagePath(context.getPackagePath());
         this.type = tsOdinPointerType;
     }
@@ -707,8 +709,9 @@ public class OdinTypeResolver extends OdinVisitor {
                 tsOdinProcedureType.setReturnTypes(List.of(tsOdinType));
                 tsOdinProcedureType.setReturnParameters(List.of(tsOdinParameter));
                 if (type instanceof OdinPolymorphicType polymorphicType) {
-                    tsOdinProcedureType.getContext().addType(tsOdinType.getName(), tsOdinType);
-                    tsOdinProcedureType.getContext().add(polymorphicType.getDeclaredIdentifier());
+                    tsOdinProcedureType.getContext().addPolymorphicType(tsOdinType.getName(), tsOdinType);
+                    PsiNamedElement namedElement = polymorphicType.getDeclaredIdentifier();
+                    tsOdinProcedureType.getContext().getSymbolTable().add(namedElement);
                 }
             } else {
                 List<OdinParamEntry> returnParameterEntries = returnParameters.getParamEntryList();

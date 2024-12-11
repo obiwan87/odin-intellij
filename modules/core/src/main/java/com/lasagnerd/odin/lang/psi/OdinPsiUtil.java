@@ -8,8 +8,8 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
@@ -476,7 +476,7 @@ public class OdinPsiUtil {
         for (OdinExpression expression : usingStatement.getExpressionList()) {
             TsOdinType tsOdinType = expression.getInferredType();
 
-            OdinContext typeSymbols = OdinInsightUtils.getTypeElements(usingStatement.getProject(), tsOdinType);
+            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(usingStatement.getProject(), tsOdinType);
             typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
                     .map(OdinDeclaredIdentifier.class::cast)
                     .forEach(declaredIdentifiers::add);

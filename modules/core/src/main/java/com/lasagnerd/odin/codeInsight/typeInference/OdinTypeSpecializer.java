@@ -30,7 +30,7 @@ public class OdinTypeSpecializer {
 
         specializedType.setGenericType(genericType);
         specializedType.getContext().setPackagePath(genericType.getContext().getPackagePath());
-        specializedType.getContext().putAll(genericType.getContext());
+        specializedType.getContext().merge(genericType.getContext());
         OdinContext newScope = specializedType.getContext();
         resolveArguments(outerScope,
                 genericType,
@@ -69,7 +69,7 @@ public class OdinTypeSpecializer {
 
         TsOdinProcedureType specializedType = new TsOdinProcedureType();
         specializedType.getContext().setPackagePath(genericType.getContext().getPackagePath());
-        specializedType.getContext().putAll(genericType.getContext());
+        specializedType.getContext().merge(genericType.getContext());
         specializedType.setPsiType(genericType.getPsiType());
         specializedType.setName(genericType.getName());
         specializedType.setDeclaration(genericType.getDeclaration());
@@ -119,7 +119,7 @@ public class OdinTypeSpecializer {
 
         specializedType.getContext().setPackagePath(genericType.getContext().getPackagePath());
         specializedType.setGenericType(genericType);
-        specializedType.getContext().putAll(genericType.getContext());
+        specializedType.getContext().merge(genericType.getContext());
         specializedType.setPsiType(genericType.getPsiType());
         specializedType.setName(genericType.getName());
         specializedType.setDeclaration(genericType.getDeclaration());
@@ -173,7 +173,7 @@ public class OdinTypeSpecializer {
                 if (!argumentType.isExplicitPolymorphic()) {
                     EvOdinValue value = OdinExpressionEvaluator.evaluate(outerScope, argumentExpression);
                     if (!value.isNull()) {
-                        instantiationScope.getPolyParaValueStorage().put(tsOdinParameter.getName(), value);
+                        instantiationScope.getPolymorphicValues().put(tsOdinParameter.getName(), value);
                     }
                 }
 
@@ -187,7 +187,7 @@ public class OdinTypeSpecializer {
                     if (specializedType instanceof TsOdinGenericType generalizableType) {
                         generalizableType.getResolvedPolymorphicParameters().put(tsOdinParameter.getName(), argumentType);
                     }
-                    instantiationScope.addType(tsOdinParameter.getName(), argumentType);
+                    instantiationScope.addPolymorphicType(tsOdinParameter.getName(), argumentType);
                 }
 
                 Map<String, TsOdinType> resolvedTypes = substituteTypes(argumentType, parameterType);
@@ -195,7 +195,7 @@ public class OdinTypeSpecializer {
                     generalizableType.getResolvedPolymorphicParameters().putAll(resolvedTypes);
                 }
                 for (Map.Entry<String, TsOdinType> resolvedTypeEntry : resolvedTypes.entrySet()) {
-                    instantiationScope.addType(resolvedTypeEntry.getKey(), resolvedTypeEntry.getValue());
+                    instantiationScope.addPolymorphicType(resolvedTypeEntry.getKey(), resolvedTypeEntry.getValue());
                 }
             }
         }
@@ -314,7 +314,7 @@ public class OdinTypeSpecializer {
             TsOdinType tsOdinType = metaType.representedType();
             if (tsOdinType.isExplicitPolymorphic()) {
                 TsOdinPolymorphicType tsOdinPolymorphicType = (TsOdinPolymorphicType) tsOdinType;
-                TsOdinType type = context.getType(tsOdinPolymorphicType.getName());
+                TsOdinType type = context.getPolymorphicType(tsOdinPolymorphicType.getName());
                 if (type == null) {
                     return TsOdinBuiltInTypes.UNKNOWN;
                 }

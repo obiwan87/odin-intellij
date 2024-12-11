@@ -120,13 +120,13 @@ public class OdinSymbolTable {
         }
     }
 
-    public void putAll(OdinSymbolTable context) {
+    public void merge(OdinSymbolTable context) {
         this.symbolTable.putAll(context.symbolTable);
         if (context.getParentSymbolTable() != null) {
             if (parentSymbolTable == null) {
                 parentSymbolTable = new OdinSymbolTable();
             }
-            parentSymbolTable.putAll(context.getParentSymbolTable());
+            parentSymbolTable.merge(context.getParentSymbolTable());
         }
     }
 
@@ -212,4 +212,13 @@ public class OdinSymbolTable {
     }
 
 
+    public Collection<List<OdinSymbol>> values() {
+        return symbolTable.values();
+    }
+
+    public OdinContext asContext() {
+        OdinContext odinContext = new OdinContext();
+        odinContext.symbolTable = this;
+        return odinContext;
+    }
 }

@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
@@ -238,15 +239,14 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (identifierToken.getText().equals("caller_location")) {
             OdinSdkService builtinSymbolService = OdinSdkService.getInstance(o.getProject());
             if (builtinSymbolService != null) {
-                List<OdinSymbol> runtimeCoreSymbols = builtinSymbolService.getRuntimeCoreSymbols();
-                OdinContext odinContext = OdinContext.from(runtimeCoreSymbols);
-                OdinSymbol symbol = odinContext.getSymbol("Source_Code_Location");
+                OdinSymbolTable symbolTable = builtinSymbolService.getRuntimeSymbolsTable();
+                OdinSymbol symbol = symbolTable.getSymbol("Source_Code_Location");
                 if (symbol != null) {
                     OdinDeclaration declaration = symbol.getDeclaration();
                     if (declaration instanceof OdinConstantInitializationStatement structDeclarationStatement) {
                         OdinStructType structType = PsiTreeUtil.findChildOfType(structDeclarationStatement, OdinStructType.class);
                         if (structType != null) {
-                            this.type = structType.getResolvedType(odinContext);
+                            this.type = structType.getResolvedType(this.context);
                         }
                     }
                 }
@@ -442,7 +442,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 );
             } else {
                 // TODO Add poly paras as symbols
-                TsOdinType polyParameter = context.getType(name);
+                TsOdinType polyParameter = context.getPolymorphicType(name);
                 if (polyParameter != null) {
                     this.type = createPolymorphicMetaType(polyParameter);
                 } else if (TsOdinBuiltInTypes.RESERVED_TYPES.contains(name)) {

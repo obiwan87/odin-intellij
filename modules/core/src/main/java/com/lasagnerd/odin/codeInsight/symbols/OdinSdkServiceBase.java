@@ -10,8 +10,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
-import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.evaluation.EvEnumValue;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValues;
@@ -73,7 +73,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     private List<OdinSymbol> builtInSymbols;
 
     /**
-     * Symbols contained in runtime/core.odin. Contains the definition of Context, which we need
+     * Symbols contained in runtime/core.odin. Contains the definition of SymbolTable, which we need
      */
     private List<OdinSymbol> runtimeCoreSymbols;
 
@@ -91,7 +91,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     protected abstract OdinFile createOdinFile(Project project, Path path);
 
     private OdinFile createOdinFileFromResource(Project project, String resourcePath) {
-        InputStream resource = OdinContextBuilder.class.getClassLoader().getResourceAsStream(resourcePath);
+        InputStream resource = OdinSymbolTableBuilder.class.getClassLoader().getResourceAsStream(resourcePath);
         if (resource == null)
             return null;
         try (resource) {
@@ -140,15 +140,15 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     }
 
     @Override
-    public OdinContext getBuiltInContext() {
+    public OdinSymbolTable getBuiltInSymbolTable() {
         if (builtInValues == null) {
             builtInValues = new HashMap<>();
             populateBuiltinValues(builtInValues);
         }
-        OdinContext context = new OdinContext();
-        context.addAll(builtInSymbols);
-        context.addAll(builtInValues);
-        return context;
+        OdinSymbolTable symbolTable = new OdinSymbolTable();
+        symbolTable.addAll(builtInSymbols);
+        symbolTable.addAll(builtInValues);
+        return symbolTable;
     }
 
     @Override
@@ -253,11 +253,11 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             }
             PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
             if (declaredIdentifier instanceof OdinDeclaredIdentifier odinDeclaredIdentifier) {
-                OdinContext builtinSymbols = OdinContext.from(getBuiltInSymbols());
-                OdinContext context = OdinContextBuilder.buildFullContext(declaredIdentifier);
-                context.setParentContext(builtinSymbols);
+                OdinSymbolTable builtinSymbols = OdinSymbolTable.from(getBuiltInSymbols());
+                OdinSymbolTable symbolTable = OdinSymbolTableBuilder.buildFullSymbolTable(declaredIdentifier);
+                symbolTable.setParentSymbolTable(builtinSymbols);
 
-                TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, odinDeclaredIdentifier);
+                TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable.asContext(), odinDeclaredIdentifier);
                 if (tsOdinType != null) {
                     typesCache.put(typeName, tsOdinType);
                 }
@@ -352,13 +352,13 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         loadSymbols(List.of(coreOdinPath), coreOdinSymbols);
         builtinSymbols.addAll(builtinOdinSymbols);
 
-        OdinContext syntheticContext = OdinContext.from(syntheticCompilerDeclarations);
-        OdinContext builtinOdinContext = OdinContext.from(builtinOdinSymbols);
-        OdinContext coreOdinContext = OdinContext.from(coreOdinSymbols);
+        OdinSymbolTable syntheticSymbolTable = OdinSymbolTable.from(syntheticCompilerDeclarations);
+        OdinSymbolTable builtinOdinSymbolTable = OdinSymbolTable.from(builtinOdinSymbols);
+        OdinSymbolTable coreOdinSymbolTable = OdinSymbolTable.from(coreOdinSymbols);
 
         // Add byte alias
         {
-            OdinSymbol byteSymbol = builtinOdinContext.getSymbol("byte");
+            OdinSymbol byteSymbol = builtinOdinSymbolTable.getSymbol("byte");
             Objects.requireNonNull(byteSymbol);
             typesCache.put("byte", createMetaType(
                     TsOdinBuiltInTypes.createByteAlias((OdinDeclaredIdentifier) byteSymbol.getDeclaredIdentifier()), false
@@ -367,7 +367,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
 
         // Add any with the backing type Raw_Any
         {
-            OdinSymbol anyTypeSymbol = coreOdinContext.getSymbol("Raw_Any");
+            OdinSymbol anyTypeSymbol = coreOdinSymbolTable.getSymbol("Raw_Any");
             Objects.requireNonNull(anyTypeSymbol);
             OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) anyTypeSymbol.getDeclaredIdentifier();
             TsOdinMetaType anyStructType = (TsOdinMetaType) declaredIdentifier.getType();
@@ -385,35 +385,35 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         addConstant("ODIN_DEBUG", "bool");
 
         // Defined in builtin.odin, but type is loaded from compiler_declarations.odin
-        addConstantWithSyntheticType(syntheticContext, "ODIN_OS", "Odin_OS_Type");
-        addConstantWithSyntheticType(syntheticContext, "ODIN_ARCH", "Odin_Arch_Type");
-        addConstantWithSyntheticType(syntheticContext, "ODIN_BUILD_MODE", "Odin_Build_Mode_Type");
+        addConstantWithSyntheticType(syntheticSymbolTable, "ODIN_OS", "Odin_OS_Type");
+        addConstantWithSyntheticType(syntheticSymbolTable, "ODIN_ARCH", "Odin_Arch_Type");
+        addConstantWithSyntheticType(syntheticSymbolTable, "ODIN_BUILD_MODE", "Odin_Build_Mode_Type");
 
         // Entirely defined in compiler_declarations.odin
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_BUILD_MODE"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_ENDIAN"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_PLATFORM_SUBTARGET"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_SANITIZER_FLAGS"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_NO_RTTI"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_DISABLE_ASSERT"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_OS_STRING"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_ENDIAN_STRING"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_ARCH_STRING"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_ERROR_POS_STYLE"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_DEFAULT_TO_NIL_ALLOCATOR"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_NO_DYNAMIC_LITERALS"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_NO_CRT"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_USE_SEPARATE_MODULES"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_TEST"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_NO_ENTRY_POINT"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_FOREIGN_ERROR_PROCEDURES"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_NO_RTTI"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_BUILD_PROJECT_NAME"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_VALGRIND_SUPPORT"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_OPTIMIZATION_MODE"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_DEFAULT_TO_PANIC_ALLOCATOR"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_NO_BOUNDS_CHECK"));
-        builtinSymbols.add(syntheticContext.getSymbol("ODIN_MINIMUM_OS_VERSION"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_BUILD_MODE"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_ENDIAN"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_PLATFORM_SUBTARGET"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_SANITIZER_FLAGS"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_NO_RTTI"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_DISABLE_ASSERT"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_OS_STRING"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_ENDIAN_STRING"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_ARCH_STRING"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_ERROR_POS_STYLE"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_DEFAULT_TO_NIL_ALLOCATOR"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_NO_DYNAMIC_LITERALS"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_NO_CRT"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_USE_SEPARATE_MODULES"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_TEST"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_NO_ENTRY_POINT"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_FOREIGN_ERROR_PROCEDURES"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_NO_RTTI"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_BUILD_PROJECT_NAME"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_VALGRIND_SUPPORT"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_OPTIMIZATION_MODE"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_DEFAULT_TO_PANIC_ALLOCATOR"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_NO_BOUNDS_CHECK"));
+        builtinSymbols.add(syntheticSymbolTable.getSymbol("ODIN_MINIMUM_OS_VERSION"));
 
         // Load symbols marked with @builtin
         Path coreBuiltinPath = Path.of(sdkPath, "base", "runtime", "core_builtin.odin");
@@ -432,9 +432,10 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             OdinFile odinFile = createOdinFileFromResource(project, resource);
             syntheticFiles.add(odinFile);
             if (odinFile != null) {
-                OdinContext fileScopeDeclarations = odinFile.getFileScope().getFullContext();
+                OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getFullSymbolTable();
                 fileScopeDeclarations
-                        .getSymbolTable().values()
+                        .getSymbolTable()
+                        .values()
                         .stream()
                         .flatMap(List::stream)
                         .filter(odinSymbol1 -> OdinAttributeUtils.containsAttribute(odinSymbol1.getAttributes(), "builtin")
@@ -448,8 +449,8 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         return syntheticCompilerDeclarations;
     }
 
-    private void addConstantWithSyntheticType(OdinContext syntheticContext, String constantIdentifier, String constantTypeIdentifier) {
-        OdinSymbol odinOsType = syntheticContext.getSymbol(constantTypeIdentifier);
+    private void addConstantWithSyntheticType(OdinSymbolTable syntheticSymbolTable, String constantIdentifier, String constantTypeIdentifier) {
+        OdinSymbol odinOsType = syntheticSymbolTable.getSymbol(constantTypeIdentifier);
         Objects.requireNonNull(odinOsType);
         OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) odinOsType.getDeclaredIdentifier();
         TsOdinMetaType type = (TsOdinMetaType) declaredIdentifier.getType();
@@ -477,9 +478,10 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                 if (fileScope == null) {
                     log.error("File scope is null for file %s".formatted(odinFile.getVirtualFile().getPath()));
                 } else {
-                    OdinContext fileScopeDeclarations = fileScope.getFullContext();
+                    OdinSymbolTable fileScopeDeclarations = fileScope.getFullSymbolTable();
                     fileScopeDeclarations
-                            .getSymbolTable().values()
+                            .getSymbolTable()
+                            .values()
                             .stream()
                             .flatMap(List::stream)
                             .filter(odinSymbolPredicate)

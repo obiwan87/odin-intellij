@@ -8,8 +8,8 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
-import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinImportPath;
@@ -22,8 +22,7 @@ import org.jetbrains.annotations.NotNull;
 @Setter
 @Getter
 public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiElement {
-
-    protected OdinContext fullContext;
+    protected OdinSymbolTable fullSymbolTable;
 
     public OdinPsiElementImpl(@NotNull ASTNode node) {
         super(node);
@@ -49,19 +48,19 @@ public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiE
 
     @Override
     public void subtreeChanged() {
-        fullContext = null;
+        fullSymbolTable = null;
     }
 
     @Override
     public OdinExpression parenthesesUnwrap() {
         if (this instanceof OdinParenthesizedExpression par) {
             OdinExpression expression = par.getExpression();
-            if(expression != null) {
+            if (expression != null) {
                 return expression.parenthesesUnwrap();
             }
         }
 
-        if(this instanceof OdinExpression odinExpression) {
+        if (this instanceof OdinExpression odinExpression) {
             return odinExpression;
         }
         return null;

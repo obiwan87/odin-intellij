@@ -115,7 +115,7 @@ public abstract class TsOdinGenericType extends TsOdinTypeBase {
                         labels.add(tsOdinType.getLabel());
                     }
                 } else {
-                    EvOdinValue value = getContext().getValue(parameter.getName());
+                    EvOdinValue value = getContext().getPolymorphicValue(parameter.getName());
                     if (value != null) {
                         labels.add(value.getValue().toString());
                     }

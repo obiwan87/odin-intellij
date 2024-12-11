@@ -1,6 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
-import com.lasagnerd.odin.codeInsight.OdinContext;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -89,8 +89,8 @@ public class OdinBuiltinProcedures {
     }
 
     private TsOdinType typeInfoOf(OdinCallExpression callExpression) {
-        OdinContext context = OdinContext.from(OdinSdkService.getInstance(callExpression.getProject()).getRuntimeCoreSymbols());
-        OdinSymbol symbol = context.getSymbol("Type_Info");
+        OdinSymbolTable symbolTable = OdinSymbolTable.from(OdinSdkService.getInstance(callExpression.getProject()).getRuntimeCoreSymbols());
+        OdinSymbol symbol = symbolTable.getSymbol("Type_Info");
         if (symbol != null) {
             TsOdinMetaType metaType = (TsOdinMetaType) ((OdinDeclaredIdentifier) symbol.getDeclaredIdentifier()).getType();
             TsOdinStructType structType = (TsOdinStructType) metaType.representedType();
@@ -186,6 +186,7 @@ public class OdinBuiltinProcedures {
         }
         return TsOdinBuiltInTypes.UNKNOWN;
     }
+
     private TsOdinType jmag(OdinCallExpression callExpression) {
         return quaternionComponent(callExpression);
     }

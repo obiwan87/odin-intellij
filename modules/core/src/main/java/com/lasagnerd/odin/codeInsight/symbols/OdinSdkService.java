@@ -3,7 +3,7 @@ package com.lasagnerd.odin.codeInsight.symbols;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.lasagnerd.odin.codeInsight.OdinContext;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
@@ -58,13 +58,17 @@ public interface OdinSdkService {
 
     List<OdinSymbol> getBuiltInSymbols();
 
+    default OdinSymbolTable getRuntimeSymbolsTable() {
+        return OdinSymbolTable.from(getRuntimeCoreSymbols());
+    }
+
     default OdinSymbol getBuiltinSymbol(String name) {
         return getBuiltInSymbols().stream()
                 .filter(s -> Objects.equals(name, s.getName())).findFirst()
                 .orElse(null);
     }
 
-    OdinContext getBuiltInContext();
+    OdinSymbolTable getBuiltInSymbolTable();
 
     boolean isInSyntheticOdinFile(PsiElement element);
 

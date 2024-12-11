@@ -67,7 +67,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             expressionType = refExpressionValue.asBaseType();
             if (expressionType instanceof TsOdinPackageReferenceType ||
                     expressionType instanceof TsOdinEnumType) {
-                localContext = OdinInsightUtils.getTypeElements(o.getProject(), expressionType);
+                localContext = OdinInsightUtils.getTypeElements(o.getProject(), expressionType).asContext();
             } else {
                 return;
             }
@@ -95,7 +95,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             return EvOdinValues.nullValue();
         }
 
-        EvOdinValue storedValue = context.getValue(symbol.getName());
+        EvOdinValue storedValue = context.getPolymorphicValue(symbol.getName());
         if (storedValue != null) {
             return storedValue;
         }

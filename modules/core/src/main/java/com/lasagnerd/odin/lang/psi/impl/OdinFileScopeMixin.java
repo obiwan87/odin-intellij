@@ -1,14 +1,14 @@
 package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.lasagnerd.odin.codeInsight.OdinContext;
-import com.lasagnerd.odin.codeInsight.symbols.OdinContextBuilder;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableBuilder;
 import com.lasagnerd.odin.lang.psi.OdinFileScope;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class OdinFileScopeMixin extends OdinPsiElementImpl {
 
-    protected OdinContext context;
+    protected OdinSymbolTable symbolTable;
 
     public OdinFileScopeMixin(@NotNull ASTNode node) {
         super(node);
@@ -16,19 +16,19 @@ public abstract class OdinFileScopeMixin extends OdinPsiElementImpl {
 
     @Override
     public void subtreeChanged() {
-        context = null;
+        symbolTable = null;
     }
 
-    public OdinContext getFullContext() {
+    public OdinSymbolTable getFullSymbolTable() {
         if (this instanceof OdinFileScope odinFileScope) {
-            if (context == null) {
-                context = OdinContextBuilder.buildFileScopeContext(
+            if (symbolTable == null) {
+                symbolTable = OdinSymbolTableBuilder.buildFileScopeSymbolTable(
                         odinFileScope,
-                        OdinContextBuilder.getGlobalFileVisibility(odinFileScope)
+                        OdinSymbolTableBuilder.getGlobalFileVisibility(odinFileScope)
                 );
             }
 
-            return context;
+            return symbolTable;
         }
         return null;
     }

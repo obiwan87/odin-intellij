@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinLattice;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinWhenConstraintsSolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameter;
@@ -26,18 +27,18 @@ public class OdinReferenceResolver {
 
     // see https://odin-lang.org/docs/overview/#file-suffixes
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context, @NotNull OdinIdentifier element) {
-        return resolve(context, element, OdinContextBuilder::buildMinimalContext, false);
+        return resolve(context, element, OdinSymbolTableBuilder::buildMinimalSymbolTable, false);
     }
 
     // see https://odin-lang.org/docs/overview/#file-suffixes
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context,
                                                @NotNull OdinIdentifier element,
-                                               OdinContextProvider contextProvider,
+                                               OdinSymbolTableProvider contextProvider,
                                                boolean applyKnowledge) {
         try {
             if (element.getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
                 TsOdinType tsOdinType = implicitSelectorExpression.getInferredType(context);
-                OdinContext typeElements = OdinInsightUtils.getTypeElements(element.getProject(), tsOdinType);
+                OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(element.getProject(), tsOdinType);
                 return typeElements.getSymbol(element.getText());
             } else if (element.getParent() instanceof OdinNamedArgument namedArgument) {
                 OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(context, namedArgument);
@@ -88,25 +89,25 @@ public class OdinReferenceResolver {
     }
 
     // Computes the context under which the identifier is expected to be defined
-    static OdinContext getIdentifierContext(OdinContext context, @NotNull OdinIdentifier element, OdinContextProvider contextProvider) {
+    static OdinContext getIdentifierContext(OdinContext context, @NotNull OdinIdentifier element, OdinSymbolTableProvider symbolTableProvider) {
         @NotNull OdinIdentifier identifier = element;
         PsiElement parent = identifier.getParent();
         if (parent instanceof OdinRefExpression refExpression) {
             if (refExpression.getExpression() != null) {
-                return OdinInsightUtils.getReferenceableSymbols(refExpression.getExpression());
+                return OdinInsightUtils.getReferenceableSymbols(refExpression.getExpression()).asContext();
             } else {
-                return contextProvider.build(context, element);
+                return symbolTableProvider.build(context, element).asContext();
             }
         } else {
             OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, OdinQualifiedType.class);
             if (qualifiedType != null) {
                 if (qualifiedType.getPackageIdentifier() == identifier) {
-                    return contextProvider.build(context, element);
+                    return symbolTableProvider.build(context, element).asContext();
                 } else {
-                    return OdinInsightUtils.getReferenceableSymbols(context, qualifiedType);
+                    return OdinInsightUtils.getReferenceableSymbols(context, qualifiedType).asContext();
                 }
             } else if (parent instanceof OdinSimpleRefType) {
-                return contextProvider.build(context, element);
+                return symbolTableProvider.build(context, element).asContext();
             } else {
                 return OdinContext.EMPTY;
             }

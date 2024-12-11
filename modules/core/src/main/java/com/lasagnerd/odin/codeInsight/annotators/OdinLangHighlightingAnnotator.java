@@ -3,7 +3,6 @@ package com.lasagnerd.odin.codeInsight.annotators;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
@@ -19,8 +18,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
-import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPolymorphicType;
@@ -292,7 +291,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         return;
                     }
 
-                    OdinContext odinContext = OdinContextBuilder.buildFullContext(declaration);
+                    var odinContext = OdinSymbolTableBuilder.buildFullSymbolTable(declaration);
                     if (odinContext.getSymbol(declaredIdentifier.getName()) != null) {
                         highlight(annotationHolder, psiElementRange, ODIN_SHADOWING_VARIABLE);
                         return;
@@ -406,8 +405,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
             // If we are being referenced from a polymorphic type, do not show any errors
             if (refExpression.getExpression() != null) {
-                OdinContext context = computeContext(identifierTokenParent);
-                TsOdinType type = refExpression.getExpression().getInferredType(context);
+                OdinSymbolTable symbolTable = computeSymbolTable(identifierTokenParent);
+                TsOdinType type = refExpression.getExpression().getInferredType(symbolTable.asContext());
                 TsOdinType referenceableType = OdinInsightUtils.getReferenceableType(type);
                 if (referenceableType instanceof TsOdinPolymorphicType) {
                     annotationSessionState.aborted.add(topMostExpression);
@@ -464,7 +463,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 return;
             }
 
-            OdinContext context = computeContext(identifierTokenParent);
+            OdinSymbolTable context = computeSymbolTable(identifierTokenParent);
             if (context.isShadowing(symbol.getName())) {
                 highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_SHADOWING_VARIABLE_REF);
                 return;
@@ -516,8 +515,8 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                 "'%s' is not visible");
     }
 
-    private static OdinContext computeContext(PsiElement identifierTokenParent) {
-        return OdinContextBuilder.buildFullContext(identifierTokenParent)
+    private static OdinSymbolTable computeSymbolTable(PsiElement identifierTokenParent) {
+        return OdinSymbolTableBuilder.buildFullSymbolTable(identifierTokenParent)
                 .with(OdinImportService.getInstance(identifierTokenParent.getProject())
                         .getPackagePath(identifierTokenParent));
     }
@@ -591,12 +590,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
     private static void highlight(@NotNull AnnotationHolder annotationHolder, TextRange textRange, TextAttributesKey constant) {
         annotationHolder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                .problemGroup(new ProblemGroup() {
-                    @Override
-                    public String getProblemName() {
-                        return "Odin";
-                    }
-                })
+                .problemGroup(() -> "Odin")
                 .range(textRange)
                 .textAttributes(constant)
                 .create();
