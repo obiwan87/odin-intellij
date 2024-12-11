@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class OdinStatefulSymbolTableBuilder {
+public abstract class OdinSymbolTableBuilderBase implements OdinSymbolTableProvider {
     static final OdinSymbolTableHelper.StopCondition ALWAYS_FALSE = context -> false;
     private final PsiElement originalPosition;
     private final String packagePath;
@@ -28,13 +28,15 @@ public class OdinStatefulSymbolTableBuilder {
     private final PsiElement psiContext;
     private @Nullable OdinCompoundLiteral parentCompoundLiteral;
 
-    public OdinStatefulSymbolTableBuilder(PsiElement originalPosition, String packagePath, OdinSymbolTableHelper.StopCondition stopCondition, OdinContext initialContext) {
+    public OdinSymbolTableBuilderBase(PsiElement originalPosition, String packagePath, OdinSymbolTableHelper.StopCondition stopCondition, OdinContext initialContext) {
         this.originalPosition = originalPosition;
         this.packagePath = packagePath;
         this.stopCondition = stopCondition;
         this.initialContext = initialContext;
         this.psiContext = OdinExpectedTypeEngine.findTypeExpectationContext(originalPosition);
     }
+
+    public abstract OdinSymbolTable build();
 
     public OdinSymbolTable buildFullContext() {
         OdinSymbolTable fullContext = buildFullContext(originalPosition);

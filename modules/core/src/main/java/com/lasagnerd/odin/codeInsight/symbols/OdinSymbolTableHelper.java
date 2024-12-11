@@ -233,7 +233,7 @@ public class OdinSymbolTableHelper {
 
     @TestOnly
     public static OdinSymbolTable doBuildFullSymbolTable(@NotNull PsiElement position) {
-        return doBuildFullSymbolTable(position, OdinStatefulSymbolTableBuilder.ALWAYS_FALSE);
+        return doBuildFullSymbolTable(position, OdinSymbolTableBuilderBase.ALWAYS_FALSE);
     }
 
     @TestOnly
@@ -243,7 +243,7 @@ public class OdinSymbolTableHelper {
 
     public static OdinSymbolTable buildMinimalSymbolTable(OdinContext context, PsiElement identifier) {
         String packagePath = OdinImportService.getInstance(identifier.getProject()).getPackagePath(identifier);
-        OdinStatefulSymbolTableBuilder resolver = new OdinStatefulSymbolTableBuilder(
+        OdinSymbolTableBuilderBase resolver = new OdinSymbolTableBuilderBase(
                 identifier,
                 packagePath,
                 s -> s.getSymbol(identifier.getText()) != null,
@@ -260,7 +260,7 @@ public class OdinSymbolTableHelper {
         // 3. Import symbols from the scope tree
         OdinSymbolTable symbolTable = doBuildFullSymbolTable(packagePath,
                 element,
-                OdinStatefulSymbolTableBuilder.ALWAYS_FALSE,
+                OdinSymbolTableBuilderBase.ALWAYS_FALSE,
                 context);
 
         symbolTable.setPackagePath(packagePath);
@@ -272,7 +272,7 @@ public class OdinSymbolTableHelper {
                                                          @NotNull PsiElement position,
                                                          StopCondition stopCondition,
                                                          OdinContext root) {
-        return new OdinStatefulSymbolTableBuilder(
+        return new OdinSymbolTableBuilderBase(
                 position,
                 packagePath,
                 stopCondition,
