@@ -39,9 +39,9 @@ public class OdinMinimalSymbolTableBuilder extends OdinSymbolTableBuilderBase {
     public OdinSymbolTable buildMinimalContext(PsiElement element, boolean constantsOnly) {
         OdinScopeBlock containingScopeBlock = getNextContainingScopeBlock(element);
         if (containingScopeBlock == null) {
-            OdinSymbolTable rootContext = OdinSymbolTableHelper.getRootContext(element, packagePath);
-            if (checkStopCondition(rootContext)) {
-                return rootContext;
+            OdinSymbolTable rootSymbolTable = OdinSymbolTableHelper.getRootSymbolTable(element, packagePath);
+            if (checkStopCondition(rootSymbolTable) || listener.onBlockConsumed(rootSymbolTable, null)) {
+                return rootSymbolTable;
             }
             return null;
         }

@@ -15,6 +15,7 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameter;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameterOwner;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
+import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,13 +35,22 @@ public class OdinReferenceResolver {
         return resolve(context, element,
                 new OdinMinimalSymbolTableBuilder(element,
                         OdinImportService.packagePath(element),
-                        createListener(element),
+                        createCheckpointListener(element),
                         context
                 )
                 , false);
     }
 
-    private static @NotNull OdinSymbolTableBuilderListener createListener(@NotNull OdinIdentifier element) {
+    private static @NotNull OdinSymbolTableBuilderListener createEndOfBlockListener(@NotNull OdinIdentifier element) {
+        return new OdinSymbolTableBuilderListener() {
+            @Override
+            public boolean onBlockConsumed(OdinSymbolTable symbolTable, OdinScopeBlock scopeBlock) {
+                return symbolTable.getSymbol(element.getText()) != null;
+            }
+        };
+    }
+
+    private static @NotNull OdinSymbolTableBuilderListener createCheckpointListener(@NotNull OdinIdentifier element) {
         return new OdinSymbolTableBuilderListener() {
             @Override
             public boolean onCheckpointCalled(OdinSymbolTable symbolTable) {
@@ -77,10 +87,12 @@ public class OdinReferenceResolver {
 
                 List<OdinSymbol> symbols = symbolContext.getSymbols(name);
 
-                symbols = symbols.stream().filter(
-                        s -> OdinInsightUtils.isVisible(element, s) || s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE
-                ).toList();
-
+                symbols = symbols.stream()
+                        .filter(s -> OdinInsightUtils.isVisible(element, s)
+                                || s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
+                        .toList();
+                symbols = symbols.stream()
+                        .collect(MoreCollectors.distinctBy(OdinSymbol::getDeclaredIdentifier));
                 if (!symbols.isEmpty()) {
                     if (applyKnowledge) {
                         OdinLattice sourceLattice = OdinWhenConstraintsSolver.solveLattice(symbolContext, element);
@@ -93,8 +105,9 @@ public class OdinReferenceResolver {
                         ).toList();
 
                     }
-                    if (symbols.size() == 1)
+                    if (symbols.size() == 1) {
                         return symbols.getFirst();
+                    }
                     return null;
                 }
 

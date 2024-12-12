@@ -51,7 +51,7 @@ public class OdinFullSymbolTableBuilder extends OdinSymbolTableBuilderBase {
         OdinScopeBlock containingScopeBlock = getNextContainingScopeBlock(element);
 
         if (containingScopeBlock == null) {
-            return Objects.requireNonNullElseGet(OdinSymbolTableHelper.getRootContext(element, this.packagePath), () -> new OdinSymbolTable(packagePath));
+            return Objects.requireNonNullElseGet(OdinSymbolTableHelper.getRootSymbolTable(element, this.packagePath), () -> new OdinSymbolTable(packagePath));
         }
 
         if (containingScopeBlock.getFullSymbolTable() != null) {

@@ -70,7 +70,7 @@ public abstract class OdinSymbolTableBuilderBase implements OdinSymbolTableBuild
     }
 
     protected boolean checkStopCondition(OdinSymbolTable symbolTable) {
-        return listener.onCheckpointCalled(symbolTable);
+        return listener != ALWAYS_FALSE && listener.onCheckpointCalled(symbolTable);
     }
 
     protected PositionCheckResult checkPosition(OdinDeclaration declaration) {

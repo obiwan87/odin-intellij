@@ -11,7 +11,10 @@ import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.symbols.*;
+import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -136,7 +139,7 @@ public class OdinSymbolTableHelper {
         return Collections.emptyList();
     }
 
-    public static @NotNull OdinSymbolTable getRootContext(@NotNull PsiElement element, String packagePath) {
+    public static @NotNull OdinSymbolTable getRootSymbolTable(@NotNull PsiElement element, String packagePath) {
         OdinSymbolTable context = new OdinSymbolTable();
         context.setPackagePath(packagePath);
 
