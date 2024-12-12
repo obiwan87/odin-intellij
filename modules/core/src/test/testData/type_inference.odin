@@ -79,10 +79,6 @@ testTypeInference :: proc() {
 
 }
 
-Dict :: struct($Key: typeid, $Value: typeid) {
-    entries: map[Key]Value
-}
-
 testTypeInference2 :: proc() {
     dict := Dict(i32, Point) { entries = { 1 = Point{ a, b } } }
     get_value(dict, 1)
