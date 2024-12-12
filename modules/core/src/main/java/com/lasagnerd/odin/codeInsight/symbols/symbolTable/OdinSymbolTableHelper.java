@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.codeInsight.symbols;
+package com.lasagnerd.odin.codeInsight.symbols.symbolTable;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -10,6 +10,8 @@ import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
+import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
+import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

@@ -1,7 +1,7 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
+import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;

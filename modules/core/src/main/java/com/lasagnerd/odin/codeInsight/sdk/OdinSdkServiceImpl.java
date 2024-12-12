@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.codeInsight.symbols;
+package com.lasagnerd.odin.codeInsight.sdk;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;

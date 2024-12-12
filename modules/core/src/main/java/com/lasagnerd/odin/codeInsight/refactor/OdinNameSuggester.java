@@ -3,7 +3,7 @@ package com.lasagnerd.odin.codeInsight.refactor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableHelper;
+import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.lang.psi.*;
 
 import java.util.ArrayList;

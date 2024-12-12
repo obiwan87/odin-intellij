@@ -262,8 +262,8 @@
 
         <projectService serviceImplementation="com.lasagnerd.odin.projectSettings.OdinProjectSettingsService"/>
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
-        <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.symbols.OdinSdkServiceImpl"
-                        serviceInterface="com.lasagnerd.odin.codeInsight.symbols.OdinSdkService"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.sdk.OdinSdkServiceImpl"
+                        serviceInterface="com.lasagnerd.odin.codeInsight.sdk.OdinSdkService"/>
         <projectService serviceInterface="com.lasagnerd.odin.codeInsight.imports.OdinImportService"
                         serviceImplementation="com.lasagnerd.odin.codeInsight.imports.OdinImportServiceImpl"/>
         <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType"

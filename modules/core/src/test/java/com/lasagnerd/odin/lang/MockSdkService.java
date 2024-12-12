@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSdkServiceBase;
+import com.lasagnerd.odin.codeInsight.sdk.OdinSdkServiceBase;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 
 import java.nio.file.Path;

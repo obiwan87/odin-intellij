@@ -19,7 +19,7 @@ import com.intellij.util.Query;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.refactor.OdinNameSuggester;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableHelper;
+import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;

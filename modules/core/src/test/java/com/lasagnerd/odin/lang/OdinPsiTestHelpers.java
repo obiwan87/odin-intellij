@@ -19,7 +19,7 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableHelper;
+import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;

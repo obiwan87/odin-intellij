@@ -2,7 +2,7 @@ package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolTableHelper;
+import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.lang.psi.OdinFileScope;
 import org.jetbrains.annotations.NotNull;
 

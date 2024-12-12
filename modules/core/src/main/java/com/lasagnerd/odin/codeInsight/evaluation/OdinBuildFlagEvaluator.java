@@ -1,7 +1,7 @@
 package com.lasagnerd.odin.codeInsight.evaluation;
 
 import com.intellij.openapi.project.Project;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSdkService;
+import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;

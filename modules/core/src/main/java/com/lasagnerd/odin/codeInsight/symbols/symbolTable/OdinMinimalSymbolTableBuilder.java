@@ -1,9 +1,11 @@
-package com.lasagnerd.odin.codeInsight.symbols;
+package com.lasagnerd.odin.codeInsight.symbols.symbolTable;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.lang.psi.*;
 
 import java.util.List;

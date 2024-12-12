@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.codeInsight.symbols;
+package com.lasagnerd.odin.codeInsight.symbols.symbolTable;
 
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 
