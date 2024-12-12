@@ -25,4 +25,8 @@ public interface OdinImportService {
     PsiFile createPsiFile(VirtualFile virtualFile);
 
     Optional<String> getSdkPath();
+
+    static String packagePath(PsiElement element) {
+        return getInstance(element.getProject()).getPackagePath(element);
+    }
 }

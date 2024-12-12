@@ -1399,7 +1399,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "using_import", "test");
             OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.doBuildFullSymbolTable(packagePath,
                     expression,
-                    scope -> false,
+                    OdinSymbolTableBuilderBase.ALWAYS_FALSE,
                     OdinContext.EMPTY);
             assertNotNull(odinSymbolTable.getSymbol("a_mypublic_proc"));
             assertNotNull(odinSymbolTable.getSymbol("a_ret"));
@@ -2752,7 +2752,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinSymbol symbol = OdinReferenceResolver.resolve(
                     OdinContext.EMPTY,
                     simpleRefType.getIdentifier(),
-                    OdinSymbolTableHelper::buildFullSymbolTable,
+                    new OdinFullSymbolTableBuilder(OdinContext.EMPTY, simpleRefType.getIdentifier()),
                     true);
 
             {

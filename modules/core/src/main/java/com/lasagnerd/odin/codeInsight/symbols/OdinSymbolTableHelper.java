@@ -237,20 +237,24 @@ public class OdinSymbolTableHelper {
     }
 
     @TestOnly
-    public static OdinSymbolTable doBuildFullSymbolTable(@NotNull PsiElement position, StopCondition stopCondition) {
-        return doBuildFullSymbolTable(null, position, stopCondition, null);
+    public static OdinSymbolTable doBuildFullSymbolTable(@NotNull PsiElement position, OdinSymbolTableBuilderListener listener) {
+        return doBuildFullSymbolTable(null, position, listener, null);
     }
 
     public static OdinSymbolTable buildMinimalSymbolTable(OdinContext context, PsiElement identifier) {
-        String packagePath = OdinImportService.getInstance(identifier.getProject()).getPackagePath(identifier);
-        OdinSymbolTableBuilderBase resolver = new OdinSymbolTableBuilderBase(
+        OdinSymbolTableBuilderBase resolver = new OdinMinimalSymbolTableBuilder(
                 identifier,
-                packagePath,
-                s -> s.getSymbol(identifier.getText()) != null,
+                OdinImportService.packagePath(identifier),
+                new OdinSymbolTableBuilderListener() {
+                    @Override
+                    public boolean onCheckpointCalled(OdinSymbolTable symbolTable) {
+                        return symbolTable.getSymbol(identifier.getText()) != null;
+                    }
+                },
                 context
         );
 
-        OdinSymbolTable symbolTable = resolver.buildMinimalContext(identifier, false);
+        OdinSymbolTable symbolTable = resolver.build();
         return symbolTable == null ? OdinSymbolTable.EMPTY : symbolTable;
     }
 
@@ -270,12 +274,12 @@ public class OdinSymbolTableHelper {
 
     public static OdinSymbolTable doBuildFullSymbolTable(String packagePath,
                                                          @NotNull PsiElement position,
-                                                         StopCondition stopCondition,
+                                                         OdinSymbolTableBuilderListener listener,
                                                          OdinContext root) {
-        return new OdinSymbolTableBuilderBase(
+        return new OdinFullSymbolTableBuilder(
                 position,
                 packagePath,
-                stopCondition,
+                listener,
                 root).buildFullContext();
     }
 
@@ -414,7 +418,6 @@ public class OdinSymbolTableHelper {
             declarations.add(declaration);
         }
     }
-
 
     public static OdinSymbolTable buildFullSymbolTable(PsiElement reference, @NonNls @NotNull String originalFilePath) {
         return buildFullSymbolTable(reference).with(originalFilePath);

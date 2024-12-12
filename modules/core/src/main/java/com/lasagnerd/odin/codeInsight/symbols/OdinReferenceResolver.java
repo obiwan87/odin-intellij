@@ -7,6 +7,7 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinLattice;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinWhenConstraintsSolver;
+import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameter;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameterOwner;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
@@ -27,13 +28,28 @@ public class OdinReferenceResolver {
 
     // see https://odin-lang.org/docs/overview/#file-suffixes
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context, @NotNull OdinIdentifier element) {
-        return resolve(context, element, OdinSymbolTableHelper::buildMinimalSymbolTable, false);
+        return resolve(context, element,
+                new OdinMinimalSymbolTableBuilder(element,
+                        OdinImportService.packagePath(element),
+                        createListener(element),
+                        context
+                )
+                , false);
+    }
+
+    private static @NotNull OdinSymbolTableBuilderListener createListener(@NotNull OdinIdentifier element) {
+        return new OdinSymbolTableBuilderListener() {
+            @Override
+            public boolean onCheckpointCalled(OdinSymbolTable symbolTable) {
+                return symbolTable.getSymbol(element.getText()) != null;
+            }
+        };
     }
 
     // see https://odin-lang.org/docs/overview/#file-suffixes
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context,
                                                @NotNull OdinIdentifier element,
-                                               OdinSymbolTableProvider contextProvider,
+                                               OdinSymbolTableBuilder contextProvider,
                                                boolean applyKnowledge) {
         try {
             if (element.getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
@@ -89,25 +105,25 @@ public class OdinReferenceResolver {
     }
 
     // Computes the context under which the identifier is expected to be defined
-    static OdinContext getIdentifierContext(OdinContext context, @NotNull OdinIdentifier element, OdinSymbolTableProvider symbolTableProvider) {
+    static OdinContext getIdentifierContext(OdinContext context, @NotNull OdinIdentifier element, OdinSymbolTableBuilder symbolTableProvider) {
         @NotNull OdinIdentifier identifier = element;
         PsiElement parent = identifier.getParent();
         if (parent instanceof OdinRefExpression refExpression) {
             if (refExpression.getExpression() != null) {
                 return OdinInsightUtils.getReferenceableSymbols(refExpression.getExpression()).asContext();
             } else {
-                return symbolTableProvider.build(context, element).asContext();
+                return symbolTableProvider.build().asContext();
             }
         } else {
             OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, OdinQualifiedType.class);
             if (qualifiedType != null) {
                 if (qualifiedType.getPackageIdentifier() == identifier) {
-                    return symbolTableProvider.build(context, element).asContext();
+                    return symbolTableProvider.build().asContext();
                 } else {
                     return OdinInsightUtils.getReferenceableSymbols(context, qualifiedType).asContext();
                 }
             } else if (parent instanceof OdinSimpleRefType) {
-                return symbolTableProvider.build(context, element).asContext();
+                return symbolTableProvider.build().asContext();
             } else {
                 return OdinContext.EMPTY;
             }
