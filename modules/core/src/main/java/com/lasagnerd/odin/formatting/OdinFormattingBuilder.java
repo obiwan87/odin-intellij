@@ -27,7 +27,7 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .between(OdinTypes.ELSE, OdinTypes.STATEMENT_BODY)
                 .spacing(1, 1, 0, false, 0)
 
-                .withinPairInside(OdinTypes.CONDITION, OdinTypes.BLOCK, OdinTypes.CONDITIONAL_STATEMENT)
+                .withinPairInside(OdinTypes.CONDITION, OdinTypes.BLOCK, OdinTypes.IF_STATEMENT)
                 .spacing(1, 1, 0, false, 0)
 
                 .withinPairInside(OdinTypes.SWITCH, OdinTypes.SWITCH_BODY, OdinTypes.SWITCH_STATEMENT)
