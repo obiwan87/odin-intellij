@@ -30,7 +30,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
     EvOdinValue value;
 
     public static EvOdinValue evaluate(OdinExpression expression) {
-        return evaluate(OdinContext.EMPTY, expression);
+        return evaluate(new OdinContext(), expression);
     }
 
     public static EvOdinValue evaluate(OdinContext context, OdinExpression expression) {
@@ -231,7 +231,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
     @Override
     public void visitImplicitSelectorExpression(@NotNull OdinImplicitSelectorExpression o) {
-        TsOdinType tsOdinType = o.getInferredType();
+        TsOdinType tsOdinType = o.getInferredType(context);
         if (tsOdinType instanceof TsOdinEnumType tsOdinEnumType) {
             EvEnumValue enumValue = getEnumValue(tsOdinEnumType, o.getIdentifier().getText());
             this.value = new EvOdinValue(enumValue, tsOdinType);

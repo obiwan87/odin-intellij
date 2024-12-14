@@ -10,7 +10,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.symbols.*;
+import com.lasagnerd.odin.codeInsight.symbols.OdinScope;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -1053,9 +1056,9 @@ public class OdinInsightUtils {
     }
 
     // This is a variant of getTypeElements()
-    public static OdinSymbolTable getReferenceableSymbols(OdinExpression valueExpression) {
+    public static OdinSymbolTable getReferenceableSymbols(OdinContext context, OdinExpression valueExpression) {
         // Add filter for referenceable elements
-        TsOdinType type = valueExpression.getInferredType();
+        TsOdinType type = valueExpression.getInferredType(context);
         if (type instanceof TsOdinMetaType metaType) {
             TsOdinType tsOdinType = metaType.representedType().baseType(true);
             if (tsOdinType instanceof TsOdinEnumType) {

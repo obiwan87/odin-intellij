@@ -20,7 +20,10 @@ import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.symbols.*;
+import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinExpectedTypeEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -71,8 +74,9 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         OdinExpression expression = reference.getExpression();
         if (expression != null) {
             Project project = expression.getProject();
-            TsOdinType refExpressionType = expression.getInferredType();
-            OdinSymbolTable completionSymbols = OdinInsightUtils.getReferenceableSymbols(expression);
+            OdinContext context = new OdinContext();
+            TsOdinType refExpressionType = expression.getInferredType(context);
+            OdinSymbolTable completionSymbols = OdinInsightUtils.getReferenceableSymbols(context, expression);
             if (completionSymbols != null) {
                 Collection<OdinSymbol> visibleSymbols = completionSymbols.flatten()
                         .getSymbols()
@@ -90,7 +94,9 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                         false,
                         (lookupElement, symbol) -> {
                             if (symbol.getSymbolType() == OdinSymbolType.STRUCT_FIELD) {
-                                TsOdinType symbolType = OdinInferenceEngine.getSymbolType(project,
+                                TsOdinType symbolType = OdinInferenceEngine.getSymbolType(
+                                        new OdinContext(),
+                                        project,
                                         symbol,
                                         refExpressionType,
                                         expression);
@@ -392,7 +398,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             }
         }
         addLookUpElements(result, visibleSymbols, 2000, (l, s) -> {
-            TsOdinType symbolType = OdinInferenceEngine.getSymbolType(project, s, null, parameters.getPosition());
+            TsOdinType symbolType = OdinInferenceEngine.getSymbolType(new OdinContext(), project, s, null, parameters.getPosition());
             if (!symbolType.isUnknown()) {
                 if (symbolType instanceof TsOdinMetaType metaType && metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
                     return l.withIcon(AllIcons.Nodes.Type);

@@ -433,6 +433,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             OdinSymbol symbol = identifier.getReferencedSymbol(context);
             if (symbol != null) {
                 this.type = getSymbolType(
+                        context,
                         project,
                         symbol,
                         tsOdinRefExpressionType,
@@ -470,10 +471,12 @@ public class OdinInferenceEngine extends OdinVisitor {
         return tsOdinMetaType;
     }
 
-    public static @NotNull TsOdinType getSymbolType(@NotNull Project project,
-                                                    OdinSymbol symbol,
-                                                    @Nullable TsOdinType tsOdinRefExpressionType,
-                                                    PsiElement position) {
+    public static @NotNull TsOdinType getSymbolType(
+            OdinContext context,
+            @NotNull Project project,
+            OdinSymbol symbol,
+            @Nullable TsOdinType tsOdinRefExpressionType,
+            PsiElement position) {
 
         // Check for specialized types
         if (tsOdinRefExpressionType != null && tsOdinRefExpressionType.baseType(true) instanceof TsOdinStructType tsOdinStructType) {
@@ -529,7 +532,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
         } else {
 
-            TsOdinType tsOdinType = resolveTypeOfNamedElement(symbol.getDeclaredIdentifier());
+            TsOdinType tsOdinType = resolveTypeOfNamedElement(symbol.getDeclaredIdentifier(), context);
             OdinDeclaration declaration = symbol.getDeclaration();
             if (declaration instanceof OdinSwitchTypeVariableDeclaration switchTypeVariableDeclaration) {
                 OdinSwitchBlock switchInBlock = PsiTreeUtil.getParentOfType(switchTypeVariableDeclaration,
@@ -553,14 +556,14 @@ public class OdinInferenceEngine extends OdinVisitor {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private static @NotNull TsOdinType resolveTypeOfNamedElement(PsiNamedElement namedElement) {
+    private static @NotNull TsOdinType resolveTypeOfNamedElement(PsiNamedElement namedElement, OdinContext context) {
         OdinImportDeclarationStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
         if (importDeclarationStatement != null) {
             return createPackageReferenceType(OdinImportService
                     .getInstance(namedElement.getProject())
                     .getPackagePath(importDeclarationStatement), importDeclarationStatement);
         } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
-            TsOdinType tsOdinType = doResolveTypeOfDeclaredIdentifier(declaredIdentifier);
+            TsOdinType tsOdinType = doResolveTypeOfDeclaredIdentifier(declaredIdentifier, context);
             OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
             if (!(declaration instanceof OdinConstantInitializationStatement)) {
                 return OdinTypeConverter.convertToTyped(tsOdinType);
@@ -1022,7 +1025,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     }
 
-    public static @NotNull TsOdinType resolveTypeOfDeclaredIdentifier(OdinDeclaredIdentifier declaredIdentifier) {
+    public static @NotNull TsOdinType resolveTypeOfDeclaredIdentifier(OdinContext context, OdinDeclaredIdentifier declaredIdentifier) {
         OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier,
                 false,
                 OdinDeclaration.class);
@@ -1031,12 +1034,12 @@ public class OdinInferenceEngine extends OdinVisitor {
         // TODO How can we still use the cache?
         if (odinDeclaration instanceof OdinVariableDeclarationStatement declarationStatement) {
             var mainType = declarationStatement.getType();
-            return mainType.getResolvedType();
+            return mainType.getResolvedType(context);
         }
 
         if (odinDeclaration instanceof OdinVariableInitializationStatement initializationStatement) {
             if (initializationStatement.getType() != null) {
-                return initializationStatement.getType().getResolvedType();
+                return initializationStatement.getType().getResolvedType(context);
             }
 
             int index = initializationStatement.getDeclaredIdentifierList().indexOf(declaredIdentifier);
@@ -1048,7 +1051,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
             for (OdinExpression odinExpression : expressionList) {
-                TsOdinType tsOdinType = odinExpression.getInferredType(new OdinInferenceEngineParameters(null,
+                TsOdinType tsOdinType = odinExpression.getInferredType(new OdinInferenceEngineParameters(context,
                         null,
                         lhsValuesCount,
                         false));
@@ -1288,8 +1291,8 @@ public class OdinInferenceEngine extends OdinVisitor {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private static @NotNull TsOdinType doResolveTypeOfDeclaredIdentifier(OdinDeclaredIdentifier declaredIdentifier) {
-        return declaredIdentifier.getType();
+    private static @NotNull TsOdinType doResolveTypeOfDeclaredIdentifier(OdinDeclaredIdentifier declaredIdentifier, OdinContext context) {
+        return declaredIdentifier.getType(context);
     }
 
     public static @NotNull TsOdinPolymorphicType createExplicitPolymorphicType(OdinDeclaredIdentifier declaredIdentifier, OdinDeclaration odinDeclaration) {

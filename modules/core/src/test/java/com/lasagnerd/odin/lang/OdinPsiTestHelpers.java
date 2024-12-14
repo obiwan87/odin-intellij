@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
@@ -54,6 +55,7 @@ class OdinPsiTestHelpers {
 
     static TsOdinType inferTypeOfDeclaration(OdinDeclaration declaration) {
         return OdinInferenceEngine.resolveTypeOfDeclaredIdentifier(
+                new OdinContext(),
                 declaration.getDeclaredIdentifiers().getFirst()
         );
     }

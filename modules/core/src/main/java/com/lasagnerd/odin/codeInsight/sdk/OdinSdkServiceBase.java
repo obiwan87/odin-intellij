@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiNamedElement;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.evaluation.EvEnumValue;
@@ -375,7 +376,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             OdinSymbol anyTypeSymbol = coreOdinSymbolTable.getSymbol("Raw_Any");
             Objects.requireNonNull(anyTypeSymbol);
             OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) anyTypeSymbol.getDeclaredIdentifier();
-            TsOdinMetaType anyStructType = (TsOdinMetaType) declaredIdentifier.getType();
+            TsOdinMetaType anyStructType = (TsOdinMetaType) declaredIdentifier.getType(new OdinContext());
             typesCache.put("any", createMetaType(new TsOdinAnyType((TsOdinStructType) anyStructType.representedType()), false));
         }
 
@@ -458,7 +459,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         OdinSymbol odinOsType = syntheticSymbolTable.getSymbol(constantTypeIdentifier);
         Objects.requireNonNull(odinOsType);
         OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) odinOsType.getDeclaredIdentifier();
-        TsOdinMetaType type = (TsOdinMetaType) declaredIdentifier.getType();
+        TsOdinMetaType type = (TsOdinMetaType) declaredIdentifier.getType(new OdinContext());
         typesCache.put(constantTypeIdentifier, type);
         typesCache.put(constantIdentifier, type.representedType());
     }

@@ -121,7 +121,7 @@ public class CNFConverter {
         if (atomic.getOperator() == OdinTypes.EQEQ) {
             operator = OdinTypes.NEQ;
         } else if (atomic.getOperator() == OdinTypes.NEQ) {
-            operator = OdinTypes.EQ;
+            operator = OdinTypes.EQEQ;
         } else {
             throw new UnsupportedOperationException("Implement atomic negation based on your domain.");
         }

@@ -5,8 +5,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.dataflow.OdinLattice;
-import com.lasagnerd.odin.codeInsight.dataflow.OdinWhenConstraintsSolver;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinMinimalSymbolTableBuilder;
 import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableBuilder;
@@ -19,6 +17,7 @@ import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public class OdinReferenceResolver {
@@ -32,13 +31,19 @@ public class OdinReferenceResolver {
 
     // see https://odin-lang.org/docs/overview/#file-suffixes
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context, @NotNull OdinIdentifier element) {
+        // Here we need to check if we are in a when block or if there is knowledge from build flags
+        // In that case we use the slower, but more precise, end of block listener,
+        // which ensures that all symbols in one block are gathered. These can then be pruned
+        // using the knowledge at hand.
+
+
         return resolve(context, element,
                 new OdinMinimalSymbolTableBuilder(element,
                         OdinImportService.packagePath(element),
-                        createCheckpointListener(element),
+                        createEndOfBlockListener(element),
                         context
                 )
-                , false);
+        );
     }
 
     private static @NotNull OdinSymbolTableBuilderListener createEndOfBlockListener(@NotNull OdinIdentifier element) {
@@ -61,91 +66,90 @@ public class OdinReferenceResolver {
 
     // see https://odin-lang.org/docs/overview/#file-suffixes
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context,
-                                               @NotNull OdinIdentifier element,
-                                               OdinSymbolTableBuilder contextProvider,
-                                               boolean applyKnowledge) {
+                                               @NotNull OdinIdentifier identifier,
+                                               OdinSymbolTableBuilder contextProvider) {
+        System.out.println("Resolving reference to " + identifier.getText() + ":" + identifier.getLocation());
+
         try {
-            if (element.getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
-                TsOdinType tsOdinType = implicitSelectorExpression.getInferredType(context);
-                OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(element.getProject(), tsOdinType);
-                return typeElements.getSymbol(element.getText());
-            } else if (element.getParent() instanceof OdinNamedArgument namedArgument) {
-                OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(context, namedArgument);
-                if (callInfo.callingType() instanceof TsOdinParameterOwner parameterOwner) {
-                    List<TsOdinParameter> parameters = parameterOwner.getParameters();
-                    TsOdinParameter tsOdinParameter = parameters.stream()
-                            .filter(p -> p.getName().equals(namedArgument.getIdentifier().getText()))
-                            .findFirst().orElse(null);
+            var identifierSymbols = getIdentifierSymbolTable(context, identifier, contextProvider);
+            String name = identifier.getIdentifierToken().getText();
 
-                    if (tsOdinParameter != null) {
-                        return tsOdinParameter.toSymbol();
-                    }
+            List<OdinSymbol> symbols = identifierSymbols.getSymbols(name);
+
+            symbols = symbols.stream()
+                    .filter(s -> OdinInsightUtils.isVisible(identifier, s)
+                            || s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
+                    .toList();
+            symbols = symbols.stream()
+                    .collect(MoreCollectors.distinctBy(OdinSymbol::getDeclaredIdentifier));
+            if (!symbols.isEmpty()) {
+//                    if (applyKnowledge) {
+//                        System.out.println("Solving lattice for " + identifier.getText() + ":" + identifier.getLocation());
+//                        OdinLattice sourceLattice = OdinWhenConstraintsSolver.solveLattice(context, identifier);
+//                        symbols = symbols.stream()
+//                                .filter(
+//                                        s -> {
+//                                            OdinLattice targetLattice = OdinWhenConstraintsSolver
+//                                                    .solveLattice(context, (OdinPsiElement) s.getDeclaredIdentifier());
+//                                            return sourceLattice.isSubset(targetLattice);
+//                                        }
+//                                ).toList();
+//
+//                    }
+                if (symbols.size() == 1) {
+                    return symbols.getFirst();
                 }
-            } else {
-                OdinContext symbolContext = getIdentifierContext(context, element, contextProvider);
-                String name = element.getIdentifierToken().getText();
-
-                List<OdinSymbol> symbols = symbolContext.getSymbols(name);
-
-                symbols = symbols.stream()
-                        .filter(s -> OdinInsightUtils.isVisible(element, s)
-                                || s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
-                        .toList();
-                symbols = symbols.stream()
-                        .collect(MoreCollectors.distinctBy(OdinSymbol::getDeclaredIdentifier));
-                if (!symbols.isEmpty()) {
-                    if (applyKnowledge) {
-                        OdinLattice sourceLattice = OdinWhenConstraintsSolver.solveLattice(symbolContext, element);
-                        symbols = symbols.stream().filter(
-                                s -> {
-                                    OdinLattice targetLattice = OdinWhenConstraintsSolver
-                                            .solveLattice(context, s.getDeclaredIdentifier());
-                                    return sourceLattice.isSubset(targetLattice);
-                                }
-                        ).toList();
-
-                    }
-                    if (symbols.size() == 1) {
-                        return symbols.getFirst();
-                    }
-                    return null;
-                }
-
-                return null;
+                return symbols.getLast();
             }
+
             return null;
         } catch (StackOverflowError e) {
-            OdinInsightUtils.logStackOverFlowError(element, OdinReference.LOG);
+            OdinInsightUtils.logStackOverFlowError(identifier, OdinReference.LOG);
             return null;
         }
     }
 
-    // Computes the context under which the identifier is expected to be defined
-    static OdinContext getIdentifierContext(OdinContext context, @NotNull OdinIdentifier element, OdinSymbolTableBuilder symbolTableProvider) {
-        @NotNull OdinIdentifier identifier = element;
-        PsiElement parent = identifier.getParent();
+    // Computes the symbol table under which the identifier is expected to be defined
+    static OdinSymbolTable getIdentifierSymbolTable(OdinContext context, @NotNull OdinIdentifier element, OdinSymbolTableBuilder symbolTableProvider) {
+        PsiElement parent = element.getParent();
+        if (element.getParent() instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
+            TsOdinType tsOdinType = implicitSelectorExpression.getInferredType(context);
+            return OdinInsightUtils.getTypeElements(element.getProject(), tsOdinType);
+        } else if (element.getParent() instanceof OdinNamedArgument namedArgument) {
+            OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(context, namedArgument);
+            if (callInfo.callingType() instanceof TsOdinParameterOwner parameterOwner) {
+                List<TsOdinParameter> parameters = parameterOwner.getParameters();
+                TsOdinParameter tsOdinParameter = parameters.stream()
+                        .filter(p -> p.getName().equals(namedArgument.getIdentifier().getText()))
+                        .findFirst().orElse(null);
+
+                if (tsOdinParameter != null) {
+                    return OdinSymbolTable.from(Collections.singleton(tsOdinParameter.toSymbol()));
+                }
+            }
+        }
+
         if (parent instanceof OdinRefExpression refExpression) {
             if (refExpression.getExpression() != null) {
-                return OdinInsightUtils.getReferenceableSymbols(refExpression.getExpression()).asContext();
+                return OdinInsightUtils.getReferenceableSymbols(context, refExpression.getExpression());
             } else {
-                return symbolTableProvider.build().asContext();
+                return symbolTableProvider.build();
             }
         } else {
-            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(identifier, OdinQualifiedType.class);
+            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(element, OdinQualifiedType.class);
             if (qualifiedType != null) {
-                if (qualifiedType.getPackageIdentifier() == identifier) {
-                    return symbolTableProvider.build().asContext();
+                if (qualifiedType.getPackageIdentifier() == element) {
+                    return symbolTableProvider.build();
                 } else {
-                    return OdinInsightUtils.getReferenceableSymbols(context, qualifiedType).asContext();
+                    return OdinInsightUtils.getReferenceableSymbols(context, qualifiedType);
                 }
             } else if (parent instanceof OdinSimpleRefType) {
-                return symbolTableProvider.build().asContext();
+                return symbolTableProvider.build();
             } else {
-                return OdinContext.EMPTY;
+                return OdinSymbolTable.EMPTY;
             }
         }
     }
-
 }
 
 

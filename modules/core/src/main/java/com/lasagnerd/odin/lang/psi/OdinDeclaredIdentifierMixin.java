@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.lang.psi;
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.ASTNode;
@@ -9,19 +8,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
-import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
+import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.lang.psi.impl.OdinPsiElementImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class OdinDeclaredIdentifierMixin extends ASTWrapperPsiElement implements OdinDeclaredIdentifier {
+public abstract class OdinDeclaredIdentifierMixin extends OdinPsiElementImpl implements OdinDeclaredIdentifier {
     public OdinDeclaredIdentifierMixin(@NotNull ASTNode node) {
         super(node);
     }
@@ -110,27 +111,28 @@ public abstract class OdinDeclaredIdentifierMixin extends ASTWrapperPsiElement i
         return super.getUseScope();
     }
 
-    private CachedValue<TsOdinType> cachedValue;
+    private ParameterizedCachedValue<TsOdinType, OdinContext> cachedValue;
 
-    public TsOdinType getType() {
+    public TsOdinType getType(OdinContext context) {
         if (cachedValue == null) {
             cachedValue = createCachedValue();
         }
-        return cachedValue.getValue();
+        return cachedValue.getValue(context);
     }
 
-    private CachedValue<TsOdinType> createCachedValue() {
-        return CachedValuesManager.getManager(getProject()).createCachedValue(
-                this::computeType
+    private ParameterizedCachedValue<TsOdinType, OdinContext> createCachedValue() {
+        return CachedValuesManager.getManager(getProject()).createParameterizedCachedValue(
+                this::computeType,
+                false
         );
     }
 
-    private CachedValueProvider.Result<TsOdinType> computeType() {
+    private CachedValueProvider.Result<TsOdinType> computeType(OdinContext context) {
         List<Object> dependencies = new ArrayList<>();
         dependencies.add(this);
         TsOdinType tsOdinType = tryGetBuiltinType(this);
         if (tsOdinType == null) {
-            return CachedValueProvider.Result.create(OdinInferenceEngine.resolveTypeOfDeclaredIdentifier(this), dependencies);
+            return CachedValueProvider.Result.create(OdinInferenceEngine.resolveTypeOfDeclaredIdentifier(context, this), dependencies);
         }
         return CachedValueProvider.Result.create(tsOdinType, dependencies);
     }

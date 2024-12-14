@@ -80,7 +80,7 @@ public class ConditionExtractor extends OdinVisitor {
 
     @Override
     public void visitRefExpression(@NotNull OdinRefExpression o) {
-        TsOdinType type = o.getInferredType();
+        TsOdinType type = o.getInferredType(context);
         if (TsOdinBuiltInTypes.getBoolTypes().contains(type.baseType(true))) {
             AtomicCondition atomicCondition = new AtomicCondition(o);
             atomicCondition.setLeft(createValueOrSymbol(o));
@@ -102,7 +102,7 @@ public class ConditionExtractor extends OdinVisitor {
             return new SymbolicOperand(refExpression.getIdentifier().getReferencedSymbol(context));
         }
         if (o instanceof OdinLiteralExpression || o instanceof OdinImplicitSelectorExpression) {
-            return new ValueOperand(OdinExpressionEvaluator.evaluate(o));
+            return new ValueOperand(OdinExpressionEvaluator.evaluate(context, o));
         }
 
         return null;

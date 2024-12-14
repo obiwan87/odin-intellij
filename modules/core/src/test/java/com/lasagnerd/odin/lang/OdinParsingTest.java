@@ -52,8 +52,10 @@ import com.lasagnerd.odin.codeInsight.dataflow.OdinWhenConstraintsSolver;
 import com.lasagnerd.odin.codeInsight.evaluation.*;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.symbols.*;
-import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinFullSymbolTableBuilder;
+import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinExpectedTypeEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeChecker;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
@@ -419,7 +421,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
 
         OdinSymbolTable context = com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper.buildFullSymbolTable(odinRefExpression);
-        OdinInsightUtils.getReferenceableSymbols(odinRefExpression);
+        OdinInsightUtils.getReferenceableSymbols(new OdinContext(), odinRefExpression);
 
     }
 
@@ -2273,14 +2275,18 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testPsiFileAtOffset() throws IOException {
         {
-            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\testing\\runner.odin");
-            PsiElement element = file.findElementAt(20244);
+            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\sync\\futex_haiku.odin");
+            PsiElement element = file.findElementAt(170);
             assertNotNull(element);
 
-            OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
-            assertNotNull(refExpression);
-            EvOdinValue value = OdinExpressionEvaluator.evaluate(refExpression);
-            assertFalse(value.asBool());
+            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(element, OdinQualifiedType.class);
+            OdinSymbol symbol = OdinReferenceResolver.resolve(new OdinContext(), qualifiedType.getTypeIdentifier());
+            assertNotNull(symbol);
+            System.out.println(symbol);
+//            OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
+//            assertNotNull(refExpression);
+//            EvOdinValue value = OdinExpressionEvaluator.evaluate(refExpression);
+//            assertFalse(value.asBool());
 //            TsOdinType inferredType = refExpression.getInferredType();
 //            TsOdinSliceType tsOdinSliceType = assertInstanceOf(inferredType.baseType(), TsOdinSliceType.class);
 
@@ -2557,8 +2563,6 @@ public class OdinParsingTest extends UsefulTestCase {
             Collection<OdinCondition> conditions = PsiTreeUtil.findChildrenOfType(proc, OdinCondition.class);
             for (OdinCondition condition : conditions) {
                 try {
-
-
                     OdinExpression expression = condition.getExpression();
                     EvOdinValue value = OdinExpressionEvaluator.evaluate(expression);
                     System.out.printf("%s -> %s%n", expression.getText(), value);
@@ -2751,11 +2755,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinType type = compoundLiteralTyped.getTypeContainer().getType();
             OdinSimpleRefType simpleRefType = assertInstanceOf(type, OdinSimpleRefType.class);
 
-            OdinSymbol symbol = OdinReferenceResolver.resolve(
-                    OdinContext.EMPTY,
-                    simpleRefType.getIdentifier(),
-                    new OdinFullSymbolTableBuilder(OdinContext.EMPTY, simpleRefType.getIdentifier()),
-                    true);
+            OdinSymbol symbol = OdinReferenceResolver.resolve(OdinContext.EMPTY, simpleRefType.getIdentifier());
 
             {
                 TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "types", "w");

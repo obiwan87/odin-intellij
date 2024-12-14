@@ -1,4 +1,4 @@
-//+private
+#+private
 package sync
 
 import "core:c"
@@ -75,10 +75,10 @@ _futex_wait :: proc "contextless" (f: ^Futex, expect: u32) -> (ok: bool) {
 	if u32(atomic_load_explicit(f, .Acquire)) == expect {
 		waitq_unlock(waitq)
 		defer waitq_lock(waitq)
-		
+
 		sig: c.int
 		haiku.sigwait(&mask, &sig)
-		errno := haiku.errno() 
+		errno := haiku.errno()
 		ok = errno == .OK
 	}
 
@@ -87,7 +87,7 @@ _futex_wait :: proc "contextless" (f: ^Futex, expect: u32) -> (ok: bool) {
 
 	_ = unix.pthread_sigmask(haiku.SIG_SETMASK, &old_mask, nil)
 
- 	// FIXME: Add error handling!
+	// FIXME: Add error handling!
 	return
 }
 
@@ -118,14 +118,14 @@ _futex_wait_with_timeout :: proc "contextless" (f: ^Futex, expect: u32, duration
 	if u32(atomic_load_explicit(f, .Acquire)) == expect {
 		waitq_unlock(waitq)
 		defer waitq_lock(waitq)
-		
+
 		info: haiku.siginfo_t
 		ts := unix.timespec{
 			tv_sec  = i64(duration / 1e9),
 			tv_nsec = i64(duration % 1e9),
 		}
 		haiku.sigtimedwait(&mask, &info, &ts)
-		errno := haiku.errno() 
+		errno := haiku.errno()
 		ok = errno == .EAGAIN || errno == .OK
 	}
 

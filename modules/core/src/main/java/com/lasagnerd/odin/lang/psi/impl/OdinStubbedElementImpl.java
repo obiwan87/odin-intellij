@@ -37,4 +37,9 @@ public class OdinStubbedElementImpl<T extends StubBase<?>> extends StubBasedPsiE
     public OdinExpression parenthesesUnwrap() {
         return null;
     }
+
+    @Override
+    public String getLocation() {
+        return "";
+    }
 }

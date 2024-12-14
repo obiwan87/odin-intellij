@@ -66,6 +66,7 @@ public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiE
         return null;
     }
 
+    @Override
     public String getLocation() {
         VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(this);
         String lineColumn = OdinInsightUtils.getLineColumn(this);

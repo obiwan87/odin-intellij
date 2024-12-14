@@ -7,21 +7,21 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
+import com.lasagnerd.odin.lang.psi.OdinIdentifier;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.With;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @AllArgsConstructor
 @Getter
 public class OdinContext {
     public static final OdinContext EMPTY = new OdinContext();
+
+    private Set<OdinIdentifier> visitedIdentifiers = new HashSet<>();
 
     OdinSymbolTable symbolTable = new OdinSymbolTable();
 

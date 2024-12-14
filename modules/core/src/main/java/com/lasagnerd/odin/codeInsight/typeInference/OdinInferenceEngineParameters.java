@@ -11,7 +11,7 @@ public record OdinInferenceEngineParameters(
 ) {
 
     public static OdinInferenceEngineParameters defaultParameters() {
-        return new OdinInferenceEngineParameters(null, null, 1, false);
+        return new OdinInferenceEngineParameters(new OdinContext(), null, 1, false);
     }
 
 }

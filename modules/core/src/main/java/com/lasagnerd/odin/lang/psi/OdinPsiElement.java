@@ -14,4 +14,6 @@ public interface OdinPsiElement extends PsiElement {
      * @return The unwrapped expression
      */
     OdinExpression parenthesesUnwrap();
+
+    String getLocation();
 }

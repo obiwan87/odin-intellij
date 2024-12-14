@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
@@ -92,7 +93,7 @@ public class OdinBuiltinProcedures {
         OdinSymbolTable symbolTable = OdinSymbolTable.from(OdinSdkService.getInstance(callExpression.getProject()).getRuntimeCoreSymbols());
         OdinSymbol symbol = symbolTable.getSymbol("Type_Info");
         if (symbol != null) {
-            TsOdinMetaType metaType = (TsOdinMetaType) ((OdinDeclaredIdentifier) symbol.getDeclaredIdentifier()).getType();
+            TsOdinMetaType metaType = (TsOdinMetaType) ((OdinDeclaredIdentifier) symbol.getDeclaredIdentifier()).getType(new OdinContext());
             TsOdinStructType structType = (TsOdinStructType) metaType.representedType();
             TsOdinPointerType tsOdinPointerType = new TsOdinPointerType();
             tsOdinPointerType.setDereferencedType(structType);
@@ -230,7 +231,7 @@ public class OdinBuiltinProcedures {
         if (!argumentList.isEmpty()) {
             OdinArgument first = argumentList.getFirst();
             if (first instanceof OdinUnnamedArgument argument) {
-                return argument.getExpression().getInferredType();
+                return argument.getExpression().getInferredType(engine.context);
             }
         }
         return TsOdinBuiltInTypes.UNKNOWN;
@@ -242,7 +243,7 @@ public class OdinBuiltinProcedures {
         if (!argumentList.isEmpty()) {
             OdinArgument first = argumentList.getFirst();
             if (first instanceof OdinUnnamedArgument argument) {
-                types.add(argument.getExpression().getInferredType());
+                types.add(argument.getExpression().getInferredType(engine.context));
             }
         }
         return types;
@@ -253,7 +254,7 @@ public class OdinBuiltinProcedures {
         if (!argumentList.isEmpty()) {
             OdinArgument first = argumentList.getFirst();
             if (first instanceof OdinUnnamedArgument argument) {
-                TsOdinType tsOdinType = argument.getExpression().getInferredType();
+                TsOdinType tsOdinType = argument.getExpression().getInferredType(engine.context);
                 return OdinTypeResolver.createMetaType(tsOdinType, null);
             }
         }
