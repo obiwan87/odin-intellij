@@ -123,7 +123,7 @@ The following sections outline the setup for various debuggers.
 
 To set up LLDB-DAP:
 
-1. Download the LLVM 18.1.x binaries for your platform.
+1. Download the [LLVM 18.1.x binaries](https://github.com/llvm/llvm-project/releases/tag/llvmorg-18.1.8) for your platform
 2. In the Odin settings page, select the `lldb-dap` executable from the `bin` directory.
 
 > [!IMPORTANT]
