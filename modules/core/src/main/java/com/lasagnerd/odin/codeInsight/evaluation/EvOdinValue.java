@@ -113,9 +113,13 @@ public class EvOdinValue {
         if (value instanceof EvEnumValue enumValue) {
             Set<EvEnumValue> enumValues = new java.util.HashSet<>();
             enumValues.add(enumValue);
-            return new EvOdinEnumSet(enumValues, (TsOdinEnumType) type);
+            TsOdinType tsOdinType = type.dereference().baseType(true);
+            if (tsOdinType instanceof TsOdinEnumType) {
+                return new EvOdinEnumSet(enumValues, (TsOdinEnumType) tsOdinType);
+            }
+            return EvOdinValues.bottom();
         }
-        return EvOdinValues.bottom();
+        return EvOdinValues.anySet();
     }
 
     @Override

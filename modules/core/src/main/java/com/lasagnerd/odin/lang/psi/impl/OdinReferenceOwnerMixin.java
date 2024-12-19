@@ -27,7 +27,7 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     @NotNull
     @Override
     public OdinReference getReference() {
-        return getReference(OdinContext.EMPTY);
+        return getReference(new OdinContext());
     }
 
     CachedValueProvider.Result<OdinReference> computeReference(OdinContext context) {
@@ -59,6 +59,11 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     }
 
     public @NotNull OdinReference getReference(OdinContext context) {
+        if (!context.isUseCache()) {
+            OdinReference odinReference = new OdinReference(context, this);
+            odinReference.resolve();
+            return odinReference;
+        }
         if (getCachedReference() == null) {
             @NotNull ParameterizedCachedValue<OdinReference, OdinContext> cachedValue = CachedValuesManager
                     .getManager(getProject())

@@ -7,16 +7,15 @@ import com.lasagnerd.odin.lang.psi.OdinAttributesDefinition;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinType;
 import com.lasagnerd.odin.lang.psi.OdinUsingStatement;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.With;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 @AllArgsConstructor
 public class OdinSymbol {
     // Psi stuff
@@ -72,5 +71,10 @@ public class OdinSymbol {
 
     public boolean isStatic() {
         return OdinAttributeUtils.containsAttribute(attributes, "static");
+    }
+
+    @Override
+    public String toString() {
+        return getName() + "(" + getSymbolType() + ")";
     }
 }

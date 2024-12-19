@@ -7,6 +7,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.tree.IElementType;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
+import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinPsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,5 +42,10 @@ public class OdinStubbedElementImpl<T extends StubBase<?>> extends StubBasedPsiE
     @Override
     public String getLocation() {
         return "";
+    }
+
+    @Override
+    public OdinFile getContainingOdinFile() {
+        return null;
     }
 }

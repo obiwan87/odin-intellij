@@ -1,8 +1,6 @@
 package com.lasagnerd.odin.codeInsight;
 
 import com.intellij.psi.PsiNamedElement;
-import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
-import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
@@ -10,7 +8,6 @@ import com.lasagnerd.odin.lang.psi.OdinScopeBlock;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.With;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,12 +38,6 @@ public class OdinSymbolTable {
 
     Map<String, List<OdinSymbol>> symbolTable = new HashMap<>();
 
-    // Used for specialization
-    Map<String, EvOdinValue> polyParaValueStorage = new HashMap<>();
-
-    @With
-    OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
-
     public OdinSymbolTable(String packagePath) {
         this.packagePath = packagePath;
     }
@@ -73,15 +64,6 @@ public class OdinSymbolTable {
         }
         return symbols;
     }
-
-    public EvOdinValue getValue(String name) {
-        EvOdinValue value = polyParaValueStorage.get(name);
-        if (value != null)
-            return value;
-
-        return parentSymbolTable != null ? parentSymbolTable.getValue(name) : null;
-    }
-
 
     public Collection<PsiNamedElement> getNamedElements() {
         return symbolTable.values().stream()
@@ -200,10 +182,6 @@ public class OdinSymbolTable {
                 parentSymbolTable = context;
             }
         }
-    }
-
-    public void addAll(Map<String, EvOdinValue> builtInValues) {
-        polyParaValueStorage.putAll(builtInValues);
     }
 
     public boolean isShadowing(String name) {

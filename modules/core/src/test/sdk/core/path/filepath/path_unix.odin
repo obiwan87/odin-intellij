@@ -1,5 +1,8 @@
-//+build linux, darwin, freebsd, openbsd, netbsd
+#+build linux, darwin, freebsd, openbsd, netbsd
 package filepath
+
+import "base:runtime"
+import "core:strings"
 
 when ODIN_OS == .Darwin {
 	foreign import libc "system:System.framework"
@@ -7,8 +10,8 @@ when ODIN_OS == .Darwin {
 	foreign import libc "system:c"
 }
 
-import "base:runtime"
-import "core:strings"
+
+
 
 SEPARATOR :: '/'
 SEPARATOR_STRING :: `/`

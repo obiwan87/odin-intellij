@@ -8,13 +8,10 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -472,17 +469,7 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinUsingStatement usingStatement) {
-        List<OdinDeclaredIdentifier> declaredIdentifiers = new ArrayList<>();
-        for (OdinExpression expression : usingStatement.getExpressionList()) {
-            TsOdinType tsOdinType = expression.getInferredType();
-
-            OdinSymbolTable typeSymbols = OdinInsightUtils.getTypeElements(usingStatement.getProject(), tsOdinType);
-            typeSymbols.getNamedElements().stream().filter(s -> s instanceof OdinDeclaredIdentifier)
-                    .map(OdinDeclaredIdentifier.class::cast)
-                    .forEach(declaredIdentifiers::add);
-        }
-
-        return declaredIdentifiers;
+        throw new UnsupportedOperationException("This method must not be used. Use getTypeElements() with a context object.");
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinForInParameterDeclaration forInParameterDeclaration) {

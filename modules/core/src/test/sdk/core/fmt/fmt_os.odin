@@ -1,12 +1,12 @@
-//+build !freestanding
-//+build !js
-//+build !orca
+#+build !freestanding
+#+build !js
+#+build !orca
 package fmt
 
 import "base:runtime"
-import "core:os"
-import "core:io"
 import "core:bufio"
+import "core:io"
+import "core:os"
 
 // fprint formats using the default print settings and writes to fd
 fprint :: proc(fd: os.Handle, args: ..any, sep := " ", flush := true) -> int {

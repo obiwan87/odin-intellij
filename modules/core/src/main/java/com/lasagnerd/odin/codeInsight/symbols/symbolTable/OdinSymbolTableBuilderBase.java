@@ -26,7 +26,7 @@ public abstract class OdinSymbolTableBuilderBase implements OdinSymbolTableBuild
     protected final PsiElement originalPosition;
     protected final String packagePath;
 
-    protected final OdinContext initialContext;
+    protected final OdinContext context;
     protected final PsiElement typeExpectationContext;
 
     public static final OdinSymbolTableBuilderListener ALWAYS_FALSE = new OdinSymbolTableBuilderListener() {
@@ -36,13 +36,13 @@ public abstract class OdinSymbolTableBuilderBase implements OdinSymbolTableBuild
     protected final OdinSymbolTableBuilderListener listener;
 
 
-    public OdinSymbolTableBuilderBase(PsiElement originalPosition, String packagePath, OdinSymbolTableBuilderListener listener, OdinContext initialContext) {
+    public OdinSymbolTableBuilderBase(PsiElement originalPosition, String packagePath, OdinSymbolTableBuilderListener listener, OdinContext context) {
         this.originalPosition = originalPosition;
         this.packagePath = packagePath;
 
         this.listener = listener;
 
-        this.initialContext = initialContext;
+        this.context = context;
         this.typeExpectationContext = OdinExpectedTypeEngine.findTypeExpectationContext(originalPosition);
     }
 
@@ -55,7 +55,7 @@ public abstract class OdinSymbolTableBuilderBase implements OdinSymbolTableBuild
     protected void addSymbolsOfCompoundLiteral(PsiElement element, OdinCompoundLiteral containingScopeBlock, OdinSymbolTable context) {
         OdinLhs lhs = PsiTreeUtil.getParentOfType(element, OdinLhs.class, false);
         if (lhs != null) {
-            TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(initialContext, containingScopeBlock);
+            TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(this.context, containingScopeBlock);
             List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, tsOdinType.getContext());
             context.addAll(elementSymbols);
         }
@@ -170,7 +170,7 @@ public abstract class OdinSymbolTableBuilderBase implements OdinSymbolTableBuild
         OdinCallExpression callExpression = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class);
         if (callExpression != null && callExpression.getArgumentList().size() == 2) {
             if (argument == callExpression.getArgumentList().get(1)) {
-                OdinSymbol symbol = OdinInsightUtils.findBuiltinSymbolOfCallExpression(initialContext, callExpression, text -> text.equals("offset_of") || text.equals("offset_of_member"));
+                OdinSymbol symbol = OdinInsightUtils.findBuiltinSymbolOfCallExpression(context, callExpression, text -> text.equals("offset_of") || text.equals("offset_of_member"));
                 if (symbol != null) {
                     OdinArgument odinArgument = callExpression.getArgumentList().getFirst();
                     OdinExpression typeExpression = getArgumentExpression(odinArgument);
@@ -178,7 +178,7 @@ public abstract class OdinSymbolTableBuilderBase implements OdinSymbolTableBuild
                         TsOdinType tsOdinType = typeExpression.getInferredType();
                         if (tsOdinType instanceof TsOdinMetaType metaType) {
                             if (metaType.representedType() instanceof TsOdinStructType structType) {
-                                OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(argument.getProject(), structType);
+                                OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(context, argument.getProject(), structType);
                                 symbolTable.merge(typeElements);
                             }
                         }

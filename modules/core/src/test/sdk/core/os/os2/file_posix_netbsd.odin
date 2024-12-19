@@ -1,8 +1,7 @@
-//+private
+#+private
 package os2
 
 import "base:runtime"
-
 import "core:sys/posix"
 
 _posix_absolute_path :: proc(fd: posix.FD, name: string, allocator: runtime.Allocator) -> (path: cstring, err: Error) {

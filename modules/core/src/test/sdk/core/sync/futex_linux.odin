@@ -1,9 +1,9 @@
-//+private
-//+build linux
+#+private
+#+build linux
 package sync
 
-import "core:time"
 import "core:sys/linux"
+import "core:time"
 
 _futex_wait :: proc "contextless" (futex: ^Futex, expected: u32) -> bool {
 	errno := linux.futex(cast(^linux.Futex) futex, linux.FUTEX_WAIT, {.PRIVATE}, expected)

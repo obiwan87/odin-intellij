@@ -10,6 +10,7 @@ import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinIdentifier;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.With;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,8 +20,6 @@ import java.util.*;
 @AllArgsConstructor
 @Getter
 public class OdinContext {
-    public static final OdinContext EMPTY = new OdinContext();
-
     private Set<OdinIdentifier> visitedIdentifiers = new HashSet<>();
 
     OdinSymbolTable symbolTable = new OdinSymbolTable();
@@ -36,6 +35,9 @@ public class OdinContext {
 
     @With
     OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
+
+    @Setter
+    private boolean useCache = true;
 
     public OdinContext(String packagePath) {
         this.symbolTable = new OdinSymbolTable(packagePath);

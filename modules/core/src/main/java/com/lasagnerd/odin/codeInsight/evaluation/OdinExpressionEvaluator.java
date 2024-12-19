@@ -67,7 +67,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             expressionType = refExpressionValue.asBaseType();
             if (expressionType instanceof TsOdinPackageReferenceType ||
                     expressionType instanceof TsOdinEnumType) {
-                localContext = OdinInsightUtils.getTypeElements(o.getProject(), expressionType).asContext();
+                localContext = OdinInsightUtils.getTypeElements(context, o.getProject(), expressionType).asContext();
             } else {
                 return;
             }
@@ -155,7 +155,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         return EvOdinValues.nullValue();
     }
 
-    static EvEnumValue getEnumValue(TsOdinEnumType enumType, @Nullable String name) {
+    public static EvEnumValue getEnumValue(TsOdinEnumType enumType, @Nullable String name) {
         List<OdinEnumValueDeclaration> enumValueDeclarations = getEnumValueDeclarations(enumType);
 
         OdinEnumValueDeclaration enumValueDeclaration = enumValueDeclarations.stream()

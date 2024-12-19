@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.evaluation.EvEnumValue;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
@@ -143,7 +144,7 @@ public class OdinTypeSpecializer {
     }
 
     private static void resolveArguments(
-            OdinContext outerScope,
+            OdinContext context,
             TsOdinType genericType,
             List<TsOdinParameter> parameters,
             TsOdinType specializedType,
@@ -159,7 +160,7 @@ public class OdinTypeSpecializer {
                 if (!tsOdinParameter.hasPolymorphicDeclarations())
                     continue;
 
-                TsOdinType argumentType = resolveArgumentType(argumentExpression, outerScope);
+                TsOdinType argumentType = resolveArgumentType(argumentExpression, context);
                 if (argumentType.isUnknown()) {
                     System.out.printf("Could not resolve argument [%s] type for base type %s with name %s%n in %s",
                             tsOdinParameter.getName(),
@@ -171,9 +172,21 @@ public class OdinTypeSpecializer {
                 }
 
                 if (!argumentType.isExplicitPolymorphic()) {
-                    EvOdinValue value = OdinExpressionEvaluator.evaluate(outerScope, argumentExpression);
-                    if (!value.isNull()) {
-                        instantiationScope.getPolymorphicValues().put(tsOdinParameter.getName(), value);
+                    if (!argumentType.isUndecided()) {
+                        EvOdinValue value = OdinExpressionEvaluator.evaluate(context, argumentExpression);
+                        if (!value.isNull()) {
+                            instantiationScope.getPolymorphicValues().put(tsOdinParameter.getName(), value);
+                        }
+                    } else {
+                        TsOdinType parameterBaseType = tsOdinParameter.getType().baseType(true);
+                        if (parameterBaseType instanceof TsOdinEnumType enumType
+                                && argumentExpression instanceof OdinImplicitSelectorExpression implicitSelectorExpression) {
+                            EvEnumValue enumValue = OdinExpressionEvaluator.getEnumValue(enumType, implicitSelectorExpression.getIdentifier().getText());
+                            if (enumValue != null) {
+                                EvOdinValue value = new EvOdinValue(enumValue, tsOdinParameter.getType());
+                                instantiationScope.getPolymorphicValues().put(tsOdinParameter.getName(), value);
+                            }
+                        }
                     }
                 }
 

@@ -1,8 +1,8 @@
-//+private
+#+private
 package os2
 
-import win32 "core:sys/windows"
 import "base:runtime"
+import win32 "core:sys/windows"
 
 _Path_Separator        :: '\\'
 _Path_Separator_String :: "\\"

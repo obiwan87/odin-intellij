@@ -1,7 +1,9 @@
 // This is purely for documentation
-//+build ignore
+#+build ignore
 package intrinsics
+
 import "base:runtime"
+
 // Package-Related
 is_package_imported :: proc(package_name: string) -> bool ---
 

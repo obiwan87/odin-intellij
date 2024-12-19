@@ -1,9 +1,9 @@
-//+build arm32, arm64
-//+build linux
+#+build arm32, arm64
+#+build linux
 package sysinfo
 
-import "core:sys/linux"
 import "core:strings"
+import "core:sys/linux"
 
 @(init, private)
 init_cpu_features :: proc() {

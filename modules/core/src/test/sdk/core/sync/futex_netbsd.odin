@@ -1,10 +1,10 @@
-//+private
+#+private
 package sync
 
 import "base:intrinsics"
-import "core:time"
 import "core:c"
 import "core:sys/unix"
+import "core:time"
 
 foreign import libc "system:c"
 

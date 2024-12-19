@@ -1,4 +1,4 @@
-//+private
+#+private
 package spall
 
 // Only for types.

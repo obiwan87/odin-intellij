@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class OdinSymbolTableHelper {
 
     public static OdinSymbolTable buildFullSymbolTable(@NotNull PsiElement element) {
-        return buildFullSymbolTable(OdinContext.EMPTY, element);
+        return buildFullSymbolTable(new OdinContext(), element);
     }
 
     public static OdinSymbolTable buildFileScopeSymbolTable(@NotNull OdinFileScope fileScope, @NotNull OdinVisibility globalVisibility) {
@@ -43,7 +43,7 @@ public class OdinSymbolTableHelper {
         while (!statementStack.isEmpty()) {
             PsiElement element = statementStack.pop();
             if (element instanceof OdinDeclaration declaration) {
-                List<OdinSymbol> symbols = OdinDeclarationSymbolResolver.getSymbols(globalVisibility, declaration, OdinContext.EMPTY);
+                List<OdinSymbol> symbols = OdinDeclarationSymbolResolver.getSymbols(globalVisibility, declaration, new OdinContext());
                 context.getDeclarationSymbols().computeIfAbsent(declaration, d -> new ArrayList<>()).addAll(symbols);
                 fileScopeSymbols.addAll(symbols);
             } else {
@@ -139,9 +139,10 @@ public class OdinSymbolTableHelper {
         return Collections.emptyList();
     }
 
-    public static @NotNull OdinSymbolTable getRootSymbolTable(@NotNull PsiElement element, String packagePath) {
-        OdinSymbolTable context = new OdinSymbolTable();
-        context.setPackagePath(packagePath);
+    // TODO this should depend on context of the queried element
+    public static @NotNull OdinSymbolTable getRootSymbolTable(OdinContext context, @NotNull PsiElement element, String packagePath) {
+        OdinSymbolTable symbolTable = new OdinSymbolTable();
+        symbolTable.setPackagePath(packagePath);
 
         List<OdinSymbol> builtInSymbols = getBuiltInSymbols(element.getProject());
 
@@ -150,7 +151,7 @@ public class OdinSymbolTableHelper {
 
         // 0. Import built-in symbols
         if (!OdinSdkService.isInBuiltinOdinFile(element)) {
-            context.setRoot(builtinContext);
+            symbolTable.setRoot(builtinContext);
         }
 
         // 1. Import symbols from this file
@@ -174,10 +175,10 @@ public class OdinSymbolTableHelper {
                         .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
                         .toList();
 
-                context.addAll(fileScopeDeclarations);
+                symbolTable.addAll(fileScopeDeclarations);
             }
         }
-        return context;
+        return symbolTable;
     }
 
     public static OdinVisibility getGlobalFileVisibility(@NotNull OdinFileScope fileScope) {
@@ -243,24 +244,7 @@ public class OdinSymbolTableHelper {
 
     @TestOnly
     public static OdinSymbolTable doBuildFullSymbolTable(@NotNull PsiElement position, OdinSymbolTableBuilderListener listener) {
-        return doBuildFullSymbolTable(null, position, listener, null);
-    }
-
-    public static OdinSymbolTable buildMinimalSymbolTable(OdinContext context, PsiElement identifier) {
-        OdinSymbolTableBuilderBase resolver = new OdinMinimalSymbolTableBuilder(
-                identifier,
-                OdinImportService.packagePath(identifier),
-                new OdinSymbolTableBuilderListener() {
-                    @Override
-                    public boolean onCheckpointCalled(OdinSymbolTable symbolTable) {
-                        return symbolTable.getSymbol(identifier.getText()) != null;
-                    }
-                },
-                context
-        );
-
-        OdinSymbolTable symbolTable = resolver.build();
-        return symbolTable == null ? OdinSymbolTable.EMPTY : symbolTable;
+        return doBuildFullSymbolTable(null, position, listener, new OdinContext());
     }
 
     public static OdinSymbolTable buildFullSymbolTable(OdinContext context, PsiElement element) {
@@ -427,11 +411,5 @@ public class OdinSymbolTableHelper {
     public static OdinSymbolTable buildFullSymbolTable(PsiElement reference, @NonNls @NotNull String originalFilePath) {
         return buildFullSymbolTable(reference).with(originalFilePath);
     }
-
-    @FunctionalInterface
-    public interface StopCondition {
-        boolean match(OdinSymbolTable context);
-    }
-
 }
 

@@ -3,12 +3,14 @@ package com.lasagnerd.odin.codeInsight.evaluation;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class EvOdinValues {
     public static final EvOdinValue NULL = new EvNullValue<>();
     public static final EvOdinValueSet BOTTOM = new EvNullSet();
+    public static final EvOdinValueSet ANY = new EvAnySet();
     public static final Map<String, EvOdinValue> BUILTIN_IDENTIFIERS = new HashMap<>();
 
     public static <V, T extends TsOdinType> EvOdinValue nullValue() {
@@ -17,6 +19,10 @@ public class EvOdinValues {
 
     public static EvOdinValueSet bottom() {
         return BOTTOM;
+    }
+
+    public static EvOdinValueSet anySet() {
+        return ANY;
     }
 
     static {
@@ -100,6 +106,43 @@ public class EvOdinValues {
         @Override
         public boolean isNull() {
             return true;
+        }
+    }
+
+    public static class EvAnySet extends EvOdinValueSet {
+
+        public EvAnySet() {
+            super(Object.class, Collections.emptySet(), TsOdinBuiltInTypes.UNKNOWN);
+        }
+
+        @Override
+        public EvOdinValueSet doCombine(EvOdinValueSet other) {
+            return this;
+        }
+
+        @Override
+        public EvOdinValueSet doIntersect(EvOdinValueSet other) {
+            return other;
+        }
+
+        @Override
+        public EvOdinValueSet complement() {
+            return BOTTOM;
+        }
+
+        @Override
+        public EvOdinValueSet any() {
+            return this;
+        }
+
+        @Override
+        public EvOdinValueSet doDiff(EvOdinValueSet other) {
+            return this;
+        }
+
+        @Override
+        public boolean isSubset(EvOdinValueSet set) {
+            return set == this;
         }
     }
 }

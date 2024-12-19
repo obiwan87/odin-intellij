@@ -13,6 +13,7 @@ import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
 import com.lasagnerd.odin.codeInsight.evaluation.EvEnumValue;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValues;
@@ -86,7 +87,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     private final Map<String, OdinSymbol> symbolsCache = new HashMap<>();
     private final Map<String, TsOdinType> typesCache = new HashMap<>();
     private Map<OdinImport, List<OdinFile>> sdkImportsCache;
-    private Map<String, EvOdinValue> builtInValues;
+    private Map<OdinSymbol, EvOdinValue> builtInValues;
     private final List<OdinFile> syntheticFiles = new ArrayList<>();
 
 
@@ -147,13 +148,10 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
 
     @Override
     public OdinSymbolTable getBuiltInSymbolTable() {
-        if (builtInValues == null) {
-            builtInValues = new HashMap<>();
-            populateBuiltinValues(builtInValues);
-        }
+        loadBuiltinValues();
         OdinSymbolTable symbolTable = new OdinSymbolTable();
         symbolTable.addAll(builtInSymbols);
-        symbolTable.addAll(builtInValues);
+
         return symbolTable;
     }
 
@@ -167,43 +165,47 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
 
     @Override
     public EvOdinValue getValue(String name) {
+        loadBuiltinValues();
+        return builtInValues.get(getBuiltinSymbol(name));
+    }
+
+    private void loadBuiltinValues() {
         if (builtInValues == null) {
             builtInValues = new HashMap<>();
             // This is not thread safe because it calls populate builtin symbols
             populateBuiltinValues(builtInValues);
         }
-        return builtInValues.get(name);
     }
 
-    protected void populateBuiltinValues(Map<String, EvOdinValue> valueMap) {
+    protected void populateBuiltinValues(Map<OdinSymbol, EvOdinValue> valueMap) {
         loadBuiltinSymbols();
         // ODIN_OS
         {
             setOdinOs(valueMap);
             setOdinArch(valueMap);
-            valueMap.put("ODIN_DEBUG", EvOdinValues.BUILTIN_IDENTIFIERS.get("false"));
+            valueMap.put(getBuiltinSymbol("ODIN_DEBUG"), EvOdinValues.BUILTIN_IDENTIFIERS.get("false"));
         }
     }
 
-    private void setOdinArch(Map<String, EvOdinValue> valueMap) {
+    private void setOdinArch(Map<OdinSymbol, EvOdinValue> valueMap) {
         TsOdinType odinArchType = getType("Odin_Arch_Type");
         Processor processor = ArchUtils.getProcessor();
         Processor.Type type = processor.getType();
 
         EvEnumValue enumName = switch (type) {
             case AARCH_64 -> new EvEnumValue("arm46", 0);
-            case X86 -> new EvEnumValue("i386", 2);
+            case X86 -> new EvEnumValue("amd64", 1);
             case IA_64, PPC, UNKNOWN -> new EvEnumValue("Unknown", 0);
             case RISC_V -> new EvEnumValue("riscv64", 6);
             case null -> new EvEnumValue("Unknown", 0);
         };
 
         EvOdinValue value = new EvOdinValue(enumName, odinArchType);
-        valueMap.put("ODIN_ARCH", value);
-        valueMap.put("ODIN_ARCH_STRING", new EvOdinValue(enumName.getName().toLowerCase(), TsOdinBuiltInTypes.STRING));
+        valueMap.put(getBuiltinSymbol("ODIN_ARCH"), value);
+        valueMap.put(getBuiltinSymbol("ODIN_ARCH_STRING"), new EvOdinValue(enumName.getName().toLowerCase(), TsOdinBuiltInTypes.STRING));
     }
 
-    private void setOdinOs(Map<String, EvOdinValue> valueMap) {
+    private void setOdinOs(Map<OdinSymbol, EvOdinValue> valueMap) {
         TsOdinType odinOsType = getType("Odin_OS_Type");
         /*
         	    Unknown,
@@ -228,12 +230,12 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             enumValue = new EvEnumValue("Unknown", 0);
         }
         EvOdinValue value = new EvOdinValue(enumValue, odinOsType);
-        valueMap.put("ODIN_OS", value);
+        valueMap.put(getBuiltinSymbol("ODIN_OS"), value);
 
         EvOdinValue stringValue = new EvOdinValue(enumValue
                 .getName()
                 .toLowerCase(), TsOdinBuiltInTypes.STRING);
-        valueMap.put("ODIN_OS_STRING", stringValue);
+        valueMap.put(getBuiltinSymbol("ODIN_OS_STRING"), stringValue);
     }
 
     @Override
@@ -431,6 +433,15 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                 odinSymbol -> OdinAttributeUtils.containsAttribute(odinSymbol.getAttributes(), "builtin"));
     }
 
+    @Override
+    public OdinSymbolValueStore getSymbolValueStore() {
+        loadBuiltinValues();
+
+        OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
+        symbolValueStore.getValues().putAll(builtInValues);
+        return symbolValueStore;
+    }
+
     private @NotNull List<OdinSymbol> loadSyntheticCompilerDeclarations() {
         List<OdinSymbol> syntheticCompilerDeclarations = new ArrayList<>();
         List<String> resources = List.of("odin/compiler_declarations.odin");
@@ -456,9 +467,9 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
     }
 
     private void addConstantWithSyntheticType(OdinSymbolTable syntheticSymbolTable, String constantIdentifier, String constantTypeIdentifier) {
-        OdinSymbol odinOsType = syntheticSymbolTable.getSymbol(constantTypeIdentifier);
-        Objects.requireNonNull(odinOsType);
-        OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) odinOsType.getDeclaredIdentifier();
+        OdinSymbol symbol = syntheticSymbolTable.getSymbol(constantTypeIdentifier);
+        Objects.requireNonNull(symbol);
+        OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) symbol.getDeclaredIdentifier();
         TsOdinMetaType type = (TsOdinMetaType) declaredIdentifier.getType(new OdinContext());
         typesCache.put(constantTypeIdentifier, type);
         typesCache.put(constantIdentifier, type.representedType());

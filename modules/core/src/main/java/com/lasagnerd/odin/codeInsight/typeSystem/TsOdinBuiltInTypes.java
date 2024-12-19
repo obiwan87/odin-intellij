@@ -403,7 +403,7 @@ public class TsOdinBuiltInTypes {
 
     private static class TsOdinUnknownType extends TsOdinTypeBase {
         {
-            this.context = OdinContext.EMPTY;
+            this.context = new OdinContext();
         }
 
         @Override
@@ -429,7 +429,7 @@ public class TsOdinBuiltInTypes {
 
     private static class TsOdinUndecidedType extends TsOdinTypeBase {
         {
-            this.context = OdinContext.EMPTY;
+            this.context = new OdinContext();
         }
 
         @Override
@@ -455,7 +455,7 @@ public class TsOdinBuiltInTypes {
 
     private static class TsOdinVoidType extends TsOdinTypeBase {
         {
-            this.context = OdinContext.EMPTY;
+            this.context = new OdinContext();
         }
 
         @Override

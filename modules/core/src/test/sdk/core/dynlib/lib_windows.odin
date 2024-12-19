@@ -1,10 +1,10 @@
-//+build windows
-//+private
+#+build windows
+#+private
 package dynlib
 
-import win32 "core:sys/windows"
-import "core:strings"
 import "core:reflect"
+import "core:strings"
+import win32 "core:sys/windows"
 
 _load_library :: proc(path: string, global_symbols := false, allocator := context.temp_allocator) -> (Library, bool) {
 	// NOTE(bill): 'global_symbols' is here only for consistency with POSIX which has RTLD_GLOBAL

@@ -8,19 +8,17 @@
 */
 
 
-//+vet !using-stmt
+#+vet !using-stmt
 package png
 
+import "base:runtime"
+import "core:bytes"
 import "core:compress"
 import "core:compress/zlib"
-import "core:image"
-
 import "core:hash"
-import "core:bytes"
+import "core:image"
 import "core:io"
 import "core:mem"
-import "base:intrinsics"
-import "base:runtime"
 
 // Limit chunk sizes.
 // By default: IDAT = 8k x 8k x 16-bits + 8k filter bytes.

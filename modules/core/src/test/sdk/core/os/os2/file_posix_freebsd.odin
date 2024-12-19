@@ -1,8 +1,7 @@
-//+private
+#+private
 package os2
 
 import "base:runtime"
-
 import "core:c"
 import "core:sys/posix"
 

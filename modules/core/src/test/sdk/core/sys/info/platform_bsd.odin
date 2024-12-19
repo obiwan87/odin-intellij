@@ -1,10 +1,10 @@
-//+build openbsd, netbsd
+#+build openbsd, netbsd
 package sysinfo
 
-import sys "core:sys/unix"
-import "core:strings"
-import "core:strconv"
 import "base:runtime"
+import "core:strconv"
+import "core:strings"
+import sys "core:sys/unix"
 
 @(private)
 version_string_buf: [1024]u8

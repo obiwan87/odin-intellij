@@ -1,5 +1,9 @@
-//+build darwin, netbsd, openbsd, freebsd
+#+build darwin, netbsd, openbsd, freebsd
 package kqueue
+
+import "base:intrinsics"
+import "core:c"
+import "core:sys/posix"
 
 when ODIN_OS == .Darwin {
 	foreign import lib "system:System.framework"
@@ -7,10 +11,10 @@ when ODIN_OS == .Darwin {
 	foreign import lib "system:c"
 }
 
-import "base:intrinsics"
 
-import "core:c"
-import "core:sys/posix"
+
+
+
 
 KQ :: posix.FD
 

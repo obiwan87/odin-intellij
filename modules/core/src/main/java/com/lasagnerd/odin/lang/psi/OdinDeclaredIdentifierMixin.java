@@ -131,7 +131,7 @@ public abstract class OdinDeclaredIdentifierMixin extends OdinPsiElementImpl imp
         List<Object> dependencies = new ArrayList<>();
         dependencies.add(this);
         TsOdinType tsOdinType = tryGetBuiltinType(this);
-        if (tsOdinType == null) {
+        if (tsOdinType == null || tsOdinType.isUnknown()) {
             return CachedValueProvider.Result.create(OdinInferenceEngine.resolveTypeOfDeclaredIdentifier(context, this), dependencies);
         }
         return CachedValueProvider.Result.create(tsOdinType, dependencies);

@@ -60,7 +60,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     }
 
     private void addSelectorTypeCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result, @NotNull OdinQualifiedType parentType) {
-        OdinSymbolTable completionScope = OdinInsightUtils.getReferenceableSymbols(OdinContext.EMPTY, parentType);
+        OdinSymbolTable completionScope = OdinInsightUtils.getReferenceableSymbols(new OdinContext(), parentType);
         if (completionScope != null) {
             addLookUpElements(result, completionScope.flatten()
                     .getSymbols()
@@ -226,7 +226,8 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     }
 
     private static void addImplicitEnumCompletions(@NotNull CompletionResultSet result, TsOdinEnumType tsOdinEnumType, Project project, int priority) {
-        OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(project, tsOdinEnumType);
+        // TODO context
+        OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(new OdinContext(), project, tsOdinEnumType);
         // Sort by definition order
         List<OdinSymbol> symbols = typeElements.getSymbols().stream()
                 .sorted(

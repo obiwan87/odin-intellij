@@ -34,13 +34,6 @@ public class OdinSymbolValueStore {
         return values.get(symbol);
     }
 
-    // TODO implement
-    public OdinSymbolValueStore copy() {
-        OdinSymbolValueStore store = new OdinSymbolValueStore();
-        store.getValues().putAll(values);
-        return store;
-    }
-
     public void combine(OdinSymbolValueStore other) {
         for (var entry : other.values.entrySet()) {
             EvOdinValue value = values.computeIfAbsent(entry.getKey(), k -> entry.getValue());
@@ -61,6 +54,21 @@ public class OdinSymbolValueStore {
         }
     }
 
+    public OdinSymbolValueStore intersected(OdinSymbolValueStore symbolValueStore) {
+
+        OdinSymbolValueStore copy = copy();
+        if (symbolValueStore == null)
+            return copy;
+        copy.intersect(symbolValueStore);
+        return copy;
+    }
+
+    public OdinSymbolValueStore copy() {
+        OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
+        symbolValueStore.getValues().putAll(this.values);
+        return symbolValueStore;
+    }
+
     public void printValues() {
         for (Map.Entry<OdinSymbol, EvOdinValue> entry : values.entrySet()) {
             System.out.println(entry.getKey().getName() + ":=" + entry.getValue().toString());
@@ -70,6 +78,13 @@ public class OdinSymbolValueStore {
     // An absence of value means ALL values
     // So if
     public boolean isSubset(OdinSymbolValueStore symbolValueStore) {
+        if (values.isEmpty()) {
+            return symbolValueStore.values.isEmpty();
+        }
+
+        if (symbolValueStore.values.isEmpty())
+            return true;
+
         for (var entry : this.values.entrySet()) {
             OdinSymbol symbol = entry.getKey();
             EvOdinValue thisValue = entry.getValue();
@@ -82,5 +97,20 @@ public class OdinSymbolValueStore {
             }
         }
         return true;
+    }
+
+    /**
+     * 'bottom' is a commonly used term in dataflow analysis, the denotes a contradictory/impossible state
+     * If any of the symbols assume a 'bottom' value, the whole store is bottom.
+     *
+     * @return True if the symbol value store is 'bottom'
+     */
+    public boolean isBottom() {
+        for (Map.Entry<OdinSymbol, EvOdinValue> entry : values.entrySet()) {
+            if (entry.getValue().asSet().isBottom()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

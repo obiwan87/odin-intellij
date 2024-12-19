@@ -58,11 +58,11 @@ public class OdinTypeResolver extends OdinVisitor {
         return resolveType(0, context, declaredIdentifier, declaration, type);
     }
 
-    public static @NotNull TsOdinType resolveType(OdinContext context, @NotNull OdinType type) {
+    public static @NotNull TsOdinType resolveType(@NotNull OdinContext context, @NotNull OdinType type) {
         return resolveType(0, context, null, null, type);
     }
 
-    public static @NotNull TsOdinType resolveType(OdinContext context,
+    public static @NotNull TsOdinType resolveType(@NotNull OdinContext context,
                                                   OdinDeclaredIdentifier declaredIdentifier,
                                                   OdinDeclaration declaration,
                                                   @NotNull OdinType type) {
@@ -93,13 +93,6 @@ public class OdinTypeResolver extends OdinVisitor {
     public static @NotNull OdinContext initializeContext(OdinContext context, PsiElement element) {
         if (context == null) {
             context = new OdinContext(OdinImportService.getInstance(element.getProject()).getPackagePath(element));
-        } else {
-            OdinContext newContext = new OdinContext(OdinImportService.getInstance(element.getProject()).getPackagePath(element));
-            newContext.addTypes(context);
-            newContext.getKnownTypes().putAll(context.getKnownTypes());
-            newContext.getSpecializedTypes().putAll(context.getSpecializedTypes());
-            newContext.getPolymorphicValues().putAll(context.getPolymorphicValues());
-            context = newContext;
         }
         return context;
     }
@@ -110,7 +103,7 @@ public class OdinTypeResolver extends OdinVisitor {
         return findMetaType(context, null, null, expression, type);
     }
 
-    public static @NotNull TsOdinMetaType findMetaType(OdinContext context,
+    public static @NotNull TsOdinMetaType findMetaType(@NotNull OdinContext context,
                                                        OdinDeclaredIdentifier declaredIdentifier,
                                                        OdinDeclaration declaration,
                                                        OdinExpression firstExpression,
@@ -224,10 +217,10 @@ public class OdinTypeResolver extends OdinVisitor {
             PsiNamedElement declaredIdentifier = odinSymbol.getDeclaredIdentifier();
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return OdinImportUtils.getSymbolsOfImportedPackage(context.getPackagePath(), importDeclarationStatement).asContext();
+                return OdinImportUtils.getSymbolsOfImportedPackage(context, context.getPackagePath(), importDeclarationStatement).asContext();
             }
         }
-        return OdinContext.EMPTY;
+        return new OdinContext();
     }
 
     // resolve type calls
@@ -391,7 +384,7 @@ public class OdinTypeResolver extends OdinVisitor {
         if (odinDeclaration != null) {
             typeContext = initializeContext(context, odinDeclaration);
         } else {
-            typeContext = OdinContext.EMPTY;
+            typeContext = new OdinContext();
         }
         switch (odinDeclaration) {
             case OdinConstantInitializationStatement constantInitializationStatement -> {

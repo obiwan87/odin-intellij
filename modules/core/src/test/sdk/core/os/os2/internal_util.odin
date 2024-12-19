@@ -1,9 +1,8 @@
-//+private
+#+private
 package os2
 
 import "base:intrinsics"
 import "base:runtime"
-
 
 // Splits pattern by the last wildcard "*", if it exists, and returns the prefix and suffix
 // parts which are split by the last "*"

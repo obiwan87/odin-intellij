@@ -1,13 +1,12 @@
-//+private
-//+build darwin, netbsd, freebsd, openbsd
+#+private
+#+build darwin, netbsd, freebsd, openbsd
 package os2
 
 import "base:runtime"
-
-import "core:io"
 import "core:c"
-import "core:time"
+import "core:io"
 import "core:sys/posix"
+import "core:time"
 
 // Most implementations will EINVAL at some point when doing big writes.
 // In practice a read/write call would probably never read/write these big buffers all at once,

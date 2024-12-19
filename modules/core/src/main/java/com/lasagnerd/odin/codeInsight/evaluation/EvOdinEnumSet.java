@@ -92,4 +92,9 @@ public class EvOdinEnumSet extends EvOdinValueSet {
         String vals = getValue().stream().map(EvEnumValue::toString).collect(Collectors.joining(", "));
         return "{%s}".formatted(vals);
     }
+
+    @Override
+    public boolean isBottom() {
+        return getValue().isEmpty();
+    }
 }

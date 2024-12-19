@@ -44,6 +44,7 @@ public class CNFFormula {
         CNFFormula cnf = new CNFFormula();
         for (Condition condition : conditions) {
             CNFFormula currentCNF = cnfConverter.toCNF(condition);
+
             cnf = cnf.and(currentCNF);
         }
 

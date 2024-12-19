@@ -1,19 +1,19 @@
 package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
-import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValueSet;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinBuildFlagEvaluator;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.lang.psi.OdinFileScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class OdinFileScopeMixin extends OdinPsiElementImpl implements OdinFileScope {
 
@@ -31,16 +31,18 @@ public abstract class OdinFileScopeMixin extends OdinPsiElementImpl implements O
     }
 
     private CachedValueProvider.Result<OdinSymbolValueStore> computeBuildFlagStore() {
-        if (this.getBuildFlagClauseList().isEmpty())
-            return CachedValueProvider.Result.create(null, this);
-
         OdinBuildFlagEvaluator buildFlagEvaluator = new OdinBuildFlagEvaluator();
-        Map<OdinSymbol, EvOdinValueSet> buildFlagsValues = buildFlagEvaluator.evaluate(this.getBuildFlagClauseList());
-        if (buildFlagsValues.isEmpty())
-            return CachedValueProvider.Result.create(null, this.getBuildFlagClauseList());
-        OdinSymbolValueStore odinSymbolValueStore = new OdinSymbolValueStore();
-        odinSymbolValueStore.getValues().putAll(buildFlagsValues);
-        return CachedValueProvider.Result.create(odinSymbolValueStore, this.getBuildFlagClauseList());
+        OdinSymbolValueStore buildFlagsValues = buildFlagEvaluator.evaluateBuildFlags(this.getContainingOdinFile());
+        if (buildFlagsValues.getValues().isEmpty())
+            return null;
+
+        List<Object> dependencies = new ArrayList<>(this.getBuildFlagClauseList());
+        dependencies.add(this);
+        PsiFile containingFile = this.getContainingFile();
+        if (containingFile != null) {
+            dependencies.add(containingFile);
+        }
+        return CachedValueProvider.Result.create(buildFlagsValues, dependencies);
     }
 
     public OdinFileScopeMixin(@NotNull ASTNode node) {
@@ -53,16 +55,12 @@ public abstract class OdinFileScopeMixin extends OdinPsiElementImpl implements O
     }
 
     public OdinSymbolTable getFullSymbolTable() {
-        if (this instanceof OdinFileScope odinFileScope) {
-            if (symbolTable == null) {
-                symbolTable = OdinSymbolTableHelper.buildFileScopeSymbolTable(
-                        odinFileScope,
-                        OdinSymbolTableHelper.getGlobalFileVisibility(odinFileScope)
-                );
-            }
-
-            return symbolTable;
+        if (symbolTable == null) {
+            symbolTable = OdinSymbolTableHelper
+                    .buildFileScopeSymbolTable(this,
+                            OdinSymbolTableHelper.getGlobalFileVisibility(this));
         }
-        return null;
+
+        return symbolTable;
     }
 }

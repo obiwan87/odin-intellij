@@ -187,7 +187,7 @@ odinFile                             ::= fileScope
 private eos_recover ::= !eos
 
 fileScope                            ::= buildFlagClause* packageDeclaration eos importStatementsContainer? fileScopeStatementList <<eof>> {
-    methods=[getImportStatements getFullSymbolTable]
+    methods=[getImportStatements getFullSymbolTable getBuildFlagsValuesStore]
     mixin= "com.lasagnerd.odin.lang.psi.impl.OdinFileScopeMixin"
     implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock"]
 }

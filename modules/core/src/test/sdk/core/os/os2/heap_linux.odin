@@ -1,9 +1,9 @@
-//+private
+#+private
 package os2
 
-import "core:sys/linux"
-import "core:sync"
 import "core:mem"
+import "core:sync"
+import "core:sys/linux"
 
 // NOTEs
 //

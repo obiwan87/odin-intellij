@@ -14,32 +14,28 @@ import java.util.Map;
 @Getter
 public class OdinLattice {
 
-    public static final OdinLattice EMPTY = new OdinLattice(OdinContext.EMPTY);
+    public static final OdinLattice EMPTY = new OdinLattice();
     // Facts
     OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
     List<OdinConstraint> constraints = new ArrayList<>();
     List<Condition> conditions = new ArrayList<>();
-    final OdinContext context;
 
     public OdinLattice() {
-        this(OdinContext.EMPTY);
+
     }
 
     public static OdinLattice fromContext(OdinContext context) {
         if (context == null)
-            context = OdinContext.EMPTY;
-        OdinLattice lattice = new OdinLattice(context);
+            context = new OdinContext();
+        OdinLattice lattice = new OdinLattice();
         lattice.symbolValueStore = context.getSymbolValueStore().copy();
         return lattice;
     }
 
-    public OdinLattice(OdinContext context) {
-        this.context = context;
-    }
 
     // TODO implement
     public OdinLattice copy() {
-        OdinLattice lattice = new OdinLattice(context);
+        OdinLattice lattice = new OdinLattice();
         lattice.symbolValueStore = lattice.getSymbolValueStore().copy();
         lattice.getConditions().addAll(conditions);
         lattice.getConstraints().addAll(constraints);
@@ -47,8 +43,10 @@ public class OdinLattice {
         return lattice;
     }
 
-    public OdinContext getContext() {
-        return this.context.withSymbolValueStore(symbolValueStore);
+    public OdinContext toContext() {
+        OdinContext context = new OdinContext();
+        context.getSymbolValueStore().getValues().putAll(this.getValues());
+        return context;
     }
 
     public void combine(OdinLattice lattice) {
@@ -63,6 +61,12 @@ public class OdinLattice {
         OdinLattice copy = this.copy();
         copy.intersect(lattice);
         return lattice;
+    }
+
+    public void removeSymbols(OdinLattice other) {
+        for (Map.Entry<OdinSymbol, EvOdinValue> entry : other.getValues().entrySet()) {
+            this.getValues().remove(entry.getKey());
+        }
     }
 
     public boolean isSubset(OdinLattice lattice) {

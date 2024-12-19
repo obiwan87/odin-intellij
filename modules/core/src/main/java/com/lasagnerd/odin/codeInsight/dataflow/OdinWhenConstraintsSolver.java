@@ -53,7 +53,7 @@ public class OdinWhenConstraintsSolver extends OdinVisitor {
                 return OdinValueInequalityConstraint.create(condition);
             }
         }
-        throw new UnsupportedOperationException("Bug!");
+        return IDENTITY;
     }
 
     private static OdinLattice doSolveLattice(@NotNull OdinLattice lattice, OdinPsiElement element, OdinWhenInstruction odinConditionalBlock) {
@@ -69,19 +69,22 @@ public class OdinWhenConstraintsSolver extends OdinVisitor {
                 break;
             }
         }
-        if (!foundAncestor)
+        if (!foundAncestor) {
             return outLattice;
+        }
 
         for (OdinWhenBranchBlock branch : odinConditionalBlock.getBranches()) {
             boolean isAncestor = PsiTreeUtil.isAncestor(branch.getPsiElement(), element, true);
             if (branch.getCondition() != null) {
-                System.out.println("Coming from " + element.getText() + ":" + element.getLocation() + ". Entering condition " + branch.getCondition().getText());
+//                System.out.println("Coming from " + element.getText() + ":" + element.getLocation() + ". Entering condition " + branch.getCondition().getText());
                 // Careful, ConditionExtractor uses reference resolver
-                Condition condition = ConditionExtractor.toCondition(lattice.getContext(), branch.getCondition());
-                if (isAncestor) {
-                    conditions.add(condition);
-                } else {
-                    conditions.add(new NotCondition(condition));
+                Condition condition = ConditionExtractor.toCondition(lattice.toContext(), branch.getCondition());
+                if (condition != null) {
+                    if (isAncestor) {
+                        conditions.add(condition);
+                    } else {
+                        conditions.add(new NotCondition(condition));
+                    }
                 }
             }
 

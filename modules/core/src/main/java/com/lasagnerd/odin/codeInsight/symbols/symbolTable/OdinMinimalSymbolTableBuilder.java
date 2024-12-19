@@ -39,7 +39,7 @@ public class OdinMinimalSymbolTableBuilder extends OdinSymbolTableBuilderBase {
     public OdinSymbolTable buildMinimalContext(PsiElement element, boolean constantsOnly) {
         OdinScopeBlock containingScopeBlock = getNextContainingScopeBlock(element);
         if (containingScopeBlock == null) {
-            OdinSymbolTable rootSymbolTable = OdinSymbolTableHelper.getRootSymbolTable(element, packagePath);
+            OdinSymbolTable rootSymbolTable = OdinSymbolTableHelper.getRootSymbolTable(context, element, packagePath);
             if (checkStopCondition(rootSymbolTable) || listener.onBlockConsumed(rootSymbolTable, null)) {
                 return rootSymbolTable;
             }
@@ -103,7 +103,7 @@ public class OdinMinimalSymbolTableBuilder extends OdinSymbolTableBuilderBase {
             OdinSymbolTableBuilderBase.PositionCheckResult positionCheckResult = checkPosition(declaration);
             if (!positionCheckResult.validPosition()) continue;
 
-            List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getSymbols(declaration, initialContext);
+            List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getSymbols(declaration, this.context);
 
             context.addAll(localSymbols);
 
@@ -120,7 +120,7 @@ public class OdinMinimalSymbolTableBuilder extends OdinSymbolTableBuilderBase {
 
             if (!shouldAdd) continue;
 
-            List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getSymbols(declaration, initialContext);
+            List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getSymbols(declaration, this.context);
             for (OdinSymbol symbol : localSymbols) {
                 // Add stuff if we are in file scope (e.g. global variables)
 

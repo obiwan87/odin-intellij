@@ -1,9 +1,9 @@
-//+private
+#+private
 package os2
 
-import "core:strings"
-import "core:strconv"
 import "base:runtime"
+import "core:strconv"
+import "core:strings"
 import "core:sys/linux"
 
 _Path_Separator        :: '/'

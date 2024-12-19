@@ -3,6 +3,7 @@ package com.lasagnerd.odin.lang.psi.impl;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -11,10 +12,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.lang.psi.OdinExpression;
-import com.lasagnerd.odin.lang.psi.OdinImportPath;
-import com.lasagnerd.odin.lang.psi.OdinParenthesizedExpression;
-import com.lasagnerd.odin.lang.psi.OdinPsiElement;
+import com.lasagnerd.odin.lang.psi.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -72,5 +70,13 @@ public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiE
         String lineColumn = OdinInsightUtils.getLineColumn(this);
 
         return "%s:%s".formatted(containingVirtualFile.getPath(), lineColumn);
+    }
+
+    @Override
+    public OdinFile getContainingOdinFile() {
+        PsiFile containingFile = getContainingFile();
+        if (containingFile instanceof OdinFile)
+            return (OdinFile) containingFile;
+        return null;
     }
 }

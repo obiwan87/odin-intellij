@@ -35,6 +35,68 @@ testWhenStatementConditions :: proc() {
     }
 }
 
+
+testWhenStatementMultipleDefinitions_withAlias :: proc() {
+
+    when ODIN_OS == .Linux {
+        _S :: struct {
+            f: i32
+        }
+    } else {
+        _S :: struct {
+            f: i64
+        }
+    }
+
+    // This symbol will be reached with different knowledge
+    // We cannot use the cached value as-is
+    // Instead, we need to either, use cached values that are dependent
+    // on the context, or turn off cache retrieval for subsequent computation
+    // What is the condition, under which cache computation is allowed/disallowed?
+    // Thoughts:
+    // When reaching out to a target whose lattice is not a subset of the source lattice
+    //
+    S :: _S
+
+    when ODIN_OS == .Linux {
+        linux := S { }
+        linux_val := linux.f
+    } else {
+        other := S { }
+        other_val := other.f
+    }
+}
+
+testWhenStatementMultipleDefinitions :: proc() {
+
+    when ODIN_OS != .Windows {
+        when ODIN_OS == .Linux {
+            S :: struct {
+                f: i32
+            }
+        } else when ODIN_OS == .Darwin {
+            S :: struct {
+                f: f64
+            }
+        } else {
+            S :: struct {
+                f: f32
+            }
+        }
+    }
+
+    when ODIN_OS == .Linux {
+        linux := S { }
+        linux_val := linux.f
+    } else when ODIN_OS == .Darwin {
+        darwin := S { }
+        darwin_val := darwin.f
+    } else when ODIN_OS != .Windows {
+        other := S { }
+        other_val := other.f
+    }
+}
+
 testWhenStatement :: proc() {
     when ODIN_OS != .Windows {
         X :: 1

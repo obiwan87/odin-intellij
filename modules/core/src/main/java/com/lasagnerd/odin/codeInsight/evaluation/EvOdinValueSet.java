@@ -24,7 +24,10 @@ public abstract class EvOdinValueSet extends EvOdinValue {
     }
 
     protected boolean isCompatible(EvOdinValueSet other) {
-        return other.getElementType() == elementType && OdinTypeChecker.checkTypesStrictly(type, other.getType());
+        if (type != null && other.getType() != null) {
+            return other.getElementType() == elementType && OdinTypeChecker.checkTypesStrictly(type, other.getType());
+        }
+        return false;
     }
 
     public abstract EvOdinValueSet doCombine(EvOdinValueSet other);

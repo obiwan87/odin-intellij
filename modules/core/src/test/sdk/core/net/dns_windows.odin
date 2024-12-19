@@ -1,4 +1,4 @@
-//+build windows
+#+build windows
 package net
 
 /*
@@ -20,9 +20,8 @@ package net
 		Feoramund:       FreeBSD platform code
 */
 
-import "core:strings"
 import "core:mem"
-
+import "core:strings"
 import win "core:sys/windows"
 
 @(private)

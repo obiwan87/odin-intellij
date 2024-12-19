@@ -178,7 +178,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     TsOdinType doInferType(OdinExpression expression) {
         OdinInferenceEngineParameters inferenceEngineParameters = new OdinInferenceEngineParameters(
-                null, null, 1, explicitMode
+                new OdinContext(), null, 1, explicitMode
         );
         return expression.getInferredType(inferenceEngineParameters);
     }
@@ -406,7 +406,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     public static boolean enumContainsValue(TsOdinEnumType tsOdinEnumType, String enumValue) {
-        List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(tsOdinEnumType, OdinContext.EMPTY);
+        List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(new OdinContext(), tsOdinEnumType);
         return typeElements.stream().anyMatch(s -> s.getName().equals(enumValue));
     }
 
@@ -602,6 +602,19 @@ public class OdinInferenceEngine extends OdinVisitor {
     @Override
     public void visitCallExpression(@NotNull OdinCallExpression o) {
         // Get type of expression. If it is callable, retrieve the return type and set that as result
+        if (o instanceof OdinDirectiveExpression directiveExpression) {
+            if (directiveExpression.getDirectiveIdentifier().getIdentifierToken().getText().equals("config")) {
+                if (o.getArgumentList().size() == 2) {
+                    OdinArgument lastArgument = o.getArgumentList().getLast();
+                    if (lastArgument instanceof OdinUnnamedArgument unnamedArgument) {
+                        OdinExpression expression = unnamedArgument.getExpression();
+                        TsOdinType tsOdinType = doInferType(expression);
+                        this.type = tsOdinType.typed();
+                        return;
+                    }
+                }
+            }
+        }
         TsOdinType tsOdinType = doInferType(o.getExpression());
 
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
@@ -840,7 +853,6 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitTransmuteExpression(@NotNull OdinTransmuteExpression o) {
-
         this.type = o.getType().getResolvedType(context);
     }
 
@@ -1072,10 +1084,10 @@ public class OdinInferenceEngine extends OdinVisitor {
         if (odinDeclaration instanceof OdinConstantInitializationStatement initializationStatement) {
             if (initializationStatement.getType() != null) {
                 OdinType mainType = initializationStatement.getType();
-                return mainType.getResolvedType();
+                return mainType.getResolvedType(context);
             }
 
-            TsOdinMetaType metaType = findMetaType(null, declaredIdentifier, initializationStatement);
+            TsOdinMetaType metaType = findMetaType(context, declaredIdentifier, initializationStatement);
             if (metaType != null) return metaType;
 
 
@@ -1115,7 +1127,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         if (odinDeclaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
             if (fieldDeclarationStatement.getType() != null) {
-                return fieldDeclarationStatement.getType().getResolvedType();
+                return fieldDeclarationStatement.getType().getResolvedType(context);
             }
             return TsOdinBuiltInTypes.UNKNOWN;
         }
@@ -1126,14 +1138,14 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (typeDefinitionContainer != null) {
                 OdinType parameterType = typeDefinitionContainer
                         .getType();
-                return parameterType.getResolvedType();
+                return parameterType.getResolvedType(context);
             }
         }
 
         if (odinDeclaration instanceof OdinParameterInitialization parameterInitialization) {
             OdinType type = parameterInitialization.getTypeDefinition();
             if (type != null) {
-                return type.getResolvedType();
+                return type.getResolvedType(context);
             }
 
             OdinExpression odinExpression = parameterInitialization.getExpression();
@@ -1141,7 +1153,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
-            return OdinTypeResolver.findMetaType(null,
+            return OdinTypeResolver.findMetaType(context,
                     declaredIdentifier,
                     odinDeclaration,
                     null,
@@ -1157,7 +1169,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 enumDeclaredIdentifier = enumDeclarationStatement.getDeclaredIdentifiers().getFirst();
             }
             if (enumType != null) {
-                return OdinTypeResolver.resolveType(null,
+                return OdinTypeResolver.resolveType(context,
                         enumDeclaredIdentifier,
                         enumDeclarationStatement,
                         enumType);
@@ -1340,7 +1352,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         return declarationType;
     }
 
-    public static @Nullable TsOdinMetaType findMetaType(OdinContext context,
+    public static @Nullable TsOdinMetaType findMetaType(@NotNull OdinContext context,
                                                         OdinDeclaredIdentifier declaredIdentifier,
                                                         OdinConstantInitializationStatement initializationStatement) {
         if (initializationStatement.getExpressionList().isEmpty())

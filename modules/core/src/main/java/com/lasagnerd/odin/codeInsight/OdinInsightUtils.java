@@ -96,28 +96,31 @@ public class OdinInsightUtils {
         return null;
     }
 
-    public static OdinSymbolTable getTypeElements(Project project, TsOdinType type) {
-        return getTypeElements(project, type, false);
+    public static OdinSymbolTable getTypeElements(OdinContext context, Project project, TsOdinType type) {
+        return getTypeElements(context, project, type, false);
     }
 
-    public static OdinSymbolTable getTypeElements(Project project, TsOdinType type, boolean includeReferenceableSymbols) {
+    public static OdinSymbolTable getTypeElements(OdinContext context, Project project, TsOdinType type, boolean includeReferenceableSymbols) {
 
         type = type.baseType(true);
 
+        if (type == null)
+            return OdinSymbolTable.EMPTY;
+
         if (type instanceof TsOdinPackageReferenceType packageType) {
-            return getPackageReferenceSymbols(project, packageType, true);
+            return getPackageReferenceSymbols(context, project, packageType, true);
         }
         OdinContext typeContext = type.getContext();
         OdinSymbolTable symbolTable = new OdinSymbolTable();
         switch (type) {
             case TsOdinPointerType pointerType -> {
-                return getTypeElements(project, pointerType.getDereferencedType(), includeReferenceableSymbols);
+                return getTypeElements(context, project, pointerType.getDereferencedType(), includeReferenceableSymbols);
             }
             case TsOdinConstrainedType constrainedType -> {
-                return getTypeElements(project, constrainedType.getSpecializedType(), includeReferenceableSymbols);
+                return getTypeElements(context, project, constrainedType.getSpecializedType(), includeReferenceableSymbols);
             }
             case TsOdinAnyType anyType -> {
-                return getTypeElements(project, anyType.getBackingType(), includeReferenceableSymbols);
+                return getTypeElements(context, project, anyType.getBackingType(), includeReferenceableSymbols);
             }
             case TsOdinMetaType metaType when metaType.representedType() instanceof TsOdinPolymorphicType polymorphicType -> {
                 OdinType psiType = polymorphicType.getPsiType();
@@ -232,11 +235,13 @@ public class OdinInsightUtils {
         return symbolTable;
     }
 
-    public static @NotNull OdinSymbolTable getPackageReferenceSymbols(Project project,
-                                                                      TsOdinPackageReferenceType packageType,
-                                                                      boolean includeBuiltin) {
+    public static @NotNull OdinSymbolTable getPackageReferenceSymbols(
+            OdinContext context,
+            Project project,
+            TsOdinPackageReferenceType packageType,
+            boolean includeBuiltin) {
         OdinSymbolTable symbolTable = OdinImportUtils
-                .getSymbolsOfImportedPackage(packageType.getReferencingPackagePath(),
+                .getSymbolsOfImportedPackage(context, packageType.getReferencingPackagePath(),
                         (OdinImportDeclarationStatement) packageType.getDeclaration());
         if (includeBuiltin) {
             List<OdinSymbol> builtInSymbols = OdinSdkService.getInstance(project).getBuiltInSymbols();
@@ -389,18 +394,18 @@ public class OdinInsightUtils {
     public static List<OdinSymbol> getTypeElements(OdinContext context, OdinExpression expression) {
         TsOdinType tsOdinType = expression.getInferredType(context);
         if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            return getTypeElements(OdinTypeResolver.resolveMetaType(context, tsOdinMetaType)
-                    .baseType(true), context);
+            return getTypeElements(context, OdinTypeResolver.resolveMetaType(context, tsOdinMetaType)
+                    .baseType(true));
         }
-        return getTypeElements(tsOdinType.baseType(true), context);
+        return getTypeElements(context, tsOdinType.baseType(true));
     }
 
-    public static List<OdinSymbol> getTypeElements(OdinType type, OdinContext context) {
+    public static List<OdinSymbol> getTypeElements(OdinContext context, OdinType type) {
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, type);
-        return getTypeElements(tsOdinType, context);
+        return getTypeElements(context, tsOdinType);
     }
 
-    public static @NotNull List<OdinSymbol> getTypeElements(TsOdinType tsOdinType, OdinContext context) {
+    public static @NotNull List<OdinSymbol> getTypeElements(OdinContext context, TsOdinType tsOdinType) {
         if (tsOdinType instanceof TsOdinStructType structType) {
             if (structType.getPsiType() instanceof OdinStructType psiStructType) {
                 return getStructFields(context, psiStructType);
@@ -408,7 +413,7 @@ public class OdinInsightUtils {
         }
 
         if (tsOdinType instanceof TsOdinPointerType pointerType) {
-            return getTypeElements(pointerType.getDereferencedType(), context);
+            return getTypeElements(context, pointerType.getDereferencedType());
         }
 
         if (tsOdinType instanceof TsOdinEnumType enumType) {
@@ -424,7 +429,7 @@ public class OdinInsightUtils {
 
         if (tsOdinType instanceof TsOdinPackageReferenceType packageReferenceType) {
             OdinSymbolTable symbolTable = OdinImportUtils
-                    .getSymbolsOfImportedPackage(packageReferenceType.getReferencingPackagePath(),
+                    .getSymbolsOfImportedPackage(context, packageReferenceType.getReferencingPackagePath(),
                             (OdinImportDeclarationStatement) packageReferenceType.getDeclaration());
             return new ArrayList<>(symbolTable.getSymbols());
         }
@@ -709,12 +714,12 @@ public class OdinInsightUtils {
         List<OdinSymbol> elementSymbols = new ArrayList<>();
         tsOdinType = tsOdinType.baseType(true);
         if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
-            List<OdinSymbol> typeSymbols = getTypeElements(tsOdinStructType, context);
+            List<OdinSymbol> typeSymbols = getTypeElements(context, tsOdinStructType);
             elementSymbols.addAll(typeSymbols);
         }
 
         if (tsOdinType instanceof TsOdinBitFieldType tsOdinBitFieldType) {
-            List<OdinSymbol> typeSymbols = getTypeElements(tsOdinBitFieldType, context);
+            List<OdinSymbol> typeSymbols = getTypeElements(context, tsOdinBitFieldType);
             elementSymbols.addAll(typeSymbols);
         }
 
@@ -1062,15 +1067,15 @@ public class OdinInsightUtils {
         if (type instanceof TsOdinMetaType metaType) {
             TsOdinType tsOdinType = metaType.representedType().baseType(true);
             if (tsOdinType instanceof TsOdinEnumType) {
-                return getTypeElements(valueExpression.getProject(), tsOdinType);
+                return getTypeElements(context, valueExpression.getProject(), tsOdinType);
             }
         }
         if (type instanceof TsOdinPackageReferenceType packageReferenceType) {
-            return getPackageReferenceSymbols(valueExpression.getProject(),
+            return getPackageReferenceSymbols(context, valueExpression.getProject(),
                     packageReferenceType,
                     false);
         }
-        return getTypeElements(valueExpression.getProject(), type, true);
+        return getTypeElements(context, valueExpression.getProject(), type, true);
     }
 
     // This is a variant  of getTypeElements()
@@ -1080,7 +1085,7 @@ public class OdinInsightUtils {
         if (odinSymbol != null) {
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
             if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return OdinImportUtils.getSymbolsOfImportedPackage(OdinImportService.getInstance(qualifiedType.getProject()).getPackagePath(qualifiedType), importDeclarationStatement);
+                return OdinImportUtils.getSymbolsOfImportedPackage(context, OdinImportService.getInstance(qualifiedType.getProject()).getPackagePath(qualifiedType), importDeclarationStatement);
             }
         }
         return OdinSymbolTable.EMPTY;

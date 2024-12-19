@@ -3,9 +3,10 @@ package com.lasagnerd.odin.codeInsight.dataflow.constraints;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinLattice;
 import com.lasagnerd.odin.codeInsight.dataflow.conditions.AtomicCondition;
 import com.lasagnerd.odin.codeInsight.dataflow.conditions.SymbolicOperand;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValueSet;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.List;
 
@@ -32,6 +33,25 @@ public class OdinSymbolicEqualityConstraint implements OdinTransferFunction {
 
     @Override
     public OdinLattice transfer(OdinLattice lattice) {
-        throw new NotImplementedException("Implement equality constraint transfer function");
+        OdinLattice outLattice = lattice.copy();
+        EvOdinValueSet valueSet = null;
+        for (OdinSymbol symbol : symbols) {
+            if (valueSet == null) {
+                EvOdinValue value = lattice.getSymbolValueStore().getValue(symbol);
+                if (value != null) {
+                    valueSet = value.asSet();
+                }
+            } else {
+                EvOdinValueSet currentValue = lattice.getSymbolValueStore().getValue(symbol).asSet();
+                valueSet = valueSet.intersect(currentValue);
+            }
+        }
+
+        if (valueSet != null) {
+            for (OdinSymbol symbol : symbols) {
+                outLattice.getValues().put(symbol, valueSet);
+            }
+        }
+        return outLattice;
     }
 }

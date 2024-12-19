@@ -82,8 +82,9 @@ public interface TsOdinType {
             TsOdinType aliasedType = alias.getAliasedType();
             if (aliasedType != null) {
                 types.add(aliasedType);
-                currentType = aliasedType;
+
             }
+            currentType = aliasedType;
         }
         return types;
     }

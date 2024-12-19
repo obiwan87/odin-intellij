@@ -1,11 +1,11 @@
-//+build !freestanding
-//+build !orca
+#+build !freestanding
+#+build !orca
 package log
 
 import "core:encoding/ansi"
 import "core:fmt"
-import "core:strings"
 import "core:os"
+import "core:strings"
 import "core:time"
 
 Level_Headers := [?]string{

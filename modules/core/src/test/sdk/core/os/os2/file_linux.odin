@@ -1,11 +1,11 @@
-//+private
+#+private
 package os2
 
 import "base:runtime"
 import "core:io"
-import "core:time"
 import "core:sync"
 import "core:sys/linux"
+import "core:time"
 
 File_Impl :: struct {
 	file: File,

@@ -1,8 +1,7 @@
-//+build !freestanding
+#+build !freestanding
 package mem
 
 import "core:sync"
-
 /*
 The data for mutex allocator.
 */

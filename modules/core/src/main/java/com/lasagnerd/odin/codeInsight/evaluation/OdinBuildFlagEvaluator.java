@@ -1,6 +1,9 @@
 package com.lasagnerd.odin.codeInsight.evaluation;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
@@ -21,6 +24,8 @@ import java.util.function.Function;
  */
 public class OdinBuildFlagEvaluator {
     private static final Map<String, Function<Project, OdinSymbolValue>> VALUES = new HashMap<>();
+    private static final Map<String, Function<Project, OdinSymbolValue>> OS_VALUES = new HashMap<>();
+    private static final Map<String, Function<Project, OdinSymbolValue>> ARCH_VALUES = new HashMap<>();
 
     public static final String ODIN_ARCH = "ODIN_ARCH";
     public static final String ODIN_OS = "ODIN_OS";
@@ -31,26 +36,29 @@ public class OdinBuildFlagEvaluator {
 
     static {
 
-        VALUES.put("windows", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Windows"));
-        VALUES.put("darwin", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Darwin"));
-        VALUES.put("linux", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Linux"));
-        VALUES.put("essence", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Essence"));
-        VALUES.put("freebsd", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "FreeBSD"));
-        VALUES.put("openbsd", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "OpenBSD"));
-        VALUES.put("netbsd", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "NetBSD"));
-        VALUES.put("haiku", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Haiku"));
-        VALUES.put("wasi", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "WASI"));
-        VALUES.put("js", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "JS"));
-        VALUES.put("orca", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Orca"));
-        VALUES.put("freestanding", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Freestanding"));
+        OS_VALUES.put("windows", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Windows"));
+        OS_VALUES.put("darwin", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Darwin"));
+        OS_VALUES.put("linux", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Linux"));
+        OS_VALUES.put("essence", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Essence"));
+        OS_VALUES.put("freebsd", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "FreeBSD"));
+        OS_VALUES.put("openbsd", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "OpenBSD"));
+        OS_VALUES.put("netbsd", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "NetBSD"));
+        OS_VALUES.put("haiku", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Haiku"));
+        OS_VALUES.put("wasi", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "WASI"));
+        OS_VALUES.put("js", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "JS"));
+        OS_VALUES.put("orca", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Orca"));
+        OS_VALUES.put("freestanding", project -> getSdkEnumValue(project, ODIN_OS, ODIN_OS_TYPE, "Freestanding"));
 
-        VALUES.put("amd64", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "amd64"));
-        VALUES.put("i386", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "i386"));
-        VALUES.put("arm32", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "arm32"));
-        VALUES.put("arm64", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "arm64"));
-        VALUES.put("wasm32", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "wasm32"));
-        VALUES.put("wasm64p32", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "wasm64p32"));
-        VALUES.put("riscv64", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "riscv64"));
+        ARCH_VALUES.put("amd64", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "amd64"));
+        ARCH_VALUES.put("i386", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "i386"));
+        ARCH_VALUES.put("arm32", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "arm32"));
+        ARCH_VALUES.put("arm64", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "arm64"));
+        ARCH_VALUES.put("wasm32", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "wasm32"));
+        ARCH_VALUES.put("wasm64p32", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "wasm64p32"));
+        ARCH_VALUES.put("riscv64", project -> getSdkEnumValue(project, ODIN_ARCH, ODIN_ARCH_TYPE, "riscv64"));
+
+        VALUES.putAll(OS_VALUES);
+        VALUES.putAll(ARCH_VALUES);
     }
 
     record OdinSymbolValue(OdinSymbol symbol, EvOdinValue value) {
@@ -101,6 +109,65 @@ public class OdinBuildFlagEvaluator {
 
         }
         return disjunctions;
+    }
+
+    public Map<OdinSymbol, EvOdinValueSet> evaluateFileSuffix(Project project, String fileName) {
+        fileName = FileUtil.getNameWithoutExtension(fileName);
+        String[] splits = fileName.split("_");
+
+        Map<OdinSymbol, EvOdinValueSet> values = new HashMap<>();
+        String os;
+        String arch;
+        if (splits.length > 1) {
+            os = splits[1];
+        } else {
+            os = null;
+        }
+        if (splits.length > 2) {
+            arch = splits[2];
+        } else {
+            arch = null;
+        }
+
+        if (os != null) {
+            Function<Project, OdinSymbolValue> func = OS_VALUES.get(os);
+            if (func != null) {
+                OdinSymbolValue symbolValue = func.apply(project);
+                values.put(symbolValue.symbol(), symbolValue.value().asSet());
+            }
+        }
+
+        if (arch != null) {
+            Function<Project, OdinSymbolValue> func = ARCH_VALUES.get(arch);
+            if (func != null) {
+                OdinSymbolValue symbolValue = func.apply(project);
+                values.put(symbolValue.symbol(), symbolValue.value().asSet());
+            }
+        }
+
+        return values;
+    }
+
+    public OdinSymbolValueStore evaluateBuildFlags(OdinFile file) {
+        OdinFileScope fileScope = file.getFileScope();
+        Map<OdinSymbol, EvOdinValueSet> valuesBuildFlagClauses = evaluate(fileScope.getBuildFlagClauseList());
+        VirtualFile virtualFile = file.getContainingFile().getVirtualFile();
+
+        Map<OdinSymbol, EvOdinValueSet> valuesFileSuffix;
+        if (virtualFile != null) {
+            valuesFileSuffix = evaluateFileSuffix(fileScope.getProject(),
+                    virtualFile.getName());
+        } else {
+            valuesFileSuffix = Collections.emptyMap();
+        }
+
+        OdinSymbolValueStore clauseStore = new OdinSymbolValueStore();
+        clauseStore.getValues().putAll(valuesBuildFlagClauses);
+        OdinSymbolValueStore suffixStore = new OdinSymbolValueStore();
+        suffixStore.getValues().putAll(valuesFileSuffix);
+
+        suffixStore.intersect(clauseStore);
+        return suffixStore;
     }
 
     private static void processConjunctions(Map<OdinSymbol, EvOdinValueSet> newValues,

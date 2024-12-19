@@ -1,5 +1,5 @@
 package conditionalImporting
 
 _S :: struct {
-    windows_i386: i32
+    windows_amd64: f64
 }

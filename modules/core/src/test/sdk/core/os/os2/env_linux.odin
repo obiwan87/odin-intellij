@@ -1,12 +1,11 @@
-//+private
+#+private
 package os2
 
-import "base:runtime"
 import "base:intrinsics"
-
-import "core:sync"
+import "base:runtime"
 import "core:slice"
 import "core:strings"
+import "core:sync"
 
 // TODO: IF NO_CRT:
 //         Override the libc environment functions' weak linkage to

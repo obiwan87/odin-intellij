@@ -1,4 +1,4 @@
-//+private
+#+private
 package mypackage
 
 my_private_struct :: struct {}

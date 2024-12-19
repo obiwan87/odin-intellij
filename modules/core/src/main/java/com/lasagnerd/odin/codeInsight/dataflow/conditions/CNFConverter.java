@@ -17,16 +17,21 @@ public class CNFConverter {
             CNFFormula leftCNF = toCNF(andCond.getLeft());
             CNFFormula rightCNF = toCNF(andCond.getRight());
             // CNF(AND) is just union of clauses
-            return leftCNF.and(rightCNF);
+            if (leftCNF != null && rightCNF != null) {
+                return leftCNF.and(rightCNF);
+            }
+            return new CNFFormula();
         } else if (condition instanceof OrCondition orCond) {
             CNFFormula leftCNF = toCNF(orCond.getLeft());
             CNFFormula rightCNF = toCNF(orCond.getRight());
-            return distributeOrOverAnd(leftCNF, rightCNF);
+            if (leftCNF != null && rightCNF != null) {
+                return distributeOrOverAnd(leftCNF, rightCNF);
+            }
+            return new CNFFormula();
         } else if (condition instanceof NotCondition notCond) {
             return handleNotCondition(notCond.getInner());
         } else {
-            // If you have other condition types, handle them here.
-            throw new UnsupportedOperationException("Unknown expression type: " + condition.getClass());
+            return new CNFFormula();
         }
     }
 
@@ -103,7 +108,7 @@ public class CNFConverter {
             // !!E = E, double negation elimination
             return toCNF(innerNot.getInner());
         } else {
-            throw new UnsupportedOperationException("Unknown expression type under NOT: " + expr.getClass());
+            return new CNFFormula();
         }
     }
 

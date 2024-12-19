@@ -1,9 +1,8 @@
-//+private
-//+build darwin, netbsd, freebsd, openbsd
+#+private
+#+build darwin, netbsd, freebsd, openbsd
 package os2
 
 import "base:runtime"
-
 import "core:strings"
 import "core:sys/posix"
 

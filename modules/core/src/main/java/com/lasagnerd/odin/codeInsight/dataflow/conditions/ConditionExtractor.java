@@ -22,7 +22,10 @@ public class ConditionExtractor extends OdinVisitor {
             return Condition.EMPTY;
         ConditionExtractor conditionExtractor = new ConditionExtractor();
         conditionExtractor.context = context;
-        expression.accept(conditionExtractor);
+        try {
+            expression.accept(conditionExtractor);
+        } catch (UnsupportedOperationException ignored) {
+        }
         return conditionExtractor.result;
     }
 
@@ -41,7 +44,7 @@ public class ConditionExtractor extends OdinVisitor {
     public void visitAndExpression(@NotNull OdinAndExpression o) {
         AndCondition andCondition = new AndCondition();
         andCondition.setLeft(toCondition(o.getLeft()));
-        andCondition.setRight(toCondition(o.getLeft()));
+        andCondition.setRight(toCondition(o.getRight()));
         this.result = andCondition;
     }
 
@@ -74,7 +77,7 @@ public class ConditionExtractor extends OdinVisitor {
     @Override
     public void visitUnaryNotExpression(@NotNull OdinUnaryNotExpression o) {
         NotCondition notCondition = new NotCondition();
-        notCondition.setInner(toCondition(o));
+        notCondition.setInner(toCondition(o.getExpression()));
         this.result = notCondition;
     }
 

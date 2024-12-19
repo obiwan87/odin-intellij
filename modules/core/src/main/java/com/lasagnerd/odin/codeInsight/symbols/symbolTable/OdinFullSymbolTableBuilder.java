@@ -51,7 +51,7 @@ public class OdinFullSymbolTableBuilder extends OdinSymbolTableBuilderBase {
         OdinScopeBlock containingScopeBlock = getNextContainingScopeBlock(element);
 
         if (containingScopeBlock == null) {
-            return Objects.requireNonNullElseGet(OdinSymbolTableHelper.getRootSymbolTable(element, this.packagePath), () -> new OdinSymbolTable(packagePath));
+            return Objects.requireNonNullElseGet(OdinSymbolTableHelper.getRootSymbolTable(context, element, this.packagePath), () -> new OdinSymbolTable(packagePath));
         }
 
         if (containingScopeBlock.getFullSymbolTable() != null) {
@@ -76,7 +76,7 @@ public class OdinFullSymbolTableBuilder extends OdinSymbolTableBuilderBase {
 
         // Bring field declarations and swizzle into scope
         if (containingScopeBlock instanceof OdinCompoundLiteral compoundLiteral) {
-            TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(initialContext, compoundLiteral);
+            TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(context, compoundLiteral);
             List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, tsOdinType.getContext());
             symbolTable.addAll(elementSymbols);
         }
@@ -93,7 +93,7 @@ public class OdinFullSymbolTableBuilder extends OdinSymbolTableBuilderBase {
         }
         List<OdinDeclaration> declarations = OdinSymbolTableHelper.getDeclarations(containingScopeBlock);
         for (OdinDeclaration declaration : declarations) {
-            List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getSymbols(declaration, initialContext);
+            List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver.getSymbols(declaration, context);
 
             symbolTable.getDeclarationSymbols().computeIfAbsent(declaration, d -> new ArrayList<>()).addAll(localSymbols);
 

@@ -1,8 +1,6 @@
-//+build orca
-//+private
+#+build orca
+#+private
 package runtime
-
-import "base:intrinsics"
 
 // Constants allowing to specify the level of logging verbosity.
 log_level :: enum u32 {

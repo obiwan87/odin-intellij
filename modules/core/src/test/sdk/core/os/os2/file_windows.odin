@@ -1,14 +1,13 @@
-//+private
+#+private
 package os2
 
 import "base:runtime"
-
 import "core:io"
 import "core:mem"
 import "core:sync"
+import win32 "core:sys/windows"
 import "core:time"
 import "core:unicode/utf16"
-import win32 "core:sys/windows"
 
 INVALID_HANDLE :: ~uintptr(0)
 

@@ -1,8 +1,8 @@
-//+build !js
+#+build !js
 package core_image_bmp
 
-import "core:os"
 import "core:bytes"
+import "core:os"
 
 load :: proc{load_from_file, load_from_bytes, load_from_context}
 
