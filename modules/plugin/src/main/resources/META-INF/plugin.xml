@@ -233,8 +233,12 @@
 
     <ul>
     <li>Syntax highlighting
-    <li>Simple syntax error highlighting
-    <li>Simple code completion
+    <li>Debugging
+    <li>Reference resolution
+    <li>Type inference
+    <li>Code completion
+    <li>Refactoring support
+    <li>... and much more
     </ul>
   ]]></description>
 
