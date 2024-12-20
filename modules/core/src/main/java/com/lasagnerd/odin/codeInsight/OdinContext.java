@@ -37,6 +37,7 @@ public class OdinContext {
     OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
 
     @Setter
+    @With
     private boolean useCache = true;
 
     public OdinContext(String packagePath) {

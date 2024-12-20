@@ -113,7 +113,7 @@ public class OdinReferenceResolver {
         String name = identifier.getIdentifierToken().getText();
 
 
-        OdinLattice implicitSourceKnowledge = getImplicitKnowledge(identifier);
+        OdinLattice implicitSourceKnowledge = computeImplicitKnowledge(identifier);
         OdinLattice explicitSourceKnowledge = computeExplicitKnowledge(context, identifier);
         boolean sourceInducesExplicitKnowledge = !explicitSourceKnowledge.getValues().isEmpty();
 
@@ -168,11 +168,13 @@ public class OdinReferenceResolver {
 
             if (validSymbols.size() == 1
                     && validSymbols.getFirst().getDeclaredIdentifier() != null) {
+
+                // TODO do this in getReference()
                 // Evaluate what the knowledge would be independently of the identifier
                 // source. If the target has a compatible knowledge state, we can use the
                 // cache, otherwise, this is a non-idempotent operation, that requires not
                 // using the cache.
-                OdinLattice implicitTargetKnowledge = getImplicitKnowledge(validSymbols.getFirst().getDeclaredIdentifier());
+                OdinLattice implicitTargetKnowledge = computeImplicitKnowledge(validSymbols.getFirst().getDeclaredIdentifier());
 
                 if (!implicitTargetKnowledge.isSubset(explicitSourceKnowledge)) {
                     context.setUseCache(false);
@@ -209,7 +211,7 @@ public class OdinReferenceResolver {
         return lattice;
     }
 
-    private static @NotNull OdinLattice getImplicitKnowledge(@NotNull PsiElement element) {
+    public static @NotNull OdinLattice computeImplicitKnowledge(@NotNull PsiElement element) {
         if (OdinSdkService.getInstance(element.getProject()).isInSyntheticOdinFile(element)
                 || OdinSdkService.isInBuiltinOdinFile(element)) {
             return new OdinLattice();

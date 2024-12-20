@@ -2602,12 +2602,12 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testConditionalImports_advanced() throws IOException {
         OdinFile file = loadTestData("evaluation/importee.odin");
         {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "advanced", "win_i386_var");
-            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
-        }
-        {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "advanced", "win_amd_var");
             assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "advanced", "win_i386_var");
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
         }
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "advanced", "win_arm64_var");
