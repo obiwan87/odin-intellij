@@ -1,9 +1,8 @@
+#+build linux
 #+no-instrumentation
 package linux
 
 import "base:intrinsics"
-
-
 /*
 	Read data from file into the buffer
 	Returns the number of bytes successfully read, which may be less than the size

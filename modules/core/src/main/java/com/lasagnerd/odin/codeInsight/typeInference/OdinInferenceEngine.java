@@ -1100,7 +1100,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
             for (OdinExpression odinExpression : expressionList) {
-                TsOdinType tsOdinType = odinExpression.getInferredType();
+                TsOdinType tsOdinType = odinExpression.getInferredType(context);
                 if (tsOdinType instanceof TsOdinTuple tuple) {
                     tsOdinTypes.addAll(tuple.getTypes());
                 } else {

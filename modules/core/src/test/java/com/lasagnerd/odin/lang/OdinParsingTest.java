@@ -49,10 +49,7 @@ import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinLattice;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinWhenConstraintsSolver;
-import com.lasagnerd.odin.codeInsight.evaluation.EvEnumValue;
-import com.lasagnerd.odin.codeInsight.evaluation.EvOdinEnumSet;
-import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
-import com.lasagnerd.odin.codeInsight.evaluation.OdinBuildFlagEvaluator;
+import com.lasagnerd.odin.codeInsight.evaluation.*;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
@@ -2279,17 +2276,19 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testPsiFileAtOffset() throws IOException {
         {
-            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\slice\\sort.odin");
-            PsiElement element = file.findElementAt(695);
+            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\sys\\info\\cpu_darwin_arm64.odin");
+            PsiElement element = file.findElementAt(753);
             assertNotNull(element);
 
 //            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(element, OdinQualifiedType.class);
 //            OdinSymbol symbol = OdinReferenceResolver.resolve(new OdinContext(), qualifiedType.getTypeIdentifier());
 //            assertNotNull(symbol);
 //            System.out.println(symbol);
+
 //            OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
 //            OdinSymbol referencedSymbol = refExpression.getIdentifier().getReferencedSymbol();
-//            assertNotNull(refExpression);
+//            assertNotNull(referencedSymbol);
+
 //            EvOdinValue value = OdinExpressionEvaluator.evaluate(refExpression);
 //            assertFalse(value.asBool());
 //            TsOdinType inferredType = refExpression.getInferredType();
@@ -2299,6 +2298,7 @@ public class OdinParsingTest extends UsefulTestCase {
 //            assertNotNull(identifier);
 //            OdinSymbol referencedSymbol = identifier.getReferencedSymbol();
 //            assertNotNull(referencedSymbol);
+
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.getParentOfType(element, OdinImplicitSelectorExpression.class);
             assertNotNull(implicitSelectorExpression);
             TsOdinType inferredType = implicitSelectorExpression.getInferredType();
@@ -2563,21 +2563,28 @@ public class OdinParsingTest extends UsefulTestCase {
 
     }
 
+    public void testIndirectImport() throws IOException {
+        OdinFile file = loadTestData("evaluation/os_linux.odin");
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "test_indirect_import", "x");
+            assertEquals(TsOdinBuiltInTypes.I64, tsOdinType);
+        }
+    }
+
     public void testWhenStatementConditions() throws IOException {
-//        var file = loadExpressionEval();
-//
-//        OdinProcedureDefinition proc = findFirstProcedure(file, "testWhenStatementConditions");
-//        Collection<OdinCondition> conditions = PsiTreeUtil.findChildrenOfType(proc, OdinCondition.class);
-//        for (OdinCondition condition : conditions) {
-//            try {
-//                OdinExpression expression = condition.getExpression();
-//                EvOdinValue value = OdinExpressionEvaluator.evaluate(expression);
-//                System.out.printf("%s -> %s%n", expression.getText(), value);
-//            } catch (StackOverflowError t) {
-//                System.out.println(condition.getExpression().getText() + " caused a stack overflow");
-//            }
-//
-//        }
+        var file = loadExpressionEval();
+
+        OdinProcedureDefinition proc = findFirstProcedure(file, "testWhenStatementConditions");
+        Collection<OdinCondition> conditions = PsiTreeUtil.findChildrenOfType(proc, OdinCondition.class);
+        for (OdinCondition condition : conditions) {
+            try {
+                OdinExpression expression = condition.getExpression();
+                EvOdinValue value = OdinExpressionEvaluator.evaluate(expression);
+                System.out.printf("%s -> %s%n", expression.getText(), value);
+            } catch (StackOverflowError t) {
+                System.out.println(condition.getExpression().getText() + " caused a stack overflow");
+            }
+        }
     }
 
     public void testConditionalImports_easy() throws IOException {
@@ -2632,12 +2639,13 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testWhenStatementMultipleDefinitions() throws IOException {
         OdinFile file = loadExpressionEval();
         {
-            TsOdinType firstExpressionOfVariable = inferFirstRightHandExpressionOfVariable(file, "testWhenStatementMultipleDefinitions", "other_val");
-            assertEquals(TsOdinBuiltInTypes.F32, firstExpressionOfVariable);
-        }
-        {
             TsOdinType firstExpressionOfVariable = inferFirstRightHandExpressionOfVariable(file, "testWhenStatementMultipleDefinitions", "linux_val");
             assertEquals(TsOdinBuiltInTypes.I32, firstExpressionOfVariable);
+        }
+
+        {
+            TsOdinType firstExpressionOfVariable = inferFirstRightHandExpressionOfVariable(file, "testWhenStatementMultipleDefinitions", "other_val");
+            assertEquals(TsOdinBuiltInTypes.F32, firstExpressionOfVariable);
         }
 
         {

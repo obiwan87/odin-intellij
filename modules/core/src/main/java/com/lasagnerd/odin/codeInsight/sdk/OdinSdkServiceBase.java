@@ -438,7 +438,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         loadBuiltinValues();
 
         OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
-        symbolValueStore.getValues().putAll(builtInValues);
+        symbolValueStore.putAll(builtInValues);
         return symbolValueStore;
     }
 

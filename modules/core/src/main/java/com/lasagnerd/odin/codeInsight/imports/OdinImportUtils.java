@@ -18,7 +18,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
 import com.lasagnerd.odin.codeInsight.refactor.OdinNameSuggester;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
@@ -137,18 +136,11 @@ public class OdinImportUtils {
                         || globalFileVisibility == OdinVisibility.FILE_PRIVATE)
                     continue;
 
-                OdinSymbolValueStore valuesStore = importedFile.getFileScope().getBuildFlagsValuesStore();
-                if (!context.getSymbolValueStore().intersected(valuesStore).isBottom()) {
-                    Collection<OdinSymbol> fileScopeDeclarations = importedFileScope
-                            .getFullSymbolTable()
-                            .getSymbols();
+                Collection<OdinSymbol> fileScopeDeclarations = importedFileScope
+                        .getFullSymbolTable()
+                        .getSymbols();
 
-
-                    packageDeclarations.addAll(fileScopeDeclarations);
-//                    System.out.println(importedFile.getVirtualFile().getName() + " imported!");
-                } else {
-//                    System.out.println(importedFile.getVirtualFile().getName() + " NOT imported!");
-                }
+                packageDeclarations.addAll(fileScopeDeclarations);
             }
 
             if (!importedFiles.isEmpty()) {

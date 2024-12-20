@@ -42,7 +42,7 @@ public class OdinValueInequalityConstraint implements OdinConstraint {
 
     public void mutate(OdinLattice lattice) {
         EvOdinValue presentValue = lattice.getValues().computeIfAbsent(symbol, s -> value.asSet().any());
-        EvOdinValueSet newValue = presentValue.asSet().diff(value.asSet());
+        EvOdinValueSet newValue = presentValue.asSet().intersect(value.asSet().complement());
         lattice.getValues().put(symbol, newValue);
     }
 }

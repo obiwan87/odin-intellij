@@ -44,6 +44,9 @@ public class EvOdinEnumSet extends EvOdinValueSet {
     public EvOdinValueSet doCombine(EvOdinValueSet other) {
         if (!(other instanceof EvOdinEnumSet otherEnumSet))
             return EvOdinValues.bottom();
+        if (other.isBottom() || isBottom())
+            return EvOdinValues.bottom();
+
         Set<EvEnumValue> newValues = new HashSet<>(getValue());
         newValues.addAll(otherEnumSet.getValue());
         return new EvOdinEnumSet(newValues, (TsOdinEnumType) getType());

@@ -118,30 +118,29 @@ public class OdinBuildFlagEvaluator {
         Map<OdinSymbol, EvOdinValueSet> values = new HashMap<>();
         String os;
         String arch;
+
         if (splits.length > 1) {
-            os = splits[1];
-        } else {
-            os = null;
-        }
-        if (splits.length > 2) {
-            arch = splits[2];
-        } else {
-            arch = null;
-        }
+            for (int i = 1; i < splits.length; i++) {
+                String split = splits[i];
+                {
+                    Function<Project, OdinSymbolValue> osFunc = OS_VALUES.get(split);
+                    if (osFunc != null) {
+                        OdinSymbolValue symbolValue = osFunc.apply(project);
+                        if (symbolValue != null && symbolValue.symbol() != null) {
+                            values.put(symbolValue.symbol(), symbolValue.value().asSet());
+                        }
+                    }
+                }
 
-        if (os != null) {
-            Function<Project, OdinSymbolValue> func = OS_VALUES.get(os);
-            if (func != null) {
-                OdinSymbolValue symbolValue = func.apply(project);
-                values.put(symbolValue.symbol(), symbolValue.value().asSet());
-            }
-        }
-
-        if (arch != null) {
-            Function<Project, OdinSymbolValue> func = ARCH_VALUES.get(arch);
-            if (func != null) {
-                OdinSymbolValue symbolValue = func.apply(project);
-                values.put(symbolValue.symbol(), symbolValue.value().asSet());
+                {
+                    Function<Project, OdinSymbolValue> osFunc = ARCH_VALUES.get(split);
+                    if (osFunc != null) {
+                        OdinSymbolValue symbolValue = osFunc.apply(project);
+                        if (symbolValue != null && symbolValue.symbol() != null) {
+                            values.put(symbolValue.symbol(), symbolValue.value().asSet());
+                        }
+                    }
+                }
             }
         }
 
@@ -162,9 +161,9 @@ public class OdinBuildFlagEvaluator {
         }
 
         OdinSymbolValueStore clauseStore = new OdinSymbolValueStore();
-        clauseStore.getValues().putAll(valuesBuildFlagClauses);
+        clauseStore.putAll(valuesBuildFlagClauses);
         OdinSymbolValueStore suffixStore = new OdinSymbolValueStore();
-        suffixStore.getValues().putAll(valuesFileSuffix);
+        suffixStore.putAll(valuesFileSuffix);
 
         suffixStore.intersect(clauseStore);
         return suffixStore;

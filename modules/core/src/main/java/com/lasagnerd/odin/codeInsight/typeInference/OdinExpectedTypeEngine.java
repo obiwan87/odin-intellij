@@ -282,6 +282,7 @@ public class OdinExpectedTypeEngine {
                 return propagateTypeDown(OdinTypeResolver.resolveType(context, declaredType), topMostExpression, expression);
             }
         }
+
         if (typeExpectationContext instanceof OdinIndex index && index.getParent() instanceof OdinIndexExpression indexExpression) {
             TsOdinType tsOdinType = OdinInferenceEngine.inferTypeInExplicitMode(context, indexExpression.getExpression());
             TsOdinType baseType = tsOdinType.baseType(true);

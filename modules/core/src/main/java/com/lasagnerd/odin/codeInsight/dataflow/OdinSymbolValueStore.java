@@ -65,7 +65,7 @@ public class OdinSymbolValueStore {
 
     public OdinSymbolValueStore copy() {
         OdinSymbolValueStore symbolValueStore = new OdinSymbolValueStore();
-        symbolValueStore.getValues().putAll(this.values);
+        symbolValueStore.values.putAll(this.values);
         return symbolValueStore;
     }
 
@@ -80,6 +80,10 @@ public class OdinSymbolValueStore {
     public boolean isSubset(OdinSymbolValueStore symbolValueStore) {
         if (values.isEmpty()) {
             return symbolValueStore.values.isEmpty();
+        }
+
+        if (isBottom()) {
+            return false;
         }
 
         if (symbolValueStore.values.isEmpty())
@@ -112,5 +116,13 @@ public class OdinSymbolValueStore {
             }
         }
         return false;
+    }
+
+    public void putAll(Map<OdinSymbol, ? extends EvOdinValue> values) {
+        this.values.putAll(values);
+    }
+
+    public boolean isEmpty() {
+        return values.isEmpty();
     }
 }

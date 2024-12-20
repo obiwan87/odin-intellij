@@ -114,6 +114,9 @@ public abstract class OdinDeclaredIdentifierMixin extends OdinPsiElementImpl imp
     private ParameterizedCachedValue<TsOdinType, OdinContext> cachedValue;
 
     public TsOdinType getType(OdinContext context) {
+        if (!context.isUseCache()) {
+            return resolveType(context);
+        }
         if (cachedValue == null) {
             cachedValue = createCachedValue();
         }
@@ -130,11 +133,19 @@ public abstract class OdinDeclaredIdentifierMixin extends OdinPsiElementImpl imp
     private CachedValueProvider.Result<TsOdinType> computeType(OdinContext context) {
         List<Object> dependencies = new ArrayList<>();
         dependencies.add(this);
+        TsOdinType result = resolveType(context);
+        return CachedValueProvider.Result.create(result, dependencies);
+    }
+
+    private @NotNull TsOdinType resolveType(OdinContext context) {
+        TsOdinType result;
         TsOdinType tsOdinType = tryGetBuiltinType(this);
         if (tsOdinType == null || tsOdinType.isUnknown()) {
-            return CachedValueProvider.Result.create(OdinInferenceEngine.resolveTypeOfDeclaredIdentifier(context, this), dependencies);
+            result = OdinInferenceEngine.resolveTypeOfDeclaredIdentifier(context, this);
+        } else {
+            result = tsOdinType;
         }
-        return CachedValueProvider.Result.create(tsOdinType, dependencies);
+        return result;
     }
 
     public static @Nullable TsOdinType tryGetBuiltinType(OdinDeclaredIdentifier declaredIdentifier) {

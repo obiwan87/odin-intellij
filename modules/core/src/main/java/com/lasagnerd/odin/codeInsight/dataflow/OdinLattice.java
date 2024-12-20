@@ -36,7 +36,7 @@ public class OdinLattice {
     // TODO implement
     public OdinLattice copy() {
         OdinLattice lattice = new OdinLattice();
-        lattice.symbolValueStore = lattice.getSymbolValueStore().copy();
+        lattice.symbolValueStore = this.getSymbolValueStore().copy();
         lattice.getConditions().addAll(conditions);
         lattice.getConstraints().addAll(constraints);
 
@@ -45,7 +45,7 @@ public class OdinLattice {
 
     public OdinContext toContext() {
         OdinContext context = new OdinContext();
-        context.getSymbolValueStore().getValues().putAll(this.getValues());
+        context.getSymbolValueStore().putAll(this.getValues());
         return context;
     }
 

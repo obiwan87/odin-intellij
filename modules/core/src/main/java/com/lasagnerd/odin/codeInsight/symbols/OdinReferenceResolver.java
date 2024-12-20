@@ -72,23 +72,11 @@ public class OdinReferenceResolver {
 
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context,
                                                @NotNull OdinIdentifier identifier,
-                                               OdinSymbolTableBuilder contextProvider) {
+                                               OdinSymbolTableBuilder symbolTableBuilder) {
 //        System.out.println("Resolving reference to " + identifier.getText() + ":" + identifier.getLocation());
 
         try {
-            String name = identifier.getIdentifierToken().getText();
-            OdinSymbolTable identifierSymbols = getIdentifierSymbolTable(new OdinContext(), identifier, contextProvider);
-            List<OdinSymbol> symbols = identifierSymbols.getSymbols(name);
-            symbols = symbols.stream()
-                    .filter(s -> OdinInsightUtils.isVisible(identifier, s) || s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
-                    .collect(MoreCollectors.distinctBy(OdinSymbol::getDeclaredIdentifier));
-
-            if (!symbols.isEmpty()) {
-                return symbols.getLast();
-            }
-
-            return null;
-
+            return resolveWithKnowledge(context, identifier, symbolTableBuilder);
 //            return getSymbolWithKnowledgeApplication(context, identifier, contextProvider);
         } catch (StackOverflowError e) {
             OdinInsightUtils.logStackOverFlowError(identifier, OdinReference.LOG);
@@ -96,20 +84,46 @@ public class OdinReferenceResolver {
         }
     }
 
-    private static @Nullable OdinSymbol getSymbolWithKnowledgeApplication(@NotNull OdinContext context, @NotNull OdinIdentifier identifier, OdinSymbolTableBuilder contextProvider) {
+    private static @Nullable OdinSymbol resolveWithoutKnowledge(@NotNull OdinIdentifier identifier, OdinSymbolTableBuilder symbolTableBuilder) {
+        String name = identifier.getIdentifierToken().getText();
+        OdinSymbolTable identifierSymbols = getIdentifierSymbolTable(new OdinContext(), identifier, symbolTableBuilder);
+        List<OdinSymbol> symbols = identifierSymbols.getSymbols(name);
+        symbols = symbols.stream()
+                .filter(s -> OdinInsightUtils.isVisible(identifier, s) || s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
+                .collect(MoreCollectors.distinctBy(OdinSymbol::getDeclaredIdentifier));
+
+        if (!symbols.isEmpty()) {
+            return symbols.getLast();
+        }
+
+        return null;
+    }
+
+    private static @Nullable OdinSymbol resolveWithKnowledge(@NotNull OdinContext context,
+                                                             @NotNull OdinIdentifier identifier,
+                                                             OdinSymbolTableBuilder contextProvider) {
         // We have two different types of situations
         // Either the element is under a when statement, or in a file with defined build flag clauses/a certain
         // file suffix (explicit context)
         // Or, the knowledge is induced by the values provided by the current target platform and build profile
         // e.g. ODIN_OS = .Windows, ODIN_DEBUG = false (implicit context)
 
-        // These two situations should be merged together, to have consistent mapping of the current state of the
-        // analysis.
-        // We want the values induced by the explicit context, take precedent over the implicit context.
+        // TODO 1. We need to consider the incoming knowledge coming from context
+        //  2. We need a way to distinguish whether the incoming knowledge is implicit or explicit. Have a flag? Different symbolic class?
         String name = identifier.getIdentifierToken().getText();
 
-        boolean sourceInducesKnowledge = inducesExplicitKnowledge(identifier);
-        OdinLattice sourceLattice = createLattice(context, identifier, sourceInducesKnowledge);
+
+        OdinLattice implicitSourceKnowledge = getImplicitKnowledge(identifier);
+        OdinLattice explicitSourceKnowledge = computeExplicitKnowledge(context, identifier);
+        boolean sourceInducesExplicitKnowledge = !explicitSourceKnowledge.getValues().isEmpty();
+
+        OdinLattice sourceLattice;
+        if (sourceInducesExplicitKnowledge) {
+            sourceLattice = explicitSourceKnowledge;
+        } else {
+            sourceLattice = implicitSourceKnowledge;
+        }
+
         OdinSymbolTable identifierSymbols = getIdentifierSymbolTable(sourceLattice.toContext(), identifier, contextProvider);
 
         List<OdinSymbol> symbols = identifierSymbols.getSymbols(name);
@@ -119,52 +133,56 @@ public class OdinReferenceResolver {
                 .collect(MoreCollectors.distinctBy(OdinSymbol::getDeclaredIdentifier));
 
         if (!symbols.isEmpty()) {
-            boolean targetInducesExplicitKnowledge = symbols.stream()
-                    .filter(s -> s.getDeclaredIdentifier() != null && !s.isImplicitlyDeclared())
-                    .anyMatch(s -> inducesExplicitKnowledge((OdinPsiElement) s.getDeclaredIdentifier()));
+            // Mutate context, such that
+            // TODO is this even correct?
+            context.getSymbolValueStore().intersect(sourceLattice.getSymbolValueStore());
+            // System.out.println("Solving lattice for " + identifier.getText() + ":" + identifier.getLocation());
 
-            if (sourceInducesKnowledge || targetInducesExplicitKnowledge) {
-                // Mutate context, such that
-                context.getSymbolValueStore().intersect(sourceLattice.getSymbolValueStore());
+            List<OdinSymbol> validSymbols = new ArrayList<>();
+            for (OdinSymbol symbol : symbols) {
 
-//                    System.out.println("Solving lattice for " + identifier.getText() + ":" + identifier.getLocation());
-
-                List<OdinSymbol> validSymbols = new ArrayList<>();
-                for (OdinSymbol symbol : symbols) {
-                    if (symbol.getDeclaredIdentifier() == null || symbol.isImplicitlyDeclared()) {
-                        validSymbols.add(symbol);
-                        continue;
-                    }
-                    OdinPsiElement declaredIdentifier = (OdinPsiElement) symbol.getDeclaredIdentifier();
-                    OdinLattice targetLattice = createLattice(sourceLattice.toContext(),
-                            declaredIdentifier,
-                            inducesExplicitKnowledge(declaredIdentifier));
-                    if (sourceLattice.isSubset(targetLattice)) {
-                        validSymbols.add(symbol);
-                    }
+                if (symbol.getDeclaredIdentifier() == null || symbol.isImplicitlyDeclared()) {
+                    validSymbols.add(symbol);
+                    continue;
                 }
 
-                symbols = validSymbols;
+                OdinPsiElement declaredIdentifier = (OdinPsiElement) symbol.getDeclaredIdentifier();
+                OdinLattice explicitTargetKnowledge = computeExplicitKnowledge(context, declaredIdentifier);
+                boolean targetInducesExplicitKnowledge = !explicitTargetKnowledge.getValues().isEmpty();
 
-                if (validSymbols.size() == 1
-                        && validSymbols.getFirst().getDeclaredIdentifier() != null) {
-                    // Evaluate what the knowledge would be independently of the identifier
-                    // source. If the target has a compatible knowledge state, we can use the
-                    // cache, otherwise, this is a non-idempotent operation, that requires not
-                    // using the cache.
-                    OdinLattice validTargetLattice = createLattice(new OdinContext(),
-                            validSymbols.getFirst().getDeclaration(),
-                            inducesExplicitKnowledge(validSymbols.getFirst().getDeclaration())
-                    );
-                    if (!validTargetLattice.isSubset(sourceLattice)) {
-                        context.setUseCache(false);
-                    }
+                if (!targetInducesExplicitKnowledge && !sourceInducesExplicitKnowledge) {
+                    validSymbols.add(symbol);
+                    continue;
+                }
+
+                boolean include;
+                if (sourceInducesExplicitKnowledge) {
+                    include = !targetInducesExplicitKnowledge || explicitTargetKnowledge.isSubset(explicitSourceKnowledge);
+                } else {
+                    include = explicitTargetKnowledge.isSubset(implicitSourceKnowledge);
+                }
+                if (include) {
+                    validSymbols.add(symbol);
                 }
             }
 
-            if (symbols.size() == 1) {
-                return symbols.getFirst();
+            if (validSymbols.size() == 1
+                    && validSymbols.getFirst().getDeclaredIdentifier() != null) {
+                // Evaluate what the knowledge would be independently of the identifier
+                // source. If the target has a compatible knowledge state, we can use the
+                // cache, otherwise, this is a non-idempotent operation, that requires not
+                // using the cache.
+                OdinLattice implicitTargetKnowledge = getImplicitKnowledge(validSymbols.getFirst().getDeclaredIdentifier());
+
+                if (!implicitTargetKnowledge.isSubset(explicitSourceKnowledge)) {
+                    context.setUseCache(false);
+                }
             }
+
+            if (validSymbols.size() == 1) {
+                return validSymbols.getFirst();
+            }
+
             if (!symbols.isEmpty()) {
                 return symbols.getLast();
             }
@@ -177,9 +195,10 @@ public class OdinReferenceResolver {
     private static @NotNull OdinLattice createLattice(@NotNull OdinContext context,
                                                       @NotNull OdinPsiElement element,
                                                       boolean inducesKnowledge) {
+        OdinLattice sourceLattice = OdinLattice.fromContext(context);
         if (OdinSdkService.getInstance(element.getProject()).isInSyntheticOdinFile(element)
                 || OdinSdkService.isInBuiltinOdinFile(element)) {
-            return OdinLattice.fromContext(context);
+            return sourceLattice;
         }
         OdinLattice lattice;
         if (inducesKnowledge) {
@@ -187,17 +206,23 @@ public class OdinReferenceResolver {
 
             OdinLattice knowledge = getImplicitKnowledge(element);
 
+            // Let lattice knowledge take precedence
             knowledge.removeSymbols(lattice);
+            knowledge.removeSymbols(sourceLattice);
             lattice.intersect(knowledge);
-        } else if (context.getSymbolValueStore().getValues().isEmpty()) {
+        } else if (context.getSymbolValueStore().isEmpty()) {
             lattice = getImplicitKnowledge(element);
         } else {
-            lattice = OdinLattice.fromContext(context);
+            lattice = sourceLattice;
         }
         return lattice;
     }
 
     private static @NotNull OdinLattice computeExplicitKnowledge(@NotNull OdinContext context, @NotNull OdinPsiElement element) {
+        if (OdinSdkService.getInstance(element.getProject()).isInSyntheticOdinFile(element)
+                || OdinSdkService.isInBuiltinOdinFile(element)) {
+            return OdinLattice.fromContext(context);
+        }
         OdinLattice lattice;
         lattice = OdinWhenConstraintsSolver.solveLattice(context, element);
         if (element.getContainingOdinFile() != null) {
@@ -210,10 +235,14 @@ public class OdinReferenceResolver {
         return lattice;
     }
 
-    private static @NotNull OdinLattice getImplicitKnowledge(@NotNull OdinPsiElement identifier) {
+    private static @NotNull OdinLattice getImplicitKnowledge(@NotNull PsiElement element) {
+        if (OdinSdkService.getInstance(element.getProject()).isInSyntheticOdinFile(element)
+                || OdinSdkService.isInBuiltinOdinFile(element)) {
+            return new OdinLattice();
+        }
         OdinLattice sourceLattice;
         OdinSymbolValueStore defaultValue = OdinSdkService
-                .getInstance(identifier.getProject()).getSymbolValueStore();
+                .getInstance(element.getProject()).getSymbolValueStore();
         sourceLattice = new OdinLattice();
 
         sourceLattice.getSymbolValueStore().combine(defaultValue);
@@ -229,7 +258,7 @@ public class OdinReferenceResolver {
         OdinFile odinFile = psiElement.getContainingOdinFile();
         if (odinFile != null) {
             OdinSymbolValueStore valuesStore = odinFile.getFileScope().getBuildFlagsValuesStore();
-            return valuesStore != null && !valuesStore.getValues().isEmpty();
+            return valuesStore != null && !valuesStore.isEmpty();
         }
         return false;
     }

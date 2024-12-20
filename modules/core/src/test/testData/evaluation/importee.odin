@@ -4,6 +4,7 @@ import c "./conditionalImporting"
 import "./shared"
 
 S :: c._S
+T :: _T
 
 test_reference :: proc() {
     s := S { }

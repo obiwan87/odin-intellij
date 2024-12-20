@@ -33,7 +33,7 @@ public abstract class OdinFileScopeMixin extends OdinPsiElementImpl implements O
     private CachedValueProvider.Result<OdinSymbolValueStore> computeBuildFlagStore() {
         OdinBuildFlagEvaluator buildFlagEvaluator = new OdinBuildFlagEvaluator();
         OdinSymbolValueStore buildFlagsValues = buildFlagEvaluator.evaluateBuildFlags(this.getContainingOdinFile());
-        if (buildFlagsValues.getValues().isEmpty())
+        if (buildFlagsValues.isEmpty())
             return null;
 
         List<Object> dependencies = new ArrayList<>(this.getBuildFlagClauseList());
