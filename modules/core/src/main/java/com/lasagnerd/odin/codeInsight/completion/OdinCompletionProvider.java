@@ -17,13 +17,11 @@ import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.dataflow.OdinLattice;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
-import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
+import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinExpectedTypeEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -117,6 +115,10 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         if (!(position.getParent() instanceof OdinIdentifier identifier))
             return;
 
+        OdinLattice lattice = OdinReferenceResolver.computeExplicitKnowledge(new OdinContext(), identifier);
+        OdinContext context = lattice.toContext();
+        context.setUseCache(false);
+
         VirtualFile sourceFile = OdinImportUtils.getContainingVirtualFile(parameters.getOriginalFile());
 
         if (!(parameters.getOriginalFile() instanceof OdinFile odinFile))
@@ -129,7 +131,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         if (topMostRefExpression != null && (topMostRefExpression.getParent() instanceof OdinLhs || topMostRefExpression.getParent() instanceof OdinRhs)) {
             OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(topMostRefExpression, OdinCompoundLiteral.class);
             if (compoundLiteral != null) {
-                addCompoundLiteralCompletions(result, topMostRefExpression, compoundLiteral);
+                addCompoundLiteralCompletions(result, compoundLiteral, context);
             }
         }
 
@@ -139,7 +141,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         // Type assert
         if (parent instanceof OdinType && parent.getParent() instanceof OdinRefExpression refExpression) {
             if (refExpression.getExpression() != null) {
-                TsOdinType tsOdinType = refExpression.getExpression().getInferredType();
+                TsOdinType tsOdinType = refExpression.getExpression().getInferredType(context);
                 if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
                     addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
                     return;
@@ -153,12 +155,12 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             if (switchBlock != null) {
                 if (switchBlock.getSwitchInClause() != null) {
                     OdinExpression expression = switchBlock.getSwitchInClause().getExpression();
-                    TsOdinType tsOdinType = expression.getInferredType();
+                    TsOdinType tsOdinType = expression.getInferredType(context);
                     if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
                         addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
                     }
                 } else if (switchBlock.getExpression() != null) {
-                    TsOdinType tsOdinType = switchBlock.getExpression().getInferredType();
+                    TsOdinType tsOdinType = switchBlock.getExpression().getInferredType(context);
                     if (tsOdinType.baseType(true) instanceof TsOdinEnumType tsOdinEnumType) {
                         List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType());
                         result.startBatch();
@@ -177,7 +179,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             case OdinImplicitSelectorExpression implicitSelectorExpression -> {
                 TsOdinType tsOdinType = OdinExpectedTypeEngine
                         .inferExpectedType(
-                                OdinSymbolTableHelper.buildFullSymbolTable(position).asContext(),
+                                OdinSymbolTableHelper.buildFullSymbolTable(position, new OdinContext()).asContext(),
                                 implicitSelectorExpression
                         );
 
@@ -196,11 +198,11 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                         .getOriginalFile()
                         .getContainingDirectory()
                         .getVirtualFile()
-                        .getPath());
+                        .getPath(), context);
 
                 TsOdinType inferredType = TsOdinBuiltInTypes.UNKNOWN;
                 if (refExpression.getExpression() != null) {
-                    inferredType = refExpression.getExpression().getInferredType();
+                    inferredType = refExpression.getExpression().getInferredType(context);
                 }
 
                 if (!inferredType.isUnknown()) {
@@ -218,7 +220,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             // Identifiers like '<caret>'
             case null, default -> {
                 OdinSymbolTable symbolTable = OdinSymbolTableHelper
-                        .buildFullSymbolTable(position)
+                        .buildFullSymbolTable(position, new OdinContext())
                         .flatten();
                 addIdentifierCompletions(parameters, result, position.getText(), symbolTable);
             }
@@ -301,11 +303,10 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         result.endBatch();
     }
 
-    private static void addCompoundLiteralCompletions(@NotNull CompletionResultSet result, OdinRefExpression topMostRefExpression, OdinCompoundLiteral compoundLiteral) {
-        OdinSymbolTable symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(topMostRefExpression);
-        TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(symbolTable.asContext(), compoundLiteral);
+    private static void addCompoundLiteralCompletions(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral, OdinContext context) {
+        TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(context, compoundLiteral);
 
-        List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, symbolTable.asContext());
+        List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, context);
         InsertHandler<LookupElement> insertHandler = new ElementEntryInsertHandler();
 
         for (OdinSymbol symbol : elementSymbols) {

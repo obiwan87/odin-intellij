@@ -2,6 +2,7 @@ package com.lasagnerd.odin.codeInsight.refactor;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.lang.psi.*;
@@ -38,12 +39,12 @@ public class OdinNameSuggester {
             }
             if (statementList != null) {
                 PsiElement lastChild = statementList.getLastChild();
-                symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(lastChild);
+                symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(lastChild, new OdinContext());
             }
         }
 
         if (symbolTable == null) {
-            symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(targetExpression);
+            symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(targetExpression, new OdinContext());
         }
 
         if (targetExpression instanceof OdinRefExpression refExpression) {

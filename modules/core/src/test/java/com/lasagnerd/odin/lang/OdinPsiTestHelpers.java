@@ -174,7 +174,7 @@ class OdinPsiTestHelpers {
                         .orElseThrow();
 
         OdinExpression expression = odinExpressionStatement.getExpression();
-        OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(Objects.requireNonNull(expression));
+        OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(Objects.requireNonNull(expression), new OdinContext());
         return expression.getInferredType(context.asContext());
     }
 

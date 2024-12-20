@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 
 public class OdinSymbolTableHelper {
 
-    public static OdinSymbolTable buildFullSymbolTable(@NotNull PsiElement element) {
-        return buildFullSymbolTable(new OdinContext(), element);
+    public static OdinSymbolTable buildFullSymbolTable(@NotNull PsiElement element, OdinContext context) {
+        return buildFullSymbolTable(context, element);
     }
 
     public static OdinSymbolTable buildFileScopeSymbolTable(@NotNull OdinFileScope fileScope, @NotNull OdinVisibility globalVisibility) {
@@ -408,8 +408,8 @@ public class OdinSymbolTableHelper {
         }
     }
 
-    public static OdinSymbolTable buildFullSymbolTable(PsiElement reference, @NonNls @NotNull String originalFilePath) {
-        return buildFullSymbolTable(reference).with(originalFilePath);
+    public static OdinSymbolTable buildFullSymbolTable(PsiElement reference, @NonNls @NotNull String originalFilePath, OdinContext context) {
+        return buildFullSymbolTable(reference, context).with(originalFilePath);
     }
 }
 

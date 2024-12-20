@@ -192,33 +192,7 @@ public class OdinReferenceResolver {
         return null;
     }
 
-    private static @NotNull OdinLattice createLattice(@NotNull OdinContext context,
-                                                      @NotNull OdinPsiElement element,
-                                                      boolean inducesKnowledge) {
-        OdinLattice sourceLattice = OdinLattice.fromContext(context);
-        if (OdinSdkService.getInstance(element.getProject()).isInSyntheticOdinFile(element)
-                || OdinSdkService.isInBuiltinOdinFile(element)) {
-            return sourceLattice;
-        }
-        OdinLattice lattice;
-        if (inducesKnowledge) {
-            lattice = computeExplicitKnowledge(context, element);
-
-            OdinLattice knowledge = getImplicitKnowledge(element);
-
-            // Let lattice knowledge take precedence
-            knowledge.removeSymbols(lattice);
-            knowledge.removeSymbols(sourceLattice);
-            lattice.intersect(knowledge);
-        } else if (context.getSymbolValueStore().isEmpty()) {
-            lattice = getImplicitKnowledge(element);
-        } else {
-            lattice = sourceLattice;
-        }
-        return lattice;
-    }
-
-    private static @NotNull OdinLattice computeExplicitKnowledge(@NotNull OdinContext context, @NotNull OdinPsiElement element) {
+    public static @NotNull OdinLattice computeExplicitKnowledge(@NotNull OdinContext context, @NotNull OdinPsiElement element) {
         if (OdinSdkService.getInstance(element.getProject()).isInSyntheticOdinFile(element)
                 || OdinSdkService.isInBuiltinOdinFile(element)) {
             return OdinLattice.fromContext(context);

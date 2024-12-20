@@ -18,11 +18,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
+import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.symbols.*;
+import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
+import com.lasagnerd.odin.codeInsight.symbols.OdinScope;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPolymorphicType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
@@ -293,7 +297,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         return;
                     }
 
-                    var odinContext = OdinSymbolTableHelper.buildFullSymbolTable(declaration);
+                    var odinContext = OdinSymbolTableHelper.buildFullSymbolTable(declaration, new OdinContext());
                     if (odinContext.getSymbol(declaredIdentifier.getName()) != null) {
                         highlight(annotationHolder, psiElementRange, ODIN_SHADOWING_VARIABLE);
                         return;
@@ -518,7 +522,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     }
 
     private static OdinSymbolTable computeSymbolTable(PsiElement identifierTokenParent) {
-        return OdinSymbolTableHelper.buildFullSymbolTable(identifierTokenParent)
+        return OdinSymbolTableHelper.buildFullSymbolTable(identifierTokenParent, new OdinContext())
                 .with(OdinImportService.getInstance(identifierTokenParent.getProject())
                         .getPackagePath(identifierTokenParent));
     }

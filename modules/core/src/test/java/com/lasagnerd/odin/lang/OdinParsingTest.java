@@ -421,7 +421,7 @@ public class OdinParsingTest extends UsefulTestCase {
         Objects.requireNonNull(refExpressions);
         OdinRefExpression odinRefExpression = refExpressions.stream().filter(e -> e.getText().contains("weapon")).findFirst().orElseThrow();
 
-        OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(odinRefExpression);
+        OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(odinRefExpression, new OdinContext());
         OdinInsightUtils.getReferenceableSymbols(new OdinContext(), odinRefExpression);
 
     }
@@ -1434,7 +1434,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinFile odinFile = load("src/test/testData/mypackage/packages.odin");
 
             OdinExpression expression = findFirstExpressionOfVariable(odinFile, "main", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.buildFullSymbolTable(expression);
+            OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.buildFullSymbolTable(expression, new OdinContext());
             assertNotNull(odinSymbolTable.getSymbol("a_mypublic_proc"));
             assertNotNull(odinSymbolTable.getSymbol("b_mypackage_private_proc"));
             {
@@ -1539,7 +1539,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinAssignmentStatement assignmentStatement = PsiTreeUtil.findChildOfType(procedure, OdinAssignmentStatement.class);
             OdinExpression odinExpression = Objects.requireNonNull(Objects.requireNonNull(assignmentStatement)
                     .getRhsExpressions()).getExpressionList().getFirst();
-            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinSymbolTableHelper.buildFullSymbolTable(odinExpression).asContext(), odinExpression);
+            TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(OdinSymbolTableHelper.buildFullSymbolTable(odinExpression, new OdinContext()).asContext(), odinExpression);
             TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
             assertEquals("MyStruct", structType.getName());
         }
@@ -1872,7 +1872,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
             Objects.requireNonNull(implicitSelectorExpression);
             TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(
-                    OdinSymbolTableHelper.buildFullSymbolTable(implicitSelectorExpression).asContext(), implicitSelectorExpression);
+                    OdinSymbolTableHelper.buildFullSymbolTable(implicitSelectorExpression, new OdinContext()).asContext(), implicitSelectorExpression);
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("Direction", tsOdinEnumType.getName());
         }
@@ -1987,7 +1987,7 @@ public class OdinParsingTest extends UsefulTestCase {
                         .map(OdinLhs::getExpression)
                         .orElseThrow();
 
-                OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(odinExpression);
+                OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(odinExpression, new OdinContext());
                 assertNotNull(context.getSymbol("alpha"));
                 assertNotNull(context.getSymbol("beta"));
                 assertNotNull(context.getSymbol("gamma"));
@@ -2000,7 +2000,7 @@ public class OdinParsingTest extends UsefulTestCase {
                         .map(OdinLhs::getExpression)
                         .orElseThrow();
 
-                OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(odinExpression);
+                OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(odinExpression, new OdinContext());
                 assertNotNull(context.getSymbol("x"));
                 assertNotNull(context.getSymbol("y"));
             }
@@ -2012,7 +2012,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinLhs lhs = PsiTreeUtil.findChildOfType(proc, OdinLhs.class);
             Objects.requireNonNull(lhs);
             OdinExpression expression = lhs.getExpression();
-            OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(expression);
+            OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(expression, new OdinContext());
             assertNotNull(context.getSymbol("x"));
         }
     }
@@ -2087,7 +2087,7 @@ public class OdinParsingTest extends UsefulTestCase {
                     assertInstanceOf(tsOdinType, TsOdinEnumType.class);
                 }
                 {
-                    OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.buildFullSymbolTable(Objects.requireNonNull(implicitExpression));
+                    OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.buildFullSymbolTable(Objects.requireNonNull(implicitExpression), new OdinContext());
                     assertNotNull(odinSymbolTable.getSymbol("North"));
                     assertNotNull(odinSymbolTable.getSymbol("South"));
                     assertNotNull(odinSymbolTable.getSymbol("East"));
@@ -2185,7 +2185,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = loadTypeInference();
         {
             OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(file, "testNestedWhenStatements", "x");
-            OdinSymbolTable symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(var);
+            OdinSymbolTable symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(var, new OdinContext());
             assertNotNull(symbolTable.getSymbol("CONST"));
         }
     }
@@ -2196,7 +2196,7 @@ public class OdinParsingTest extends UsefulTestCase {
             var proc = findFirstProcedure(file, "testArrayOfStructs");
             OdinLhs lhs = PsiTreeUtil.findChildOfType(proc, OdinLhs.class);
             Objects.requireNonNull(lhs);
-            OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(lhs);
+            OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(lhs, new OdinContext());
             assertNotNull(context.getSymbol("x"));
             assertNotNull(context.getSymbol("y"));
         }
@@ -2258,7 +2258,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(var, OdinImplicitSelectorExpression.class);
             assertNotNull(expression);
             TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(
-                    OdinSymbolTableHelper.buildFullSymbolTable(expression).asContext(), expression);
+                    OdinSymbolTableHelper.buildFullSymbolTable(expression, new OdinContext()).asContext(), expression);
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(tsOdinType, TsOdinEnumType.class);
             assertEquals("E", tsOdinEnumType.getName());
         }
@@ -2323,7 +2323,7 @@ public class OdinParsingTest extends UsefulTestCase {
 
             OdinUnnamedArgument argument = (OdinUnnamedArgument) Objects.requireNonNull(arguments)[1];
             assertEquals("x", argument.getText());
-            OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(argument.getExpression());
+            OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(argument.getExpression(), new OdinContext());
             assertNotNull(context.getSymbol("x"));
             assertNotNull(context.getSymbol("y"));
         }
@@ -2389,7 +2389,7 @@ public class OdinParsingTest extends UsefulTestCase {
             if (typeDefinition instanceof OdinArrayType arrayType) {
                 OdinType type = arrayType.getType();
                 assert type != null;
-                OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(type);
+                OdinSymbolTable context = OdinSymbolTableHelper.buildFullSymbolTable(type, new OdinContext());
                 assertNotNull(context.getSymbol("T"));
             }
         }

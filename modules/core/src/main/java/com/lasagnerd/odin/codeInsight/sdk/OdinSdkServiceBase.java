@@ -262,7 +262,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
             if (declaredIdentifier instanceof OdinDeclaredIdentifier odinDeclaredIdentifier) {
                 OdinSymbolTable builtinSymbols = OdinSymbolTable.from(getBuiltInSymbols());
-                OdinSymbolTable symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(declaredIdentifier);
+                OdinSymbolTable symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(declaredIdentifier, new OdinContext());
                 symbolTable.setParentSymbolTable(builtinSymbols);
 
                 TsOdinType tsOdinType = OdinTypeResolver.resolveType(symbolTable.asContext(), odinDeclaredIdentifier);
