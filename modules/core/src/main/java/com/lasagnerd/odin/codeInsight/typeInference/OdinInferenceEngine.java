@@ -762,7 +762,11 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (tsOdinType instanceof TsOdinMapType mapType) {
-            this.type = mapType.getValueType();
+            if (lhsValuesCount == 2) {
+                this.type = createOptionalOkTuple(mapType.getValueType());
+            } else {
+                this.type = mapType.getValueType();
+            }
         }
 
         if (tsOdinType instanceof TsOdinMatrixType matrixType) {

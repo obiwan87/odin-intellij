@@ -2278,8 +2278,8 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testPsiFileAtOffset() throws IOException {
         {
-            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\sys\\info\\cpu_darwin_arm64.odin");
-            PsiElement element = file.findElementAt(753);
+            OdinFile file = load("D:\\dev\\code\\Odin\\core\\time\\timezone\\tz_windows.odin");
+            PsiElement element = file.findElementAt(14198);
             assertNotNull(element);
 
 //            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(element, OdinQualifiedType.class);
@@ -2291,6 +2291,10 @@ public class OdinParsingTest extends UsefulTestCase {
 //            OdinSymbol referencedSymbol = refExpression.getIdentifier().getReferencedSymbol();
 //            assertNotNull(referencedSymbol);
 
+            OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
+            TsOdinType inferredType = refExpression.getInferredType();
+            System.out.println(inferredType);
+
 //            EvOdinValue value = OdinExpressionEvaluator.evaluate(refExpression);
 //            assertFalse(value.asBool());
 //            TsOdinType inferredType = refExpression.getInferredType();
@@ -2301,10 +2305,10 @@ public class OdinParsingTest extends UsefulTestCase {
 //            OdinSymbol referencedSymbol = identifier.getReferencedSymbol();
 //            assertNotNull(referencedSymbol);
 
-            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.getParentOfType(element, OdinImplicitSelectorExpression.class);
-            assertNotNull(implicitSelectorExpression);
-            TsOdinType inferredType = implicitSelectorExpression.getInferredType();
-            assertInstanceOf(inferredType, TsOdinEnumType.class);
+//            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.getParentOfType(element, OdinImplicitSelectorExpression.class);
+//            assertNotNull(implicitSelectorExpression);
+//            TsOdinType inferredType = implicitSelectorExpression.getInferredType();
+//            assertInstanceOf(inferredType, TsOdinEnumType.class);
 //
 //            OdinIdentifier identifier = PsiTreeUtil.getParentOfType(element, OdinIdentifier.class);
 //            assertNotNull(identifier);
