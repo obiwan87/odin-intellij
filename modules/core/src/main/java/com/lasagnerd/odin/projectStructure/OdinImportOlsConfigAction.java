@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.projectStructure;
 
-import com.intellij.lang.documentation.ide.impl.DocumentationManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;

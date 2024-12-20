@@ -64,6 +64,7 @@ import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.lang.psi.impl.OdinAssignmentStatementImpl;
 import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.projectSettings.OdinProjectSettingsServiceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
@@ -145,6 +146,7 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(PsiFileFactory.class, myFileFactory);
         project.registerService(TreeAspect.class, new TreeAspect());
         project.registerService(SmartPointerManager.class, new MockSmartPointerManager());
+        project.registerService(OdinProjectSettingsService.class, new MockProjectSettingsService());
 
         registerExtensionPoint(project.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
         registerExtensionPoint(app.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
@@ -155,7 +157,7 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(StartupManager.class, new StartupManagerImpl(project, project.getCoroutineScope()));
         project.registerService(OdinImportService.class, new MockOdinImportService(myFileFactory));
         project.registerService(OdinSdkService.class, new MockSdkService(project, myFileFactory));
-        project.registerService(OdinProjectSettingsService.class, new OdinProjectSettingsService());
+        project.registerService(OdinProjectSettingsServiceImpl.class, new OdinProjectSettingsServiceImpl());
         registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
         registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 

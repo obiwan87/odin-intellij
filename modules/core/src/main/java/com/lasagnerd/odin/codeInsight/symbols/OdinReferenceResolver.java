@@ -17,6 +17,7 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameter;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinParameterOwner;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,21 +28,7 @@ import java.util.List;
 
 public class OdinReferenceResolver {
 
-    // TODO Reference resolver also, like type resolver and inference engine, needs context
-    //  Example 1:
-    //  In a when-block where the value of ODIN_OS/ODIN_ARCH is statically computable
-    //  we need that information to import the correct files.
-    //  Example 2:
-    //  Same as above, but with build flags (?)
-
-    // see https://odin-lang.org/docs/overview/#file-suffixes
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context, @NotNull OdinIdentifier element) {
-        // Here we need to check if we are in a when block or if there is knowledge from build flags
-        // In that case we use the slower, but more precise, end of block listener,
-        // which ensures that all symbols in one block are gathered. These can then be pruned
-        // using the knowledge at hand.
-
-
         return resolve(context, element,
                 new OdinMinimalSymbolTableBuilder(element,
                         OdinImportService.packagePath(element),
@@ -73,11 +60,11 @@ public class OdinReferenceResolver {
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context,
                                                @NotNull OdinIdentifier identifier,
                                                OdinSymbolTableBuilder symbolTableBuilder) {
-//        System.out.println("Resolving reference to " + identifier.getText() + ":" + identifier.getLocation());
-
         try {
-            return resolveWithKnowledge(context, identifier, symbolTableBuilder);
-//            return getSymbolWithKnowledgeApplication(context, identifier, contextProvider);
+            if (OdinProjectSettingsService.getInstance(identifier.getProject()).isConditionalSymbolResolutionEnabled()) {
+                return resolveWithKnowledge(context, identifier, symbolTableBuilder);
+            }
+            return resolveWithoutKnowledge(identifier, symbolTableBuilder);
         } catch (StackOverflowError e) {
             OdinInsightUtils.logStackOverFlowError(identifier, OdinReference.LOG);
             return null;

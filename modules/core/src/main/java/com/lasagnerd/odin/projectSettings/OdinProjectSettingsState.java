@@ -12,4 +12,5 @@ public class OdinProjectSettingsState {
     public String debuggerId = "";
     public String debuggerPath = "";
     public String highlightUnknownReferencesEnabled = "";
+    public String conditionalSymbolResolutionEnabled = "";
 }

@@ -10,6 +10,7 @@ import com.lasagnerd.odin.codeInsight.dataflow.OdinLattice;
 import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -61,9 +62,30 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     }
 
     public @NotNull OdinReference getReference(OdinContext context) {
-//        String location = "Resolving reference to " + getText() + " at " + this.getLocation() + ": ";
+        if (OdinProjectSettingsService.getInstance(getProject()).isConditionalSymbolResolutionEnabled()) {
+            return doGetReferenceWithKnowledge(context);
+        }
+        return doGetReferenceWithoutKnowledge(context);
+    }
+
+    private @NotNull OdinReference doGetReferenceWithoutKnowledge(OdinContext context) {
         if (!context.isUseCache()) {
-//            System.out.println(location + "Not using cache because context says so!");
+            OdinReference odinReference = new OdinReference(context, this);
+            odinReference.resolve();
+            return odinReference;
+        }
+        if (getCachedReference() == null) {
+            @NotNull ParameterizedCachedValue<OdinReference, OdinContext> cachedValue = CachedValuesManager
+                    .getManager(getProject())
+                    .createParameterizedCachedValue(this::computeReference, false);
+
+            setCachedReference(cachedValue);
+        }
+        return getCachedReference().getValue(context);
+    }
+
+    private OdinReference doGetReferenceWithKnowledge(OdinContext context) {
+        if (!context.isUseCache()) {
             OdinReference odinReference = new OdinReference(context, this);
             odinReference.resolve();
             return odinReference;
@@ -74,7 +96,6 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
         boolean useCache = explicitKnowledge.getSymbolValueStore().isEmpty() || explicitKnowledge.isSubset(implicitKnowledge);
         if (!useCache) {
             context.setUseCache(false);
-//            System.out.println(location + "Not using cache because explicit knowledge more specific than implicit");
             OdinReference odinReference = new OdinReference(context.withUseCache(false), this);
             odinReference.resolve();
             return odinReference;

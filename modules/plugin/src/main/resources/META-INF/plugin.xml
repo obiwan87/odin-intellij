@@ -264,7 +264,8 @@
                 id="com.lasagnerd.odin.projectSettings.OdinProjectConfigurable"
                 displayName="Odin"/>
 
-        <projectService serviceImplementation="com.lasagnerd.odin.projectSettings.OdinProjectSettingsService"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.projectSettings.OdinProjectSettingsServiceImpl"
+                        serviceInterface="com.lasagnerd.odin.projectSettings.OdinProjectSettingsService"/>
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
         <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.sdk.OdinSdkServiceImpl"
                         serviceInterface="com.lasagnerd.odin.codeInsight.sdk.OdinSdkService"/>
