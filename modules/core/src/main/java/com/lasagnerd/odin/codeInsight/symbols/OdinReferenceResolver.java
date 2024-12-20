@@ -172,6 +172,10 @@ public class OdinReferenceResolver {
                 return validSymbols.getFirst();
             }
 
+            if (!validSymbols.isEmpty()) {
+                return validSymbols.getLast();
+            }
+
             if (!symbols.isEmpty()) {
                 return symbols.getLast();
             }
@@ -181,15 +185,15 @@ public class OdinReferenceResolver {
         return null;
     }
 
-    public static @NotNull OdinLattice computeExplicitKnowledge(@NotNull OdinContext context, @NotNull OdinPsiElement element) {
+    public static @NotNull OdinLattice computeExplicitKnowledge(@NotNull OdinContext context, @NotNull PsiElement element) {
         if (OdinSdkService.getInstance(element.getProject()).isInSyntheticOdinFile(element)
                 || OdinSdkService.isInBuiltinOdinFile(element)) {
             return OdinLattice.fromContext(context);
         }
         OdinLattice lattice;
         lattice = OdinWhenConstraintsSolver.solveLattice(context, element);
-        if (element.getContainingOdinFile() != null) {
-            OdinSymbolValueStore valuesStore = element.getContainingOdinFile()
+        if (element.getContainingFile() instanceof OdinFile odinFile) {
+            OdinSymbolValueStore valuesStore = odinFile
                     .getFileScope().getBuildFlagsValuesStore();
             if (valuesStore != null) {
                 lattice.getSymbolValueStore().intersect(valuesStore);

@@ -606,7 +606,9 @@ public class OdinTypeResolver extends OdinVisitor {
             if (unionBody != null) {
                 List<OdinType> types = unionBody.getTypeList();
                 for (OdinType type : types) {
-                    TsOdinType tsOdinType = doResolveType(tsOdinUnionType.getContext(), type);
+                    TsOdinType tsOdinType = doResolveType(tsOdinUnionType.getContext()
+                            .withSymbolValueStore(context.getSymbolValueStore())
+                            .withUseCache(context.isUseCache()), type);
 
                     TsOdinUnionVariant tsOdinUnionVariant = new TsOdinUnionVariant();
                     tsOdinUnionVariant.setPsiType(type);

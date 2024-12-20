@@ -147,7 +147,9 @@ public class OdinInsightUtils {
         }
 
         if (type.getPsiType() instanceof OdinStructType structType) {
-            var structFields = OdinInsightUtils.getStructFields(type.getContext(), structType);
+            var structFields = OdinInsightUtils.getStructFields(type.getContext()
+                    .withSymbolValueStore(context.getSymbolValueStore())
+                    .withUseCache(context.isUseCache()), structType);
 
             symbolTable.addAll(structFields);
 //            context.addTypes(typeContext);

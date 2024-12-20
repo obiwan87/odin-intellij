@@ -2278,8 +2278,8 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testPsiFileAtOffset() throws IOException {
         {
-            OdinFile file = load("D:\\dev\\code\\Odin\\core\\time\\timezone\\tz_windows.odin");
-            PsiElement element = file.findElementAt(14198);
+            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\thread\\thread_windows.odin");
+            PsiElement element = file.findElementAt(1311);
             assertNotNull(element);
 
 //            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(element, OdinQualifiedType.class);
@@ -2290,10 +2290,11 @@ public class OdinParsingTest extends UsefulTestCase {
 //            OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
 //            OdinSymbol referencedSymbol = refExpression.getIdentifier().getReferencedSymbol();
 //            assertNotNull(referencedSymbol);
-
+//
             OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
             TsOdinType inferredType = refExpression.getInferredType();
             System.out.println(inferredType);
+            assertFalse(inferredType.isUnknown());
 
 //            EvOdinValue value = OdinExpressionEvaluator.evaluate(refExpression);
 //            assertFalse(value.asBool());

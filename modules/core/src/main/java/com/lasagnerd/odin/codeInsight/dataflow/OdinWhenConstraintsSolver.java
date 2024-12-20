@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.dataflow;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.dataflow.cfg.OdinWhenBranchBlock;
@@ -10,7 +11,6 @@ import com.lasagnerd.odin.codeInsight.dataflow.constraints.OdinSymbolicEqualityC
 import com.lasagnerd.odin.codeInsight.dataflow.constraints.OdinTransferFunction;
 import com.lasagnerd.odin.codeInsight.dataflow.constraints.OdinValueEqualityConstraint;
 import com.lasagnerd.odin.codeInsight.dataflow.constraints.OdinValueInequalityConstraint;
-import com.lasagnerd.odin.lang.psi.OdinPsiElement;
 import com.lasagnerd.odin.lang.psi.OdinTypes;
 import com.lasagnerd.odin.lang.psi.OdinVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +26,7 @@ public class OdinWhenConstraintsSolver extends OdinVisitor {
         this.inLattice = inLattice;
     }
 
-    public static OdinLattice solveLattice(OdinContext context, OdinPsiElement element) {
+    public static OdinLattice solveLattice(OdinContext context, PsiElement element) {
         OdinLattice lattice = OdinLattice.fromContext(context);
         OdinWhenInstruction odinConditionalBlock = OdinWhenTreeBuilder.buildTree(element);
         return doSolveLattice(lattice, element, odinConditionalBlock);
@@ -56,7 +56,7 @@ public class OdinWhenConstraintsSolver extends OdinVisitor {
         return IDENTITY;
     }
 
-    private static OdinLattice doSolveLattice(@NotNull OdinLattice lattice, OdinPsiElement element, OdinWhenInstruction odinConditionalBlock) {
+    private static OdinLattice doSolveLattice(@NotNull OdinLattice lattice, PsiElement element, OdinWhenInstruction odinConditionalBlock) {
         OdinLattice outLattice = lattice.copy();
 
         List<Condition> conditions = outLattice.getConditions();

@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -90,10 +91,7 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
             odinReference.resolve();
             return odinReference;
         }
-        OdinLattice explicitKnowledge = OdinReferenceResolver.computeExplicitKnowledge(context, this);
-        OdinLattice implicitKnowledge = OdinReferenceResolver.computeImplicitKnowledge(this);
-
-        boolean useCache = explicitKnowledge.getSymbolValueStore().isEmpty() || explicitKnowledge.isSubset(implicitKnowledge);
+        boolean useCache = shouldUseCache(context, this);
         if (!useCache) {
             context.setUseCache(false);
             OdinReference odinReference = new OdinReference(context.withUseCache(false), this);
@@ -110,5 +108,12 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
         }
 //        System.out.println(location + "Using cache");
         return getCachedReference().getValue(context);
+    }
+
+    public static boolean shouldUseCache(OdinContext context, PsiElement element) {
+        OdinLattice explicitKnowledge = OdinReferenceResolver.computeExplicitKnowledge(context, element);
+        OdinLattice implicitKnowledge = OdinReferenceResolver.computeImplicitKnowledge(element);
+
+        return explicitKnowledge.getSymbolValueStore().isEmpty() || explicitKnowledge.isSubset(implicitKnowledge);
     }
 }
