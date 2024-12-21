@@ -7,20 +7,21 @@
 
         <h4>Bug Fixes</h4>
         <ul>
-            <li>Fixed grammar mistake where attributes would not be correctly parsed in foreign statements.</li>
+            <li>Resolved an issue where attributes were not correctly parsed in foreign statements due to a grammar mistake.</li>
         </ul>
 
         <h4>Improvements</h4>
         <ul>
-            <li>Added support for conditional code completion that is sensitive to when conditions.</li>
-            <li>Symbols and inferred types are now cached.</li>
+            <li>Introduced conditional code completion that adapts dynamically to <code>when</code> conditions.</li>
+            <li>Implemented caching for symbols and inferred types to improve performance.</li>
         </ul>
 
         <p>
-            <b>Note:</b> Caching and conditional symbol resolution can be enabled/disabled using the project settings.
-            These features, especially conditional symbol resolution, are experimental. Turn them off if you are experiencing
-            problems with code completion and symbol resolution.
+            <b>Note:</b> You can enable or disable caching and conditional symbol resolution in the project settings.
+            These features, particularly conditional symbol resolution, are experimental.
+            If you encounter issues with code completion or symbol resolution, consider disabling them.
         </p>
+
 
         <h3>0.7.5</h3>
 
