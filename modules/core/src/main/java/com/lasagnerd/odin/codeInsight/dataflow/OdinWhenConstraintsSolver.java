@@ -20,11 +20,6 @@ import java.util.Set;
 
 public class OdinWhenConstraintsSolver extends OdinVisitor {
     public static final OdinTransferFunction IDENTITY = l -> l;
-    private final OdinLattice inLattice;
-
-    public OdinWhenConstraintsSolver(OdinLattice inLattice) {
-        this.inLattice = inLattice;
-    }
 
     public static OdinLattice solveLattice(OdinContext context, PsiElement element) {
         OdinLattice lattice = OdinLattice.fromContext(context);

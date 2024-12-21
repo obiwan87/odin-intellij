@@ -17,7 +17,6 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.lang.psi.impl.OdinReferenceOwnerMixin;
 import groovy.json.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,10 +149,9 @@ public class OdinInsightUtils {
         if (type.getPsiType() instanceof OdinStructType structType) {
             var structFields = OdinInsightUtils.getStructFields(type.getContext()
                     .withSymbolValueStore(context.getSymbolValueStore())
-                    .withUseCache(context.isUseCache()), structType);
+                    .withUseKnowledge(context.isUseKnowledge()), structType);
 
             symbolTable.addAll(structFields);
-//            context.addTypes(typeContext);
             return symbolTable;
         }
 
@@ -349,9 +347,8 @@ public class OdinInsightUtils {
             return;
         }
 
-        // TODO this is definitely not the best place to do that!
-        boolean useCache = OdinReferenceOwnerMixin.shouldUseCache(context, field.getType());
-        context.setUseCache(useCache);
+//        boolean useCache = OdinReferenceOwnerMixin.shouldUseCache(context, field.getType());
+//        context.setUseKnowledge(useCache);
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, field.getType());
         TsOdinStructType structType = unwrapFromPointerType(tsOdinType);
 

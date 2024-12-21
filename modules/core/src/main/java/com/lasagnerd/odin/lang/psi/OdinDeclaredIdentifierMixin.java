@@ -23,6 +23,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.impl.OdinPsiElementImpl;
+import com.lasagnerd.odin.lang.psi.impl.OdinReferenceOwnerMixin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +117,7 @@ public abstract class OdinDeclaredIdentifierMixin extends OdinPsiElementImpl imp
     private ParameterizedCachedValue<TsOdinType, OdinContext> cachedValue;
 
     public TsOdinType getType(OdinContext context) {
-        if (!context.isUseCache()) {
+        if (!OdinReferenceOwnerMixin.shouldUseCache(context, this)) {
             return resolveType(context);
         }
         if (cachedValue == null) {

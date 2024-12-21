@@ -98,16 +98,16 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     public static @NotNull TsOdinTypeReference findTypeReference(OdinContext context,
-                                                       OdinTypeDefinitionExpression expression,
-                                                       @NotNull OdinType type) {
+                                                                 OdinTypeDefinitionExpression expression,
+                                                                 @NotNull OdinType type) {
         return findTypeReference(context, null, null, expression, type);
     }
 
     public static @NotNull TsOdinTypeReference findTypeReference(@NotNull OdinContext context,
-                                                       OdinDeclaredIdentifier declaredIdentifier,
-                                                       OdinDeclaration declaration,
-                                                       OdinExpression firstExpression,
-                                                       @NotNull OdinType type) {
+                                                                 OdinDeclaredIdentifier declaredIdentifier,
+                                                                 OdinDeclaration declaration,
+                                                                 OdinExpression firstExpression,
+                                                                 @NotNull OdinType type) {
 
         TsOdinType tsOdinType = type.getResolvedType(new OdinTypeResolverParameters(context, declaredIdentifier, declaration, false));
         return createTypeReference(tsOdinType, firstExpression);
@@ -322,6 +322,7 @@ public class OdinTypeResolver extends OdinVisitor {
             this.context.addKnownType(typeDeclaredIdentifier, tsOdinType);
         }
         tsOdinType.getContext().merge(context);
+        tsOdinType.getContext().setUseKnowledge(context.isUseKnowledge());
         tsOdinType.getContext().setPackagePath(context.getPackagePath());
         log("Initialized " + tsOdinType.getClass().getSimpleName() + " with name " + name);
     }
@@ -330,18 +331,15 @@ public class OdinTypeResolver extends OdinVisitor {
         PsiNamedElement declaration;
         String identifierText = typeIdentifier.getText();
 
-        TsOdinType scopeType = context.getPolymorphicType(identifierText);
-        if (scopeType != null) {
-            return scopeType;
+        TsOdinType polymorphicType = context.getPolymorphicType(identifierText);
+        if (polymorphicType != null) {
+            return polymorphicType;
         } else {
             OdinSymbol symbol = typeIdentifier.getReferencedSymbol(context);
 
             declaration = symbol != null ? symbol.getDeclaredIdentifier() : null;
-            // This check should happen in OdinReference
+
             if (!(declaration instanceof OdinDeclaredIdentifier declaredIdentifier)) {
-//                if (RESERVED_TYPES.contains(identifierText)) {
-//                    return TsOdinBuiltInTypes.getBuiltInType(identifierText);
-//                }
                 return TsOdinBuiltInTypes.UNKNOWN;
             } else {
                 var knownType = context.getKnownTypes().get(declaredIdentifier);
@@ -452,10 +450,10 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     public static @NotNull TsOdinTypeAlias createTypeAliasFromTypeReference(TsOdinTypeAlias typeAlias,
-                                                                       OdinDeclaredIdentifier identifier,
+                                                                            OdinDeclaredIdentifier identifier,
                                                                             TsOdinType resolvedTypeReference,
-                                                                       OdinDeclaration odinDeclaration,
-                                                                       OdinExpression odinExpression) {
+                                                                            OdinDeclaration odinDeclaration,
+                                                                            OdinExpression odinExpression) {
         if (typeAlias != resolvedTypeReference) {
             typeAlias.setAliasedType(resolvedTypeReference);
         }
@@ -606,9 +604,7 @@ public class OdinTypeResolver extends OdinVisitor {
             if (unionBody != null) {
                 List<OdinType> types = unionBody.getTypeList();
                 for (OdinType type : types) {
-                    TsOdinType tsOdinType = doResolveType(tsOdinUnionType.getContext()
-                            .withSymbolValueStore(context.getSymbolValueStore())
-                            .withUseCache(context.isUseCache()), type);
+                    TsOdinType tsOdinType = doResolveType(tsOdinUnionType.getContext(), type);
 
                     TsOdinUnionVariant tsOdinUnionVariant = new TsOdinUnionVariant();
                     tsOdinUnionVariant.setPsiType(type);

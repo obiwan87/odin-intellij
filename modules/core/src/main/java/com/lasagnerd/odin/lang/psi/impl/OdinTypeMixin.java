@@ -22,9 +22,7 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
     }
 
     public TsOdinType getResolvedType(OdinTypeResolver.OdinTypeResolverParameters typeResolverParameters) {
-        if (!typeResolverParameters.context().isUseCache()
-//                || !OdinReferenceOwnerMixin.shouldUseCache(typeResolverParameters.context(), this)
-        )
+        if (!OdinReferenceOwnerMixin.shouldUseCache(typeResolverParameters.context(), this))
             return OdinTypeResolver.resolveType(typeResolverParameters, this);
         if (cachedType == null) {
             cachedType = createCachedType();

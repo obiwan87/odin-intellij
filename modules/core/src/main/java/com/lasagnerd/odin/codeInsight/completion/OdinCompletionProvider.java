@@ -117,7 +117,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
         OdinLattice lattice = OdinReferenceResolver.computeExplicitKnowledge(new OdinContext(), identifier);
         OdinContext context = lattice.toContext();
-        context.setUseCache(false);
+        context.setUseKnowledge(false);
 
         VirtualFile sourceFile = OdinImportUtils.getContainingVirtualFile(parameters.getOriginalFile());
 

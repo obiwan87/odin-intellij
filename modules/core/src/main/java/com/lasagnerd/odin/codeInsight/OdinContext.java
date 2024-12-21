@@ -38,7 +38,7 @@ public class OdinContext {
 
     @Setter
     @With
-    private boolean useCache = true;
+    private boolean useKnowledge = true;
 
     public OdinContext(String packagePath) {
         this.symbolTable = new OdinSymbolTable(packagePath);
@@ -111,7 +111,9 @@ public class OdinContext {
         polymorphicTypes.putAll(context.polymorphicTypes);
         knownTypes.putAll(context.knownTypes);
         specializedTypes.putAll(context.specializedTypes);
+        useKnowledge = context.isUseKnowledge();
 
+        this.getSymbolValueStore().getValues().putAll(context.getSymbolValueStore().getValues());
     }
 
     public void addKnownType(OdinDeclaredIdentifier declaredIdentifier, TsOdinType type) {

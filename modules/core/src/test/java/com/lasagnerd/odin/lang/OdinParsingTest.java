@@ -2278,8 +2278,8 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testPsiFileAtOffset() throws IOException {
         {
-            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\net\\socket_windows.odin");
-            PsiElement element = file.findElementAt(2446);
+            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\os\\os_freebsd.odin");
+            PsiElement element = file.findElementAt(2911);
             assertNotNull(element);
 
 //            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(element, OdinQualifiedType.class);
@@ -2291,10 +2291,10 @@ public class OdinParsingTest extends UsefulTestCase {
 //            OdinSymbol referencedSymbol = refExpression.getIdentifier().getReferencedSymbol();
 //            assertNotNull(referencedSymbol);
 //
-//            OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
-//            TsOdinType inferredType = refExpression.getInferredType();
-//            System.out.println(inferredType);
-//            assertFalse(inferredType.isUnknown());
+            OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
+            TsOdinType inferredType = refExpression.getInferredType();
+            System.out.println(inferredType);
+            assertFalse(inferredType.isUnknown());
 
 //            EvOdinValue value = OdinExpressionEvaluator.evaluate(refExpression);
 //            assertFalse(value.asBool());
@@ -2306,18 +2306,18 @@ public class OdinParsingTest extends UsefulTestCase {
 //            OdinSymbol referencedSymbol = identifier.getReferencedSymbol();
 //            assertNotNull(referencedSymbol);
 
-            file.getFileScope().accept(new OdinRecursiveVisitor() {
-                @Override
-                public void visitIdentifier(@NotNull OdinIdentifier o) {
-                    o.getReferencedSymbol();
-                }
-            });
+//            file.getFileScope().accept(new OdinRecursiveVisitor() {
+//                @Override
+//                public void visitIdentifier(@NotNull OdinIdentifier o) {
+//                    o.getReferencedSymbol();
+//                }
+//            });
 
-            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.getParentOfType(element, OdinImplicitSelectorExpression.class);
-            assertNotNull(implicitSelectorExpression);
-            TsOdinType inferredType = implicitSelectorExpression.getInferredType();
-            assertInstanceOf(inferredType, TsOdinEnumType.class);
-//
+//            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.getParentOfType(element, OdinImplicitSelectorExpression.class);
+//            assertNotNull(implicitSelectorExpression);
+//            TsOdinType inferredType = implicitSelectorExpression.getInferredType();
+//            assertInstanceOf(inferredType, TsOdinEnumType.class);
+////
 //            OdinIdentifier identifier = PsiTreeUtil.getParentOfType(element, OdinIdentifier.class);
 //            assertNotNull(identifier);
 //            PsiReference reference = identifier.getReference();

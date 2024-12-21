@@ -253,10 +253,11 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
 
     @Override
     public TsOdinType getType(String typeName) {
+        loadBuiltinSymbols();
         if (typesCache.get(typeName) == null) {
             OdinSymbol symbol = getRuntimeCoreSymbol(typeName);
             if (symbol == null) {
-                System.out.printf("No builtin type with name %s%n", typeName);
+                System.out.printf("No builtin type for symbol with name %s%n", typeName);
                 return TsOdinBuiltInTypes.UNKNOWN;
             }
             PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
@@ -373,12 +374,15 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             ));
         }
 
+        OdinContext context = new OdinContext();
+        context.setUseKnowledge(false);
         // Add any with the backing type Raw_Any
         {
             OdinSymbol anyTypeSymbol = coreOdinSymbolTable.getSymbol("Raw_Any");
             Objects.requireNonNull(anyTypeSymbol);
             OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) anyTypeSymbol.getDeclaredIdentifier();
-            TsOdinTypeReference anyStructType = (TsOdinTypeReference) declaredIdentifier.getType(new OdinContext());
+
+            TsOdinTypeReference anyStructType = (TsOdinTypeReference) declaredIdentifier.getType(context);
             typesCache.put("any", createTypeReference(new TsOdinAnyType((TsOdinStructType) anyStructType.referencedType()), false));
         }
 
@@ -455,8 +459,8 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                         .values()
                         .stream()
                         .flatMap(List::stream)
-                        .filter(odinSymbol1 -> OdinAttributeUtils.containsAttribute(odinSymbol1.getAttributes(), "builtin")
-                                || odinSymbol1.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE)
+                        .filter(symbol -> OdinAttributeUtils.containsAttribute(symbol.getAttributes(), "builtin")
+                                || symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE)
                         .forEach(symbol -> {
                             symbol.setBuiltin(true);
                             syntheticCompilerDeclarations.add(symbol);
@@ -470,7 +474,11 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         OdinSymbol symbol = syntheticSymbolTable.getSymbol(constantTypeIdentifier);
         Objects.requireNonNull(symbol);
         OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) symbol.getDeclaredIdentifier();
-        TsOdinTypeReference type = (TsOdinTypeReference) declaredIdentifier.getType(new OdinContext());
+
+        OdinContext context = new OdinContext();
+        context.setUseKnowledge(false);
+
+        TsOdinTypeReference type = (TsOdinTypeReference) declaredIdentifier.getType(context);
         typesCache.put(constantTypeIdentifier, type);
         typesCache.put(constantIdentifier, type.referencedType());
     }

@@ -89,8 +89,7 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     private OdinReference doGetReferenceWithKnowledge(OdinContext context) {
         boolean useCache = shouldUseCache(context, this);
         if (!useCache) {
-            context.setUseCache(false);
-            OdinReference odinReference = new OdinReference(context.withUseCache(false), this);
+            OdinReference odinReference = new OdinReference(context, this);
             odinReference.resolve();
             return odinReference;
         }
@@ -108,14 +107,14 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
 
     public static boolean shouldUseCache(OdinContext context, PsiElement element) {
         Project project = element.getProject();
-        boolean useCacheForKnowledge = !context.isUseCache() && OdinProjectSettingsService.getInstance(project).isConditionalSymbolResolutionEnabled();
-        if (useCacheForKnowledge
-                || !OdinProjectSettingsService.getInstance(project).isCacheEnabled())
+        if (!OdinProjectSettingsService.getInstance(project).isCacheEnabled())
             return false;
 
-        OdinLattice explicitKnowledge = OdinReferenceResolver.computeExplicitKnowledge(context, element);
-        OdinLattice implicitKnowledge = OdinReferenceResolver.computeImplicitKnowledge(element);
-
-        return explicitKnowledge.getSymbolValueStore().isEmpty() || explicitKnowledge.isSubset(implicitKnowledge);
+        if (context.isUseKnowledge()) {
+            OdinLattice explicitKnowledge = OdinReferenceResolver.computeExplicitKnowledge(context, element);
+            OdinLattice implicitKnowledge = OdinReferenceResolver.computeImplicitKnowledge(element);
+            return explicitKnowledge.getSymbolValueStore().isEmpty() || explicitKnowledge.isSubset(implicitKnowledge);
+        }
+        return true;
     }
 }

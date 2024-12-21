@@ -61,7 +61,9 @@ public class OdinReferenceResolver {
                                                @NotNull OdinIdentifier identifier,
                                                OdinSymbolTableBuilder symbolTableBuilder) {
         try {
-            if (OdinProjectSettingsService.getInstance(identifier.getProject()).isConditionalSymbolResolutionEnabled()) {
+            boolean useKnowledge = OdinProjectSettingsService.getInstance(identifier.getProject())
+                    .isConditionalSymbolResolutionEnabled() && context.isUseKnowledge();
+            if (useKnowledge) {
                 return resolveWithKnowledge(context, identifier, symbolTableBuilder);
             }
             return resolveWithoutKnowledge(identifier, symbolTableBuilder);
@@ -153,21 +155,6 @@ public class OdinReferenceResolver {
                 }
             }
 
-            if (validSymbols.size() == 1
-                    && validSymbols.getFirst().getDeclaredIdentifier() != null) {
-
-                // TODO do this in getReference()
-                // Evaluate what the knowledge would be independently of the identifier
-                // source. If the target has a compatible knowledge state, we can use the
-                // cache, otherwise, this is a non-idempotent operation, that requires not
-                // using the cache.
-                OdinLattice implicitTargetKnowledge = computeImplicitKnowledge(validSymbols.getFirst().getDeclaredIdentifier());
-
-                if (!implicitTargetKnowledge.isSubset(explicitSourceKnowledge)) {
-                    context.setUseCache(false);
-                }
-            }
-
             if (validSymbols.size() == 1) {
                 return validSymbols.getFirst();
             }
@@ -214,20 +201,6 @@ public class OdinReferenceResolver {
 
         sourceLattice.getSymbolValueStore().combine(defaultValue);
         return sourceLattice;
-    }
-
-    private static boolean inducesExplicitKnowledge(OdinPsiElement psiElement) {
-
-        OdinWhenStatement whenStatement = PsiTreeUtil.getParentOfType(psiElement, OdinWhenStatement.class);
-        if (whenStatement != null)
-            return true;
-
-        OdinFile odinFile = psiElement.getContainingOdinFile();
-        if (odinFile != null) {
-            OdinSymbolValueStore valuesStore = odinFile.getFileScope().getBuildFlagsValuesStore();
-            return valuesStore != null && !valuesStore.isEmpty();
-        }
-        return false;
     }
 
     // Computes the symbol table under which the identifier is expected to be defined

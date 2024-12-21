@@ -22,6 +22,7 @@ advanced :: proc() {
         win_amd_var := win_amd64.windows_amd64
     }
 
+
     when ODIN_OS == .Windows && ODIN_ARCH == .i386{
         win_i386 := S { }
         win_i386_var := win_i386.windows_i386
