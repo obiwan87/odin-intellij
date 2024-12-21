@@ -92,17 +92,19 @@ public abstract class OdinDeclaredIdentifierMixin extends OdinPsiElementImpl imp
     public @NotNull SearchScope getUseScope() {
         // TODO
         OdinSymbol symbol = createSymbol();
-        switch (symbol.getVisibility()) {
-            case NONE -> {
-                OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
-                if (fileScope != null) {
-                    return new LocalSearchScope(fileScope);
+        if (symbol != null) {
+            switch (symbol.getVisibility()) {
+                case NONE -> {
+                    OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
+                    if (fileScope != null) {
+                        return new LocalSearchScope(fileScope);
+                    }
                 }
-            }
-            case FILE_PRIVATE -> {
-                OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
-                if (fileScope != null) {
-                    return new LocalSearchScope(fileScope.getContainingFile());
+                case FILE_PRIVATE -> {
+                    OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
+                    if (fileScope != null) {
+                        return new LocalSearchScope(fileScope.getContainingFile());
+                    }
                 }
             }
         }

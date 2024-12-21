@@ -3,6 +3,25 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.8.0</h3>
+
+        <h4>Bug Fixes</h4>
+        <ul>
+            <li>Fixed grammar mistake where attributes would not be correctly parsed in foreign statements.</li>
+        </ul>
+
+        <h4>Improvements</h4>
+        <ul>
+            <li>Added support for conditional code completion that is sensitive to when conditions.</li>
+            <li>Symbols and inferred types are now cached.</li>
+        </ul>
+
+        <p>
+            <b>Note:</b> Caching and conditional symbol resolution can be enabled/disabled using the project settings.
+            These features, especially conditional symbol resolution, are experimental. Turn them off if you are experiencing
+            problems with code completion and symbol resolution.
+        </p>
+
         <h3>0.7.5</h3>
 
         <h4>Bug Fixes</h4>
