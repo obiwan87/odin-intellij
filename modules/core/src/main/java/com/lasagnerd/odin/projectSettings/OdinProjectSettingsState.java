@@ -13,4 +13,5 @@ public class OdinProjectSettingsState {
     public String debuggerPath = "";
     public String highlightUnknownReferencesEnabled = "";
     public String conditionalSymbolResolutionEnabled = "";
+    public String cacheEnabled = "";
 }

@@ -58,6 +58,8 @@ public class OdinProjectSettings implements Disposable {
     private JButton downloadButton;
     private JBCheckBox highlightUnknownReferencesEnabledCheckbox;
     private JBCheckBox conditionalSymbolResolutionEnabledCheckbox;
+    private JBCheckBox cacheEnabledCheckbox;
+
     private SimpleColoredComponent sdkVersion;
 
     private final Object MUTEX = new Object();
@@ -110,6 +112,11 @@ public class OdinProjectSettings implements Disposable {
             if (conditionalSymbolResolutionEnabledCheckbox != null) {
                 conditionalSymbolResolutionEnabledCheckbox = null;
             }
+
+            if (cacheEnabledCheckbox != null) {
+                cacheEnabledCheckbox = null;
+            }
+
             if (sdkVersion != null) {
                 sdkVersion.clear(); // Clear any text or icons
                 sdkVersion = null;
@@ -142,8 +149,16 @@ public class OdinProjectSettings implements Disposable {
         return conditionalSymbolResolutionEnabledCheckbox.isSelected();
     }
 
-    public void setConditionalSymbolResolutionEnabledCheckbox(boolean conditionalSymbolResolutionCheckboxEnabled) {
+    public void setConditionalSymbolResolutionEnabledCheckboxEnabled(boolean conditionalSymbolResolutionCheckboxEnabled) {
         this.conditionalSymbolResolutionEnabledCheckbox.setSelected(conditionalSymbolResolutionCheckboxEnabled);
+    }
+
+    public boolean isCacheEnabled() {
+        return cacheEnabledCheckbox.isSelected();
+    }
+
+    public void setCacheEnabled(boolean cacheEnabled) {
+        this.cacheEnabledCheckbox.setSelected(cacheEnabled);
     }
 
     class BrowseToSdkFileChooserAction extends AbstractAction {
@@ -179,6 +194,11 @@ public class OdinProjectSettings implements Disposable {
     private @NotNull JComponent createConditionalSymbolResolutionCheckbox() {
         conditionalSymbolResolutionEnabledCheckbox = new JBCheckBox();
         return conditionalSymbolResolutionEnabledCheckbox;
+    }
+
+    private @NotNull JComponent createCacheEnabledCheckbox() {
+        cacheEnabledCheckbox = new JBCheckBox();
+        return cacheEnabledCheckbox;
     }
 
     private @NotNull JButton createDownloadButton() {
@@ -355,11 +375,13 @@ public class OdinProjectSettings implements Disposable {
                                     <html><p>Turn this off if you get StackOverflowError's or when the <br>'Analyzing...' message on the top right corner won't disappear</p></html>
                                     """.stripIndent()), 0)
                     .addLabeledComponent(new JBLabel("Odin checker"), createOdinCheckerCheckbox(), 1)
-                    .addComponentToRightColumn(createComment("Enable/Disable the odin checker and the respective error messages"))
+                    .addComponentToRightColumn(createComment("Enable/disable the odin checker and the respective error messages"))
                     .addLabeledComponent(new JBLabel("Highlight unknown references"), createHighlightUnknownReferencesCheckbox(), 1)
                     .addComponentToRightColumn(createComment("Enable/disable highlighting of unknown references"))
+                    .addLabeledComponent(new JBLabel("Use cache"), createCacheEnabledCheckbox(), 1)
+                    .addComponentToRightColumn(createComment("Enable/disable caching for type inference and symbol resolution"))
                     .addLabeledComponent(new JBLabel("Conditional symbol resolution (experimental)"), createConditionalSymbolResolutionCheckbox(), 1)
-                    .addComponentToRightColumn(createComment("Enable/disable symbol resolution that is sensitive to when statement conditions"))
+                    .addComponentToRightColumn(createComment("Enable/disable symbol resolution that is sensitive to <br/> when statement conditions"))
                     .addComponentFillVertically(new JPanel(), 1)
                     .getPanel();
 

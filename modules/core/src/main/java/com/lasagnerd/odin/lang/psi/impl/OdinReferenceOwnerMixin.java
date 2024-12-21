@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -70,7 +71,7 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     }
 
     private @NotNull OdinReference doGetReferenceWithoutKnowledge(OdinContext context) {
-        if (!context.isUseCache()) {
+        if (!shouldUseCache(context, this)) {
             OdinReference odinReference = new OdinReference(context, this);
             odinReference.resolve();
             return odinReference;
@@ -86,11 +87,6 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     }
 
     private OdinReference doGetReferenceWithKnowledge(OdinContext context) {
-        if (!context.isUseCache()) {
-            OdinReference odinReference = new OdinReference(context, this);
-            odinReference.resolve();
-            return odinReference;
-        }
         boolean useCache = shouldUseCache(context, this);
         if (!useCache) {
             context.setUseCache(false);
@@ -111,7 +107,11 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     }
 
     public static boolean shouldUseCache(OdinContext context, PsiElement element) {
-        if (!OdinProjectSettingsService.getInstance(element.getProject()).isConditionalSymbolResolutionEnabled())
+        Project project = element.getProject();
+        if (!context.isUseCache() || !OdinProjectSettingsService.getInstance(project).isCacheEnabled())
+            return false;
+
+        if (!OdinProjectSettingsService.getInstance(project).isConditionalSymbolResolutionEnabled())
             return true;
         OdinLattice explicitKnowledge = OdinReferenceResolver.computeExplicitKnowledge(context, element);
         OdinLattice implicitKnowledge = OdinReferenceResolver.computeImplicitKnowledge(element);

@@ -26,4 +26,6 @@ public interface OdinProjectSettingsService extends PersistentStateComponent<Odi
     OdinProjectSettingsState getState();
 
     void setState(OdinProjectSettingsState state);
+
+    boolean isCacheEnabled();
 }

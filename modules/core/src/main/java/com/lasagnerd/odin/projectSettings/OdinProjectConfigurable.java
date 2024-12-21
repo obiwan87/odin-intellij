@@ -38,13 +38,13 @@ public class OdinProjectConfigurable implements Configurable {
         OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
         OdinProjectSettingsState state = settingsService.getState();
 
-        boolean sameSdkPath = projectSettings.getSdkPath()
+        boolean sdkPathModified = !projectSettings.getSdkPath()
                 .equals(state.sdkPath);
 
-        boolean sameBuildFlags = projectSettings.getBuildFlags()
+        boolean buildFlagsModified = !projectSettings.getBuildFlags()
                 .equals(state.extraBuildFlags);
 
-        boolean sameSemanticAnnotatorEnabled = projectSettings.isSemanticAnnotatorEnabled()
+        boolean semanticAnnotatorEnabledModified = !projectSettings.isSemanticAnnotatorEnabled()
                 == settingsService.isSemanticAnnotatorEnabled();
 
         boolean debuggerIdModified = !projectSettings.getDebuggerId().equals(state.getDebuggerId());
@@ -52,16 +52,18 @@ public class OdinProjectConfigurable implements Configurable {
         boolean odinCheckerEnabledModified = projectSettings.isOdinCheckerEnabled() != settingsService.isOdinCheckerEnabled();
         boolean highlightUnknownReferencesEnabledModified = projectSettings.isHighlightUnknownReferencesEnabled() != settingsService.isHighlightUnknownReferencesEnabled();
         boolean conditionalSymbolResolutionEnabledModified = projectSettings.isConditionalSymbolResolutionCheckboxEnabled() != settingsService.isConditionalSymbolResolutionEnabled();
+        boolean cachedEnabledModified = projectSettings.isCacheEnabled() != settingsService.isCacheEnabled();
 
 
-        return !sameSdkPath
-                || !sameBuildFlags
-                || !sameSemanticAnnotatorEnabled
+        return !sdkPathModified
+                || buildFlagsModified
+                || semanticAnnotatorEnabledModified
                 || debuggerIdModified
                 || debuggerPathModified
                 || odinCheckerEnabledModified
                 || highlightUnknownReferencesEnabledModified
                 || conditionalSymbolResolutionEnabledModified
+                || cachedEnabledModified
                 ;
     }
 
@@ -96,6 +98,7 @@ public class OdinProjectConfigurable implements Configurable {
         state.setOdinCheckerEnabled(sdkSettings.isOdinCheckerEnabled() ? "true" : "false");
         state.setHighlightUnknownReferencesEnabled(sdkSettings.isHighlightUnknownReferencesEnabled() ? "true" : "false");
         state.setConditionalSymbolResolutionEnabled(sdkSettings.isConditionalSymbolResolutionCheckboxEnabled() ? "true" : "false");
+        state.setCacheEnabled(sdkSettings.isCacheEnabled() ? "true" : "false");
     }
 
     @Override
@@ -112,7 +115,8 @@ public class OdinProjectConfigurable implements Configurable {
         projectSettings.setDebuggerId(state.getDebuggerId());
         projectSettings.setOdinCheckerEnabled(settingsService.isOdinCheckerEnabled());
         projectSettings.setHighlightUnknownReferences(settingsService.isHighlightUnknownReferencesEnabled());
-        projectSettings.setConditionalSymbolResolutionEnabledCheckbox(settingsService.isConditionalSymbolResolutionEnabled());
+        projectSettings.setConditionalSymbolResolutionEnabledCheckboxEnabled(settingsService.isConditionalSymbolResolutionEnabled());
+        projectSettings.setCacheEnabled(settingsService.isCacheEnabled());
     }
 
     @Override

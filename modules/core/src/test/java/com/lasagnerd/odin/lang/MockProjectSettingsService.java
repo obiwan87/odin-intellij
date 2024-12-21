@@ -38,6 +38,11 @@ public class MockProjectSettingsService implements OdinProjectSettingsService {
 
     }
 
+    @Override
+    public boolean isCacheEnabled() {
+        return true;
+    }
+
 
     @Override
     public @NotNull OdinProjectSettingsState getState() {

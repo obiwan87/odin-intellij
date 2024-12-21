@@ -23,6 +23,18 @@ public class OdinProjectSettingsServiceImpl implements OdinProjectSettingsServic
     }
 
     @Override
+    public boolean isCacheEnabled() {
+        if (state.cacheEnabled != null) {
+            // Annotator enabled by default
+            if (state.cacheEnabled.isEmpty()) {
+                return false;
+            }
+            return state.cacheEnabled.equals("true");
+        }
+        return true;
+    }
+
+    @Override
     public void initializeComponent() {
         OdinProjectSettingsService.super.initializeComponent();
     }
@@ -65,7 +77,7 @@ public class OdinProjectSettingsServiceImpl implements OdinProjectSettingsServic
             }
             return state.highlightUnknownReferencesEnabled.equals("true");
         }
-        return false;
+        return true;
     }
 
     @Override
