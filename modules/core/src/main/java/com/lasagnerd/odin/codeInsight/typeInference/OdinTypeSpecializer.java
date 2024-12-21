@@ -67,8 +67,11 @@ public class OdinTypeSpecializer {
             return genericType;
 
         // TODO OPTIMIZE: Check if it needs specialization?
-
         TsOdinProcedureType specializedType = new TsOdinProcedureType();
+        OdinContext context = specializedType.getContext()
+                .withSymbolValueStore(outerScope.getSymbolValueStore())
+                .withUseCache(outerScope.isUseCache());
+        specializedType.setContext(context);
         specializedType.getContext().setPackagePath(genericType.getContext().getPackagePath());
         specializedType.getContext().merge(genericType.getContext());
         specializedType.setPsiType(genericType.getPsiType());
@@ -82,8 +85,10 @@ public class OdinTypeSpecializer {
                 specializedType,
                 arguments);
 
+
         for (TsOdinParameter tsOdinParameter : genericType.getParameters()) {
-            TsOdinType tsOdinType = resolveType(specializedType.getContext(), tsOdinParameter.getPsiType());
+            TsOdinType tsOdinType = resolveType(context
+                    , tsOdinParameter.getPsiType());
             TsOdinParameter specializedParameter = cloneWithType(tsOdinParameter, tsOdinType);
             specializedType.getParameters().add(specializedParameter);
         }

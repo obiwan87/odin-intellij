@@ -111,6 +111,8 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     }
 
     public static boolean shouldUseCache(OdinContext context, PsiElement element) {
+        if (!OdinProjectSettingsService.getInstance(element.getProject()).isConditionalSymbolResolutionEnabled())
+            return true;
         OdinLattice explicitKnowledge = OdinReferenceResolver.computeExplicitKnowledge(context, element);
         OdinLattice implicitKnowledge = OdinReferenceResolver.computeImplicitKnowledge(element);
 

@@ -17,6 +17,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.lang.psi.impl.OdinReferenceOwnerMixin;
 import groovy.json.StringEscapeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -333,6 +334,7 @@ public class OdinInsightUtils {
                 odinSymbol.setHasUsing(hasUsing);
                 symbols.add(odinSymbol);
                 if (field.getDeclaredIdentifiers().size() == 1 && hasUsing) {
+
                     getSymbolsOfFieldWithUsing(context, field, symbols);
                 }
             }
@@ -346,6 +348,10 @@ public class OdinInsightUtils {
         if (field.getType() == null) {
             return;
         }
+
+        // TODO this is definitely not the best place to do that!
+        boolean useCache = OdinReferenceOwnerMixin.shouldUseCache(context, field.getType());
+        context.setUseCache(useCache);
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, field.getType());
         TsOdinStructType structType = unwrapFromPointerType(tsOdinType);
 
