@@ -117,7 +117,7 @@ public abstract class TsOdinTypeBase implements TsOdinType {
         return this instanceof TsOdinUntypedType;
     }
 
-    public abstract TsOdinMetaType.MetaType getMetaType();
+    public abstract TsOdinTypeKind getTypeReferenceKind();
 
     @Override
     public String toString() {

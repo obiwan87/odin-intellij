@@ -29,8 +29,8 @@ public class TsOdinTuple extends TsOdinTypeBase {
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.UNKNOWN;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.UNKNOWN;
     }
 
     @Override

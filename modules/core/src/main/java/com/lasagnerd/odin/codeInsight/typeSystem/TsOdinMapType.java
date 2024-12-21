@@ -17,7 +17,7 @@ public class TsOdinMapType extends TsOdinTypeBase {
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.MAP;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.MAP;
     }
 }

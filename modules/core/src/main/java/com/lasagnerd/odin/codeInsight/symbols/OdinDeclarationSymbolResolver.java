@@ -9,9 +9,9 @@ import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinEnumType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPackageReferenceType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeReference;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -238,8 +238,8 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
             List<OdinSymbol> typeSymbols;
             TsOdinType tsOdinType = expression.getInferredType(context);
-            if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-                typeSymbols = getTypeElements(context, OdinTypeResolver.resolveMetaType(context, tsOdinMetaType)
+            if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
+                typeSymbols = getTypeElements(context, OdinTypeResolver.resolveTypeReference(context, tsOdinTypeReference)
                         .baseType(true));
             } else {
                 var stream = getTypeElements(context, tsOdinType.baseType(true)).stream();
@@ -313,8 +313,8 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
                 } else {
                     OdinExpression expression = o.getExpressionList().getFirst();
                     TsOdinType tsOdinType = expression.getInferredType(context);
-                    if (tsOdinType instanceof TsOdinMetaType metaType
-                            && metaType.representedType().baseType(true) instanceof TsOdinEnumType enumType) {
+                    if (tsOdinType instanceof TsOdinTypeReference typeReference
+                            && typeReference.referencedType().baseType(true) instanceof TsOdinEnumType enumType) {
                         List<OdinSymbol> enumFields = OdinInsightUtils.getEnumFields((OdinEnumType) enumType.getPsiType());
                         symbols.addAll(enumFields);
                     }

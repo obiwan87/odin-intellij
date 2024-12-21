@@ -16,7 +16,7 @@ public class TsOdinPointerType extends TsOdinTypeBase {
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.POINTER;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.POINTER;
     }
 }

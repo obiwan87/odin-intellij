@@ -6,7 +6,7 @@ public class TsOdinStringType extends TsOdinBuiltInType {
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.STRING;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.STRING;
     }
 }

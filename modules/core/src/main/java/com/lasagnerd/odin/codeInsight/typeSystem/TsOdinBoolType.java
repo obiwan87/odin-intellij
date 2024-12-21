@@ -9,7 +9,7 @@ public class TsOdinBoolType extends TsOdinBuiltInType {
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.BOOL;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.BOOL;
     }
 }

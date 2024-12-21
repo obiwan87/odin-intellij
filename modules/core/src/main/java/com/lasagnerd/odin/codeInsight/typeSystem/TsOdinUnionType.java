@@ -15,7 +15,7 @@ public class TsOdinUnionType extends TsOdinGenericType implements TsOdinParamete
     List<TsOdinParameter> parameters = new ArrayList<>();
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.UNION;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.UNION;
     }
 }

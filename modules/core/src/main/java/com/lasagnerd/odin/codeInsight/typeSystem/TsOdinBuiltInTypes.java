@@ -71,13 +71,13 @@ public class TsOdinBuiltInTypes {
     public static final TsOdinBuiltInType TYPEID = new TsOdinBuiltInType("typeid");
     public static final TsOdinBuiltInType NIL = new TsOdinBuiltInType("nil");
 
-    public static final TsOdinUntypedType UNTYPED_INT = new TsOdinUntypedType("untyped int", TsOdinMetaType.MetaType.NUMERIC);
-    public static final TsOdinUntypedType UNTYPED_BOOLEAN = new TsOdinUntypedType("untyped bool", TsOdinMetaType.MetaType.BOOL);
-    public static final TsOdinUntypedType UNTYPED_RUNE = new TsOdinUntypedType("untyped rune", TsOdinMetaType.MetaType.RUNE);
-    public static final TsOdinUntypedType UNTYPED_STRING = new TsOdinUntypedType("untyped string", TsOdinMetaType.MetaType.STRING);
-    public static final TsOdinUntypedType UNTYPED_FLOAT = new TsOdinUntypedType("untyped float", TsOdinMetaType.MetaType.NUMERIC);
-    public static final TsOdinUntypedType UNTYPED_COMPLEX = new TsOdinUntypedType("untyped complex", TsOdinMetaType.MetaType.NUMERIC);
-    public static final TsOdinUntypedType UNTYPED_QUATERNION = new TsOdinUntypedType("untyped quaternion", TsOdinMetaType.MetaType.NUMERIC);
+    public static final TsOdinUntypedType UNTYPED_INT = new TsOdinUntypedType("untyped int", TsOdinTypeKind.NUMERIC);
+    public static final TsOdinUntypedType UNTYPED_BOOLEAN = new TsOdinUntypedType("untyped bool", TsOdinTypeKind.BOOL);
+    public static final TsOdinUntypedType UNTYPED_RUNE = new TsOdinUntypedType("untyped rune", TsOdinTypeKind.RUNE);
+    public static final TsOdinUntypedType UNTYPED_STRING = new TsOdinUntypedType("untyped string", TsOdinTypeKind.STRING);
+    public static final TsOdinUntypedType UNTYPED_FLOAT = new TsOdinUntypedType("untyped float", TsOdinTypeKind.NUMERIC);
+    public static final TsOdinUntypedType UNTYPED_COMPLEX = new TsOdinUntypedType("untyped complex", TsOdinTypeKind.NUMERIC);
+    public static final TsOdinUntypedType UNTYPED_QUATERNION = new TsOdinUntypedType("untyped quaternion", TsOdinTypeKind.NUMERIC);
 
     public static final TsOdinBuiltinProc LEN = new TsOdinBuiltinProc("len");
     public static final TsOdinBuiltinProc CAP = new TsOdinBuiltinProc("cap");
@@ -412,8 +412,8 @@ public class TsOdinBuiltInTypes {
         }
 
         @Override
-        public TsOdinMetaType.MetaType getMetaType() {
-            return TsOdinMetaType.MetaType.UNKNOWN;
+        public TsOdinTypeKind getTypeReferenceKind() {
+            return TsOdinTypeKind.UNKNOWN;
         }
 
         @Override
@@ -438,8 +438,8 @@ public class TsOdinBuiltInTypes {
         }
 
         @Override
-        public TsOdinMetaType.MetaType getMetaType() {
-            return TsOdinMetaType.MetaType.UNDECIDED;
+        public TsOdinTypeKind getTypeReferenceKind() {
+            return TsOdinTypeKind.UNDECIDED;
         }
 
         @Override
@@ -469,8 +469,8 @@ public class TsOdinBuiltInTypes {
         }
 
         @Override
-        public TsOdinMetaType.MetaType getMetaType() {
-            return TsOdinMetaType.MetaType.VOID;
+        public TsOdinTypeKind getTypeReferenceKind() {
+            return TsOdinTypeKind.VOID;
         }
     }
 

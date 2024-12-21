@@ -11,7 +11,7 @@ public class TsOdinMatrixType extends TsOdinTypeBase implements TsOdinElementOwn
     private TsOdinType elementType;
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.UNKNOWN;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.UNKNOWN;
     }
 }

@@ -93,8 +93,8 @@ public class OdinBuiltinProcedures {
         OdinSymbolTable symbolTable = OdinSymbolTable.from(OdinSdkService.getInstance(callExpression.getProject()).getRuntimeCoreSymbols());
         OdinSymbol symbol = symbolTable.getSymbol("Type_Info");
         if (symbol != null) {
-            TsOdinMetaType metaType = (TsOdinMetaType) ((OdinDeclaredIdentifier) symbol.getDeclaredIdentifier()).getType(new OdinContext());
-            TsOdinStructType structType = (TsOdinStructType) metaType.representedType();
+            TsOdinTypeReference typeReference = (TsOdinTypeReference) ((OdinDeclaredIdentifier) symbol.getDeclaredIdentifier()).getType(new OdinContext());
+            TsOdinStructType structType = (TsOdinStructType) typeReference.referencedType();
             TsOdinPointerType tsOdinPointerType = new TsOdinPointerType();
             tsOdinPointerType.setDereferencedType(structType);
 
@@ -255,7 +255,7 @@ public class OdinBuiltinProcedures {
             OdinArgument first = argumentList.getFirst();
             if (first instanceof OdinUnnamedArgument argument) {
                 TsOdinType tsOdinType = argument.getExpression().getInferredType(engine.context);
-                return OdinTypeResolver.createMetaType(tsOdinType, null);
+                return OdinTypeResolver.createTypeReference(tsOdinType, null);
             }
         }
         return TsOdinBuiltInTypes.UNKNOWN;

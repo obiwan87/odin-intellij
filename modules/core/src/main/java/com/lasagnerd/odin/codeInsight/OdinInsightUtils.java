@@ -123,7 +123,7 @@ public class OdinInsightUtils {
             case TsOdinAnyType anyType -> {
                 return getTypeElements(context, project, anyType.getBackingType(), includeReferenceableSymbols);
             }
-            case TsOdinMetaType metaType when metaType.representedType() instanceof TsOdinPolymorphicType polymorphicType -> {
+            case TsOdinTypeReference typeReference when typeReference.referencedType() instanceof TsOdinPolymorphicType polymorphicType -> {
                 OdinType psiType = polymorphicType.getPsiType();
                 if (psiType != null) {
                     if (psiType.getParent() instanceof OdinConstrainedType constrainedType) {
@@ -177,7 +177,7 @@ public class OdinInsightUtils {
             return symbolTable.with(getEnumFields(enumType));
         }
 
-        if (type instanceof TsOdinMetaType metaType && metaType.representedType().baseType(true) instanceof TsOdinBitSetType tsOdinBitSetType) {
+        if (type instanceof TsOdinTypeReference typeReference && typeReference.referencedType().baseType(true) instanceof TsOdinBitSetType tsOdinBitSetType) {
             if (tsOdinBitSetType.getElementType() instanceof TsOdinEnumType tsOdinEnumType) {
                 return symbolTable.with(getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType()));
             }
@@ -261,7 +261,7 @@ public class OdinInsightUtils {
 
         if (expression != null) {
             TsOdinType sizeType = expression.getInferredType(context);
-            if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
+            if (sizeType instanceof TsOdinTypeReference sizeTypeReference && sizeTypeReference.getTargetTypeKind() == TsOdinTypeKind.ENUM) {
                 List<OdinSymbol> enumFields = getEnumFields((OdinEnumType) sizeType.getPsiType());
                 context.getSymbolTable().addAll(enumFields, true);
                 return true;
@@ -401,8 +401,8 @@ public class OdinInsightUtils {
 
     public static List<OdinSymbol> getTypeElements(OdinContext context, OdinExpression expression) {
         TsOdinType tsOdinType = expression.getInferredType(context);
-        if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            return getTypeElements(context, OdinTypeResolver.resolveMetaType(context, tsOdinMetaType)
+        if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
+            return getTypeElements(context, OdinTypeResolver.resolveTypeReference(context, tsOdinTypeReference)
                     .baseType(true));
         }
         return getTypeElements(context, tsOdinType.baseType(true));
@@ -687,7 +687,7 @@ public class OdinInsightUtils {
         OdinEnumType psiType;
         if (expression != null) {
             TsOdinType sizeType = expression.getInferredType(context);
-            if (sizeType instanceof TsOdinMetaType sizeMetaType && sizeMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ENUM) {
+            if (sizeType instanceof TsOdinTypeReference sizeTypeReference && sizeTypeReference.getTargetTypeKind() == TsOdinTypeKind.ENUM) {
                 psiType = (OdinEnumType) sizeType.getPsiType();
             } else {
                 psiType = null;
@@ -985,8 +985,8 @@ public class OdinInsightUtils {
             if (callingElement instanceof OdinCallExpression odinCallExpression) {
                 tsOdinType = odinCallExpression.getExpression().getInferredType(context);
                 // Here we have to get a meta type, otherwise the call expression does not make sense
-                if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-                    tsOdinType = tsOdinMetaType.representedType();
+                if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
+                    tsOdinType = tsOdinTypeReference.referencedType();
                 } else if (!(tsOdinType.baseType(true) instanceof TsOdinProcedureType)) {
                     tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
                 }
@@ -1072,8 +1072,8 @@ public class OdinInsightUtils {
     public static OdinSymbolTable getReferenceableSymbols(OdinContext context, OdinExpression valueExpression) {
         // Add filter for referenceable elements
         TsOdinType type = valueExpression.getInferredType(context);
-        if (type instanceof TsOdinMetaType metaType) {
-            TsOdinType tsOdinType = metaType.representedType().baseType(true);
+        if (type instanceof TsOdinTypeReference typeReference) {
+            TsOdinType tsOdinType = typeReference.referencedType().baseType(true);
             if (tsOdinType instanceof TsOdinEnumType) {
                 return getTypeElements(context, valueExpression.getProject(), tsOdinType);
             }

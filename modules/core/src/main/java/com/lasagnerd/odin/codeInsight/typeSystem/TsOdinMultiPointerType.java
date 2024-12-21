@@ -11,8 +11,8 @@ public class TsOdinMultiPointerType extends TsOdinTypeBase {
     TsOdinType dereferencedType;
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.MULTI_POINTER;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.MULTI_POINTER;
     }
 
     @Override

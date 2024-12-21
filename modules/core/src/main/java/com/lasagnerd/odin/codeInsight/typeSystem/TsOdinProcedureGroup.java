@@ -14,7 +14,7 @@ public class TsOdinProcedureGroup extends TsOdinTypeBase {
     private List<TsOdinProcedureType> procedures = new ArrayList<>();
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.PROCEDURE_GROUP;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.PROCEDURE_GROUP;
     }
 }

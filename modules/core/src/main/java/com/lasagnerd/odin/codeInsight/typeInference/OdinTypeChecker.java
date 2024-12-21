@@ -36,7 +36,7 @@ public class OdinTypeChecker {
                 return true;
         }
 
-        if (parameterBaseType.isTypeId() && argumentType instanceof TsOdinMetaType) {
+        if (parameterBaseType.isTypeId() && argumentType instanceof TsOdinTypeReference) {
             return true;
         }
 
@@ -44,8 +44,8 @@ public class OdinTypeChecker {
 
 
             if (constrainedType.getMainType().isTypeId()) {
-                if (argumentType instanceof TsOdinMetaType metaType) {
-                    TsOdinType tsOdinType = metaType.representedType();
+                if (argumentType instanceof TsOdinTypeReference typeReference) {
+                    TsOdinType tsOdinType = typeReference.referencedType();
                     return checkConstrainedType(tsOdinType, constrainedType);
                 }
                 return false;
@@ -255,10 +255,10 @@ public class OdinTypeChecker {
         }
 
         if (expectedType instanceof TsOdinConstrainedType constrainedType) {
-            if (type instanceof TsOdinMetaType metaType) {
-                TsOdinType representedType = metaType.getRepresentedType();
+            if (type instanceof TsOdinTypeReference typeReference) {
+                TsOdinType representedType = typeReference.getRepresentedType();
                 if (representedType == null) {
-                    representedType = OdinTypeResolver.resolveMetaType(metaType.getContext(), metaType);
+                    representedType = OdinTypeResolver.resolveTypeReference(typeReference.getContext(), typeReference);
                 }
 
                 doCheckTypes(representedType.baseType(true), constrainedType.getSpecializedType());

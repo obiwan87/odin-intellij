@@ -20,7 +20,7 @@ public class TsOdinBitSetType extends TsOdinTypeBase implements TsOdinElementOwn
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.BIT_SET;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.BIT_SET;
     }
 }

@@ -12,8 +12,8 @@ public class TsOdinDynamicArray extends TsOdinTypeBase implements TsOdinElementO
     private boolean soa;
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.DYNAMIC_ARRAY;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.DYNAMIC_ARRAY;
     }
 
     @Override

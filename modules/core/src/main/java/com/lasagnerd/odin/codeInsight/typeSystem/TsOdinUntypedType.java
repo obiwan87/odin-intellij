@@ -1,15 +1,15 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
 public class TsOdinUntypedType extends TsOdinBuiltInType {
-    private final TsOdinMetaType.MetaType metaType;
+    private final TsOdinTypeKind typeReferenceKind;
 
-    TsOdinUntypedType(String name, TsOdinMetaType.MetaType metaType) {
+    TsOdinUntypedType(String name, TsOdinTypeKind typeReferenceKind) {
         super(name);
-        this.metaType = metaType;
+        this.typeReferenceKind = typeReferenceKind;
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return this.metaType;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return this.typeReferenceKind;
     }
 }

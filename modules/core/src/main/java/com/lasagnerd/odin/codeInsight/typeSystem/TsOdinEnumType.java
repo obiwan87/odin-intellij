@@ -16,7 +16,7 @@ public class TsOdinEnumType extends TsOdinTypeBase {
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.ENUM;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.ENUM;
     }
 }

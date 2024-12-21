@@ -30,7 +30,7 @@ public class TsOdinNumericType extends TsOdinBuiltInType {
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.NUMERIC;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.NUMERIC;
     }
 }

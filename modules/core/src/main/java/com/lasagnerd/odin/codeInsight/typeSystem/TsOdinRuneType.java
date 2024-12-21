@@ -6,7 +6,7 @@ public class TsOdinRuneType extends TsOdinBuiltInType{
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.RUNE;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.RUNE;
     }
 }

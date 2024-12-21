@@ -64,7 +64,7 @@ public interface TsOdinType {
 
     boolean isUntyped();
 
-    TsOdinMetaType.MetaType getMetaType();
+    TsOdinTypeKind getTypeReferenceKind();
 
     boolean isInteger();
 
@@ -94,8 +94,8 @@ public interface TsOdinType {
     }
 
     default TsOdinType dereference() {
-        if (this instanceof TsOdinMetaType metaType) {
-            return metaType.representedType();
+        if (this instanceof TsOdinTypeReference typeReference) {
+            return typeReference.referencedType();
         }
         return this;
     }

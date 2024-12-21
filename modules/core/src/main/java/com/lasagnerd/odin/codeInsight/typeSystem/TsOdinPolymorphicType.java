@@ -16,8 +16,8 @@ public class TsOdinPolymorphicType extends TsOdinTypeBase {
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.POLYMORPHIC;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.POLYMORPHIC;
     }
 
 }

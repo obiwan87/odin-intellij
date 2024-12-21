@@ -6,7 +6,7 @@ public class TsOdinRawPointerType extends TsOdinBuiltInType{
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.RAWPTR;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.RAWPTR;
     }
 }

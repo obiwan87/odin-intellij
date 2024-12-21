@@ -9,8 +9,8 @@ import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngineParameters;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeReference;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinRefExpression;
 import org.jetbrains.annotations.NotNull;
@@ -74,9 +74,9 @@ public abstract class OdinExpressionMixin extends OdinPsiElementImpl implements 
     private CachedValueProvider.Result<TsOdinType> inferType(OdinInferenceEngineParameters inferenceEngineParameters) {
         TsOdinType originalType = OdinInferenceEngine.inferType(inferenceEngineParameters, this);
         TsOdinType tsOdinType;
-        if (originalType instanceof TsOdinMetaType metaType) {
+        if (originalType instanceof TsOdinTypeReference typeReference) {
             // TODO Performance: should be retrieved from cache?
-            tsOdinType = metaType.representedType();
+            tsOdinType = typeReference.referencedType();
         } else {
             tsOdinType = originalType;
         }

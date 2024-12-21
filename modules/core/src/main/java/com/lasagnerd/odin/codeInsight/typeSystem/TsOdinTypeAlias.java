@@ -11,8 +11,8 @@ public class TsOdinTypeAlias extends TsOdinTypeBase {
     private TsOdinType aliasedType;
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.ALIAS;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.ALIAS;
     }
 
     public TsOdinType getBaseType() {

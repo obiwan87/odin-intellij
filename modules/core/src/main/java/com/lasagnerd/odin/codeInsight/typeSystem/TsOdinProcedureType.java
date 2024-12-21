@@ -37,7 +37,7 @@ public class TsOdinProcedureType extends TsOdinTypeBase implements TsOdinParamet
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.PROCEDURE;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.PROCEDURE;
     }
 }

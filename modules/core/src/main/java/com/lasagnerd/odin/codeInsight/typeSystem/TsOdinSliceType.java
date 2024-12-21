@@ -5,7 +5,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType.SLICE;
+import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeKind.SLICE;
 
 @EqualsAndHashCode(callSuper = true)
 @Getter
@@ -15,7 +15,7 @@ public class TsOdinSliceType extends TsOdinTypeBase implements TsOdinElementOwne
     boolean soa;
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
+    public TsOdinTypeKind getTypeReferenceKind() {
         return SLICE;
     }
 

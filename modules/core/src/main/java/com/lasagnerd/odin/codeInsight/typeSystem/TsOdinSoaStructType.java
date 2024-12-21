@@ -15,7 +15,7 @@ public class TsOdinSoaStructType extends TsOdinTypeBase {
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.SOA_STRUCT;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.SOA_STRUCT;
     }
 }

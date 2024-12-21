@@ -40,7 +40,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver.createMetaType;
+import static com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver.createTypeReference;
 
 public abstract class OdinSdkServiceBase implements OdinSdkService {
 
@@ -346,7 +346,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         String sdkPath = sdkPathOptional.get();
         Collection<TsOdinType> builtInTypes = TsOdinBuiltInTypes.getBuiltInTypes();
         for (TsOdinType builtInType : builtInTypes) {
-            typesCache.put(builtInType.getName(), createMetaType(builtInType, false));
+            typesCache.put(builtInType.getName(), createTypeReference(builtInType, false));
         }
 
         List<OdinSymbol> syntheticCompilerDeclarations = loadSyntheticCompilerDeclarations();
@@ -368,7 +368,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         {
             OdinSymbol byteSymbol = builtinOdinSymbolTable.getSymbol("byte");
             Objects.requireNonNull(byteSymbol);
-            typesCache.put("byte", createMetaType(
+            typesCache.put("byte", createTypeReference(
                     TsOdinBuiltInTypes.createByteAlias((OdinDeclaredIdentifier) byteSymbol.getDeclaredIdentifier()), false
             ));
         }
@@ -378,8 +378,8 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             OdinSymbol anyTypeSymbol = coreOdinSymbolTable.getSymbol("Raw_Any");
             Objects.requireNonNull(anyTypeSymbol);
             OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) anyTypeSymbol.getDeclaredIdentifier();
-            TsOdinMetaType anyStructType = (TsOdinMetaType) declaredIdentifier.getType(new OdinContext());
-            typesCache.put("any", createMetaType(new TsOdinAnyType((TsOdinStructType) anyStructType.representedType()), false));
+            TsOdinTypeReference anyStructType = (TsOdinTypeReference) declaredIdentifier.getType(new OdinContext());
+            typesCache.put("any", createTypeReference(new TsOdinAnyType((TsOdinStructType) anyStructType.referencedType()), false));
         }
 
         // Add boolean constants
@@ -470,14 +470,14 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         OdinSymbol symbol = syntheticSymbolTable.getSymbol(constantTypeIdentifier);
         Objects.requireNonNull(symbol);
         OdinDeclaredIdentifier declaredIdentifier = (OdinDeclaredIdentifier) symbol.getDeclaredIdentifier();
-        TsOdinMetaType type = (TsOdinMetaType) declaredIdentifier.getType(new OdinContext());
+        TsOdinTypeReference type = (TsOdinTypeReference) declaredIdentifier.getType(new OdinContext());
         typesCache.put(constantTypeIdentifier, type);
-        typesCache.put(constantIdentifier, type.representedType());
+        typesCache.put(constantIdentifier, type.referencedType());
     }
 
     private void addConstant(String constantIdentifier, String constantTypeIdentifier) {
-        TsOdinMetaType metaType = (TsOdinMetaType) typesCache.get(constantTypeIdentifier);
-        TsOdinType type = metaType.representedType();
+        TsOdinTypeReference typeReference = (TsOdinTypeReference) typesCache.get(constantTypeIdentifier);
+        TsOdinType type = typeReference.referencedType();
         typesCache.put(constantIdentifier, type);
     }
 

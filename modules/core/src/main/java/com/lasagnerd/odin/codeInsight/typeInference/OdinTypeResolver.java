@@ -97,85 +97,85 @@ public class OdinTypeResolver extends OdinVisitor {
         return context;
     }
 
-    public static @NotNull TsOdinMetaType findMetaType(OdinContext context,
+    public static @NotNull TsOdinTypeReference findTypeReference(OdinContext context,
                                                        OdinTypeDefinitionExpression expression,
                                                        @NotNull OdinType type) {
-        return findMetaType(context, null, null, expression, type);
+        return findTypeReference(context, null, null, expression, type);
     }
 
-    public static @NotNull TsOdinMetaType findMetaType(@NotNull OdinContext context,
+    public static @NotNull TsOdinTypeReference findTypeReference(@NotNull OdinContext context,
                                                        OdinDeclaredIdentifier declaredIdentifier,
                                                        OdinDeclaration declaration,
                                                        OdinExpression firstExpression,
                                                        @NotNull OdinType type) {
 
         TsOdinType tsOdinType = type.getResolvedType(new OdinTypeResolverParameters(context, declaredIdentifier, declaration, false));
-        return createMetaType(tsOdinType, firstExpression);
+        return createTypeReference(tsOdinType, firstExpression);
     }
 
-    public static @NotNull TsOdinMetaType createMetaType(TsOdinType tsOdinType, OdinExpression firstExpression) {
+    public static @NotNull TsOdinTypeReference createTypeReference(TsOdinType tsOdinType, OdinExpression firstExpression) {
         boolean distinct = OdinInsightUtils.isDistinct(firstExpression);
-        return createMetaType(tsOdinType, distinct);
+        return createTypeReference(tsOdinType, distinct);
     }
 
-    public static @NotNull TsOdinMetaType createMetaType(TsOdinType tsOdinType, boolean distinct) {
-        TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(tsOdinType.getMetaType());
-        tsOdinMetaType.setName(tsOdinType.getName());
-        tsOdinMetaType.setDeclaredIdentifier(tsOdinMetaType.getDeclaredIdentifier());
-        tsOdinMetaType.setDeclaration(tsOdinType.getDeclaration());
-        tsOdinMetaType.setContext(tsOdinType.getContext());
-        tsOdinMetaType.setRepresentedType(tsOdinType);
-        tsOdinMetaType.setPsiType(tsOdinType.getPsiType());
-        tsOdinMetaType.setDistinct(distinct);
-        return tsOdinMetaType;
+    public static @NotNull TsOdinTypeReference createTypeReference(TsOdinType tsOdinType, boolean distinct) {
+        TsOdinTypeReference tsOdinTypeReference = new TsOdinTypeReference(tsOdinType.getTypeReferenceKind());
+        tsOdinTypeReference.setName(tsOdinType.getName());
+        tsOdinTypeReference.setDeclaredIdentifier(tsOdinTypeReference.getDeclaredIdentifier());
+        tsOdinTypeReference.setDeclaration(tsOdinType.getDeclaration());
+        tsOdinTypeReference.setContext(tsOdinType.getContext());
+        tsOdinTypeReference.setRepresentedType(tsOdinType);
+        tsOdinTypeReference.setPsiType(tsOdinType.getPsiType());
+        tsOdinTypeReference.setDistinct(distinct);
+        return tsOdinTypeReference;
     }
 
-    public static @NotNull TsOdinType resolveMetaType(OdinContext context, TsOdinMetaType metaType) {
-        return resolveMetaType(0, context, metaType);
+    public static @NotNull TsOdinType resolveTypeReference(OdinContext context, TsOdinTypeReference typeReference) {
+        return resolveTypeReference(0, context, typeReference);
     }
 
-    public static TsOdinType resolveMetaType(int level, OdinContext context, TsOdinMetaType metaType) {
-        if (metaType.getRepresentedType() instanceof TsOdinBuiltInType) {
-            return TsOdinBuiltInTypes.getBuiltInType(metaType.getName());
+    public static TsOdinType resolveTypeReference(int level, OdinContext context, TsOdinTypeReference typeReference) {
+        if (typeReference.getRepresentedType() instanceof TsOdinBuiltInType) {
+            return TsOdinBuiltInTypes.getBuiltInType(typeReference.getName());
         } else {
             TsOdinType tsOdinType;
-            if (metaType.getRepresentedType() != null) {
-                return metaType.getRepresentedType();
-            } else if (metaType.getPsiType() != null) {
-                OdinDeclaredIdentifier declaredIdentifier = metaType.getDeclaredIdentifier();
+            if (typeReference.getRepresentedType() != null) {
+                return typeReference.getRepresentedType();
+            } else if (typeReference.getPsiType() != null) {
+                OdinDeclaredIdentifier declaredIdentifier = typeReference.getDeclaredIdentifier();
                 tsOdinType = resolveType(level,
                         context,
                         declaredIdentifier,
-                        metaType.getDeclaration(),
-                        metaType.getPsiType());
-                tsOdinType.setDeclaration(metaType.getDeclaration());
+                        typeReference.getDeclaration(),
+                        typeReference.getPsiType());
+                tsOdinType.setDeclaration(typeReference.getDeclaration());
                 tsOdinType.setDeclaredIdentifier(declaredIdentifier);
                 context.addKnownType(declaredIdentifier, tsOdinType);
                 if (declaredIdentifier != null) {
                     tsOdinType.setName(declaredIdentifier.getName());
                 }
                 tsOdinType.getContext().merge(context);
-                metaType.setRepresentedType(tsOdinType);
+                typeReference.setRepresentedType(tsOdinType);
                 return tsOdinType;
-            } else if (metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
+            } else if (typeReference.getTargetTypeKind() == TsOdinTypeKind.ALIAS) {
 
                 TsOdinTypeAlias typeAlias = new TsOdinTypeAlias();
-                metaType.setRepresentedType(typeAlias);
+                typeReference.setRepresentedType(typeAlias);
 
-                if (metaType.getTypeExpression() instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
+                if (typeReference.getTypeExpression() instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
                     typeAlias.setDistinct(typeDefinitionExpression.getDistinct() != null);
                     typeAlias.setPsiType(typeDefinitionExpression.getType());
                 } else {
-                    typeAlias.setPsiTypeExpression(metaType.getTypeExpression());
+                    typeAlias.setPsiTypeExpression(typeReference.getTypeExpression());
                 }
 
-                typeAlias.setDeclaration(metaType.getDeclaration());
-                typeAlias.setName(metaType.getName());
-                typeAlias.setContext(metaType.getContext());
+                typeAlias.setDeclaration(typeReference.getDeclaration());
+                typeAlias.setName(typeReference.getName());
+                typeAlias.setContext(typeReference.getContext());
 
-                TsOdinType aliasedType = resolveMetaType(level + 1,
-                        metaType.getAliasedMetaType().getContext(),
-                        metaType.getAliasedMetaType());
+                TsOdinType aliasedType = resolveTypeReference(level + 1,
+                        typeReference.getAliasedTypeReference().getContext(),
+                        typeReference.getAliasedTypeReference());
                 typeAlias.setAliasedType(aliasedType);
 
                 return typeAlias;
@@ -236,14 +236,14 @@ public class OdinTypeResolver extends OdinVisitor {
         return resolveType(level + 1, context, null, null, this.substitutionMode, type);
     }
 
-    public @NotNull TsOdinType doResolveMetaType(OdinContext context, TsOdinMetaType metaType) {
-        return resolveMetaType(level + 1, context, metaType);
+    public @NotNull TsOdinType doResolveTypeReference(OdinContext context, TsOdinTypeReference typeReference) {
+        return resolveTypeReference(level + 1, context, typeReference);
     }
 
     public @NotNull TsOdinType doResolveType(OdinContext context, OdinExpression odinExpression) {
         TsOdinType tsOdinType = odinExpression.getInferredType(context);
-        if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            return doResolveMetaType(context, tsOdinMetaType);
+        if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
+            return doResolveTypeReference(context, tsOdinTypeReference);
         }
         return tsOdinType;
     }
@@ -376,8 +376,8 @@ public class OdinTypeResolver extends OdinVisitor {
                 OdinDeclaration.class);
 
         TsOdinType builtinType = OdinDeclaredIdentifierMixin.tryGetBuiltinType(declaredIdentifier);
-        if (builtinType instanceof TsOdinMetaType metaType) {
-            return metaType.representedType();
+        if (builtinType instanceof TsOdinTypeReference typeReference) {
+            return typeReference.referencedType();
         }
 
         OdinContext typeContext;
@@ -417,10 +417,10 @@ public class OdinTypeResolver extends OdinVisitor {
                     typeAlias.setName(declaredIdentifier.getText());
                     addKnownType(typeAlias, declaredIdentifier, odinDeclaration, typeContext);
                     TsOdinType tsOdinType = odinExpression.getInferredType(typeContext);
-                    if (tsOdinType instanceof TsOdinMetaType metaType) {
-                        TsOdinType resolvedMetaType = doResolveMetaType(metaType.getContext(), metaType);
+                    if (tsOdinType instanceof TsOdinTypeReference typeReference) {
+                        TsOdinType resolvedTypeReference = doResolveTypeReference(typeReference.getContext(), typeReference);
                         typeAlias.setDistinct(OdinInsightUtils.isDistinct(odinExpression));
-                        return createTypeAliasFromMetaType(typeAlias, declaredIdentifier, resolvedMetaType, odinDeclaration, odinExpression);
+                        return createTypeAliasFromTypeReference(typeAlias, declaredIdentifier, resolvedTypeReference, odinDeclaration, odinExpression);
                     }
                     return TsOdinBuiltInTypes.UNKNOWN;
                 }
@@ -451,24 +451,24 @@ public class OdinTypeResolver extends OdinVisitor {
                 || declaredType instanceof OdinEnumType;
     }
 
-    public static @NotNull TsOdinTypeAlias createTypeAliasFromMetaType(TsOdinTypeAlias typeAlias,
+    public static @NotNull TsOdinTypeAlias createTypeAliasFromTypeReference(TsOdinTypeAlias typeAlias,
                                                                        OdinDeclaredIdentifier identifier,
-                                                                       TsOdinType resolvedMetaType,
+                                                                            TsOdinType resolvedTypeReference,
                                                                        OdinDeclaration odinDeclaration,
                                                                        OdinExpression odinExpression) {
-        if (typeAlias != resolvedMetaType) {
-            typeAlias.setAliasedType(resolvedMetaType);
+        if (typeAlias != resolvedTypeReference) {
+            typeAlias.setAliasedType(resolvedTypeReference);
         }
         typeAlias.setDeclaration(odinDeclaration);
         typeAlias.setDeclaredIdentifier(identifier);
         typeAlias.setName(identifier.getName());
-        typeAlias.setPsiTypeExpression(resolvedMetaType.getPsiTypeExpression());
+        typeAlias.setPsiTypeExpression(resolvedTypeReference.getPsiTypeExpression());
 
         if (odinExpression instanceof OdinTypeDefinitionExpression typeDefinitionExpression) {
             typeAlias.setDistinct(typeDefinitionExpression.getDistinct() != null);
             typeAlias.setPsiType(typeDefinitionExpression.getType());
         }
-        typeAlias.setContext(resolvedMetaType.getContext());
+        typeAlias.setContext(resolvedTypeReference.getContext());
         return typeAlias;
     }
 

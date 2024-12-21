@@ -18,8 +18,8 @@ public class TsOdinStructType extends TsOdinGenericType implements TsOdinParamet
     private Map<String, TsOdinType> fields = new HashMap<>();
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.STRUCT;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.STRUCT;
     }
 
 

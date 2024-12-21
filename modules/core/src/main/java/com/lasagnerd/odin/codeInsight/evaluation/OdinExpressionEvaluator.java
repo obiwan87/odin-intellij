@@ -124,14 +124,14 @@ public class OdinExpressionEvaluator extends OdinVisitor {
 
         if (declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
 
-            TsOdinMetaType declaredType = OdinInferenceEngine.findMetaType(
+            TsOdinTypeReference declaredType = OdinInferenceEngine.findTypeReference(
                     context,
                     odinDeclaredIdentifier,
                     constantInitializationStatement);
 
             if (declaredType != null) {
                 // This is a type declaration, set EvOdinValue<?> accordingly
-                return new EvOdinValue(declaredType.representedType(), declaredType);
+                return new EvOdinValue(declaredType.referencedType(), declaredType);
             }
 
             // This is not a type

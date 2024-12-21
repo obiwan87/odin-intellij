@@ -22,7 +22,7 @@ public class TsOdinArrayType extends TsOdinTypeBase implements TsOdinElementOwne
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.ARRAY;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.ARRAY;
     }
 }

@@ -328,8 +328,8 @@ public class OdinTypeSpecializer {
     @NotNull
     private static TsOdinType resolveArgumentType(OdinExpression argumentExpression, OdinContext context) {
         TsOdinType argumentType = inferTypeInExplicitMode(context, argumentExpression);
-        if (argumentType instanceof TsOdinMetaType metaType) {
-            TsOdinType tsOdinType = metaType.representedType();
+        if (argumentType instanceof TsOdinTypeReference typeReference) {
+            TsOdinType tsOdinType = typeReference.referencedType();
             if (tsOdinType.isExplicitPolymorphic()) {
                 TsOdinPolymorphicType tsOdinPolymorphicType = (TsOdinPolymorphicType) tsOdinType;
                 TsOdinType type = context.getPolymorphicType(tsOdinPolymorphicType.getName());
@@ -338,7 +338,7 @@ public class OdinTypeSpecializer {
                 }
                 return type;
             }
-            return metaType.getRepresentedType();
+            return typeReference.getRepresentedType();
         }
 
         // Case 3: The argument has been resolved to a proper type. Just add the mapping

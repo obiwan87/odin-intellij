@@ -8,9 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinProcedureType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeKind;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeReference;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +54,8 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
         List<PsiElement> procedures = new ArrayList<>();
         OdinExpression expression = callExpression.getExpression();
         TsOdinType tsOdinType = expression.getInferredType();
-        if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
-            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE) {
+        if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
+            if (tsOdinTypeReference.getTargetTypeKind() == TsOdinTypeKind.PROCEDURE) {
                 OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(tsOdinType.getDeclaration());
                 if (procedureType != null) {
 //                    OdinParamEntries paramEntries = declaration.getProcedureDefinition().getProcedureType().getParamEntries();
@@ -64,8 +65,8 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
                 }
             }
 
-            if (tsOdinMetaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.PROCEDURE_GROUP) {
-                OdinDeclaration declaration = tsOdinMetaType.getDeclaration();
+            if (tsOdinTypeReference.getTargetTypeKind() == TsOdinTypeKind.PROCEDURE_GROUP) {
+                OdinDeclaration declaration = tsOdinTypeReference.getDeclaration();
                 OdinProcedureGroupType procedureGroupType = OdinInsightUtils.getDeclaredType(declaration, OdinProcedureGroupType.class);
                 Objects.requireNonNull(procedureGroupType);
                 for (var procedureRef : procedureGroupType.getProcedureRefList()) {

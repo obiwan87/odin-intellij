@@ -18,8 +18,8 @@ public class TsOdinBuiltInType extends TsOdinTypeBase implements Comparable<TsOd
 
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.BUILTIN;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.BUILTIN;
     }
 
     @Override

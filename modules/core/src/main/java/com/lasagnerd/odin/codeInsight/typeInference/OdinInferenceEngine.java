@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType.*;
+import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeKind.*;
 
 public class OdinInferenceEngine extends OdinVisitor {
     // Result fields
@@ -228,7 +228,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     @Override
     public void visitTypeDefinitionExpression(@NotNull OdinTypeDefinitionExpression o) {
-        this.type = OdinTypeResolver.findMetaType(context, o, o.getType());
+        this.type = OdinTypeResolver.findTypeReference(context, o, o.getType());
     }
 
     @Override
@@ -443,9 +443,9 @@ public class OdinInferenceEngine extends OdinVisitor {
                 // TODO Add poly paras as symbols
                 TsOdinType polyParameter = context.getPolymorphicType(name);
                 if (polyParameter != null) {
-                    this.type = createPolymorphicMetaType(polyParameter);
+                    this.type = createPolymorphicTypeReference(polyParameter);
                 } else if (TsOdinBuiltInTypes.RESERVED_TYPES.contains(name)) {
-                    this.type = createBuiltinMetaType(name);
+                    this.type = createBuiltinTypeReference(name);
                 }
             }
         }
@@ -461,14 +461,14 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
     }
 
-    private static @NotNull TsOdinMetaType createPolymorphicMetaType(TsOdinType polyParameter) {
-        TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(POLYMORPHIC);
-        tsOdinMetaType.setDeclaration(polyParameter.getDeclaration());
-        tsOdinMetaType.setPsiType(polyParameter.getPsiType());
-        tsOdinMetaType.setDeclaredIdentifier(polyParameter.getDeclaredIdentifier());
-        tsOdinMetaType.setName(polyParameter.getName());
-        tsOdinMetaType.setRepresentedType(polyParameter);
-        return tsOdinMetaType;
+    private static @NotNull TsOdinTypeReference createPolymorphicTypeReference(TsOdinType polyParameter) {
+        TsOdinTypeReference tsOdinTypeReference = new TsOdinTypeReference(POLYMORPHIC);
+        tsOdinTypeReference.setDeclaration(polyParameter.getDeclaration());
+        tsOdinTypeReference.setPsiType(polyParameter.getPsiType());
+        tsOdinTypeReference.setDeclaredIdentifier(polyParameter.getDeclaredIdentifier());
+        tsOdinTypeReference.setName(polyParameter.getName());
+        tsOdinTypeReference.setRepresentedType(polyParameter);
+        return tsOdinTypeReference;
     }
 
     public static @NotNull TsOdinType getSymbolType(
@@ -522,7 +522,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
             // Built-in symbols
             else if (symbol.getSymbolType() == OdinSymbolType.BUILTIN_TYPE) {
-                return createBuiltinMetaType(symbol.getName());
+                return createBuiltinTypeReference(symbol.getName());
             } else {
                 OdinSdkService builtinSymbolService = OdinSdkService.getInstance(project);
                 if (symbol.getPsiType() != null && builtinSymbolService != null) {
@@ -544,7 +544,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             if (isExplicitPolymorphicParameter(tsOdinType, symbol.getDeclaredIdentifier())) {
-                return createPolymorphicMetaType(
+                return createPolymorphicTypeReference(
                         createExplicitPolymorphicType(
                                 (OdinDeclaredIdentifier) symbol.getDeclaredIdentifier(),
                                 symbol.getDeclaration()
@@ -586,12 +586,12 @@ public class OdinInferenceEngine extends OdinVisitor {
         return null;
     }
 
-    public static @NotNull TsOdinMetaType createBuiltinMetaType(String name) {
+    public static @NotNull TsOdinTypeReference createBuiltinTypeReference(String name) {
         TsOdinBuiltInType builtInType = TsOdinBuiltInTypes.getBuiltInType(name);
-        TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(builtInType.getMetaType());
-        tsOdinMetaType.setName(name);
-        tsOdinMetaType.setRepresentedType(TsOdinBuiltInTypes.getBuiltInType(name));
-        return tsOdinMetaType;
+        TsOdinTypeReference tsOdinTypeReference = new TsOdinTypeReference(builtInType.getTypeReferenceKind());
+        tsOdinTypeReference.setName(name);
+        tsOdinTypeReference.setRepresentedType(TsOdinBuiltInTypes.getBuiltInType(name));
+        return tsOdinTypeReference;
     }
 
     @Override
@@ -617,42 +617,42 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
         TsOdinType tsOdinType = doInferType(o.getExpression());
 
-        if (tsOdinType instanceof TsOdinMetaType tsOdinMetaType) {
+        if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
             // resolve to base type
-            TsOdinMetaType tsOdinOriginalMetaType = tsOdinMetaType;
-            if (tsOdinMetaType.getRepresentedMetaType() == ALIAS) {
-                tsOdinMetaType = tsOdinMetaType.baseMetaType();
+            TsOdinTypeReference tsOdinOriginalTypeReference = tsOdinTypeReference;
+            if (tsOdinTypeReference.getTargetTypeKind() == ALIAS) {
+                tsOdinTypeReference = tsOdinTypeReference.baseTypeReference();
             }
 
-            TsOdinMetaType.MetaType representedMetaType = tsOdinMetaType.getRepresentedMetaType();
+            TsOdinTypeKind representedTypeReferenceKind = tsOdinTypeReference.getTargetTypeKind();
             // normal procedure call
-            if (representedMetaType == PROCEDURE) {
-                TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveMetaType(tsOdinType.getContext(), tsOdinMetaType);
+            if (representedTypeReferenceKind == PROCEDURE) {
+                TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveTypeReference(tsOdinType.getContext(), tsOdinTypeReference);
                 this.type = inferTypeOfProcedureCall(o, procedureType, context);
             }
             // struct specialization
-            else if (representedMetaType == STRUCT) {
-                TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveMetaType(context, tsOdinMetaType);
+            else if (representedTypeReferenceKind == STRUCT) {
+                TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveTypeReference(context, tsOdinTypeReference);
                 TsOdinStructType specializedStructType = OdinTypeSpecializer.specializeStructOrGetCached(context, structType, o.getArgumentList());
-                TsOdinMetaType resultType = new TsOdinMetaType(STRUCT);
+                TsOdinTypeReference resultType = new TsOdinTypeReference(STRUCT);
                 resultType.setRepresentedType(specializedStructType);
                 this.type = resultType;
             }
             // union specialization
-            else if (representedMetaType == UNION) {
-                TsOdinUnionType unionType = (TsOdinUnionType) OdinTypeResolver.resolveMetaType(context, tsOdinMetaType);
+            else if (representedTypeReferenceKind == UNION) {
+                TsOdinUnionType unionType = (TsOdinUnionType) OdinTypeResolver.resolveTypeReference(context, tsOdinTypeReference);
                 TsOdinType specializedUnion = OdinTypeSpecializer.specializeUnionOrGetCached(context, unionType, o.getArgumentList());
-                TsOdinMetaType resultType = new TsOdinMetaType(UNION);
+                TsOdinTypeReference resultType = new TsOdinTypeReference(UNION);
                 resultType.setRepresentedType(specializedUnion);
                 this.type = resultType;
             }
             // procedure group
-            else if (representedMetaType == PROCEDURE_GROUP) {
-                TsOdinProcedureGroup procedureGroupType = (TsOdinProcedureGroup) OdinTypeResolver.resolveMetaType(tsOdinType.getContext(), tsOdinMetaType);
+            else if (representedTypeReferenceKind == PROCEDURE_GROUP) {
+                TsOdinProcedureGroup procedureGroupType = (TsOdinProcedureGroup) OdinTypeResolver.resolveTypeReference(tsOdinType.getContext(), tsOdinTypeReference);
                 this.type = inferTypeOfBestProcedure(o, procedureGroupType);
             }
             // Builtin procedures
-            else if (representedMetaType == BUILTIN && tsOdinMetaType.representedType() instanceof TsOdinBuiltinProc proc) {
+            else if (representedTypeReferenceKind == BUILTIN && tsOdinTypeReference.referencedType() instanceof TsOdinBuiltinProc proc) {
                 this.type = OdinBuiltinProcedures.inferType(this, proc, o);
             }
             // type casting
@@ -660,7 +660,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 OdinExpression expression = o.getExpression().parenthesesUnwrap();
                 if (expression instanceof OdinRefExpression
                         || expression instanceof OdinTypeDefinitionExpression) {
-                    this.type = tsOdinOriginalMetaType.representedType();
+                    this.type = tsOdinOriginalTypeReference.referencedType();
                 }
             }
         }
@@ -839,10 +839,10 @@ public class OdinInferenceEngine extends OdinVisitor {
     public void visitProcedureExpression(@NotNull OdinProcedureExpression o) {
         // get type of expression. If it is a procedure, retrieve the return type and set that as result
         var procedureType = o.getProcedureLiteralType();
-        TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(PROCEDURE);
-        tsOdinMetaType.setPsiType(procedureType);
+        TsOdinTypeReference tsOdinTypeReference = new TsOdinTypeReference(PROCEDURE);
+        tsOdinTypeReference.setPsiType(procedureType);
 
-        this.type = tsOdinMetaType;
+        this.type = tsOdinTypeReference;
     }
 
     @Override
@@ -1091,8 +1091,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                 return mainType.getResolvedType(context);
             }
 
-            TsOdinMetaType metaType = findMetaType(context, declaredIdentifier, initializationStatement);
-            if (metaType != null) return metaType;
+            TsOdinTypeReference typeReference = findTypeReference(context, declaredIdentifier, initializationStatement);
+            if (typeReference != null) return typeReference;
 
 
             int index = initializationStatement
@@ -1114,15 +1114,15 @@ public class OdinInferenceEngine extends OdinVisitor {
 
             if (tsOdinTypes.size() > index) {
                 TsOdinType tsOdinType = tsOdinTypes.get(index);
-                if (tsOdinType instanceof TsOdinMetaType aliasedMetaType) {
-                    TsOdinMetaType tsOdinMetaType = new TsOdinMetaType(ALIAS);
-                    tsOdinMetaType.setDeclaration(odinDeclaration);
-                    tsOdinMetaType.setTypeExpression(expressionList.get(index));
-                    tsOdinMetaType.setDeclaredIdentifier(declaredIdentifier);
-                    tsOdinMetaType.setName(declaredIdentifier.getName());
-                    tsOdinMetaType.setAliasedMetaType(aliasedMetaType);
+                if (tsOdinType instanceof TsOdinTypeReference aliasedTypeReference) {
+                    TsOdinTypeReference tsOdinTypeReference = new TsOdinTypeReference(ALIAS);
+                    tsOdinTypeReference.setDeclaration(odinDeclaration);
+                    tsOdinTypeReference.setTypeExpression(expressionList.get(index));
+                    tsOdinTypeReference.setDeclaredIdentifier(declaredIdentifier);
+                    tsOdinTypeReference.setName(declaredIdentifier.getName());
+                    tsOdinTypeReference.setAliasedTypeReference(aliasedTypeReference);
 
-                    return tsOdinMetaType;
+                    return tsOdinTypeReference;
                 }
                 return tsOdinType;
             }
@@ -1157,7 +1157,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (odinDeclaration instanceof OdinPolymorphicType polymorphicType) {
-            return OdinTypeResolver.findMetaType(context,
+            return OdinTypeResolver.findTypeReference(context,
                     declaredIdentifier,
                     odinDeclaration,
                     null,
@@ -1277,7 +1277,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     }
                 }
 
-                if (tsOdinType instanceof TsOdinMetaType metaType && metaType.representedType()
+                if (tsOdinType instanceof TsOdinTypeReference typeReference && typeReference.referencedType()
                         .baseType(true) instanceof TsOdinEnumType enumType) {
                     if (index == 0) {
                         return enumType;
@@ -1348,15 +1348,15 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (expressionList.size() == 1) {
                 OdinExpression odinExpression = expressionList.getFirst();
                 TsOdinType caseType = odinExpression.getInferredType();
-                if (caseType instanceof TsOdinMetaType metaType) {
-                    return OdinTypeResolver.resolveMetaType(caseType.getContext(), metaType);
+                if (caseType instanceof TsOdinTypeReference typeReference) {
+                    return OdinTypeResolver.resolveTypeReference(caseType.getContext(), typeReference);
                 }
             }
         }
         return declarationType;
     }
 
-    public static @Nullable TsOdinMetaType findMetaType(@NotNull OdinContext context,
+    public static @Nullable TsOdinTypeReference findTypeReference(@NotNull OdinContext context,
                                                         OdinDeclaredIdentifier declaredIdentifier,
                                                         OdinConstantInitializationStatement initializationStatement) {
         if (initializationStatement.getExpressionList().isEmpty())
@@ -1372,7 +1372,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                         || declaredType instanceof OdinProcedureLiteralType
                         || declaredType instanceof OdinEnumType) {
             // check distinct
-            return OdinTypeResolver.findMetaType(
+            return OdinTypeResolver.findTypeReference(
                     context,
                     declaredIdentifier,
                     initializationStatement,

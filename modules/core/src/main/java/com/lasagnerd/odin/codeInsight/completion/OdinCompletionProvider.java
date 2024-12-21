@@ -402,7 +402,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         addLookUpElements(result, visibleSymbols, 2000, (l, s) -> {
             TsOdinType symbolType = OdinInferenceEngine.getSymbolType(new OdinContext(), project, s, null, parameters.getPosition());
             if (!symbolType.isUnknown()) {
-                if (symbolType instanceof TsOdinMetaType metaType && metaType.getRepresentedMetaType() == TsOdinMetaType.MetaType.ALIAS) {
+                if (symbolType instanceof TsOdinTypeReference typeReference && typeReference.getTargetTypeKind() == TsOdinTypeKind.ALIAS) {
                     return l.withIcon(AllIcons.Nodes.Type);
                 }
                 if (s.getSymbolType() == OdinSymbolType.VARIABLE || s.getSymbolType() == OdinSymbolType.CONSTANT) {

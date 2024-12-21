@@ -16,7 +16,7 @@ public class TsOdinPackageReferenceType extends TsOdinTypeBase {
     }
 
     @Override
-    public TsOdinMetaType.MetaType getMetaType() {
-        return TsOdinMetaType.MetaType.PACKAGE;
+    public TsOdinTypeKind getTypeReferenceKind() {
+        return TsOdinTypeKind.PACKAGE;
     }
 }

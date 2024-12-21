@@ -1,7 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType.MetaType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -51,7 +50,7 @@ public class OdinTypeConverter {
         b = b.baseType();
 
         // Easy case: the type kind is the same
-        if (a.getMetaType() == b.getMetaType()) {
+        if (a.getTypeReferenceKind() == b.getTypeReferenceKind()) {
             if (OdinTypeChecker.checkTypesStrictly(a, b)) {
                 TsOdinType baseTypeA = a.baseType(true);
                 TsOdinType baseTypeB = b.baseType(true);
@@ -70,7 +69,7 @@ public class OdinTypeConverter {
 
         // Give arrays the precedence
         TsOdinType baseTypeA = a.baseType(true);
-        if (baseTypeA.getMetaType() == MetaType.ARRAY) {
+        if (baseTypeA.getTypeReferenceKind() == TsOdinTypeKind.ARRAY) {
             TsOdinType tsOdinType = convertToArrayType((TsOdinArrayType) baseTypeA, b);
             if(!tsOdinType.isUnknown()) {
                 return a;
@@ -78,7 +77,7 @@ public class OdinTypeConverter {
         }
 
         TsOdinType baseTypeB = b.baseType(true);
-        if (baseTypeB.getMetaType() == MetaType.ARRAY) {
+        if (baseTypeB.getTypeReferenceKind() == TsOdinTypeKind.ARRAY) {
             TsOdinType tsOdinType = convertToArrayType((TsOdinArrayType) baseTypeB, a);
             if(!tsOdinType.isUnknown()) {
                 return b;
@@ -141,7 +140,7 @@ public class OdinTypeConverter {
         TsOdinType typedB = convertToTyped(untypedB);
 
         // In case of string vs rune vs numeric
-        if (typedA.getMetaType() != typedB.getMetaType())
+        if (typedA.getTypeReferenceKind() != typedB.getTypeReferenceKind())
             return TsOdinBuiltInTypes.UNKNOWN;
 
         if (typedA.isNumeric()) {

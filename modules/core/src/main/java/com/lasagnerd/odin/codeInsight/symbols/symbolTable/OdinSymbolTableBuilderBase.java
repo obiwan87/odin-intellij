@@ -12,9 +12,9 @@ import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinExpectedTypeEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinMetaType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeReference;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,8 +176,8 @@ public abstract class OdinSymbolTableBuilderBase implements OdinSymbolTableBuild
                     OdinExpression typeExpression = getArgumentExpression(odinArgument);
                     if (typeExpression != null) {
                         TsOdinType tsOdinType = typeExpression.getInferredType();
-                        if (tsOdinType instanceof TsOdinMetaType metaType) {
-                            if (metaType.representedType() instanceof TsOdinStructType structType) {
+                        if (tsOdinType instanceof TsOdinTypeReference typeReference) {
+                            if (typeReference.referencedType() instanceof TsOdinStructType structType) {
                                 OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(context, argument.getProject(), structType);
                                 symbolTable.merge(typeElements);
                             }
