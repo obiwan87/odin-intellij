@@ -374,6 +374,7 @@
                                               nameKey="odin.whenEval"
                                               providerId="Odin"
                                               bundle="odin.Bundle"/>
+        <gotoSymbolContributor implementation="com.lasagnerd.odin.goToSymbol.OdinGoToSymbolContributor"/>
     </extensions>
 
     <extensionPoints>
