@@ -55,7 +55,7 @@ public class OdinProjectConfigurable implements Configurable {
         boolean cachedEnabledModified = projectSettings.isCacheEnabled() != settingsService.isCacheEnabled();
 
 
-        return !sdkPathModified
+        return sdkPathModified
                 || buildFlagsModified
                 || semanticAnnotatorEnabledModified
                 || debuggerIdModified
