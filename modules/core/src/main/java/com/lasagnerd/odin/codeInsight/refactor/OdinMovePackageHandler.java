@@ -3,6 +3,7 @@ package com.lasagnerd.odin.codeInsight.refactor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -87,7 +88,7 @@ public class OdinMovePackageHandler extends MoveFilesOrDirectoriesHandler {
         Project project = dataContext.getData(CommonDataKeys.PROJECT);
         if (project == null)
             return false;
-        Object targetElement = dataContext.getData("psi.TargetElement");
+        Object targetElement = dataContext.getData(DataKey.create("psi.TargetElement"));
         PsiElement[] psiElementArray = CommonRefactoringUtil.getPsiElementArray(dataContext);
         if(targetElement instanceof PsiElement targetPsiElement) {
             return isValidTarget(targetPsiElement, psiElementArray);
