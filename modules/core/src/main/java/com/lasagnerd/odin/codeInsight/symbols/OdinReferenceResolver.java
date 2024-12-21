@@ -91,16 +91,7 @@ public class OdinReferenceResolver {
     private static @Nullable OdinSymbol resolveWithKnowledge(@NotNull OdinContext context,
                                                              @NotNull OdinIdentifier identifier,
                                                              OdinSymbolTableBuilder contextProvider) {
-        // We have two different types of situations
-        // Either the element is under a when statement, or in a file with defined build flag clauses/a certain
-        // file suffix (explicit context)
-        // Or, the knowledge is induced by the values provided by the current target platform and build profile
-        // e.g. ODIN_OS = .Windows, ODIN_DEBUG = false (implicit context)
-
-        // TODO 1. We need to consider the incoming knowledge coming from context
-        //  2. We need a way to distinguish whether the incoming knowledge is implicit or explicit. Have a flag? Different symbolic class?
         String name = identifier.getIdentifierToken().getText();
-
 
         OdinLattice implicitSourceKnowledge = computeImplicitKnowledge(identifier);
         OdinLattice explicitSourceKnowledge = computeExplicitKnowledge(context, identifier);
@@ -123,7 +114,8 @@ public class OdinReferenceResolver {
 
         if (!symbols.isEmpty()) {
             // Mutate context, such that
-            // TODO is this even correct?
+            // TODO This should be returned as a copy. In OdinInferenceEngine we return a more specific
+            //  context in the type itself. Should we return it in the symbol?
             context.getSymbolValueStore().intersect(sourceLattice.getSymbolValueStore());
             // System.out.println("Solving lattice for " + identifier.getText() + ":" + identifier.getLocation());
 
