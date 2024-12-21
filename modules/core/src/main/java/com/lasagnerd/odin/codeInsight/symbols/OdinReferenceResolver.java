@@ -29,13 +29,18 @@ import java.util.List;
 public class OdinReferenceResolver {
 
     public static @Nullable OdinSymbol resolve(@NotNull OdinContext context, @NotNull OdinIdentifier element) {
-        return resolve(context, element,
-                new OdinMinimalSymbolTableBuilder(element,
-                        OdinImportService.packagePath(element),
-                        createEndOfBlockListener(element),
-                        context
-                )
-        );
+
+        try {
+            boolean useKnowledge = OdinProjectSettingsService.getInstance(element.getProject())
+                    .isConditionalSymbolResolutionEnabled() && context.isUseKnowledge();
+            if (useKnowledge) {
+                return resolveWithKnowledge(context, element);
+            }
+            return resolveWithoutKnowledge(context, element);
+        } catch (StackOverflowError e) {
+            OdinInsightUtils.logStackOverFlowError(element, OdinReference.LOG);
+            return null;
+        }
     }
 
     private static @NotNull OdinSymbolTableBuilderListener createEndOfBlockListener(@NotNull OdinIdentifier element) {
@@ -57,23 +62,13 @@ public class OdinReferenceResolver {
     }
 
 
-    public static @Nullable OdinSymbol resolve(@NotNull OdinContext context,
-                                               @NotNull OdinIdentifier identifier,
-                                               OdinSymbolTableBuilder symbolTableBuilder) {
-        try {
-            boolean useKnowledge = OdinProjectSettingsService.getInstance(identifier.getProject())
-                    .isConditionalSymbolResolutionEnabled() && context.isUseKnowledge();
-            if (useKnowledge) {
-                return resolveWithKnowledge(context, identifier, symbolTableBuilder);
-            }
-            return resolveWithoutKnowledge(identifier, symbolTableBuilder);
-        } catch (StackOverflowError e) {
-            OdinInsightUtils.logStackOverFlowError(identifier, OdinReference.LOG);
-            return null;
-        }
-    }
+    private static @Nullable OdinSymbol resolveWithoutKnowledge(OdinContext context, @NotNull OdinIdentifier identifier) {
+        OdinSymbolTableBuilder symbolTableBuilder = new OdinMinimalSymbolTableBuilder(identifier,
+                OdinImportService.packagePath(identifier),
+                createCheckpointListener(identifier),
+                context
+        );
 
-    private static @Nullable OdinSymbol resolveWithoutKnowledge(@NotNull OdinIdentifier identifier, OdinSymbolTableBuilder symbolTableBuilder) {
         String name = identifier.getIdentifierToken().getText();
         OdinSymbolTable identifierSymbols = getIdentifierSymbolTable(new OdinContext(), identifier, symbolTableBuilder);
         List<OdinSymbol> symbols = identifierSymbols.getSymbols(name);
@@ -89,8 +84,13 @@ public class OdinReferenceResolver {
     }
 
     private static @Nullable OdinSymbol resolveWithKnowledge(@NotNull OdinContext context,
-                                                             @NotNull OdinIdentifier identifier,
-                                                             OdinSymbolTableBuilder contextProvider) {
+                                                             @NotNull OdinIdentifier identifier) {
+
+        OdinSymbolTableBuilder symbolTableBuilder = new OdinMinimalSymbolTableBuilder(identifier,
+                OdinImportService.packagePath(identifier),
+                createEndOfBlockListener(identifier),
+                context
+        );
         String name = identifier.getIdentifierToken().getText();
 
         OdinLattice implicitSourceKnowledge = computeImplicitKnowledge(identifier);
@@ -104,7 +104,7 @@ public class OdinReferenceResolver {
             sourceLattice = implicitSourceKnowledge;
         }
 
-        OdinSymbolTable identifierSymbols = getIdentifierSymbolTable(sourceLattice.toContext(), identifier, contextProvider);
+        OdinSymbolTable identifierSymbols = getIdentifierSymbolTable(sourceLattice.toContext(), identifier, symbolTableBuilder);
 
         List<OdinSymbol> symbols = identifierSymbols.getSymbols(name);
 
