@@ -172,19 +172,20 @@
 
   methods('.*([iI]nitialization|[dD]eclaration)Statement') = [getDeclaration]
   methods('.*([iI]nitialization|[dD]eclaration)$') = [getDeclaredIdentifiers]
+  methods('.*[dD]eclaration$') = [getName getPresentation getIcon]
 
   implements('.*([iI]nitialization|[dD]eclaration)$') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
 
   implements("binaryExpression|unaryExpression|castExpression|transmuteExpression|autoCastExpression|orElseExpression|orReturnExpression|orBreakExpression|orContinueExpression|ternaryExpression") = 'com.lasagnerd.odin.lang.psi.OdinOperation'
-  implements('importDeclaration') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
+  implements('importDeclaration|constantInitDeclaration') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
   implements('usingStatement') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
   methods('usingStatement') = [getDeclaredIdentifiers]
-  implements('constantInitializationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
+
   psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
 
-  elementTypeFactory("fileScope|packageClause|importDeclaration|shortVariableDeclaration|initVariableDeclaration") =  "com.lasagnerd.odin.lang.stubs.OdinStubElementTypeFactory.create"
+  elementTypeFactory("fileScope|packageClause|importDeclaration|shortVariableDeclaration|initVariableDeclaration|declaredIdentifier|constantInitDeclaration") =  "com.lasagnerd.odin.lang.stubs.OdinStubElementTypeFactory.create"
 
-  extends("packageClause|importDeclaration|shortVariableDeclaration|initVariableDeclaration") = "com.lasagnerd.odin.lang.psi.impl.OdinStubbedElementImpl<?>"
+  extends("packageClause|importDeclaration|shortVariableDeclaration|initVariableDeclaration|constantInitDeclaration") = "com.lasagnerd.odin.lang.psi.impl.OdinStubbedElementImpl<?>"
 }
 
 odinFile                             ::= fileScope
@@ -213,6 +214,7 @@ packageClause                        ::= PACKAGE declaredIdentifier {
     pin=1
     recoverWhile=eos_recover
     stubClass="com.lasagnerd.odin.lang.stubs.OdinPackageClauseStub"
+    methods=[getName]
 }
 
 importStatement           ::= importDeclaration {implements="com.lasagnerd.odin.lang.psi.OdinDeclarationProvidingStatement<com.lasagnerd.odin.lang.psi.OdinImportDeclaration>" methods=[getDeclaration]}
@@ -392,7 +394,12 @@ arraySize                            ::= QUESTION|expression
 dynamicArrayType                     ::= [directiveIdentifier] LBRACKET DYNAMIC RBRACKET type {methods=[getTypeDefinition]}
 
 sliceType                            ::= [directiveIdentifier] LBRACKET RBRACKET type
-constantInitializationStatement      ::= symbolDefinitionHead colonClosing  <<guardedExpression incompleteGuard expressionListWithRecover>> { methods=[getTypeDefinition getExpressionList] pin=2}
+constantInitializationStatement      ::= constantInitDeclaration { methods=[getExpressionList] implements="com.lasagnerd.odin.lang.psi.OdinDeclarationProvidingStatement<com.lasagnerd.odin.lang.psi.OdinConstantInitDeclaration>"}
+constantInitDeclaration              ::= symbolDefinitionHead colonClosing  <<guardedExpression incompleteGuard expressionListWithRecover>> {
+    pin=2
+    methods=[getExpressionList getDeclaration]
+    stubClass="com.lasagnerd.odin.lang.stubs.OdinConstantInitDeclarationStub"
+}
 
 private incompleteGuard              ::= !(<<afterNewLine>> (symbolDefinitionHead|!expression))
 colonClosing                         ::= COLON
@@ -420,7 +427,12 @@ shortVariableDeclaration             ::= (attributesDefinition eos?)* [USING] id
 
 
 private identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
-declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifierMixin' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation getType]}
+declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN {
+    mixin = 'com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifierMixin'
+    implements=['com.intellij.psi.PsiNameIdentifierOwner' "com.lasagnerd.odin.lang.psi.OdinPsiElement"]
+    methods=[getPresentation getType]
+    stubClass="com.lasagnerd.odin.lang.stubs.OdinDeclaredIdentifierStub"
+}
 
 assignmentStatement                  ::= [directiveIdentifier] lhsExpressions assignmentOperator rhsExpressions
 lhsExpressions                       ::= expressionListWithRecover

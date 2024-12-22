@@ -95,8 +95,8 @@ class OdinPsiTestHelpers {
     }
 
     static @NotNull OdinProcedureDefinition findFirstProcedure(@NotNull PsiElement element, String procedureName) {
-        Collection<OdinConstantInitializationStatement> constantInitializationStatements = PsiTreeUtil.findChildrenOfType(element,
-                OdinConstantInitializationStatement.class);
+        Collection<OdinConstantInitDeclaration> constantInitializationStatements = PsiTreeUtil.findChildrenOfType(element,
+                OdinConstantInitDeclaration.class);
 
         return constantInitializationStatements.stream()
                 .filter(c -> c.getDeclaredIdentifiers().getFirst().getIdentifierToken().getText().equals(procedureName))
@@ -127,10 +127,10 @@ class OdinPsiTestHelpers {
         return variable;
     }
 
-    static @NotNull OdinConstantInitializationStatement findFirstConstant(PsiElement parent, String constantName) {
-        Collection<OdinConstantInitializationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinConstantInitializationStatement.class);
+    static @NotNull OdinConstantInitDeclaration findFirstConstant(PsiElement parent, String constantName) {
+        Collection<OdinConstantInitDeclaration> vars = PsiTreeUtil.findChildrenOfType(parent, OdinConstantInitDeclaration.class);
 
-        OdinConstantInitializationStatement variable = vars.stream()
+        OdinConstantInitDeclaration variable = vars.stream()
                 .filter(v -> v.getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), constantName)))
                 .findFirst().orElse(null);
         TestCase.assertNotNull(variable);
@@ -138,7 +138,7 @@ class OdinPsiTestHelpers {
         return variable;
     }
 
-    static @NotNull OdinConstantInitializationStatement findFirstConstant(OdinFile odinFile, String procedureName, String variableName) {
+    static @NotNull OdinConstantInitDeclaration findFirstConstant(OdinFile odinFile, String procedureName, String variableName) {
         OdinProcedureDefinition procedure = findFirstProcedure(odinFile, procedureName);
         TestCase.assertNotNull(procedure);
         return findFirstConstant(procedure, variableName);

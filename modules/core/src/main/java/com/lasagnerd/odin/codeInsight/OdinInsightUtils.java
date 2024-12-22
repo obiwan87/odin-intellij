@@ -546,12 +546,12 @@ public class OdinInsightUtils {
     }
 
     public static boolean isConstantDeclaration(PsiElement element) {
-        if (element.getParent() instanceof OdinConstantInitializationStatement constantInitializationStatement) {
-            return constantInitializationStatement.getExpressionList().size() > 1
+        if (element.getParent() instanceof OdinConstantInitDeclaration constantInitDeclaration) {
+            return constantInitDeclaration.getExpressionList().size() > 1
                     || (
-                    constantInitializationStatement.getExpressionList().size() == 1 &&
+                    constantInitDeclaration.getExpressionList().size() == 1 &&
                             !(
-                                    constantInitializationStatement.getExpressionList().getFirst() instanceof OdinTypeDefinitionExpression
+                                    constantInitDeclaration.getExpressionList().getFirst() instanceof OdinTypeDefinitionExpression
                             ));
         }
 
@@ -575,8 +575,8 @@ public class OdinInsightUtils {
                 = PsiTreeUtil.getParentOfType(element,
                 OdinDeclaration.class,
                 false);
-        if (declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
-            return getDeclaredType(constantInitializationStatement);
+        if (declaration instanceof OdinConstantInitDeclaration constantInitDeclaration) {
+            return getDeclaredType(constantInitDeclaration);
         }
         return null;
     }
@@ -603,7 +603,7 @@ public class OdinInsightUtils {
         return null;
     }
 
-    public static @Nullable OdinType getDeclaredType(OdinConstantInitializationStatement constantInitializationStatement) {
+    public static @Nullable OdinType getDeclaredType(OdinConstantInitDeclaration constantInitializationStatement) {
         List<OdinExpression> expressionList = constantInitializationStatement.getExpressionList();
         if (expressionList.isEmpty())
             return null;
@@ -951,7 +951,7 @@ public class OdinInsightUtils {
     public static boolean isStaticProcedure(OdinDeclaredIdentifier declaredIdentifier) {
         PsiElement parent = declaredIdentifier.getParent();
         if (isProcedureDeclaration(parent)) {
-            OdinConstantInitializationStatement constant = (OdinConstantInitializationStatement) parent;
+            OdinConstantInitDeclaration constant = (OdinConstantInitDeclaration) parent;
             return OdinAttributeUtils.containsAttribute(constant.getAttributesDefinitionList(), "static");
         }
         return false;

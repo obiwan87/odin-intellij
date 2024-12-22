@@ -385,9 +385,9 @@ public class OdinTypeResolver extends OdinVisitor {
             typeContext = new OdinContext();
         }
         switch (odinDeclaration) {
-            case OdinConstantInitializationStatement constantInitializationStatement -> {
-                OdinExpression firstExpression = constantInitializationStatement.getExpressionList().getFirst();
-                OdinType declaredType = OdinInsightUtils.getDeclaredType(constantInitializationStatement);
+            case OdinConstantInitDeclaration constantInitDeclaration -> {
+                OdinExpression firstExpression = constantInitDeclaration.getExpressionList().getFirst();
+                OdinType declaredType = OdinInsightUtils.getDeclaredType(constantInitDeclaration);
 
                 // Check whether this constant is a "pure" type definition, or if it is a type alias
                 if (isTypeDefinition(declaredType)) {
@@ -398,9 +398,9 @@ public class OdinTypeResolver extends OdinVisitor {
                 }
 
                 // Here we have a type alias
-                List<OdinExpression> expressionList = constantInitializationStatement.getExpressionList();
+                List<OdinExpression> expressionList = constantInitDeclaration.getExpressionList();
                 if (!expressionList.isEmpty()) {
-                    int index = constantInitializationStatement.getDeclaredIdentifiers().indexOf(declaredIdentifier);
+                    int index = constantInitDeclaration.getDeclaredIdentifiers().indexOf(declaredIdentifier);
                     if (index == -1) {
                         return TsOdinBuiltInTypes.UNKNOWN;
                     }

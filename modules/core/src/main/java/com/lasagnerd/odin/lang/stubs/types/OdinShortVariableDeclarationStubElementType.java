@@ -7,13 +7,14 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.lasagnerd.odin.lang.psi.OdinShortVariableDeclaration;
 import com.lasagnerd.odin.lang.psi.impl.OdinShortVariableDeclarationImpl;
 import com.lasagnerd.odin.lang.stubs.OdinShortVariableDeclarationStub;
+import com.lasagnerd.odin.lang.stubs.OdinStubElementTypeFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class OdinShortVariableDeclarationElementType extends OdinStubElementType<OdinShortVariableDeclarationStub, OdinShortVariableDeclaration> {
-    public OdinShortVariableDeclarationElementType(@NotNull String debugName) {
-        super(debugName);
+public class OdinShortVariableDeclarationStubElementType extends OdinDeclarationStubElementType<OdinShortVariableDeclarationStub, OdinShortVariableDeclaration> {
+    public OdinShortVariableDeclarationStubElementType() {
+        super(OdinStubElementTypeFactory.SHORT_VARIABLE_DECLARATION);
     }
 
     @Override
@@ -23,16 +24,17 @@ public class OdinShortVariableDeclarationElementType extends OdinStubElementType
 
     @Override
     public @NotNull OdinShortVariableDeclarationStub createStub(@NotNull OdinShortVariableDeclaration psi, StubElement<? extends PsiElement> parentStub) {
-        return new OdinShortVariableDeclarationStub(parentStub, this);
+        return new OdinShortVariableDeclarationStub(parentStub, this, getNames(psi));
     }
+
 
     @Override
     public void serialize(@NotNull OdinShortVariableDeclarationStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-
+        super.serialize(stub, dataStream);
     }
 
     @Override
     public @NotNull OdinShortVariableDeclarationStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-        return new OdinShortVariableDeclarationStub(parentStub, this);
+        return new OdinShortVariableDeclarationStub(parentStub, this, dataStream.readName());
     }
 }

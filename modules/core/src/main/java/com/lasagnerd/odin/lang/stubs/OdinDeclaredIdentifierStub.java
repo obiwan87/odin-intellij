@@ -8,14 +8,14 @@ import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class OdinDeclaredIdentifierStub<T extends OdinDeclaredIdentifier> extends NamedStubBase<T> {
+public class OdinDeclaredIdentifierStub extends NamedStubBase<OdinDeclaredIdentifier> {
 
-    protected OdinDeclaredIdentifierStub(StubElement parent, @NotNull IStubElementType elementType, @Nullable StringRef name) {
+    public OdinDeclaredIdentifierStub(StubElement parent, @NotNull IStubElementType elementType, @Nullable StringRef name) {
         super(parent, elementType, name);
 
     }
 
-    protected OdinDeclaredIdentifierStub(StubElement parent, @NotNull IStubElementType elementType, @Nullable String name) {
+    public OdinDeclaredIdentifierStub(StubElement parent, @NotNull IStubElementType elementType, @Nullable String name) {
         super(parent, elementType, name);
     }
 }

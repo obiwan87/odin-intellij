@@ -122,12 +122,12 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             return EvOdinValues.nullValue();
         }
 
-        if (declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
+        if (declaration instanceof OdinConstantInitDeclaration constantInitDeclaration) {
 
             TsOdinTypeReference declaredType = OdinInferenceEngine.findTypeReference(
                     context,
                     odinDeclaredIdentifier,
-                    constantInitializationStatement);
+                    constantInitDeclaration);
 
             if (declaredType != null) {
                 // This is a type declaration, set EvOdinValue<?> accordingly
@@ -135,11 +135,11 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             }
 
             // This is not a type
-            int index = constantInitializationStatement
+            int index = constantInitDeclaration
                     .getDeclaredIdentifierList()
                     .indexOf(declaredIdentifier);
 
-            List<OdinExpression> expressionList = constantInitializationStatement
+            List<OdinExpression> expressionList = constantInitDeclaration
                     .getExpressionList();
 
             if (expressionList.size() > index) {

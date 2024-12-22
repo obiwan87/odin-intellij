@@ -262,8 +262,8 @@ public class OdinExpectedTypeEngine {
             }
         }
 
-        if (typeExpectationContext instanceof OdinConstantInitializationStatement constantInitializationStatement) {
-            OdinType type = constantInitializationStatement.getType();
+        if (typeExpectationContext instanceof OdinConstantInitDeclaration constantInitDeclaration) {
+            OdinType type = constantInitDeclaration.getType();
             if (type != null) {
                 return propagateTypeDown(OdinTypeResolver.resolveType(context, type), topMostExpression, expression);
             }
@@ -355,8 +355,8 @@ public class OdinExpectedTypeEngine {
                         OdinArgument.class,
                         OdinRhsExpressions.class,
                         OdinCaseClause.class,
-                        OdinInitVariableStatement.class,
-                        OdinConstantInitializationStatement.class,
+                        OdinInitVariableDeclaration.class,
+                        OdinConstantInitDeclaration.class,
                         OdinParameterInitialization.class,
                         OdinIndex.class,
                         OdinCaseClause.class,

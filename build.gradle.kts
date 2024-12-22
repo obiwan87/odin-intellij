@@ -35,6 +35,8 @@ val clionVersion = properties("clionVersion").get()
 val riderVersion = properties("riderVersion").get()
 
 val debuggerPlugins = listOf("com.intellij.cidr.lang", "com.intellij.cidr.base", "com.intellij.nativeDebug")
+val indexViewer = "com.jetbrains.hackathon.indices.viewer:1.29"
+val idePerf = "com.google.ide-perf:1.3.2"
 val riderPlugins = emptyList<String>()
 
 val lsp4jVersion = "0.23.0"
@@ -188,7 +190,6 @@ project(":core") {
         lsp4ijDep()
         intellijPlatform {
             testFramework(TestFrameworkType.Platform)
-
             testImplementation("junit:junit:4.13.2")
             testCompileOnly("org.projectlombok:lombok:1.18.34")
             testCompileOnly("org.junit.jupiter:junit-jupiter-api:5.4.2")
@@ -213,9 +214,12 @@ project(":plugin") {
         implementation(project(":core"))
         implementation(project(":debugger"))
         implementation(project(":rider"))
+
         intellijPlatform {
             zipSigner()
             pluginVerifier()
+            plugin(idePerf)
+            plugin(indexViewer)
             when (baseIDE) {
                 "idea" -> intellijIdeaCommunity(ideaVersion, useInstaller = false)
                 "clion" -> clion(clionVersion, useInstaller = false)

@@ -241,8 +241,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                 OdinSymbol symbol = symbolTable.getSymbol("Source_Code_Location");
                 if (symbol != null) {
                     OdinDeclaration declaration = symbol.getDeclaration();
-                    if (declaration instanceof OdinConstantInitializationStatement structDeclarationStatement) {
-                        OdinStructType structType = PsiTreeUtil.findChildOfType(structDeclarationStatement, OdinStructType.class);
+                    if (declaration instanceof OdinConstantInitDeclaration constantInitDeclaration) {
+                        OdinStructType structType = PsiTreeUtil.findChildOfType(constantInitDeclaration, OdinStructType.class);
                         if (structType != null) {
                             this.type = structType.getResolvedType(this.context);
                         }
@@ -565,7 +565,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
             TsOdinType tsOdinType = doResolveTypeOfDeclaredIdentifier(declaredIdentifier, context);
             OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
-            if (!(declaration instanceof OdinConstantInitializationStatement)) {
+            if (!(declaration instanceof OdinConstantInitDeclaration)) {
                 return OdinTypeConverter.convertToTyped(tsOdinType);
             }
             return tsOdinType;
@@ -1085,21 +1085,21 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         // If we get a type here, then it's an alias
-        if (odinDeclaration instanceof OdinConstantInitializationStatement initializationStatement) {
-            if (initializationStatement.getType() != null) {
-                OdinType mainType = initializationStatement.getType();
+        if (odinDeclaration instanceof OdinConstantInitDeclaration constantInitDeclaration) {
+            if (constantInitDeclaration.getType() != null) {
+                OdinType mainType = constantInitDeclaration.getType();
                 return mainType.getResolvedType(context);
             }
 
-            TsOdinTypeReference typeReference = findTypeReference(context, declaredIdentifier, initializationStatement);
+            TsOdinTypeReference typeReference = findTypeReference(context, declaredIdentifier, constantInitDeclaration);
             if (typeReference != null) return typeReference;
 
 
-            int index = initializationStatement
+            int index = constantInitDeclaration
                     .getDeclaredIdentifierList()
                     .indexOf(declaredIdentifier);
 
-            List<OdinExpression> expressionList = initializationStatement
+            List<OdinExpression> expressionList = constantInitDeclaration
                     .getExpressionList();
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
@@ -1166,16 +1166,16 @@ public class OdinInferenceEngine extends OdinVisitor {
 
         if (odinDeclaration instanceof OdinEnumValueDeclaration odinEnumValueDeclaration) {
             OdinEnumType enumType = PsiTreeUtil.getParentOfType(odinEnumValueDeclaration, true, OdinEnumType.class);
-            OdinConstantInitializationStatement enumDeclarationStatement = PsiTreeUtil.getParentOfType(enumType, true, OdinConstantInitializationStatement.class);
+            OdinConstantInitDeclaration enumDeclaration = PsiTreeUtil.getParentOfType(enumType, true, OdinConstantInitDeclaration.class);
 
             OdinDeclaredIdentifier enumDeclaredIdentifier = null;
-            if (enumDeclarationStatement != null) {
-                enumDeclaredIdentifier = enumDeclarationStatement.getDeclaredIdentifiers().getFirst();
+            if (enumDeclaration != null) {
+                enumDeclaredIdentifier = enumDeclaration.getDeclaredIdentifiers().getFirst();
             }
             if (enumType != null) {
                 return OdinTypeResolver.resolveType(context,
                         enumDeclaredIdentifier,
-                        enumDeclarationStatement,
+                        enumDeclaration,
                         enumType);
             }
         }
@@ -1358,11 +1358,11 @@ public class OdinInferenceEngine extends OdinVisitor {
 
     public static @Nullable TsOdinTypeReference findTypeReference(@NotNull OdinContext context,
                                                         OdinDeclaredIdentifier declaredIdentifier,
-                                                        OdinConstantInitializationStatement initializationStatement) {
-        if (initializationStatement.getExpressionList().isEmpty())
+                                                                  OdinConstantInitDeclaration constantInitDeclaration) {
+        if (constantInitDeclaration.getExpressionList().isEmpty())
             return null;
-        OdinExpression firstExpression = initializationStatement.getExpressionList().getFirst();
-        OdinType declaredType = OdinInsightUtils.getDeclaredType(initializationStatement);
+        OdinExpression firstExpression = constantInitDeclaration.getExpressionList().getFirst();
+        OdinType declaredType = OdinInsightUtils.getDeclaredType(constantInitDeclaration);
         if (
                 declaredType instanceof OdinStructType
                         || declaredType instanceof OdinBitFieldType
@@ -1375,7 +1375,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             return OdinTypeResolver.findTypeReference(
                     context,
                     declaredIdentifier,
-                    initializationStatement,
+                    constantInitDeclaration,
                     firstExpression,
                     declaredType
             );

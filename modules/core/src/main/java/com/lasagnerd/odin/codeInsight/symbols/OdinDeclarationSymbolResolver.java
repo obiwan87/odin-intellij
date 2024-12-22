@@ -285,6 +285,13 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     @Override
     public void visitConstantInitializationStatement(@NotNull OdinConstantInitializationStatement o) {
+        visitConstantInitDeclaration(o.getConstantInitDeclaration());
+    }
+
+    @Override
+    public void visitConstantInitDeclaration(@NotNull OdinConstantInitDeclaration o) {
+        super.visitConstantInitDeclaration(o);
+
         OdinType declaredType = OdinInsightUtils.getDeclaredType(o);
         OdinSymbolType symbolType = switch (declaredType) {
             case OdinProcedureType ignored -> OdinSymbolType.PROCEDURE;

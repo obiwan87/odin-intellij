@@ -1,6 +1,8 @@
 package com.lasagnerd.odin.lang.psi;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -12,9 +14,13 @@ import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.lang.stubs.OdinConstantInitDeclarationStub;
+import com.lasagnerd.odin.lang.stubs.OdinInitVariableDeclarationStub;
+import com.lasagnerd.odin.lang.stubs.OdinPackageClauseStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -214,7 +220,7 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinConstantInitializationStatement statement) {
-        return statement.getDeclaredIdentifierList();
+        return statement.getConstantInitDeclaration().getDeclaredIdentifierList();
     }
 
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinShortVariableDeclaration shortVariableDeclaration) {
@@ -265,7 +271,7 @@ public class OdinPsiUtil {
     // OdinTypedDeclaration
 
     public static OdinType getTypeDefinition(OdinConstantInitializationStatement statement) {
-        return statement.getType();
+        return statement.getConstantInitDeclaration().getType();
     }
 
     public static OdinType getTypeDefinition(OdinParameterDeclarator statement) {
@@ -491,7 +497,11 @@ public class OdinPsiUtil {
     }
 
     public static List<OdinExpression> getExpressionList(OdinConstantInitializationStatement constantInitializationStatement) {
-        return PsiTreeUtil.getChildrenOfTypeAsList(constantInitializationStatement, OdinExpression.class);
+        return PsiTreeUtil.getChildrenOfTypeAsList(constantInitializationStatement.getConstantInitDeclaration(), OdinExpression.class);
+    }
+
+    public static List<OdinExpression> getExpressionList(OdinConstantInitDeclaration constantInitDeclaration) {
+        return PsiTreeUtil.getChildrenOfTypeAsList(constantInitDeclaration, OdinExpression.class);
     }
 
     public static OdinRhsExpressions getRhsExpressions(OdinInitVariableStatement initVariableStatement) {
@@ -556,5 +566,71 @@ public class OdinPsiUtil {
 
     public static OdinRhsExpressions getRhsExpressions(OdinInitVariableDeclaration initVariableDeclaration) {
         return PsiTreeUtil.getChildOfType(initVariableDeclaration, OdinRhsExpressions.class);
+    }
+
+    public static String getName(OdinPackageClause packageClause) {
+        OdinPackageClauseStub packageClauseStub = packageClause.getStub();
+        if (packageClauseStub != null) return packageClauseStub.getName();
+        if (packageClause.getDeclaredIdentifier() != null) {
+            return packageClause.getDeclaredIdentifier().getIdentifierToken().getText().trim();
+        }
+        return null;
+    }
+
+
+    public static ItemPresentation getPresentation(OdinDeclaration declaration) {
+        return new ItemPresentation() {
+            @Override
+            public @Nullable String getPresentableText() {
+                return declaration.getName();
+            }
+
+            @Override
+            public Icon getIcon(boolean unused) {
+                return AllIcons.Nodes.Variable;
+            }
+
+            @Override
+            public String getLocationString() {
+                return "somewhere";
+            }
+        };
+    }
+
+    public static String getName(OdinDeclaration declaration) {
+        if (declaration instanceof OdinInitVariableDeclaration variableDeclaration) {
+            OdinInitVariableDeclarationStub stub = variableDeclaration.getStub();
+            if (stub != null) {
+                if (stub.getNames().size() == 1) {
+                    return stub.getNames().getFirst();
+                }
+            }
+            if (variableDeclaration.getDeclaredIdentifiers().size() == 1) {
+                return variableDeclaration.getDeclaredIdentifiers().getFirst().getName();
+            }
+        }
+
+        if (declaration instanceof OdinConstantInitDeclaration constantInitDeclaration) {
+            OdinConstantInitDeclarationStub stub = constantInitDeclaration.getStub();
+            if (stub != null) {
+                if (stub.getNames().size() == 1) {
+                    return stub.getNames().getFirst();
+                }
+            }
+            if (constantInitDeclaration.getDeclaredIdentifiers().size() == 1) {
+                return constantInitDeclaration.getDeclaredIdentifiers().getFirst().getName();
+            }
+        }
+
+
+        return null;
+    }
+
+    public static OdinConstantInitDeclaration getDeclaration(OdinConstantInitializationStatement constantInitializationStatement) {
+        return constantInitializationStatement.getConstantInitDeclaration();
+    }
+
+    public static Icon getIcon(OdinDeclaration declaration, int flags) {
+        return AllIcons.Nodes.Variable;
     }
 }

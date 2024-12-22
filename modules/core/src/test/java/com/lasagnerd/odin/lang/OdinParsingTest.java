@@ -2569,17 +2569,15 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testOdinConstants() throws IOException {
         OdinFile file = loadExpressionEval();
         {
-            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_WINDOWS");
-            @NotNull Boolean val = assertInstanceOf(evOdinValue.getValue(), Boolean.class);
-            assertTrue(val);
-        }
-
-        {
             EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_BUILD_MODE_DYNAMIC");
             @NotNull Boolean val = assertInstanceOf(evOdinValue.getValue(), Boolean.class);
             assertFalse(val);
         }
-
+        {
+            EvOdinValue evOdinValue = evaluateFirstRightHandExpressionOfConstant(file, "testOdinOs", "IS_WINDOWS");
+            @NotNull Boolean val = assertInstanceOf(evOdinValue.getValue(), Boolean.class);
+            assertTrue(val);
+        }
 
     }
 

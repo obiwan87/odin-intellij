@@ -56,7 +56,7 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
             declarationText += ": " + fieldDeclarationStatement.getType().getText();
         }
 
-        if (declaration instanceof OdinConstantInitializationStatement) {
+        if (declaration instanceof OdinConstantInitDeclaration) {
             declarationText += " :: ";
         }
 
@@ -79,7 +79,7 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
             declarationText += procedureLiteralType.getProcedureDefinition().getProcedureSignature().getText();
         } else if (declaredType != null) {
             declarationText += declaredType.getText();
-        } else if (declaration instanceof OdinConstantInitializationStatement constantInitializationStatement) {
+        } else if (declaration instanceof OdinConstantInitDeclaration constantInitializationStatement) {
             int index = constantInitializationStatement.getDeclaredIdentifiers().indexOf(declaredIdentifier);
             OdinExpression odinExpression = constantInitializationStatement.getExpressionList().get(index);
             String name = declaredIdentifier.getName();

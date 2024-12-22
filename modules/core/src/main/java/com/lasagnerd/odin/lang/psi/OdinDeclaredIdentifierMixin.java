@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -22,8 +24,9 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
-import com.lasagnerd.odin.lang.psi.impl.OdinPsiElementImpl;
 import com.lasagnerd.odin.lang.psi.impl.OdinReferenceOwnerMixin;
+import com.lasagnerd.odin.lang.psi.impl.OdinStubbedElementImpl;
+import com.lasagnerd.odin.lang.stubs.OdinDeclaredIdentifierStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +34,17 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class OdinDeclaredIdentifierMixin extends OdinPsiElementImpl implements OdinDeclaredIdentifier {
+public abstract class OdinDeclaredIdentifierMixin extends OdinStubbedElementImpl<OdinDeclaredIdentifierStub> implements OdinDeclaredIdentifier {
     public OdinDeclaredIdentifierMixin(@NotNull ASTNode node) {
         super(node);
+    }
+
+    public OdinDeclaredIdentifierMixin(@NotNull OdinDeclaredIdentifierStub stub, @NotNull IStubElementType<?, ?> nodeType) {
+        super(stub, nodeType);
+    }
+
+    public OdinDeclaredIdentifierMixin(OdinDeclaredIdentifierStub stub, IElementType nodeType, ASTNode node) {
+        super(stub, nodeType, node);
     }
 
     public OdinSymbol createSymbol() {
