@@ -49,8 +49,8 @@ public class OdinPsiElementFactory {
         String dummyCode = VARIABLE_DECLARATION.replaceAll("identifier", name);
         OdinFile file = createFile(dummyCode);
         OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().getFirst();
-        if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            OdinExpression odinExpression = variableInitializationStatement.getRhsExpressions().getExpressionList().getFirst();
+        if (odinStatement instanceof OdinInitVariableStatement initVariableStatement) {
+            OdinExpression odinExpression = initVariableStatement.getRhsExpressions().getExpressionList().getFirst();
             if (odinExpression instanceof OdinRefExpression refExpression) {
                 return Objects.requireNonNull(refExpression.getIdentifier());
             }
@@ -70,13 +70,16 @@ public class OdinPsiElementFactory {
     public OdinDeclaredIdentifier createDeclaredIdentifier(String name) {
         OdinFile file = createFile(VARIABLE_DECLARATION.replaceAll("declaredIdentifier", name));
         OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().getFirst();
-        if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            return variableInitializationStatement.getDeclaredIdentifiers().getFirst();
+        if (odinStatement instanceof OdinInitVariableStatement initVariableStatement) {
+            return initVariableStatement
+                    .getInitVariableDeclaration()
+                    .getDeclaredIdentifiers()
+                    .getFirst();
         }
         throw new RuntimeException("Something went wrong.");
     }
 
-    public OdinVariableInitializationStatement createVariableInitializationStatement(String name, String value) {
+    public OdinInitVariableStatement createInitVariableStatement(String name, String value) {
 
         String var = """
                 package dummy
@@ -84,13 +87,13 @@ public class OdinPsiElementFactory {
                 """.formatted(name, value);
         OdinFile file = createFile(var);
         OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().getFirst();
-        if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            return variableInitializationStatement;
+        if (odinStatement instanceof OdinInitVariableStatement initVariableStatement) {
+            return initVariableStatement;
         }
         throw new RuntimeException("Something went wrong.");
     }
 
-    public OdinVariableInitializationStatement createVariableInitializationStatement(String name, String type, String value) {
+    public OdinInitVariableStatement createInitVariableStatement(String name, String type, String value) {
 
         String var = """
                 package dummy
@@ -98,20 +101,20 @@ public class OdinPsiElementFactory {
                 """.formatted(name, type, value);
         OdinFile file = createFile(var);
         OdinStatement odinStatement = file.getFileScope().getFileScopeStatementList().getStatementList().getFirst();
-        if (odinStatement instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            return variableInitializationStatement;
+        if (odinStatement instanceof OdinInitVariableStatement initVariableStatement) {
+            return initVariableStatement;
         }
         throw new RuntimeException("Something went wrong.");
     }
 
-    public OdinVariableInitializationStatement createVariableInitializationStatement(String name, OdinExpression valueExpression) {
-        OdinVariableInitializationStatement statement = createVariableInitializationStatement(name, "v");
+    public OdinInitVariableStatement createInitVariableStatement(String name, OdinExpression valueExpression) {
+        OdinInitVariableStatement statement = createInitVariableStatement(name, "v");
         statement.getRhsExpressions().getExpressionList().getFirst().replace(valueExpression);
         return statement;
     }
 
-    public OdinVariableInitializationStatement createVariableInitializationStatement(String name, String type, OdinExpression valueExpression) {
-        OdinVariableInitializationStatement statement = createVariableInitializationStatement(name, type, "v");
+    public OdinInitVariableStatement createInitVariableStatement(String name, String type, OdinExpression valueExpression) {
+        OdinInitVariableStatement statement = createInitVariableStatement(name, type, "v");
         statement.getRhsExpressions().getExpressionList().getFirst().replace(valueExpression);
         return statement;
     }
@@ -133,7 +136,7 @@ public class OdinPsiElementFactory {
 
     public OdinImportStatement createImport(String alias, String packagePath) {
         OdinFile file;
-        if(alias == null) {
+        if (alias == null) {
             file = createFile(IMPORT.replaceAll("packagePath", packagePath));
         } else {
             file = createFile(IMPORT_WITH_ALIAS.formatted(alias, packagePath));

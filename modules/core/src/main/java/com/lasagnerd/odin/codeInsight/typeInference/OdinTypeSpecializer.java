@@ -45,8 +45,8 @@ public class OdinTypeSpecializer {
         specializedType.getFields().putAll(genericType.getFields());
 
         OdinStructType type = genericType.type();
-        List<OdinFieldDeclarationStatement> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(type);
-        for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarations) {
+        List<OdinFieldDeclaration> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(type);
+        for (OdinFieldDeclaration fieldDeclaration : fieldDeclarations) {
             var fieldType = fieldDeclaration.getType();
             if (fieldType != null) {
                 TsOdinType tsOdinType = resolveType(newScope, fieldType);

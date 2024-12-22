@@ -211,12 +211,12 @@ public abstract class OdinSymbolTableBuilderBase implements OdinSymbolTableBuild
     }
 
     protected boolean isStatic(OdinDeclaration declaration) {
-        if (declaration instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            return OdinAttributeUtils.containsAttribute(variableInitializationStatement.getAttributesDefinitionList(), "static");
+        if (declaration instanceof OdinInitVariableDeclaration initVariableDeclaration) {
+            return OdinAttributeUtils.containsAttribute(initVariableDeclaration.getAttributesDefinitionList(), "static");
         }
 
-        if (declaration instanceof OdinVariableDeclarationStatement variableDeclarationStatement) {
-            return OdinAttributeUtils.containsAttribute(variableDeclarationStatement.getAttributesDefinitionList(), "static");
+        if (declaration instanceof OdinShortVariableDeclaration shortVariableDeclaration) {
+            return OdinAttributeUtils.containsAttribute(shortVariableDeclaration.getAttributesDefinitionList(), "static");
         }
         return false;
     }

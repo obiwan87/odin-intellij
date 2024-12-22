@@ -52,13 +52,13 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .before(OdinTypes.COLON_OPENING)
                 .spaces(1)
 
-                .afterInside(OdinTypes.COLON, OdinTypes.FIELD_DECLARATION_STATEMENT)
+                .afterInside(OdinTypes.COLON, OdinTypes.FIELD_DECLARATION)
                 .spaces(1)
 
-                .afterInside(OdinTypes.EQ, OdinTypes.VARIABLE_INITIALIZATION_STATEMENT)
+                .afterInside(OdinTypes.EQ, OdinTypes.INIT_VARIABLE_STATEMENT)
                 .spaces(1)
 
-                .aroundInside(OdinTypes.TYPE_DEFINITION_EXPRESSION, OdinTypes.VARIABLE_INITIALIZATION_STATEMENT)
+                .aroundInside(OdinTypes.TYPE_DEFINITION_EXPRESSION, OdinTypes.INIT_VARIABLE_STATEMENT)
                 .spaces(1)
 
                 .aroundInside(OdinTypes.TYPE_DEFINITION_EXPRESSION, OdinTypes.CONSTANT_INITIALIZATION_STATEMENT)

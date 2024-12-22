@@ -137,7 +137,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     @Override
-    public void visitVariableDeclarationStatement(@NotNull OdinVariableDeclarationStatement o) {
+    public void visitShortVariableDeclaration(@NotNull OdinShortVariableDeclaration o) {
         boolean isLocal = OdinInsightUtils.isLocalVariable(o);
 
         boolean hasUsing = o.getUsing() != null;
@@ -182,7 +182,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     @Override
-    public void visitVariableInitializationStatement(@NotNull OdinVariableInitializationStatement o) {
+    public void visitInitVariableDeclaration(@NotNull OdinInitVariableDeclaration o) {
         boolean isLocal = OdinInsightUtils.isLocalVariable(o);
 
         boolean hasUsing = o.getUsing() != null;
@@ -190,7 +190,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
         OdinScope scope = getScope(o);
         OdinVisibility visibility = getVisibility(scope, o.getAttributesDefinitionList());
-        for (int i = 0; i < o.getDeclaredIdentifiers().size(); i++) {
+        for (int i = 0; i < o.getDeclaredIdentifierList().size(); i++) {
             OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifiers().get(i), visibility);
             odinSymbol.setSymbolType(OdinSymbolType.VARIABLE);
             odinSymbol.setHasUsing(hasUsing);
@@ -303,8 +303,8 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         List<OdinAttributesDefinition> attributeList = o.getAttributesDefinitionList();
 
         OdinVisibility visibility = getVisibility(scope, attributeList);
-        for (int i = 0; i < o.getDeclaredIdentifiers().size(); i++) {
-            OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifiers().get(i), visibility);
+        for (int i = 0; i < o.getDeclaredIdentifierList().size(); i++) {
+            OdinSymbol odinSymbol = new OdinSymbol(o.getDeclaredIdentifierList().get(i), visibility);
 
             if (o.getUsing() != null) {
                 odinSymbol.setHasUsing(true);
@@ -373,7 +373,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     @Override
-    public void visitFieldDeclarationStatement(@NotNull OdinFieldDeclarationStatement o) {
+    public void visitFieldDeclaration(@NotNull OdinFieldDeclaration o) {
         OdinType type = o.getType();
         boolean hasUsing = o.getUsing() != null;
         for (OdinDeclaredIdentifier odinDeclaredIdentifier : o.getDeclaredIdentifierList()) {
@@ -420,17 +420,14 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     private void addWhenBlockDeclarations(OdinWhenBlock whenBlock) {
-        boolean ifConditionTrue = true;
-        boolean ignoreCondition = true;
-
         OdinStatementBody statementBody = whenBlock.getStatementBody();
 
-        if (statementBody != null && (ifConditionTrue || ignoreCondition)) {
+        if (statementBody != null) {
             addStatementBodySymbols(statementBody);
         }
 
         OdinElseWhenBlock elseWhenBlock = whenBlock.getElseWhenBlock();
-        if (elseWhenBlock != null && (!ifConditionTrue || ignoreCondition)) {
+        if (elseWhenBlock != null) {
             OdinWhenBlock nextWhenBlock = elseWhenBlock.getWhenBlock();
             if (nextWhenBlock != null) {
                 addWhenBlockDeclarations(nextWhenBlock);
@@ -438,6 +435,21 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
                 addStatementBodySymbols(elseWhenBlock.getStatementBody());
             }
         }
+    }
+
+    @Override
+    public void visitInitVariableStatement(@NotNull OdinInitVariableStatement o) {
+        o.getInitVariableDeclaration().accept(this);
+    }
+
+    @Override
+    public void visitImportStatement(@NotNull OdinImportStatement o) {
+        o.getImportDeclaration().accept(this);
+    }
+
+    @Override
+    public void visitShortVariableDeclarationStatement(@NotNull OdinShortVariableDeclarationStatement o) {
+        o.getShortVariableDeclaration().accept(this);
     }
 
     private void addStatementBodySymbols(OdinStatementBody statementBody) {

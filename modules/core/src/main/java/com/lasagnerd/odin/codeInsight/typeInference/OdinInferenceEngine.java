@@ -87,7 +87,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                         OdinArgument.class,
                         OdinRhsExpressions.class,
                         OdinCaseClause.class,
-                        OdinVariableInitializationStatement.class,
+                        OdinInitVariableStatement.class,
                         OdinConstantInitializationStatement.class,
                         OdinParameterInitialization.class,
                         OdinCaseClause.class,
@@ -1048,22 +1048,22 @@ public class OdinInferenceEngine extends OdinVisitor {
         // NOTE: We cannot remove the symbol table because we might have to substitute types
         // in the context of specialized structs, procedures and unions
         // TODO How can we still use the cache?
-        if (odinDeclaration instanceof OdinVariableDeclarationStatement declarationStatement) {
-            var mainType = declarationStatement.getType();
+        if (odinDeclaration instanceof OdinShortVariableDeclaration shortVariableDeclaration) {
+            var mainType = shortVariableDeclaration.getType();
             return mainType.getResolvedType(context);
         }
 
-        if (odinDeclaration instanceof OdinVariableInitializationStatement initializationStatement) {
-            if (initializationStatement.getType() != null) {
-                return initializationStatement.getType().getResolvedType(context);
+        if (odinDeclaration instanceof OdinInitVariableDeclaration initVariableDeclaration) {
+            if (initVariableDeclaration.getType() != null) {
+                return initVariableDeclaration.getType().getResolvedType(context);
             }
 
-            int index = initializationStatement.getDeclaredIdentifierList().indexOf(declaredIdentifier);
+            int index = initVariableDeclaration.getDeclaredIdentifierList().indexOf(declaredIdentifier);
             List<OdinExpression> expressionList = Objects
-                    .requireNonNull(initializationStatement.getRhsExpressions())
+                    .requireNonNull(initVariableDeclaration.getRhsExpressions())
                     .getExpressionList();
 
-            int lhsValuesCount = initializationStatement.getDeclaredIdentifierList().size();
+            int lhsValuesCount = initVariableDeclaration.getDeclaredIdentifierList().size();
 
             List<TsOdinType> tsOdinTypes = new ArrayList<>();
             for (OdinExpression odinExpression : expressionList) {
@@ -1129,7 +1129,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             return TsOdinBuiltInTypes.UNKNOWN;
         }
 
-        if (odinDeclaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
+        if (odinDeclaration instanceof OdinFieldDeclaration fieldDeclarationStatement) {
             if (fieldDeclarationStatement.getType() != null) {
                 return fieldDeclarationStatement.getType().getResolvedType(context);
             }

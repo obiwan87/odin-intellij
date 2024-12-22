@@ -730,8 +730,10 @@ testNestedWhenStatements :: proc() {
         when 1 == 1 {
             CONST :: 1
         }
+        y := 1
     }
 
+    z := y
     p :: proc () {
         x := CONST
     }

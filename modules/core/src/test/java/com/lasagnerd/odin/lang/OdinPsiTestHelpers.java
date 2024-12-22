@@ -110,17 +110,17 @@ class OdinPsiTestHelpers {
                 .findFirst().orElseThrow();
     }
 
-    static @NotNull OdinVariableInitializationStatement findFirstVariableDeclarationStatement(OdinFile odinFile, String procedureName, String variableName) {
+    static @NotNull OdinInitVariableStatement findFirstVariableDeclarationStatement(OdinFile odinFile, String procedureName, String variableName) {
         OdinProcedureDefinition procedure = findFirstProcedure(odinFile, procedureName);
         TestCase.assertNotNull(procedure);
         return findFirstVariable(procedure, variableName);
     }
 
-    static @NotNull OdinVariableInitializationStatement findFirstVariable(PsiElement parent, String variableName) {
-        Collection<OdinVariableInitializationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinVariableInitializationStatement.class);
+    static @NotNull OdinInitVariableStatement findFirstVariable(PsiElement parent, String variableName) {
+        Collection<OdinInitVariableStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinInitVariableStatement.class);
 
-        OdinVariableInitializationStatement variable = vars.stream()
-                .filter(v -> v.getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
+        OdinInitVariableStatement variable = vars.stream()
+                .filter(v -> v.getInitVariableDeclaration().getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
                 .findFirst().orElse(null);
         TestCase.assertNotNull(variable);
 
@@ -144,11 +144,11 @@ class OdinPsiTestHelpers {
         return findFirstConstant(procedure, variableName);
     }
 
-    static @NotNull OdinVariableDeclarationStatement findFirstVariableDeclaration(PsiElement parent, String variableName) {
-        Collection<OdinVariableDeclarationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinVariableDeclarationStatement.class);
+    static @NotNull OdinShortVariableDeclarationStatement findFirstVariableDeclaration(PsiElement parent, String variableName) {
+        Collection<OdinShortVariableDeclarationStatement> vars = PsiTreeUtil.findChildrenOfType(parent, OdinShortVariableDeclarationStatement.class);
 
-        OdinVariableDeclarationStatement variable = vars.stream()
-                .filter(v -> v.getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
+        OdinShortVariableDeclarationStatement variable = vars.stream()
+                .filter(v -> v.getShortVariableDeclaration().getDeclaredIdentifiers().stream().anyMatch(d -> Objects.equals(d.getName(), variableName)))
                 .findFirst().orElse(null);
         TestCase.assertNotNull(variable);
 

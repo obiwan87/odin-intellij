@@ -32,13 +32,13 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
     @Override
     public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
 
-        OdinVariableInitializationStatement varInit = PsiTreeUtil.getParentOfType(element,
-                OdinVariableInitializationStatement.class);
+        OdinInitVariableStatement varInit = PsiTreeUtil.getParentOfType(element,
+                OdinInitVariableStatement.class);
 
         if (varInit == null)
             return;
 
-        OdinDeclaredIdentifier declaredIdentifier = varInit.getDeclaredIdentifierList().getFirst();
+        OdinDeclaredIdentifier declaredIdentifier = varInit.getDeclaration().getDeclaredIdentifierList().getFirst();
         OdinRhsExpressions rhsExpressions = varInit.getRhsExpressions();
         if (rhsExpressions == null)
             return;
@@ -107,8 +107,8 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
             } else {
                 type = finalTsOdinType.getName();
             }
-            OdinVariableInitializationStatement typedVarInit = OdinPsiElementFactory.getInstance(project)
-                    .createVariableInitializationStatement(
+            OdinInitVariableStatement typedVarInit = OdinPsiElementFactory.getInstance(project)
+                    .createInitVariableStatement(
                             declaredIdentifier.getName(),
                             type,
                             expression
@@ -143,7 +143,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-        OdinVariableInitializationStatement varInit = PsiTreeUtil.getParentOfType(element, OdinVariableInitializationStatement.class);
+        OdinInitVariableStatement varInit = PsiTreeUtil.getParentOfType(element, OdinInitVariableStatement.class);
         if (varInit == null)
             return false;
 
@@ -162,6 +162,7 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
         }
 
         return PsiUtilCore.getElementType(element) == OdinTypes.IDENTIFIER_TOKEN && varInit
+                .getDeclaration()
                 .getDeclaredIdentifierList()
                 .getFirst().getIdentifierToken() == element;
     }

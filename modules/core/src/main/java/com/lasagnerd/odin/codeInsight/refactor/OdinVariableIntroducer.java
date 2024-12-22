@@ -54,7 +54,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         Objects.requireNonNull(firstUsage.getElement());
 
         // Perform replace of the expression with variable initialization
-        SmartPsiElementPointer<OdinVariableInitializationStatement> varInitStatement;
+        SmartPsiElementPointer<OdinInitVariableStatement> varInitStatement;
         OdinExpression[] occurrences;
 
         List<String> nameSuggestions = OdinNameSuggester.getNameSuggestions(targetExpression);
@@ -78,6 +78,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         }
 
         OdinDeclaredIdentifier declaredIdentifier = Objects.requireNonNull(varInitStatement.getElement())
+                .getDeclaration()
                 .getDeclaredIdentifiers().getFirst();
 
         // AFAIK it is used for the template
@@ -109,8 +110,8 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         return occurrences;
     }
 
-    private static SmartPsiElementPointer<OdinVariableInitializationStatement> performReplaceWithNewStatement(@NotNull Project project, UsageInfo topMostUsage, OdinExpression targetExpression, String name) {
-        AtomicReference<SmartPsiElementPointer<OdinVariableInitializationStatement>> newElementRef = new AtomicReference<>();
+    private static SmartPsiElementPointer<OdinInitVariableStatement> performReplaceWithNewStatement(@NotNull Project project, UsageInfo topMostUsage, OdinExpression targetExpression, String name) {
+        AtomicReference<SmartPsiElementPointer<OdinInitVariableStatement>> newElementRef = new AtomicReference<>();
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
             OdinStatement odinStatement = PsiTreeUtil.getParentOfType(topMostUsage.getElement(), OdinStatement.class);
@@ -119,8 +120,8 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
             Objects.requireNonNull(odinStatement);
             Objects.requireNonNull(statementList);
 
-            OdinVariableInitializationStatement varInit = OdinPsiElementFactory.getInstance(project)
-                    .createVariableInitializationStatement(name, "1");
+            OdinInitVariableStatement varInit = OdinPsiElementFactory.getInstance(project)
+                    .createInitVariableStatement(name, "1");
             OdinEos eos = OdinPsiElementFactory.getInstance(project).createEos();
 
             var expressionsList = varInit.getRhsExpressions();
@@ -133,21 +134,21 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
             PsiElement psiElement = statementList.addBefore(varInit, odinStatement);
             statementList.addAfter(eos, psiElement);
 
-            newElementRef.set(SmartPointerManager.createPointer((OdinVariableInitializationStatement) psiElement));
+            newElementRef.set(SmartPointerManager.createPointer((OdinInitVariableStatement) psiElement));
         });
 
         return newElementRef.get();
     }
 
-    private static SmartPsiElementPointer<OdinVariableInitializationStatement> performReplace(@NotNull Project project,
-                                                                                              OdinExpression odinExpression,
-                                                                                              String name) {
-        AtomicReference<SmartPsiElementPointer<OdinVariableInitializationStatement>> newElementRef = new AtomicReference<>();
+    private static SmartPsiElementPointer<OdinInitVariableStatement> performReplace(@NotNull Project project,
+                                                                                    OdinExpression odinExpression,
+                                                                                    String name) {
+        AtomicReference<SmartPsiElementPointer<OdinInitVariableStatement>> newElementRef = new AtomicReference<>();
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
-            OdinVariableInitializationStatement refactoringVar = OdinPsiElementFactory
+            OdinInitVariableStatement refactoringVar = OdinPsiElementFactory
                     .getInstance(project)
-                    .createVariableInitializationStatement(name, "1");
+                    .createInitVariableStatement(name, "1");
 
             // Your PSI modification logic here
             var expressionList = refactoringVar.getRhsExpressions();
@@ -155,7 +156,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
             expressionList.getExpressionList().getFirst()
                     .replace(odinExpression);
 
-            OdinVariableInitializationStatement newElement = (OdinVariableInitializationStatement) odinExpression.replace(refactoringVar);
+            OdinInitVariableStatement newElement = (OdinInitVariableStatement) odinExpression.replace(refactoringVar);
             newElementRef.set(SmartPointerManager.createPointer(newElement));
 
             CodeEditUtil.setNodeGeneratedRecursively(newElement.getNode(), true);
@@ -165,7 +166,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
 
 
     private final String originalText;
-    private final SmartPsiElementPointer<OdinVariableInitializationStatement> variableInitializationStatement;
+    private final SmartPsiElementPointer<OdinInitVariableStatement> initVariableStatement;
     private final OdinDeclaredIdentifier declaredIdentifier;
     private final @NotNull PsiIntroduceTarget<OdinExpression> target;
     private final OdinDeclaredIdentifier templateIdentifier;
@@ -175,7 +176,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
     public OdinVariableIntroducer(@NotNull Project project,
                                   @NotNull Editor editor,
                                   String originalText,
-                                  SmartPsiElementPointer<OdinVariableInitializationStatement> variableInitializationStatement,
+                                  SmartPsiElementPointer<OdinInitVariableStatement> initVariableStatement,
                                   OdinDeclaredIdentifier declaredIdentifier,
                                   @NotNull PsiIntroduceTarget<OdinExpression> target,
                                   OdinExpression[] occurrences,
@@ -191,7 +192,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
                 OdinFileType.INSTANCE);
 
         this.originalText = originalText;
-        this.variableInitializationStatement = variableInitializationStatement;
+        this.initVariableStatement = initVariableStatement;
         this.declaredIdentifier = declaredIdentifier;
         this.target = target;
         this.templateIdentifier = templateIdentifier;
@@ -260,9 +261,9 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
 
     @Override
     protected void addAdditionalVariables(TemplateBuilderImpl builder) {
-        OdinVariableInitializationStatement varInit = variableInitializationStatement.getElement();
+        OdinInitVariableStatement varInit = initVariableStatement.getElement();
         if (varInit != null) {
-            int startOffset = varInit.getColonOpening().getTextRange().getStartOffset();
+            int startOffset = varInit.getInitVariableDeclaration().getColonOpening().getTextRange().getStartOffset();
             TextRange rangeWithinElement = TextRange.create(startOffset + 1, startOffset + 1);
 
             builder.replaceElement(varInit.getContainingFile(), rangeWithinElement, "");
@@ -270,7 +271,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
     }
 
     @SuppressWarnings("unused")
-    private void createTypeVariableWithSuggestions(TemplateBuilderImpl builder, OdinVariableInitializationStatement varInit, TextRange rangeWithinElement) {
+    private void createTypeVariableWithSuggestions(TemplateBuilderImpl builder, OdinInitVariableStatement varInit, TextRange rangeWithinElement) {
         OdinExpression targetExpression = this.target.getPlace();
         if (targetExpression != null) {
             TsOdinType tsOdinType = targetExpression.getInferredType();

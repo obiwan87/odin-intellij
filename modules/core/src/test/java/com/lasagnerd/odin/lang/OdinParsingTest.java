@@ -925,7 +925,7 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(odinSymbolTable.getSymbol("g_point"));
         }
         {
-            OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(odinFile, "assignment", "test");
+            OdinInitVariableStatement var = findFirstVariableDeclarationStatement(odinFile, "assignment", "test");
             OdinExpression odinExpression = Objects.requireNonNull(var.getRhsExpressions()).getExpressionList().getFirst();
 
             com.lasagnerd.odin.codeInsight.OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.doBuildFullSymbolTable(odinExpression);
@@ -1036,29 +1036,29 @@ public class OdinParsingTest extends UsefulTestCase {
 
             // Check that expression of x that shadows outer x, only sees outer x
             {
-                OdinVariableInitializationStatement shadowingX = PsiTreeUtil.findChildOfType(shadowingBlock, OdinVariableInitializationStatement.class);
+                OdinInitVariableStatement shadowingX = PsiTreeUtil.findChildOfType(shadowingBlock, OdinInitVariableStatement.class);
                 assertNotNull(shadowingX);
                 OdinExpression odinExpression = Objects.requireNonNull(shadowingX.getRhsExpressions()).getExpressionList().getFirst();
                 OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.doBuildFullSymbolTable(odinExpression);
                 OdinSymbol symbol = odinSymbolTable.getSymbol("x");
                 assertNotNull(symbol);
                 PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
-                OdinVariableInitializationStatement variableInitializationStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinVariableInitializationStatement.class);
-                assertNotNull(variableInitializationStatement);
-                assertEquals("x := 1", variableInitializationStatement.getText());
+                OdinInitVariableStatement initVariableStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinInitVariableStatement.class);
+                assertNotNull(initVariableStatement);
+                assertEquals("x := 1", initVariableStatement.getText());
             }
 
             // Check that expression of y, only sees inner x
             {
-                OdinVariableInitializationStatement y = findFirstVariable(shadowingBlock, "y");
+                OdinInitVariableStatement y = findFirstVariable(shadowingBlock, "y");
                 OdinExpression odinExpression = Objects.requireNonNull(y.getRhsExpressions()).getExpressionList().getFirst();
                 OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.doBuildFullSymbolTable(odinExpression);
                 OdinSymbol symbol = odinSymbolTable.getSymbol("x");
                 assertNotNull(symbol);
                 PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
-                OdinVariableInitializationStatement variableInitializationStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinVariableInitializationStatement.class);
-                assertNotNull(variableInitializationStatement);
-                assertEquals("x := x", variableInitializationStatement.getText());
+                OdinInitVariableStatement initVariableStatement = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinInitVariableStatement.class);
+                assertNotNull(initVariableStatement);
+                assertEquals("x := x", initVariableStatement.getText());
             }
         }
 
@@ -1288,7 +1288,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinProcedureDefinition proc = findFirstProcedure(odinFile, "recursive_local_defs");
             OdinProcedureDefinition localProc = PsiTreeUtil.findChildOfType(proc, OdinProcedureDefinition.class);
             {
-                OdinVariableInitializationStatement testVar = findFirstVariable(localProc, "test");
+                OdinInitVariableStatement testVar = findFirstVariable(localProc, "test");
                 OdinExpression odinExpression = Objects.requireNonNull(testVar.getRhsExpressions()).getExpressionList().getFirst();
                 OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.doBuildFullSymbolTable(odinExpression);
                 assertNotNull(odinSymbolTable.getSymbol("p"));
@@ -1298,8 +1298,8 @@ public class OdinParsingTest extends UsefulTestCase {
                 assertNotNull(structVar);
                 OdinStructBody structBody = Objects.requireNonNull(structVar.getStructBlock()).getStructBody();
                 assertNotNull(structBody);
-                List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
-                OdinFieldDeclarationStatement fieldDeclaration = fieldDeclarationStatementList.getFirst();
+                List<OdinFieldDeclaration> fieldDeclarationStatementList = structBody.getFieldDeclarationList();
+                OdinFieldDeclaration fieldDeclaration = fieldDeclarationStatementList.getFirst();
                 OdinType type = fieldDeclaration.getType();
                 OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.doBuildFullSymbolTable(Objects.requireNonNull(type));
 
@@ -1355,7 +1355,7 @@ public class OdinParsingTest extends UsefulTestCase {
             OdinProcedureDefinition proc = findFirstProcedure(odinFile, "nested_procs");
             OdinProcedureDefinition nestedProc = PsiTreeUtil.findChildOfType(proc, OdinProcedureDefinition.class);
             {
-                OdinVariableInitializationStatement testVar = findFirstVariable(nestedProc, "test");
+                OdinInitVariableStatement testVar = findFirstVariable(nestedProc, "test");
                 OdinExpression odinExpression = Objects.requireNonNull(testVar.getRhsExpressions()).getExpressionList().getFirst();
                 OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.doBuildFullSymbolTable(odinExpression);
                 assertNotNull(odinSymbolTable.getSymbol("S"));
@@ -1511,7 +1511,7 @@ public class OdinParsingTest extends UsefulTestCase {
         }
         {
             OdinStatement odinStatement = statements.get(3);
-            OdinVariableInitializationStatement var = assertInstanceOf(odinStatement, OdinVariableInitializationStatement.class);
+            OdinInitVariableStatement var = assertInstanceOf(odinStatement, OdinInitVariableStatement.class);
             OdinExpression odinExpression = Objects.requireNonNull(var.getRhsExpressions()).getExpressionList().getFirst();
             assertTopMostRefExpressionTextEquals(odinExpression, "x.b.c.d().e.f", "x");
             assertTopMostRefExpressionTextEquals(odinExpression, "y.?.b.c.d().e.f", "y");
@@ -1937,10 +1937,10 @@ public class OdinParsingTest extends UsefulTestCase {
             List<OdinBlockStatement> blocks = getProcedureBlocks(testTypeConversion);
 
             OdinBlockStatement firstBlock = blocks.getFirst();
-            OdinVariableDeclarationStatement varType = findFirstVariableDeclaration(firstBlock, "type");
-            TsOdinType tsOdinType = inferTypeOfDeclaration(varType);
-            OdinVariableDeclarationStatement varExpectedType = findFirstVariableDeclaration(firstBlock, "expected_type");
-            TsOdinType tsOdinExpectedType = inferTypeOfDeclaration(varExpectedType);
+            OdinShortVariableDeclarationStatement varType = findFirstVariableDeclaration(firstBlock, "type");
+            TsOdinType tsOdinType = inferTypeOfDeclaration(varType.getDeclaration());
+            OdinShortVariableDeclarationStatement varExpectedType = findFirstVariableDeclaration(firstBlock, "expected_type");
+            TsOdinType tsOdinExpectedType = inferTypeOfDeclaration(varExpectedType.getDeclaration());
 
             OdinTypeChecker.TypeCheckResult typeCheckResult = OdinTypeChecker.checkTypes(tsOdinType, tsOdinExpectedType, false);
             assertTrue(typeCheckResult.isCompatible());
@@ -1979,8 +1979,8 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinProcedureDefinition proc = findFirstProcedure(file, "test_structField");
 
         {
-            OdinVariableInitializationStatement varLine = PsiTreeUtil.findChildrenOfType(proc, OdinVariableInitializationStatement.class)
-                    .stream().filter(v -> v.getDeclaredIdentifiers().getFirst().getText().equals("l"))
+            OdinInitVariableStatement varLine = PsiTreeUtil.findChildrenOfType(proc, OdinInitVariableStatement.class)
+                    .stream().filter(v -> v.getDeclaration().getDeclaredIdentifiers().getFirst().getText().equals("l"))
                     .findFirst()
                     .orElseThrow();
             {
@@ -2187,7 +2187,12 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testNestedWhenStatements() throws IOException {
         OdinFile file = loadTypeInference();
         {
-            OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(file, "testNestedWhenStatements", "x");
+            OdinInitVariableStatement var = findFirstVariableDeclarationStatement(file, "testNestedWhenStatements", "z");
+            OdinSymbolTable symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(var, new OdinContext());
+            assertNotNull(symbolTable.getSymbol("y"));
+        }
+        {
+            OdinInitVariableStatement var = findFirstVariableDeclarationStatement(file, "testNestedWhenStatements", "x");
             OdinSymbolTable symbolTable = OdinSymbolTableHelper.buildFullSymbolTable(var, new OdinContext());
             assertNotNull(symbolTable.getSymbol("CONST"));
         }
@@ -2208,7 +2213,7 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testPointerToCompoundLiteral() throws IOException {
         OdinFile file = loadTypeInference();
         {
-            OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file,
+            OdinInitVariableStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file,
                     "testPointerToCompoundLiteral",
                     "proc_call");
             var addressExpression = PsiTreeUtil.findChildOfType(firstVariableDeclarationStatement,
@@ -2221,7 +2226,7 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(context.getSymbol("y"));
         }
         {
-            OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file,
+            OdinInitVariableStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file,
                     "testPointerToCompoundLiteral",
                     "nested_struct");
             var addressExpression = PsiTreeUtil.findChildOfType(firstVariableDeclarationStatement,
@@ -2234,7 +2239,7 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(context.getSymbol("y"));
         }
         {
-            OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file, "testPointerToCompoundLiteral", "nested_points");
+            OdinInitVariableStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file, "testPointerToCompoundLiteral", "nested_points");
             var addressExpression = PsiTreeUtil.findChildOfType(firstVariableDeclarationStatement, OdinAddressExpression.class);
 
             OdinLhs lhs = PsiTreeUtil.findChildOfType(addressExpression, OdinLhs.class);
@@ -2244,7 +2249,7 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(context.getSymbol("y"));
         }
         {
-            OdinVariableInitializationStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file, "testPointerToCompoundLiteral", "points");
+            OdinInitVariableStatement firstVariableDeclarationStatement = findFirstVariableDeclarationStatement(file, "testPointerToCompoundLiteral", "points");
             OdinLhs lhs = PsiTreeUtil.findChildOfType(firstVariableDeclarationStatement, OdinLhs.class);
             OdinExpression expression = Objects.requireNonNull(lhs).getExpression();
             OdinSymbolTable context = OdinSymbolTableHelper.doBuildFullSymbolTable(expression);
@@ -2257,7 +2262,7 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testPositionalInitialization() throws IOException {
         OdinFile file = loadTypeInference();
         {
-            OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(file, "testPositionalInitialization", "s");
+            OdinInitVariableStatement var = findFirstVariableDeclarationStatement(file, "testPositionalInitialization", "s");
             OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(var, OdinImplicitSelectorExpression.class);
             assertNotNull(expression);
             TsOdinType tsOdinType = OdinExpectedTypeEngine.inferExpectedType(
@@ -2682,7 +2687,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = loadTypeInference();
         {
             OdinProcedureDefinition proc = findFirstProcedure(file, "testUsingVsNonUsing");
-            OdinVariableInitializationStatement s1 = findFirstVariable(proc, "s1");
+            OdinInitVariableStatement s1 = findFirstVariable(proc, "s1");
             {
                 OdinExpression expression = s1.getRhsExpressions().getExpressionList().getFirst();
                 OdinQualifiedType qualifiedType = PsiTreeUtil.findChildOfType(expression, OdinQualifiedType.class);
@@ -2690,7 +2695,7 @@ public class OdinParsingTest extends UsefulTestCase {
                 OdinSymbol referencedSymbol = qualifiedType.getTypeIdentifier().getReferencedSymbol();
                 assertFalse(referencedSymbol.isVisibleThroughUsing());
             }
-            OdinVariableInitializationStatement s1Using = findFirstVariable(proc, "s1_using");
+            OdinInitVariableStatement s1Using = findFirstVariable(proc, "s1_using");
             {
                 OdinExpression expression = s1Using.getRhsExpressions().getExpressionList().getFirst();
                 OdinSimpleRefType qualifiedType = PsiTreeUtil.findChildOfType(expression, OdinSimpleRefType.class);
@@ -2868,7 +2873,7 @@ public class OdinParsingTest extends UsefulTestCase {
         }
 
         {
-            OdinVariableInitializationStatement elseWindows = findFirstVariable(file, "is_windows");
+            OdinInitVariableStatement elseWindows = findFirstVariable(file, "is_windows");
             OdinLattice odinLattice = OdinWhenConstraintsSolver.solveLattice(new OdinContext(), elseWindows);
             odinLattice.printValues();
         }

@@ -92,8 +92,8 @@ public class OdinExpectedTypeEngine {
                 }
             }
 
-            if (grandParent instanceof OdinVariableInitializationStatement odinVariableInitializationStatement) {
-                OdinType psiType = odinVariableInitializationStatement.getType();
+            if (grandParent instanceof OdinInitVariableDeclaration initVariableDeclaration) {
+                OdinType psiType = initVariableDeclaration.getType();
                 if (psiType != null) {
                     TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, psiType);
                     return propagateTypeDown(tsOdinType, topMostExpression, expression);
@@ -269,8 +269,8 @@ public class OdinExpectedTypeEngine {
             }
         }
 
-        if (typeExpectationContext instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            OdinType type = variableInitializationStatement.getType();
+        if (typeExpectationContext instanceof OdinInitVariableDeclaration initVariableDeclaration) {
+            OdinType type = initVariableDeclaration.getType();
             if (type != null) {
                 return propagateTypeDown(OdinTypeResolver.resolveType(context, type), topMostExpression, expression);
             }
@@ -355,7 +355,7 @@ public class OdinExpectedTypeEngine {
                         OdinArgument.class,
                         OdinRhsExpressions.class,
                         OdinCaseClause.class,
-                        OdinVariableInitializationStatement.class,
+                        OdinInitVariableStatement.class,
                         OdinConstantInitializationStatement.class,
                         OdinParameterInitialization.class,
                         OdinIndex.class,

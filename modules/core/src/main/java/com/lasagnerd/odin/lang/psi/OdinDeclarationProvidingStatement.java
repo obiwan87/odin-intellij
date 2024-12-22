@@ -1,5 +1,5 @@
 package com.lasagnerd.odin.lang.psi;
 
-public interface OdinDeclarationProvidingStatement extends OdinStatement {
-    OdinDeclaration getDeclaration();
+public interface OdinDeclarationProvidingStatement<T extends OdinDeclaration> extends OdinStatement {
+    T getDeclaration();
 }

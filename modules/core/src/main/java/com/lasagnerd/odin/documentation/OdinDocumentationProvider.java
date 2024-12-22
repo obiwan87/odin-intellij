@@ -46,13 +46,13 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
         }
 
         String declarationText = "";
-        if (declaration instanceof OdinFieldDeclarationStatement) {
+        if (declaration instanceof OdinFieldDeclaration) {
             declarationText += "field ";
         }
 
         declarationText += declaredIdentifier.getName();
 
-        if (declaration instanceof OdinFieldDeclarationStatement fieldDeclarationStatement) {
+        if (declaration instanceof OdinFieldDeclaration fieldDeclarationStatement) {
             declarationText += ": " + fieldDeclarationStatement.getType().getText();
         }
 
@@ -60,15 +60,15 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
             declarationText += " :: ";
         }
 
-        if (declaration instanceof OdinVariableInitializationStatement variableInitializationStatement) {
-            int index = variableInitializationStatement.getDeclaredIdentifiers().indexOf(declaredIdentifier);
-            OdinExpression odinExpression = variableInitializationStatement.getRhsExpressions().getExpressionList().get(index);
+        if (declaration instanceof OdinInitVariableDeclaration initVariableDeclaration) {
+            int index = initVariableDeclaration.getDeclaredIdentifiers().indexOf(declaredIdentifier);
+            OdinExpression odinExpression = initVariableDeclaration.getRhsExpressions().getExpressionList().get(index);
             String type;
-            if (variableInitializationStatement.getType() == null) {
+            if (initVariableDeclaration.getType() == null) {
                 TsOdinType tsOdinType = odinExpression.getInferredType();
                 type = tsOdinType.getLabel();
             } else {
-                type = variableInitializationStatement.getType().getText();
+                type = initVariableDeclaration.getType().getText();
             }
             declarationText += " : " + type + " = " + odinExpression.getText();
         }

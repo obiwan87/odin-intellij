@@ -319,9 +319,9 @@ public class OdinInsightUtils {
     }
 
     public static List<OdinSymbol> getStructFields(OdinContext context, @NotNull OdinStructType structType) {
-        List<OdinFieldDeclarationStatement> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structType);
+        List<OdinFieldDeclaration> fieldDeclarationStatementList = getStructFieldsDeclarationStatements(structType);
         List<OdinSymbol> symbols = new ArrayList<>();
-        for (OdinFieldDeclarationStatement field : fieldDeclarationStatementList) {
+        for (OdinFieldDeclaration field : fieldDeclarationStatementList) {
             for (OdinDeclaredIdentifier odinDeclaredIdentifier : field.getDeclaredIdentifiers()) {
                 boolean hasUsing = field.getUsing() != null;
                 OdinSymbol odinSymbol = new OdinSymbol(odinDeclaredIdentifier);
@@ -340,21 +340,18 @@ public class OdinInsightUtils {
     }
 
     public static void getSymbolsOfFieldWithUsing(OdinContext context,
-                                                  OdinFieldDeclarationStatement field,
+                                                  OdinFieldDeclaration field,
                                                   List<OdinSymbol> symbols) {
         if (field.getType() == null) {
             return;
         }
 
-//        boolean useCache = OdinReferenceOwnerMixin.shouldUseCache(context, field.getType());
-//        context.setUseKnowledge(useCache);
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, field.getType());
         TsOdinStructType structType = unwrapFromPointerType(tsOdinType);
 
         if (structType != null) {
             OdinType psiType = structType.getPsiType();
-            if (psiType instanceof OdinStructType psiStructType) {// TODO This fails at models.odin in Engin3
-
+            if (psiType instanceof OdinStructType psiStructType) {
                 List<OdinSymbol> structFields = getStructFields(structType.getContext(), psiStructType);
                 symbols.addAll(structFields);
             }
@@ -377,7 +374,7 @@ public class OdinInsightUtils {
         return structType;
     }
 
-    public static @NotNull List<OdinFieldDeclarationStatement> getStructFieldsDeclarationStatements(OdinStructType structType) {
+    public static @NotNull List<OdinFieldDeclaration> getStructFieldsDeclarationStatements(OdinStructType structType) {
         OdinStructBlock structBlock = structType
                 .getStructBlock();
 
@@ -386,11 +383,11 @@ public class OdinInsightUtils {
         OdinStructBody structBody = structBlock
                 .getStructBody();
 
-        List<OdinFieldDeclarationStatement> fieldDeclarationStatementList;
+        List<OdinFieldDeclaration> fieldDeclarationStatementList;
         if (structBody == null) {
             fieldDeclarationStatementList = Collections.emptyList();
         } else {
-            fieldDeclarationStatementList = structBody.getFieldDeclarationStatementList();
+            fieldDeclarationStatementList = structBody.getFieldDeclarationList();
         }
         return fieldDeclarationStatementList;
     }
@@ -537,8 +534,7 @@ public class OdinInsightUtils {
     }
 
     public static boolean isVariableDeclaration(PsiElement element) {
-        return PsiTreeUtil.getParentOfType(element, true, OdinVariableDeclarationStatement.class) != null
-                || PsiTreeUtil.getParentOfType(element, true, OdinVariableInitializationStatement.class) != null;
+        return PsiTreeUtil.getParentOfType(element, true, OdinVariableDeclaration.class) != null;
     }
 
     public static boolean isProcedureDeclaration(PsiElement element) {
@@ -629,7 +625,7 @@ public class OdinInsightUtils {
     }
 
     private static boolean isFieldDeclaration(PsiNamedElement element) {
-        return element.getParent() instanceof OdinFieldDeclarationStatement;
+        return element.getParent() instanceof OdinFieldDeclaration;
     }
 
     private static boolean isPackageDeclaration(PsiNamedElement element) {
@@ -916,7 +912,7 @@ public class OdinInsightUtils {
 
     public static boolean isGlobalVariable(OdinDeclaredIdentifier declaredIdentifier) {
         PsiElement parent = declaredIdentifier.getParent();
-        return (parent instanceof OdinVariableInitializationStatement || parent instanceof OdinVariableDeclarationStatement)
+        return (parent instanceof OdinVariableDeclaration)
                 && !isLocalVariable(parent);
     }
 
@@ -941,13 +937,13 @@ public class OdinInsightUtils {
     }
 
     private static boolean isVariable(@NotNull PsiElement o) {
-        return o instanceof OdinVariableInitializationStatement || o instanceof OdinVariableDeclarationStatement;
+        return o instanceof OdinVariableDeclaration;
     }
 
     public static boolean isStaticVariable(OdinDeclaredIdentifier declaredIdentifier) {
         if (isVariable(declaredIdentifier.getParent())) {
-            OdinVariableDeclaration declaration = (OdinVariableDeclaration) declaredIdentifier.getParent();
-            return OdinAttributeUtils.containsAttribute(declaration.getAttributesDefinitionList(), "static");
+            OdinVariableDeclaration variableDeclaration = (OdinVariableDeclaration) declaredIdentifier.getParent();
+            return OdinAttributeUtils.containsAttribute(variableDeclaration.getAttributesDefinitionList(), "static");
         }
         return false;
     }

@@ -205,10 +205,6 @@ public class OdinPsiUtil {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinVariableInitializationStatement statement) {
-        return statement.getDeclaredIdentifierList();
-    }
-
     public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinPolymorphicType polymorphicType) {
         return Collections.singletonList(polymorphicType.getDeclaredIdentifier());
     }
@@ -221,11 +217,15 @@ public class OdinPsiUtil {
         return statement.getDeclaredIdentifierList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinVariableDeclarationStatement statement) {
-        return statement.getDeclaredIdentifierList();
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinShortVariableDeclaration shortVariableDeclaration) {
+        return shortVariableDeclaration.getDeclaredIdentifierList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinFieldDeclarationStatement statement) {
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinInitVariableDeclaration initVariableDeclaration) {
+        return initVariableDeclaration.getDeclaredIdentifierList();
+    }
+
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinFieldDeclaration statement) {
         return statement.getDeclaredIdentifierList();
     }
 
@@ -268,10 +268,6 @@ public class OdinPsiUtil {
         return statement.getType();
     }
 
-    public static OdinType getTypeDefinition(OdinVariableDeclarationStatement statement) {
-        return statement.getType();
-    }
-
     public static OdinType getTypeDefinition(OdinParameterDeclarator statement) {
         OdinTypeDefinitionContainer typeDefinitionContainer = statement.getTypeDefinitionContainer();
         if (typeDefinitionContainer != null) {
@@ -281,11 +277,11 @@ public class OdinPsiUtil {
         return null;
     }
 
-    public static OdinType getTypeDefinition(OdinVariableInitializationStatement statement) {
-        return statement.getType();
+    public static OdinType getTypeDefinition(OdinInitVariableStatement statement) {
+        return statement.getInitVariableDeclaration().getType();
     }
 
-    public static OdinType getTypeDefinition(OdinFieldDeclarationStatement statement) {
+    public static OdinType getTypeDefinition(OdinFieldDeclaration statement) {
         return statement.getType();
     }
 
@@ -498,8 +494,8 @@ public class OdinPsiUtil {
         return PsiTreeUtil.getChildrenOfTypeAsList(constantInitializationStatement, OdinExpression.class);
     }
 
-    public static OdinRhsExpressions getRhsExpressions(OdinVariableInitializationStatement variableInitializationStatement) {
-        return PsiTreeUtil.getChildOfType(variableInitializationStatement, OdinRhsExpressions.class);
+    public static OdinRhsExpressions getRhsExpressions(OdinInitVariableStatement initVariableStatement) {
+        return PsiTreeUtil.getChildOfType(initVariableStatement.getInitVariableDeclaration(), OdinRhsExpressions.class);
     }
 
     public static OdinExpression getExpression(OdinSwitchInClause switchInClause) {
@@ -546,7 +542,19 @@ public class OdinPsiUtil {
         return null;
     }
 
-    public static OdinDeclaration getDeclaration(OdinImportStatement statement) {
+    public static OdinImportDeclaration getDeclaration(OdinImportStatement statement) {
         return statement.getImportDeclaration();
+    }
+
+    public static OdinInitVariableDeclaration getDeclaration(OdinInitVariableStatement statement) {
+        return statement.getInitVariableDeclaration();
+    }
+
+    public static OdinShortVariableDeclaration getDeclaration(OdinShortVariableDeclarationStatement statement) {
+        return statement.getShortVariableDeclaration();
+    }
+
+    public static OdinRhsExpressions getRhsExpressions(OdinInitVariableDeclaration initVariableDeclaration) {
+        return PsiTreeUtil.getChildOfType(initVariableDeclaration, OdinRhsExpressions.class);
     }
 }

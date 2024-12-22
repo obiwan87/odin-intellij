@@ -77,8 +77,8 @@ public class OdinStructureViewElement implements StructureViewTreeElement, Sorta
             OdinType declaredType = OdinInsightUtils.getDeclaredType(declaredIdentifier);
             if (declaredType instanceof OdinStructType structType) {
                 List<OdinStructureViewElement> structureViewElements = new ArrayList<>();
-                List<OdinFieldDeclarationStatement> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(structType);
-                for (OdinFieldDeclarationStatement fieldDeclaration : fieldDeclarations) {
+                List<OdinFieldDeclaration> fieldDeclarations = OdinInsightUtils.getStructFieldsDeclarationStatements(structType);
+                for (OdinFieldDeclaration fieldDeclaration : fieldDeclarations) {
                     for (OdinDeclaredIdentifier identifier : fieldDeclaration.getDeclaredIdentifiers()) {
                         structureViewElements.add(new OdinStructureViewElement((NavigatablePsiElement) identifier));
                     }

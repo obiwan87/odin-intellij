@@ -45,7 +45,7 @@ public class OdinSymbolTableHelper {
             OdinDeclaration declaration;
             if (element instanceof OdinDeclaration) {
                 declaration = (OdinDeclaration) element;
-            } else if (element instanceof OdinDeclarationProvidingStatement declarationProvidingStatement) {
+            } else if (element instanceof OdinDeclarationProvidingStatement<?> declarationProvidingStatement) {
                 declaration = declarationProvidingStatement.getDeclaration();
             } else {
                 declaration = null;
@@ -78,7 +78,7 @@ public class OdinSymbolTableHelper {
             PsiElement element = statementStack.pop();
             if (element instanceof OdinDeclaration declaration) {
                 declarations.add(declaration);
-            } else if (element instanceof OdinDeclarationProvidingStatement declarationProvidingStatement) {
+            } else if (element instanceof OdinDeclarationProvidingStatement<?> declarationProvidingStatement) {
                 declarations.add(declarationProvidingStatement.getDeclaration());
             } else {
                 getStatements(element).forEach(statementStack::push);
@@ -394,7 +394,7 @@ public class OdinSymbolTableHelper {
             if (odinStatement instanceof OdinDeclaration declaration) {
                 declarations.add(declaration);
             }
-            if (odinStatement instanceof OdinDeclarationProvidingStatement declarationProvidingStatement) {
+            if (odinStatement instanceof OdinDeclarationProvidingStatement<?> declarationProvidingStatement) {
                 declarations.add(declarationProvidingStatement.getDeclaration());
             }
         }
@@ -417,9 +417,15 @@ public class OdinSymbolTableHelper {
     }
 
     private static void addControlFlowInit(@Nullable OdinControlFlowInit controlFlowInit, List<OdinDeclaration> declarations) {
-        if (controlFlowInit != null && controlFlowInit.getStatement() instanceof OdinDeclaration declaration) {
-            declarations.add(declaration);
+        if (controlFlowInit != null) {
+            if (controlFlowInit.getStatement() instanceof OdinDeclaration declaration) {
+                declarations.add(declaration);
+            }
+            if (controlFlowInit.getStatement() instanceof OdinDeclarationProvidingStatement<?> declarationProvidingStatement) {
+                declarations.add(declarationProvidingStatement.getDeclaration());
+            }
         }
+
     }
 
     public static OdinSymbolTable buildFullSymbolTable(PsiElement reference, @NonNls @NotNull String originalFilePath, OdinContext context) {

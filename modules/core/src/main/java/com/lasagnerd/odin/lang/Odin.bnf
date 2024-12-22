@@ -170,17 +170,21 @@
   extends('.*[sS]tatement$') = statement
   extends('.*Type$') = type
 
-  methods('.*([iI]nitialization|[dD]eclaration).*') = [getDeclaredIdentifiers]
+  methods('.*([iI]nitialization|[dD]eclaration)Statement') = [getDeclaration]
+  methods('.*([iI]nitialization|[dD]eclaration)$') = [getDeclaredIdentifiers]
+
+  implements('.*([iI]nitialization|[dD]eclaration)$') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
 
   implements("binaryExpression|unaryExpression|castExpression|transmuteExpression|autoCastExpression|orElseExpression|orReturnExpression|orBreakExpression|orContinueExpression|ternaryExpression") = 'com.lasagnerd.odin.lang.psi.OdinOperation'
-  implements('.*([iI]nitialization|[dD]eclaration).*') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
   implements('importDeclaration') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
   implements('usingStatement') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
   methods('usingStatement') = [getDeclaredIdentifiers]
   implements('constantInitializationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
   psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
-  elementTypeFactory("fileScope|packageClause|importDeclaration") =  "com.lasagnerd.odin.lang.stubs.OdinStubElementTypeFactory.create"
-  extends("packageClause|importDeclaration") = "com.lasagnerd.odin.lang.psi.impl.OdinStubbedElementImpl<?>"
+
+  elementTypeFactory("fileScope|packageClause|importDeclaration|shortVariableDeclaration|initVariableDeclaration") =  "com.lasagnerd.odin.lang.stubs.OdinStubElementTypeFactory.create"
+
+  extends("packageClause|importDeclaration|shortVariableDeclaration|initVariableDeclaration") = "com.lasagnerd.odin.lang.psi.impl.OdinStubbedElementImpl<?>"
 }
 
 odinFile                             ::= fileScope
@@ -211,7 +215,7 @@ packageClause                        ::= PACKAGE declaredIdentifier {
     stubClass="com.lasagnerd.odin.lang.stubs.OdinPackageClauseStub"
 }
 
-importStatement           ::= importDeclaration {implements="com.lasagnerd.odin.lang.psi.OdinDeclarationProvidingStatement" methods=[getDeclaration]}
+importStatement           ::= importDeclaration {implements="com.lasagnerd.odin.lang.psi.OdinDeclarationProvidingStatement<com.lasagnerd.odin.lang.psi.OdinImportDeclaration>" methods=[getDeclaration]}
 importDeclaration         ::= [attributesDefinition EOS_TOKEN?] IMPORT declaredIdentifier? importPath {
   methods=[alias="/declaredIdentifier"
   path="/importPath" getName setName getNameIdentifier getImportInfo]
@@ -230,14 +234,14 @@ importPath                           ::= DQ_STRING_LITERAL {
 fileScopeStatement                   ::= foreignImportDeclarationStatement
                                          | importStatement
                                          | constantInitializationStatement
-                                         | variableInitializationStatement
-                                         | variableDeclarationStatement
+                                         | initVariableStatement
+                                         | shortVariableDeclarationStatement
                                          | foreignStatement
                                          | whenStatement
                                          | directiveStatement
 
 // @require foreign import entry "entryUnixNoCrtAmd64.asm"
-foreignImportDeclarationStatement    ::= (attributesDefinition EOS_TOKEN?)* FOREIGN IMPORT declaredIdentifier? (foreignImportPath | foreignImportBlock) {methods=[alias="declaredIdentifier" getName setName getNameIdentifier] implements=["com.intellij.psi.PsiNameIdentifierOwner"]}
+foreignImportDeclarationStatement    ::= (attributesDefinition EOS_TOKEN?)* FOREIGN IMPORT declaredIdentifier? (foreignImportPath | foreignImportBlock) {methods=[alias="declaredIdentifier" getName setName getNameIdentifier] implements=["com.intellij.psi.PsiNameIdentifierOwner" "com.lasagnerd.odin.lang.psi.OdinDeclaration"]}
 foreignImportPath                    ::= expression
 private foreignImportBlock           ::= blockStart foreignImportPath (COMMA foreignImportPath)* COMMA? blockEnd
 
@@ -246,7 +250,7 @@ foreignStatement                     ::= (attributesDefinition EOS_TOKEN?)* FORE
 foreignBlock                         ::= blockStart foreignStatementList? blockEnd {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"}
 
 foreignStatementList                 ::= (sos? foreignBlockStatement eos)+
-foreignBlockStatement                ::= variableDeclarationStatement
+foreignBlockStatement                ::= shortVariableDeclarationStatement
                                          | constantInitializationStatement
                                          | whenStatement
 
@@ -273,8 +277,8 @@ private polyParams                   ::= LPAREN polymorphicParameterList RPAREN 
 
 
 structBlock                          ::= blockStart [structBody] blockEnd
-structBody                           ::= fieldDeclarationStatement (COMMA fieldDeclarationStatement)*  (COMMA|EOS_TOKEN|&RBRACE) {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"}
-fieldDeclarationStatement            ::= USING? directiveIdentifier? fieldDeclarator [structTag] { methods=[ getTypeDefinition ] pin="declaredIdentifier" }
+structBody                           ::= fieldDeclaration (COMMA fieldDeclaration)*  (COMMA|EOS_TOKEN|&RBRACE) {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"}
+fieldDeclaration                     ::= USING? directiveIdentifier? fieldDeclarator [structTag] { methods=[ getTypeDefinition ] pin="declaredIdentifier" }
 
 structTag                            ::= RAW_STRING_LITERAL
 private fieldDeclarator              ::= declaredIdentifier (COMMA declaredIdentifier)* COLON type {pin(".*")=1 recoverWhile=fieldRecover}
@@ -396,11 +400,24 @@ colonClosing                         ::= COLON
 private symbolDefinitionHead         ::= (attributesDefinition eos?)* [directiveIdentifier] [USING] identifierList colonOpening type?
 colonOpening                         ::= COLON
 
-variableInitializationStatement      ::= symbolDefinitionHead EQ <<guardedExpression incompleteGuard rhsExpressions>>
-                                        { implements=["com.lasagnerd.odin.lang.psi.OdinVariableDeclaration"]
-                                          methods=[getTypeDefinition getRhsExpressions]
-                                          pin=2
-                                        }
+initVariableStatement                ::= initVariableDeclaration {
+    implements=["com.lasagnerd.odin.lang.psi.OdinVariableStatement<com.lasagnerd.odin.lang.psi.OdinInitVariableDeclaration>"]
+    methods=[getDeclaration getTypeDefinition getRhsExpressions]
+}
+
+initVariableDeclaration              ::= symbolDefinitionHead EQ <<guardedExpression incompleteGuard rhsExpressions>> {
+    pin=2
+    implements="com.lasagnerd.odin.lang.psi.OdinVariableDeclaration"
+    methods=[getTypeDefinition getRhsExpressions getDeclaredIdentifiers]
+    stubClass="com.lasagnerd.odin.lang.stubs.OdinInitVariableDeclarationStub"
+}
+
+shortVariableDeclarationStatement    ::= shortVariableDeclaration { implements=["com.lasagnerd.odin.lang.psi.OdinVariableStatement<com.lasagnerd.odin.lang.psi.OdinShortVariableDeclaration>"] }
+shortVariableDeclaration             ::= (attributesDefinition eos?)* [USING] identifierList COLON type {
+    stubClass="com.lasagnerd.odin.lang.stubs.OdinShortVariableDeclarationStub"
+    implements="com.lasagnerd.odin.lang.psi.OdinVariableDeclaration"
+}
+
 
 private identifierList                       ::= declaredIdentifier (COMMA declaredIdentifier)*
 declaredIdentifier                   ::= [DOLLAR] IDENTIFIER_TOKEN { mixin = 'com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifierMixin' implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getPresentation getType]}
@@ -495,10 +512,6 @@ assignmentOperator                   ::= EQ
                                          | RSHIFT_EQ
                                          | BITWISE_AND_NOT_EQ
 
-variableDeclarationStatement         ::= (attributesDefinition eos?)* [USING] identifierList COLON type {
-                                                        implements=["com.lasagnerd.odin.lang.psi.OdinVariableDeclaration"]
-                                                        methods=[getTypeDefinition]
-                                                    }
 
 // Parameters for procedures and assignments
 private polymorphicParameterList     ::= paramEntries
@@ -817,8 +830,8 @@ private statementRecover             ::= !(NOT
 statement                            ::= assignmentStatement
                                          | forStatement
                                          | constantInitializationStatement
-                                         | variableInitializationStatement
-                                         | variableDeclarationStatement
+                                         | initVariableStatement
+                                         | shortVariableDeclarationStatement
                                          | blockStatement
                                          | ifStatement
                                          | whenStatement
@@ -860,8 +873,8 @@ private deferrableStatement          ::= assignmentStatement
 
 // Shared rules among all control flow statements
 controlFlowInit                  ::= assignmentStatement
-                                         | variableInitializationStatement
-                                         | variableDeclarationStatement
+                                         | initVariableStatement
+                                         | shortVariableDeclarationStatement
                                          | callExpression
 
 condition                            ::= expression

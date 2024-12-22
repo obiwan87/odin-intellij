@@ -370,9 +370,9 @@ public class OdinTypeChecker {
             if (structBlock != null) {
                 OdinStructBody structBody = structBlock.getStructBody();
                 if (structBody != null) {
-                    for (OdinFieldDeclarationStatement odinFieldDeclarationStatement : structBody.getFieldDeclarationStatementList()) {
-                        if (odinFieldDeclarationStatement.getUsing() != null) {
-                            OdinType declarationType = odinFieldDeclarationStatement.getType();
+                    for (OdinFieldDeclaration odinFieldDeclaration : structBody.getFieldDeclarationList()) {
+                        if (odinFieldDeclaration.getUsing() != null) {
+                            OdinType declarationType = odinFieldDeclaration.getType();
                             if (declarationType != null) {
                                 TsOdinType usedType = OdinTypeResolver.resolveType(
                                         structType.getContext(),
