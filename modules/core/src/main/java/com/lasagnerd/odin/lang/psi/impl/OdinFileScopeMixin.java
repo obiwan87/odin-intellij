@@ -2,6 +2,8 @@ package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -10,16 +12,25 @@ import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinBuildFlagEvaluator;
 import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.lang.psi.OdinFileScope;
+import com.lasagnerd.odin.lang.stubs.OdinFileScopeStub;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class OdinFileScopeMixin extends OdinPsiElementImpl implements OdinFileScope {
+public abstract class OdinFileScopeMixin extends OdinStubbedElementImpl<OdinFileScopeStub> implements OdinFileScope {
 
     protected OdinSymbolTable symbolTable;
 
     private CachedValue<OdinSymbolValueStore> cachedBuildFlagStore;
+
+    public OdinFileScopeMixin(OdinFileScopeStub stub, IElementType nodeType, ASTNode node) {
+        super(stub, nodeType, node);
+    }
+
+    public OdinFileScopeMixin(@NotNull OdinFileScopeStub stub, @NotNull IStubElementType<?, ?> nodeType) {
+        super(stub, nodeType);
+    }
 
     public OdinSymbolValueStore getBuildFlagsValuesStore() {
         if (cachedBuildFlagStore == null) {

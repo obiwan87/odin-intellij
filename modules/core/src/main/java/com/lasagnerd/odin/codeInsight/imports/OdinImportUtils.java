@@ -59,8 +59,8 @@ public class OdinImportUtils {
     }
 
 
-    public static OdinSymbolTable getSymbolsOfImportedPackage(OdinContext context, OdinImportDeclarationStatement importStatement) {
-        OdinImport importInfo = importStatement.getImportInfo();
+    public static OdinSymbolTable getSymbolsOfImportedPackage(OdinContext context, OdinImportStatement importStatement) {
+        OdinImport importInfo = importStatement.getImportDeclaration().getImportInfo();
 
         OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
         PsiFile containingFile = importStatement.getContainingFile();
@@ -429,11 +429,11 @@ public class OdinImportUtils {
     @NotNull
     public static Map<String, OdinImport> getImportStatementsInfo(OdinFileScope fileScope) {
         Map<String, OdinImport> importMap = new HashMap<>();
-        List<OdinImportDeclarationStatement> importStatements
+        List<OdinImportStatement> importStatements
                 = fileScope.getImportStatements();
 
-        for (OdinImportDeclarationStatement importStatement : importStatements) {
-            OdinImport importInfo = importStatement.getImportInfo();
+        for (OdinImportStatement importStatement : importStatements) {
+            OdinImport importInfo = importStatement.getImportDeclaration().getImportInfo();
             importMap.put(importInfo.packageName(), importInfo);
         }
         return importMap;
@@ -459,11 +459,11 @@ public class OdinImportUtils {
         return files;
     }
 
-    public static OdinSymbolTable getSymbolsOfImportedPackage(OdinContext context, String packagePath, OdinImportDeclarationStatement importStatement) {
-        OdinImport importInfo = importStatement.getImportInfo();
-        OdinFileScope fileScope = ((OdinFile) importStatement.getContainingFile()).getFileScope();
+    public static OdinSymbolTable getSymbolsOfImportedPackage(OdinContext context, String packagePath, @NotNull OdinImportDeclaration importDeclaration) {
+        OdinImport importInfo = importDeclaration.getImportInfo();
+        OdinFileScope fileScope = ((OdinFile) importDeclaration.getContainingFile()).getFileScope();
         // Check if package is null. If yes log debug
-        String fileName = getFileName(importStatement);
+        String fileName = getFileName(importDeclaration);
         if (packagePath == null) {
             packagePath = "/";
         }
@@ -474,7 +474,7 @@ public class OdinImportUtils {
             path = Path.of(packagePath, fileName).toString();
         }
         String name = importInfo.packageName();
-        Project project = importStatement.getProject();
+        Project project = importDeclaration.getProject();
         return getSymbolsOfImportedPackage(context, getImportStatementsInfo(fileScope).get(name), path, project);
     }
 
@@ -520,16 +520,16 @@ public class OdinImportUtils {
         return null;
     }
 
-    public static boolean isUnusedImport(OdinImportDeclarationStatement importDeclarationStatement) {
-        PsiFile containingFile = importDeclarationStatement.getContainingFile();
-        if (importDeclarationStatement.getDeclaredIdentifier() == null) {
-            String text = importDeclarationStatement.getImportInfo().packageName();
+    public static boolean isUnusedImport(OdinImportStatement importStatement) {
+        PsiFile containingFile = importStatement.getContainingFile();
+        if (importStatement.getImportDeclaration().getDeclaredIdentifier() == null) {
+            String text = importStatement.getImportDeclaration().getImportInfo().packageName();
 
-            PsiDirectory psiDirectory = OdinPackageReference.resolvePackagePathDirectory(importDeclarationStatement.getImportPath());
+            PsiDirectory psiDirectory = OdinPackageReference.resolvePackagePathDirectory(importStatement.getImportDeclaration().getImportPath());
             if (text.isBlank())
                 return false;
 
-            Project project = importDeclarationStatement.getProject();
+            Project project = importStatement.getProject();
 
             return PsiSearchHelper.getInstance(project).processElementsWithWord(
                     (element, offsetInElement) -> {
@@ -537,11 +537,11 @@ public class OdinImportUtils {
                             PsiReference reference = identifier.getReference();
                             PsiElement resolvedReference = reference.resolve();
                             if (resolvedReference != null) {
-                                if (resolvedReference instanceof OdinImportDeclarationStatement importDeclarationStatement1) {
-                                    return importDeclarationStatement1 != importDeclarationStatement;
+                                if (resolvedReference instanceof OdinImportDeclaration importDeclaration) {
+                                    return importDeclaration.getParent() != importStatement;
                                 }
                                 if (resolvedReference instanceof OdinDeclaredIdentifier) {
-                                    return resolvedReference.getParent() != importDeclarationStatement;
+                                    return resolvedReference.getParent().getParent() != importStatement;
                                 }
                                 return !resolvedReference.isEquivalentTo(psiDirectory);
                             }
@@ -555,13 +555,13 @@ public class OdinImportUtils {
                     true
             );
         } else {
-            Query<PsiReference> search = ReferencesSearch.search(importDeclarationStatement.getDeclaredIdentifier(), new LocalSearchScope(containingFile), true);
+            Query<PsiReference> search = ReferencesSearch.search(importStatement.getImportDeclaration().getDeclaredIdentifier(), new LocalSearchScope(containingFile), true);
             return search.findFirst() == null;
         }
     }
 
     public static PsiElement insertImport(Project project, String alias, String importPath, OdinFileScope fileScope) {
-        OdinImportDeclarationStatement anImport = OdinPsiElementFactory.getInstance(project)
+        OdinImportStatement anImport = OdinPsiElementFactory.getInstance(project)
                 .createImport(alias, importPath);
 
         OdinImportStatementsContainer importStatementsContainer = fileScope.getImportStatementsContainer();
@@ -570,15 +570,15 @@ public class OdinImportUtils {
                     .createImportStatementsContainer(List.of(anImport));
             return fileScope.addAfter(templateImportStatementsContainer, fileScope.getEos());
         } else {
-            OdinImportDeclarationStatement odinImportDeclarationStatement = fileScope.getImportStatementsContainer().getImportDeclarationStatementList().getLast();
-            return importStatementsContainer.addAfter(anImport, odinImportDeclarationStatement);
+            OdinImportStatement OdinImportStatement = fileScope.getImportStatementsContainer().getImportStatementList().getLast();
+            return importStatementsContainer.addAfter(anImport, OdinImportStatement);
         }
     }
 
     public static @Nullable OdinImport getImportInfo(@NotNull OdinImportPath element) {
-        OdinImportDeclarationStatement importDeclarationStatement = PsiTreeUtil.getParentOfType(element, OdinImportDeclarationStatement.class);
+        OdinImportStatement importDeclarationStatement = PsiTreeUtil.getParentOfType(element, OdinImportStatement.class);
         if (importDeclarationStatement == null)
             return null;
-        return importDeclarationStatement.getImportInfo();
+        return importDeclarationStatement.getImportDeclaration().getImportInfo();
     }
 }

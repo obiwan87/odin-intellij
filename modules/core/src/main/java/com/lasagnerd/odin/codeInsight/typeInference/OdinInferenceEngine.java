@@ -119,9 +119,9 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     private static @NotNull TsOdinPackageReferenceType createPackageReferenceType(String packagePath,
-                                                                                  OdinImportDeclarationStatement importDeclarationStatement) {
+                                                                                  OdinImportStatement importDeclarationStatement) {
         TsOdinPackageReferenceType packageType = new TsOdinPackageReferenceType(packagePath);
-        packageType.setDeclaration(importDeclarationStatement);
+        packageType.setDeclaration(importDeclarationStatement.getImportDeclaration());
         return packageType;
     }
 
@@ -557,7 +557,7 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     private static @NotNull TsOdinType resolveTypeOfNamedElement(PsiNamedElement namedElement, OdinContext context) {
-        OdinImportDeclarationStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
+        OdinImportStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
         if (importDeclarationStatement != null) {
             return createPackageReferenceType(OdinImportService
                     .getInstance(namedElement.getProject())
@@ -573,14 +573,14 @@ public class OdinInferenceEngine extends OdinVisitor {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private static OdinImportDeclarationStatement getImportDeclarationStatement(PsiNamedElement namedElement) {
-        if (namedElement instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-            return importDeclarationStatement;
+    private static OdinImportStatement getImportDeclarationStatement(PsiNamedElement namedElement) {
+        if (namedElement instanceof OdinImportDeclaration importDeclaration) {
+            return (OdinImportStatement) importDeclaration.getParent();
         }
         if (namedElement instanceof OdinDeclaredIdentifier) {
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(namedElement, true, OdinDeclaration.class);
-            if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return importDeclarationStatement;
+            if (odinDeclaration instanceof OdinImportDeclaration importDeclaration) {
+                return (OdinImportStatement) importDeclaration.getParent();
             }
         }
         return null;

@@ -910,6 +910,20 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testScoping() throws IOException {
         // Assignment
         OdinFile odinFile = load("src/test/testData/scoping/scoping.odin");
+        // File scope
+        {
+            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "file_scope", "test");
+            OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.doBuildFullSymbolTable(expression);
+
+            assertNotNull(odinSymbolTable.getSymbol("assignment"));
+            assertNotNull(odinSymbolTable.getSymbol("partial_scope"));
+            assertNotNull(odinSymbolTable.getSymbol("conditional_block"));
+            assertNotNull(odinSymbolTable.getSymbol("shadowing"));
+            assertNotNull(odinSymbolTable.getSymbol("file_scope"));
+            assertNotNull(odinSymbolTable.getSymbol("fmt"));
+            assertNotNull(odinSymbolTable.getSymbol("MyStruct"));
+            assertNotNull(odinSymbolTable.getSymbol("g_point"));
+        }
         {
             OdinVariableInitializationStatement var = findFirstVariableDeclarationStatement(odinFile, "assignment", "test");
             OdinExpression odinExpression = Objects.requireNonNull(var.getRhsExpressions()).getExpressionList().getFirst();
@@ -1048,20 +1062,7 @@ public class OdinParsingTest extends UsefulTestCase {
             }
         }
 
-        // File scope
-        {
-            OdinExpression expression = findFirstExpressionOfVariable(odinFile, "file_scope", "test");
-            OdinSymbolTable odinSymbolTable = OdinSymbolTableHelper.doBuildFullSymbolTable(expression);
 
-            assertNotNull(odinSymbolTable.getSymbol("assignment"));
-            assertNotNull(odinSymbolTable.getSymbol("partial_scope"));
-            assertNotNull(odinSymbolTable.getSymbol("conditional_block"));
-            assertNotNull(odinSymbolTable.getSymbol("shadowing"));
-            assertNotNull(odinSymbolTable.getSymbol("file_scope"));
-            assertNotNull(odinSymbolTable.getSymbol("fmt"));
-            assertNotNull(odinSymbolTable.getSymbol("MyStruct"));
-            assertNotNull(odinSymbolTable.getSymbol("g_point"));
-        }
 
 
     }

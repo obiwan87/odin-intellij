@@ -28,7 +28,7 @@ public class OdinUnusedAnnotator implements Annotator {
                 false))
             return;
 
-        if (element instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+        if (element instanceof OdinImportStatement importDeclarationStatement) {
             if (OdinImportUtils.isUnusedImport(importDeclarationStatement)) {
                 // annotated entire import statement
                 holder.newAnnotation(HighlightSeverity.WARNING, "Unused import statement")
@@ -46,11 +46,11 @@ public class OdinUnusedAnnotator implements Annotator {
 
         OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinDeclaration.class);
 
-        if (odinDeclaration instanceof OdinPackageDeclaration) {
+        if (odinDeclaration instanceof OdinPackageClause) {
             return;
         }
 
-        if (odinDeclaration instanceof OdinImportDeclarationStatement) {
+        if (odinDeclaration instanceof OdinImportDeclaration) {
             return;
         }
 

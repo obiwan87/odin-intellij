@@ -88,10 +88,10 @@ public class OdinFormattingBuilder implements FormattingModelBuilder {
                 .aroundInside(BINARY_OPERATORS, BINARY_EXPRESSIONS)
                 .spaces(1)
 
-                .between(OdinTypes.IMPORT_DECLARATION_STATEMENT, OdinTypes.IMPORT_DECLARATION_STATEMENT)
+                .between(OdinTypes.IMPORT_STATEMENT, OdinTypes.IMPORT_STATEMENT)
                 .spacing(0, 0, 1, false, 0)
 
-                .withinPair(OdinTypes.PACKAGE_DECLARATION, OdinTypes.IMPORT_DECLARATION_STATEMENT)
+                .withinPair(OdinTypes.PACKAGE_CLAUSE, OdinTypes.IMPORT_STATEMENT)
                 .spacing(0, 0, 2, false, 0)
 
                 .between(OdinTypes.IMPORT_STATEMENTS_CONTAINER, TokenSet.create(OdinTypes.FILE_SCOPE_STATEMENT_LIST, OdinTypes.LINE_COMMENT, OdinTypes.BLOCK_COMMENT))

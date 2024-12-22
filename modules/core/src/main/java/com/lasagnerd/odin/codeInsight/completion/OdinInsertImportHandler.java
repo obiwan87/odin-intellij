@@ -13,7 +13,7 @@ import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinFileScope;
-import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
+import com.lasagnerd.odin.lang.psi.OdinImportStatement;
 import org.jetbrains.annotations.NotNull;
 
 public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
@@ -43,8 +43,8 @@ public class OdinInsertImportHandler implements InsertHandler<LookupElement> {
         String importPath = odinImport.fullImportPath();
 
         // Check if package is already imported
-        for (OdinImportDeclarationStatement importStatement : sourceFile.getFileScope().getImportStatements()) {
-            OdinImport importInfo = importStatement.getImportInfo();
+        for (OdinImportStatement importStatement : sourceFile.getFileScope().getImportStatements()) {
+            OdinImport importInfo = importStatement.getImportDeclaration().getImportInfo();
             if (importInfo.fullImportPath().equals(this.odinImport.fullImportPath())) {
                 return;
             }

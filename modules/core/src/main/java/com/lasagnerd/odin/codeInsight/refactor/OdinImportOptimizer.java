@@ -6,7 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.OdinFile;
-import com.lasagnerd.odin.lang.psi.OdinImportDeclarationStatement;
+import com.lasagnerd.odin.lang.psi.OdinImportStatement;
 import com.lasagnerd.odin.lang.psi.OdinImportStatementsContainer;
 import com.lasagnerd.odin.lang.psi.OdinPsiElementFactory;
 import org.jetbrains.annotations.NotNull;
@@ -25,12 +25,12 @@ public class OdinImportOptimizer implements ImportOptimizer {
     public @NotNull Runnable processFile(@NotNull PsiFile file) {
         return () -> {
             OdinFile odinFile = (OdinFile) file;
-            List<OdinImportDeclarationStatement> importStatements = odinFile.getFileScope().getImportStatements();
+            List<OdinImportStatement> importStatements = odinFile.getFileScope().getImportStatements();
 
             // Keep used imports
-            List<OdinImportDeclarationStatement> usedImports = importStatements.stream()
+            List<OdinImportStatement> usedImports = importStatements.stream()
                     .filter(importDeclarationStatement -> !OdinImportUtils.isUnusedImport(importDeclarationStatement))
-                    .sorted(Comparator.comparing(i -> i.getImportInfo().fullImportPath()))
+                    .sorted(Comparator.comparing(i -> i.getImportDeclaration().getImportInfo().fullImportPath()))
                     .collect(Collectors.toList());
 
             // Replace old import statements container with new one
@@ -43,7 +43,7 @@ public class OdinImportOptimizer implements ImportOptimizer {
                     importStatementsContainer.delete();
                 CodeStyleManager
                         .getInstance(file.getProject())
-                        .reformat(odinFile.getFileScope().getPackageDeclaration());
+                        .reformat(odinFile.getFileScope().getPackageClause());
                 return;
             }
 

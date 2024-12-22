@@ -216,8 +216,8 @@ public class OdinTypeResolver extends OdinVisitor {
         if (odinSymbol != null) {
             PsiNamedElement declaredIdentifier = odinSymbol.getDeclaredIdentifier();
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class, false);
-            if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return OdinImportUtils.getSymbolsOfImportedPackage(context, context.getPackagePath(), importDeclarationStatement).asContext();
+            if (odinDeclaration instanceof OdinImportDeclaration importDeclaration) {
+                return OdinImportUtils.getSymbolsOfImportedPackage(context, context.getPackagePath(), importDeclaration).asContext();
             }
         }
         return new OdinContext();

@@ -131,7 +131,7 @@ public class OdinPsiElementFactory {
     }
 
 
-    public OdinImportDeclarationStatement createImport(String alias, String packagePath) {
+    public OdinImportStatement createImport(String alias, String packagePath) {
         OdinFile file;
         if(alias == null) {
             file = createFile(IMPORT.replaceAll("packagePath", packagePath));
@@ -147,9 +147,9 @@ public class OdinPsiElementFactory {
     }
 
     @NotNull
-    public OdinImportStatementsContainer createImportStatementsContainer(List<OdinImportDeclarationStatement> imports) {
+    public OdinImportStatementsContainer createImportStatementsContainer(List<OdinImportStatement> imports) {
         String importStatements = imports.stream()
-                .map(OdinImportDeclarationStatement::getText)
+                .map(OdinImportStatement::getText)
                 .reduce("", (a, b) -> a + "\n" + b);
         String dummyCode = """
                 package dummy;
@@ -170,6 +170,6 @@ public class OdinPsiElementFactory {
                 """;
 
         OdinFile file = createFile(dummyCode.formatted(importPath));
-        return file.getFileScope().getImportStatements().getFirst().getImportPath();
+        return file.getFileScope().getImportStatements().getFirst().getImportDeclaration().getImportPath();
     }
 }

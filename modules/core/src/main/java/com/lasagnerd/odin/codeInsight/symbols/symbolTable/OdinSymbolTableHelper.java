@@ -42,7 +42,16 @@ public class OdinSymbolTableHelper {
         statementStack.addAll(fileScope.getImportStatements());
         while (!statementStack.isEmpty()) {
             PsiElement element = statementStack.pop();
-            if (element instanceof OdinDeclaration declaration) {
+            OdinDeclaration declaration;
+            if (element instanceof OdinDeclaration) {
+                declaration = (OdinDeclaration) element;
+            } else if (element instanceof OdinDeclarationProvidingStatement declarationProvidingStatement) {
+                declaration = declarationProvidingStatement.getDeclaration();
+            } else {
+                declaration = null;
+            }
+
+            if (declaration != null) {
                 List<OdinSymbol> symbols = OdinDeclarationSymbolResolver.getSymbols(globalVisibility, declaration, new OdinContext());
                 context.getDeclarationSymbols().computeIfAbsent(declaration, d -> new ArrayList<>()).addAll(symbols);
                 fileScopeSymbols.addAll(symbols);
@@ -58,7 +67,7 @@ public class OdinSymbolTableHelper {
 
     private static List<OdinDeclaration> getFileScopeDeclarations(OdinFileScope fileScope) {
         // Find all blocks that are not in a procedure
-        List<OdinDeclaration> fileScopeSymbols = new ArrayList<>();
+        List<OdinDeclaration> declarations = new ArrayList<>();
 
         Stack<PsiElement> statementStack = new Stack<>();
 
@@ -68,12 +77,14 @@ public class OdinSymbolTableHelper {
         while (!statementStack.isEmpty()) {
             PsiElement element = statementStack.pop();
             if (element instanceof OdinDeclaration declaration) {
-                fileScopeSymbols.add(declaration);
+                declarations.add(declaration);
+            } else if (element instanceof OdinDeclarationProvidingStatement declarationProvidingStatement) {
+                declarations.add(declarationProvidingStatement.getDeclaration());
             } else {
                 getStatements(element).forEach(statementStack::push);
             }
         }
-        return fileScopeSymbols;
+        return declarations;
     }
 
     private static List<OdinStatement> getStatements(@NotNull PsiElement psiElement) {
@@ -382,6 +393,9 @@ public class OdinSymbolTableHelper {
         for (OdinStatement odinStatement : statements) {
             if (odinStatement instanceof OdinDeclaration declaration) {
                 declarations.add(declaration);
+            }
+            if (odinStatement instanceof OdinDeclarationProvidingStatement declarationProvidingStatement) {
+                declarations.add(declarationProvidingStatement.getDeclaration());
             }
         }
     }

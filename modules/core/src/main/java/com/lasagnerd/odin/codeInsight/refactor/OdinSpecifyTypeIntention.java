@@ -192,8 +192,8 @@ public class OdinSpecifyTypeIntention extends PsiElementBaseIntentionAction {
             this.sourceFileScope = sourceFileScope;
 
             pathToImportMap = new HashMap<>();
-            for (OdinImportDeclarationStatement importStatement : sourceFileScope.getImportStatements()) {
-                OdinImport importInfo = importStatement.getImportInfo();
+            for (OdinImportStatement importStatement : sourceFileScope.getImportStatements()) {
+                OdinImport importInfo = importStatement.getImportDeclaration().getImportInfo();
                 Path importPath = OdinImportUtils.getFirstAbsoluteImportPath(importInfo,
                         sourceFileScope.getContainingFile().getVirtualFile().getPath(),
                         sourceFileScope.getProject());

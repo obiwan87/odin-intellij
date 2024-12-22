@@ -242,8 +242,7 @@ public class OdinInsightUtils {
             TsOdinPackageReferenceType packageType,
             boolean includeBuiltin) {
         OdinSymbolTable symbolTable = OdinImportUtils
-                .getSymbolsOfImportedPackage(context, packageType.getReferencingPackagePath(),
-                        (OdinImportDeclarationStatement) packageType.getDeclaration());
+                .getSymbolsOfImportedPackage(context, packageType.getReferencingPackagePath(), (OdinImportDeclaration) packageType.getDeclaration());
         if (includeBuiltin) {
             List<OdinSymbol> builtInSymbols = OdinSdkService.getInstance(project).getBuiltInSymbols();
             OdinSymbolTable odinBuiltinSymbolsTable = OdinSymbolTable.from(builtInSymbols);
@@ -435,7 +434,7 @@ public class OdinInsightUtils {
         if (tsOdinType instanceof TsOdinPackageReferenceType packageReferenceType) {
             OdinSymbolTable symbolTable = OdinImportUtils
                     .getSymbolsOfImportedPackage(context, packageReferenceType.getReferencingPackagePath(),
-                            (OdinImportDeclarationStatement) packageReferenceType.getDeclaration());
+                            (OdinImportDeclaration) packageReferenceType.getDeclaration());
             return new ArrayList<>(symbolTable.getSymbols());
         }
 
@@ -634,8 +633,8 @@ public class OdinInsightUtils {
     }
 
     private static boolean isPackageDeclaration(PsiNamedElement element) {
-        return element instanceof OdinImportDeclarationStatement
-                || element.getParent() instanceof OdinImportDeclarationStatement;
+        return element instanceof OdinImportDeclaration
+                || element.getParent() instanceof OdinImportDeclaration;
     }
 
     public static OdinSymbolType classify(PsiNamedElement element) {
@@ -1089,11 +1088,34 @@ public class OdinInsightUtils {
         OdinSymbol odinSymbol = identifier.getReferencedSymbol(context);
         if (odinSymbol != null) {
             OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(odinSymbol.getDeclaredIdentifier(), false, OdinDeclaration.class);
-            if (odinDeclaration instanceof OdinImportDeclarationStatement importDeclarationStatement) {
-                return OdinImportUtils.getSymbolsOfImportedPackage(context, OdinImportService.getInstance(qualifiedType.getProject()).getPackagePath(qualifiedType), importDeclarationStatement);
+            if (odinDeclaration instanceof OdinImportDeclaration importDeclaration) {
+                return OdinImportUtils.getSymbolsOfImportedPackage(context,
+                        OdinImportService.getInstance(qualifiedType.getProject()).getPackagePath(qualifiedType),
+                        importDeclaration);
             }
         }
         return OdinSymbolTable.EMPTY;
+    }
+
+    public static @NotNull String getLocation(PsiElement psiElement) {
+        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(psiElement);
+        String lineColumn = getLineColumn(psiElement);
+
+        return "%s:%s".formatted(containingVirtualFile.getPath(), lineColumn);
+    }
+
+    public static OdinExpression parenthesesUnwrap(PsiElement element) {
+        if (element instanceof OdinParenthesizedExpression par) {
+            OdinExpression parExpression = par.getExpression();
+            if (parExpression != null) {
+                return parenthesesUnwrap(parExpression);
+            }
+        }
+
+        if (element instanceof OdinExpression odinExpression) {
+            return odinExpression;
+        }
+        return null;
     }
 
     // Record to hold the result

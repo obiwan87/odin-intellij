@@ -182,18 +182,18 @@ public class OdinPsiUtil {
         return PsiTreeUtil.findChildOfType(self, OdinCompoundValueBody.class);
     }
 
-    public static List<OdinImportDeclarationStatement> getImportStatements(OdinFileScope self) {
-        List<OdinImportDeclarationStatement> imports;
+    public static List<OdinImportStatement> getImportStatements(OdinFileScope self) {
+        List<OdinImportStatement> imports;
         if (self.getImportStatementsContainer() != null) {
-            imports = self.getImportStatementsContainer().getImportDeclarationStatementList();
+            imports = self.getImportStatementsContainer().getImportStatementList();
         } else {
             imports = Collections.emptyList();
         }
 
-        List<OdinImportDeclarationStatement> importDeclarationStatementList = new ArrayList<>(imports);
+        List<OdinImportStatement> importDeclarationStatementList = new ArrayList<>(imports);
         self.getFileScopeStatementList().getStatementList().stream()
-                .filter(s -> s instanceof OdinImportDeclarationStatement)
-                .map(OdinImportDeclarationStatement.class::cast)
+                .filter(s -> s instanceof OdinImportStatement)
+                .map(OdinImportStatement.class::cast)
                 .forEach(importDeclarationStatementList::add);
 
         return importDeclarationStatementList;
@@ -201,7 +201,7 @@ public class OdinPsiUtil {
 
     // OdinDeclaration
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinPackageDeclaration statement) {
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinPackageClause statement) {
         return Collections.singletonList(statement.getDeclaredIdentifier());
     }
 
@@ -235,9 +235,9 @@ public class OdinPsiUtil {
         return Collections.emptyList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinImportDeclarationStatement statement) {
-        if (statement.getAlias() != null)
-            return Collections.singletonList(statement.getAlias());
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinImportDeclaration importDeclaration) {
+        if (importDeclaration.getAlias() != null)
+            return Collections.singletonList(importDeclaration.getAlias());
         return Collections.emptyList();
     }
 
@@ -307,17 +307,17 @@ public class OdinPsiUtil {
 
     // OdinImportDeclaration
 
-    public static String getName(OdinImportDeclarationStatement importStatement) {
-        return importStatement.getImportInfo().packageName();
+    public static String getName(OdinImportDeclaration importDeclaration) {
+        return importDeclaration.getImportInfo().packageName();
     }
 
-    public static PsiElement setName(OdinImportDeclarationStatement importStatement, @NotNull String ignored) {
-        return importStatement;
+    public static PsiElement setName(OdinImportDeclaration importDeclaration, @NotNull String ignored) {
+        return importDeclaration;
     }
 
-    public static PsiElement getNameIdentifier(OdinImportDeclarationStatement importStatement) {
-        if (importStatement.getAlias() != null)
-            return importStatement.getAlias();
+    public static PsiElement getNameIdentifier(OdinImportDeclaration importDeclaration) {
+        if (importDeclaration.getAlias() != null)
+            return importDeclaration.getAlias();
         return null;
     }
 
@@ -327,12 +327,12 @@ public class OdinPsiUtil {
     }
 
     @NotNull
-    public static OdinImport getImportInfo(OdinImportDeclarationStatement importStatement) {
-        String name = importStatement.getAlias() != null
-                ? importStatement.getAlias().getText()
+    public static OdinImport getImportInfo(OdinImportDeclaration importDeclaration) {
+        String name = importDeclaration.getAlias() != null
+                ? importDeclaration.getAlias().getText()
                 : null;
 
-        String fullPathWithQuotes = importStatement.getPath().getText();
+        String fullPathWithQuotes = importDeclaration.getPath().getText();
         String fullPath = fullPathWithQuotes.substring(1, fullPathWithQuotes.length() - 1);
         String path = fullPath;
 
@@ -544,5 +544,9 @@ public class OdinPsiUtil {
             return foreignImportDeclarationStatement.getForeignImportPathList().getFirst();
         }
         return null;
+    }
+
+    public static OdinDeclaration getDeclaration(OdinImportStatement statement) {
+        return statement.getImportDeclaration();
     }
 }

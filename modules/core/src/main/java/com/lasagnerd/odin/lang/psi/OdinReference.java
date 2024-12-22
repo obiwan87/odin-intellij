@@ -52,11 +52,11 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
         if (symbol != null) {
             if (symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE) {
                 PsiNamedElement declaredIdentifier = symbol.getDeclaredIdentifier();
-                if (declaredIdentifier instanceof OdinImportDeclarationStatement importDeclarationStatement) {
+                if (declaredIdentifier instanceof OdinImportDeclaration importDeclaration) {
                     // TODO here we only resolve to import declaration, however, when wants to jump to declaration
                     //  we want to open the path. How do do that? HintedReferenceHost?
 //                    return OdinPackageReference.resolvePackagePathDirectory(importDeclarationStatement.getImportPath());
-                    return importDeclarationStatement;
+                    return importDeclaration;
                 } else {
                     return declaredIdentifier;
                 }

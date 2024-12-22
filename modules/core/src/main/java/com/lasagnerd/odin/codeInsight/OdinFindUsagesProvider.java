@@ -9,7 +9,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.lang.OdinLexerAdapter;
 import com.lasagnerd.odin.lang.OdinParserDefinition;
-import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.lang.psi.OdinDeclaration;
+import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
+import com.lasagnerd.odin.lang.psi.OdinImportStatement;
+import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.*;
 
 public class OdinFindUsagesProvider implements FindUsagesProvider {
@@ -38,7 +41,7 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
         OdinDeclaredIdentifier declaredIdentifier = PsiTreeUtil.getParentOfType(psiElement, false, OdinDeclaredIdentifier.class);
 
         if(declaredIdentifier == null) {
-            if(psiElement instanceof OdinImportDeclarationStatement) {
+            if (psiElement instanceof OdinImportStatement) {
                 return getHumanReadableName(OdinSymbolType.PACKAGE_REFERENCE);
             }
             return getHumanReadableName(OdinSymbolType.UNKNOWN);

@@ -174,11 +174,13 @@
 
   implements("binaryExpression|unaryExpression|castExpression|transmuteExpression|autoCastExpression|orElseExpression|orReturnExpression|orBreakExpression|orContinueExpression|ternaryExpression") = 'com.lasagnerd.odin.lang.psi.OdinOperation'
   implements('.*([iI]nitialization|[dD]eclaration).*') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
-  implements('(procedure|enum|bitField|bitset|struct|union|procedureGroup|import)DeclarationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
+  implements('importDeclaration') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
   implements('usingStatement') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
   methods('usingStatement') = [getDeclaredIdentifiers]
   implements('constantInitializationStatement') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
   psiImplUtilClass="com.lasagnerd.odin.lang.psi.OdinPsiUtil"
+  elementTypeFactory("fileScope|packageClause|importDeclaration") =  "com.lasagnerd.odin.lang.stubs.OdinStubElementTypeFactory.create"
+  extends("packageClause|importDeclaration") = "com.lasagnerd.odin.lang.psi.impl.OdinStubbedElementImpl<?>"
 }
 
 odinFile                             ::= fileScope
@@ -186,10 +188,11 @@ odinFile                             ::= fileScope
 // General recover rules
 private eos_recover ::= !eos
 
-fileScope                            ::= buildFlagClause* packageDeclaration eos importStatementsContainer? fileScopeStatementList <<eof>> {
+fileScope                            ::= buildFlagClause* packageClause eos importStatementsContainer? fileScopeStatementList <<eof>> {
     methods=[getImportStatements getFullSymbolTable getBuildFlagsValuesStore]
     mixin= "com.lasagnerd.odin.lang.psi.impl.OdinFileScopeMixin"
     implements=["com.lasagnerd.odin.lang.psi.OdinScopeBlock"]
+    stubClass="com.lasagnerd.odin.lang.stubs.OdinFileScopeStub"
 }
 
 buildFlagClause                      ::= buildFlagPrefix [buildFlagArguments]
@@ -200,11 +203,22 @@ buildFlagIdentifier                  ::= BUILD_FLAG_IDENTIFIER_TOKEN {extends=bu
 buildFlagNegation                    ::= NOT buildFlag {extends=buildFlag}
 buildFlag                            ::= buildFlagIdentifier
                                          | buildFlagNegation
-importStatementsContainer            ::= (importDeclarationStatement eos)+
+importStatementsContainer            ::= (importStatement eos)+
 fileScopeStatementList               ::= (fileScopeStatement (eos|<<afterNewLine>>))*
-packageDeclaration                   ::= PACKAGE declaredIdentifier {pin=1 recoverWhile=eos_recover}
+packageClause                        ::= PACKAGE declaredIdentifier {
+    pin=1
+    recoverWhile=eos_recover
+    stubClass="com.lasagnerd.odin.lang.stubs.OdinPackageClauseStub"
+}
 
-importDeclarationStatement           ::= [attributesDefinition EOS_TOKEN?] IMPORT declaredIdentifier? importPath {methods=[alias="/declaredIdentifier" path="/importPath" getName setName getNameIdentifier getImportInfo] implements=["com.intellij.psi.PsiNameIdentifierOwner"]}
+importStatement           ::= importDeclaration {implements="com.lasagnerd.odin.lang.psi.OdinDeclarationProvidingStatement" methods=[getDeclaration]}
+importDeclaration         ::= [attributesDefinition EOS_TOKEN?] IMPORT declaredIdentifier? importPath {
+  methods=[alias="/declaredIdentifier"
+  path="/importPath" getName setName getNameIdentifier getImportInfo]
+  implements=["com.intellij.psi.PsiNameIdentifierOwner"]
+  stubClass="com.lasagnerd.odin.lang.stubs.OdinImportDeclarationStub"
+}
+
 importPath                           ::= DQ_STRING_LITERAL {
                                                         methods=[
                                                                 getReference
@@ -214,7 +228,7 @@ importPath                           ::= DQ_STRING_LITERAL {
                                                                 ] implements=["com.intellij.psi.HintedReferenceHost"]}
 
 fileScopeStatement                   ::= foreignImportDeclarationStatement
-                                         | importDeclarationStatement
+                                         | importStatement
                                          | constantInitializationStatement
                                          | variableInitializationStatement
                                          | variableDeclarationStatement
@@ -818,7 +832,7 @@ statement                            ::= assignmentStatement
                                          | fallthroughStatement
                                          | foreignImportDeclarationStatement
                                          | foreignStatement
-                                         | importDeclarationStatement
+                                         | importStatement
                                          | semicolonStatement
 
 semicolonStatement                   ::= SEMICOLON

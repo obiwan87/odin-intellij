@@ -221,8 +221,9 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
         }
     }
 
+
     @Override
-    public void visitImportDeclarationStatement(@NotNull OdinImportDeclarationStatement o) {
+    public void visitImportDeclaration(@NotNull OdinImportDeclaration o) {
         var alias = o.getAlias();
         OdinSymbol odinSymbol = new OdinSymbol(Objects.requireNonNullElse(alias, o));
         odinSymbol.setSymbolType(OdinSymbolType.PACKAGE_REFERENCE);

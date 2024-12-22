@@ -268,7 +268,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                     }
                 }
                 case PACKAGE_REFERENCE -> {
-                    OdinImportDeclarationStatement odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinImportDeclarationStatement.class);
+                    OdinImportDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(declaredIdentifier, false, OdinImportDeclaration.class);
                     if (odinDeclaration != null) {
                         OdinImport info = odinDeclaration.getImportInfo();
 
