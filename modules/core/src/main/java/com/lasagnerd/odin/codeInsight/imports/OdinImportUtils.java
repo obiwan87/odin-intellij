@@ -73,7 +73,7 @@ public class OdinImportUtils {
         String path = OdinImportService.getInstance(importStatement.getProject()).getCanonicalPath(virtualFile);
         String name = importInfo.packageName();
         Project project = importStatement.getProject();
-        return getSymbolsOfImportedPackage(context, getImportStatementsInfo(fileScope).get(name), path, project);
+        return getSymbolsOfImportedPackage(context, getImportsMap(fileScope).get(name), path, project);
     }
 
 
@@ -393,7 +393,7 @@ public class OdinImportUtils {
                 Path relativePath = Path.of(sdkPath.get()).relativize(targetDir);
                 if (relativePath.getNameCount() >= 2) {
                     String collection = FileUtil.toSystemIndependentName(relativePath.getName(0).toString());
-                    String subPath = FileUtil.toSystemIndependentName(relativePath.subpath(1, targetDir.getNameCount()).toString());
+                    String subPath = FileUtil.toSystemIndependentName(relativePath.subpath(1, relativePath.getNameCount()).toString());
                     String packageName = relativePath.getFileName().toString();
                     String fullImportPath = collection + ":" + subPath;
                     return new OdinImport(fullImportPath, packageName, subPath, collection, null);
@@ -427,7 +427,7 @@ public class OdinImportUtils {
     }
 
     @NotNull
-    public static Map<String, OdinImport> getImportStatementsInfo(OdinFileScope fileScope) {
+    public static Map<String, OdinImport> getImportsMap(OdinFileScope fileScope) {
         Map<String, OdinImport> importMap = new HashMap<>();
         List<OdinImportStatement> importStatements
                 = fileScope.getImportStatements();
@@ -437,6 +437,16 @@ public class OdinImportUtils {
             importMap.put(importInfo.packageName(), importInfo);
         }
         return importMap;
+    }
+
+    @NotNull
+    public static List<OdinImport> getImports(OdinFileScope fileScope) {
+        if (fileScope == null)
+            return Collections.emptyList();
+        return fileScope.getImportStatements().stream()
+                .map(OdinImportStatement::getImportDeclaration)
+                .map(OdinImportDeclaration::getImportInfo)
+                .toList();
     }
 
     public static List<OdinFile> getFilesInPackage(Project project, Path importPath) {
@@ -475,7 +485,7 @@ public class OdinImportUtils {
         }
         String name = importInfo.packageName();
         Project project = importDeclaration.getProject();
-        return getSymbolsOfImportedPackage(context, getImportStatementsInfo(fileScope).get(name), path, project);
+        return getSymbolsOfImportedPackage(context, getImportsMap(fileScope).get(name), path, project);
     }
 
 

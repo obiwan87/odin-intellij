@@ -19,7 +19,6 @@ import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -48,16 +47,9 @@ public abstract class OdinDeclaredIdentifierMixin extends OdinStubbedElementImpl
     }
 
     public OdinSymbol createSymbol() {
+        String name = this.getName();
         OdinDeclaration declaration = PsiTreeUtil.getParentOfType(this, OdinDeclaration.class);
-
-        if (declaration != null) {
-            List<OdinSymbol> symbols = OdinDeclarationSymbolResolver.getSymbols(declaration);
-            return symbols.stream()
-                    .filter(s -> s.getName().equals(this.getName()))
-                    .findFirst()
-                    .orElse(null);
-        }
-        return null;
+        return OdinInsightUtils.createSymbol(declaration, name);
     }
 
     public ItemPresentation getPresentation() {

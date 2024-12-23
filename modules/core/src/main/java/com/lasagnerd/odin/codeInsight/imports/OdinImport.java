@@ -17,8 +17,15 @@ package com.lasagnerd.odin.codeInsight.imports;
  */
 public record OdinImport(
         String fullImportPath,
-        String packageName,
+        String canonicalName,
         String path,
         String collection,
         String alias) {
+
+    public String packageName() {
+        if (alias != null) {
+            return alias;
+        }
+        return canonicalName;
+    }
 }

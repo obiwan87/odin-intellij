@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
@@ -12,8 +13,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
@@ -27,6 +31,7 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinExpectedTypeEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.lang.stubs.indexes.OdinAllPublicNamesIndex;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,6 +116,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext processingContext,
                                   @NotNull CompletionResultSet result) {
+
         PsiElement position = parameters.getPosition();
         if (!(position.getParent() instanceof OdinIdentifier identifier))
             return;
@@ -209,10 +215,14 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                     addSelectorExpressionCompletions(odinFile, result, refExpression);
                 } else {
                     if (topMostRefExpression != null) {
-                        addIdentifierCompletions(parameters,
-                                result,
-                                topMostRefExpression.getText(),
-                                symbolTable.flatten());
+                        addIdentifierCompletionsWithStubs(
+                                position.getText(),
+                                odinFile,
+                                result);
+//                        addIdentifierCompletions(parameters,
+//                                result,
+//                                topMostRefExpression.getText(),
+//                                symbolTable.flatten());
                     }
                 }
 
@@ -222,10 +232,15 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                 OdinSymbolTable symbolTable = OdinSymbolTableHelper
                         .buildFullSymbolTable(position, new OdinContext())
                         .flatten();
-                addIdentifierCompletions(parameters, result, position.getText(), symbolTable);
+//                addIdentifierCompletions(parameters, result, position.getText(), symbolTable);
+                addIdentifierCompletionsWithStubs(
+                        position.getText(),
+                        odinFile,
+                        result);
             }
         }
     }
+
 
     private static void addImplicitEnumCompletions(@NotNull CompletionResultSet result, TsOdinEnumType tsOdinEnumType, Project project, int priority) {
         // TODO context
@@ -363,18 +378,16 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                                           String text,
                                           OdinSymbolTable context) {
         String typed = text.replaceAll(DUMMY_IDENTIFIER_TRIMMED + "$", "");
-
-        // Add symbols from all visible stuff in my project
-        OdinFile thisOdinFile = (OdinFile) parameters.getOriginalFile();
-        VirtualFile thisFile = thisOdinFile.getVirtualFile();
-        String thisPackagePath = thisFile.getParent().getPath();
-        Project project = thisOdinFile.getProject();
-
         if (typed.isBlank()) {
             result.restartCompletionOnAnyPrefixChange();
         } else {
             result = result.withPrefixMatcher(typed);
         }
+        // Add symbols from all visible stuff in my project
+        OdinFile thisOdinFile = (OdinFile) parameters.getOriginalFile();
+        VirtualFile thisFile = thisOdinFile.getVirtualFile();
+        String thisPackagePath = thisFile.getParent().getPath();
+        Project project = thisOdinFile.getProject();
 
         // Add symbols from local scope
         List<OdinSymbol> symbols = context.getSymbols()
@@ -414,7 +427,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
         // Add symbols from other packages from this source root (the blue folder)
         ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
-        VirtualFile sourceRoot = projectFileIndex.getSourceRootForFile(thisFile);
+        VirtualFile sourceRoot = getSourceRootForFile(projectFileIndex, thisFile);
         if (!typed.isBlank() || parameters.getInvocationCount() > 1) {
             if (sourceRoot != null) {
                 // Recursively walk through all dirs starting from source root
@@ -428,7 +441,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                 // add all the symbols to the lookup elements whilst taking into consideration
                 // their origin package. Upon accepting a suggestion insert the import statement
                 // if not already present
-                addPackageCompletions(thisOdinFile, thisPackagePath, sourceRootPackages, result, 1000);
+                addAutoImportCompletions(result.getPrefixMatcher(), typed, thisOdinFile, thisPackagePath, sourceRootPackages, result, 1000);
             }
 
             // Add collection roots completions
@@ -440,28 +453,40 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                             rootDir,
                             entry.getKey(),
                             null);
-                    addPackageCompletions(thisOdinFile, thisPackagePath, collectionPackages, result, 500);
+                    addAutoImportCompletions(result.getPrefixMatcher(), typed, thisOdinFile, thisPackagePath, collectionPackages, result, 500);
                 }
             }
 
             // Add sdk packages completions
             OdinSdkService sdkService = OdinSdkService.getInstance(project);
             Map<OdinImport, List<OdinFile>> sdkPackages = sdkService.getSdkPackages();
+            // TODO this is a bug, as it won't work when aliases change
             if (this.sdkPackageCompletions == null) {
-                this.sdkPackageCompletions = addPackageCompletions(thisOdinFile, thisPackagePath, sdkPackages, result, 250);
+                this.sdkPackageCompletions = addAutoImportCompletions(result.getPrefixMatcher(), typed, thisOdinFile, thisPackagePath, sdkPackages, result, 250);
             } else {
                 result.addAllElements(this.sdkPackageCompletions);
             }
         }
     }
 
-    private List<LookupElement> addPackageCompletions(OdinFile thisOdinFile,
-                                                      String thisPackagePath,
-                                                      Map<OdinImport, List<OdinFile>> packages,
-                                                      @NotNull CompletionResultSet result,
-                                                      int priority) {
+    // TODO
+    //  Look for "src" whenever we don't have a source root.
+    //  Otherwise, look for topmost directory that contains at least one .odin file
+    private static @Nullable VirtualFile getSourceRootForFile(ProjectFileIndex projectFileIndex, VirtualFile thisFile) {
+        return projectFileIndex.getSourceRootForFile(thisFile);
+    }
+
+    private List<LookupElement> addAutoImportCompletions(@NotNull PrefixMatcher prefixMatcher,
+                                                         String typed,
+                                                         OdinFile thisOdinFile,
+                                                         String thisPackagePath,
+                                                         Map<OdinImport, List<OdinFile>> packages,
+                                                         @NotNull CompletionResultSet result,
+                                                         int priority) {
+        Map<OdinImport, List<OdinFile>> packagesWithAliasReplaced = replacePackageNamesWithAlias(thisOdinFile, packages);
+
         List<LookupElement> packageCompletions = new ArrayList<>();
-        for (Map.Entry<OdinImport, List<OdinFile>> entry : packages.entrySet()) {
+        for (Map.Entry<OdinImport, List<OdinFile>> entry : packagesWithAliasReplaced.entrySet()) {
             OdinImport odinImport = entry.getKey();
 
             List<OdinFile> files = entry.getValue();
@@ -487,6 +512,146 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             }
         }
         return packageCompletions;
+    }
+
+    private static @NotNull Map<OdinImport, List<OdinFile>> replacePackageNamesWithAlias(OdinFile thisOdinFile, Map<OdinImport, List<OdinFile>> packages) {
+        String sourceFilePath = thisOdinFile.getVirtualFile().getPath();
+        Project project = thisOdinFile.getProject();
+
+        Map<OdinImport, List<OdinFile>> packagesWithAliasReplacedAlias = new HashMap<>();
+        Map<Path, OdinImport> fileImports = thisOdinFile.getFileScope().getImportStatements().stream()
+                .map(OdinImportStatement::getImportDeclaration)
+                .map(OdinImportDeclaration::getImportInfo)
+                .collect(Collectors.toMap(
+                        i -> OdinImportUtils.getFirstAbsoluteImportPath(i, sourceFilePath, project),
+                        v -> v,
+                        (a, b) -> a
+                ));
+
+        for (Map.Entry<OdinImport, List<OdinFile>> entry : packages.entrySet()) {
+            Path p = OdinImportUtils.getFirstAbsoluteImportPath(entry.getKey(), sourceFilePath, project);
+            OdinImport odinImport = fileImports.get(p);
+            if (odinImport != null && odinImport.alias() != null && !odinImport.alias().equals(entry.getKey().packageName())) {
+                packagesWithAliasReplacedAlias.put(odinImport, entry.getValue());
+            } else {
+                packagesWithAliasReplacedAlias.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return packagesWithAliasReplacedAlias;
+    }
+
+
+    private void addIdentifierCompletionsWithStubs(String text,
+                                                   OdinFile thisOdinFile,
+                                                   @NotNull CompletionResultSet completionResultSet) {
+
+        String typed = text.replaceAll(DUMMY_IDENTIFIER_TRIMMED + "$", "");
+        if (typed.isBlank()) {
+            completionResultSet.restartCompletionOnAnyPrefixChange();
+        } else {
+            completionResultSet = completionResultSet.withPrefixMatcher(typed).caseInsensitive();
+        }
+
+        Project project = thisOdinFile.getProject();
+        GlobalSearchScope globalSearchScope = GlobalSearchScope.allScope(project);
+        Set<String> allNamesSorted = collectAllNames(completionResultSet.getPrefixMatcher(), thisOdinFile);
+        String thisPackagePath = thisOdinFile.getVirtualFile().getParent().getPath();
+
+        CompletionsProcessor processor = new CompletionsProcessor(thisOdinFile, thisPackagePath);
+        for (String name : allNamesSorted) {
+            Collection<OdinDeclaration> declarations = StubIndex.getElements(OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES, name, project, globalSearchScope, OdinDeclaration.class);
+
+            for (OdinDeclaration declaration : declarations) {
+                OdinImport odinImport = OdinImportUtils.computeRelativeImport(project, OdinImportUtils.getContainingVirtualFile(thisOdinFile), OdinImportUtils.getContainingVirtualFile(declaration));
+                processor.process(name, declaration, odinImport, completionResultSet);
+            }
+        }
+    }
+
+    static class CompletionsProcessor implements ElementProcessor {
+
+        private final OdinFile sourceFile;
+
+        public CompletionsProcessor(OdinFile sourceFile, String sourcePackagePath) {
+            this.sourceFile = sourceFile;
+            this.sourcePackagePath = sourcePackagePath;
+        }
+
+        private final String sourcePackagePath;
+
+        @Override
+        public boolean process(@NotNull String name, @NotNull OdinDeclaration element, @Nullable OdinImport importData, @NotNull CompletionResultSet result) {
+            String identifierName = substringAfter(name, '.');
+            OdinSymbol symbol = OdinInsightUtils.createSymbol(element, identifierName);
+            addLookUpElement(sourceFile, importData, sourcePackagePath, result, symbol, 0);
+            return true;
+        }
+
+        @Override
+        public boolean isMine(@NotNull String name, @NotNull OdinImport element) {
+            return false;
+        }
+    }
+
+    interface ElementProcessor {
+        boolean process(@NotNull String name,
+                        @NotNull OdinDeclaration element,
+                        @NotNull OdinImport importData,
+                        @NotNull CompletionResultSet result);
+
+        boolean isMine(@NotNull String name, @NotNull OdinImport element);
+    }
+
+
+    private static @NotNull Set<String> collectAllNames(PrefixMatcher matcher, OdinFile thisOdinFile) {
+        Set<String> aliases = OdinImportUtils.getImports(thisOdinFile.getFileScope()).stream()
+                .filter(i -> i.alias() != null)
+                .map(OdinImport::canonicalName)
+                .collect(Collectors.toSet());
+
+        String prefix = matcher.getPrefix();
+        boolean prefixIsEmpty = prefix.isEmpty();
+
+        Set<String> allNames = new HashSet<>();
+        CancellableCollectProcessor<String> processor = new CancellableCollectProcessor<>(allNames) {
+            @Override
+            protected boolean accept(String s) {
+                return prefixIsEmpty || matcher.prefixMatches(s) || aliases.contains(substringBefore(s, '.'));
+            }
+        };
+
+        // TODO add production filter and scope
+        StubIndex.getInstance().processAllKeys(
+                OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES,
+                processor,
+                GlobalSearchScope.allScope(thisOdinFile.getProject()),
+                null
+        );
+
+        List<String> sorted = ContainerUtil.sorted(allNames, String.CASE_INSENSITIVE_ORDER);
+        ProgressManager.checkCanceled();
+
+        LinkedHashSet<String> result = new LinkedHashSet<>();
+        for (String name : sorted) {
+            ProgressManager.checkCanceled();
+            if (matcher.isStartMatch(name)) {
+                result.add(name);
+            }
+        }
+        result.addAll(sorted);
+        return result;
+    }
+
+    private static String substringBefore(@NotNull String s, char c) {
+        int i = s.indexOf(c);
+        if (i == -1) return s;
+        return s.substring(0, i);
+    }
+
+    private static String substringAfter(@NotNull String s, char c) {
+        int i = s.indexOf(c);
+        if (i == -1) return "";
+        return s.substring(i + 1);
     }
 
     @Getter

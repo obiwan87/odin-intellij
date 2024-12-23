@@ -13,10 +13,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
-import com.lasagnerd.odin.codeInsight.symbols.OdinScope;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
-import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
+import com.lasagnerd.odin.codeInsight.symbols.*;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -1228,6 +1225,18 @@ public class OdinInsightUtils {
         }
         return OdinVisibility.NONE;
     }
+
+    public static @Nullable OdinSymbol createSymbol(OdinDeclaration declaration, String name) {
+        if (declaration != null) {
+            List<OdinSymbol> symbols = OdinDeclarationSymbolResolver.getSymbols(declaration);
+            return symbols.stream()
+                    .filter(s -> s.getName().equals(name))
+                    .findFirst()
+                    .orElse(null);
+        }
+        return null;
+    }
+
     // Record to hold the result
     public record LineColumn(int line, int column) {
     }

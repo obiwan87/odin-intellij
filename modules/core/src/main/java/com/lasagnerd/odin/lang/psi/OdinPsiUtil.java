@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
@@ -345,9 +344,7 @@ public class OdinPsiUtil {
 
     @NotNull
     public static OdinImport getImportInfo(OdinImportDeclaration importDeclaration) {
-        String name = importDeclaration.getAlias() != null
-                ? importDeclaration.getAlias().getText()
-                : null;
+
 
         String fullPathWithQuotes = importDeclaration.getPath().getText();
         String fullPath = fullPathWithQuotes.substring(1, fullPathWithQuotes.length() - 1);
@@ -363,13 +360,15 @@ public class OdinPsiUtil {
             path = parts[0];
         }
 
-        if (name == null) {
-            // Last path segment is the packageName
-            String[] pathParts = path.split("/");
-            name = pathParts[pathParts.length - 1];
+        String[] pathParts = path.split("/");
+        String lastSegmentOfPath = pathParts[pathParts.length - 1];
+
+        String alias = null;
+        if (importDeclaration.getDeclaredIdentifier() != null) {
+            alias = importDeclaration.getDeclaredIdentifier().getIdentifierToken().getText().trim();
         }
 
-        return new OdinImport(fullPath, name, path, library, null);
+        return new OdinImport(fullPath, lastSegmentOfPath, path, library, alias);
     }
 
     public static OdinIdentifier getPackageIdentifier(OdinQualifiedType qualifiedType) {
@@ -688,7 +687,7 @@ public class OdinPsiUtil {
         }
 
         if (baseIcon != null) {
-            if ((flags & Iconable.ICON_FLAG_VISIBILITY) != 0) {
+            if (true) {
                 OdinVisibility visibility = null;
                 if (declaration instanceof OdinAttributesOwner attributesOwner) {
                     visibility = OdinInsightUtils.computeVisibility(attributesOwner);
