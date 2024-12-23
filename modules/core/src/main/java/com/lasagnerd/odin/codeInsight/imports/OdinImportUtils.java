@@ -86,7 +86,7 @@ public class OdinImportUtils {
     public static OdinSymbolTable getSymbolsOfImportedPackage(OdinContext context, OdinImport importInfo, String sourceFilePath, Project project) {
         List<OdinSymbol> packageDeclarations = new ArrayList<>();
         if (importInfo != null) {
-            Path packagePath = getFirstAbsoluteImportPath(importInfo, sourceFilePath, project);
+            Path packagePath = getFirstAbsoluteImportPath(project, sourceFilePath, importInfo);
             if (packagePath == null)
                 return OdinSymbolTable.EMPTY;
 
@@ -155,14 +155,12 @@ public class OdinImportUtils {
      * When importing from a collection, there might be competing collection names. This will return
      * the first path or a collection from the SDK if present.
      *
-     * @param importInfo     The import to be imported
-     * @param sourceFilePath Path of the file from where the import should be resolved
      * @param project        The current project
+     * @param sourceFilePath Path of the file from where the import should be resolved
+     * @param importInfo     The import to be imported
      * @return The first import path that exists or null if none exist
      */
-    public static @Nullable Path getFirstAbsoluteImportPath(OdinImport importInfo,
-                                                            String sourceFilePath,
-                                                            Project project) {
+    public static @Nullable Path getFirstAbsoluteImportPath(Project project, String sourceFilePath, OdinImport importInfo) {
         List<Path> packagePaths = getAbsoluteImportPaths(importInfo, sourceFilePath, project);
 
         Path packagePath;
@@ -330,6 +328,19 @@ public class OdinImportUtils {
         }
 
         return null;
+    }
+
+    public static @NotNull Map<Path, OdinImport> getImportPathMap(OdinFile thisOdinFile) {
+        Project project = thisOdinFile.getProject();
+        String sourceFilePath = thisOdinFile.getVirtualFile().getPath();
+        return thisOdinFile.getFileScope().getImportStatements().stream()
+                .map(OdinImportStatement::getImportDeclaration)
+                .map(OdinImportDeclaration::getImportInfo)
+                .collect(Collectors.toMap(
+                        i -> getFirstAbsoluteImportPath(project, sourceFilePath, i),
+                        v -> v,
+                        (a, b) -> a
+                ));
     }
 
     public String getCollectionName(Project project, String path) {

@@ -924,12 +924,10 @@ public class OdinInsightUtils {
     }
 
     public static boolean isLocal(@NotNull PsiElement o) {
-        OdinFileScopeStatementList fileScope = PsiTreeUtil.getParentOfType(o, OdinFileScopeStatementList.class,
-                true,
-                OdinProcedureBody.class);
+        OdinProcedureBody fileScope = PsiTreeUtil.getParentOfType(o, OdinProcedureBody.class);
 
 
-        return fileScope == null;
+        return fileScope != null;
     }
 
     public static boolean isForeign(PsiElement o) {
@@ -1112,6 +1110,15 @@ public class OdinInsightUtils {
             return odinExpression;
         }
         return null;
+    }
+
+    public static OdinVisibility getGlobalFileVisibility(@NotNull PsiElement element) {
+        if (isLocal(element))
+            return OdinVisibility.NONE;
+        OdinFileScope fileScope = PsiTreeUtil.getParentOfType(element, OdinFileScope.class, false);
+        if (fileScope != null)
+            return getGlobalFileVisibility(fileScope);
+        return OdinVisibility.NONE;
     }
 
     public static OdinVisibility getGlobalFileVisibility(@NotNull OdinFileScope fileScope) {

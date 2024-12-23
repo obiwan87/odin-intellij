@@ -35,11 +35,11 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
     }
 
     public static List<OdinSymbol> getSymbols(OdinDeclaration odinDeclaration) {
-        return getSymbols(OdinVisibility.PACKAGE_EXPORTED, odinDeclaration, new OdinContext());
+        return getSymbols(OdinInsightUtils.getGlobalFileVisibility(odinDeclaration), odinDeclaration, new OdinContext());
     }
 
     public static List<OdinSymbol> getSymbols(OdinDeclaration odinDeclaration, OdinContext odinContext) {
-        return getSymbols(OdinVisibility.NONE, odinDeclaration, odinContext);
+        return getSymbols(OdinInsightUtils.getGlobalFileVisibility(odinDeclaration), odinDeclaration, odinContext);
     }
 
     public static List<OdinSymbol> getSymbols(@NotNull OdinVisibility defaultVisibility,
