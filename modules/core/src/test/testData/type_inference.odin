@@ -308,14 +308,14 @@ typeInference_procedureGroup :: proc() {
 
 
     add_one :: proc {
-    add_one_string,
-    add_one_integer,
-    add_one_struct,
-    add_one_distinct_alias,
-    add_one_alias,
-    add_one_alias_2,
-    add_one_arr,
-    add_one_arr_2,
+        add_one_string,
+        add_one_integer,
+        add_one_struct,
+        add_one_distinct_alias,
+        add_one_alias,
+        add_one_alias_2,
+        add_one_arr,
+        add_one_arr_2,
     }
 
     r := add_one([2]i32{ 1, 2 })
@@ -339,7 +339,7 @@ typeInference_polyProcedureGroup :: proc() {
     }
 
     my_make :: proc {
-    my_make_slice, my_make_dyn_array,
+        my_make_slice, my_make_dyn_array,
     }
 
     x := my_make([]Point)
@@ -442,17 +442,17 @@ test_polyOverloadWithMake :: proc() {
     }
 
     make :: proc{
-    make_slice,
-    make_dynamic_array,
-    make_dynamic_array_len,
-    make_dynamic_array_len_cap,
-    make_map,
-    make_multi_pointer,
+        make_slice,
+        make_dynamic_array,
+        make_dynamic_array_len,
+        make_dynamic_array_len_cap,
+        make_map,
+        make_multi_pointer,
 
-    make_soa_slice,
-    make_soa_dynamic_array,
-    make_soa_dynamic_array_len,
-    make_soa_dynamic_array_len_cap,
+        make_soa_slice,
+        make_soa_dynamic_array,
+        make_soa_dynamic_array_len,
+        make_soa_dynamic_array_len_cap,
     }
 
     x := make([]Point, 1)
@@ -493,9 +493,9 @@ test_astNew :: proc() {
     }
 
     new :: proc {
-    new_from_pos_and_end_node_2,
-    new_from_positions,
-    new_from_pos_and_end_node,
+        new_from_pos_and_end_node_2,
+        new_from_positions,
+        new_from_pos_and_end_node,
 
     }
 
@@ -608,7 +608,7 @@ testImplicitEnumExpression :: proc() {
         }
 
         group :: proc {
-        p1, p2
+            p1, p2
         }
 
         // implicit expressions in procedure overloads
@@ -646,7 +646,7 @@ testImplicitEnumExpression :: proc() {
         nested_ternary := bitset | bitset | (x? { + (((+ .East))) } : y? { + (.South) } : { x? .North : .West }) | a
 
         is_superset := false
-        is_superset = get_bitset() >= {.East}
+        is_superset = get_bitset() >= { .East }
         get_bitset :: proc() -> Directions {
             return Directions{ }
         }
@@ -833,7 +833,7 @@ testUnionConversion :: proc() {
     }
 
     p :: proc {
-    p1, p2
+        p1, p2
     }
 
     x := p(1.0)
@@ -849,7 +849,7 @@ testAnyTypeConversion :: proc() {
     }
 
     p :: proc {
-    p1, p2
+        p1, p2
     }
 
     x := p(1.0, 1.0)
@@ -864,10 +864,10 @@ testFloatConversion :: proc() {
     }
 
     p :: proc {
-    p1, p2
+        p1, p2
     }
     q :: proc {
-    p2, p3
+        p2, p3
     }
 
     x := p(1)
@@ -889,4 +889,8 @@ testUsingVsNonUsing :: proc() {
     using o
     s1 := o.S1 { }
     s1_using := S1 { }
+}
+
+testStructTypeReferenceNotHavingTypeElements :: proc() {
+    x := Line.points
 }

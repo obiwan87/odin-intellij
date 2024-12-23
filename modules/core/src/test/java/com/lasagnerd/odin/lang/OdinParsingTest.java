@@ -2877,6 +2877,15 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testStructTypeReferenceNotHavingTypeElements() throws IOException {
+        OdinFile file = loadTypeInference();
+        {
+            OdinRefExpression ref = (OdinRefExpression) findFirstExpressionOfVariable(file, "testStructTypeReferenceNotHavingTypeElements", "x");
+            OdinSymbol referencedSymbol = ref.getIdentifier().getReferencedSymbol();
+            assertNull(referencedSymbol);
+        }
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
         String filePath = "expression_eval.odin";
         return loadTestData(filePath);

@@ -146,91 +146,92 @@ public class OdinInsightUtils {
             }
         }
 
-        if (type.getPsiType() instanceof OdinStructType structType) {
-            var structFields = OdinInsightUtils.getStructFields(type.getContext()
-                    .withSymbolValueStore(context.getSymbolValueStore())
-                    .withUseKnowledge(context.isUseKnowledge()), structType);
+        if (!(type instanceof TsOdinTypeReference typeReference)) {
+            if (type.getPsiType() instanceof OdinStructType structType) {
+                var structFields = OdinInsightUtils.getStructFields(type.getContext()
+                        .withSymbolValueStore(context.getSymbolValueStore())
+                        .withUseKnowledge(context.isUseKnowledge()), structType);
 
-            symbolTable.addAll(structFields);
-            return symbolTable;
-        }
-
-        if (type instanceof TsOdinSoaStructType tsOdinSoaStructType) {
-            for (Map.Entry<String, TsOdinType> entry : tsOdinSoaStructType.getFields().entrySet()) {
-                TsOdinType sliceType = entry.getValue();
-                OdinSymbol symbol = new OdinSymbol();
-                symbol.setName(entry.getKey());
-                symbol.setVisibility(OdinVisibility.NONE);
-                symbol.setSymbolType(SOA_FIELD);
-                symbol.setPsiType(sliceType.getPsiType());
-                symbol.setImplicitlyDeclared(true);
-                symbol.setScope(OdinScope.TYPE);
-                symbolTable.add(symbol);
+                symbolTable.addAll(structFields);
+                return symbolTable;
             }
 
-            return symbolTable;
-        }
+            if (type instanceof TsOdinSoaStructType tsOdinSoaStructType) {
+                for (Map.Entry<String, TsOdinType> entry : tsOdinSoaStructType.getFields().entrySet()) {
+                    TsOdinType sliceType = entry.getValue();
+                    OdinSymbol symbol = new OdinSymbol();
+                    symbol.setName(entry.getKey());
+                    symbol.setVisibility(OdinVisibility.NONE);
+                    symbol.setSymbolType(SOA_FIELD);
+                    symbol.setPsiType(sliceType.getPsiType());
+                    symbol.setImplicitlyDeclared(true);
+                    symbol.setScope(OdinScope.TYPE);
+                    symbolTable.add(symbol);
+                }
 
-        if (type.getPsiType() instanceof OdinEnumType enumType) {
-            return symbolTable.with(getEnumFields(enumType));
-        }
+                return symbolTable;
+            }
 
-        if (type instanceof TsOdinTypeReference typeReference && typeReference.referencedType().baseType(true) instanceof TsOdinBitSetType tsOdinBitSetType) {
+            if (type.getPsiType() instanceof OdinEnumType enumType) {
+                return symbolTable.with(getEnumFields(enumType));
+            }
+
+            if (type.getPsiType() instanceof OdinBitFieldType bitFieldType) {
+                return symbolTable.with(getBitFieldFields(bitFieldType));
+            }
+
+            if (includeReferenceableSymbols && type instanceof TsOdinArrayType arrayType) {
+                return OdinSymbolTable.from(getSwizzleFields(arrayType));
+            }
+
+            if (includeReferenceableSymbols && (type instanceof TsOdinDynamicArray || type instanceof TsOdinMapType)) {
+                OdinSymbol implicitStructSymbol = OdinSdkService.createAllocatorSymbol(project);
+                return OdinSymbolTable.from(Collections.singletonList(implicitStructSymbol));
+            }
+
+            if (includeReferenceableSymbols && TsOdinBuiltInTypes.getComplexTypes().contains(type)) {
+                if (type == TsOdinBuiltInTypes.COMPLEX32) {
+                    List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F16);
+                    odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F16));
+                    return OdinSymbolTable.from(odinSymbols);
+                }
+
+                if (type == TsOdinBuiltInTypes.COMPLEX64) {
+                    List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F32);
+                    odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F32));
+                    return OdinSymbolTable.from(odinSymbols);
+                }
+
+                if (type == TsOdinBuiltInTypes.COMPLEX128) {
+                    List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F64);
+                    odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F64));
+                    return OdinSymbolTable.from(odinSymbols);
+                }
+            }
+
+            if (includeReferenceableSymbols && TsOdinBuiltInTypes.getQuaternionTypes().contains(type)) {
+                if (type == TsOdinBuiltInTypes.QUATERNION64) {
+                    List<OdinSymbol> odinSymbols = generateSwizzleFields(RGBA, TsOdinBuiltInTypes.F16);
+                    odinSymbols.addAll(generateSwizzleFields(XYZW, TsOdinBuiltInTypes.F16));
+                    return OdinSymbolTable.from(odinSymbols);
+                }
+
+                if (type == TsOdinBuiltInTypes.QUATERNION128) {
+                    List<OdinSymbol> odinSymbols = generateSwizzleFields(RGBA, TsOdinBuiltInTypes.F32);
+                    odinSymbols.addAll(generateSwizzleFields(XYZW, TsOdinBuiltInTypes.F32));
+                    return OdinSymbolTable.from(odinSymbols);
+                }
+
+                if (type == TsOdinBuiltInTypes.QUATERNION256) {
+                    List<OdinSymbol> odinSymbols = generateSwizzleFields(RGBA, TsOdinBuiltInTypes.F64);
+                    odinSymbols.addAll(generateSwizzleFields(XYZW, TsOdinBuiltInTypes.F64));
+                    return OdinSymbolTable.from(odinSymbols);
+                }
+            }
+
+        } else if (typeReference.referencedType().baseType(true) instanceof TsOdinBitSetType tsOdinBitSetType) {
             if (tsOdinBitSetType.getElementType() instanceof TsOdinEnumType tsOdinEnumType) {
                 return symbolTable.with(getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType()));
-            }
-        }
-
-        if (type.getPsiType() instanceof OdinBitFieldType bitFieldType) {
-            return symbolTable.with(getBitFieldFields(bitFieldType));
-        }
-
-        if (includeReferenceableSymbols && type instanceof TsOdinArrayType arrayType) {
-            return OdinSymbolTable.from(getSwizzleFields(arrayType));
-        }
-
-        if (includeReferenceableSymbols && (type instanceof TsOdinDynamicArray || type instanceof TsOdinMapType)) {
-            OdinSymbol implicitStructSymbol = OdinSdkService.createAllocatorSymbol(project);
-            return OdinSymbolTable.from(Collections.singletonList(implicitStructSymbol));
-        }
-
-        if (includeReferenceableSymbols && TsOdinBuiltInTypes.getComplexTypes().contains(type)) {
-            if (type == TsOdinBuiltInTypes.COMPLEX32) {
-                List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F16);
-                odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F16));
-                return OdinSymbolTable.from(odinSymbols);
-            }
-
-            if (type == TsOdinBuiltInTypes.COMPLEX64) {
-                List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F32);
-                odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F32));
-                return OdinSymbolTable.from(odinSymbols);
-            }
-
-            if (type == TsOdinBuiltInTypes.COMPLEX128) {
-                List<OdinSymbol> odinSymbols = generateSwizzleFields(RG, TsOdinBuiltInTypes.F64);
-                odinSymbols.addAll(generateSwizzleFields(XY, TsOdinBuiltInTypes.F64));
-                return OdinSymbolTable.from(odinSymbols);
-            }
-        }
-
-        if (includeReferenceableSymbols && TsOdinBuiltInTypes.getQuaternionTypes().contains(type)) {
-            if (type == TsOdinBuiltInTypes.QUATERNION64) {
-                List<OdinSymbol> odinSymbols = generateSwizzleFields(RGBA, TsOdinBuiltInTypes.F16);
-                odinSymbols.addAll(generateSwizzleFields(XYZW, TsOdinBuiltInTypes.F16));
-                return OdinSymbolTable.from(odinSymbols);
-            }
-
-            if (type == TsOdinBuiltInTypes.QUATERNION128) {
-                List<OdinSymbol> odinSymbols = generateSwizzleFields(RGBA, TsOdinBuiltInTypes.F32);
-                odinSymbols.addAll(generateSwizzleFields(XYZW, TsOdinBuiltInTypes.F32));
-                return OdinSymbolTable.from(odinSymbols);
-            }
-
-            if (type == TsOdinBuiltInTypes.QUATERNION256) {
-                List<OdinSymbol> odinSymbols = generateSwizzleFields(RGBA, TsOdinBuiltInTypes.F64);
-                odinSymbols.addAll(generateSwizzleFields(XYZW, TsOdinBuiltInTypes.F64));
-                return OdinSymbolTable.from(odinSymbols);
             }
         }
         return symbolTable;
