@@ -3,7 +3,6 @@ package com.lasagnerd.odin.codeInsight.symbols.symbolTable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
@@ -212,11 +211,11 @@ public abstract class OdinSymbolTableBuilderBase implements OdinSymbolTableBuild
 
     protected boolean isStatic(OdinDeclaration declaration) {
         if (declaration instanceof OdinInitVariableDeclaration initVariableDeclaration) {
-            return OdinAttributeUtils.containsAttribute(initVariableDeclaration.getAttributesDefinitionList(), "static");
+            return OdinInsightUtils.containsAttribute(initVariableDeclaration.getAttributesDefinitionList(), "static");
         }
 
         if (declaration instanceof OdinShortVariableDeclaration shortVariableDeclaration) {
-            return OdinAttributeUtils.containsAttribute(shortVariableDeclaration.getAttributesDefinitionList(), "static");
+            return OdinInsightUtils.containsAttribute(shortVariableDeclaration.getAttributesDefinitionList(), "static");
         }
         return false;
     }

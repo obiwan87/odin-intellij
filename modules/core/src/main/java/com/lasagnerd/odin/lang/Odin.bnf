@@ -178,6 +178,7 @@
 
   implements("binaryExpression|unaryExpression|castExpression|transmuteExpression|autoCastExpression|orElseExpression|orReturnExpression|orBreakExpression|orContinueExpression|ternaryExpression") = 'com.lasagnerd.odin.lang.psi.OdinOperation'
   implements('importDeclaration|constantInitDeclaration') = 'com.lasagnerd.odin.lang.psi.OdinConstantDeclaration'
+  implements('constantInitDeclaration') = "com.lasagnerd.odin.lang.psi.OdinAttributesOwner"
   implements('usingStatement') = 'com.lasagnerd.odin.lang.psi.OdinDeclaration'
   methods('usingStatement') = [getDeclaredIdentifiers]
 

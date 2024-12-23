@@ -2,7 +2,7 @@ package com.lasagnerd.odin.codeInsight.symbols;
 
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.OdinAttributesDefinition;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinType;
@@ -70,7 +70,7 @@ public class OdinSymbol {
     }
 
     public boolean isStatic() {
-        return OdinAttributeUtils.containsAttribute(attributes, "static");
+        return OdinInsightUtils.containsAttribute(attributes, "static");
     }
 
     @Override

@@ -17,7 +17,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
-import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
@@ -459,7 +458,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
 
         if (symbol.getSymbolType() == OdinSymbolType.VARIABLE) {
-            if (OdinAttributeUtils.containsAttribute(symbol.getAttributes(), "static")) {
+            if (OdinInsightUtils.containsAttribute(symbol.getAttributes(), "static")) {
                 highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_STATIC_VARIABLE);
                 return;
             }

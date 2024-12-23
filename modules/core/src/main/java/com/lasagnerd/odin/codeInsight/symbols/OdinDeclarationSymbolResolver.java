@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
@@ -474,7 +473,7 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
 
     public static @NotNull OdinVisibility getVisibility(@NotNull Collection<OdinAttributesDefinition> attributes,
                                                         OdinVisibility defaultVisibility) {
-        OdinVisibility odinVisibility = OdinAttributeUtils.computeVisibility(attributes);
+        OdinVisibility odinVisibility = OdinInsightUtils.computeVisibility(attributes);
         return defaultVisibility == null ? odinVisibility : OdinVisibility.min(defaultVisibility, odinVisibility);
     }
 

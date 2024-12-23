@@ -17,11 +17,11 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
 import com.lasagnerd.odin.codeInsight.OdinContext;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.refactor.OdinNameSuggester;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
-import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinSdkLibraryManager;
@@ -131,7 +131,7 @@ public class OdinImportUtils {
                     System.out.printf("File scope is null for file %s%n", importedFile.getVirtualFile().getPath());
                     continue;
                 }
-                OdinVisibility globalFileVisibility = OdinSymbolTableHelper.getGlobalFileVisibility(importedFileScope);
+                OdinVisibility globalFileVisibility = OdinInsightUtils.getGlobalFileVisibility(importedFileScope);
                 if (globalFileVisibility == OdinVisibility.PACKAGE_PRIVATE
                         || globalFileVisibility == OdinVisibility.FILE_PRIVATE)
                     continue;

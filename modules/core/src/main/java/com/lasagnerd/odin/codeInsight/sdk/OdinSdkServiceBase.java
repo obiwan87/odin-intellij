@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiNamedElement;
-import com.lasagnerd.odin.codeInsight.OdinAttributeUtils;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
@@ -434,7 +433,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
         List<Path> builtinPaths = List.of(coreBuiltinPath, coreBuiltinSoaPath);
         loadSymbols(builtinPaths,
                 builtinSymbols,
-                odinSymbol -> OdinAttributeUtils.containsAttribute(odinSymbol.getAttributes(), "builtin"));
+                odinSymbol -> OdinInsightUtils.containsAttribute(odinSymbol.getAttributes(), "builtin"));
     }
 
     @Override
@@ -459,7 +458,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                         .values()
                         .stream()
                         .flatMap(List::stream)
-                        .filter(symbol -> OdinAttributeUtils.containsAttribute(symbol.getAttributes(), "builtin")
+                        .filter(symbol -> OdinInsightUtils.containsAttribute(symbol.getAttributes(), "builtin")
                                 || symbol.getSymbolType() == OdinSymbolType.PACKAGE_REFERENCE)
                         .forEach(symbol -> {
                             symbol.setBuiltin(true);

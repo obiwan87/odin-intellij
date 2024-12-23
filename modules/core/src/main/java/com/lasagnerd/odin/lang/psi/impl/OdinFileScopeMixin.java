@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinBuildFlagEvaluator;
@@ -69,7 +70,7 @@ public abstract class OdinFileScopeMixin extends OdinStubbedElementImpl<OdinFile
         if (symbolTable == null) {
             symbolTable = OdinSymbolTableHelper
                     .buildFileScopeSymbolTable(this,
-                            OdinSymbolTableHelper.getGlobalFileVisibility(this));
+                            OdinInsightUtils.getGlobalFileVisibility(this));
         }
 
         return symbolTable;

@@ -2,10 +2,7 @@ package com.lasagnerd.odin.codeInsight.symbols.symbolTable;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
@@ -190,50 +187,6 @@ public class OdinSymbolTableHelper {
             }
         }
         return symbolTable;
-    }
-
-    public static OdinVisibility getGlobalFileVisibility(@NotNull OdinFileScope fileScope) {
-        PsiElement lineComment = PsiTreeUtil.skipSiblingsBackward(fileScope, PsiWhiteSpace.class);
-        if (lineComment != null) {
-            IElementType elementType = PsiUtilCore.getElementType(lineComment.getNode());
-            if (elementType == OdinTypes.LINE_COMMENT) {
-                if (lineComment.getText().equals("//+private")) {
-                    return OdinVisibility.PACKAGE_PRIVATE;
-                }
-
-                if (lineComment.getText().equals("//+private file")) {
-                    return OdinVisibility.FILE_PRIVATE;
-                }
-            }
-        }
-
-        OdinBuildFlagClause[] buildFlagClauses = PsiTreeUtil.getChildrenOfType(fileScope, OdinBuildFlagClause.class);
-        if (buildFlagClauses == null)
-            return OdinVisibility.PACKAGE_EXPORTED;
-
-        for (OdinBuildFlagClause buildFlagClause : buildFlagClauses) {
-
-            String prefix = buildFlagClause.getBuildFlagPrefix().getText();
-            if (prefix.equals("#+private")) {
-                for (OdinBuildFlagArgument buildFlagArgument : buildFlagClause.getBuildFlagArgumentList()) {
-                    if (buildFlagArgument.getBuildFlagList().size() > 1)
-                        continue;
-
-                    OdinBuildFlag buildFlag = buildFlagArgument.getBuildFlagList().getFirst();
-                    if (!(buildFlag instanceof OdinBuildFlagIdentifier buildFlagIdentifier))
-                        continue;
-                    if (buildFlagIdentifier.getBuildFlagIdentifierToken()
-                            .getText()
-                            .trim()
-                            .equals("file")) {
-                        return OdinVisibility.FILE_PRIVATE;
-                    }
-                }
-                return OdinVisibility.PACKAGE_PRIVATE;
-            }
-        }
-
-        return OdinVisibility.PACKAGE_EXPORTED;
     }
 
     /**

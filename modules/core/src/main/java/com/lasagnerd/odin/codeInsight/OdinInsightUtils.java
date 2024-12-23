@@ -6,7 +6,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
@@ -603,8 +606,8 @@ public class OdinInsightUtils {
         return null;
     }
 
-    public static @Nullable OdinType getDeclaredType(OdinConstantInitDeclaration constantInitializationStatement) {
-        List<OdinExpression> expressionList = constantInitializationStatement.getExpressionList();
+    public static @Nullable OdinType getDeclaredType(OdinConstantInitDeclaration constantInitDeclaration) {
+        List<OdinExpression> expressionList = constantInitDeclaration.getExpressionList();
         if (expressionList.isEmpty())
             return null;
 
@@ -943,7 +946,7 @@ public class OdinInsightUtils {
     public static boolean isStaticVariable(OdinDeclaredIdentifier declaredIdentifier) {
         if (isVariable(declaredIdentifier.getParent())) {
             OdinVariableDeclaration variableDeclaration = (OdinVariableDeclaration) declaredIdentifier.getParent();
-            return OdinAttributeUtils.containsAttribute(variableDeclaration.getAttributesDefinitionList(), "static");
+            return containsAttribute(variableDeclaration.getAttributesDefinitionList(), "static");
         }
         return false;
     }
@@ -952,7 +955,7 @@ public class OdinInsightUtils {
         PsiElement parent = declaredIdentifier.getParent();
         if (isProcedureDeclaration(parent)) {
             OdinConstantInitDeclaration constant = (OdinConstantInitDeclaration) parent;
-            return OdinAttributeUtils.containsAttribute(constant.getAttributesDefinitionList(), "static");
+            return containsAttribute(constant.getAttributesDefinitionList(), "static");
         }
         return false;
     }
@@ -1114,6 +1117,117 @@ public class OdinInsightUtils {
         return null;
     }
 
+    public static OdinVisibility getGlobalFileVisibility(@NotNull OdinFileScope fileScope) {
+        PsiElement lineComment = PsiTreeUtil.skipSiblingsBackward(fileScope, PsiWhiteSpace.class);
+        if (lineComment != null) {
+            IElementType elementType = PsiUtilCore.getElementType(lineComment.getNode());
+            if (elementType == OdinTypes.LINE_COMMENT) {
+                if (lineComment.getText().equals("//+private")) {
+                    return OdinVisibility.PACKAGE_PRIVATE;
+                }
+
+                if (lineComment.getText().equals("//+private file")) {
+                    return OdinVisibility.FILE_PRIVATE;
+                }
+            }
+        }
+
+        OdinBuildFlagClause[] buildFlagClauses = PsiTreeUtil.getChildrenOfType(fileScope, OdinBuildFlagClause.class);
+        if (buildFlagClauses == null)
+            return OdinVisibility.PACKAGE_EXPORTED;
+
+        for (OdinBuildFlagClause buildFlagClause : buildFlagClauses) {
+
+            String prefix = buildFlagClause.getBuildFlagPrefix().getText();
+            if (prefix.equals("#+private")) {
+                for (OdinBuildFlagArgument buildFlagArgument : buildFlagClause.getBuildFlagArgumentList()) {
+                    if (buildFlagArgument.getBuildFlagList().size() > 1)
+                        continue;
+
+                    OdinBuildFlag buildFlag = buildFlagArgument.getBuildFlagList().getFirst();
+                    if (!(buildFlag instanceof OdinBuildFlagIdentifier buildFlagIdentifier))
+                        continue;
+                    if (buildFlagIdentifier.getBuildFlagIdentifierToken()
+                            .getText()
+                            .trim()
+                            .equals("file")) {
+                        return OdinVisibility.FILE_PRIVATE;
+                    }
+                }
+                return OdinVisibility.PACKAGE_PRIVATE;
+            }
+        }
+
+        return OdinVisibility.PACKAGE_EXPORTED;
+    }
+
+    public static boolean containsAttribute(List<OdinAttributesDefinition> attributesDefinitions, String attributeName) {
+        if (attributesDefinitions == null)
+            return false;
+
+        for (OdinAttributesDefinition attributesDefinition : attributesDefinitions) {
+
+            for (OdinAttributeArgument odinArgument : attributesDefinition.getAttributeArgumentList()) {
+                if (odinArgument instanceof OdinUnassignedAttribute unassignedAttribute) {
+                    if (unassignedAttribute.getText().equals(attributeName)) {
+                        return true;
+                    }
+                }
+
+                if (odinArgument instanceof OdinAssignedAttribute assignedAttribute) {
+                    if (assignedAttribute.getAttributeIdentifier().getText().equals(attributeName)) {
+                        return true;
+                    }
+                }
+            }
+
+        }
+
+        return false;
+    }
+
+    public static @NotNull OdinVisibility computeVisibility(@NotNull Collection<OdinAttributesDefinition> attributesDefinitions) {
+        for (OdinAttributesDefinition odinAttributesDefinition : attributesDefinitions) {
+            for (OdinAttributeArgument attributeArgument : odinAttributesDefinition.getAttributeArgumentList()) {
+                if (attributeArgument instanceof OdinAssignedAttribute assignedAttribute) {
+                    String text = assignedAttribute.getAttributeIdentifier().getText();
+                    if (text.equals("private")) {
+                        String attributeValue = getStringLiteralValue(assignedAttribute.getExpression());
+                        if (Objects.equals(attributeValue, "file")) {
+                            return OdinVisibility.FILE_PRIVATE;
+                        }
+
+                        if (Objects.equals(attributeValue, "package")) {
+                            return OdinVisibility.PACKAGE_PRIVATE;
+                        }
+                    }
+                }
+
+                if (attributeArgument instanceof OdinUnassignedAttribute unnamedArgument) {
+                    if (unnamedArgument.getAttributeIdentifier().getText().equals("private")) {
+                        return OdinVisibility.PACKAGE_PRIVATE;
+                    }
+                }
+            }
+        }
+
+        return OdinVisibility.NONE;
+    }
+
+    public static OdinVisibility computeVisibility(OdinAttributesOwner attributesOwner) {
+        if (isLocal(attributesOwner)) {
+            return OdinVisibility.NONE;
+        }
+
+        OdinVisibility visibility = computeVisibility(attributesOwner.getAttributesDefinitionList());
+        if (visibility == OdinVisibility.NONE) {
+            OdinFileScope fileScope = PsiTreeUtil.getParentOfType(attributesOwner, OdinFileScope.class);
+            if (fileScope != null) {
+                return getGlobalFileVisibility(fileScope);
+            }
+        }
+        return OdinVisibility.NONE;
+    }
     // Record to hold the result
     public record LineColumn(int line, int column) {
     }

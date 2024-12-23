@@ -3,17 +3,30 @@ package com.lasagnerd.odin.lang.psi;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryRoot;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.PlatformIcons;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinDeclarationSymbolResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.lang.stubs.OdinConstantInitDeclarationStub;
 import com.lasagnerd.odin.lang.stubs.OdinInitVariableDeclarationStub;
 import com.lasagnerd.odin.lang.stubs.OdinPackageClauseStub;
@@ -21,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -587,12 +602,43 @@ public class OdinPsiUtil {
 
             @Override
             public Icon getIcon(boolean unused) {
-                return AllIcons.Nodes.Variable;
+                return null;
             }
 
             @Override
             public String getLocationString() {
-                return "somewhere";
+                PsiFile containingFile = declaration.getContainingFile();
+                if (containingFile != null) {
+                    VirtualFile virtualFile = containingFile.getVirtualFile();
+                    if (virtualFile != null) {
+                        Project project = declaration.getProject();
+                        ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
+                        Collection<@NotNull LibraryEntity> libraries = projectFileIndex.findContainingLibraries(virtualFile);
+                        LibraryEntity odinSdk = libraries.stream().filter(l -> l.getName().equals("Odin SDK")).findFirst().orElse(null);
+                        Path virtualFileNioPath = Path.of(virtualFile.getPath());
+
+                        if (odinSdk != null) {
+                            if (!odinSdk.getRoots().isEmpty()) {
+                                LibraryRoot first = odinSdk.getRoots().getFirst();
+                                try {
+                                    Path path = Paths.get(first.getUrl().getPresentableUrl());
+                                    return path.relativize(virtualFileNioPath).toString();
+                                } catch (Exception ignored) {
+                                }
+                            }
+                        }
+
+                        if (projectFileIndex.isInProject(virtualFile)) {
+                            String basePath = project.getBasePath();
+                            if (basePath != null) {
+
+                                return Path.of(basePath).relativize(virtualFileNioPath).toString();
+                            }
+                            return virtualFile.getPath();
+                        }
+                    }
+                }
+                return null;
             }
         };
     }
@@ -631,6 +677,33 @@ public class OdinPsiUtil {
     }
 
     public static Icon getIcon(OdinDeclaration declaration, int flags) {
-        return AllIcons.Nodes.Variable;
+        Icon baseIcon = null;
+        if (declaration instanceof OdinVariableDeclaration variableDeclaration) {
+            baseIcon = AllIcons.Nodes.Variable;
+        }
+
+        if (declaration instanceof OdinConstantInitDeclaration constantInitDeclaration) {
+            OdinSymbolType symbolType = OdinInsightUtils.classify(constantInitDeclaration.getDeclaredIdentifiers().getFirst());
+            baseIcon = OdinCompletionContributor.getIcon(symbolType);
+        }
+
+        if (baseIcon != null) {
+            if ((flags & Iconable.ICON_FLAG_VISIBILITY) != 0) {
+                OdinVisibility visibility = null;
+                if (declaration instanceof OdinAttributesOwner attributesOwner) {
+                    visibility = OdinInsightUtils.computeVisibility(attributesOwner);
+                }
+
+                if (visibility != null) {
+                    return switch (visibility) {
+                        case PACKAGE_PRIVATE -> ElementBase.buildRowIcon(baseIcon, PlatformIcons.PACKAGE_LOCAL_ICON);
+                        case FILE_PRIVATE -> ElementBase.buildRowIcon(baseIcon, PlatformIcons.PRIVATE_ICON);
+                        case PACKAGE_EXPORTED, NONE -> ElementBase.buildRowIcon(baseIcon, PlatformIcons.PUBLIC_ICON);
+                    };
+                }
+            }
+        }
+
+        return baseIcon;
     }
 }
