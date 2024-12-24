@@ -21,6 +21,7 @@ import com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
+import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.impl.OdinReferenceOwnerMixin;
@@ -94,20 +95,16 @@ public abstract class OdinDeclaredIdentifierMixin extends OdinStubbedElementImpl
 
     @Override
     public @NotNull SearchScope getUseScope() {
-        // TODO
         OdinSymbol symbol = createSymbol();
         if (symbol != null) {
-            switch (symbol.getVisibility()) {
-                case NONE -> {
-                    OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
-                    if (fileScope != null) {
-                        return new LocalSearchScope(fileScope);
-                    }
+            switch (symbol.getScope()) {
+                case LOCAL -> {
+                    return new LocalSearchScope(this.getContainingFile());
                 }
-                case FILE_PRIVATE -> {
+                case GLOBAL -> {
                     OdinFileScope fileScope = PsiTreeUtil.getParentOfType(this, OdinFileScope.class, true);
-                    if (fileScope != null) {
-                        return new LocalSearchScope(fileScope.getContainingFile());
+                    if (symbol.getVisibility() == OdinVisibility.FILE_PRIVATE && fileScope != null) {
+                        return new LocalSearchScope(fileScope);
                     }
                 }
             }
