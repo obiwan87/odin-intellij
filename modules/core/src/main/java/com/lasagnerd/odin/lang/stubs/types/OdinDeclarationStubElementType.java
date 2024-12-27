@@ -50,19 +50,28 @@ public abstract class OdinDeclarationStubElementType<S extends OdinDeclarationSt
         for (String name : stub.getNames()) {
             if (StringUtil.isNotEmpty(name)) {
                 String packageName = null;
+                String packageClauseName = null;
                 StubElement<?> parent = stub.getParentStub();
                 while (parent != null) {
                     if (parent instanceof OdinFileStub odinFileStub) {
                         packageName = odinFileStub.getPackageName();
+                        packageClauseName = odinFileStub.getPackageClauseName();
                         break;
                     }
                     parent = parent.getParentStub();
                 }
 
                 String indexingName = StringUtil.isNotEmpty(packageName) ? packageName + "." + name : name;
+                String packageClauseIndexingName = StringUtil.isNotEmpty(packageClauseName) ? packageClauseName + "." + name : name;
+
                 if (stub.isPublic()) {
+                    if (!indexingName.equals(packageClauseIndexingName)) {
+                        sink.occurrence(OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES, packageClauseIndexingName);
+                    }
                     sink.occurrence(OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES, indexingName);
                 }
+
+
             }
         }
     }

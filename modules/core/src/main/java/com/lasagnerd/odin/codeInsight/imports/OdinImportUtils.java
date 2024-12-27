@@ -58,6 +58,15 @@ public class OdinImportUtils {
         return virtualFile;
     }
 
+    public static @Nullable String getContainingDirectoryName(@NotNull PsiElement psiElement) {
+        VirtualFile virtualFile = getContainingVirtualFile(psiElement);
+        VirtualFile parent = virtualFile.getParent();
+        if (parent != null) {
+            return parent.getName();
+        }
+        return null;
+    }
+
 
     public static OdinSymbolTable getSymbolsOfImportedPackage(OdinContext context, OdinImportStatement importStatement) {
         OdinImport importInfo = importStatement.getImportDeclaration().getImportInfo();

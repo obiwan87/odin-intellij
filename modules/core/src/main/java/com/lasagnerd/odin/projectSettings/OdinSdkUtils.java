@@ -1,13 +1,10 @@
 package com.lasagnerd.odin.projectSettings;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator.OdinBuildProcessRunner;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,11 +14,8 @@ import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -122,79 +116,6 @@ public class OdinSdkUtils {
         return validSdkPath
                 .map(s -> VirtualFileManager.getInstance().findFileByNioPath(Path.of(s)))
                 .orElse(null);
-    }
-
-    /**
-     * Creates a command line with the currently set odin compiler
-     *
-     * @param project              Current project
-     * @param debug                debug mode?
-     * @param mode                 "run" or "debug"
-     * @param compilerOptions      compiler options
-     * @param outputPathString     output path, i.e. -out:path
-     * @param projectDirectoryPath where to build
-     * @param programArguments     the arguments to pass to the built executable
-     * @param workingDirectory     working directory
-     * @return General command line object
-     */
-    public static @NotNull GeneralCommandLine createCommandLine(Project project,
-                                                                boolean debug,
-                                                                String mode,
-                                                                String compilerOptions,
-                                                                String outputPathString,
-                                                                String projectDirectoryPath,
-                                                                String programArguments,
-                                                                String workingDirectory) {
-        ProgramParametersConfigurator configurator = new ProgramParametersConfigurator();
-        Function<String, String> expandPath = s -> configurator.expandPathAndMacros(s, null, project);
-
-        projectDirectoryPath = expandPath.apply(projectDirectoryPath);
-        workingDirectory = expandPath.apply(workingDirectory);
-        outputPathString = expandPath.apply(outputPathString);
-
-        List<String> command = new ArrayList<>();
-        String odinBinaryPath = getOdinBinaryPath(project);
-
-        if (odinBinaryPath == null) {
-            throw new RuntimeException("'odin' executable not found. Please setup SDK.");
-        }
-        String compilerPath = FileUtil.toSystemIndependentName(odinBinaryPath);
-
-
-        addCommandPart(command, compilerPath);
-        addCommandPart(command, mode);
-
-        addCommandPart(command, projectDirectoryPath);
-
-        Collections.addAll(command, compilerOptions.split(" +"));
-        if (debug && !command.contains("-debug")) {
-            addCommandPart(command, "-debug");
-        }
-        OdinBuildProcessRunner.addCollectionPaths(project, projectDirectoryPath, command);
-
-        if (!outputPathString.isEmpty()) {
-
-            Path outputPath = getAbsolutePath(project, outputPathString);
-            if (!outputPath.getParent().toFile().exists()) {
-                boolean success = outputPath.getParent().toFile().mkdirs();
-                if (!success) {
-                    throw new RuntimeException("Failed to create output directory");
-                }
-            }
-
-            addCommandPart(command, "-out:" + outputPathString);
-        }
-
-        if (programArguments != null && !programArguments.isEmpty()) {
-            addCommandPart(command, "--");
-            Collections.addAll(command, programArguments.split(" +"));
-        }
-
-        GeneralCommandLine commandLine = new GeneralCommandLine(command);
-
-        commandLine.setWorkDirectory(workingDirectory);
-
-        return commandLine;
     }
 
     public static Path getAbsolutePath(Project project, String expandedPath) {

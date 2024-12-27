@@ -218,8 +218,6 @@ project(":plugin") {
         intellijPlatform {
             zipSigner()
             pluginVerifier()
-            plugin(idePerf)
-            plugin(indexViewer)
             when (baseIDE) {
                 "idea" -> intellijIdeaCommunity(ideaVersion, useInstaller = false)
                 "clion" -> clion(clionVersion, useInstaller = false)
@@ -256,6 +254,12 @@ project(":plugin") {
     tasks {
         runIde {
             enabled = true
+            dependencies {
+                intellijPlatform {
+                    plugin(idePerf)
+                    plugin(indexViewer)
+                }
+            }
         }
 
         prepareSandbox {

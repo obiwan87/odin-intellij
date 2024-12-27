@@ -292,11 +292,15 @@
                         serviceInterface="com.lasagnerd.odin.codeInsight.sdk.OdinSdkService"/>
         <projectService serviceInterface="com.lasagnerd.odin.codeInsight.imports.OdinImportService"
                         serviceImplementation="com.lasagnerd.odin.codeInsight.imports.OdinImportServiceImpl"/>
-        <configurationType implementation="com.lasagnerd.odin.runConfiguration.OdinRunConfigurationType"
+
+        <configurationType implementation="com.lasagnerd.odin.runConfiguration.build.OdinBuildRunConfigurationType"
                            id="OdinRunConfigurationType"/>
+        <configurationType implementation="com.lasagnerd.odin.runConfiguration.test.OdinTestRunConfigurationType"
+                           id="OdinTestRunConfigurationType"/>
         <!--debug-->
 
-        <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.OdinLazyConfigurationProducer"/>
+        <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.build.OdinBuildRunConfigurationProducer"/>
+        <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.test.OdinTestRunConfigurationProducer"/>
         <runLineMarkerContributor language="Odin"
                                   implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
         <!--        <codeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinCodeStyleSettingsProvider"/>-->

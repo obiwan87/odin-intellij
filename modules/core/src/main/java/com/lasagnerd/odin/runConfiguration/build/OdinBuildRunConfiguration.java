@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.runConfiguration;
+package com.lasagnerd.odin.runConfiguration.build;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -15,11 +15,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class OdinRunConfiguration extends LocatableConfigurationBase<OdinRunConfigurationOptions>
+public class OdinBuildRunConfiguration extends LocatableConfigurationBase<OdinBuildRunConfigurationOptions>
         implements RunProfileWithCompileBeforeLaunchOption{
-    protected OdinRunConfiguration(@NotNull Project project,
-                                   @NotNull ConfigurationFactory factory,
-                                   @Nullable String name) {
+    protected OdinBuildRunConfiguration(@NotNull Project project,
+                                        @NotNull ConfigurationFactory factory,
+                                        @Nullable String name) {
         super(project, factory, name);
     }
 
@@ -69,18 +69,18 @@ public class OdinRunConfiguration extends LocatableConfigurationBase<OdinRunConf
 
     @Override
     @NotNull
-    public OdinRunConfigurationOptions getOptions() {
-        return (OdinRunConfigurationOptions) super.getOptions();
+    public OdinBuildRunConfigurationOptions getOptions() {
+        return (OdinBuildRunConfigurationOptions) super.getOptions();
     }
 
     @Override
     public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-        return new OdinRunConfigurationSettingsEditor(getProject());
+        return new OdinBuildRunConfigurationSettingsEditor(getProject());
     }
 
     @Override
     public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
-        return new OdinRunCommandLineState(environment, getOptions());
+        return new OdinBuildRunCommandLineState(environment, getOptions());
     }
 
     public @NotNull String getOutputPath() {

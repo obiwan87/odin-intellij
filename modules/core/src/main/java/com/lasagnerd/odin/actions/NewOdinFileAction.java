@@ -46,7 +46,7 @@ public class NewOdinFileAction extends AnAction {
 
         final String finalFileName = fileName;
 
-        String dirName = directory.getVirtualFile().getName();
+        String packageName = directory.getVirtualFile().getName();
         if (directory.findFile(fileName) != null) {
             Messages.showErrorDialog(project, "A file with this name already exists.", "Error");
             return;
@@ -54,7 +54,7 @@ public class NewOdinFileAction extends AnAction {
 
         // run write action
         ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.runWriteCommandAction(project, () -> {
-            String content = "package %s\n\n".formatted(dirName);
+            String content = "package %s\n\n".formatted(packageName);
             PsiFileFactory factory = PsiFileFactory.getInstance(project);
             PsiFile newFile = factory.createFileFromText(finalFileName, OdinFileType.INSTANCE, content);
             directory.add(newFile);

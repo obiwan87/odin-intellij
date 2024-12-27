@@ -325,7 +325,7 @@ public class OdinProjectSettings implements Disposable {
         return panel;
     }
 
-    private GridBagConstraints createGridBagConstraintsForFirstColumn() {
+    public static GridBagConstraints createGridBagConstraintsForFirstColumn() {
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.gridx = 0;  // column 0
         constraints.gridy = 0;  // row 0

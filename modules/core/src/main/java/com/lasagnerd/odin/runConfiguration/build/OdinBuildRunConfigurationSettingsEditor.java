@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.runConfiguration;
+package com.lasagnerd.odin.runConfiguration.build;
 
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class OdinRunConfigurationSettingsEditor extends SettingsEditor<OdinRunConfiguration> implements CheckableRunConfigurationEditor<OdinRunConfiguration> {
+public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<OdinBuildRunConfiguration> implements CheckableRunConfigurationEditor<OdinBuildRunConfiguration> {
 
     private final JPanel panel;
     private final JTextField compilerOptions;
@@ -25,7 +25,7 @@ public class OdinRunConfigurationSettingsEditor extends SettingsEditor<OdinRunCo
     private final ExtendableTextField projectProjectDirectoryPath;
     private final ExtendableTextField outputPath;
 
-    public OdinRunConfigurationSettingsEditor(@NotNull Project project) {
+    public OdinBuildRunConfigurationSettingsEditor(@NotNull Project project) {
         // Get project
         compilerOptions = new JTextField("run .");
 
@@ -50,7 +50,6 @@ public class OdinRunConfigurationSettingsEditor extends SettingsEditor<OdinRunCo
                 .addLabeledComponent("Project directory", extendableProjectDirectoryPath)
                 .addLabeledComponent("Program arguments", programArguments)
                 .addLabeledComponent("Working directory", extendableWorkingDirectory)
-
                 .addLabeledComponent("Compiler options", compilerOptions, 15)
                 .addLabeledComponent("Output path", outputPath)
                 .addLabeledComponent("Environment variables", environmentVariables)
@@ -71,7 +70,7 @@ public class OdinRunConfigurationSettingsEditor extends SettingsEditor<OdinRunCo
     }
 
     @Override
-    protected void resetEditorFrom(@NotNull OdinRunConfiguration s) {
+    protected void resetEditorFrom(@NotNull OdinBuildRunConfiguration s) {
         compilerOptions.setText(s.getOptions().getCompilerOptions());
         projectProjectDirectoryPath.setText(s.getOptions().getProjectDirectoryPath());
         outputPath.setText(s.getOptions().getOutputPath());
@@ -80,7 +79,7 @@ public class OdinRunConfigurationSettingsEditor extends SettingsEditor<OdinRunCo
     }
 
     @Override
-    protected void applyEditorTo(@NotNull OdinRunConfiguration s) {
+    protected void applyEditorTo(@NotNull OdinBuildRunConfiguration s) {
         s.getOptions().setCompilerOptions(compilerOptions.getText());
         s.getOptions().setProjectDirectoryPath(projectProjectDirectoryPath.getText());
         s.getOptions().setOutputPath(outputPath.getText());
@@ -95,7 +94,7 @@ public class OdinRunConfigurationSettingsEditor extends SettingsEditor<OdinRunCo
     }
 
     @Override
-    public void checkEditorData(OdinRunConfiguration s) {
+    public void checkEditorData(OdinBuildRunConfiguration s) {
 
     }
 }

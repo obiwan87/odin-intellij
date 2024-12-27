@@ -2,7 +2,6 @@ package com.lasagnerd.odin.debugger.runner
 
 import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
@@ -20,7 +19,6 @@ import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -37,9 +35,9 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.lasagnerd.odin.OdinBundle
 import com.lasagnerd.odin.debugger.OdinDebuggerToolchainService
-import com.lasagnerd.odin.runConfiguration.OdinRunCommandLineState
-import com.lasagnerd.odin.runConfiguration.OdinRunConfiguration
 import com.lasagnerd.odin.projectSettings.OdinProjectConfigurable
+import com.lasagnerd.odin.runConfiguration.build.OdinBuildRunCommandLineState
+import com.lasagnerd.odin.runConfiguration.build.OdinBuildRunConfiguration
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -53,13 +51,13 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         return DefaultDebugExecutor.EXECUTOR_ID == executorId
-                && profile is OdinRunConfiguration
+                && profile is OdinBuildRunConfiguration
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
         // The state is passed through OdinRunCommandLineState which is provided OdinRunConfiguration
         val runProfile = environment.runProfile
-        if (state !is OdinRunCommandLineState || runProfile !is OdinRunConfiguration) {
+        if (state !is OdinBuildRunCommandLineState || runProfile !is OdinBuildRunConfiguration) {
             return resolvedPromise()
         }
 

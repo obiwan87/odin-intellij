@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -19,11 +20,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class OdinTreeStructureProvider implements TreeStructureProvider {
     @Override
     public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
+        List<AbstractTreeNode<?>> modifiedChildren = new ArrayList<>();
         for (AbstractTreeNode<?> child : children) {
             if (child instanceof PsiDirectoryNode directoryNode) {
                 VirtualFile directoryFile = directoryNode.getVirtualFile();
@@ -62,10 +66,14 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
                         }
                     }
                 }
-
             }
+            modifiedChildren.add(child);
         }
-        return children;
+        return modifiedChildren;
     }
 
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink, @NotNull Collection<? extends AbstractTreeNode<?>> selection) {
+        TreeStructureProvider.super.uiDataSnapshot(sink, selection);
+    }
 }

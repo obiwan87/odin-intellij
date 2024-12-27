@@ -75,6 +75,15 @@ public class OdinInsightUtils {
         return symbols;
     }
 
+    public static String getQualifiedCanonicalName(OdinDeclaration declaration) {
+        if (declaration.getDeclaredIdentifiers().size() == 1) {
+            if (!isLocal(declaration)) {
+                String packageClauseName = OdinInsightUtils.getPackageClauseName(declaration);
+                return packageClauseName + "." + declaration.getName();
+            }
+        }
+        return null;
+    }
     public static String getStringLiteralValue(OdinExpression odinExpression) {
         if (odinExpression instanceof OdinLiteralExpression literalExpression) {
             if (literalExpression.getBasicLiteral() instanceof OdinStringLiteral stringLiteral) {
@@ -579,6 +588,16 @@ public class OdinInsightUtils {
         if (declaration instanceof OdinConstantInitDeclaration constantInitDeclaration) {
             return getDeclaredType(constantInitDeclaration);
         }
+        return null;
+    }
+
+    public static String getPackageClauseName(PsiElement element) {
+        OdinFileScope fileScope = PsiTreeUtil.getParentOfType(element, OdinFileScope.class);
+        if (fileScope != null) {
+            OdinPackageClause packageClause = fileScope.getPackageClause();
+            return packageClause.getName();
+        }
+
         return null;
     }
 

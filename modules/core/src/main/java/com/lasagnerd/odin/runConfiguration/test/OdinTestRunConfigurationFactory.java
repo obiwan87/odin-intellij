@@ -1,36 +1,32 @@
-package com.lasagnerd.odin.runConfiguration;
+package com.lasagnerd.odin.runConfiguration.test;
 
-import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-public class OdinRunConfigurationFactory extends ConfigurationFactory {
-    public OdinRunConfigurationFactory(OdinRunConfigurationType odinRunConfigurationType) {
-        super(odinRunConfigurationType);
+public class OdinTestRunConfigurationFactory extends ConfigurationFactory {
+    public OdinTestRunConfigurationFactory(OdinTestRunConfigurationType odinTestRunConfigurationType) {
+        super(odinTestRunConfigurationType);
     }
 
     @Override
     public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-        return new OdinRunConfiguration(project, this, "Odin");
+        return new OdinTestRunConfiguration(project, this, "Odin");
     }
 
     @Override
     public @Nullable Class<? extends BaseState> getOptionsClass() {
-        return OdinRunConfigurationOptions.class;
+        return OdinTestRunConfigurationOptions.class;
     }
 
     @Override
     public @NotNull @NonNls String getId() {
-        return OdinRunConfigurationType.ID;
+        return OdinTestRunConfigurationType.ID;
     }
 
     @Override

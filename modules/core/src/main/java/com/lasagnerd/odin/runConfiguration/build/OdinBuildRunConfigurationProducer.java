@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.runConfiguration;
+package com.lasagnerd.odin.runConfiguration.build;
 
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
@@ -11,24 +11,35 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.lang.OdinLanguage;
+import com.lasagnerd.odin.lang.psi.OdinConstantInitDeclaration;
+import com.lasagnerd.odin.runConfiguration.OdinRunConfigurationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class OdinLazyConfigurationProducer extends LazyRunConfigurationProducer<OdinRunConfiguration> {
+public class OdinBuildRunConfigurationProducer extends LazyRunConfigurationProducer<OdinBuildRunConfiguration> {
 
 
     @NotNull
     @Override
     public ConfigurationFactory getConfigurationFactory() {
-        return ConfigurationTypeUtil.findConfigurationType(OdinRunConfigurationType.class).getConfigurationFactories()[0];
+        return ConfigurationTypeUtil.findConfigurationType(OdinBuildRunConfigurationType.class).getConfigurationFactories()[0];
     }
 
     @Override
-    protected boolean setupConfigurationFromContext(@NotNull OdinRunConfiguration configuration,
+    protected boolean setupConfigurationFromContext(@NotNull OdinBuildRunConfiguration configuration,
                                                     @NotNull ConfigurationContext context,
                                                     @NotNull Ref<PsiElement> sourceElement) {
-        // Check if current file is an Odin file
+
         PsiElement psiLocation = context.getPsiLocation();
         if (psiLocation == null) return false;
+        OdinConstantInitDeclaration testProcedure = OdinRunConfigurationUtils.getTestProcedure(sourceElement.get());
+        if (testProcedure != null) {
+            return false;
+        }
+
+        if (OdinRunConfigurationUtils.isPackageClause(context.getPsiLocation())) {
+            return false;
+        }
+        // Check if current file is an Odin file
 
         PsiFile containingFile = psiLocation.getContainingFile();
         if (containingFile == null) return false;
@@ -38,17 +49,14 @@ public class OdinLazyConfigurationProducer extends LazyRunConfigurationProducer<
             Project project = context.getProject();
             PsiDirectory containingDirectory = psiLocation.getContainingFile().getContainingDirectory();
 
-            if(containingDirectory == null) return false;
+            if (containingDirectory == null) return false;
 
-            OdinRunConfigurationOptions options = configuration.getOptions();
+            OdinBuildRunConfigurationOptions options = configuration.getOptions();
             String packagePath = containingDirectory.getVirtualFile().getPath();
             options.setProjectDirectoryPath(packagePath);
             options.setWorkingDirectory(project.getBasePath());
 
-            boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
-            String packageName = containingDirectory.getName();
-
-            String outputPath = project.getBasePath() + "/bin" + (isWindows ? "/%s.exe" : "/%s").formatted(packageName);
+            String outputPath = OdinBuildRunConfigurationOptions.OUTPUT_PATH_DEFAULT;
             options.setOutputPath(outputPath);
 
             configuration.setName(containingFile.getName());
@@ -59,16 +67,17 @@ public class OdinLazyConfigurationProducer extends LazyRunConfigurationProducer<
         return false;
     }
 
+
     @Override
-    public boolean isConfigurationFromContext(@NotNull OdinRunConfiguration configuration, @NotNull ConfigurationContext context) {
+    public boolean isConfigurationFromContext(@NotNull OdinBuildRunConfiguration configuration, @NotNull ConfigurationContext context) {
         PsiElement psiLocation = context.getPsiLocation();
         if (psiLocation == null) return false;
 
-        OdinRunConfigurationOptions options = configuration.getOptions();
+        OdinBuildRunConfigurationOptions options = configuration.getOptions();
         String projectDirectoryPath = options.getProjectDirectoryPath();
         PsiFile containingFile = psiLocation.getContainingFile();
 
-        if(containingFile == null) return false;
+        if (containingFile == null) return false;
 
         PsiDirectory containingDirectory = containingFile.getContainingDirectory();
 
