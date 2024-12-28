@@ -78,7 +78,7 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
         if (declaredType instanceof OdinProcedureLiteralType procedureLiteralType) {
             declarationText += procedureLiteralType.getProcedureDefinition().getProcedureSignature().getText();
         } else if (declaredType != null) {
-            declarationText += declaredType.getText();
+            declarationText += declaredType.getText().replaceAll("\n", "\n\n");
         } else if (declaration instanceof OdinConstantInitDeclaration constantInitializationStatement) {
             int index = constantInitializationStatement.getDeclaredIdentifiers().indexOf(declaredIdentifier);
             OdinExpression odinExpression = constantInitializationStatement.getExpressionList().get(index);
