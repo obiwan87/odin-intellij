@@ -113,6 +113,83 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         }
     }
 
+    private static void addUnionTypeCompletions(@NotNull CompletionResultSet result,
+                                                OdinFile odinFile,
+                                                TsOdinUnionType tsOdinUnionType,
+                                                Project project,
+                                                VirtualFile sourceFile,
+                                                OdinTypeAssertInsertHandler insertHandler) {
+        result.startBatch();
+        List<TsOdinUnionVariant> variants = tsOdinUnionType.getVariants();
+        for (int i = 0; i < variants.size(); i++) {
+            TsOdinUnionVariant variant = variants.get(i);
+            TsOdinType variantType = variant.getType();
+
+            OdinDeclaration declaration = variantType.getDeclaration();
+            if (declaration != null) {
+                List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver
+                        .getSymbols(declaration, variantType.getContext());
+                if (!localSymbols.isEmpty()) {
+                    OdinSymbol symbol = localSymbols.getFirst();
+                    if (symbol.getDeclaration() != null) {
+                        VirtualFile targetFile = OdinInsightUtils.getContainingVirtualFile(symbol.getDeclaration());
+                        OdinImport odinImport = OdinImportUtils.computeRelativeImport(project, sourceFile, targetFile);
+                        addLookUpElement(odinFile,
+                                odinImport,
+                                sourceFile.getParent().getPath(),
+                                result,
+                                localSymbols.getFirst(),
+                                10000 + variants.size() - i,
+                                (lookupElementBuilder, __) -> {
+                                    LookupElementBuilder bold = lookupElementBuilder.bold();
+                                    if (insertHandler != null) {
+                                        InsertHandler<LookupElement> currentInsertHandler
+                                                = lookupElementBuilder.getInsertHandler();
+                                        CombinedInsertHandler newInsertHandler = new CombinedInsertHandler(currentInsertHandler, currentInsertHandler);
+                                        return bold.withInsertHandler(newInsertHandler);
+                                    }
+                                    return bold;
+                                }
+                        );
+                    }
+                }
+            } else if (variantType instanceof TsOdinBuiltInType builtInType) {
+                LookupElementBuilder lookupElement =
+                        LookupElementBuilder.create(builtInType.getName()).bold();
+                if (insertHandler != null) {
+                    lookupElement = lookupElement.withInsertHandler(insertHandler);
+                }
+                result.addElement(
+                        withPriority(lookupElement, 10000 + variants.size() - i)
+                );
+            }
+        }
+        result.endBatch();
+    }
+
+
+    private static void addImplicitEnumCompletions(@NotNull CompletionResultSet result, TsOdinEnumType tsOdinEnumType, Project project, int priority) {
+        // TODO context
+        OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(new OdinContext(), project, tsOdinEnumType);
+        // Sort by definition order
+        List<OdinSymbol> symbols = typeElements.getSymbols().stream()
+                .sorted(
+                        Comparator.comparing(s -> s.getDeclaration().getTextOffset())
+                )
+                .toList();
+        for (int i = 0; i < symbols.size(); i++) {
+            OdinSymbol symbol = symbols.get(i);
+            LookupElementBuilder lookupElementBuilder = LookupElementBuilder
+                    .create(symbol.getName())
+                    .withTypeText(tsOdinEnumType.getName())
+                    .withPresentableText("." + symbol.getName())
+                    .withIcon(getIcon(OdinSymbolType.ENUM_FIELD));
+
+            // Higher for earlier elements
+            result.addElement(withPriority(lookupElementBuilder, priority + symbols.size() - i));
+        }
+    }
+
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext processingContext,
@@ -126,7 +203,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         OdinContext context = lattice.toContext();
         context.setUseKnowledge(false);
 
-        VirtualFile sourceFile = OdinImportUtils.getContainingVirtualFile(parameters.getOriginalFile());
+        VirtualFile sourceFile = OdinInsightUtils.getContainingVirtualFile(parameters.getOriginalFile());
 
         if (!(parameters.getOriginalFile() instanceof OdinFile odinFile))
             return;
@@ -234,83 +311,6 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                         result);
             }
         }
-    }
-
-
-    private static void addImplicitEnumCompletions(@NotNull CompletionResultSet result, TsOdinEnumType tsOdinEnumType, Project project, int priority) {
-        // TODO context
-        OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(new OdinContext(), project, tsOdinEnumType);
-        // Sort by definition order
-        List<OdinSymbol> symbols = typeElements.getSymbols().stream()
-                .sorted(
-                        Comparator.comparing(s -> s.getDeclaration().getTextOffset())
-                )
-                .toList();
-        for (int i = 0; i < symbols.size(); i++) {
-            OdinSymbol symbol = symbols.get(i);
-            LookupElementBuilder lookupElementBuilder = LookupElementBuilder
-                    .create(symbol.getName())
-                    .withTypeText(tsOdinEnumType.getName())
-                    .withPresentableText("." + symbol.getName())
-                    .withIcon(getIcon(OdinSymbolType.ENUM_FIELD));
-
-            // Higher for earlier elements
-            result.addElement(withPriority(lookupElementBuilder, priority + symbols.size() - i));
-        }
-    }
-
-    private static void addUnionTypeCompletions(@NotNull CompletionResultSet result,
-                                                OdinFile odinFile,
-                                                TsOdinUnionType tsOdinUnionType,
-                                                Project project,
-                                                VirtualFile sourceFile,
-                                                OdinTypeAssertInsertHandler insertHandler) {
-        result.startBatch();
-        List<TsOdinUnionVariant> variants = tsOdinUnionType.getVariants();
-        for (int i = 0; i < variants.size(); i++) {
-            TsOdinUnionVariant variant = variants.get(i);
-            TsOdinType variantType = variant.getType();
-
-            OdinDeclaration declaration = variantType.getDeclaration();
-            if (declaration != null) {
-                List<OdinSymbol> localSymbols = OdinDeclarationSymbolResolver
-                        .getSymbols(declaration, variantType.getContext());
-                if (!localSymbols.isEmpty()) {
-                    OdinSymbol symbol = localSymbols.getFirst();
-                    if (symbol.getDeclaration() != null) {
-                        VirtualFile targetFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaration());
-                        OdinImport odinImport = OdinImportUtils.computeRelativeImport(project, sourceFile, targetFile);
-                        addLookUpElement(odinFile,
-                                odinImport,
-                                sourceFile.getParent().getPath(),
-                                result,
-                                localSymbols.getFirst(),
-                                10000 + variants.size() - i,
-                                (lookupElementBuilder, __) -> {
-                                    LookupElementBuilder bold = lookupElementBuilder.bold();
-                                    if (insertHandler != null) {
-                                        InsertHandler<LookupElement> currentInsertHandler
-                                                = lookupElementBuilder.getInsertHandler();
-                                        CombinedInsertHandler newInsertHandler = new CombinedInsertHandler(currentInsertHandler, currentInsertHandler);
-                                        return bold.withInsertHandler(newInsertHandler);
-                                    }
-                                    return bold;
-                                }
-                        );
-                    }
-                }
-            } else if (variantType instanceof TsOdinBuiltInType builtInType) {
-                LookupElementBuilder lookupElement =
-                        LookupElementBuilder.create(builtInType.getName()).bold();
-                if (insertHandler != null) {
-                    lookupElement = lookupElement.withInsertHandler(insertHandler);
-                }
-                result.addElement(
-                        withPriority(lookupElement, 10000 + variants.size() - i)
-                );
-            }
-        }
-        result.endBatch();
     }
 
     private static void addCompoundLiteralCompletions(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral, OdinContext context) {
@@ -439,7 +439,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                 if (OdinSdkService.isInBuiltinOdinFile(declaration))
                     continue;
 
-                VirtualFile declarationVirtualFile = OdinImportUtils.getContainingVirtualFile(declaration);
+                VirtualFile declarationVirtualFile = OdinInsightUtils.getContainingVirtualFile(declaration);
 
                 boolean samePackage = declarationVirtualFile.getParent().equals(thisParentPath);
 

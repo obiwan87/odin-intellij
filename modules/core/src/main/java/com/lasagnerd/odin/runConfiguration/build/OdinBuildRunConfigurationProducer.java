@@ -4,14 +4,14 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
-import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.lasagnerd.odin.lang.OdinLanguage;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.OdinConstantInitDeclaration;
+import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.runConfiguration.OdinBaseRunConfigurationOptions;
 import com.lasagnerd.odin.runConfiguration.OdinRunConfigurationUtils;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +25,22 @@ public class OdinBuildRunConfigurationProducer extends LazyRunConfigurationProdu
         return ConfigurationTypeUtil.findConfigurationType(OdinBuildRunConfigurationType.class).getConfigurationFactories()[0];
     }
 
+    private static void createBuildPackageRunConfiguration(@NotNull OdinBuildRunConfiguration configuration,
+                                                           OdinFile odinFile,
+                                                           PsiDirectory containingDirectory,
+                                                           Project project) {
+        OdinBaseRunConfigurationOptions options = configuration.getOptions();
+        String packagePath = containingDirectory.getVirtualFile().getPath();
+        options.setPackageDirectoryPath(packagePath);
+        options.setWorkingDirectory(project.getBasePath());
+
+        String outputPath = OdinBuildRunConfigurationOptions.OUTPUT_PATH_DEFAULT;
+        options.setOutputPath(outputPath);
+
+        String name = OdinInsightUtils.getPackageClauseName(odinFile);
+        configuration.setName(name);
+    }
+
     @Override
     protected boolean setupConfigurationFromContext(@NotNull OdinBuildRunConfiguration configuration,
                                                     @NotNull ConfigurationContext context,
@@ -32,6 +48,17 @@ public class OdinBuildRunConfigurationProducer extends LazyRunConfigurationProdu
 
         PsiElement psiLocation = context.getPsiLocation();
         if (psiLocation == null) return false;
+
+        if (psiLocation instanceof PsiDirectory psiDirectory) {
+            Project project = configuration.getProject();
+            OdinFile odinFile = OdinRunConfigurationUtils.getFirstOdinFile(psiDirectory, project, OdinRunConfigurationUtils::hasMainProcedure);
+            if (odinFile != null) {
+                createBuildPackageRunConfiguration(configuration, odinFile, psiDirectory, odinFile.getProject());
+                return true;
+            }
+            return false;
+        }
+
         OdinConstantInitDeclaration testProcedure = OdinRunConfigurationUtils.getTestProcedure(sourceElement.get());
         if (testProcedure != null) {
             return false;
@@ -43,29 +70,21 @@ public class OdinBuildRunConfigurationProducer extends LazyRunConfigurationProdu
         // Check if current file is an Odin file
 
         PsiFile containingFile = psiLocation.getContainingFile();
-        if (containingFile == null) return false;
+        if (!(containingFile instanceof OdinFile odinFile)) return false;
 
-        Language language = containingFile.getLanguage();
-        if (language.isKindOf(OdinLanguage.INSTANCE)) {
-            Project project = context.getProject();
-            PsiDirectory containingDirectory = psiLocation.getContainingFile().getContainingDirectory();
+        if (containingFile.getVirtualFile().getNameWithoutExtension().endsWith("_test"))
+            return false;
 
-            if (containingDirectory == null) return false;
+        if (!OdinRunConfigurationUtils.hasMainProcedure(odinFile))
+            return false;
 
-            OdinBaseRunConfigurationOptions options = configuration.getOptions();
-            String packagePath = containingDirectory.getVirtualFile().getPath();
-            options.setPackageDirectoryPath(packagePath);
-            options.setWorkingDirectory(project.getBasePath());
+        Project project = context.getProject();
+        PsiDirectory containingDirectory = psiLocation.getContainingFile().getContainingDirectory();
 
-            String outputPath = OdinBuildRunConfigurationOptions.OUTPUT_PATH_DEFAULT;
-            options.setOutputPath(outputPath);
+        if (containingDirectory == null) return false;
 
-            configuration.setName(containingFile.getName());
-            return true;
-        }
-
-
-        return false;
+        createBuildPackageRunConfiguration(configuration, odinFile, containingDirectory, project);
+        return true;
     }
 
 

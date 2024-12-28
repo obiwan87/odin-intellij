@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,7 @@ public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
 
         if (element.getParent().getParent() instanceof OdinPackageClause) {
             AnAction[] actions = ExecutorAction.getActions(0);
-            VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(element);
+            VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(element);
             if (containingVirtualFile.getNameWithoutExtension().endsWith("_test")) {
                 return new Info(
                         AllIcons.Actions.RunAll,
@@ -75,12 +74,15 @@ public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
                     (ignored) -> "Run Test"
             );
         } else if (element.getText().equals("main")) {
-            AnAction[] actions = ExecutorAction.getActions(0);
-            return new Info(
-                    AllIcons.RunConfigurations.TestState.Run,
-                    new AnAction[]{actions[0], actions[1], actions[actions.length - 1]},
-                    (ignored) -> "Run " + element.getContainingFile().getName()
-            );
+            VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(element);
+            if (!containingVirtualFile.getNameWithoutExtension().endsWith("_test")) {
+                AnAction[] actions = ExecutorAction.getActions(0);
+                return new Info(
+                        AllIcons.RunConfigurations.TestState.Run,
+                        new AnAction[]{actions[0], actions[1], actions[actions.length - 1]},
+                        (ignored) -> "Run " + element.getContainingFile().getName()
+                );
+            }
         }
         return null;
     }

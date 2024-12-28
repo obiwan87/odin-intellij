@@ -15,7 +15,7 @@ public class OdinBuildRunConfigurationOptions extends OdinBaseRunConfigurationOp
         }
     }
 
-    private final StoredProperty<String> packageDirectoryPath =
+    private final StoredProperty<String> projectDirectoryPath =
             string("").provideDelegate(this, "projectDirectoryPath");
     private final StoredProperty<String> compilerOptions =
             string("").provideDelegate(this, "compilerOptions");
@@ -60,12 +60,20 @@ public class OdinBuildRunConfigurationOptions extends OdinBaseRunConfigurationOp
 
     @Override
     public String getPackageDirectoryPath() {
-        return packageDirectoryPath.getValue(this);
+        return getProjectDirectoryPath();
     }
 
     @Override
-    public void setPackageDirectoryPath(String projectDirectoryPath) {
-        this.packageDirectoryPath.setValue(this, projectDirectoryPath);
+    public void setPackageDirectoryPath(String packageDirectoryPath) {
+        setProjectDirectoryPath(packageDirectoryPath);
+    }
+
+    public String getProjectDirectoryPath() {
+        return projectDirectoryPath.getValue(this);
+    }
+
+    public void setProjectDirectoryPath(String projectDirectoryPath) {
+        this.projectDirectoryPath.setValue(this, projectDirectoryPath);
     }
 
     @Override

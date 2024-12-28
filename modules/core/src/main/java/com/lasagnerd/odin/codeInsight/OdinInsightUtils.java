@@ -592,7 +592,20 @@ public class OdinInsightUtils {
     }
 
     public static String getPackageClauseName(PsiElement element) {
-        OdinFileScope fileScope = PsiTreeUtil.getParentOfType(element, OdinFileScope.class);
+        if (element instanceof OdinFile odinFile)
+            return getPackageClauseName(odinFile);
+
+        OdinFileScope fileScope = PsiTreeUtil.getParentOfType(element, false, OdinFileScope.class);
+        if (fileScope != null) {
+            OdinPackageClause packageClause = fileScope.getPackageClause();
+            return packageClause.getName();
+        }
+
+        return null;
+    }
+
+    public static String getPackageClauseName(OdinFile file) {
+        OdinFileScope fileScope = file.getFileScope();
         if (fileScope != null) {
             OdinPackageClause packageClause = fileScope.getPackageClause();
             return packageClause.getName();
@@ -1039,8 +1052,8 @@ public class OdinInsightUtils {
         if (symbol.getDeclaration() == null)
             return true;
 
-        VirtualFile referenceFile = OdinImportUtils.getContainingVirtualFile(reference);
-        VirtualFile declarationFile = OdinImportUtils.getContainingVirtualFile(symbol.getDeclaration());
+        VirtualFile referenceFile = getContainingVirtualFile(reference);
+        VirtualFile declarationFile = getContainingVirtualFile(symbol.getDeclaration());
 
         if (referenceFile.equals(declarationFile))
             return true;
@@ -1112,7 +1125,7 @@ public class OdinInsightUtils {
     }
 
     public static @NotNull String getLocation(PsiElement psiElement) {
-        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(psiElement);
+        VirtualFile containingVirtualFile = getContainingVirtualFile(psiElement);
         String lineColumn = getLineColumn(psiElement);
 
         return "%s:%s".formatted(containingVirtualFile.getPath(), lineColumn);
@@ -1262,6 +1275,18 @@ public class OdinInsightUtils {
                     .orElse(null);
         }
         return null;
+    }
+
+    public static @NotNull VirtualFile getContainingVirtualFile(@NotNull PsiElement psiElement) {
+        VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
+        if (virtualFile == null) {
+            virtualFile = psiElement.getContainingFile().getOriginalFile().getVirtualFile();
+        }
+
+        if (virtualFile == null) {
+            virtualFile = psiElement.getContainingFile().getViewProvider().getVirtualFile();
+        }
+        return virtualFile;
     }
 
     // Record to hold the result

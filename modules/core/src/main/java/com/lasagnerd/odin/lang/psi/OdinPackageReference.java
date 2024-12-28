@@ -13,6 +13,7 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.IncorrectOperationException;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
@@ -46,7 +47,7 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
 
         OdinImport importInfo = OdinImportUtils.getImportInfo(importPath);
         if (importInfo != null) {
-            VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(importPath);
+            VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(importPath);
             VirtualFile importDir = findDirectoryFileForImportPath(importPath.getProject(),
                     importInfo,
                     importInfo.path(),
@@ -109,8 +110,8 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
 
     public static Path getDirectoryPath(String importPath, @NotNull OdinImportPath element) {
         OdinImport importInfo = OdinImportUtils.getImportInfo(element);
-        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(element);
-        if (importInfo != null && containingVirtualFile != null) {
+        VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(element);
+        if (importInfo != null) {
             return findDirectoryPathForImportPath(element.getProject(), importInfo,
                     importPath,
                     containingVirtualFile
@@ -121,17 +122,15 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
 
     @Override
     public @Nullable PsiElement resolve() {
-        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(getElement());
-        if (containingVirtualFile != null) {
-            OdinImport importInfo = OdinImportUtils.getImportInfo(getElement());
-            VirtualFile importDir = findDirectoryFileForImportPath(getElement().getProject(),
-                    importInfo,
-                    subdirectory.toString(),
-                    containingVirtualFile
-            );
-            if (importDir != null) {
-                return OdinImportUtils.findPsiDirectory(getElement().getProject(), importDir);
-            }
+        VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(getElement());
+        OdinImport importInfo = OdinImportUtils.getImportInfo(getElement());
+        VirtualFile importDir = findDirectoryFileForImportPath(getElement().getProject(),
+                importInfo,
+                subdirectory.toString(),
+                containingVirtualFile
+        );
+        if (importDir != null) {
+            return OdinImportUtils.findPsiDirectory(getElement().getProject(), importDir);
         }
         return null;
     }

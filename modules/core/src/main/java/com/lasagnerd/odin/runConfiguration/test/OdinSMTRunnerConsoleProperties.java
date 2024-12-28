@@ -10,7 +10,6 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.OdinConstantInitDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.runConfiguration.OdinRunConfigurationUtils;
@@ -46,7 +45,7 @@ public class OdinSMTRunnerConsoleProperties extends SMTRunnerConsoleProperties i
         Map<String, Path> procedureToFilePath = new HashMap<>();
         Map<Path, List<String>> fileToProcedureName = new HashMap<>();
         for (OdinFile file : filesInPackage) {
-            VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(file);
+            VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(file);
             Path virtualFilePath = Path.of(containingVirtualFile.getPath());
             List<OdinConstantInitDeclaration> testProcedures = OdinRunConfigurationUtils.findTestProcedures(file);
             for (OdinConstantInitDeclaration testProcedure : testProcedures) {

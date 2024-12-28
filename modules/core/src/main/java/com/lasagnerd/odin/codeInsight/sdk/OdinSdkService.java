@@ -3,11 +3,11 @@ package com.lasagnerd.odin.codeInsight.sdk;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
 import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinScope;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
@@ -40,7 +40,7 @@ public interface OdinSdkService {
         if (instance == null)
             return false;
 
-        @NotNull VirtualFile containingFile = OdinImportUtils.getContainingVirtualFile(element);
+        @NotNull VirtualFile containingFile = OdinInsightUtils.getContainingVirtualFile(element);
         if (!Objects.equals(instance.getBuiltinVirtualFile(), containingFile)) {
             VirtualFile intrinsicsFile = instance.getIntrinsicsFile();
             return Objects.equals(intrinsicsFile, containingFile);
@@ -53,7 +53,7 @@ public interface OdinSdkService {
         if (instance == null)
             return false;
 
-        @NotNull VirtualFile containingFile = OdinImportUtils.getContainingVirtualFile(element);
+        @NotNull VirtualFile containingFile = OdinInsightUtils.getContainingVirtualFile(element);
 
         VirtualFile builtinVirtualFile = instance.getBuiltinVirtualFile();
         return Objects.equals(builtinVirtualFile, containingFile);

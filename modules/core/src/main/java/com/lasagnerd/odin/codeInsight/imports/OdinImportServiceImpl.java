@@ -7,6 +7,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public class OdinImportServiceImpl implements OdinImportService {
         if (containingDirectory != null) {
             return containingDirectory.getVirtualFile().getPath();
         }
-        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(psiElement);
+        VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(psiElement);
         VirtualFile parent = containingVirtualFile.getParent();
         if (parent != null) {
             return parent.getPath();

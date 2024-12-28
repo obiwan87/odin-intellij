@@ -6,14 +6,16 @@ import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator.OdinBuildProcessRunner;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPointerType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinProcedureType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
@@ -22,10 +24,12 @@ import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class OdinRunConfigurationUtils {
     public static boolean isMainProcedure(PsiElement element) {
@@ -55,6 +59,35 @@ public class OdinRunConfigurationUtils {
         return testProcedures;
     }
 
+    public static boolean hasMainProcedure(OdinFile file) {
+        return findMainProcedure(file).isPresent();
+    }
+
+    public static Optional<OdinConstantInitDeclaration> findMainProcedure(OdinFile file) {
+
+        OdinSymbolTable symbolTable = file.getFileScope().getFullSymbolTable();
+        for (OdinSymbol symbol : symbolTable.getSymbols()) {
+            OdinDeclaration declaration = symbol.getDeclaration();
+            if (symbol.getSymbolType() != OdinSymbolType.PROCEDURE)
+                continue;
+            if (!symbol.getName().equals("main"))
+                continue;
+
+            if (declaration instanceof OdinConstantInitDeclaration constantInitDeclaration) {
+                OdinDeclaredIdentifier first = constantInitDeclaration.getDeclaredIdentifierList().getFirst();
+                TsOdinType type = first.getType(new OdinContext());
+
+                if (type.dereference() instanceof TsOdinProcedureType procedureType) {
+                    if (procedureType.getParameters().isEmpty() && procedureType.getReturnParameters().isEmpty()) {
+                        return Optional.of(constantInitDeclaration);
+                    }
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
     public static OdinConstantInitDeclaration getTestProcedure(PsiElement element) {
         if (!OdinInsightUtils.isLocal(element)) {
             OdinDeclaration declaration = PsiTreeUtil.getParentOfType(element, false, OdinDeclaration.class);
@@ -71,7 +104,7 @@ public class OdinRunConfigurationUtils {
                                 if (dereferencedType.baseType() instanceof TsOdinStructType structType) {
                                     if (structType.getName().equals("T")) {
                                         OdinDeclaration structTypeDeclaration = structType.getDeclaration();
-                                        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(structTypeDeclaration);
+                                        VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(structTypeDeclaration);
                                         Path declarationPath = Path.of(containingVirtualFile.getPath());
                                         Optional<String> validSdkPath = OdinSdkUtils.getValidSdkPath(element.getProject());
                                         if (validSdkPath.isPresent()) {
@@ -203,6 +236,30 @@ public class OdinRunConfigurationUtils {
         commandLine.setWorkDirectory(workingDirectory);
 
         return commandLine;
+    }
+
+    public static @Nullable OdinFile getFirstOdinFile(PsiDirectory psiDirectory, Project project) {
+        return getFirstOdinFile(psiDirectory, project, f -> true);
+    }
+
+    public static @Nullable OdinFile getFirstOdinFile(PsiDirectory psiDirectory, Project project, Predicate<OdinFile> filePredicate) {
+        OdinFile odinFile;
+        VirtualFile[] children = psiDirectory.getVirtualFile().getChildren();
+        if (children != null) {
+            odinFile = Arrays.stream(children)
+                    .filter(v -> Objects.equals(v.getExtension(), "odin"))
+                    .map(v -> PsiManager.getInstance(project).findFile(v))
+                    .filter(OdinFile.class::isInstance)
+                    .map(OdinFile.class::cast)
+                    .filter(filePredicate)
+                    .findFirst()
+                    .orElse(null);
+
+
+        } else {
+            odinFile = null;
+        }
+        return odinFile;
     }
 
     @Getter

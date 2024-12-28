@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceBase;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
@@ -81,7 +82,7 @@ public class OdinCollectionReference extends PsiReferenceBase<OdinImportPath> im
                 collections.add(lookupElement);
             }
         }
-        VirtualFile containingVirtualFile = OdinImportUtils.getContainingVirtualFile(getElement());
+        VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(getElement());
         if (containingVirtualFile != null) {
             String basePath = myElement.getProject().getBasePath();
             if (basePath != null) {

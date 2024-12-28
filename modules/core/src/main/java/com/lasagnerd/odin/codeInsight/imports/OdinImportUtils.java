@@ -42,24 +42,12 @@ import java.util.stream.Stream;
 public class OdinImportUtils {
 
     public static @NotNull String getFileName(@NotNull PsiElement psiElement) {
-        return getContainingVirtualFile(psiElement).getName();
+        return OdinInsightUtils.getContainingVirtualFile(psiElement).getName();
 
-    }
-
-    public static @NotNull VirtualFile getContainingVirtualFile(@NotNull PsiElement psiElement) {
-        VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
-        if (virtualFile == null) {
-            virtualFile = psiElement.getContainingFile().getOriginalFile().getVirtualFile();
-        }
-
-        if (virtualFile == null) {
-            virtualFile = psiElement.getContainingFile().getViewProvider().getVirtualFile();
-        }
-        return virtualFile;
     }
 
     public static @Nullable String getContainingDirectoryName(@NotNull PsiElement psiElement) {
-        VirtualFile virtualFile = getContainingVirtualFile(psiElement);
+        VirtualFile virtualFile = OdinInsightUtils.getContainingVirtualFile(psiElement);
         VirtualFile parent = virtualFile.getParent();
         if (parent != null) {
             return parent.getName();
