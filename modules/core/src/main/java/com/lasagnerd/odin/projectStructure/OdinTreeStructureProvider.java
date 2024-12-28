@@ -20,14 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 public class OdinTreeStructureProvider implements TreeStructureProvider {
     @Override
     public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
-        List<AbstractTreeNode<?>> modifiedChildren = new ArrayList<>();
+
         for (AbstractTreeNode<?> child : children) {
             if (child instanceof PsiDirectoryNode directoryNode) {
                 VirtualFile directoryFile = directoryNode.getVirtualFile();
@@ -67,9 +65,8 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
                     }
                 }
             }
-            modifiedChildren.add(child);
         }
-        return modifiedChildren;
+        return children;
     }
 
     @Override
