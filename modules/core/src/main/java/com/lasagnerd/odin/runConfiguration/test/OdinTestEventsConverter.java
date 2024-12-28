@@ -31,6 +31,7 @@ public class OdinTestEventsConverter extends OutputToGeneralTestEventsConverter 
 
     public static final Pattern TEST_STATE = Pattern.compile("Test #([0-9]+) (\\S+) changed state to (\\S+?)\\.");
     public static final Pattern TEST_FINISHED = Pattern.compile("Finished .*? tests in");
+    public static final Pattern ONE_TEST_FINISHED = Pattern.compile("Finished 1 test in");
 
     Map<String, Long> durations = new HashMap<>();
 
@@ -70,8 +71,7 @@ public class OdinTestEventsConverter extends OutputToGeneralTestEventsConverter 
 
             return false;
         } else {
-            Matcher matcher = TEST_FINISHED.matcher(text);
-            if (matcher.find()) {
+            if (TEST_FINISHED.matcher(text).find() || ONE_TEST_FINISHED.matcher(text).find()) {
                 if (previousPackageName != null) {
                     visitor.visitTestSuiteFinished(new TestSuiteFinished(previousPackageName));
                     previousPackageName = null;
