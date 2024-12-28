@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.lang.psi;
 
+import com.intellij.mock.MockProject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
@@ -55,8 +56,10 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
                 if (declaredIdentifier instanceof OdinImportDeclaration importDeclaration) {
                     // TODO here we only resolve to import declaration, however, when wants to jump to declaration
                     //  we want to open the path. How do do that? HintedReferenceHost?
+                    if (declaredIdentifier.getProject() instanceof MockProject) {
+                        return importDeclaration;
+                    }
                     return OdinPackageReference.resolvePackagePathDirectory(importDeclaration.getImportPath());
-//                    return importDeclaration;
                 } else {
                     return declaredIdentifier;
                 }
