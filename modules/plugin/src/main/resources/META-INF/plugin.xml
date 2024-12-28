@@ -3,6 +3,21 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.9.0</h3>
+
+        <h4>Bug Fixes</h4>
+        <ul>
+            <li>Fix bug where structs would expose their fields when referenced over their type.</li>
+            <li>Fix where finding usages would not work for global symbols</li>
+        </ul>
+
+        <h4>Improvements</h4>
+        <ul>
+            <li>🔥 Introduced "Go to Symbol" search 🔥.</li>
+            <li>🔥 Auto-complete is now much faster 🔥</li>
+            <li>🔥 Add support for unit tests 🔥</li>
+        </ul>
+
         <h3>0.8.0</h3>
 
         <h4>Bug Fixes</h4>
