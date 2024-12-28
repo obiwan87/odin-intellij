@@ -49,6 +49,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -94,7 +95,6 @@ public abstract class DAPDriver<
         processHandler.addProcessListener(new ProcessAdapter() {
             @Override
             public void startNotified(@NotNull ProcessEvent event) {
-                System.out.println("DAP server started");
                 super.startNotified(event);
             }
 
@@ -105,20 +105,20 @@ public abstract class DAPDriver<
                     return;
                 if (ProcessOutputType.isStdout(outputType)) {
                     try {
-                        System.out.println("-> " + text);
+                        LOG.info(MessageFormat.format("-> {0}", text));
                         pipeOutput.write(text.getBytes(StandardCharsets.UTF_8));
                         pipeOutput.flush();
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 } else if (ProcessOutputType.isStderr(outputType)) {
-                    System.out.println("!> " + text);
+                    LOG.info(MessageFormat.format("!> {0}", text));
                 }
             }
 
             @Override
             public void processNotStarted() {
-                System.out.println("Process not started");
+                LOG.info("Process not started");
             }
         });
         client = createDebuggerClient();

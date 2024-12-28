@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.lang.OdinLanguage;
 import com.lasagnerd.odin.lang.psi.OdinConstantInitDeclaration;
+import com.lasagnerd.odin.runConfiguration.OdinBaseRunConfigurationOptions;
 import com.lasagnerd.odin.runConfiguration.OdinRunConfigurationUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,9 +52,9 @@ public class OdinBuildRunConfigurationProducer extends LazyRunConfigurationProdu
 
             if (containingDirectory == null) return false;
 
-            OdinBuildRunConfigurationOptions options = configuration.getOptions();
+            OdinBaseRunConfigurationOptions options = configuration.getOptions();
             String packagePath = containingDirectory.getVirtualFile().getPath();
-            options.setProjectDirectoryPath(packagePath);
+            options.setPackageDirectoryPath(packagePath);
             options.setWorkingDirectory(project.getBasePath());
 
             String outputPath = OdinBuildRunConfigurationOptions.OUTPUT_PATH_DEFAULT;
@@ -73,8 +74,8 @@ public class OdinBuildRunConfigurationProducer extends LazyRunConfigurationProdu
         PsiElement psiLocation = context.getPsiLocation();
         if (psiLocation == null) return false;
 
-        OdinBuildRunConfigurationOptions options = configuration.getOptions();
-        String projectDirectoryPath = options.getProjectDirectoryPath();
+        OdinBaseRunConfigurationOptions options = configuration.getOptions();
+        String projectDirectoryPath = options.getPackageDirectoryPath();
         PsiFile containingFile = psiLocation.getContainingFile();
 
         if (containingFile == null) return false;

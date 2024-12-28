@@ -22,7 +22,10 @@ import com.jetbrains.cidr.ArchitectureType;
 import com.lasagnerd.odin.debugger.drivers.dap.DAPDebuggerDriverConfiguration;
 import com.lasagnerd.odin.debugger.drivers.dap.DAPDriver;
 import com.lasagnerd.odin.debugger.drivers.dap.WrappedDebugServer;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.eclipse.lsp4j.debug.Capabilities;
 import org.eclipse.lsp4j.debug.OutputEventArguments;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolServer;
@@ -104,7 +107,7 @@ public class WinDAPDriver extends DAPDriver<
     @Override
     protected void addArgsForLaunch(Map<String, Object> args) {
 
-        args.put("console", "integratedTerminal");
+        args.put("console", "internalConsole");
         args.put("logging", Map.of("moduleLoad", true));
         args.put("__configurationTarget", 2);
     }

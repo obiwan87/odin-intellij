@@ -40,7 +40,6 @@ public class OdinNewProjectStep extends AbstractNewProjectWizardStep {
 
         OdinProjectCreationUtils.saveProjectSettings(project, projectSettings);
 
-        System.out.println("setupProject() called");
         ModuleManager moduleManager = ModuleManager.getInstance(project);
         VirtualFile workspaceFile = project.getWorkspaceFile();
         if (workspaceFile == null) {

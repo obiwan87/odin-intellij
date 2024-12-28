@@ -5,9 +5,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.jetbrains.cidr.ArchitectureType;
 import com.intellij.util.system.CpuArch;
+import com.jetbrains.cidr.ArchitectureType;
 import com.jetbrains.cidr.execution.Installer;
 import com.jetbrains.cidr.execution.RunParameters;
 import com.jetbrains.cidr.execution.TrivialInstaller;
@@ -45,26 +46,28 @@ public class OdinDebugRunParameters extends RunParameters {
 
 	private static class MyLLDBDriver extends LLDBDriver {
 
+		private static final Logger LOG = Logger.getInstance(MyLLDBDriver.class);
+
 		public MyLLDBDriver(@NotNull Handler handler, @NotNull LLDBDriverConfiguration starter, @NotNull ArchitectureType architectureType) throws ExecutionException {
 			super(handler, starter, architectureType);
 			getProcessHandler().addProcessListener(new ProcessListener() {
 				@Override
 				public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-					System.out.println("LLDB says: " + event.getText());
+					LOG.info("LLDB says: " + event.getText());
 				}
 
 				@Override
 				public void processTerminated(@NotNull ProcessEvent event) {
-					System.out.println("Process terminated with code " + event.getExitCode());
+					LOG.info("Process terminated with code " + event.getExitCode());
 				}
 			});
 		}
 
 		@Override
 		public <R extends Message, E extends Exception> @NotNull R sendMessageAndWaitForReply(@NotNull Message message, @NotNull Class<R> responseClass, @NotNull ResponseMessageConsumer<? super R, E> errorHandler, long msTimeout) throws ExecutionException, E {
-			System.out.println("Sending message: " + message);
+			LOG.info("Sending message: " + message);
 			R r = super.sendMessageAndWaitForReply(message, responseClass, errorHandler, msTimeout);
-			System.out.println("Response: " + r);
+			LOG.info("Response: " + r);
 			return r;
 		}
 	}

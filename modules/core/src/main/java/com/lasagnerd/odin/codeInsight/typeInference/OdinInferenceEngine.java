@@ -712,9 +712,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                     return TsOdinBuiltInTypes.VOID;
                 }
             }
-            System.out.println("Could not determine best procedure for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
-        } else {
-            System.out.println("Could not find any compatible candidate for " + o.getText() + " at " + OdinInsightUtils.getLineColumn(o));
         }
         return TsOdinBuiltInTypes.UNKNOWN;
     }

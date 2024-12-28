@@ -195,7 +195,6 @@ public class OdinTypeSpecializer {
 
                 TsOdinType parameterType = tsOdinParameter.getType();
                 if (parameterType == null) {
-                    System.out.println("Could not resolve parameter type");
                     continue;
                 }
 

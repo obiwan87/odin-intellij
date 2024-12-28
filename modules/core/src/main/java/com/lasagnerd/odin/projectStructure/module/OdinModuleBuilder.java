@@ -91,7 +91,7 @@ public class OdinModuleBuilder extends ModuleBuilder {
 
         @Override
         public void updateDataModel() {
-            System.out.println("Hello");
+
         }
 
         @Override

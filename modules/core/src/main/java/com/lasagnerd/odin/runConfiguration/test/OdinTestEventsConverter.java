@@ -8,10 +8,8 @@ import jetbrains.buildServer.messages.serviceMessages.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,23 +19,12 @@ public class OdinTestEventsConverter extends OutputToGeneralTestEventsConverter 
     private String previousPackageName;
 
     public OdinTestEventsConverter(@NotNull String testFrameworkName,
-                                   @NotNull TestConsoleProperties consoleProperties,
-                                   List<String> testNames,
-                                   Map<String, Path> procedureToFilePath,
-                                   Map<Path, List<String>> fileToProcedureName) {
+                                   @NotNull TestConsoleProperties consoleProperties) {
         super(testFrameworkName, consoleProperties);
-    }
-
-    public OdinTestEventsConverter(@NotNull String testFrameworkName,
-                                   boolean doNotBufferTextUntilNewLine,
-                                   boolean cutNewLineBeforeServiceMessage,
-                                   boolean validateServiceMessagesAttributes) {
-        super(testFrameworkName, doNotBufferTextUntilNewLine, cutNewLineBeforeServiceMessage, validateServiceMessagesAttributes);
     }
 
     @Override
     public void process(String text, Key outputType) {
-        System.out.println(text);
         super.process(text, outputType);
     }
 

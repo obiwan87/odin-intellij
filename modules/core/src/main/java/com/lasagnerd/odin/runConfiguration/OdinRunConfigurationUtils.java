@@ -20,7 +20,6 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
-import com.lasagnerd.odin.runConfiguration.build.OdinBuildRunConfigurationOptions;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,10 +104,10 @@ public class OdinRunConfigurationUtils {
 
     public static @NotNull GeneralCommandLine createCommandLine(boolean debug,
                                                                 ExecutionEnvironment environment,
-                                                                OdinBuildRunConfigurationOptions options) {
+                                                                OdinBaseRunConfigurationOptions options) {
         Project project = environment.getProject();
         OdinToolMode mode = debug ? OdinToolMode.BUILD : OdinToolMode.RUN;
-        String projectDirectoryPath = options.getProjectDirectoryPath();
+        String projectDirectoryPath = options.getPackageDirectoryPath();
         String programArguments = options.getProgramArguments();
         String compilerOptions = Objects.requireNonNullElse(options.getCompilerOptions(), "");
         String outputPathString = Objects.requireNonNullElse(options.getOutputPath(), "");
@@ -128,6 +127,7 @@ public class OdinRunConfigurationUtils {
                 programArguments,
                 workingDirectory);
     }
+
 
     /**
      * Creates a command line with the currently set odin compiler

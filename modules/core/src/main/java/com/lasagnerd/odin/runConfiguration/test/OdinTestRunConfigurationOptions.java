@@ -1,9 +1,9 @@
 package com.lasagnerd.odin.runConfiguration.test;
 
-import com.intellij.execution.configurations.LocatableRunConfigurationOptions;
 import com.intellij.openapi.components.StoredProperty;
+import com.lasagnerd.odin.runConfiguration.OdinBaseRunConfigurationOptions;
 
-public class OdinTestRunConfigurationOptions extends LocatableRunConfigurationOptions {
+public class OdinTestRunConfigurationOptions extends OdinBaseRunConfigurationOptions {
     private final StoredProperty<String> testNames = string("").provideDelegate(this, "testNames");
 
     public String getTestNames() {

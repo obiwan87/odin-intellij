@@ -9,9 +9,6 @@ import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsC
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.OdinConstantInitDeclaration;
@@ -39,42 +36,8 @@ public class OdinSMTRunnerConsoleProperties extends SMTRunnerConsoleProperties i
     public OutputToGeneralTestEventsConverter createTestEventsConverter(@NotNull String testFrameworkName, @NotNull TestConsoleProperties consoleProperties) {
         OdinTestRunConfiguration configuration = getConfiguration();
         OdinTestRunConfigurationOptions options = configuration.getOptions();
-        if (Objects.equals(options.getTestKind(), "Package")) {
-            List<OdinFile> filesInPackage = OdinImportUtils.getFilesInPackage(getConfiguration().getProject(), Path.of(options.getPackageDirectoryPath()));
-            TestProceduresLocations result = getTestProcedureLocations(filesInPackage);
-
-            List<String> testNames;
-            if (options.getTestNames() != null) {
-                testNames = Arrays.stream(options.getTestNames().split(",")).filter(s -> !s.isBlank()).toList();
-            } else {
-                testNames = null;
-            }
-
-            return new OdinTestEventsConverter(ODIN_TEST_RUNNER,
-                    this,
-                    testNames,
-                    result.procedureToFilePath(),
-                    result.fileToProcedureName());
-        }
-
-        if (Objects.equals(options.getTestKind(), "File")) {
-            String testFilePath = options.getTestFilePath();
-            VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(testFilePath));
-            if (virtualFile != null) {
-                PsiFile file = PsiManager.getInstance(consoleProperties.getProject()).findFile(virtualFile);
-                if (file instanceof OdinFile odinFile) {
-                    TestProceduresLocations testProcedureLocations = getTestProcedureLocations(List.of(odinFile));
-                    return new OdinTestEventsConverter(ODIN_TEST_RUNNER,
-                            this,
-                            null,
-                            testProcedureLocations.procedureToFilePath,
-                            testProcedureLocations.fileToProcedureName);
-                } else {
-                    throw new IllegalArgumentException("File is not an odin file");
-                }
-            } else {
-                throw new IllegalArgumentException("File does not exist");
-            }
+        if (Objects.equals(options.getTestKind(), "Package") || Objects.equals(options.getTestKind(), "File")) {
+            return new OdinTestEventsConverter(ODIN_TEST_RUNNER, this);
         }
         throw new IllegalArgumentException("Test kind is not valid");
     }
@@ -94,8 +57,7 @@ public class OdinSMTRunnerConsoleProperties extends SMTRunnerConsoleProperties i
                         .add(qualifiedCanonicalName);
             }
         }
-        TestProceduresLocations result = new TestProceduresLocations(procedureToFilePath, fileToProcedureName);
-        return result;
+        return new TestProceduresLocations(procedureToFilePath, fileToProcedureName);
     }
 
     private record TestProceduresLocations(Map<String, Path> procedureToFilePath, Map<Path, List<String>> fileToProcedureName) {

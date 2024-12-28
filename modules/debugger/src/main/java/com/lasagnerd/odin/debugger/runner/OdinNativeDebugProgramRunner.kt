@@ -36,11 +36,14 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.lasagnerd.odin.OdinBundle
 import com.lasagnerd.odin.debugger.OdinDebuggerToolchainService
 import com.lasagnerd.odin.projectSettings.OdinProjectConfigurable
-import com.lasagnerd.odin.runConfiguration.build.OdinBuildRunCommandLineState
-import com.lasagnerd.odin.runConfiguration.build.OdinBuildRunConfiguration
+import com.lasagnerd.odin.runConfiguration.OdinBaseCommandLineState
+import com.lasagnerd.odin.runConfiguration.OdinBaseRunConfiguration
+import com.lasagnerd.odin.runConfiguration.test.OdinTestRunCommandLineState
+import com.lasagnerd.odin.runConfiguration.test.OdinTestRunConfiguration
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import java.nio.file.Path
 
 
 class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
@@ -51,13 +54,13 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         return DefaultDebugExecutor.EXECUTOR_ID == executorId
-                && profile is OdinBuildRunConfiguration
+                && profile is OdinBaseRunConfiguration<*>
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
         // The state is passed through OdinRunCommandLineState which is provided OdinRunConfiguration
         val runProfile = environment.runProfile
-        if (state !is OdinBuildRunCommandLineState || runProfile !is OdinBuildRunConfiguration) {
+        if (state !is OdinBaseCommandLineState || runProfile !is OdinBaseRunConfiguration<*>) {
             return resolvedPromise()
         }
 
@@ -84,21 +87,33 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         // This will be set from the EDT thread
         val runContentDescriptorPromise = AsyncPromise<RunContentDescriptor?>()
 
+
+        var outputPath = runProfile.options.outputPath
+
+        val nioPath = Path.of(outputPath)
+        if (!nioPath.isAbsolute) {
+            outputPath = Path.of(runProfile.options.workingDirectory).resolve(nioPath).toString()
+        }
+
+        val expandedOutputPath = ProgramParametersUtil.expandPathAndMacros(
+            outputPath,
+            null,
+            environment.project
+        )
+
+        val runExecutable = GeneralCommandLine(expandedOutputPath)
+        runExecutable.setWorkDirectory(runProfile.options.workingDirectory)
+        val debugCompiledExeRunParameters = OdinDebugRunParameters(runExecutable, debuggerDriverConfiguration)
+
+        // This is the console to be shared with the debug process
+
+        val console = if (state is OdinTestRunCommandLineState && runProfile is OdinTestRunConfiguration) {
+            state.createConsole(runProfile)
+        } else {
+            state.consoleBuilder.console
+        }
         // Switch to BGT for long-running and blocking calls
         AppExecutorUtil.getAppExecutorService().execute {
-            val expandedOutputPath = ProgramParametersUtil.expandPathAndMacros(
-                runProfile.outputPath,
-                null,
-                environment.project
-            )
-
-            val runExecutable = GeneralCommandLine(expandedOutputPath)
-            runExecutable.setWorkDirectory(runProfile.options.workingDirectory)
-            val debugCompiledExeRunParameters = OdinDebugRunParameters(runExecutable, debuggerDriverConfiguration)
-
-            // This is the console to be shared with the debug process
-            val console = state.consoleBuilder.console
-
             // Create the build command line with debug parameters: "odin build <path> -debug ..."
             val buildProcessHandler = ProcessHandlerFactory.getInstance().createProcessHandler(
                 state.createCommandLine(true)

@@ -72,7 +72,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
     @Override
     protected void resetEditorFrom(@NotNull OdinBuildRunConfiguration s) {
         compilerOptions.setText(s.getOptions().getCompilerOptions());
-        projectProjectDirectoryPath.setText(s.getOptions().getProjectDirectoryPath());
+        projectProjectDirectoryPath.setText(s.getOptions().getPackageDirectoryPath());
         outputPath.setText(s.getOptions().getOutputPath());
         workingDirectory.setText(s.getOptions().getWorkingDirectory());
         programArguments.setText(s.getOptions().getProgramArguments());
@@ -81,7 +81,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
     @Override
     protected void applyEditorTo(@NotNull OdinBuildRunConfiguration s) {
         s.getOptions().setCompilerOptions(compilerOptions.getText());
-        s.getOptions().setProjectDirectoryPath(projectProjectDirectoryPath.getText());
+        s.getOptions().setPackageDirectoryPath(projectProjectDirectoryPath.getText());
         s.getOptions().setOutputPath(outputPath.getText());
         s.getOptions().setWorkingDirectory(workingDirectory.getText());
         s.getOptions().setProgramArguments(programArguments.getText());

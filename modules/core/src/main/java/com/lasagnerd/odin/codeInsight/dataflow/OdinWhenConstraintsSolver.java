@@ -71,7 +71,6 @@ public class OdinWhenConstraintsSolver extends OdinVisitor {
         for (OdinWhenBranchBlock branch : odinConditionalBlock.getBranches()) {
             boolean isAncestor = PsiTreeUtil.isAncestor(branch.getPsiElement(), element, true);
             if (branch.getCondition() != null) {
-//                System.out.println("Coming from " + element.getText() + ":" + element.getLocation() + ". Entering condition " + branch.getCondition().getText());
                 // Careful, ConditionExtractor uses reference resolver
                 Condition condition = ConditionExtractor.toCondition(lattice.toContext(), branch.getCondition());
                 if (condition != null) {

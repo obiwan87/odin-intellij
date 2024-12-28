@@ -44,7 +44,11 @@ public abstract class DAPDebuggerDriverConfiguration extends DebuggerDriverConfi
     }
 
     @Override
-    public EvaluationContext createEvaluationContext(@NotNull DebuggerDriver debuggerDriver, @Nullable Expirable expirable, @NotNull LLThread llThread, @NotNull LLFrame llFrame, @NotNull UserDataHolderEx userDataHolderEx) {
+    public EvaluationContext createEvaluationContext(@NotNull DebuggerDriver debuggerDriver,
+                                                     @Nullable Expirable expirable,
+                                                     @NotNull LLThread llThread,
+                                                     @NotNull LLFrame llFrame,
+                                                     @NotNull UserDataHolderEx userDataHolderEx) {
         return new EvaluationContext(debuggerDriver, expirable, llThread, llFrame, userDataHolderEx) {
             @Override
             public @NotNull String convertToRValue(@NotNull LLValueData llValueData, @NotNull Pair<LLValue, String> pair) throws DebuggerCommandException, ExecutionException {

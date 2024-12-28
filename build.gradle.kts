@@ -37,6 +37,7 @@ val riderVersion = properties("riderVersion").get()
 val debuggerPlugins = listOf("com.intellij.cidr.lang", "com.intellij.cidr.base", "com.intellij.nativeDebug")
 val indexViewer = "com.jetbrains.hackathon.indices.viewer:1.29"
 val idePerf = "com.google.ide-perf:1.3.2"
+val nativeDebuggerSupportPlugin = "com.intellij.nativeDebug:243.22562.145"
 val riderPlugins = emptyList<String>()
 
 val lsp4jVersion = "0.23.0"
@@ -219,7 +220,8 @@ project(":plugin") {
             zipSigner()
             pluginVerifier()
             when (baseIDE) {
-                "idea" -> intellijIdeaCommunity(ideaVersion, useInstaller = false)
+                "ideaC" -> intellijIdeaCommunity(ideaVersion, useInstaller = false)
+                "ideaU" -> intellijIdeaUltimate(ideaVersion, useInstaller = false)
                 "clion" -> clion(clionVersion, useInstaller = false)
                 "rider" -> rider(riderVersion, useInstaller = false)
             }
@@ -258,6 +260,9 @@ project(":plugin") {
                 intellijPlatform {
                     plugin(idePerf)
                     plugin(indexViewer)
+                    if (baseIDE == "ideaU") {
+                        plugin(nativeDebuggerSupportPlugin)
+                    }
                 }
             }
         }

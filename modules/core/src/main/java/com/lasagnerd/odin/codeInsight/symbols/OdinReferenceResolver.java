@@ -117,7 +117,7 @@ public class OdinReferenceResolver {
             // TODO This should be returned as a copy. In OdinInferenceEngine we return a more specific
             //  context in the type itself. Should we return it in the symbol?
             context.getSymbolValueStore().intersect(sourceLattice.getSymbolValueStore());
-            // System.out.println("Solving lattice for " + identifier.getText() + ":" + identifier.getLocation());
+
 
             List<OdinSymbol> validSymbols = new ArrayList<>();
             for (OdinSymbol symbol : symbols) {

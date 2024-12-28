@@ -101,7 +101,6 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
 
             setCachedReference(cachedValue);
         }
-//        System.out.println(location + "Using cache");
         return getCachedReference().getValue(context);
     }
 

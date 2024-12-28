@@ -159,7 +159,6 @@ public class OdinImportPathCompletionProvider extends CompletionProvider<Complet
             current = stack.pop();
             for (PsiDirectory subdir : current.getSubdirectories()) {
                 Path subdirPath = Path.of(subdir.getVirtualFile().getPath());
-                System.out.println("- " + subdirPath);
                 Path relativePath = root.relativize(subdirPath);
                 String lookupString = FileUtil.toSystemIndependentName(relativePath.toString());
                 if (lookupString.isBlank()) {

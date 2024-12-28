@@ -1,9 +1,9 @@
 package com.lasagnerd.odin.runConfiguration.build;
 
-import com.intellij.execution.configurations.LocatableRunConfigurationOptions;
 import com.intellij.openapi.components.StoredProperty;
+import com.lasagnerd.odin.runConfiguration.OdinBaseRunConfigurationOptions;
 
-public class OdinBuildRunConfigurationOptions extends LocatableRunConfigurationOptions {
+public class OdinBuildRunConfigurationOptions extends OdinBaseRunConfigurationOptions {
     public static final String OUTPUT_PATH_DEFAULT;
 
     static {
@@ -15,7 +15,7 @@ public class OdinBuildRunConfigurationOptions extends LocatableRunConfigurationO
         }
     }
 
-    private final StoredProperty<String> projectDirectoryPath =
+    private final StoredProperty<String> packageDirectoryPath =
             string("").provideDelegate(this, "projectDirectoryPath");
     private final StoredProperty<String> compilerOptions =
             string("").provideDelegate(this, "compilerOptions");
@@ -28,42 +28,52 @@ public class OdinBuildRunConfigurationOptions extends LocatableRunConfigurationO
 
     private final StoredProperty<String> programArguments = string("").provideDelegate(this, "programArguments");
 
+    @Override
     public String getWorkingDirectory() {
         return workingDirectory.getValue(this);
     }
 
+    @Override
     public void setWorkingDirectory(String workingDirectory) {
         this.workingDirectory.setValue(this, workingDirectory);
     }
 
+    @Override
     public String getProgramArguments() {
         return programArguments.getValue(this);
     }
 
+    @Override
     public void setProgramArguments(String programArguments) {
         this.programArguments.setValue(this, programArguments);
     }
 
+    @Override
     public String getCompilerOptions() {
         return compilerOptions.getValue(this);
     }
 
+    @Override
     public void setCompilerOptions(String compilerOptions) {
         this.compilerOptions.setValue(this, compilerOptions);
     }
 
-    public String getProjectDirectoryPath() {
-        return projectDirectoryPath.getValue(this);
+    @Override
+    public String getPackageDirectoryPath() {
+        return packageDirectoryPath.getValue(this);
     }
 
-    public void setProjectDirectoryPath(String projectDirectoryPath) {
-        this.projectDirectoryPath.setValue(this, projectDirectoryPath);
+    @Override
+    public void setPackageDirectoryPath(String projectDirectoryPath) {
+        this.packageDirectoryPath.setValue(this, projectDirectoryPath);
     }
 
+    @Override
     public String getOutputPath() {
         return outputPath.getValue(this);
     }
 
+    @Override
     public void setOutputPath(String outputPath) {
         this.outputPath.setValue(this, outputPath);
     }
