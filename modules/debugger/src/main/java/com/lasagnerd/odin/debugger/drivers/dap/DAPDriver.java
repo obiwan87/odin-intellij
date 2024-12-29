@@ -782,22 +782,22 @@ public abstract class DAPDriver<
     }
 
     protected List<LLValue> getVariables(int frameID, int variablesReference) throws ExecutionException {
-        val javaVariables = new ArrayList<LLValue>();
-        val variableArgs = new VariablesArguments();
+        ArrayList<LLValue> javaVariables = new ArrayList<>();
+        VariablesArguments variableArgs = new VariablesArguments();
         variableArgs.setVariablesReference(variablesReference);
         variableArgs.setStart(null);
         variableArgs.setCount(null);
-        val variables = server.variablesNow(variableArgs);
-        for (val variable : variables.getVariables()) {
-            val address = DAPDriverUtils.parseAddressNullable(variable.getMemoryReference());
-            val type = DAPDriverUtils.emptyIfNull(variable.getType());
-            val truncated = type.replaceAll("error\\{.*?}", "error{}");
-            val name = variable.getName();
-            val evalName = DAPDriverUtils.emptyIfNull(variable.getEvaluateName());
-            val childRef = variable.getVariablesReference();
-            val knownValue = variable.getValue();
+        VariablesResponse variables = server.variablesNow(variableArgs);
+        for (Variable variable : variables.getVariables()) {
+            Long address = DAPDriverUtils.parseAddressNullable(variable.getMemoryReference());
+            String type = DAPDriverUtils.emptyIfNull(variable.getType());
+            String truncated = type.replaceAll("error\\{.*?}", "error{}");
+            String name = variable.getName();
+            String evalName = DAPDriverUtils.emptyIfNull(variable.getEvaluateName());
+            int childRef = variable.getVariablesReference();
+            String knownValue = variable.getValue();
 
-            val llValue = new LLValue(name, type, truncated, address, null, evalName);
+            final LLValue llValue = new LLValue(name, type, truncated, address, null, evalName);
             llValue.putUserData(LLVALUE_FRAME, frameID);
             llValue.putUserData(LLVALUE_CHILDREN_REF, childRef);
             if (knownValue != null) {
@@ -874,8 +874,8 @@ public abstract class DAPDriver<
      */
     @Override
     public @Nullable Integer getChildrenCount(@NotNull LLValue value) throws ExecutionException {
-        val frame = value.getUserData(LLVALUE_FRAME);
-        val childrenRef = value.getUserData(LLVALUE_CHILDREN_REF);
+        final Integer frame = value.getUserData(LLVALUE_FRAME);
+        final Integer childrenRef = value.getUserData(LLVALUE_CHILDREN_REF);
         List<LLValue> children;
         if (childrenRef == null || frame == null) {
             children = List.of();
@@ -911,17 +911,22 @@ public abstract class DAPDriver<
     @Override
     public @NotNull LLValue evaluate(long threadId, int frameIndex, @NotNull String expression, @Nullable DebuggerLanguage language)
             throws ExecutionException {
-        val evalArgs = new EvaluateArguments();
+        final EvaluateArguments evalArgs = new EvaluateArguments();
         evalArgs.setFrameId(frameIndex);
         evalArgs.setExpression(expression);
-        val res = server.evaluateNow(evalArgs);
+        final EvaluateResponse res = server.evaluateNow(evalArgs);
         var type = res.getType();
         type = type == null ? "unknown" : type;
-        val mRef = res.getMemoryReference();
+        final String mRef = res.getMemoryReference();
         Long addr = mRef == null ? null : DAPDriverUtils.parseAddress(mRef);
-        val result = new LLValue("result", type, addr, null, "");
-        result.putUserData(LLVALUE_DATA, new LLValueData(res.getResult(), null, false, false, false));
+        boolean hasChildren = res.getVariablesReference() != 0;
+
+        final LLValue result = new LLValue("result", type, addr, null, "");
+        result.putUserData(LLVALUE_DATA, new LLValueData(res.getResult(), null, false, hasChildren, false));
         result.putUserData(LLVALUE_FRAME, frameIndex);
+        if (hasChildren) {
+            result.putUserData(LLVALUE_CHILDREN_REF, res.getVariablesReference());
+        }
         return result;
     }
 
@@ -1110,6 +1115,7 @@ public abstract class DAPDriver<
             inferior().close();
         }
     };
+
 
     @Override
     public @Nullable OutputStream getProcessInput() {

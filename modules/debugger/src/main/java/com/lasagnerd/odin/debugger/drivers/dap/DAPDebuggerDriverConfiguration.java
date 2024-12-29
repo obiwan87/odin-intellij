@@ -49,11 +49,19 @@ public abstract class DAPDebuggerDriverConfiguration extends DebuggerDriverConfi
                                                      @NotNull LLThread llThread,
                                                      @NotNull LLFrame llFrame,
                                                      @NotNull UserDataHolderEx userDataHolderEx) {
-        return new EvaluationContext(debuggerDriver, expirable, llThread, llFrame, userDataHolderEx) {
-            @Override
-            public @NotNull String convertToRValue(@NotNull LLValueData llValueData, @NotNull Pair<LLValue, String> pair) throws DebuggerCommandException, ExecutionException {
-                return cast(pair.getSecond(), pair.getFirst().getType());
-            }
-        };
+        return new MyEvaluationContext(debuggerDriver, expirable, llThread, llFrame, userDataHolderEx);
+    }
+
+    private static class MyEvaluationContext extends EvaluationContext {
+        public MyEvaluationContext(@NotNull DebuggerDriver debuggerDriver, @Nullable Expirable expirable, @NotNull LLThread llThread, @NotNull LLFrame llFrame, @NotNull UserDataHolderEx userDataHolderEx) {
+            super(debuggerDriver, expirable, llThread, llFrame, userDataHolderEx);
+        }
+
+        @Override
+        public @NotNull String convertToRValue(@NotNull LLValueData llValueData, @NotNull Pair<LLValue, String> pair) throws DebuggerCommandException, ExecutionException {
+            return cast(pair.getSecond(), pair.getFirst().getType());
+        }
+
+
     }
 }
