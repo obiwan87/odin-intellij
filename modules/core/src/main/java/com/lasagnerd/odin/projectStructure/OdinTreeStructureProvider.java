@@ -20,11 +20,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class OdinTreeStructureProvider implements TreeStructureProvider {
     @Override
     public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
+        List<AbstractTreeNode<?>> newChildren = new ArrayList<>();
 
         for (AbstractTreeNode<?> child : children) {
             if (child instanceof PsiDirectoryNode directoryNode) {
@@ -46,9 +49,11 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
                             Color foreground = presentation.getForcedTextForeground();
 
                             OdinPsiCollection odinPsiCollection = new OdinPsiCollection(collectionName, directoryNode.getValue());
+                            PsiDirectoryNode newDirectoryNode =
+                                    new PsiDirectoryNode(directoryNode);
                             OdinPsiCollectionDirectory odinPsiCollectionDirectory
                                     = new OdinPsiCollectionDirectory(directoryNode.getValue(), odinPsiCollection);
-                            directoryNode.setValue(odinPsiCollectionDirectory);
+                            newDirectoryNode.setValue(odinPsiCollectionDirectory);
 
                             if (directoryName.equals(collectionName)) {
                                 presentation.addText(directoryName,
@@ -61,10 +66,13 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
                                 presentation.addText(" [%s]".formatted(collectionName),
                                         new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, Gray._150));
                             }
+                            newChildren.add(newDirectoryNode);
+                            continue;
                         }
                     }
                 }
             }
+            newChildren.add(child);
         }
         return children;
     }
