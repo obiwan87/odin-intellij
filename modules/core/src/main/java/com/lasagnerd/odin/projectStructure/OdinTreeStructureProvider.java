@@ -27,33 +27,40 @@ import java.util.List;
 public class OdinTreeStructureProvider implements TreeStructureProvider {
     @Override
     public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
-        List<AbstractTreeNode<?>> newChildren = new ArrayList<>();
+        List<AbstractTreeNode<?>> newChildren = new ArrayList<>(children.size() + 1);
 
         for (AbstractTreeNode<?> child : children) {
             if (child instanceof PsiDirectoryNode directoryNode) {
                 VirtualFile directoryFile = directoryNode.getVirtualFile();
                 if (directoryFile != null) {
                     Module module = ModuleUtilCore.findModuleForFile(directoryFile, child.getProject());
-                    if (module == null)
+                    if (module == null) {
+                        newChildren.add(child);
                         continue;
+                    }
 
                     SourceFolder sourceFolder = OdinRootTypeUtils.getCollectionFolder(directoryFile,
                             ModuleRootManager.getInstance(module).getModifiableModel());
                     if (sourceFolder != null) {
                         JpsElement properties = sourceFolder.getJpsElement().getProperties();
                         if (properties instanceof OdinCollectionRootProperties collectionRootProperties) {
-                            PresentationData presentation = child.getPresentation();
 
                             String collectionName = collectionRootProperties.getCollectionName();
                             String directoryName = directoryFile.getName();
-                            Color foreground = presentation.getForcedTextForeground();
 
                             OdinPsiCollection odinPsiCollection = new OdinPsiCollection(collectionName, directoryNode.getValue());
-                            PsiDirectoryNode newDirectoryNode =
-                                    new PsiDirectoryNode(directoryNode);
                             OdinPsiCollectionDirectory odinPsiCollectionDirectory
                                     = new OdinPsiCollectionDirectory(directoryNode.getValue(), odinPsiCollection);
-                            newDirectoryNode.setValue(odinPsiCollectionDirectory);
+                            PsiDirectoryNode newDirectoryNode = new PsiDirectoryNode(directoryNode.getProject(),
+                                    odinPsiCollectionDirectory,
+                                    // This is a workaround to #98: Compact middle packages hides content of collections
+                                    // I am not sure why contents of collection roots are not rendered correctly when that
+                                    // view setting is enabled. So to allow for correct work, we just do not hide middle packages.
+                                    ViewSettings.DEFAULT
+//                                    directoryNode.getSettings()
+                            );
+                            PresentationData presentation = newDirectoryNode.getPresentation();
+                            Color foreground = presentation.getForcedTextForeground();
 
                             if (directoryName.equals(collectionName)) {
                                 presentation.addText(directoryName,
@@ -74,7 +81,7 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
             }
             newChildren.add(child);
         }
-        return children;
+        return newChildren;
     }
 
     @Override

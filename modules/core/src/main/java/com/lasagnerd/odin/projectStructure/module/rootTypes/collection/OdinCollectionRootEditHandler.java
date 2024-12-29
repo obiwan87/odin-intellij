@@ -2,8 +2,6 @@ package com.lasagnerd.odin.projectStructure.module.rootTypes.collection;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.roots.ui.configuration.ContentRootPanel;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.ui.DarculaColors;
 import com.intellij.ui.JBColor;
@@ -33,7 +31,7 @@ public class OdinCollectionRootEditHandler extends ModuleSourceRootEditHandler<O
 
     @Override
     public @Nullable Icon getFolderUnderRootIcon() {
-        return null;
+        return AllIcons.Nodes.Package;
     }
 
     @Override
