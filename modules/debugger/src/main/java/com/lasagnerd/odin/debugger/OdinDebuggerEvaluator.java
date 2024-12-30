@@ -11,7 +11,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
 import com.jetbrains.cidr.execution.debugger.CidrEvaluator;
 import com.jetbrains.cidr.execution.debugger.CidrStackFrame;
-import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPointerType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinUnionType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinUnionVariant;
@@ -50,43 +50,58 @@ public class OdinDebuggerEvaluator extends CidrEvaluator {
                     textRange = refExpression.getTextRange();
                     displayText = refExpression.getText();
 
-                }
-                OdinRefExpression currentRefExpression = OdinInsightUtils.findTopMostRefExpression(psiElementAtOffset);
-                List<String> fragments = new ArrayList<>();
-                boolean notSupported = false;
-
-                while (currentRefExpression != null) {
-                    if (currentRefExpression.getIdentifier() != null) {
-                        fragments.add(currentRefExpression.getIdentifier().getText());
-                    }
-                    if (currentRefExpression.getType() != null) {
-                        if (currentRefExpression.getExpression() != null) {
-                            TsOdinType inferredType = currentRefExpression.getExpression().getInferredType();
-                            if (inferredType.baseType(true) instanceof TsOdinUnionType unionType) {
-                                int v = 1;
-                                for (TsOdinUnionVariant variant : unionType.getVariants()) {
-                                    if (variant.getType().getName().equals(currentRefExpression.getType().getText())) {
-                                        fragments.add("v" + v);
-                                        break;
+                    OdinRefExpression currentRefExpression = refExpression;
+                    List<ExpressionFragment> fragments = new ArrayList<>();
+                    boolean notSupported = false;
+                    while (currentRefExpression != null) {
+                        TsOdinType currentType = currentRefExpression.getInferredType();
+                        if (currentRefExpression.getIdentifier() != null) {
+                            fragments.add(new ExpressionFragment(currentRefExpression.getIdentifier().getText(), currentType));
+                        }
+                        if (currentRefExpression.getType() != null) {
+                            if (currentRefExpression.getExpression() != null) {
+                                TsOdinType parentType = currentRefExpression.getExpression().getInferredType();
+                                if (parentType.baseType(true) instanceof TsOdinUnionType unionType) {
+                                    int v = 1;
+                                    for (TsOdinUnionVariant variant : unionType.getVariants()) {
+                                        if (variant.getType().getName().equals(currentRefExpression.getType().getText())) {
+                                            String expression = "v" + v;
+                                            fragments.add(new ExpressionFragment(expression, variant.getType()));
+                                            break;
+                                        }
+                                        v++;
                                     }
-                                    v++;
                                 }
                             }
                         }
+                        if (currentRefExpression.getExpression() instanceof OdinRefExpression nextRefExpression) {
+                            currentRefExpression = nextRefExpression;
+                        } else if (currentRefExpression.getExpression() == null) {
+                            currentRefExpression = null;
+                        } else {
+                            notSupported = true;
+                            break;
+                        }
                     }
-                    if (currentRefExpression.getExpression() instanceof OdinRefExpression nextRefExpression) {
-                        currentRefExpression = nextRefExpression;
-                    } else if (currentRefExpression.getExpression() == null) {
-                        currentRefExpression = null;
+                    if (notSupported) {
+                        expressionText = displayText;
                     } else {
-                        notSupported = true;
-                        break;
+                        StringBuilder expressionSb = new StringBuilder();
+                        List<ExpressionFragment> reversed = fragments.reversed();
+                        for (int i = 0; i < reversed.size(); i++) {
+                            ExpressionFragment expressionFragment = reversed.get(i);
+                            expressionSb.append(expressionFragment.expression());
+                            if (i < reversed.size() - 1) {
+                                if (expressionFragment.isPointer()) {
+                                    expressionSb.append("->");
+                                } else {
+                                    expressionSb.append(".");
+                                }
+                            }
+                        }
+
+                        expressionText = expressionSb.toString();
                     }
-                }
-                if (notSupported) {
-                    expressionText = displayText;
-                } else {
-                    expressionText = String.join(".", fragments.reversed());
                 }
             }
         }
@@ -94,6 +109,12 @@ public class OdinDebuggerEvaluator extends CidrEvaluator {
             return new ExpressionInfo(textRange, expressionText, displayText);
         }
         return null;
+    }
+
+    record ExpressionFragment(String expression, TsOdinType baseType) {
+        public boolean isPointer() {
+            return baseType.baseType(true) instanceof TsOdinPointerType;
+        }
     }
 
     @Override
