@@ -894,3 +894,16 @@ testUsingVsNonUsing :: proc() {
 testStructTypeReferenceNotHavingTypeElements :: proc() {
     x := Line.points
 }
+
+testUsingWithAlias :: proc() {
+    _Transform :: struct {
+        translation: i32
+    }
+    Transform :: distinct _Transform
+    TransformP :: distinct ^Transform
+    Entity :: struct {
+        using t: TransformP
+    }
+    e := Entity{ }
+    x := e.translation
+}

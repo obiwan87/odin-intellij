@@ -2886,6 +2886,14 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testUsingWithAlias() throws IOException {
+        OdinFile file = loadTypeInference();
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "testUsingWithAlias", "x");
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
+        }
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
         String filePath = "expression_eval.odin";
         return loadTestData(filePath);

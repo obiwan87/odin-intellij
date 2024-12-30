@@ -357,7 +357,7 @@ public class OdinInsightUtils {
         }
 
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, field.getType());
-        TsOdinStructType structType = unwrapFromPointerType(tsOdinType);
+        TsOdinStructType structType = unwrapStructType(tsOdinType.baseType(true));
 
         if (structType != null) {
             OdinType psiType = structType.getPsiType();
@@ -368,15 +368,17 @@ public class OdinInsightUtils {
         }
     }
 
-    private static @Nullable TsOdinStructType unwrapFromPointerType(TsOdinType tsOdinType) {
+    private static @Nullable TsOdinStructType unwrapStructType(TsOdinType tsOdinType) {
         TsOdinStructType structType;
-        if (tsOdinType instanceof TsOdinPointerType tsOdinPointerType) {
-            if (tsOdinPointerType.getDereferencedType() instanceof TsOdinStructType) {
-                structType = (TsOdinStructType) tsOdinPointerType.getDereferencedType();
+        TsOdinType baseType = tsOdinType.baseType(true);
+        if (baseType instanceof TsOdinPointerType tsOdinPointerType) {
+            TsOdinType baseDereferencedType = tsOdinPointerType.getDereferencedType().baseType(true);
+            if (baseDereferencedType instanceof TsOdinStructType) {
+                structType = (TsOdinStructType) baseDereferencedType;
             } else {
                 structType = null;
             }
-        } else if (tsOdinType instanceof TsOdinStructType tsOdinStructType) {
+        } else if (baseType instanceof TsOdinStructType tsOdinStructType) {
             structType = tsOdinStructType;
         } else {
             structType = null;

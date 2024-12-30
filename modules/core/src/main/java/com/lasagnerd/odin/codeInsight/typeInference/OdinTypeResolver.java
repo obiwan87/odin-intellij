@@ -386,6 +386,9 @@ public class OdinTypeResolver extends OdinVisitor {
         }
         switch (odinDeclaration) {
             case OdinConstantInitDeclaration constantInitDeclaration -> {
+                if (constantInitDeclaration.getExpressionList().isEmpty())
+                    return TsOdinBuiltInTypes.UNKNOWN;
+
                 OdinExpression firstExpression = constantInitDeclaration.getExpressionList().getFirst();
                 OdinType declaredType = OdinInsightUtils.getDeclaredType(constantInitDeclaration);
 
