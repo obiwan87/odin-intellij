@@ -4,6 +4,8 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.cidr.execution.debugger.CidrDebuggerEditorsProvider;
 import com.jetbrains.cidr.execution.debugger.CidrDebuggerLanguageSupport;
+import com.jetbrains.cidr.execution.debugger.CidrEvaluator;
+import com.jetbrains.cidr.execution.debugger.CidrStackFrame;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,4 +23,11 @@ public class OdinDebuggerLanguageSupport extends CidrDebuggerLanguageSupport {
 	public @Nullable XDebuggerEditorsProvider createEditor(@Nullable RunProfile profile) {
 		return new CidrDebuggerEditorsProvider();
 	}
+
+	@Override
+	protected @Nullable CidrEvaluator createEvaluator(@NotNull CidrStackFrame frame) {
+		return new OdinDebuggerEvaluator(frame);
+	}
+
+
 }
