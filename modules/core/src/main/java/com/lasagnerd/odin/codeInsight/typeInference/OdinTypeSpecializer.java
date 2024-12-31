@@ -85,8 +85,7 @@ public class OdinTypeSpecializer {
 
 
         for (TsOdinParameter tsOdinParameter : genericType.getParameters()) {
-            TsOdinType tsOdinType = resolveType(context
-                    , tsOdinParameter.getPsiType());
+            TsOdinType tsOdinType = resolveType(context, tsOdinParameter.getPsiType());
             TsOdinParameter specializedParameter = cloneWithType(tsOdinParameter, tsOdinType);
             specializedType.getParameters().add(specializedParameter);
         }

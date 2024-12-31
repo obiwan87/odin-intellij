@@ -484,6 +484,12 @@ public class OdinInferenceEngine extends OdinVisitor {
                 return tsOdinStructType.getFields().get(symbol.getName());
             }
         }
+        if (symbol.getSymbolType() == OdinSymbolType.POLYMORPHIC_TYPE) {
+            TsOdinType polymorphicType = context.getPolymorphicType(symbol.getName());
+            if (polymorphicType != null) {
+                return OdinTypeResolver.createTypeReference(polymorphicType, false);
+            }
+        }
 
         // Implicitly declared symbols, like swizzle fields
         if (symbol.isImplicitlyDeclared()) {

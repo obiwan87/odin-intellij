@@ -2894,6 +2894,20 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testIteratorWithPolyProc() throws IOException {
+        OdinFile odinFile = loadTypeInference();
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testIteratorWithPolyProc", "x");
+            TsOdinStructType structType = assertInstanceOf(tsOdinType, TsOdinStructType.class);
+            assertEquals("Bullet", structType.getName());
+        }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testIteratorWithPolyProc", "y");
+            assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
+        }
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
         String filePath = "expression_eval.odin";
         return loadTestData(filePath);

@@ -123,7 +123,12 @@ public abstract class DAPDriver<
         });
         client = createDebuggerClient();
         val executorServer = Executors.newSingleThreadExecutor();
-        val launcher = DebugLauncher.createLauncher(client, getServerInterface(), pipeInput, processHandler.getProcessInput(), executorServer, this::wrapMessageConsumer);
+        val launcher = DebugLauncher.createLauncher(client,
+                getServerInterface(),
+                pipeInput,
+                processHandler.getProcessInput(),
+                executorServer,
+                this::wrapMessageConsumer);
         server = wrapDebugServer(launcher.getRemoteProxy());
         launcher.startListening();
 

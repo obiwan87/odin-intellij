@@ -907,3 +907,43 @@ testUsingWithAlias :: proc() {
     e := Entity{ }
     x := e.translation
 }
+
+testIteratorWithPolyProc :: proc() {
+    Bullet :: struct {
+        Position: i32
+    }
+
+    Handle_Array :: struct($T: typeid, $THandle: typeid) {
+        data: T,
+        handle: THandle
+    }
+
+    Handler_Array_Iter :: struct($T: typeid, $THandle: typeid) {
+        ha: Handle_Array(T, THandle),
+        index: int
+    }
+
+    ha_make_iter :: proc(ha: Handle_Array($T, $THandle)) -> Handler_Array_Iter(T, THandle) {
+
+    }
+
+    ha_iter :: proc(it: ^Handler_Array_Iter($T, $THandle)) -> (val: T, h:THandle, cond: bool) {
+
+    }
+
+    ha_iter_ptr :: proc(it: ^Handler_Array_Iter($T, $THandle)) -> (val: ^T, h: THandle, cond: bool) {
+
+    }
+
+    Bullets := Handle_Array(Bullet, i32) { }
+
+    b := Bullet{ }
+    bullets := ha_make_iter(Bullets)
+    x := bullets.ha.data
+
+    for bullet, handle in ha_iter_ptr(&bullets) {
+        using bullet
+
+        y := Position
+    }
+}
