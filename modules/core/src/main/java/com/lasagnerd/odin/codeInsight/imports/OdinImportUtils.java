@@ -330,14 +330,18 @@ public class OdinImportUtils {
     public static @NotNull Map<Path, OdinImport> getImportPathMap(OdinFile thisOdinFile) {
         Project project = thisOdinFile.getProject();
         String sourceFilePath = thisOdinFile.getVirtualFile().getPath();
-        return thisOdinFile.getFileScope().getImportStatements().stream()
-                .map(OdinImportStatement::getImportDeclaration)
-                .map(OdinImportDeclaration::getImportInfo)
-                .collect(Collectors.toMap(
-                        i -> getFirstAbsoluteImportPath(project, sourceFilePath, i),
-                        v -> v,
-                        (a, b) -> a
-                ));
+        OdinFileScope fileScope = thisOdinFile.getFileScope();
+        if (fileScope != null) {
+            return fileScope.getImportStatements().stream()
+                    .map(OdinImportStatement::getImportDeclaration)
+                    .map(OdinImportDeclaration::getImportInfo)
+                    .collect(Collectors.toMap(
+                            i -> getFirstAbsoluteImportPath(project, sourceFilePath, i),
+                            v -> v,
+                            (a, b) -> a
+                    ));
+        }
+        return Collections.emptyMap();
     }
 
     public String getCollectionName(Project project, String path) {
