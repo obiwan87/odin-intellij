@@ -73,6 +73,11 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
             declarationText += " : " + type + " = " + odinExpression.getText();
         }
 
+        if (declaration instanceof OdinShortVariableDeclaration shortVariableDeclaration) {
+            TsOdinType type = shortVariableDeclaration.getType().getResolvedType();
+            declarationText += ": " + type;
+        }
+
 
         OdinType declaredType = OdinInsightUtils.getDeclaredType(declaredIdentifier);
         if (declaredType instanceof OdinProcedureLiteralType procedureLiteralType) {

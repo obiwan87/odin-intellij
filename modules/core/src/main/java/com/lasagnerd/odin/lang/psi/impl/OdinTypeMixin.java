@@ -36,7 +36,7 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
 
     public TsOdinType getResolvedType() {
         OdinTypeResolver.OdinTypeResolverParameters typeResolverParameters = new OdinTypeResolver.OdinTypeResolverParameters(
-                null, null, null, false
+                new OdinContext(), null, null, false
         );
 
         return getResolvedType(typeResolverParameters);
