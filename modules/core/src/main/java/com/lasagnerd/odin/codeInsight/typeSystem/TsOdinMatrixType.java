@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import com.lasagnerd.odin.lang.psi.OdinExpression;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +12,9 @@ public class TsOdinMatrixType extends TsOdinTypeBase implements TsOdinElementOwn
     private TsOdinType elementType;
     Integer rows;
     Integer columns;
+
+    OdinExpression rowsExpression;
+    OdinExpression columnsExpression;
 
     @Override
     public TsOdinTypeKind getTypeReferenceKind() {

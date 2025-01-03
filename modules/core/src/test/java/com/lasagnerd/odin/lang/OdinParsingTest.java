@@ -2908,6 +2908,16 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testMatrixTranspose() throws IOException {
+        OdinFile odinFile = loadTypeInference();
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testMatrixTranspose", "m_t");
+            TsOdinMatrixType matrixType = assertInstanceOf(tsOdinType, TsOdinMatrixType.class);
+            assertEquals(3, (int) matrixType.getRows());
+            assertEquals(4, (int) matrixType.getColumns());
+        }
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
         String filePath = "expression_eval.odin";
         return loadTestData(filePath);

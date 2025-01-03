@@ -947,3 +947,13 @@ testIteratorWithPolyProc :: proc() {
         y := Position
     }
 }
+
+testMatrixTranspose :: proc() {
+    m: matrix[4, 3]f32
+
+    transpose :: proc(m: matrix[$R, $C]$T) -> (m_t: matrix[C, R]T) {
+        return m_t
+    }
+
+    m_t := transpose(m)
+}

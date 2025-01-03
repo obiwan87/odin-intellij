@@ -527,11 +527,13 @@ public class OdinTypeResolver extends OdinVisitor {
             for (int i = 0; i < arraySizeList.size(); i++) {
                 OdinArraySize arraySize = arraySizeList.get(i);
                 if (arraySize.getExpression() != null) {
-                    Integer sizeValue = OdinExpressionEvaluator.evaluate(context, arraySize.getExpression()).asInt();
+                    Integer sizeValue = OdinExpressionEvaluator.evaluate(context, arraySize.getExpression()).toInt();
                     if (i == 1) {
+                        tsOdinMatrixType.setColumnsExpression(arraySize.getExpression());
                         tsOdinMatrixType.setColumns(sizeValue);
                     }
                     if (i == 0) {
+                        tsOdinMatrixType.setRowsExpression(arraySize.getExpression());
                         tsOdinMatrixType.setRows(sizeValue);
                     }
                 }

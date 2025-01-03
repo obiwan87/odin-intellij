@@ -87,6 +87,17 @@ public class OdinExpressionEvaluator extends OdinVisitor {
         }
     }
 
+    @Override
+    public void visitTypeDefinitionExpression(@NotNull OdinTypeDefinitionExpression o) {
+        if (o.getType() instanceof OdinPolymorphicType polymorphicType) {
+            String symbolName = polymorphicType.getDeclaredIdentifier().getIdentifierToken().getText();
+            EvOdinValue polymorphicValue = context.getPolymorphicValue(symbolName);
+            if (polymorphicValue != null) {
+                this.value = polymorphicValue;
+            }
+        }
+    }
+
     public static EvOdinValue evaluateConstantDeclaration(@NotNull Project project,
                                                           OdinSymbol symbol,
                                                           OdinContext context,

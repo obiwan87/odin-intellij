@@ -8,9 +8,7 @@ import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class OdinTypeChecker {
 
@@ -121,29 +119,6 @@ public class OdinTypeChecker {
             return checkTypesStrictly(argumentType.baseType(true), constrainedType.getSpecializedType());
         }
         return checkTypesStrictly(argumentType, constrainedType.getSpecializedType());
-    }
-
-    /**
-     * Checks if a type is compatible with a constrained type
-     *
-     * @param constrainedType the constrained type
-     * @param typeToCheck     the type to check
-     * @return true if compatible, false otherwise
-     */
-    public static boolean checkConstrainedType_(TsOdinConstrainedType constrainedType, TsOdinType typeToCheck) {
-        Map<String, TsOdinType> resolvedTypes = OdinTypeSpecializer.substituteTypes(typeToCheck.baseType(),
-                constrainedType.getSpecializedType().baseType());
-
-        Collection<OdinPolymorphicType> polymorphicTypes = PsiTreeUtil.findChildrenOfType(constrainedType.getPsiType(), OdinPolymorphicType.class);
-        boolean solved = true;
-        for (OdinPolymorphicType polymorphicType : polymorphicTypes) {
-            String name = polymorphicType.getDeclaredIdentifier().getName();
-            if (!resolvedTypes.containsKey(name)) {
-                solved = false;
-                break;
-            }
-        }
-        return solved;
     }
 
     public static boolean hasPolymorphicTypes(TsOdinType type) {
