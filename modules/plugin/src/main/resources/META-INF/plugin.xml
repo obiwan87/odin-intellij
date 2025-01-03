@@ -300,11 +300,15 @@
                 id="com.lasagnerd.odin.projectSettings.OdinProjectConfigurable"
                 displayName="Odin"/>
 
+        <!--suppress PluginXmlValidity -->
         <projectService serviceImplementation="com.lasagnerd.odin.projectSettings.OdinProjectSettingsServiceImpl"
                         serviceInterface="com.lasagnerd.odin.projectSettings.OdinProjectSettingsService"/>
+        <!--suppress PluginXmlValidity -->
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
+        <!--suppress PluginXmlValidity -->
         <projectService serviceImplementation="com.lasagnerd.odin.codeInsight.sdk.OdinSdkServiceImpl"
                         serviceInterface="com.lasagnerd.odin.codeInsight.sdk.OdinSdkService"/>
+        <!--suppress PluginXmlValidity -->
         <projectService serviceInterface="com.lasagnerd.odin.codeInsight.imports.OdinImportService"
                         serviceImplementation="com.lasagnerd.odin.codeInsight.imports.OdinImportServiceImpl"/>
 

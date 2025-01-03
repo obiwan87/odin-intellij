@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-package com.lasagnerd.odin.debugger.drivers;
+package com.lasagnerd.odin.debugger.dapDrivers;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.util.system.CpuArch;
 import com.jetbrains.cidr.ArchitectureType;
-import com.lasagnerd.odin.debugger.drivers.dap.DAPDebuggerDriverConfiguration;
-import com.lasagnerd.odin.debugger.drivers.dap.DAPDriver;
-import com.lasagnerd.odin.debugger.drivers.dap.WrappedDebugServer;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -39,6 +36,9 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -97,6 +97,16 @@ public class WinDAPDriver extends DAPDriver<
     @Override
     protected WrappedDebugServer<IDebugProtocolServer> wrapDebugServer(IDebugProtocolServer remoteProxy) {
         return new WrappedDebugServer<>(remoteProxy);
+    }
+
+    @Override
+    public @NotNull Inferior loadForRemote(@NotNull String connectionString, @Nullable File symbolFile, @Nullable File sysroot, @NotNull List<PathMapping> pathMappings) throws ExecutionException {
+        throw new UnsupportedOperationException("Not supported");
+    }
+
+    @Override
+    protected void doStartDebugging(HashMap<String, Object> args) throws ExecutionException {
+        server.launchNow(args);
     }
 
     @Override

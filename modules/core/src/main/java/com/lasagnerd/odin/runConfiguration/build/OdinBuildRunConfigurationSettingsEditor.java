@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +23,9 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
     private final JTextField compilerOptions;
     private final ExtendableTextField workingDirectory;
     private final RawCommandLineEditor programArguments;
-    private final ExtendableTextField projectProjectDirectoryPath;
+    private final ExtendableTextField packageRootPathTextField;
     private final ExtendableTextField outputPath;
+    private final JBCheckBox runAfterBuildCheckbox;
 
     public OdinBuildRunConfigurationSettingsEditor(@NotNull Project project) {
         // Get project
@@ -33,9 +35,9 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
         outputPath.setColumns(0);
         MacrosDialog.addMacroSupport(outputPath, (x) -> true, () -> false);
 
-        projectProjectDirectoryPath = new ExtendableTextField("$ProjectFileDir$");
-        TextFieldWithBrowseButton extendableProjectDirectoryPath = createDirectoryChooser(project, projectProjectDirectoryPath);
-        MacrosDialog.addMacroSupport(projectProjectDirectoryPath, (x) -> true, () -> false);
+        packageRootPathTextField = new ExtendableTextField("$ProjectFileDir$");
+        TextFieldWithBrowseButton packageRootPath = createDirectoryChooser(project, this.packageRootPathTextField);
+        MacrosDialog.addMacroSupport(this.packageRootPathTextField, (x) -> true, () -> false);
 
         workingDirectory = new ExtendableTextField("$ProjectFileDir$");
         TextFieldWithBrowseButton extendableWorkingDirectory = createDirectoryChooser(project, workingDirectory);
@@ -46,12 +48,15 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
         programArguments = new RawCommandLineEditor();
         MacrosDialog.addMacroSupport(programArguments.getEditorField(), (x) -> true, () -> false);
 
+        runAfterBuildCheckbox = new JBCheckBox();
+
         panel = FormBuilder.createFormBuilder()
-                .addLabeledComponent("Project directory", extendableProjectDirectoryPath)
+                .addLabeledComponent("Package root path", packageRootPath)
                 .addLabeledComponent("Program arguments", programArguments)
                 .addLabeledComponent("Working directory", extendableWorkingDirectory)
                 .addLabeledComponent("Compiler options", compilerOptions, 15)
                 .addLabeledComponent("Output path", outputPath)
+                .addLabeledComponent("Run after build?", runAfterBuildCheckbox)
                 .addLabeledComponent("Environment variables", environmentVariables)
 
                 .getPanel();
@@ -72,21 +77,23 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
     @Override
     protected void resetEditorFrom(@NotNull OdinBuildRunConfiguration s) {
         compilerOptions.setText(s.getOptions().getCompilerOptions());
-        projectProjectDirectoryPath.setText(s.getOptions().getPackageDirectoryPath());
+        packageRootPathTextField.setText(s.getOptions().getPackageDirectoryPath());
         outputPath.setText(s.getOptions().getOutputPath());
         workingDirectory.setText(s.getOptions().getWorkingDirectory());
         programArguments.setText(s.getOptions().getProgramArguments());
+        runAfterBuildCheckbox.setSelected(s.getOptions().isRunAfterBuild());
     }
 
     @Override
     protected void applyEditorTo(@NotNull OdinBuildRunConfiguration s) {
         s.getOptions().setCompilerOptions(compilerOptions.getText());
-        s.getOptions().setPackageDirectoryPath(projectProjectDirectoryPath.getText());
+        s.getOptions().setPackageDirectoryPath(packageRootPathTextField.getText());
         s.getOptions().setOutputPath(outputPath.getText());
         s.getOptions().setWorkingDirectory(workingDirectory.getText());
         s.getOptions().setProgramArguments(programArguments.getText());
-
+        s.getOptions().setRunAfterBuild(runAfterBuildCheckbox.isSelected());
     }
+
 
     @Override
     protected @NotNull JComponent createEditor() {

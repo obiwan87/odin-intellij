@@ -16,10 +16,15 @@
 
 <idea-plugin package="com.lasagnerd.odin.debugger">
     <depends>com.intellij.modules.cidr.debugger</depends>
+    <depends>com.jetbrains.plugins.webDeployment</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <programRunner implementation="com.lasagnerd.odin.debugger.runner.OdinNativeDebugProgramRunner"/>
+        <programRunner implementation="com.lasagnerd.odin.debugger.runner.OdinRemoteDebugProgramRunner"/>
+
+        <!--suppress PluginXmlValidity -->
         <projectService serviceImplementation="com.lasagnerd.odin.debugger.OdinDebuggerToolchainService"/>
+        <configurationType implementation="com.lasagnerd.odin.debugger.runConfiguration.OdinRemoteDebugRunConfigurationType"/>
     </extensions>
 
     <extensions defaultExtensionNs="cidr.debugger">

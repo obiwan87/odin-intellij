@@ -12,7 +12,8 @@ public class OdinLocalDebugProcess extends CidrLocalDebugProcess {
 
 	public OdinLocalDebugProcess(@NotNull RunParameters parameters, @NotNull XDebugSession session, @NotNull TextConsoleBuilder consoleBuilder) throws ExecutionException {
 		super(parameters, session, consoleBuilder, (project) -> Filter.EMPTY_ARRAY, false);
-	}
+
+    }
 
 	@Override
 	public boolean isLibraryFrameFilterSupported() {

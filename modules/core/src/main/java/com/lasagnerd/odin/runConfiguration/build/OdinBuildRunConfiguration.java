@@ -36,4 +36,9 @@ public class OdinBuildRunConfiguration extends OdinBaseRunConfiguration<OdinBase
     public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
         return new OdinBuildRunCommandLineState(environment, getOptions());
     }
+
+    @Override
+    public @NotNull OdinBuildRunConfigurationOptions getOptions() {
+        return (OdinBuildRunConfigurationOptions) super.getOptions();
+    }
 }

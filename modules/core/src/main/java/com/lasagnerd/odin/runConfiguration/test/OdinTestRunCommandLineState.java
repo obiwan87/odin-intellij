@@ -22,6 +22,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.lang.psi.OdinConstantInitDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinFile;
+import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import com.lasagnerd.odin.runConfiguration.OdinBaseCommandLineState;
 import com.lasagnerd.odin.runConfiguration.OdinRunConfigurationUtils;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +104,7 @@ public class OdinTestRunCommandLineState extends OdinBaseCommandLineState {
         OdinRunConfigurationUtils.OdinToolMode toolMode = debug ? OdinRunConfigurationUtils.OdinToolMode.BUILD : OdinRunConfigurationUtils.OdinToolMode.TEST;
 
         GeneralCommandLine commandLine = OdinRunConfigurationUtils.createCommandLine(getEnvironment().getProject(),
-                false,
+                OdinSdkUtils.getOdinBinaryPath(getEnvironment().getProject()), false,
                 toolMode,
                 options.getCompilerOptions(),
                 options.getOutputPath(),

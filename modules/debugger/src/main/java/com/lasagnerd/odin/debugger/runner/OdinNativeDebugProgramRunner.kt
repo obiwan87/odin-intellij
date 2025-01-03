@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
@@ -38,6 +39,7 @@ import com.lasagnerd.odin.debugger.OdinDebuggerToolchainService
 import com.lasagnerd.odin.projectSettings.OdinProjectConfigurable
 import com.lasagnerd.odin.runConfiguration.OdinBaseCommandLineState
 import com.lasagnerd.odin.runConfiguration.OdinBaseRunConfiguration
+import com.lasagnerd.odin.runConfiguration.build.OdinBuildRunConfiguration
 import com.lasagnerd.odin.runConfiguration.test.OdinTestRunCommandLineState
 import com.lasagnerd.odin.runConfiguration.test.OdinTestRunConfiguration
 import org.jetbrains.concurrency.AsyncPromise
@@ -53,6 +55,11 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
+        if (profile is OdinBuildRunConfiguration) {
+            if (!profile.options.isRunAfterBuild) {
+                return false;
+            }
+        }
         return DefaultDebugExecutor.EXECUTOR_ID == executorId
                 && profile is OdinBaseRunConfiguration<*>
     }
@@ -64,21 +71,11 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             return resolvedPromise()
         }
 
+        val expandedWorkingDirectory = expandPath(environment.project, runProfile.options.workingDirectory) ?: return resolvedPromise()
+
         val debuggerDriverConfiguration = OdinDebuggerToolchainService.getInstance(environment.project).debuggerDriverConfiguration
         if (debuggerDriverConfiguration == null) {
-            val notification = Notification("Odin Notifications", OdinBundle.message("odin.no-debugger-error"), NotificationType.ERROR)
-                .addAction(object : NotificationAction("Open Odin settings") {
-                    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                        ShowSettingsUtil.getInstance().showSettingsDialog(
-                            environment.project,
-                            OdinProjectConfigurable::class.java,
-                            null
-                        )
-                    }
-
-                })
-
-            Notifications.Bus.notify(notification, environment.project)
+            showDebuggerNotSetNotification(environment)
             return resolvedPromise()
         }
 
@@ -86,23 +83,17 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
         // This will be set from the EDT thread
         val runContentDescriptorPromise = AsyncPromise<RunContentDescriptor?>()
-
-
         var outputPath = runProfile.options.outputPath
-
         val nioPath = Path.of(outputPath)
+
         if (!nioPath.isAbsolute) {
-            outputPath = Path.of(runProfile.options.workingDirectory).resolve(nioPath).toString()
+            outputPath = Path.of(expandedWorkingDirectory).resolve(nioPath).toString()
         }
 
-        val expandedOutputPath = ProgramParametersUtil.expandPathAndMacros(
-            outputPath,
-            null,
-            environment.project
-        )
+        val expandedOutputPath = expandPath(environment.project, outputPath)
 
         val runExecutable = GeneralCommandLine(expandedOutputPath)
-        runExecutable.setWorkDirectory(runProfile.options.workingDirectory)
+        runExecutable.setWorkDirectory(expandedWorkingDirectory)
         val debugCompiledExeRunParameters = OdinDebugRunParameters(runExecutable, debuggerDriverConfiguration)
 
         // This is the console to be shared with the debug process
@@ -163,6 +154,29 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         return runContentDescriptorPromise
     }
 
+    private fun showDebuggerNotSetNotification(environment: ExecutionEnvironment) {
+        val notification = Notification("Odin Notifications", OdinBundle.message("odin.no-debugger-error"), NotificationType.ERROR)
+            .addAction(object : NotificationAction("Open Odin settings") {
+                override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                    ShowSettingsUtil.getInstance().showSettingsDialog(
+                        environment.project,
+                        OdinProjectConfigurable::class.java,
+                        null
+                    )
+                }
+
+            })
+
+        Notifications.Bus.notify(notification, environment.project)
+    }
+
+    private fun expandPath(project: Project, outputPath: String?): String? =
+        ProgramParametersUtil.expandPathAndMacros(
+            outputPath,
+            null,
+            project
+        )
+
 
     private class BuildProcessListener(private val console: ConsoleView) : ProcessListener {
         var buildFailed = false
@@ -180,7 +194,7 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         }
     }
 
-    private class SharedConsoleBuilder(private val console: ConsoleView) : TextConsoleBuilder() {
+    public class SharedConsoleBuilder(private val console: ConsoleView) : TextConsoleBuilder() {
         override fun getConsole(): ConsoleView {
             return this.console
         }

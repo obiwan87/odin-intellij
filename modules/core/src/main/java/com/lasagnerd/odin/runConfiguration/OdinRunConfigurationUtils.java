@@ -1,7 +1,6 @@
 package com.lasagnerd.odin.runConfiguration;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -135,37 +134,12 @@ public class OdinRunConfigurationUtils {
         return false;
     }
 
-    public static @NotNull GeneralCommandLine createCommandLine(boolean debug,
-                                                                ExecutionEnvironment environment,
-                                                                OdinBaseRunConfigurationOptions options) {
-        Project project = environment.getProject();
-        OdinToolMode mode = debug ? OdinToolMode.BUILD : OdinToolMode.RUN;
-        String projectDirectoryPath = options.getPackageDirectoryPath();
-        String programArguments = options.getProgramArguments();
-        String compilerOptions = Objects.requireNonNullElse(options.getCompilerOptions(), "");
-        String outputPathString = Objects.requireNonNullElse(options.getOutputPath(), "");
-        String basePath = project.getBasePath();
-        String workingDirectory;
-        if (options.getWorkingDirectory() != null) {
-            workingDirectory = options.getWorkingDirectory();
-        } else {
-            workingDirectory = basePath;
-        }
-
-        return createCommandLine(project, debug,
-                mode,
-                compilerOptions,
-                outputPathString,
-                projectDirectoryPath,
-                programArguments,
-                workingDirectory);
-    }
-
 
     /**
      * Creates a command line with the currently set odin compiler
      *
      * @param project              Current project
+     * @param odinBinaryPath       Odin binary path
      * @param debug                debug mode?
      * @param mode                 "run" or "build"
      * @param compilerOptions      compiler options
@@ -176,6 +150,7 @@ public class OdinRunConfigurationUtils {
      * @return General command line object
      */
     public static @NotNull GeneralCommandLine createCommandLine(Project project,
+                                                                String odinBinaryPath,
                                                                 boolean debug,
                                                                 OdinToolMode mode,
                                                                 String compilerOptions,
@@ -191,7 +166,6 @@ public class OdinRunConfigurationUtils {
         outputPathString = expandPath.apply(outputPathString);
 
         List<String> command = new ArrayList<>();
-        String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(project);
 
         if (odinBinaryPath == null) {
             throw new RuntimeException("'odin' executable not found. Please setup SDK.");
@@ -274,4 +248,5 @@ public class OdinRunConfigurationUtils {
             this.commandLineArgument = commandLineArgument;
         }
     }
+
 }
