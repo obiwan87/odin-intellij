@@ -288,7 +288,8 @@ private fieldDeclarator              ::= declaredIdentifier (COMMA declaredIdent
 private fieldRecover                 ::= !(EOS_TOKEN | COMMA  | RBRACE | RAW_STRING_LITERAL)
 
 // Enum
-enumType                             ::= ENUM [qualifiedType|simpleRefType] EOS_TOKEN? enumBlock {pin=1}
+enumType                             ::= ENUM [enumBackingType| LPAREN enumBackingType RPAREN] EOS_TOKEN? enumBlock {pin=1}
+private enumBackingType              ::= qualifiedType|simpleRefType
 enumBlock                            ::= blockStart [enumBody] blockEnd
 enumBody                             ::= enumValueDeclaration (COMMA enumValueDeclaration)* [EOS_TOKEN|COMMA] {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"}
 enumValueDeclaration                 ::= declaredIdentifier [EQ expression]
