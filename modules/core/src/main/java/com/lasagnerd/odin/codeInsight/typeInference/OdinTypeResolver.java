@@ -528,10 +528,10 @@ public class OdinTypeResolver extends OdinVisitor {
                 OdinArraySize arraySize = arraySizeList.get(i);
                 if (arraySize.getExpression() != null) {
                     Integer sizeValue = OdinExpressionEvaluator.evaluate(context, arraySize.getExpression()).asInt();
-                    if (i == 0) {
+                    if (i == 1) {
                         tsOdinMatrixType.setColumns(sizeValue);
                     }
-                    if (i == 1) {
+                    if (i == 0) {
                         tsOdinMatrixType.setRows(sizeValue);
                     }
                 }

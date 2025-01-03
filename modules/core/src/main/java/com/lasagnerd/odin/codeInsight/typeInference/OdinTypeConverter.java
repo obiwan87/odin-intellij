@@ -80,35 +80,66 @@ public class OdinTypeConverter {
     }
 
     private static @Nullable TsOdinType tryConvertToMatrix(@NotNull TsOdinType a, @NotNull TsOdinType b) {
-        TsOdinType tsOdinType = doTryConvertToMatrixType(a, b);
-        if (tsOdinType != null) return tsOdinType;
-
-        return doTryConvertToMatrixType(b, a);
-    }
-
-    private static @Nullable TsOdinType doTryConvertToMatrixType(@NotNull TsOdinType a, @NotNull TsOdinType b) {
         TsOdinType baseTypeA = a.baseType(true);
+        // m * v
         if (baseTypeA.getTypeReferenceKind() == TsOdinTypeKind.MATRIX) {
+            TsOdinMatrixType matrixType = (TsOdinMatrixType) baseTypeA;
             if (b.baseType() instanceof TsOdinArrayType arrayType) {
-                TsOdinType tsOdinType = convertToMatchingArrayType((TsOdinMatrixType) baseTypeA, arrayType);
-                if (!tsOdinType.isUnknown()) {
-                    return tsOdinType;
+                if (matrixType.isSquare()) {
+                    TsOdinType tsOdinType = convertToMatchingArrayType(arrayType, matrixType.getColumns());
+                    if (!tsOdinType.isUnknown()) {
+                        return tsOdinType;
+                    }
+                } else {
+                    if (matrixType.getColumns() != null && matrixType.getColumns().equals(arrayType.getSize())) {
+                        TsOdinMatrixType resultingMatrixType = new TsOdinMatrixType();
+                        resultingMatrixType.setRows(matrixType.getColumns());
+                        resultingMatrixType.setColumns(1);
+                        resultingMatrixType.setElementType(matrixType.getElementType());
+                        return resultingMatrixType;
+                    }
                 }
             }
-            TsOdinType tsOdinType = convertToElementType((TsOdinMatrixType) baseTypeA, b);
+
+            TsOdinType tsOdinType = convertToElementType(matrixType, b);
             if (!tsOdinType.isUnknown()) {
                 return a;
+            }
+        }
+
+        TsOdinType baseTypeB = b.baseType(true);
+        if (baseTypeB.getTypeReferenceKind() == TsOdinTypeKind.MATRIX) {
+            TsOdinMatrixType matrixType = (TsOdinMatrixType) baseTypeB;
+            if (a.baseType() instanceof TsOdinArrayType arrayType) {
+                if (matrixType.isSquare()) {
+                    TsOdinType tsOdinType = convertToMatchingArrayType(arrayType, matrixType.getRows());
+                    if (!tsOdinType.isUnknown()) {
+                        return tsOdinType;
+                    }
+                } else {
+                    if (matrixType.getRows() != null && matrixType.getRows().equals(arrayType.getSize())) {
+                        TsOdinMatrixType resultingMatrixType = new TsOdinMatrixType();
+                        resultingMatrixType.setColumns(matrixType.getRows());
+                        resultingMatrixType.setRows(1);
+                        resultingMatrixType.setElementType(matrixType.getElementType());
+                        return resultingMatrixType;
+                    }
+                }
+            }
+
+            TsOdinType tsOdinType = convertToElementType(matrixType, a);
+            if (!tsOdinType.isUnknown()) {
+                return b;
             }
         }
         return null;
     }
 
-    private static TsOdinType convertToMatchingArrayType(TsOdinMatrixType matrixType, @NotNull TsOdinArrayType arrayType) {
-        if (arrayType.getSize() != null
-                && matrixType.getRows() != null && matrixType.getColumns() != null) {
+    private static TsOdinType convertToMatchingArrayType(@NotNull TsOdinArrayType arrayType, Integer matrixSize) {
+        if (arrayType.getSize() != null && arrayType.getSize().equals(matrixSize)) {
             TsOdinArrayType tsOdinArrayType = new TsOdinArrayType();
             tsOdinArrayType.setElementType(arrayType.getElementType());
-            tsOdinArrayType.setSize(matrixType.getRows());
+            tsOdinArrayType.setSize(matrixSize);
             return tsOdinArrayType;
         }
         return TsOdinBuiltInTypes.UNKNOWN;
