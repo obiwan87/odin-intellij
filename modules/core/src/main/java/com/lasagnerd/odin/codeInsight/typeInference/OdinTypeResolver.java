@@ -522,6 +522,22 @@ public class OdinTypeResolver extends OdinVisitor {
             tsOdinMatrixType.setElementType(elementType);
             tsOdinMatrixType.setPsiType(o);
             tsOdinMatrixType.setContext(context);
+            @NotNull List<OdinArraySize> arraySizeList = o.getArraySizeList();
+
+            for (int i = 0; i < arraySizeList.size(); i++) {
+                OdinArraySize arraySize = arraySizeList.get(i);
+                if (arraySize.getExpression() != null) {
+                    Integer sizeValue = OdinExpressionEvaluator.evaluate(context, arraySize.getExpression()).asInt();
+                    if (i == 0) {
+                        tsOdinMatrixType.setColumns(sizeValue);
+                    }
+                    if (i == 1) {
+                        tsOdinMatrixType.setRows(sizeValue);
+                    }
+                }
+            }
+
+
             this.type = tsOdinMatrixType;
         }
     }

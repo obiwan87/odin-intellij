@@ -13,10 +13,12 @@ import java.util.stream.Collectors;
 @Setter
 public class TsOdinMatrixType extends TsOdinTypeBase implements TsOdinElementOwner {
     private TsOdinType elementType;
+    Integer rows;
+    Integer columns;
 
     @Override
     public TsOdinTypeKind getTypeReferenceKind() {
-        return TsOdinTypeKind.UNKNOWN;
+        return TsOdinTypeKind.MATRIX;
     }
 
     @Override
