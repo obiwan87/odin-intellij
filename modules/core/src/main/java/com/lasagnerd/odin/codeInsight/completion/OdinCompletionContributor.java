@@ -89,8 +89,46 @@ public class OdinCompletionContributor extends CompletionContributor {
     private static LookupElementBuilder procedureLookupElement(LookupElementBuilder element, @NotNull OdinProcedureType procedureType) {
         var params = procedureType.getParamEntryList();
         StringBuilder tailText = new StringBuilder("(");
-        String paramList = params.stream().map(PsiElement::getText).collect(Collectors.joining(", "));
-        tailText.append(paramList);
+
+        // TODO handle whitespaces
+        List<String> paramEntryFragments = new ArrayList<>();
+        for (OdinParamEntry param : params) {
+            OdinParameterDeclaration parameterDeclaration = param.getParameterDeclaration();
+            String paramEntry = "";
+            if (parameterDeclaration instanceof OdinParameterDeclarator parameterDeclarator) {
+                String paramsList = parameterDeclarator.getDeclaredIdentifiers().stream()
+                        .map(PsiElement::getText)
+                        .map(String::trim)
+                        .collect(Collectors.joining(", "));
+                paramEntry += paramsList + ":";
+                OdinType typeDefinition = parameterDeclarator.getTypeDefinition();
+                if (typeDefinition != null) {
+                    paramEntry += " ";
+                    paramEntry += typeDefinition.getText().replaceAll("\\s", "");
+                }
+                paramEntryFragments.add(paramEntry);
+            }
+
+            if (parameterDeclaration instanceof OdinUnnamedParameter unnamedParameter) {
+                paramEntryFragments.add(unnamedParameter.getText().trim());
+            }
+
+            if (parameterDeclaration instanceof OdinParameterInitialization parameterInitialization) {
+                OdinDeclaredIdentifier declaredIdentifier = parameterInitialization.getParameter().getDeclaredIdentifier();
+                String paramInit = declaredIdentifier.getText().trim();
+                OdinType paramType = parameterInitialization.getTypeDefinition();
+                if (paramType != null) {
+                    paramInit += ":";
+                    paramInit += paramType.getText().replaceAll("\\s+", "");
+                    paramInit += " = ";
+                } else {
+                    paramInit += " := ";
+                }
+                paramInit += parameterInitialization.getExpression().getText().replaceAll("\\s+", "");
+                paramEntryFragments.add(paramInit);
+            }
+        }
+        tailText.append(String.join(", ", paramEntryFragments));
         tailText.append(")");
         element = element.withTailText(tailText.toString());
 
