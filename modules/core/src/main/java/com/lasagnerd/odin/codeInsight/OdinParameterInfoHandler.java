@@ -8,10 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinProcedureType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeKind;
-import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeReference;
+import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +27,50 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
 
         if (callExpression != null) {
 
-            List<PsiElement> matchingDeclarations = findMatchingDeclarations(callExpression);
-            if (!matchingDeclarations.isEmpty()) {
-                context.setItemsToShow(matchingDeclarations.toArray(new PsiElement[0]));
+            List<PsiElement> procedures = new ArrayList<>();
+            OdinExpression expression = callExpression.getExpression();
+            TsOdinType tsOdinType = expression.getInferredType();
+            if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
+                if (tsOdinTypeReference.getTargetTypeKind() == TsOdinTypeKind.PROCEDURE) {
+                    OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(tsOdinType.getDeclaration());
+                    if (procedureType != null) {
+                        //                    OdinParamEntries paramEntries = declaration.getProcedureDefinition().getProcedureType().getParamEntries();
+                        //                    if (paramEntries != null && !paramEntries.getParamEntryList().isEmpty()) {
+                        procedures.add(procedureType);
+                        //                    }
+                    }
+                }
+
+                if (tsOdinTypeReference.getTargetTypeKind() == TsOdinTypeKind.PROCEDURE_GROUP) {
+                    OdinDeclaration declaration = tsOdinTypeReference.getDeclaration();
+                    OdinProcedureGroupType procedureGroupType = OdinInsightUtils.getDeclaredType(declaration, OdinProcedureGroupType.class);
+                    Objects.requireNonNull(procedureGroupType);
+                    for (var procedureRef : procedureGroupType.getProcedureRefList()) {
+                        OdinIdentifier odinIdentifier = OdinPsiUtil.getIdentifier(procedureRef);
+                        if (odinIdentifier == null)
+                            continue;
+                        PsiReference identifierReference = odinIdentifier.getReference();
+                        PsiElement resolve = identifierReference.resolve();
+                        OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(resolve);
+                        if (resolve != null && procedureType != null) {
+                            procedures.add(procedureType);
+                        }
+                    }
+                }
+            }
+
+            if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
+                OdinType procedureType = tsOdinProcedureType.getPsiType();
+                procedures.add(procedureType);
+            }
+
+            if (tsOdinType instanceof TsOdinPseudoMethodType tsOdinPseudoMethodType) {
+                OdinType procedureType = tsOdinPseudoMethodType.getProcedureType().getPsiType();
+                procedures.add(procedureType);
+            }
+
+            if (!procedures.isEmpty()) {
+                context.setItemsToShow(procedures.toArray(new PsiElement[0]));
                 return callExpression;
             }
         }
@@ -48,49 +86,6 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallEx
             callExpression = PsiTreeUtil.getParentOfType(element, false, OdinCallExpression.class);
         }
         return callExpression;
-    }
-
-    public static List<PsiElement> findMatchingDeclarations(OdinCallExpression callExpression) {
-        List<PsiElement> procedures = new ArrayList<>();
-        OdinExpression expression = callExpression.getExpression();
-        TsOdinType tsOdinType = expression.getInferredType();
-        if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
-            if (tsOdinTypeReference.getTargetTypeKind() == TsOdinTypeKind.PROCEDURE) {
-                OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(tsOdinType.getDeclaration());
-                if (procedureType != null) {
-//                    OdinParamEntries paramEntries = declaration.getProcedureDefinition().getProcedureType().getParamEntries();
-//                    if (paramEntries != null && !paramEntries.getParamEntryList().isEmpty()) {
-                    procedures.add(procedureType);
-//                    }
-                }
-            }
-
-            if (tsOdinTypeReference.getTargetTypeKind() == TsOdinTypeKind.PROCEDURE_GROUP) {
-                OdinDeclaration declaration = tsOdinTypeReference.getDeclaration();
-                OdinProcedureGroupType procedureGroupType = OdinInsightUtils.getDeclaredType(declaration, OdinProcedureGroupType.class);
-                Objects.requireNonNull(procedureGroupType);
-                for (var procedureRef : procedureGroupType.getProcedureRefList()) {
-                    OdinIdentifier odinIdentifier = OdinPsiUtil.getIdentifier(procedureRef);
-                    if (odinIdentifier == null)
-                        continue;
-                    PsiReference identifierReference = odinIdentifier.getReference();
-                    if (identifierReference != null) {
-                        PsiElement resolve = identifierReference.resolve();
-                        OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(resolve);
-                        if (resolve != null && procedureType != null) {
-                            procedures.add(procedureType);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
-            OdinType procedureType = tsOdinProcedureType.getPsiType();
-            procedures.add(procedureType);
-        }
-
-        return procedures;
     }
 
     @Override

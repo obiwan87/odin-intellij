@@ -16,6 +16,7 @@ public enum TsOdinTypeKind {
     POINTER,
     POLYMORPHIC,
     PROCEDURE,
+    PSEUDO_METHOD,
     RAWPTR,
     RUNE,
     SLICE,

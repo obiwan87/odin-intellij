@@ -410,55 +410,31 @@ public class OdinInferenceEngine extends OdinVisitor {
         return typeElements.stream().anyMatch(s -> s.getName().equals(enumValue));
     }
 
-    @Override
-    public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
-        TsOdinType tsOdinRefExpressionType = TsOdinBuiltInTypes.UNKNOWN;
-        Project project = refExpression.getProject();
-        if (refExpression.getExpression() != null) {
-            // solve for expression first. This defines the scope
-            TsOdinType refExpressionType = doInferType(refExpression.getExpression());
-            tsOdinRefExpressionType = OdinInsightUtils.getReferenceableType(refExpressionType);
+    public static @Nullable TsOdinTypeReference findTypeReference(@NotNull OdinContext context,
+                                                                  OdinDeclaredIdentifier declaredIdentifier,
+                                                                  OdinConstantInitDeclaration constantInitDeclaration) {
+        if (constantInitDeclaration.getExpressionList().isEmpty())
+            return null;
+        OdinExpression firstExpression = constantInitDeclaration.getExpressionList().getFirst();
+        OdinType declaredType = OdinInsightUtils.getDeclaredType(constantInitDeclaration);
+        if (
+                declaredType instanceof OdinStructType
+                        || declaredType instanceof OdinBitFieldType
+                        || declaredType instanceof OdinUnionType
+                        || declaredType instanceof OdinProcedureGroupType
+                        || declaredType instanceof OdinProcedureType
+                        || declaredType instanceof OdinProcedureLiteralType
+                        || declaredType instanceof OdinEnumType) {
+            // check distinct
+            return OdinTypeResolver.findTypeReference(
+                    context,
+                    declaredIdentifier,
+                    constantInitDeclaration,
+                    firstExpression,
+                    declaredType
+            );
         }
-
-
-        OdinIdentifier identifier = refExpression.getIdentifier();
-        if (identifier != null) {
-            // using current scope, find identifier declaration and extract type
-
-            String name = identifier.getText();
-            // If this is an identifier in a ref expression like ref.thisIdentifier
-            // getReferencedSymbol() will get the inferred type of 'ref' from the cache
-            // because it has been computed above. Then ,in OdinReference, the correct
-            // using the type elements of that type, it will correctly retrieve the symbol
-            OdinSymbol symbol = identifier.getReferencedSymbol(context);
-            if (symbol != null) {
-                this.type = getSymbolType(
-                        context,
-                        project,
-                        symbol,
-                        tsOdinRefExpressionType,
-                        identifier
-                );
-            } else {
-                // TODO Add poly paras as symbols
-                TsOdinType polyParameter = context.getPolymorphicType(name);
-                if (polyParameter != null) {
-                    this.type = createPolymorphicTypeReference(polyParameter);
-                } else if (TsOdinBuiltInTypes.RESERVED_TYPES.contains(name)) {
-                    this.type = createBuiltinTypeReference(name);
-                }
-            }
-        }
-
-        // Type conversion
-        if (refExpression.getType() != null) {
-            TsOdinType tsOdinType = refExpression.getType().getResolvedType(context);
-            if (this.lhsValuesCount == 2) {
-                this.type = createOptionalOkTuple(tsOdinType);
-            } else {
-                this.type = tsOdinType;
-            }
-        }
+        return null;
     }
 
     private static @NotNull TsOdinTypeReference createPolymorphicTypeReference(TsOdinType polyParameter) {
@@ -606,75 +582,64 @@ public class OdinInferenceEngine extends OdinVisitor {
     }
 
     @Override
-    public void visitCallExpression(@NotNull OdinCallExpression o) {
-        // Get type of expression. If it is callable, retrieve the return type and set that as result
-        if (o instanceof OdinDirectiveExpression directiveExpression) {
-            if (directiveExpression.getDirectiveIdentifier().getIdentifierToken().getText().equals("config")) {
-                if (o.getArgumentList().size() == 2) {
-                    OdinArgument lastArgument = o.getArgumentList().getLast();
-                    if (lastArgument instanceof OdinUnnamedArgument unnamedArgument) {
-                        OdinExpression expression = unnamedArgument.getExpression();
-                        TsOdinType tsOdinType = doInferType(expression);
-                        this.type = tsOdinType.typed();
-                        return;
+    public void visitRefExpression(@NotNull OdinRefExpression refExpression) {
+        TsOdinType tsOdinRefExpressionType = TsOdinBuiltInTypes.UNKNOWN;
+        Project project = refExpression.getProject();
+        if (refExpression.getExpression() != null) {
+            // solve for expression first. This defines the scope
+            TsOdinType refExpressionType = doInferType(refExpression.getExpression());
+            tsOdinRefExpressionType = OdinInsightUtils.getReferenceableType(refExpressionType);
+        }
+
+
+        OdinIdentifier identifier = refExpression.getIdentifier();
+        if (identifier != null) {
+            // using current scope, find identifier declaration and extract type
+
+            String name = identifier.getText();
+            // If this is an identifier in a ref expression like ref.thisIdentifier
+            // getReferencedSymbol() will get the inferred type of 'ref' from the cache
+            // because it has been computed above. Then ,in OdinReference, the correct
+            // using the type elements of that type, it will correctly retrieve the symbol
+            OdinSymbol symbol = identifier.getReferencedSymbol(context);
+            if (symbol != null) {
+                this.type = getSymbolType(
+                        context,
+                        project,
+                        symbol,
+                        tsOdinRefExpressionType,
+                        identifier
+                );
+
+                if (refExpression.getArrow() != null) {
+                    // pseudo method selector is only allowed in call-expression.
+                    // x := s->p would not be valid
+                    if (type.dereference().baseType(true) instanceof TsOdinProcedureType procedureType
+                            && refExpression.getParent() instanceof OdinCallExpression) {
+                        TsOdinPseudoMethodType pseudoMethodType = new TsOdinPseudoMethodType();
+                        pseudoMethodType.setRefExpression(refExpression);
+                        pseudoMethodType.setProcedureType(procedureType);
+                        this.type = pseudoMethodType;
                     }
                 }
-            }
-        }
-        TsOdinType tsOdinType = doInferType(o.getExpression());
-
-        if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
-            // resolve to base type
-            TsOdinTypeReference tsOdinOriginalTypeReference = tsOdinTypeReference;
-            if (tsOdinTypeReference.getTargetTypeKind() == ALIAS) {
-                tsOdinTypeReference = tsOdinTypeReference.baseTypeReference();
-            }
-
-            TsOdinTypeKind representedTypeReferenceKind = tsOdinTypeReference.getTargetTypeKind();
-            // normal procedure call
-            if (representedTypeReferenceKind == PROCEDURE) {
-                TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveTypeReference(tsOdinType.getContext(), tsOdinTypeReference);
-                this.type = inferTypeOfProcedureCall(o, procedureType, context);
-            }
-            // struct specialization
-            else if (representedTypeReferenceKind == STRUCT) {
-                TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveTypeReference(context, tsOdinTypeReference);
-                TsOdinStructType specializedStructType = OdinTypeSpecializer.specializeStructOrGetCached(context, structType, o.getArgumentList());
-                TsOdinTypeReference resultType = new TsOdinTypeReference(STRUCT);
-                resultType.setRepresentedType(specializedStructType);
-                this.type = resultType;
-            }
-            // union specialization
-            else if (representedTypeReferenceKind == UNION) {
-                TsOdinUnionType unionType = (TsOdinUnionType) OdinTypeResolver.resolveTypeReference(context, tsOdinTypeReference);
-                TsOdinType specializedUnion = OdinTypeSpecializer.specializeUnionOrGetCached(context, unionType, o.getArgumentList());
-                TsOdinTypeReference resultType = new TsOdinTypeReference(UNION);
-                resultType.setRepresentedType(specializedUnion);
-                this.type = resultType;
-            }
-            // procedure group
-            else if (representedTypeReferenceKind == PROCEDURE_GROUP) {
-                TsOdinProcedureGroup procedureGroupType = (TsOdinProcedureGroup) OdinTypeResolver.resolveTypeReference(tsOdinType.getContext(), tsOdinTypeReference);
-                this.type = inferTypeOfBestProcedure(o, procedureGroupType);
-            }
-            // Builtin procedures
-            else if (representedTypeReferenceKind == BUILTIN && tsOdinTypeReference.referencedType() instanceof TsOdinBuiltinProc proc) {
-                this.type = OdinBuiltinProcedures.inferType(this, proc, o);
-            }
-            // type casting
-            else {
-                OdinExpression expression = o.getExpression().parenthesesUnwrap();
-                if (expression instanceof OdinRefExpression
-                        || expression instanceof OdinTypeDefinitionExpression) {
-                    this.type = tsOdinOriginalTypeReference.referencedType();
+            } else {
+                TsOdinType polyParameter = context.getPolymorphicType(name);
+                if (polyParameter != null) {
+                    this.type = createPolymorphicTypeReference(polyParameter);
+                } else if (TsOdinBuiltInTypes.RESERVED_TYPES.contains(name)) {
+                    this.type = createBuiltinTypeReference(name);
                 }
             }
         }
-        // handles cases where the type was set in a field or a variable
-        else if (tsOdinType.baseType(true) instanceof TsOdinProcedureType procedureType) {
-            this.type = inferTypeOfProcedureCall(o, procedureType, context);
-        } else if (tsOdinType.baseType(true) instanceof TsOdinProcedureGroup procedureGroupType) {
-            this.type = inferTypeOfBestProcedure(o, procedureGroupType);
+
+        // Type conversion
+        if (refExpression.getType() != null) {
+            TsOdinType tsOdinType = refExpression.getType().getResolvedType(context);
+            if (this.lhsValuesCount == 2) {
+                this.type = createOptionalOkTuple(tsOdinType);
+            } else {
+                this.type = tsOdinType;
+            }
         }
     }
 
@@ -1359,31 +1324,81 @@ public class OdinInferenceEngine extends OdinVisitor {
         return declarationType;
     }
 
-    public static @Nullable TsOdinTypeReference findTypeReference(@NotNull OdinContext context,
-                                                        OdinDeclaredIdentifier declaredIdentifier,
-                                                                  OdinConstantInitDeclaration constantInitDeclaration) {
-        if (constantInitDeclaration.getExpressionList().isEmpty())
-            return null;
-        OdinExpression firstExpression = constantInitDeclaration.getExpressionList().getFirst();
-        OdinType declaredType = OdinInsightUtils.getDeclaredType(constantInitDeclaration);
-        if (
-                declaredType instanceof OdinStructType
-                        || declaredType instanceof OdinBitFieldType
-                        || declaredType instanceof OdinUnionType
-                        || declaredType instanceof OdinProcedureGroupType
-                        || declaredType instanceof OdinProcedureType
-                        || declaredType instanceof OdinProcedureLiteralType
-                        || declaredType instanceof OdinEnumType) {
-            // check distinct
-            return OdinTypeResolver.findTypeReference(
-                    context,
-                    declaredIdentifier,
-                    constantInitDeclaration,
-                    firstExpression,
-                    declaredType
-            );
+    @Override
+    public void visitCallExpression(@NotNull OdinCallExpression o) {
+        // Get type of expression. If it is callable, retrieve the return type and set that as result
+        if (o instanceof OdinDirectiveExpression directiveExpression) {
+            if (directiveExpression.getDirectiveIdentifier().getIdentifierToken().getText().equals("config")) {
+                if (o.getArgumentList().size() == 2) {
+                    OdinArgument lastArgument = o.getArgumentList().getLast();
+                    if (lastArgument instanceof OdinUnnamedArgument unnamedArgument) {
+                        OdinExpression expression = unnamedArgument.getExpression();
+                        TsOdinType tsOdinType = doInferType(expression);
+                        this.type = tsOdinType.typed();
+                        return;
+                    }
+                }
+            }
         }
-        return null;
+        TsOdinType tsOdinType = doInferType(o.getExpression());
+
+        if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
+            // resolve to base type
+            TsOdinTypeReference tsOdinOriginalTypeReference = tsOdinTypeReference;
+            if (tsOdinTypeReference.getTargetTypeKind() == ALIAS) {
+                tsOdinTypeReference = tsOdinTypeReference.baseTypeReference();
+            }
+
+            TsOdinTypeKind representedTypeReferenceKind = tsOdinTypeReference.getTargetTypeKind();
+            // normal procedure call
+            if (representedTypeReferenceKind == PROCEDURE) {
+                TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveTypeReference(tsOdinType.getContext(), tsOdinTypeReference);
+                this.type = inferTypeOfProcedureCall(o, procedureType, context);
+            }
+            // struct specialization
+            else if (representedTypeReferenceKind == STRUCT) {
+                TsOdinStructType structType = (TsOdinStructType) OdinTypeResolver.resolveTypeReference(context, tsOdinTypeReference);
+                TsOdinStructType specializedStructType = OdinTypeSpecializer.specializeStructOrGetCached(context, structType, o.getArgumentList());
+                TsOdinTypeReference resultType = new TsOdinTypeReference(STRUCT);
+                resultType.setRepresentedType(specializedStructType);
+                this.type = resultType;
+            }
+            // union specialization
+            else if (representedTypeReferenceKind == UNION) {
+                TsOdinUnionType unionType = (TsOdinUnionType) OdinTypeResolver.resolveTypeReference(context, tsOdinTypeReference);
+                TsOdinType specializedUnion = OdinTypeSpecializer.specializeUnionOrGetCached(context, unionType, o.getArgumentList());
+                TsOdinTypeReference resultType = new TsOdinTypeReference(UNION);
+                resultType.setRepresentedType(specializedUnion);
+                this.type = resultType;
+            }
+            // procedure group
+            else if (representedTypeReferenceKind == PROCEDURE_GROUP) {
+                TsOdinProcedureGroup procedureGroupType = (TsOdinProcedureGroup) OdinTypeResolver.resolveTypeReference(tsOdinType.getContext(), tsOdinTypeReference);
+                this.type = inferTypeOfBestProcedure(o, procedureGroupType);
+            }
+            // Builtin procedures
+            else if (representedTypeReferenceKind == BUILTIN && tsOdinTypeReference.referencedType() instanceof TsOdinBuiltinProc proc) {
+                this.type = OdinBuiltinProcedures.inferType(this, proc, o);
+            }
+            // type casting
+            else {
+                OdinExpression expression = o.getExpression().parenthesesUnwrap();
+                if (expression instanceof OdinRefExpression
+                        || expression instanceof OdinTypeDefinitionExpression) {
+                    this.type = tsOdinOriginalTypeReference.referencedType();
+                }
+            }
+        }
+        // handles cases where the type was set in a field or a variable
+        else if (tsOdinType.baseType(true) instanceof TsOdinProcedureType procedureType) {
+            this.type = inferTypeOfProcedureCall(o, procedureType, context);
+        } else if (tsOdinType.baseType(true) instanceof TsOdinProcedureGroup procedureGroupType) {
+            this.type = inferTypeOfBestProcedure(o, procedureGroupType);
+        }
+        // pseudo methods (->)
+        else if (tsOdinType.baseType(true) instanceof TsOdinPseudoMethodType pseudoMethodType) {
+            this.type = inferTypeOfProcedureCall(o, pseudoMethodType.getProcedureType(), context);
+        }
     }
 
     @SuppressWarnings("unused")

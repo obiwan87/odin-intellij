@@ -957,3 +957,17 @@ testMatrixTranspose :: proc() {
 
     m_t := transpose(m)
 }
+
+testPseudoMethods :: proc() {
+    Enum :: enum {
+        A, B, C, D, E
+    }
+    MyStruct :: struct {
+        method: proc(self: MyStruct, e: Enum) -> i32
+    }
+
+    s := MyStruct { }
+    x := s->method(Enum.A)
+    s->method(.A)
+
+}

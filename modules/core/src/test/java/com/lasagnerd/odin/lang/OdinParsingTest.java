@@ -2918,6 +2918,18 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testPseudoMethods() throws IOException {
+        OdinFile odinFile = loadTypeInference();
+        {
+            OdinProcedureDefinition proc = findFirstProcedure(odinFile, "testPseudoMethods");
+            OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
+            assertNotNull(expression);
+            TsOdinType type = expression.getInferredType();
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(type, TsOdinEnumType.class);
+            assertEquals("Enum", tsOdinEnumType.getName());
+        }
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
         String filePath = "expression_eval.odin";
         return loadTestData(filePath);

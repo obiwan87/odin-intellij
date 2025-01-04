@@ -172,10 +172,12 @@ public class OdinExpectedTypeEngine {
                     typeReferenceKind = callInfo.callingType().baseType(true).getTypeReferenceKind();
                 }
 
-                if (typeReferenceKind == PROCEDURE) {
-                    TsOdinProcedureType callingProcedure = (TsOdinProcedureType) callInfo.callingType().baseType(true);
-                    TsOdinProcedureType specializeProcedure = OdinTypeSpecializer.specializeProcedure(context, callInfo.argumentList(), callingProcedure);
-                    Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(specializeProcedure.getParameters(), callInfo.argumentList());
+                if (typeReferenceKind == PROCEDURE || typeReferenceKind == PSEUDO_METHOD) {
+                    TsOdinParameterOwner parameterOwner = (TsOdinParameterOwner) callInfo.callingType().baseType(true);
+                    if (parameterOwner instanceof TsOdinProcedureType procedureType) {
+                        parameterOwner = OdinTypeSpecializer.specializeProcedure(context, callInfo.argumentList(), procedureType);
+                    }
+                    Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(parameterOwner.getParameters(), callInfo.argumentList());
                     if (argumentToParameterMap != null) {
                         TsOdinParameter tsOdinParameter = argumentToParameterMap.get(topMostExpression);
                         return propagateTypeDown(tsOdinParameter.getType(), topMostExpression, expression);
