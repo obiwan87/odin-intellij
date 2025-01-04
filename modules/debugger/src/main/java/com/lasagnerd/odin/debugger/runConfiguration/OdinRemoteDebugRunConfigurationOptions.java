@@ -5,6 +5,8 @@ import com.intellij.openapi.components.StoredProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOptions {
 
     private final StoredProperty<String> localPackageDirectoryPath = string("").provideDelegate(this, "localPackageDirectoryPath");
@@ -21,7 +23,13 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
     private final StoredProperty<String> lldbServerPath = string("").provideDelegate(this, "lldbServerPath");
     private final StoredProperty<String> lldbServerArgs = string("").provideDelegate(this, "lldbServerArgs");
     private final StoredProperty<String> targetExecutableDownloadPath = string("").provideDelegate(this, "targetExecutableDownloadPath");
-    private final StoredProperty<String> targetExecutableOutputPath = string("").provideDelegate(this, "targetExecutableDownloadPath");
+    private final StoredProperty<String> targetExecutableOutputPath = string("").provideDelegate(this, "targetExecutableOutputPath");
+
+    private final StoredProperty<String> programArguments = string("").provideDelegate(this, "programArguments");
+    private final StoredProperty<Map<Object, Object>> environmentVariables = map().provideDelegate(this, "environmentVariables");
+    private final StoredProperty<String> remoteCompilerOptions = string("").provideDelegate(this, "remoteCompilerOptions");
+    private final StoredProperty<String> remoteWorkingDirectory = string("").provideDelegate(this, "remoteWorkingDirectory");
+    private final StoredProperty<String> remoteOutputPath = string("").provideDelegate(this, "remoteOutputPath");
 
     // SSH Config ID
     public String getSshConfigId() {
@@ -139,5 +147,48 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
 
     public void setTargetExecutableOutputPath(String targetExecutableOutputPath) {
         this.targetExecutableOutputPath.setValue(this, targetExecutableOutputPath);
+    }
+
+
+    // program arguments
+    public @Nullable String getProgramArguments() {
+        return programArguments.getValue(this);
+    }
+
+    public void setProgramArguments(String programArguments) {
+        this.programArguments.setValue(this, programArguments);
+    }
+
+    public @Nullable String getRemoteCompilerOptions() {
+        return remoteCompilerOptions.getValue(this);
+    }
+
+    public void setRemoteCompilerOptions(String remoteCompilerOptions) {
+        this.remoteCompilerOptions.setValue(this, remoteCompilerOptions);
+    }
+
+    //environment variables
+    public @Nullable Map<Object, Object> getEnvironmentVariables() {
+        return environmentVariables.getValue(this);
+    }
+
+    public void setEnvironmentVariables(Map<Object, Object> environmentVariables) {
+        this.environmentVariables.setValue(this, environmentVariables);
+    }
+
+    public @NotNull String getRemoteWorkingDirectory() {
+        return remoteWorkingDirectory.getValue(this);
+    }
+
+    public void setRemoteWorkingDirectory(@NotNull String remoteWorkingDirectory) {
+        this.remoteWorkingDirectory.setValue(this, remoteWorkingDirectory);
+    }
+
+    public @NotNull String getRemoteOutputPath() {
+        return remoteOutputPath.getValue(this);
+    }
+
+    public void setRemoteOutputPath(@NotNull String remoteOutputPath) {
+        this.remoteOutputPath.setValue(this, remoteOutputPath);
     }
 }

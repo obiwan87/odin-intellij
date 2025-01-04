@@ -9,6 +9,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -54,7 +55,11 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             LLDBDAPDriverConfiguration(Path.of(debuggerPath))
 
         val cidrRemoteDebugParameters = CidrRemoteDebugParameters()
-        cidrRemoteDebugParameters.symbolFile = runProfile.options.localExecutablePath
+        if (!runProfile.options.isBuildOnTarget) {
+            cidrRemoteDebugParameters.symbolFile = runProfile.options.localExecutablePath
+        } else {
+            cidrRemoteDebugParameters.symbolFile = runProfile.options.targetExecutableDownloadPath!!
+        }
         cidrRemoteDebugParameters.sysroot = runProfile.options.localPackageDirectoryPath
         cidrRemoteDebugParameters.pathMappings = listOf(
             CidrRemotePathMapping(runProfile.options.localPackageDirectoryPath, runProfile.options.remotePackageDirectoryPath)
@@ -70,13 +75,15 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             val console = textConsoleBuilder.console
 
             val debugRunnerParameters = OdinRemoteDebugParameters(cidrRemoteDebugParameters, driverConfiguration)
+
             @Suppress("UnstableApiUsage") val connectionBuilder = copyToCredentials.connectionBuilder()
-            val remoteExecutablePathString: @NonNls String
-            if (runProfile.options.isBuildOnTarget) {
-                remoteExecutablePathString = prepareLocalBuild(connectionBuilder, runProfile)
+            val remoteExecutablePathString: @NonNls String = if (!runProfile.options.isBuildOnTarget) {
+                prepareLocalBuild(connectionBuilder, runProfile)
             } else {
-                remoteExecutablePathString = prepareTargetBuild(connectionBuilder, runProfile)
+                it.text = "Building target ..."
+                prepareTargetBuild(connectionBuilder, console, runProfile)
             }
+
             val command =
                 """chmod +x $remoteExecutablePathString && ${runProfile.options.lldbServerPath} ${runProfile.options.lldbServerArgs}"""
             val execBuilder = connectionBuilder.execBuilder(command)
@@ -87,6 +94,7 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
                 sshProcessHandler.runProcess()
             }
 
+            it.text = "Running ..."
             ApplicationManager.getApplication().invokeLater {
                 val debuggerManager = XDebuggerManager.getInstance(environment.project)
                 val xDebugSession = debuggerManager.startSession(environment, object : XDebugProcessStarter() {
@@ -129,20 +137,41 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
     private fun prepareTargetBuild(
         connectionBuilder: ConnectionBuilder,
-        runProfile: OdinRemoteDebugRunConfiguration
+        console: ConsoleView,
+        runProfile: OdinRemoteDebugRunConfiguration,
     ): String {
-        OdinRunConfigurationUtils.createCommandLine(
+        val options = runProfile.options
+        val commandLine = OdinRunConfigurationUtils.createCommandLine(
             runProfile.project,
-            runProfile.options.remoteOdinSdkPath,
+            options.remoteOdinSdkPath,
             true,
             OdinRunConfigurationUtils.OdinToolMode.BUILD,
-            "",
-            runProfile.options.targetExecutableOutputPath,
-            runProfile.options.remotePackageDirectoryPath,
-            "",
-            runProfile.options.remotePackageDirectoryPath
+            options.remoteCompilerOptions,
+            options.targetExecutableOutputPath,
+            options.remotePackageDirectoryPath,
+            null,
+            options.remoteWorkingDirectory
         )
-        return runProfile.options.targetExecutableOutputPath!!
+
+        val buildCommand = commandLine.commandLineString
+        val buildExecBuilder = connectionBuilder.execBuilder(buildCommand);
+        val buildSshExecProcess = buildExecBuilder.execute()
+        val buildSshProcessHandler = CapturingSshProcessHandler(buildSshExecProcess, StandardCharsets.UTF_8, buildCommand)
+        console.attachToProcess(buildSshProcessHandler)
+        buildSshProcessHandler.runProcess()
+
+        val sftpChannel = connectionBuilder.openSftpChannel()
+        if (options.targetExecutableOutputPath != null && options.targetExecutableDownloadPath != null) {
+
+            try {
+                sftpChannel.downloadFileOrDir(options.targetExecutableOutputPath!!, options.targetExecutableDownloadPath!!)
+            } catch (e: Exception) {
+
+            }
+
+        }
+
+        return options.targetExecutableOutputPath!!
     }
 
     override fun getRunnerId(): String {
