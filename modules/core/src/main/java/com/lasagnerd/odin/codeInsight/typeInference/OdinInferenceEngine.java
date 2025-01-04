@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
@@ -614,12 +615,34 @@ public class OdinInferenceEngine extends OdinVisitor {
                 if (refExpression.getArrow() != null) {
                     // pseudo method selector is only allowed in call-expression.
                     // x := s->p would not be valid
-                    if (type.dereference().baseType(true) instanceof TsOdinProcedureType procedureType
+                    TsOdinType tsOdinType = type.dereference().baseType(true);
+                    if (tsOdinType instanceof TsOdinProcedureType procedureType
                             && refExpression.getParent() instanceof OdinCallExpression) {
-                        TsOdinPseudoMethodType pseudoMethodType = new TsOdinPseudoMethodType();
-                        pseudoMethodType.setRefExpression(refExpression);
-                        pseudoMethodType.setProcedureType(procedureType);
-                        this.type = pseudoMethodType;
+                        if (tsOdinRefExpressionType.baseType(true) instanceof TsOdinStructType tsOdinStructType) {
+                            TsOdinPseudoMethodType pseudoMethodType = new TsOdinPseudoMethodType();
+                            pseudoMethodType.setRefExpression(refExpression);
+                            pseudoMethodType.setProcedureType(procedureType);
+                            pseudoMethodType.setName(procedureType.getName());
+                            pseudoMethodType.setContainingStruct(tsOdinStructType);
+                            pseudoMethodType.setPsiTypeExpression(procedureType.getPsiTypeExpression());
+                            this.type = pseudoMethodType;
+                            return;
+                        } else if (tsOdinRefExpressionType.baseType(true) instanceof TsOdinObjcClass tsOdinObjcClass) {
+                            TsOdinObjcMember objcMember = new TsOdinObjcMember();
+                            objcMember.setObjcClass(tsOdinObjcClass);
+                            objcMember.setProcedureType(procedureType);
+                            OdinDeclaration declaration = procedureType.getDeclaration();
+                            if (declaration instanceof OdinAttributesOwner attributesOwner) {
+                                EvOdinValue attributeValue = OdinInsightUtils.getAttributeValue(attributesOwner.getAttributesDefinitionList(), "objc_name");
+                                if (attributeValue != null && attributeValue.asString() != null) {
+                                    objcMember.setObjcMemberName(attributeValue.asString());
+                                    objcMember.setName(objcMember.getObjcMemberName());
+                                    objcMember.setPsiType(procedureType.getPsiType());
+                                }
+                            }
+                            this.type = objcMember;
+                            return;
+                        }
                     }
                 }
             } else {
@@ -1398,6 +1421,10 @@ public class OdinInferenceEngine extends OdinVisitor {
         // pseudo methods (->)
         else if (tsOdinType.baseType(true) instanceof TsOdinPseudoMethodType pseudoMethodType) {
             this.type = inferTypeOfProcedureCall(o, pseudoMethodType.getProcedureType(), context);
+        }
+        // objc member (->)
+        else if (tsOdinType.baseType(true) instanceof TsOdinObjcMember objcMember) {
+            this.type = inferTypeOfProcedureCall(o, objcMember.getProcedureType(), context);
         }
     }
 

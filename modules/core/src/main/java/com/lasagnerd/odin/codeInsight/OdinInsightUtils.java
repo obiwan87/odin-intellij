@@ -10,6 +10,9 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValues;
+import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
@@ -84,6 +87,7 @@ public class OdinInsightUtils {
         }
         return null;
     }
+
     public static String getStringLiteralValue(OdinExpression odinExpression) {
         if (odinExpression instanceof OdinLiteralExpression literalExpression) {
             if (literalExpression.getBasicLiteral() instanceof OdinStringLiteral stringLiteral) {
@@ -109,7 +113,10 @@ public class OdinInsightUtils {
         return getTypeElements(context, project, type, false);
     }
 
-    public static OdinSymbolTable getTypeElements(OdinContext context, Project project, TsOdinType type, boolean includeReferenceableSymbols) {
+    public static OdinSymbolTable getTypeElements(OdinContext context,
+                                                  Project project,
+                                                  TsOdinType type,
+                                                  boolean includeReferenceableSymbols) {
 
         type = type.baseType(true);
 
@@ -156,7 +163,44 @@ public class OdinInsightUtils {
         }
 
         if (!(type instanceof TsOdinTypeReference typeReference)) {
-            if (type.getPsiType() instanceof OdinStructType structType) {
+            if (type.baseType(true) instanceof TsOdinObjcClass tsOdinObjcClass) {
+                OdinFileScope fileScope = PsiTreeUtil.getParentOfType(tsOdinObjcClass.getPsiType(), OdinFileScope.class);
+                if (fileScope != null) {
+                    OdinSymbolTable fileScopeSymbolTable = fileScope.getFullSymbolTable();
+                    for (OdinSymbol symbol : fileScopeSymbolTable.flatten().getSymbols()) {
+                        if (symbol.getDeclaration() instanceof OdinConstantInitDeclaration odinConstantInitDeclaration) {
+                            EvOdinValue objcType = OdinInsightUtils.getAttributeValue(odinConstantInitDeclaration.getAttributesDefinitionList(),
+                                    "objc_type");
+                            EvOdinValue objcName = OdinInsightUtils.getAttributeValue(odinConstantInitDeclaration.getAttributesDefinitionList(),
+                                    "objc_name");
+                            if (objcType != null && objcName != null) {
+                                TsOdinType referencedType = objcType.asType();
+                                String name = objcName.asString();
+                                if (referencedType != null && name != null) {
+                                    if (referencedType.getPsiType() == tsOdinObjcClass.getPsiType()) {
+                                        OdinSymbol odinSymbol = symbol.withName(name);
+                                        symbolTable.add(odinSymbol);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    TsOdinStructType structType = tsOdinObjcClass.getStructType();
+                    OdinStructType psiStruct = structType.type();
+                    List<OdinFieldDeclaration> fields = OdinInsightUtils.getStructFieldsDeclarationStatements(psiStruct);
+                    for (OdinFieldDeclaration field : fields) {
+                        if (field.getUsing() != null && field.getType() != null) {
+                            TsOdinType tsOdinType = field.getType().getResolvedType();
+                            if (tsOdinType instanceof TsOdinObjcClass objcClass) {
+                                OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(context, project, objcClass, includeReferenceableSymbols);
+                                symbolTable.merge(typeElements);
+                            }
+                        }
+                    }
+
+                }
+            } else if (type.getPsiType() instanceof OdinStructType structType) {
                 var structFields = OdinInsightUtils.getStructFields(type.getContext()
                         .withSymbolValueStore(context.getSymbolValueStore())
                         .withUseKnowledge(context.isUseKnowledge()), structType);
@@ -341,7 +385,6 @@ public class OdinInsightUtils {
                 odinSymbol.setHasUsing(hasUsing);
                 symbols.add(odinSymbol);
                 if (field.getDeclaredIdentifiers().size() == 1 && hasUsing) {
-
                     getSymbolsOfFieldWithUsing(context, field, symbols);
                 }
             }
@@ -1219,10 +1262,32 @@ public class OdinInsightUtils {
                     }
                 }
             }
-
         }
 
         return false;
+    }
+
+    public static EvOdinValue getAttributeValue(List<OdinAttributesDefinition> attributesDefinitions, String attributeName) {
+        if (attributesDefinitions == null)
+            return null;
+
+        for (OdinAttributesDefinition attributesDefinition : attributesDefinitions) {
+            for (OdinAttributeArgument odinArgument : attributesDefinition.getAttributeArgumentList()) {
+                if (odinArgument instanceof OdinUnassignedAttribute unassignedAttribute) {
+                    if (unassignedAttribute.getText().equals(attributeName)) {
+                        return EvOdinValues.nullValue();
+                    }
+                }
+
+                if (odinArgument instanceof OdinAssignedAttribute assignedAttribute) {
+                    if (assignedAttribute.getAttributeIdentifier().getText().equals(attributeName)) {
+                        return OdinExpressionEvaluator.evaluate(assignedAttribute.getExpression());
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     public static @NotNull OdinVisibility computeVisibility(@NotNull Collection<OdinAttributesDefinition> attributesDefinitions) {

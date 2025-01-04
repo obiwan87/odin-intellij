@@ -1,9 +1,8 @@
 package odin_parser
 
+import "core:fmt"
 import "core:odin/ast"
 import "core:odin/tokenizer"
-
-import "core:fmt"
 
 Warning_Handler :: #type proc(pos: tokenizer.Pos, fmt: string, args: ..any)
 Error_Handler   :: #type proc(pos: tokenizer.Pos, fmt: string, args: ..any)
@@ -3722,6 +3721,8 @@ parse_import_decl :: proc(p: ^Parser, kind := Import_Decl_Kind.Standard) -> ^ast
 	}
 	expect_semicolon(p, decl)
 	decl.comment = p.line_comment
+
+
 
 	return decl
 }

@@ -2930,6 +2930,22 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testObjc() throws IOException {
+        OdinFile odinFile = loadTypeInference();
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "lion_milk");
+            assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "lion_roar");
+            assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
+        }
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "lion_groom");
+            assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
+        }
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
         String filePath = "expression_eval.odin";
         return loadTestData(filePath);

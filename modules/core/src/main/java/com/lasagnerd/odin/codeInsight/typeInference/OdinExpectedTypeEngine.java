@@ -25,8 +25,8 @@ public class OdinExpectedTypeEngine {
      * Types are expected at in/out nodes such as return statements, case blocks, arguments, assignments of typed variables, etc.
      * This method finds the expected type of the RHS of where the passed PSI element is located in the AST.
      *
-     * @param context The symbol table used for resolving the expected type
-     * @param expression  The expression for which we want to find the expected type
+     * @param context    The symbol table used for resolving the expected type
+     * @param expression The expression for which we want to find the expected type
      * @return The expected type
      */
     public static TsOdinType inferExpectedType(OdinContext context, OdinExpression expression) {
@@ -172,7 +172,7 @@ public class OdinExpectedTypeEngine {
                     typeReferenceKind = callInfo.callingType().baseType(true).getTypeReferenceKind();
                 }
 
-                if (typeReferenceKind == PROCEDURE || typeReferenceKind == PSEUDO_METHOD) {
+                if (typeReferenceKind == PROCEDURE || typeReferenceKind == PSEUDO_METHOD || typeReferenceKind == OBJC_MEMBER) {
                     TsOdinParameterOwner parameterOwner = (TsOdinParameterOwner) callInfo.callingType().baseType(true);
                     if (parameterOwner instanceof TsOdinProcedureType procedureType) {
                         parameterOwner = OdinTypeSpecializer.specializeProcedure(context, callInfo.argumentList(), procedureType);

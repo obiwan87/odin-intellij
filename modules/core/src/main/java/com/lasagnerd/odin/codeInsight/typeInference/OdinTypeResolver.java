@@ -5,6 +5,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.evaluation.EvOdinValue;
 import com.lasagnerd.odin.codeInsight.evaluation.OdinExpressionEvaluator;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
@@ -748,6 +749,23 @@ public class OdinTypeResolver extends OdinVisitor {
 
         List<TsOdinParameter> parameters = createParameters(tsOdinStructType, paramEntries);
         tsOdinStructType.setParameters(parameters);
+
+        // Handle Obj-C stuff
+        if (typeDeclaration != null && typeDeclaration instanceof OdinConstantInitDeclaration constantInitDeclaration) {
+
+            EvOdinValue attributeValue = OdinInsightUtils.getAttributeValue(constantInitDeclaration.getAttributesDefinitionList(), "objc_class");
+            if (attributeValue != null && attributeValue.asString() != null) {
+                TsOdinObjcClass tsOdinObjcClass = new TsOdinObjcClass();
+                tsOdinObjcClass.setStructType(tsOdinStructType);
+                tsOdinObjcClass.setObjcClassName(attributeValue.asString());
+                tsOdinObjcClass.setPsiType(structType);
+                tsOdinObjcClass.setDeclaration(typeDeclaration);
+                tsOdinObjcClass.setDeclaredIdentifier(typeDeclaredIdentifier);
+
+                this.type = tsOdinObjcClass;
+                return;
+            }
+        }
 
         this.type = tsOdinStructType;
     }

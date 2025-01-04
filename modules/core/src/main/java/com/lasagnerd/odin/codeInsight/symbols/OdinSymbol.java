@@ -24,6 +24,7 @@ public class OdinSymbol {
     private List<OdinAttributesDefinition> attributes;
     private OdinUsingStatement usingStatement;
 
+    @With
     private String name;
     private String packagePath;
     private OdinSymbolType symbolType;

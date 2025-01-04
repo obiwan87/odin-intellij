@@ -10,6 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 public class TsOdinPseudoMethodType extends TsOdinTypeBase implements TsOdinParameterOwner {
+    TsOdinStructType containingStruct;
     TsOdinProcedureType procedureType;
     OdinRefExpression refExpression;
 

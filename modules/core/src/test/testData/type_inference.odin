@@ -969,5 +969,85 @@ testPseudoMethods :: proc() {
     s := MyStruct { }
     x := s->method(Enum.A)
     s->method(.A)
+}
 
+@(objc_class="NSMammal")
+Mammal :: struct {
+
+}
+
+@(objc_type=Mammal, objc_name="makeMilk")
+Mammal_makeMilk :: proc "c" (self: ^Mammal, i: i32) -> f64 {
+    return 0.0
+}
+
+
+@(objc_class="NSCanine")
+Canine :: struct {
+    using _: Mammal
+}
+
+@(objc_type=Canine, objc_name="howl")
+Canine_howl :: proc() -> f64 {
+    return 0.0
+}
+
+@(objc_class="NSWolf")
+Wolf :: struct {
+    using _: Canine
+}
+
+@(objc_type=Wolf, objc_name="packHunt")
+Wolf_packHunt :: proc "c" (self: ^Wolf, i: i32) -> f64 {
+    return 0.0
+}
+
+@(objc_class="NSDog")
+Dog :: struct {
+    using _: Canine
+}
+
+@(objc_type=Dog, objc_name="bark")
+Dog_bark :: proc "c" (self: ^Lion, i: i32) -> f64 {
+    return 0.0
+}
+
+@(objc_class="NSFeline")
+Feline :: struct {
+    using _: Mammal
+}
+
+@(objc_type=Feline, objc_name="groom")
+Feline_groom :: proc "c" (self: ^Feline, i: i32) -> f64 {
+    return 0.0
+}
+
+@(objc_class="NSLion")
+Lion :: struct {
+    using _: Feline
+}
+
+@(objc_type=Lion, objc_name="roar")
+Lion_roar :: proc "c" (self: ^Lion, i: i32) -> f64 {
+    return 0.0
+}
+
+@(objc_class="NSCat")
+Cat :: struct {
+    using _: Feline
+}
+
+@(objc_type=Cat, objc_name="meow")
+Cat_meow :: proc "c" (self: ^Cat, i: i32) -> f64 {
+    return 0.0
+}
+
+testObjc :: proc() {
+    t := Mammal { }
+    x := t->makeMilk(1);
+
+    lion := Lion { }
+    lion_milk := lion->makeMilk(1)
+    lion_roar := lion->roar(1)
+    lion_groom := lion->groom(1)
 }

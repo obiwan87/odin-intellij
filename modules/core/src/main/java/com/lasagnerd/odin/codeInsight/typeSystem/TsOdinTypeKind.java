@@ -12,6 +12,8 @@ public enum TsOdinTypeKind {
     MATRIX,
     MULTI_POINTER,
     NUMERIC,
+    OBJC_CLASS,
+    OBJC_MEMBER,
     PACKAGE,
     POINTER,
     POLYMORPHIC,

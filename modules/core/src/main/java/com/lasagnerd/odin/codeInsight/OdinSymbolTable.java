@@ -102,13 +102,13 @@ public class OdinSymbolTable {
         }
     }
 
-    public void merge(OdinSymbolTable context) {
-        this.symbolTable.putAll(context.symbolTable);
-        if (context.getParentSymbolTable() != null) {
+    public void merge(OdinSymbolTable symbolTable) {
+        this.symbolTable.putAll(symbolTable.symbolTable);
+        if (symbolTable.getParentSymbolTable() != null) {
             if (parentSymbolTable == null) {
                 parentSymbolTable = new OdinSymbolTable();
             }
-            parentSymbolTable.merge(context.getParentSymbolTable());
+            parentSymbolTable.merge(symbolTable.getParentSymbolTable());
         }
     }
 
