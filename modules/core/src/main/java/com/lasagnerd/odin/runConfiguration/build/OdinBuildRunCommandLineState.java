@@ -39,7 +39,12 @@ public class OdinBuildRunCommandLineState extends OdinBaseCommandLineState {
         }
 
         String projectDirectoryPath = options.getPackageDirectoryPath();
-        String programArguments = options.getProgramArguments();
+        String programArguments;
+        if (mode == OdinRunConfigurationUtils.OdinToolMode.RUN) {
+            programArguments = options.getProgramArguments();
+        } else {
+            programArguments = null;
+        }
         String compilerOptions = Objects.requireNonNullElse(options.getCompilerOptions(), "");
         String outputPathString = Objects.requireNonNullElse(options.getOutputPath(), "");
         String basePath = project.getBasePath();
