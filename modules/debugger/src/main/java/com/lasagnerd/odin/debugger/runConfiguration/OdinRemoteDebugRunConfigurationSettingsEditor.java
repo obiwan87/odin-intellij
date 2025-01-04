@@ -46,6 +46,7 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
     private final RawCommandLineEditor programArgumentsField;
     private final RawCommandLineEditor remoteCompilerOptions;
     private final EnvironmentVariablesTextFieldWithBrowseButton environmentVariables;
+
     private TextFieldWithBrowseButton remoteOutputPath;
     private TextFieldWithBrowseButton remoteWorkingDirectory;
     private TextFieldWithBrowseButton localPackageDirectoryPathField;
@@ -72,24 +73,31 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
 
         sshComboBox = new SshConfigComboBox(project, this, SshConfigVisibility.App);
         sshComboBox.reload();
-        lldbServerPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10), new OpenServerBrowserDialogActionListener(project, s -> lldbServerPathField.setText(s)));
+        lldbServerPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
+                new OpenServerBrowserDialogActionListener(project, s -> lldbServerPathField.setText(s)));
         lldbServerArgsField = new JBTextField();
 
         programArgumentsField = new RawCommandLineEditor();
-        remoteWorkingDirectory = new TextFieldWithBrowseButton(new ExtendableTextField(10), new OpenServerBrowserDialogActionListener(project, s -> remoteWorkingDirectory.setText(s)));
+        remoteWorkingDirectory = new TextFieldWithBrowseButton(new ExtendableTextField(10),
+                new OpenServerBrowserDialogActionListener(project, s -> remoteWorkingDirectory.setText(s)));
 
         buildOnTargetCheckbox = new JBCheckBox();
 
-        odinExecutablePathField = new TextFieldWithBrowseButton(new ExtendableTextField(10), new OpenServerBrowserDialogActionListener(project, s -> odinExecutablePathField.setText(s)));
-        remotePackageDirectoryPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10), new OpenServerBrowserDialogActionListener(project, s -> remotePackageDirectoryPathField.setText(s)));
+        odinExecutablePathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
+                new OpenServerBrowserDialogActionListener(project, s -> odinExecutablePathField.setText(s)));
+        remotePackageDirectoryPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
+                new OpenServerBrowserDialogActionListener(project, s -> remotePackageDirectoryPathField.setText(s)));
         remoteCompilerOptions = new RawCommandLineEditor();
-        remoteOutputPath = new TextFieldWithBrowseButton(new ExtendableTextField(10), new OpenServerBrowserDialogActionListener(project, s -> remoteOutputPath.setText(s)));
+        remoteOutputPath = new TextFieldWithBrowseButton(new ExtendableTextField(10),
+                new OpenServerBrowserDialogActionListener(project, s -> remoteOutputPath.setText(s)));
         environmentVariables = new EnvironmentVariablesTextFieldWithBrowseButton();
 
-        targetExecutableUploadDirPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10), new OpenServerBrowserDialogActionListener(project, s -> targetExecutableUploadDirPathField.setText(s)));
+        targetExecutableUploadDirPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
+                new OpenServerBrowserDialogActionListener(project, s -> targetExecutableUploadDirPathField.setText(s)));
         targetExecutableDownloadPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
                 new OpenLocalFileSystemBrowserDialogAction(s -> targetExecutableDownloadPathField.setText(s), CHOOSE_FOLDER));
-        localExecutablePathField = new TextFieldWithBrowseButton(new ExtendableTextField(10), new OpenLocalFileSystemBrowserDialogAction(s -> localExecutablePathField.setText(s)));
+        localExecutablePathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
+                new OpenLocalFileSystemBrowserDialogAction(s -> localExecutablePathField.setText(s)));
 
 
         panel = FormBuilder.createFormBuilder()
@@ -105,7 +113,6 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
                 .addLabeledComponent("Program arguments", programArgumentsField)
                 .addLabeledComponent("Program Working directory", remoteWorkingDirectory)
                 .addLabeledComponent("Environment variables", environmentVariables)
-//                .addLabeledComponent(result.hostLabel(), result.hostPortPanel())
 
                 .addLabeledComponent("Build on target?", buildOnTargetCheckbox)
 
