@@ -461,6 +461,32 @@ public class OdinInferenceEngine extends OdinVisitor {
                 return tsOdinStructType.getFields().get(symbol.getName());
             }
         }
+
+        if (symbol.getSymbolType() == OdinSymbolType.OBJC_MEMBER
+                && tsOdinRefExpressionType instanceof TsOdinObjcClass tsOdinObjcClass
+                && position.getParent().getParent() instanceof OdinCallExpression
+        ) {
+
+            TsOdinObjcMember objcMember = new TsOdinObjcMember();
+            objcMember.setObjcClass(tsOdinObjcClass);
+            OdinDeclaration procedureDeclaration = symbol.getDeclaration();
+
+            if (procedureDeclaration instanceof OdinConstantInitDeclaration constantInitDeclaration
+                    && OdinInsightUtils.isProcedureDeclaration(procedureDeclaration)) {
+                TsOdinType tsOdinType = resolveTypeOfNamedElement(constantInitDeclaration.getDeclaredIdentifierList().getFirst(), context);
+                if (tsOdinType.dereference() instanceof TsOdinProcedureType procedureType) {
+                    EvOdinValue attributeValue = OdinInsightUtils.getAttributeValue(constantInitDeclaration.getAttributesDefinitionList(), "objc_name");
+                    if (attributeValue != null && attributeValue.asString() != null) {
+                        objcMember.setObjcMemberName(attributeValue.asString());
+                        objcMember.setProcedureType(procedureType);
+                        objcMember.setName(objcMember.getObjcMemberName());
+                        objcMember.setPsiType(procedureType.getPsiType());
+                    }
+                    return objcMember;
+                }
+            }
+        }
+
         if (symbol.getSymbolType() == OdinSymbolType.POLYMORPHIC_TYPE) {
             TsOdinType polymorphicType = context.getPolymorphicType(symbol.getName());
             if (polymorphicType != null) {
@@ -627,24 +653,10 @@ public class OdinInferenceEngine extends OdinVisitor {
                             pseudoMethodType.setPsiTypeExpression(procedureType.getPsiTypeExpression());
                             this.type = pseudoMethodType;
                             return;
-                        } else if (tsOdinRefExpressionType.baseType(true) instanceof TsOdinObjcClass tsOdinObjcClass) {
-                            TsOdinObjcMember objcMember = new TsOdinObjcMember();
-                            objcMember.setObjcClass(tsOdinObjcClass);
-                            objcMember.setProcedureType(procedureType);
-                            OdinDeclaration declaration = procedureType.getDeclaration();
-                            if (declaration instanceof OdinAttributesOwner attributesOwner) {
-                                EvOdinValue attributeValue = OdinInsightUtils.getAttributeValue(attributesOwner.getAttributesDefinitionList(), "objc_name");
-                                if (attributeValue != null && attributeValue.asString() != null) {
-                                    objcMember.setObjcMemberName(attributeValue.asString());
-                                    objcMember.setName(objcMember.getObjcMemberName());
-                                    objcMember.setPsiType(procedureType.getPsiType());
-                                }
-                            }
-                            this.type = objcMember;
-                            return;
                         }
                     }
                 }
+
             } else {
                 TsOdinType polyParameter = context.getPolymorphicType(name);
                 if (polyParameter != null) {
@@ -670,7 +682,7 @@ public class OdinInferenceEngine extends OdinVisitor {
         ProcedureRankingResult result = OdinProcedureRanker.findBestProcedure(context, procedureGroupType, o.getArgumentList());
 
         if (result.bestProcedure() != null) {
-            return inferTypeOfProcedureCall(o, result.bestProcedure(), context);
+            return inferTypeOfProcedureCall(context, result.bestProcedure(), o.getArgumentList());
         }
 
         if (!result.compatibleProcedures().isEmpty()) {
@@ -701,7 +713,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (sameReturnTypes) {
                 TsOdinProcedureType firstProcedure = result.compatibleProcedures().getFirst().getFirst();
                 if (!firstProcedure.getReturnTypes().isEmpty()) {
-                    return inferTypeOfProcedureCall(o, result.compatibleProcedures().getFirst().getFirst(), context);
+                    return inferTypeOfProcedureCall(context, result.compatibleProcedures().getFirst().getFirst(), o.getArgumentList());
                 } else {
                     return TsOdinBuiltInTypes.VOID;
                 }
@@ -715,12 +727,12 @@ public class OdinInferenceEngine extends OdinVisitor {
             TsOdinProcedureType bestProcedure) {
     }
 
-    private TsOdinType inferTypeOfProcedureCall(@NotNull OdinCallExpression o,
+    private TsOdinType inferTypeOfProcedureCall(OdinContext context,
                                                 TsOdinProcedureType procedureType,
-                                                OdinContext context) {
+                                                @NotNull List<OdinArgument> arguments) {
         if (!procedureType.getReturnTypes().isEmpty()) {
             TsOdinProcedureType specializedType = OdinTypeSpecializer
-                    .specializeProcedure(context, o.getArgumentList(), procedureType);
+                    .specializeProcedure(context, arguments, procedureType);
             if (specializedType.getReturnTypes().size() == 1) {
                 return specializedType.getReturnTypes().getFirst();
             } else if (specializedType.getReturnTypes().size() > 1) {
@@ -1376,7 +1388,7 @@ public class OdinInferenceEngine extends OdinVisitor {
             // normal procedure call
             if (representedTypeReferenceKind == PROCEDURE) {
                 TsOdinProcedureType procedureType = (TsOdinProcedureType) OdinTypeResolver.resolveTypeReference(tsOdinType.getContext(), tsOdinTypeReference);
-                this.type = inferTypeOfProcedureCall(o, procedureType, context);
+                this.type = inferTypeOfProcedureCall(context, procedureType, o.getArgumentList());
             }
             // struct specialization
             else if (representedTypeReferenceKind == STRUCT) {
@@ -1414,17 +1426,17 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
         // handles cases where the type was set in a field or a variable
         else if (tsOdinType.baseType(true) instanceof TsOdinProcedureType procedureType) {
-            this.type = inferTypeOfProcedureCall(o, procedureType, context);
+            this.type = inferTypeOfProcedureCall(context, procedureType, o.getArgumentList());
         } else if (tsOdinType.baseType(true) instanceof TsOdinProcedureGroup procedureGroupType) {
             this.type = inferTypeOfBestProcedure(o, procedureGroupType);
         }
         // pseudo methods (->)
         else if (tsOdinType.baseType(true) instanceof TsOdinPseudoMethodType pseudoMethodType) {
-            this.type = inferTypeOfProcedureCall(o, pseudoMethodType.getProcedureType(), context);
+            this.type = inferTypeOfProcedureCall(context, pseudoMethodType.getProcedureType(), o.getArgumentList());
         }
         // objc member (->)
         else if (tsOdinType.baseType(true) instanceof TsOdinObjcMember objcMember) {
-            this.type = inferTypeOfProcedureCall(o, objcMember.getProcedureType(), context);
+            this.type = inferTypeOfProcedureCall(context, objcMember.getProcedureType(), o.getArgumentList());
         }
     }
 

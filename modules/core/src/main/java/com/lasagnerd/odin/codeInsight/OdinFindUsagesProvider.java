@@ -74,6 +74,8 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
             case FOREIGN_IMPORT -> "Foreign Import";
             case SWIZZLE_FIELD -> "Swizzle Field";
             case BIT_FIELD -> "Bit Field";
+            case OBJC_CLASS -> "Objective-C Class";
+            case OBJC_MEMBER -> "Objective-C Member";
             case SOA_FIELD -> "Soa Field";
             case BIT_SET -> "Bit set";
         };

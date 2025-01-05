@@ -36,9 +36,8 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     }
 
     CachedValueProvider.Result<OdinReference> computeReference(OdinContext context) {
-        OdinReference odinReference = new OdinReference(context, this);
-        odinReference.resolve();
-        OdinSymbol symbol = odinReference.getSymbol();
+        OdinSymbol symbol = OdinReferenceResolver.resolve(context, this);
+        OdinReference odinReference = new OdinReference(this, symbol);
 
         List<Object> dependencies = new ArrayList<>();
         dependencies.add(this);
@@ -72,10 +71,11 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
 
     private @NotNull OdinReference doGetReferenceWithoutKnowledge(OdinContext context) {
         if (!shouldUseCache(context, this)) {
-            OdinReference odinReference = new OdinReference(context, this);
-            odinReference.resolve();
+            OdinSymbol symbol = OdinReferenceResolver.resolve(context, this);
+            OdinReference odinReference = new OdinReference(this, symbol);
             return odinReference;
         }
+
         if (getCachedReference() == null) {
             @NotNull ParameterizedCachedValue<OdinReference, OdinContext> cachedValue = CachedValuesManager
                     .getManager(getProject())
@@ -89,9 +89,8 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     private OdinReference doGetReferenceWithKnowledge(OdinContext context) {
         boolean useCache = shouldUseCache(context, this);
         if (!useCache) {
-            OdinReference odinReference = new OdinReference(context, this);
-            odinReference.resolve();
-            return odinReference;
+            OdinSymbol symbol = OdinReferenceResolver.resolve(context, this);
+            return new OdinReference(this, symbol);
         }
 
         if (getCachedReference() == null) {

@@ -5,6 +5,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.OdinFileType;
+import groovy.json.StringEscapeUtils;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -119,7 +120,6 @@ public class OdinPsiElementFactory {
         return statement;
     }
 
-
     public OdinEos createEos() {
 
         String var = """
@@ -132,7 +132,6 @@ public class OdinPsiElementFactory {
         Objects.requireNonNull(odinEos);
         return odinEos;
     }
-
 
     public OdinImportStatement createImport(String alias, String packagePath) {
         OdinFile file;
@@ -174,5 +173,17 @@ public class OdinPsiElementFactory {
 
         OdinFile file = createFile(dummyCode.formatted(importPath));
         return file.getFileScope().getImportStatements().getFirst().getImportDeclaration().getImportPath();
+    }
+
+    public OdinStringLiteral createStringLiteral(String content) {
+        String s = StringEscapeUtils.escapeJava(content);
+        String text = """
+                package dummy
+                
+                s := "%s"
+                """.formatted(s);
+
+        OdinFile file = createFile(text);
+        return Objects.requireNonNull(PsiTreeUtil.findChildOfType(file, OdinStringLiteral.class));
     }
 }

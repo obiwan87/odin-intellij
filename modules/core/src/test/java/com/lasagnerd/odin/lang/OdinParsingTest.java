@@ -2298,7 +2298,7 @@ public class OdinParsingTest extends UsefulTestCase {
 //            assertNotNull(referencedSymbol);
 //
             OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
-            TsOdinType inferredType = refExpression.getInferredType();
+            TsOdinType inferredType = Objects.requireNonNull(refExpression).getInferredType();
             System.out.println(inferredType);
             assertFalse(inferredType.isUnknown());
 
@@ -2881,7 +2881,7 @@ public class OdinParsingTest extends UsefulTestCase {
         OdinFile file = loadTypeInference();
         {
             OdinRefExpression ref = (OdinRefExpression) findFirstExpressionOfVariable(file, "testStructTypeReferenceNotHavingTypeElements", "x");
-            OdinSymbol referencedSymbol = ref.getIdentifier().getReferencedSymbol();
+            OdinSymbol referencedSymbol = Objects.requireNonNull(ref.getIdentifier()).getReferencedSymbol();
             assertNull(referencedSymbol);
         }
     }

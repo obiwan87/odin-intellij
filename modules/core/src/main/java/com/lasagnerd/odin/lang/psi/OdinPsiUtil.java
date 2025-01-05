@@ -677,7 +677,7 @@ public class OdinPsiUtil {
 
     public static Icon getIcon(OdinDeclaration declaration, int flags) {
         Icon baseIcon = null;
-        if (declaration instanceof OdinVariableDeclaration variableDeclaration) {
+        if (declaration instanceof OdinVariableDeclaration) {
             baseIcon = AllIcons.Nodes.Variable;
         }
 
@@ -687,22 +687,44 @@ public class OdinPsiUtil {
         }
 
         if (baseIcon != null) {
-            if (true) {
-                OdinVisibility visibility = null;
-                if (declaration instanceof OdinAttributesOwner attributesOwner) {
-                    visibility = OdinInsightUtils.computeVisibility(attributesOwner);
-                }
+            OdinVisibility visibility = null;
+            OdinAttributesOwner attributesOwner = (OdinAttributesOwner) declaration;
+            visibility = OdinInsightUtils.computeVisibility(attributesOwner);
 
-                if (visibility != null) {
-                    return switch (visibility) {
-                        case PACKAGE_PRIVATE -> ElementBase.buildRowIcon(baseIcon, PlatformIcons.PACKAGE_LOCAL_ICON);
-                        case FILE_PRIVATE -> ElementBase.buildRowIcon(baseIcon, PlatformIcons.PRIVATE_ICON);
-                        case PACKAGE_EXPORTED, NONE -> ElementBase.buildRowIcon(baseIcon, PlatformIcons.PUBLIC_ICON);
-                    };
-                }
+            if (visibility != null) {
+                return switch (visibility) {
+                    case PACKAGE_PRIVATE -> ElementBase.buildRowIcon(baseIcon, PlatformIcons.PACKAGE_LOCAL_ICON);
+                    case FILE_PRIVATE -> ElementBase.buildRowIcon(baseIcon, PlatformIcons.PRIVATE_ICON);
+                    case PACKAGE_EXPORTED, NONE -> ElementBase.buildRowIcon(baseIcon, PlatformIcons.PUBLIC_ICON);
+                };
             }
         }
 
         return baseIcon;
     }
+
+    public static String getName(OdinAttributeNamedValue attributeNamedValue) {
+        return OdinInsightUtils.getStringLiteralValue(attributeNamedValue.getExpression());
+    }
+
+    public static PsiElement setName(OdinAttributeNamedValue attributeNamedValue, @NotNull String name) {
+        if (attributeNamedValue.getExpression() instanceof OdinLiteralExpression literalExpression) {
+            if (literalExpression.getBasicLiteral() instanceof OdinStringLiteral stringLiteral) {
+                OdinStringLiteral newStringLiteral = OdinPsiElementFactory.getInstance(attributeNamedValue.getProject()).createStringLiteral(name);
+                stringLiteral.replace(newStringLiteral);
+            }
+        }
+        return attributeNamedValue;
+    }
+
+
+    public static @Nullable PsiElement getNameIdentifier(OdinAttributeNamedValue attributeNamedValue) {
+        if (attributeNamedValue.getExpression() instanceof OdinLiteralExpression literalExpression) {
+            if (literalExpression.getBasicLiteral() instanceof OdinStringLiteral stringLiteral) {
+                return stringLiteral;
+            }
+        }
+        return null;
+    }
+
 }

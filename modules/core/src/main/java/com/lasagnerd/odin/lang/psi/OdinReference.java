@@ -8,29 +8,28 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.IncorrectOperationException;
-import com.lasagnerd.odin.codeInsight.OdinContext;
-import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Getter
 public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
     public static Logger LOG = Logger.getInstance(OdinReference.class);
 
-    @Getter
-    private OdinSymbol symbol;
-    @Getter
-    private PsiElement resolvedReference;
+    private final OdinSymbol symbol;
+    private final PsiElement resolvedReference;
 
-    boolean resolved = false;
-
-    private final OdinContext context;
-
-    public OdinReference(@NotNull OdinContext context, @NotNull OdinIdentifier element) {
+    public OdinReference(OdinIdentifier element, OdinSymbol symbol) {
         super(element);
-        this.context = context;
+        this.symbol = symbol;
+        if (this.symbol != null) {
+            this.resolvedReference = getDeclaredIdentifier(this.symbol);
+        } else {
+            this.resolvedReference = null;
+        }
+
     }
 
     @Override
@@ -40,13 +39,7 @@ public class OdinReference extends PsiReferenceBase<OdinIdentifier> {
 
     @Override
     public @Nullable PsiElement resolve() {
-        if (!this.resolved) {
-            this.symbol = OdinReferenceResolver.resolve(context, getElement());
-            this.resolvedReference = getDeclaredIdentifier(this.symbol);
-            this.resolved = true;
-        }
-
-        return this.resolvedReference;
+        return resolvedReference;
     }
 
     private static PsiElement getDeclaredIdentifier(OdinSymbol symbol) {

@@ -25,6 +25,8 @@ public enum OdinSymbolType {
     LABEL(false),
     FOREIGN_IMPORT(false),
     SWIZZLE_FIELD(false),
+    OBJC_CLASS(true),
+    OBJC_MEMBER(true),
     SOA_FIELD(false),
     BIT_FIELD(true),
     BIT_SET(true);

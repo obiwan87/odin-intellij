@@ -169,16 +169,22 @@ public class OdinInsightUtils {
                     OdinSymbolTable fileScopeSymbolTable = fileScope.getFullSymbolTable();
                     for (OdinSymbol symbol : fileScopeSymbolTable.flatten().getSymbols()) {
                         if (symbol.getDeclaration() instanceof OdinConstantInitDeclaration odinConstantInitDeclaration) {
-                            EvOdinValue objcType = OdinInsightUtils.getAttributeValue(odinConstantInitDeclaration.getAttributesDefinitionList(),
+                            List<OdinAttributesDefinition> attributes = odinConstantInitDeclaration.getAttributesDefinitionList();
+                            EvOdinValue objcType = OdinInsightUtils.getAttributeValue(attributes,
                                     "objc_type");
-                            EvOdinValue objcName = OdinInsightUtils.getAttributeValue(odinConstantInitDeclaration.getAttributesDefinitionList(),
+                            EvOdinValue objcName = OdinInsightUtils.getAttributeValue(attributes,
                                     "objc_name");
+
                             if (objcType != null && objcName != null) {
                                 TsOdinType referencedType = objcType.asType();
                                 String name = objcName.asString();
                                 if (referencedType != null && name != null) {
                                     if (referencedType.getPsiType() == tsOdinObjcClass.getPsiType()) {
-                                        OdinSymbol odinSymbol = symbol.withName(name);
+                                        OdinAttributeNamedValue namedValue = OdinInsightUtils.getAttributeNamedValue(attributes, "objc_name");
+                                        OdinSymbol odinSymbol = symbol
+                                                .withName(name)
+                                                .withSymbolType(OBJC_MEMBER)
+                                                .withDeclaredIdentifier(namedValue);
                                         symbolTable.add(odinSymbol);
                                     }
                                 }
@@ -1281,12 +1287,28 @@ public class OdinInsightUtils {
 
                 if (odinArgument instanceof OdinAssignedAttribute assignedAttribute) {
                     if (assignedAttribute.getAttributeIdentifier().getText().equals(attributeName)) {
-                        return OdinExpressionEvaluator.evaluate(assignedAttribute.getExpression());
+                        return OdinExpressionEvaluator.evaluate(assignedAttribute.getAttributeNamedValue().getExpression());
                     }
                 }
             }
         }
 
+        return null;
+    }
+
+    public static OdinAttributeNamedValue getAttributeNamedValue(List<OdinAttributesDefinition> attributesDefinitions, String attributeName) {
+        if (attributesDefinitions == null)
+            return null;
+
+        for (OdinAttributesDefinition attributesDefinition : attributesDefinitions) {
+            for (OdinAttributeArgument odinArgument : attributesDefinition.getAttributeArgumentList()) {
+                if (odinArgument instanceof OdinAssignedAttribute assignedAttribute) {
+                    if (assignedAttribute.getAttributeIdentifier().getText().equals(attributeName)) {
+                        return assignedAttribute.getAttributeNamedValue();
+                    }
+                }
+            }
+        }
         return null;
     }
 
@@ -1296,7 +1318,7 @@ public class OdinInsightUtils {
                 if (attributeArgument instanceof OdinAssignedAttribute assignedAttribute) {
                     String text = assignedAttribute.getAttributeIdentifier().getText();
                     if (text.equals("private")) {
-                        String attributeValue = getStringLiteralValue(assignedAttribute.getExpression());
+                        String attributeValue = getStringLiteralValue(assignedAttribute.getAttributeNamedValue().getExpression());
                         if (Objects.equals(attributeValue, "file")) {
                             return OdinVisibility.FILE_PRIVATE;
                         }

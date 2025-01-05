@@ -264,12 +264,11 @@ attributesDefinition                  ::= AT unassignedAttribute
 attributeIdentifier ::= IDENTIFIER_TOKEN
 
 private attributeList               ::= attributeArgument (COMMA attributeArgument)* COMMA?
-assignedAttribute                   ::= attributeIdentifier EQ expression { extends = attributeArgument}
+assignedAttribute                   ::= attributeIdentifier EQ attributeNamedValue { extends = attributeArgument}
+attributeNamedValue                 ::= expression { implements='com.intellij.psi.PsiNameIdentifierOwner' methods=[getName setName getNameIdentifier]}
 unassignedAttribute                 ::= attributeIdentifier {extends = attributeArgument}
 attributeArgument                   ::= assignedAttribute
                                          | unassignedAttribute {implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"}
-
-
 
 // Struct
 structType                           ::= STRUCT [polyParams] <<enterNoBlockMode>> directive* <<exitNoBlockMode>> EOS_TOKEN? structBlock

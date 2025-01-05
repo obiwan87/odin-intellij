@@ -70,6 +70,8 @@ public class OdinCompletionContributor extends CompletionContributor {
             return AllIcons.FileTypes.Unknown;
         return switch (symbolType) {
             case STRUCT -> OdinIcons.Types.Struct;
+            case OBJC_CLASS -> AllIcons.Nodes.Class;
+            case OBJC_MEMBER -> AllIcons.Nodes.Method;
             case SWIZZLE_FIELD, STRUCT_FIELD, SOA_FIELD, BIT_FIELD_FIELD, ALLOCATOR_FIELD -> AllIcons.Nodes.Property;
             case TYPE_ALIAS, POLYMORPHIC_TYPE -> AllIcons.Nodes.Type;
             case BIT_FIELD, LABEL, FOREIGN_IMPORT, BIT_SET, BUILTIN_TYPE -> null;

@@ -304,6 +304,10 @@ public class OdinDeclarationSymbolResolver extends OdinVisitor {
             case null, default -> OdinSymbolType.CONSTANT;
         };
 
+        if (symbolType == OdinSymbolType.STRUCT && OdinInsightUtils.containsAttribute(o.getAttributesDefinitionList(), "objc_class")) {
+            symbolType = OdinSymbolType.OBJC_CLASS;
+        }
+
         OdinType typeDefinition = o.getType();
         OdinScope scope = getScope(o);
         List<OdinAttributesDefinition> attributeList = o.getAttributesDefinitionList();

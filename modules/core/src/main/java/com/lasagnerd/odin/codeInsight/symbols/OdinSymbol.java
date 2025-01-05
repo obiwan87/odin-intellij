@@ -19,6 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 public class OdinSymbol {
     // Psi stuff
+    @With
     private PsiNamedElement declaredIdentifier;
     private OdinType psiType;
     private List<OdinAttributesDefinition> attributes;
@@ -27,6 +28,7 @@ public class OdinSymbol {
     @With
     private String name;
     private String packagePath;
+    @With
     private OdinSymbolType symbolType;
     private OdinVisibility visibility;
     private OdinScope scope;
