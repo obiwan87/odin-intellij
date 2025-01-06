@@ -80,6 +80,16 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             <ODIN_FILE_PRIVATE_STRUCT>File_Private_Struct</ODIN_FILE_PRIVATE_STRUCT> :: struct {
             }
             
+            @(<ODIN_ATTRIBUTE_REF>objc_class</ODIN_ATTRIBUTE_REF>="NSApplication")
+            <ODIN_OBJC_CLASS>Application</ODIN_OBJC_CLASS> :: struct {
+                using _: <ODIN_PACKAGE_REF>intrinsics</ODIN_PACKAGE_REF>.<ODIN_PKG_EXP_STRUCT_REF>object</ODIN_PKG_EXP_STRUCT_REF>
+            }
+            
+            @(<ODIN_ATTRIBUTE_REF>objc_type</ODIN_ATTRIBUTE_REF>=<ODIN_PKG_EXP_STRUCT_REF>Application</ODIN_PKG_EXP_STRUCT_REF>, <ODIN_ATTRIBUTE_REF>objc_name</ODIN_ATTRIBUTE_REF>="open")
+            Application_open :: proc(<ODIN_PARAMETER>self</ODIN_PARAMETER>: ^<ODIN_PKG_EXP_STRUCT_REF>Application</ODIN_PKG_EXP_STRUCT_REF>) {
+            
+            }
+            
             @<ODIN_ATTRIBUTE_REF>private</ODIN_ATTRIBUTE_REF>
             <ODIN_PKG_PRIVATE_STRUCT>Package_Private_Struct</ODIN_PKG_PRIVATE_STRUCT> :: struct {
             }
@@ -242,6 +252,11 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
                     <ODIN_LOCAL_VARIABLE>z</ODIN_LOCAL_VARIABLE> := <ODIN_PKG_EXP_CONSTANT_REF>PACKAGE_EXPORTED_CONST</ODIN_PKG_EXP_CONSTANT_REF>
                 }
             
+                // Objective-C classes
+                {
+                    <ODIN_LOCAL_VARIABLE>application</ODIN_LOCAL_VARIABLE> := <ODIN_OBJC_CLASS_REF>Application</ODIN_OBJC_CLASS_REF> {}
+                    application-><ODIN_OBJC_MEMBER_CALL>open</ODIN_OBJC_MEMBER_CALL>()
+                }
             
                 // Struct references
                 {
@@ -371,6 +386,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("Declarations//Struct//File private struct", ODIN_FILE_PRIVATE_STRUCT),
             new AttributesDescriptor("Declarations//Struct//Package private struct", ODIN_PKG_PRIVATE_STRUCT),
             new AttributesDescriptor("Declarations//Struct//Local struct", ODIN_LOCAL_STRUCT),
+            new AttributesDescriptor("Declarations//Struct//Objective-C class", ODIN_OBJC_CLASS),
 
             new AttributesDescriptor("Declarations//Union//Package exported union", ODIN_PKG_EXP_UNION),
             new AttributesDescriptor("Declarations//Union//File private union", ODIN_FILE_PRIVATE_UNION),
@@ -419,6 +435,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("Procedure calls//File private global variable call", ODIN_FILE_PRIVATE_VAR_CALL),
             new AttributesDescriptor("Procedure calls//Struct field call", ODIN_STRUCT_FIELD_CALL),
             new AttributesDescriptor("Procedure calls//Parameter call", ODIN_PARAMETER_CALL),
+            new AttributesDescriptor("Procedure calls//Objective-C member call", ODIN_OBJC_MEMBER_CALL),
 //            new AttributesDescriptor("Procedure calls//Fake method call", OdinSyntaxTextAttributes.ODIN_FAKE_METHOD_CALL),
 
             // References
@@ -427,6 +444,7 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("References//Struct//Package private struct reference", ODIN_PKG_PRIVATE_STRUCT_REF),
             new AttributesDescriptor("References//Struct//File private struct reference", ODIN_FILE_PRIVATE_STRUCT_REF),
             new AttributesDescriptor("References//Struct//Local struct reference", ODIN_LOCAL_STRUCT_REF),
+            new AttributesDescriptor("References//Struct//Objective-C class reference", ODIN_OBJC_CLASS_REF),
 
             new AttributesDescriptor("References//Union//Package exported union reference", ODIN_PKG_EXP_UNION_REF),
             new AttributesDescriptor("References//Union//Union reference through using", ODIN_USING_PKG_EXP_UNION_REF),
@@ -640,6 +658,9 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             ADDITIONAL_TAGS.put("ODIN_VALID_ESCAPE", ODIN_VALID_ESCAPE);
             ADDITIONAL_TAGS.put("ODIN_NUMBER", ODIN_NUMBER);
             ADDITIONAL_TAGS.put("ODIN_UNKNOWN_REF", ODIN_UNKNOWN_REF);
+            ADDITIONAL_TAGS.put("ODIN_OBJC_CLASS", ODIN_OBJC_CLASS);
+            ADDITIONAL_TAGS.put("ODIN_OBJC_CLASS_REF", ODIN_OBJC_CLASS_REF);
+            ADDITIONAL_TAGS.put("ODIN_OBJC_MEMBER_CALL", ODIN_OBJC_MEMBER_CALL);
         }
         return ADDITIONAL_TAGS;
     }

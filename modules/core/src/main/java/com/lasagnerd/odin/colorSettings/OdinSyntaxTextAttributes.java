@@ -217,6 +217,10 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_VALID_ESCAPE = createTextAttributesKey("ODIN_VALID_ESCAPE", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
     public static final TextAttributesKey ODIN_NUMBER = createTextAttributesKey("ODIN_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
 
+    public static final TextAttributesKey ODIN_OBJC_CLASS = createTextAttributesKey("ODIN_OBJC_CLASS", ODIN_PKG_EXP_STRUCT);
+    public static final TextAttributesKey ODIN_OBJC_CLASS_REF = createTextAttributesKey("ODIN_OBJC_CLASS_REF", ODIN_PKG_EXP_STRUCT_REF);
+    public static final TextAttributesKey ODIN_OBJC_MEMBER_CALL = createTextAttributesKey("ODIN_OBJC_MEMBER_CALL", ODIN_PKG_EXP_PROC_CALL);
+
     public static final TextAttributesKey ODIN_UNKNOWN_REF = createTextAttributesKey("ODIN_UNKNOWN_REF", HighlighterColors.BAD_CHARACTER);
 
     public static final OdinSymbolTextAttributes TEXT_ATTRIBUTES_MAP = new OdinSymbolTextAttributes();
@@ -395,6 +399,11 @@ public class OdinSyntaxTextAttributes {
 //        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_PKG_PRIVATE_TYPE_ALIAS);
 //        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_TYPE_ALIAS);
 //        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_TYPE_ALIAS);
+
+        // Objective-C
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.OBJC_CLASS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.DECLARATION, ODIN_OBJC_CLASS);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.OBJC_CLASS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, ODIN_OBJC_CLASS_REF);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.OBJC_MEMBER, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.CALL, ODIN_OBJC_MEMBER_CALL);
 
 
         // Variable

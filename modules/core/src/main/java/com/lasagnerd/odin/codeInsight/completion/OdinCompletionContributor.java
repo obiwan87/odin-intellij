@@ -88,13 +88,17 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     @NotNull
-    private static LookupElementBuilder procedureLookupElement(LookupElementBuilder element, @NotNull OdinProcedureType procedureType) {
+    private static LookupElementBuilder procedureLookupElement(LookupElementBuilder element, @NotNull OdinProcedureType procedureType, boolean skipFirst) {
         var params = procedureType.getParamEntryList();
         StringBuilder tailText = new StringBuilder("(");
 
-        // TODO handle whitespaces
+        boolean skipped = false;
         List<String> paramEntryFragments = new ArrayList<>();
         for (OdinParamEntry param : params) {
+            if (skipFirst && !skipped) {
+                skipped = true;
+                continue;
+            }
             OdinParameterDeclaration parameterDeclaration = param.getParameterDeclaration();
             String paramEntry = "";
             if (parameterDeclaration instanceof OdinParameterDeclarator parameterDeclarator) {
@@ -130,7 +134,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                 paramEntryFragments.add(paramInit);
             }
         }
-        tailText.append(String.join(", ", paramEntryFragments));
+        String parametersText = String.join(", ", paramEntryFragments);
+        tailText.append(parametersText);
         tailText.append(")");
         element = element.withTailText(tailText.toString());
 
@@ -249,7 +254,7 @@ public class OdinCompletionContributor extends CompletionContributor {
             final String lookupString = prefix + symbol.getName();
 
             switch (symbol.getSymbolType()) {
-                case PROCEDURE -> {
+                case PROCEDURE, OBJC_MEMBER -> {
                     if (declaredIdentifier == null) break;
 
                     LookupElementBuilder element = LookupElementBuilder
@@ -261,7 +266,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                     OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(declaredIdentifier);
 
                     if (procedureType != null) {
-                        element = procedureLookupElement(element, procedureType)
+                        element = procedureLookupElement(element, procedureType, symbol.getSymbolType() == OdinSymbolType.OBJC_MEMBER)
                                 .withInsertHandler(
                                         new CombinedInsertHandler(
                                                 new OdinInsertSymbolHandler(symbol.getSymbolType()),
@@ -288,6 +293,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                         PsiReference resolvedReference = odinIdentifier.getReference();
                         PsiElement resolved = resolvedReference.resolve();
                         if (resolved instanceof OdinDeclaredIdentifier) {
+
                             OdinProcedureType declaringProcedure = OdinInsightUtils.getProcedureType(resolved);
                             if (declaringProcedure != null) {
                                 LookupElementBuilder element = LookupElementBuilder
@@ -301,7 +307,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                         new OdinInsertImportHandler(odinImport, sourcePackagePath, sourceFile)
                                                 )
                                         );
-                                element = transformer.apply(procedureLookupElement(element, declaringProcedure), symbol);
+                                element = transformer.apply(procedureLookupElement(element, declaringProcedure, false), symbol);
                                 lookupElement = PrioritizedLookupElement.withPriority(element, priority);
                             }
                         }
