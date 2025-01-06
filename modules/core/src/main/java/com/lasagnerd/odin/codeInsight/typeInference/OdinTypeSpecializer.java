@@ -225,8 +225,8 @@ public class OdinTypeSpecializer {
      * The method substituteTypes maps $T -> Point as shown in the example below
      * declared type:         List($Item) { items: []$Item }
      * polymorphic parameter: List($T):       $Item -> $T
-     *                              |              |
-     *                              v              v
+     * |              |
+     * v              v
      * argument:              List(Point)   : $Item  -> Point
      *
      * @param argumentType  The argument type
@@ -337,7 +337,27 @@ public class OdinTypeSpecializer {
                         doSubstituteTypes(argumentParameter.getType(), parameterParameter.getType(), resolvedTypes, values);
                     }
                 }
-            } // This should be working only structs, unions and procedures
+            } else if(parameterType instanceof TsOdinObjcClass parObjcClass && argumentType instanceof TsOdinObjcClass argObjcClass){
+                // NOTE: This is a workaround for a very specific use case involving  object-c bindings, specifically for the
+                //  copy() "method".
+                // @(objc_class="NSObject")
+                // Object :: struct {using _: intrinsics.objc_object}
+                //
+                // @(objc_class="NSObject")
+                // Copying :: struct($T: typeid) {using _: Object}
+                //
+                // @(objc_type=Object, objc_name="copy")
+                // copy :: proc "c" (self: ^Copying($T)) -> ^T where intrinsics.type_is_subtype_of(T, Object) {
+                //    return msgSend(^T, self, "copy")
+                // }
+                // The following code extracts the first polymorphic parameter of the underlying struct and maps it onto the argument
+                TsOdinType firstResolvedParameter = parObjcClass.getStructType().getResolvedPolymorphicParameters().entrySet().stream().findFirst()
+                        .map(Map.Entry::getValue).orElse(null);
+                if(firstResolvedParameter != null) {
+                    doSubstituteTypes(argObjcClass, firstResolvedParameter, resolvedTypes, values);
+                }
+            }
+            // This should be working only structs, unions and procedures
             else if (parameterType instanceof TsOdinGenericType generalizableType && argumentType instanceof TsOdinGenericType generalizableType1) {
                 if (generalizableType1.getClass().equals(generalizableType.getClass())) {
                     for (Map.Entry<String, TsOdinType> entry : generalizableType.getResolvedPolymorphicParameters().entrySet()) {

@@ -971,9 +971,19 @@ testPseudoMethods :: proc() {
     s->method(.A)
 }
 
+@(objc_class="NsObject")
+Object :: struct {
+
+}
+
 @(objc_class="NSMammal")
 Mammal :: struct {
+    using _: Object
+}
 
+@(objc_class="NSObject")
+Copying :: struct($T: typeid) {
+    using _: Object
 }
 
 @(objc_type=Mammal, objc_name="makeMilk")
@@ -981,6 +991,10 @@ Mammal_makeMilk :: proc "c" (self: ^Mammal, i: i32) -> f64 {
     return 0.0
 }
 
+@(objc_type=Mammal, objc_name="reproduce")
+Mammal_reproduce :: proc "c" (self: Copying($T)) -> ^T {
+    return nil
+}
 
 @(objc_class="NSCanine")
 Canine :: struct {
@@ -1050,4 +1064,6 @@ testObjc :: proc() {
     lion_milk := lion->makeMilk(1)
     lion_roar := lion->roar(1)
     lion_groom := lion->groom(1)
+    lion_cub := lion->reproduce()
+    lion_cub_roar := lion_cub->roar(1)
 }

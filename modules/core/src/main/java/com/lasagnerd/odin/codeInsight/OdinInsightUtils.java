@@ -17,6 +17,7 @@ import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkService;
 import com.lasagnerd.odin.codeInsight.symbols.*;
+import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
@@ -900,6 +901,12 @@ public class OdinInsightUtils {
         boolean invalidArguments = false;
         boolean previousIsVariadic = false;
         for (OdinArgument odinArgument : argumentList) {
+            if (odinArgument instanceof OdinSelfArgument selfArgument) {
+                assert index == 0;
+                TsOdinParameter tsOdinParameter = parametersByIndex.get(0);
+                argumentExpressions.put(selfArgument.getExpression(), tsOdinParameter);
+                usedParameters.remove(tsOdinParameter);
+            }
             if (odinArgument instanceof OdinUnnamedArgument unnamedArgument) {
                 if (nameOnly) {
                     invalidArguments = true;
@@ -1064,7 +1071,12 @@ public class OdinInsightUtils {
                 } else if (!(tsOdinType.baseType(true) instanceof TsOdinProcedureType) && !(tsOdinType instanceof TsOdinPseudoMethodType tsOdinPseudoMethodType)) {
                     tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
                 }
-                argumentList = odinCallExpression.getArgumentList();
+
+                if (tsOdinType instanceof TsOdinPseudoMethodType || tsOdinType instanceof TsOdinObjcMember) {
+                    argumentList = OdinInferenceEngine.createArgumentListWithSelf(odinCallExpression);
+                } else {
+                    argumentList = odinCallExpression.getArgumentList();
+                }
             } else if (callingElement instanceof OdinCallType odinCallType) {
                 tsOdinType = OdinTypeResolver.resolveType(context, odinCallType.getType());
                 argumentList = odinCallType.getArgumentList();

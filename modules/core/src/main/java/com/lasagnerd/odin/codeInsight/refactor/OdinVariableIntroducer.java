@@ -51,6 +51,7 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         // If there is more than one occurrence find the one that is top-most
         var sortedUsages = usages.stream().sorted(Comparator.comparing(UsageInfo::getNavigationOffset)).toList();
         UsageInfo firstUsage = sortedUsages.getFirst();
+
         Objects.requireNonNull(firstUsage.getElement());
 
         // Perform replace of the expression with variable initialization

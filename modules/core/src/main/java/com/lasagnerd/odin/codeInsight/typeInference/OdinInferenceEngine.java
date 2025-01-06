@@ -17,6 +17,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
+import com.lasagnerd.odin.lang.psi.impl.OdinSelfArgumentImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1359,6 +1360,18 @@ public class OdinInferenceEngine extends OdinVisitor {
         return declarationType;
     }
 
+    public static @NotNull List<OdinArgument> createArgumentListWithSelf(@NotNull OdinCallExpression o) {
+        List<OdinArgument> arguments = new ArrayList<>();
+        OdinExpression expression = o.getExpression();
+        if (expression instanceof OdinRefExpression refExpression) {
+            if (refExpression.getArrow() != null && refExpression.getExpression() != null) {
+                arguments.add(new OdinSelfArgumentImpl(refExpression.getExpression()));
+            }
+        }
+        arguments.addAll(o.getArgumentList());
+        return arguments;
+    }
+
     @Override
     public void visitCallExpression(@NotNull OdinCallExpression o) {
         // Get type of expression. If it is callable, retrieve the return type and set that as result
@@ -1432,11 +1445,13 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
         // pseudo methods (->)
         else if (tsOdinType.baseType(true) instanceof TsOdinPseudoMethodType pseudoMethodType) {
-            this.type = inferTypeOfProcedureCall(context, pseudoMethodType.getProcedureType(), o.getArgumentList());
+            List<OdinArgument> arguments = createArgumentListWithSelf(o);
+            this.type = inferTypeOfProcedureCall(context, pseudoMethodType.getProcedureType(), arguments);
         }
         // objc member (->)
         else if (tsOdinType.baseType(true) instanceof TsOdinObjcMember objcMember) {
-            this.type = inferTypeOfProcedureCall(context, objcMember.getProcedureType(), o.getArgumentList());
+            List<OdinArgument> arguments = createArgumentListWithSelf(o);
+            this.type = inferTypeOfProcedureCall(context, objcMember.getProcedureType(), arguments);
         }
     }
 

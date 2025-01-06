@@ -509,6 +509,11 @@ public class OdinTypeResolver extends OdinVisitor {
             this.type = OdinTypeSpecializer.specializeStructOrGetCached(context, structType, o.getArgumentList());
         }
 
+        if (this.type instanceof TsOdinObjcClass objcClass) {
+            TsOdinStructType structType = OdinTypeSpecializer.specializeStructOrGetCached(context, objcClass.getStructType(), o.getArgumentList());
+            objcClass.setStructType(structType);
+        }
+
         if (this.type instanceof TsOdinUnionType unionType) {
             // This should not be called again if type is already been visited
             this.type = OdinTypeSpecializer.specializeUnionOrGetCached(context, unionType, o.getArgumentList());

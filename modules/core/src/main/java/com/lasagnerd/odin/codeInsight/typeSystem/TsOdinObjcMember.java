@@ -14,9 +14,7 @@ public class TsOdinObjcMember extends TsOdinTypeBase implements TsOdinParameterO
 
     @Override
     public List<TsOdinParameter> getParameters() {
-        return procedureType.getParameters().stream().skip(1)
-                .map(p -> p.withIndex(p.getIndex() - 1))
-                .toList();
+        return procedureType.getParameters();
     }
 
     @Override
