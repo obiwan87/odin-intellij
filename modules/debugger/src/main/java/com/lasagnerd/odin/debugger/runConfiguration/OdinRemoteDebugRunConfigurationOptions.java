@@ -3,7 +3,6 @@ package com.lasagnerd.odin.debugger.runConfiguration;
 import com.intellij.execution.configurations.RunConfigurationOptions;
 import com.intellij.openapi.components.StoredProperty;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -19,17 +18,19 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
     private final StoredProperty<String> sshConfigId = string("").provideDelegate(this, "sshConfigId");
     private final StoredProperty<String> localExecutablePath = string("").provideDelegate(this, "localExecutablePath");
     private final StoredProperty<String> targetExecutableUploadDirPath = string("").provideDelegate(this, "targetExecutableUploadDirPath");
-    private final StoredProperty<Boolean> buildOnTarget = property(false).provideDelegate(this, "buildOnTarget");
+    private final StoredProperty<String> executableProvisioning = string(ExecutableProvisioning.LOCAL_EXECUTABLE.name())
+            .provideDelegate(this, "executableProvisioning");
     private final StoredProperty<String> lldbServerPath = string("").provideDelegate(this, "lldbServerPath");
     private final StoredProperty<String> lldbServerArgs = string("").provideDelegate(this, "lldbServerArgs");
     private final StoredProperty<String> targetExecutableDownloadPath = string("").provideDelegate(this, "targetExecutableDownloadPath");
     private final StoredProperty<String> targetExecutableOutputPath = string("").provideDelegate(this, "targetExecutableOutputPath");
 
     private final StoredProperty<String> programArguments = string("").provideDelegate(this, "programArguments");
-    private final StoredProperty<Map<Object, Object>> environmentVariables = map().provideDelegate(this, "environmentVariables");
+    private final StoredProperty<Map<String, String>> environmentVariables = this.<String, String>map().provideDelegate(this, "environmentVariables");
     private final StoredProperty<String> remoteCompilerOptions = string("").provideDelegate(this, "remoteCompilerOptions");
     private final StoredProperty<String> remoteWorkingDirectory = string("").provideDelegate(this, "remoteWorkingDirectory");
-    private final StoredProperty<String> remoteOutputPath = string("").provideDelegate(this, "remoteOutputPath");
+    private final StoredProperty<String> targetProvisionedExecutablePath = string("").provideDelegate(this, "targetProvisionedExecutablePath");
+    private final StoredProperty<String> targetProvisionedExecutableDownloadDirPath = string("").provideDelegate(this, "targetProvisionedExecutableDownloadDirPath");
 
     // SSH Config ID
     public String getSshConfigId() {
@@ -96,15 +97,15 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
     }
 
     // Build on target
-    public boolean isBuildOnTarget() {
-        return buildOnTarget.getValue(this);
+    public String getExecutableProvisioning() {
+        return executableProvisioning.getValue(this);
     }
 
-    public void setBuildOnTarget(boolean buildOnTarget) {
-        this.buildOnTarget.setValue(this, buildOnTarget);
+    public void setExecutableProvisioning(String executableProvisioning) {
+        this.executableProvisioning.setValue(this, executableProvisioning);
     }
 
-    public @Nullable String getLldbServerPath() {
+    public String getLldbServerPath() {
         return this.lldbServerPath.getValue(this);
     }
 
@@ -114,7 +115,7 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
     }
 
     // Target Executable download path
-    public @Nullable String getTargetExecutableDownloadPath() {
+    public String getTargetExecutableDownloadPath() {
         return targetExecutableDownloadPath.getValue(this);
     }
 
@@ -123,7 +124,7 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
     }
 
     // gdbRemoteArgs
-    public @Nullable String getGdbRemoteArgs() {
+    public String getGdbRemoteArgs() {
         return gdbRemoteArgs.getValue(this);
     }
 
@@ -132,7 +133,7 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
     }
 
     // lldb-server args
-    public @Nullable String getLldbServerArgs() {
+    public String getLldbServerArgs() {
         return lldbServerArgs.getValue(this);
     }
 
@@ -141,7 +142,7 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
     }
 
     // target executable output path
-    public @Nullable String getTargetExecutableOutputPath() {
+    public String getTargetExecutableOutputPath() {
         return targetExecutableOutputPath.getValue(this);
     }
 
@@ -151,7 +152,7 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
 
 
     // program arguments
-    public @Nullable String getProgramArguments() {
+    public String getProgramArguments() {
         return programArguments.getValue(this);
     }
 
@@ -159,7 +160,7 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
         this.programArguments.setValue(this, programArguments);
     }
 
-    public @Nullable String getRemoteCompilerOptions() {
+    public String getRemoteCompilerOptions() {
         return remoteCompilerOptions.getValue(this);
     }
 
@@ -168,11 +169,11 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
     }
 
     //environment variables
-    public @Nullable Map<Object, Object> getEnvironmentVariables() {
+    public Map<String, String> getEnvironmentVariables() {
         return environmentVariables.getValue(this);
     }
 
-    public void setEnvironmentVariables(Map<Object, Object> environmentVariables) {
+    public void setEnvironmentVariables(Map<String, String> environmentVariables) {
         this.environmentVariables.setValue(this, environmentVariables);
     }
 
@@ -184,11 +185,19 @@ public class OdinRemoteDebugRunConfigurationOptions extends RunConfigurationOpti
         this.remoteWorkingDirectory.setValue(this, remoteWorkingDirectory);
     }
 
-    public @NotNull String getRemoteOutputPath() {
-        return remoteOutputPath.getValue(this);
+    public String getTargetProvisionedExecutablePath() {
+        return targetProvisionedExecutablePath.getValue(this);
     }
 
-    public void setRemoteOutputPath(@NotNull String remoteOutputPath) {
-        this.remoteOutputPath.setValue(this, remoteOutputPath);
+    public void setTargetProvisionedExecutablePath(String targetProvisionedExecutablePath) {
+        this.targetProvisionedExecutablePath.setValue(this, targetProvisionedExecutablePath);
+    }
+
+    public String getTargetProvisionedExecutableDownloadDirPath() {
+        return targetProvisionedExecutableDownloadDirPath.getValue(this);
+    }
+
+    public void setTargetProvisionedExecutableDownloadDirPath(String targetProvisionedExecutableDownloadDirPath) {
+        this.targetProvisionedExecutableDownloadDirPath.setValue(this, targetProvisionedExecutableDownloadDirPath);
     }
 }

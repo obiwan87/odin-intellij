@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.debugger.dapDrivers;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.system.CpuArch;
 import com.jetbrains.cidr.ArchitectureType;
 import lombok.val;
@@ -61,10 +62,9 @@ public class LLDBDAPDriver extends DAPDriver<
         if (symbolFile != null) {
             args.put("program", symbolFile.getAbsolutePath());
         }
-        args.put("cwd", "D:/dev/code/odin-test-project/src");
-//        args.put("debuggerRoot", "D:/dev/code/odin-test-project/src");
-        args.put("sourcePath", "D:/dev/code/odin-test-project/src");
         if (sysroot != null) {
+            args.put("cwd", FileUtil.toSystemIndependentName(sysroot.getAbsolutePath()));
+            args.put("sourcePath", FileUtil.toSystemIndependentName(sysroot.getAbsolutePath()));
         }
 
         args.put("name", "LLDB Remote Debug");

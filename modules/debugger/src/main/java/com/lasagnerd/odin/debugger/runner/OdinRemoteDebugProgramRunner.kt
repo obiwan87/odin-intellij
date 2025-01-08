@@ -26,6 +26,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping
 import com.lasagnerd.odin.debugger.driverConfigurations.LLDBDAPDriverConfiguration
+import com.lasagnerd.odin.debugger.runConfiguration.ExecutableProvisioning
 import com.lasagnerd.odin.debugger.runConfiguration.OdinRemoteDebugRunConfiguration
 import com.lasagnerd.odin.runConfiguration.OdinRunConfigurationUtils
 import org.jetbrains.annotations.NonNls
@@ -55,11 +56,13 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             LLDBDAPDriverConfiguration(Path.of(debuggerPath))
 
         val cidrRemoteDebugParameters = CidrRemoteDebugParameters()
-        if (!runProfile.options.isBuildOnTarget) {
-            cidrRemoteDebugParameters.symbolFile = runProfile.options.localExecutablePath
-        } else {
-            cidrRemoteDebugParameters.symbolFile = runProfile.options.targetExecutableDownloadPath!!
+        val executableProvisioning = ExecutableProvisioning.valueOf(runProfile.options.executableProvisioning)
+        cidrRemoteDebugParameters.symbolFile = when (executableProvisioning) {
+            ExecutableProvisioning.LOCAL_EXECUTABLE -> runProfile.options.localExecutablePath
+            ExecutableProvisioning.BUILD_AT_TARGET -> runProfile.options.targetExecutableDownloadPath
+            ExecutableProvisioning.PROVIDED_AT_TARGET -> runProfile.options.targetProvisionedExecutableDownloadDirPath
         }
+
         cidrRemoteDebugParameters.sysroot = runProfile.options.localPackageDirectoryPath
         cidrRemoteDebugParameters.pathMappings = listOf(
             CidrRemotePathMapping(runProfile.options.localPackageDirectoryPath, runProfile.options.remotePackageDirectoryPath)
@@ -77,12 +80,25 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             val debugRunnerParameters = OdinRemoteDebugParameters(cidrRemoteDebugParameters, driverConfiguration)
 
             @Suppress("UnstableApiUsage") val connectionBuilder = copyToCredentials.connectionBuilder()
-            val remoteExecutablePathString: @NonNls String = if (!runProfile.options.isBuildOnTarget) {
-                prepareLocalBuild(connectionBuilder, runProfile)
-            } else {
-                it.text = "Building target ..."
-                prepareTargetBuild(connectionBuilder, console, runProfile)
+
+
+            val remoteExecutablePathString: @NonNls String = when (executableProvisioning) {
+                ExecutableProvisioning.LOCAL_EXECUTABLE -> {
+                    it.text = "Uploading local executable ..."
+                    prepareLocalBuild(connectionBuilder, runProfile)
+                }
+
+                ExecutableProvisioning.BUILD_AT_TARGET -> {
+                    it.text = "Building target ..."
+                    prepareTargetBuild(connectionBuilder, console, runProfile)
+                }
+
+                ExecutableProvisioning.PROVIDED_AT_TARGET -> {
+                    it.text = "Downloading target executable..."
+                    prepareProvidedAtTarget(connectionBuilder, console, runProfile)
+                }
             }
+
 
             val command =
                 """chmod +x $remoteExecutablePathString && ${runProfile.options.lldbServerPath} ${runProfile.options.lldbServerArgs}"""
@@ -118,9 +134,22 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         return runContentDescriptorPromise
     }
 
+    private fun prepareProvidedAtTarget(
+        connectionBuilder: ConnectionBuilder,
+        console: ConsoleView,
+        runProfile: OdinRemoteDebugRunConfiguration,
+    ): String {
+        val sftpChannel = connectionBuilder.openSftpChannel()
+        sftpChannel.downloadFileOrDir(
+            runProfile.options.targetProvisionedExecutablePath,
+            runProfile.options.targetProvisionedExecutableDownloadDirPath
+        )
+        return runProfile.options.targetProvisionedExecutablePath
+    }
+
     private fun prepareLocalBuild(
         connectionBuilder: ConnectionBuilder,
-        runProfile: OdinRemoteDebugRunConfiguration
+        runProfile: OdinRemoteDebugRunConfiguration,
     ): @NonNls String {
         val openSftpChannel = connectionBuilder.openSftpChannel()
         val file = File(runProfile.options.localExecutablePath)
@@ -130,7 +159,7 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             "/", null, null, true
         )
 
-        val remoteExecutablePath = Path.of(runProfile.options.targetExecutableUploadDirPath).resolve(file.name);
+        val remoteExecutablePath = Path.of(runProfile.options.targetExecutableUploadDirPath).resolve(file.name)
         val remoteExecutablePathString = FileUtil.toSystemIndependentName(remoteExecutablePath.toString())
         return remoteExecutablePathString
     }
@@ -154,7 +183,7 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         )
 
         val buildCommand = commandLine.commandLineString
-        val buildExecBuilder = connectionBuilder.execBuilder(buildCommand);
+        val buildExecBuilder = connectionBuilder.execBuilder(buildCommand)
         val buildSshExecProcess = buildExecBuilder.execute()
         val buildSshProcessHandler = CapturingSshProcessHandler(buildSshExecProcess, StandardCharsets.UTF_8, buildCommand)
         console.attachToProcess(buildSshProcessHandler)
@@ -162,13 +191,7 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
         val sftpChannel = connectionBuilder.openSftpChannel()
         if (options.targetExecutableOutputPath != null && options.targetExecutableDownloadPath != null) {
-
-            try {
-                sftpChannel.downloadFileOrDir(options.targetExecutableOutputPath!!, options.targetExecutableDownloadPath!!)
-            } catch (e: Exception) {
-
-            }
-
+            sftpChannel.downloadFileOrDir(options.targetExecutableOutputPath!!, options.targetExecutableDownloadPath!!)
         }
 
         return options.targetExecutableOutputPath!!
