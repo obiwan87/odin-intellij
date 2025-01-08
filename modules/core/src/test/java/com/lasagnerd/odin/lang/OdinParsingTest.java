@@ -2948,6 +2948,11 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "lion_cub_roar");
             assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
         }
+
+        {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "cat_name");
+            assertEquals(TsOdinBuiltInTypes.STRING, tsOdinType);
+        }
     }
 
     private OdinFile loadExpressionEval() throws IOException {

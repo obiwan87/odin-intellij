@@ -1056,6 +1056,13 @@ Cat_meow :: proc "c" (self: ^Cat, i: i32) -> f64 {
     return 0.0
 }
 
+
+@(objc_type=Cat, objc_name="getName", objc_is_class_method=true)
+Cat_meow :: proc "c" (i: i32) -> string {
+    return "Cat"
+}
+
+
 testObjc :: proc() {
     t := Mammal { }
     x := t->makeMilk(1);
@@ -1066,4 +1073,7 @@ testObjc :: proc() {
     lion_groom := lion->groom(1)
     lion_cub := lion->reproduce()
     lion_cub_roar := lion_cub->roar(1)
+
+    cat_name := Cat.getName()
+
 }

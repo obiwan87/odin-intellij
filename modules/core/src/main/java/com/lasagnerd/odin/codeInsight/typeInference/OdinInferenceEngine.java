@@ -454,7 +454,19 @@ public class OdinInferenceEngine extends OdinVisitor {
             @NotNull Project project,
             OdinSymbol symbol,
             @Nullable TsOdinType tsOdinRefExpressionType,
-            PsiElement position) {
+            PsiElement position
+    ) {
+        return getSymbolType(context, project, symbol, tsOdinRefExpressionType, position, false);
+    }
+
+    public static @NotNull TsOdinType getSymbolType(
+            OdinContext context,
+            @NotNull Project project,
+            OdinSymbol symbol,
+            @Nullable TsOdinType tsOdinRefExpressionType,
+            PsiElement position,
+            boolean hasReceiver
+    ) {
 
         // Check for specialized types
         if (tsOdinRefExpressionType != null && tsOdinRefExpressionType.baseType(true) instanceof TsOdinStructType tsOdinStructType) {
@@ -464,26 +476,39 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
 
         if (symbol.getSymbolType() == OdinSymbolType.OBJC_MEMBER
-                && tsOdinRefExpressionType instanceof TsOdinObjcClass tsOdinObjcClass
                 && position.getParent().getParent() instanceof OdinCallExpression
         ) {
 
-            TsOdinObjcMember objcMember = new TsOdinObjcMember();
-            objcMember.setObjcClass(tsOdinObjcClass);
-            OdinDeclaration procedureDeclaration = symbol.getDeclaration();
+            TsOdinObjcClass tsOdinObjcClass;
+            if (hasReceiver && tsOdinRefExpressionType instanceof TsOdinObjcClass) {
+                tsOdinObjcClass = (TsOdinObjcClass) tsOdinRefExpressionType;
+            } else if (!hasReceiver && (tsOdinRefExpressionType instanceof TsOdinTypeReference typeReference
+                    && typeReference.referencedType() instanceof TsOdinObjcClass referencedObjcClass)) {
+                tsOdinObjcClass = referencedObjcClass;
+            } else {
+                tsOdinObjcClass = null;
+            }
 
-            if (procedureDeclaration instanceof OdinConstantInitDeclaration constantInitDeclaration
-                    && OdinInsightUtils.isProcedureDeclaration(procedureDeclaration)) {
-                TsOdinType tsOdinType = resolveTypeOfNamedElement(constantInitDeclaration.getDeclaredIdentifierList().getFirst(), context);
-                if (tsOdinType.dereference() instanceof TsOdinProcedureType procedureType) {
-                    EvOdinValue attributeValue = OdinInsightUtils.getAttributeValue(constantInitDeclaration.getAttributesDefinitionList(), "objc_name");
-                    if (attributeValue != null && attributeValue.asString() != null) {
-                        objcMember.setObjcMemberName(attributeValue.asString());
-                        objcMember.setProcedureType(procedureType);
-                        objcMember.setName(objcMember.getObjcMemberName());
-                        objcMember.setPsiType(procedureType.getPsiType());
+            if (tsOdinObjcClass != null) {
+                TsOdinObjcMember objcMember = new TsOdinObjcMember();
+                objcMember.setObjcClass(tsOdinObjcClass);
+                OdinDeclaration procedureDeclaration = symbol.getDeclaration();
+
+                if (procedureDeclaration instanceof OdinConstantInitDeclaration constantInitDeclaration
+                        && OdinInsightUtils.isProcedureDeclaration(procedureDeclaration)) {
+                    TsOdinType tsOdinType = resolveTypeOfNamedElement(constantInitDeclaration.getDeclaredIdentifierList().getFirst(), context);
+                    if (tsOdinType.dereference() instanceof TsOdinProcedureType procedureType) {
+                        EvOdinValue attributeValue = OdinInsightUtils.getAttributeValue(constantInitDeclaration.getAttributesDefinitionList(),
+                                "objc_name");
+                        if (attributeValue != null && attributeValue.asString() != null) {
+                            objcMember.setObjcMemberName(attributeValue.asString());
+                            objcMember.setProcedureType(procedureType);
+                            objcMember.setName(objcMember.getObjcMemberName());
+                            objcMember.setPsiType(procedureType.getPsiType());
+                            objcMember.setClassMethod(!hasReceiver);
+                        }
+                        return objcMember;
                     }
-                    return objcMember;
                 }
             }
         }
@@ -636,7 +661,8 @@ public class OdinInferenceEngine extends OdinVisitor {
                         project,
                         symbol,
                         tsOdinRefExpressionType,
-                        identifier
+                        identifier,
+                        refExpression.getArrow() != null
                 );
 
                 if (refExpression.getArrow() != null) {
@@ -1450,7 +1476,12 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
         // objc member (->)
         else if (tsOdinType.baseType(true) instanceof TsOdinObjcMember objcMember) {
-            List<OdinArgument> arguments = createArgumentListWithSelf(o);
+            List<OdinArgument> arguments;
+            if (objcMember.isClassMethod()) {
+                arguments = o.getArgumentList();
+            } else {
+                arguments = createArgumentListWithSelf(o);
+            }
             this.type = inferTypeOfProcedureCall(context, objcMember.getProcedureType(), arguments);
         }
     }

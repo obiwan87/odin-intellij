@@ -170,25 +170,12 @@ public class OdinInsightUtils {
                     OdinSymbolTable fileScopeSymbolTable = fileScope.getFullSymbolTable();
                     for (OdinSymbol symbol : fileScopeSymbolTable.flatten().getSymbols()) {
                         if (symbol.getDeclaration() instanceof OdinConstantInitDeclaration odinConstantInitDeclaration) {
-                            List<OdinAttributesDefinition> attributes = odinConstantInitDeclaration.getAttributesDefinitionList();
-                            EvOdinValue objcType = OdinInsightUtils.getAttributeValue(attributes,
-                                    "objc_type");
-                            EvOdinValue objcName = OdinInsightUtils.getAttributeValue(attributes,
-                                    "objc_name");
+                            ObjcClassInfo objcClassInfo = getObjcClassInfo(odinConstantInitDeclaration);
 
-                            if (objcType != null && objcName != null) {
-                                TsOdinType referencedType = objcType.asType();
-                                String name = objcName.asString();
-                                if (referencedType != null && name != null) {
-                                    if (referencedType.getPsiType() == tsOdinObjcClass.getPsiType()) {
-                                        OdinAttributeNamedValue namedValue = OdinInsightUtils.getAttributeNamedValue(attributes, "objc_name");
-                                        OdinSymbol odinSymbol = symbol
-                                                .withName(name)
-                                                .withSymbolType(OBJC_MEMBER)
-                                                .withDeclaredIdentifier(namedValue);
-                                        symbolTable.add(odinSymbol);
-                                    }
-                                }
+                            if (objcClassInfo.objcType() != null
+                                    && objcClassInfo.objcName() != null
+                                    && (objcClassInfo.isClassMethod() == null || objcClassInfo.isClassMethod().asBool() != Boolean.TRUE)) {
+                                addObjcMethodSymbol(tsOdinObjcClass, symbol, objcClassInfo, symbolTable);
                             }
                         }
                     }
@@ -293,8 +280,55 @@ public class OdinInsightUtils {
             if (tsOdinBitSetType.getElementType() instanceof TsOdinEnumType tsOdinEnumType) {
                 return symbolTable.with(getEnumFields((OdinEnumType) tsOdinEnumType.getPsiType()));
             }
+
+        } else if (typeReference.referencedType().baseType() instanceof TsOdinObjcClass tsOdinObjcClass) {
+            // class methods
+            OdinFileScope fileScope = PsiTreeUtil.getParentOfType(tsOdinObjcClass.getPsiType(), OdinFileScope.class);
+            if (fileScope != null) {
+                OdinSymbolTable fileScopeSymbolTable = fileScope.getFullSymbolTable();
+                for (OdinSymbol symbol : fileScopeSymbolTable.flatten().getSymbols()) {
+                    if (symbol.getDeclaration() instanceof OdinConstantInitDeclaration odinConstantInitDeclaration) {
+                        ObjcClassInfo objcClassInfo = getObjcClassInfo(odinConstantInitDeclaration);
+
+                        if (objcClassInfo.objcType() != null
+                                && objcClassInfo.objcName() != null
+                                && (objcClassInfo.isClassMethod() != null && objcClassInfo.isClassMethod().asBool() == Boolean.TRUE)) {
+                            addObjcMethodSymbol(tsOdinObjcClass, symbol, objcClassInfo, symbolTable);
+                        }
+                    }
+                }
+            }
         }
         return symbolTable;
+    }
+
+    private static void addObjcMethodSymbol(TsOdinObjcClass tsOdinObjcClass, OdinSymbol symbol, ObjcClassInfo objcClassInfo, OdinSymbolTable symbolTable) {
+        TsOdinType referencedType = objcClassInfo.objcType().asType();
+        String name = objcClassInfo.objcName().asString();
+        if (referencedType != null && name != null) {
+            if (referencedType.getPsiType() == tsOdinObjcClass.getPsiType()) {
+                OdinAttributeNamedValue namedValue = OdinInsightUtils.getAttributeNamedValue(objcClassInfo.attributes(), "objc_name");
+                OdinSymbol odinSymbol = symbol
+                        .withName(name)
+                        .withSymbolType(OBJC_MEMBER)
+                        .withDeclaredIdentifier(namedValue);
+                symbolTable.add(odinSymbol);
+            }
+        }
+    }
+
+    private static @NotNull ObjcClassInfo getObjcClassInfo(OdinConstantInitDeclaration odinConstantInitDeclaration) {
+        List<OdinAttributesDefinition> attributes = odinConstantInitDeclaration.getAttributesDefinitionList();
+        EvOdinValue objcType = OdinInsightUtils.getAttributeValue(attributes,
+                "objc_type");
+        EvOdinValue objcName = OdinInsightUtils.getAttributeValue(attributes,
+                "objc_name");
+        EvOdinValue isClassMethod = OdinInsightUtils.getAttributeValue(attributes,
+                "objc_is_class_method");
+        return new ObjcClassInfo(attributes, objcType, objcName, isClassMethod);
+    }
+
+    private record ObjcClassInfo(List<OdinAttributesDefinition> attributes, EvOdinValue objcType, EvOdinValue objcName, EvOdinValue isClassMethod) {
     }
 
     public static @NotNull OdinSymbolTable getPackageReferenceSymbols(

@@ -11,6 +11,7 @@ public class TsOdinObjcMember extends TsOdinTypeBase implements TsOdinParameterO
     TsOdinObjcClass objcClass;
     TsOdinProcedureType procedureType;
     String objcMemberName;
+    boolean isClassMethod;
 
     @Override
     public List<TsOdinParameter> getParameters() {
