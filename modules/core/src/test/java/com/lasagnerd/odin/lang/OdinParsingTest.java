@@ -2933,6 +2933,14 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testObjc() throws IOException {
         OdinFile odinFile = loadTypeInference();
         {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "dog_initialized");
+            TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
+            TsOdinObjcClass tsOdinObjcClass = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinObjcClass.class);
+            assertEquals("NSDog", tsOdinObjcClass.getObjcClassName());
+            assertEquals("Dog", tsOdinObjcClass.getStructType().getName());
+        }
+
+        {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "lion_milk");
             assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
         }
@@ -2954,10 +2962,7 @@ public class OdinParsingTest extends UsefulTestCase {
             assertEquals(TsOdinBuiltInTypes.STRING, tsOdinType);
         }
 
-        {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "dog_sound");
-            assertEquals(TsOdinBuiltInTypes.I64, tsOdinType);
-        }
+
     }
 
     private OdinFile loadExpressionEval() throws IOException {

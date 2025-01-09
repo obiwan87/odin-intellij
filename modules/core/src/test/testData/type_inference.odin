@@ -996,8 +996,8 @@ Mammal_reproduce :: proc "c" (self: Copying($T)) -> ^T {
     return nil
 }
 
-@(objc_type=Mammal, objc_name="make_sound")
-Mammal_make_sound :: proc "c" (self: ^Object) -> string {
+@(objc_type=Mammal, objc_name="init")
+Mammal_init :: proc "c" (self: ^Object) -> ^Object {
     return "???"
 }
 
@@ -1013,8 +1013,8 @@ Canine_howl :: proc() -> f64 {
     return 0.0
 }
 
-@(objc_type=Canine, objc_name="make_sound")
-Canine_makeSound :: proc "c" (self: ^Canine) -> i64 {
+@(objc_type=Dog, objc_name="init")
+Dog_makeSound :: proc "c" (self: ^Dog) -> ^Dog {
     return 0x1
 }
 
@@ -1087,7 +1087,8 @@ testObjc :: proc() {
     lion_cub_roar := lion_cub->roar(1)
 
     dog := Dog { }
-    dog_sound := dog->make_sound()
+    dog_initialized := dog->init()
+    dog_initialized_2 := dog->init()->init()
 
     cat_name := Cat.getName()
 

@@ -13,4 +13,9 @@ public class TsOdinObjcClass extends TsOdinTypeBase {
     public TsOdinTypeKind getTypeReferenceKind() {
         return TsOdinTypeKind.OBJC_CLASS;
     }
+
+    @Override
+    public String getLabel() {
+        return "(objc_class)" + labelOrEmpty(structType);
+    }
 }

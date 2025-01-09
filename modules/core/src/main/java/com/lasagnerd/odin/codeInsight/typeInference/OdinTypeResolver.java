@@ -314,12 +314,16 @@ public class OdinTypeResolver extends OdinVisitor {
     }
 
     private void initializeNamedType(TsOdinType tsOdinType) {
+        initializeNamedType(tsOdinType, true);
+    }
+
+    private void initializeNamedType(TsOdinType tsOdinType, boolean addToKnownTypes) {
 
         tsOdinType.setDeclaredIdentifier(typeDeclaredIdentifier);
         String name = typeDeclaredIdentifier != null ? typeDeclaredIdentifier.getName() : null;
         tsOdinType.setName(name);
         tsOdinType.setDeclaration(typeDeclaration);
-        if (typeDeclaredIdentifier != null) {
+        if (typeDeclaredIdentifier != null && addToKnownTypes) {
             this.context.addKnownType(typeDeclaredIdentifier, tsOdinType);
         }
         tsOdinType.getContext().merge(context);
@@ -748,8 +752,9 @@ public class OdinTypeResolver extends OdinVisitor {
     public void visitStructType(@NotNull OdinStructType structType) {
         TsOdinStructType tsOdinStructType = new TsOdinStructType();
         tsOdinStructType.setPsiType(structType);
-        initializeNamedType(tsOdinStructType);
-        addKnownType(tsOdinStructType, this.typeDeclaredIdentifier, this.typeDeclaration, tsOdinStructType.getContext());
+        // Do not add to known types yet, because we might have an objc-class and not a struct
+        initializeNamedType(tsOdinStructType, false);
+
         List<OdinParamEntry> paramEntries = structType.getParamEntryList();
 
         List<TsOdinParameter> parameters = createParameters(tsOdinStructType, paramEntries);
@@ -768,10 +773,12 @@ public class OdinTypeResolver extends OdinVisitor {
                 tsOdinObjcClass.setDeclaredIdentifier(typeDeclaredIdentifier);
 
                 this.type = tsOdinObjcClass;
+
+                addKnownType(tsOdinObjcClass, this.typeDeclaredIdentifier, this.typeDeclaration, tsOdinObjcClass.getContext());
                 return;
             }
         }
-
+        addKnownType(tsOdinStructType, this.typeDeclaredIdentifier, this.typeDeclaration, tsOdinStructType.getContext());
         this.type = tsOdinStructType;
     }
 
