@@ -996,6 +996,13 @@ Mammal_reproduce :: proc "c" (self: Copying($T)) -> ^T {
     return nil
 }
 
+@(objc_type=Mammal, objc_name="make_sound")
+Mammal_make_sound :: proc "c" (self: ^Object) -> string {
+    return "???"
+}
+
+
+
 @(objc_class="NSCanine")
 Canine :: struct {
     using _: Mammal
@@ -1004,6 +1011,11 @@ Canine :: struct {
 @(objc_type=Canine, objc_name="howl")
 Canine_howl :: proc() -> f64 {
     return 0.0
+}
+
+@(objc_type=Canine, objc_name="make_sound")
+Canine_makeSound :: proc "c" (self: ^Canine) -> i64 {
+    return 0x1
 }
 
 @(objc_class="NSWolf")
@@ -1073,6 +1085,9 @@ testObjc :: proc() {
     lion_groom := lion->groom(1)
     lion_cub := lion->reproduce()
     lion_cub_roar := lion_cub->roar(1)
+
+    dog := Dog { }
+    dog_sound := dog->make_sound()
 
     cat_name := Cat.getName()
 
