@@ -1115,7 +1115,9 @@ public class OdinInsightUtils {
                 // Here we have to get a meta type, otherwise the call expression does not make sense
                 if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
                     tsOdinType = tsOdinTypeReference.referencedType();
-                } else if (!(tsOdinType.baseType(true) instanceof TsOdinProcedureType) && !(tsOdinType instanceof TsOdinPseudoMethodType tsOdinPseudoMethodType)) {
+                } else if (!(tsOdinType.baseType(true) instanceof TsOdinProcedureType)
+                        && !(tsOdinType instanceof TsOdinPseudoMethodType tsOdinPseudoMethodType)
+                        && !(tsOdinType instanceof TsOdinObjcMember)) {
                     tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
                 }
 

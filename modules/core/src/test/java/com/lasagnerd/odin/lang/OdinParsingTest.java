@@ -2933,6 +2933,13 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testObjc() throws IOException {
         OdinFile odinFile = loadTypeInference();
         {
+            OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(findFirstProcedure(odinFile, "testObjc"), OdinImplicitSelectorExpression.class);
+            TsOdinType inferredType = implicitSelectorExpression.getInferredType();
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(inferredType, TsOdinEnumType.class);
+            assertEquals("Activity", tsOdinEnumType.getName());
+        }
+
+        {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "dog_initialized");
             TsOdinPointerType tsOdinPointerType = assertInstanceOf(tsOdinType, TsOdinPointerType.class);
             TsOdinObjcClass tsOdinObjcClass = assertInstanceOf(tsOdinPointerType.getDereferencedType(), TsOdinObjcClass.class);

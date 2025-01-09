@@ -36,6 +36,12 @@ import java.util.List;
 public class OdinDocumentationProvider extends AbstractDocumentationProvider {
     @Override
     public @Nullable @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+        if (element instanceof OdinAttributeNamedValue attributeNamedValue) {
+            OdinConstantInitDeclaration constantInitDeclaration = PsiTreeUtil.getParentOfType(attributeNamedValue, OdinConstantInitDeclaration.class);
+            if (constantInitDeclaration != null && !constantInitDeclaration.getDeclaredIdentifierList().isEmpty()) {
+                element = constantInitDeclaration.getDeclaredIdentifiers().getFirst();
+            }
+        }
         if (!(element instanceof OdinDeclaredIdentifier declaredIdentifier))
             return null;
 

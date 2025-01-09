@@ -1074,6 +1074,14 @@ Cat_meow :: proc "c" (i: i32) -> string {
     return "Cat"
 }
 
+Activity :: enum {
+    Hunt, Sleep, Run
+}
+
+@(objc_type=Cat, objc_name="do_something")
+Cat_do_something :: proc(self: ^Cat, activity: Activity) {
+
+}
 
 testObjc :: proc() {
     t := Mammal { }
@@ -1091,5 +1099,7 @@ testObjc :: proc() {
     dog_initialized_2 := dog->init()->init()
 
     cat_name := Cat.getName()
+    cat := Cat { }
+    cat->do_something(.Hunt)
 
 }
