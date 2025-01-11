@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+// TODO needs to be reimplemented completely. Type parameters are wrong
+//  should be OdinProcedureType, OdinParamEntry (?)
 public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallExpression, OdinProcedureType> {
 
     private static final String DELIMITER = ", ";
