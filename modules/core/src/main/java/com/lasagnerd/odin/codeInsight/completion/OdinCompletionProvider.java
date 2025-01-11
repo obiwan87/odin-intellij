@@ -62,62 +62,12 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         };
     }
 
-    private void addSelectorTypeCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result, @NotNull OdinQualifiedType parentType) {
-        OdinSymbolTable completionScope = OdinInsightUtils.getReferenceableSymbols(new OdinContext(), parentType);
-        if (completionScope != null) {
-            addLookUpElements(result, completionScope.flatten()
-                    .getSymbols()
-                    .stream()
-                    .filter(symbolFilter::shouldInclude)
-                    .toList());
-        }
-    }
-
-    private void addSelectorExpressionCompletions(OdinFile odinFile, @NotNull CompletionResultSet result, OdinRefExpression reference) {
-        OdinExpression expression = reference.getExpression();
-        if (expression != null) {
-            Project project = expression.getProject();
-            OdinContext context = new OdinContext();
-            TsOdinType refExpressionType = expression.getInferredType(context);
-            OdinSymbolTable completionSymbols = OdinInsightUtils.getReferenceableSymbols(context, expression);
-            if (completionSymbols != null) {
-                Collection<OdinSymbol> visibleSymbols = completionSymbols.flatten()
-                        .getSymbols()
-                        .stream()
-                        .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
-                        .filter(symbolFilter::shouldInclude)
-                        .collect(Collectors.toList());
-
-                addLookUpElements(odinFile,
-                        null,
-                        "",
-                        result,
-                        visibleSymbols,
-                        0,
-                        false,
-                        (lookupElement, symbol) -> {
-                            if (symbol.getSymbolType() == OdinSymbolType.STRUCT_FIELD) {
-                                TsOdinType symbolType = OdinInferenceEngine.getSymbolType(
-                                        new OdinContext(),
-                                        project,
-                                        symbol,
-                                        refExpressionType,
-                                        expression);
-                                return lookupElement.withTypeText(symbolType.getLabel());
-                            }
-                            return lookupElement;
-                        });
-
-            }
-        }
-    }
-
     private static void addUnionTypeCompletions(@NotNull CompletionResultSet result,
                                                 OdinFile odinFile,
                                                 TsOdinUnionType tsOdinUnionType,
                                                 Project project,
                                                 VirtualFile sourceFile,
-                                                OdinTypeAssertInsertHandler insertHandler) {
+                                                OdinTypeAssertInsertHandler insertHandler, CompletionParameters parameters) {
         result.startBatch();
         List<TsOdinUnionVariant> variants = tsOdinUnionType.getVariants();
         for (int i = 0; i < variants.size(); i++) {
@@ -148,7 +98,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                                         return bold.withInsertHandler(newInsertHandler);
                                     }
                                     return bold;
-                                }
+                                }, parameters
                         );
                     }
                 }
@@ -166,8 +116,10 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         result.endBatch();
     }
 
-
-    private static void addImplicitEnumCompletions(@NotNull CompletionResultSet result, TsOdinEnumType tsOdinEnumType, Project project, int priority) {
+    private static void addImplicitEnumCompletions(@NotNull CompletionResultSet result,
+                                                   TsOdinEnumType tsOdinEnumType,
+                                                   Project project,
+                                                   int priority) {
         // TODO context
         OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(new OdinContext(), project, tsOdinEnumType);
         // Sort by definition order
@@ -186,6 +138,56 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
             // Higher for earlier elements
             result.addElement(withPriority(lookupElementBuilder, priority + symbols.size() - i));
+        }
+    }
+
+    private void addSelectorTypeCompletions(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result, @NotNull OdinQualifiedType parentType) {
+        OdinSymbolTable completionScope = OdinInsightUtils.getReferenceableSymbols(new OdinContext(), parentType);
+        if (completionScope != null) {
+            addLookUpElements(result, completionScope.flatten()
+                    .getSymbols()
+                    .stream()
+                    .filter(symbolFilter::shouldInclude)
+                    .toList(), parameters);
+        }
+    }
+
+    private void addSelectorExpressionCompletions(OdinFile odinFile, @NotNull CompletionResultSet result, OdinRefExpression reference, CompletionParameters parameters) {
+        OdinExpression expression = reference.getExpression();
+        if (expression != null) {
+            Project project = expression.getProject();
+            OdinContext context = new OdinContext();
+            TsOdinType refExpressionType = expression.getInferredType(context);
+            OdinSymbolTable completionSymbols = OdinInsightUtils.getReferenceableSymbols(context, expression);
+            if (completionSymbols != null) {
+                Collection<OdinSymbol> visibleSymbols = completionSymbols.flatten()
+                        .getSymbols()
+                        .stream()
+                        .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
+                        .filter(symbolFilter::shouldInclude)
+                        .collect(Collectors.toList());
+
+                addLookUpElements(parameters, odinFile,
+                        null,
+                        "",
+                        result,
+                        visibleSymbols,
+                        0,
+                        false,
+                        (lookupElement, symbol) -> {
+                            if (symbol.getSymbolType() == OdinSymbolType.STRUCT_FIELD) {
+                                TsOdinType symbolType = OdinInferenceEngine.getSymbolType(
+                                        new OdinContext(),
+                                        project,
+                                        symbol,
+                                        refExpressionType,
+                                        expression);
+                                return lookupElement.withTypeText(symbolType.getLabel());
+                            }
+                            return lookupElement;
+                        });
+
+            }
         }
     }
 
@@ -226,7 +228,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             if (refExpression.getExpression() != null) {
                 TsOdinType tsOdinType = refExpression.getExpression().getInferredType(context);
                 if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
-                    addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
+                    addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler(), parameters);
                     return;
                 }
             }
@@ -240,7 +242,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                     OdinExpression expression = switchBlock.getSwitchInClause().getExpression();
                     TsOdinType tsOdinType = expression.getInferredType(context);
                     if (tsOdinType.baseType(true) instanceof TsOdinUnionType tsOdinUnionType) {
-                        addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler());
+                        addUnionTypeCompletions(result, odinFile, tsOdinUnionType, project, sourceFile, new OdinTypeAssertInsertHandler(), parameters);
                     }
                 } else if (switchBlock.getExpression() != null) {
                     TsOdinType tsOdinType = switchBlock.getExpression().getInferredType(context);
@@ -289,7 +291,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                 }
 
                 if (!inferredType.isUnknown()) {
-                    addSelectorExpressionCompletions(odinFile, result, refExpression);
+                    addSelectorExpressionCompletions(odinFile, result, refExpression, parameters);
                 } else if (referencedSymbol == null) {
                     if (topMostRefExpression != null) {
                         addIdentifierCompletionsWithStubs(
@@ -398,7 +400,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         }
         localSymbols = localSymbols.reversed();
 
-        addLookUpElements(completionResultSet, localSymbols, 30);
+        addLookUpElements(completionResultSet, localSymbols, 30, parameters);
         List<OdinSymbol> builtInSymbols = OdinSdkService
                 .getInstance(thisOdinFile.getProject())
                 .getBuiltInSymbols();
@@ -406,7 +408,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         addLookUpElements(completionResultSet, builtInSymbols.stream()
                 .filter(symbolFilter::shouldInclude)
                 .filter(s -> s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
-                .toList(), 20);
+                .toList(), 20, parameters);
 
         Project project = thisOdinFile.getProject();
         GlobalSearchScope globalSearchScope;
@@ -426,7 +428,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         Map<Path, OdinImport> importPathMap = OdinImportUtils.getImportPathMap(thisOdinFile);
 
         VirtualFile sourceRootForFile = getSourceRootForFile(ProjectFileIndex.getInstance(project), thisVirtualFile);
-        CompletionsProcessor processor = new CompletionsProcessor(thisOdinFile, this.symbolFilter, thisPackagePath, sourceRootForFile);
+        CompletionsProcessor processor = new CompletionsProcessor(thisOdinFile, this.symbolFilter, thisPackagePath, sourceRootForFile, parameters);
 
         for (String name : allNamesSorted) {
             if (name.equals("_"))
@@ -465,12 +467,14 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         private final OdinSymbolFilter symbolFilter;
         private final String sourcePackagePath;
         private final VirtualFile sourceRoot;
+        private CompletionParameters parameters;
 
-        public CompletionsProcessor(OdinFile sourceFile, OdinSymbolFilter symbolFilter, String sourcePackagePath, VirtualFile sourceRoot) {
+        public CompletionsProcessor(OdinFile sourceFile, OdinSymbolFilter symbolFilter, String sourcePackagePath, VirtualFile sourceRoot, CompletionParameters parameters) {
             this.sourceFile = sourceFile;
             this.symbolFilter = symbolFilter;
             this.sourcePackagePath = sourcePackagePath;
             this.sourceRoot = sourceRoot;
+            this.parameters = parameters;
         }
 
         @Override
@@ -489,7 +493,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             if (!OdinInsightUtils.isVisible(sourceFile, symbol))
                 return false;
 
-            addLookUpElement(sourceFile, importData, sourcePackagePath, result, symbol, 0);
+            addLookUpElement(sourceFile, importData, sourcePackagePath, result, symbol, 0, parameters);
             return true;
         }
 

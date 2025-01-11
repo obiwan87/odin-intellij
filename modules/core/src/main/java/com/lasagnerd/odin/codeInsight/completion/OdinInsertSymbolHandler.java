@@ -68,6 +68,8 @@ class OdinInsertSymbolHandler implements InsertHandler<LookupElement> {
     }
 
     private boolean isProcedure() {
-        return symbolType == OdinSymbolType.PROCEDURE || symbolType == OdinSymbolType.PROCEDURE_OVERLOAD;
+        return symbolType == OdinSymbolType.PROCEDURE
+                || symbolType == OdinSymbolType.PROCEDURE_OVERLOAD
+                || symbolType == OdinSymbolType.OBJC_MEMBER;
     }
 }

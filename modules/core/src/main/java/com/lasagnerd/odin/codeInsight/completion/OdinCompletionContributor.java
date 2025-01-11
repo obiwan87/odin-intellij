@@ -1,9 +1,6 @@
 package com.lasagnerd.odin.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
@@ -88,14 +85,17 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
     @NotNull
-    private static LookupElementBuilder procedureLookupElement(LookupElementBuilder element, @NotNull OdinProcedureType procedureType, boolean skipFirst) {
+    private static LookupElementBuilder procedureLookupElement(CompletionParameters parameters, LookupElementBuilder element, @NotNull OdinProcedureType procedureType) {
+        PsiElement position = parameters.getPosition();
+        boolean expectsReceiver = position.getParent().getParent() instanceof OdinRefExpression refExpression && refExpression.getArrow() != null;
         var params = procedureType.getParamEntryList();
+
         StringBuilder tailText = new StringBuilder("(");
 
         boolean skipped = false;
         List<String> paramEntryFragments = new ArrayList<>();
         for (OdinParamEntry param : params) {
-            if (skipFirst && !skipped) {
+            if (expectsReceiver && !skipped) {
                 skipped = true;
                 continue;
             }
@@ -151,8 +151,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                        String sourcePackagePath,
                                                        @NotNull CompletionResultSet result,
                                                        OdinSymbol symbol,
-                                                       int priority) {
-        return addLookUpElements(sourceFile,
+                                                       int priority, CompletionParameters parameters) {
+        return addLookUpElements(parameters, sourceFile,
                 odinImport,
                 sourcePackagePath,
                 result,
@@ -168,8 +168,8 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                        @NotNull CompletionResultSet result,
                                                        OdinSymbol symbol,
                                                        int priority,
-                                                       BiFunction<LookupElementBuilder, OdinSymbol, LookupElementBuilder> transformer) {
-        return addLookUpElements(sourceFile,
+                                                       BiFunction<LookupElementBuilder, OdinSymbol, LookupElementBuilder> transformer, CompletionParameters parameters) {
+        return addLookUpElements(parameters, sourceFile,
                 odinImport,
                 sourcePackagePath,
                 result,
@@ -180,21 +180,21 @@ public class OdinCompletionContributor extends CompletionContributor {
     }
 
 
-    public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols) {
-        return addLookUpElements(result, symbols, 0);
+    public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols, CompletionParameters parameters) {
+        return addLookUpElements(result, symbols, 0, parameters);
     }
 
-    public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols, int priority) {
+    public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols, int priority, CompletionParameters parameters) {
         return addLookUpElements(null,
                 null,
                 "",
                 result,
                 symbols,
-                priority);
+                priority, parameters);
     }
 
-    public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols, int priority, BiFunction<LookupElementBuilder, OdinSymbol, LookupElementBuilder> transformer) {
-        return addLookUpElements(null,
+    public static List<LookupElement> addLookUpElements(@NotNull CompletionResultSet result, Collection<OdinSymbol> symbols, int priority, BiFunction<LookupElementBuilder, OdinSymbol, LookupElementBuilder> transformer, CompletionParameters parameters) {
+        return addLookUpElements(parameters, null,
                 null,
                 "",
                 result,
@@ -209,9 +209,9 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                         String sourcePackagePath,
                                                         @NotNull CompletionResultSet result,
                                                         Collection<OdinSymbol> symbols,
-                                                        int priority
+                                                        int priority, CompletionParameters parameters
     ) {
-        return addLookUpElements(sourceFile,
+        return addLookUpElements(parameters, sourceFile,
                 odinImport,
                 sourcePackagePath,
                 result,
@@ -221,14 +221,15 @@ public class OdinCompletionContributor extends CompletionContributor {
                 (e, s) -> e);
     }
 
-    public static List<LookupElement> addLookUpElements(OdinFile sourceFile,
-                                                        OdinImport odinImport,
-                                                        String sourcePackagePath,
-                                                        @NotNull CompletionResultSet result,
-                                                        Collection<OdinSymbol> symbols,
-                                                        int priority,
-                                                        boolean batchMode,
-                                                        @NotNull BiFunction<LookupElementBuilder, OdinSymbol, LookupElementBuilder> transformer
+    public static List<LookupElement> addLookUpElements(
+            CompletionParameters parameters, OdinFile sourceFile,
+            OdinImport odinImport,
+            String sourcePackagePath,
+            @NotNull CompletionResultSet result,
+            Collection<OdinSymbol> symbols,
+            int priority,
+            boolean batchMode,
+            @NotNull BiFunction<LookupElementBuilder, OdinSymbol, LookupElementBuilder> transformer
     ) {
         List<LookupElement> lookupElements = new ArrayList<>();
         String prefix = "";
@@ -266,7 +267,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                     OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(declaredIdentifier);
 
                     if (procedureType != null) {
-                        element = procedureLookupElement(element, procedureType, symbol.getSymbolType() == OdinSymbolType.OBJC_MEMBER)
+                        element = procedureLookupElement(parameters, element, procedureType)
                                 .withInsertHandler(
                                         new CombinedInsertHandler(
                                                 new OdinInsertSymbolHandler(symbol.getSymbolType()),
@@ -307,7 +308,7 @@ public class OdinCompletionContributor extends CompletionContributor {
                                                         new OdinInsertImportHandler(odinImport, sourcePackagePath, sourceFile)
                                                 )
                                         );
-                                element = transformer.apply(procedureLookupElement(element, declaringProcedure, false), symbol);
+                                element = transformer.apply(procedureLookupElement(parameters, element, declaringProcedure), symbol);
                                 lookupElement = PrioritizedLookupElement.withPriority(element, priority);
                             }
                         }
