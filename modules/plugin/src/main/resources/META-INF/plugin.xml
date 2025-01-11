@@ -3,6 +3,28 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.10.0</h3>
+        <h4>Bug Fixes</h4>
+        <ul>
+            <li>Fix bugs in inference engine</li>
+            <li>Fix bugs in documentation rendering</li>
+            <li>Fix bug where collections folders would not be expandable when enabling "Compact middle packages"</li>
+        </ul>
+
+        <h4>Improvements</h4>
+        <ul>
+            <li>🔥 Add support for Objective-c bindings 🔥</li>
+            <li>🔥 Add remote debugger run configuration 🔥</li>
+            <li>🔥 Add support for debug info on hover 🔥 (tested with Windows Debugger only)</li>
+            <li>Add support for pseudo-methods (procedure expressions referenced by "->")</li>
+            <li>Add inference support for vector-matrix and matrix-matrix multiplication</li>
+        </ul>
+
+        <h4>Known Issues</h4>
+        <ul>
+            <li>Code completion and symbol resolution for Objective-c bindings might be very slow</li>
+            <li>Parameter do not work for pseudo-methods and objective-c members, yet</li>
+        </ul>
         <h3>0.9.0</h3>
 
         <h4>Bug Fixes</h4>
