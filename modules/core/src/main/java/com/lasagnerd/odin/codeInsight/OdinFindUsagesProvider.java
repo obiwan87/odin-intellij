@@ -8,7 +8,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.lang.OdinLexerAdapter;
-import com.lasagnerd.odin.lang.OdinParserDefinition;
+import com.lasagnerd.odin.lang.OdinSyntaxHighlighter;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinImportStatement;
@@ -21,8 +21,8 @@ public class OdinFindUsagesProvider implements FindUsagesProvider {
     public @Nullable WordsScanner getWordsScanner() {
         return new DefaultWordsScanner(
                 new OdinLexerAdapter(), TokenSet.create(OdinTypes.IDENTIFIER_TOKEN),
-                OdinParserDefinition.COMMENT_TOKENS,
-                OdinParserDefinition.STRING_LITERAL_ELEMENTS
+                OdinSyntaxHighlighter.COMMENT_TOKENS,
+                OdinSyntaxHighlighter.STRING_LITERAL_ELEMENTS
         );
     }
 

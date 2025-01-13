@@ -30,7 +30,7 @@ import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinPolymorphicType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.colorSettings.OdinSyntaxTextAttributes;
-import com.lasagnerd.odin.lang.OdinParserDefinition;
+import com.lasagnerd.odin.lang.OdinSyntaxHighlighter;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
 import org.jetbrains.annotations.NotNull;
@@ -608,7 +608,7 @@ public class OdinLangHighlightingAnnotator implements Annotator {
 
     private static void highlightEscapeSequences(PsiElement psiElement, @NotNull AnnotationHolder annotationHolder) {
         IElementType elementType = PsiUtilCore.getElementType(psiElement);
-        if (!OdinParserDefinition.STRING_LITERAL_ELEMENTS.contains(elementType)) {
+        if (!OdinSyntaxHighlighter.STRING_LITERAL_ELEMENTS.contains(elementType)) {
             return;
         }
 

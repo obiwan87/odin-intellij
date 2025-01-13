@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.lasagnerd.odin.lang.OdinParserDefinition;
+import com.lasagnerd.odin.lang.OdinSyntaxHighlighter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +16,7 @@ import java.util.Objects;
 public class OdinStringSelectioner extends ExtendWordSelectionHandlerBase {
     @Override
     public boolean canSelect(@NotNull PsiElement e) {
-        return OdinParserDefinition.STRING_LITERAL_ELEMENTS.contains(PsiUtilCore.getElementType(e));
+        return OdinSyntaxHighlighter.STRING_LITERAL_ELEMENTS.contains(PsiUtilCore.getElementType(e));
     }
 
     @Override

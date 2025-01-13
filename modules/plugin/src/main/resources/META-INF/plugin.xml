@@ -345,8 +345,8 @@
         <runConfigurationProducer implementation="com.lasagnerd.odin.runConfiguration.test.OdinTestRunConfigurationProducer"/>
         <runLineMarkerContributor language="Odin"
                                   implementationClass="com.lasagnerd.odin.runConfiguration.OdinRunLineMarkerContributor"/>
-        <!--        <codeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinCodeStyleSettingsProvider"/>-->
-        <!--        <langCodeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinLanguageCodeStyleProvider"/>-->
+        <codeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinCodeStyleSettingsProvider"/>
+        <langCodeStyleSettingsProvider implementation="com.lasagnerd.odin.formatting.OdinLanguageCodeStyleProvider"/>
         <lang.quoteHandler language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinQuoteHandler"/>
         <lang.commenter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinCommenter"/>
         <lang.foldingBuilder language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFoldingBuilder"/>

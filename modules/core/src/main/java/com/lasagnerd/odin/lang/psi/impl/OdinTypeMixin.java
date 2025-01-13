@@ -55,7 +55,7 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
             }
             for (TsOdinType baseType : tsOdinType.baseTypes()) {
                 if (baseType.getDeclaration() != null) {
-                    dependencies.add(tsOdinType.getDeclaration());
+                    dependencies.add(baseType.getDeclaration());
                 }
             }
         }

@@ -9,8 +9,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class OdinLanguageCodeStyleProvider extends LanguageCodeStyleSettingsProvider  {
 
+    @org.intellij.lang.annotations.Language("Odin")
     @Override
     public @Nullable String getCodeSample(@NotNull SettingsType settingsType) {
+
         return """
                 package main
                                 

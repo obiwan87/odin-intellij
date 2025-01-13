@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +32,7 @@ import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinFullSymbolTableBui
 import com.lasagnerd.odin.codeInsight.typeInference.OdinExpectedTypeEngine;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
+import com.lasagnerd.odin.lang.OdinSyntaxHighlighter;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.lang.stubs.indexes.OdinAllPublicNamesIndex;
 import lombok.Getter;
@@ -191,6 +193,55 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         }
     }
 
+    private static @NotNull LookupElementBuilder createTypeElementSymbol(OdinSymbol symbol,
+                                                                         TsOdinType compoundLiteralType,
+                                                                         InsertHandler<LookupElement> insertHandler) {
+        Icon icon = getIcon(symbol.getSymbolType());
+        String text = symbol.getSymbolType() == OdinSymbolType.ENUM_FIELD ? "." + symbol.getName() : symbol.getName();
+
+        String typeText = getTypeText(symbol);
+
+        PsiElement declaredIdentifier = symbol.getDeclaredIdentifier();
+        declaredIdentifier = declaredIdentifier == null ? symbol.getDeclaration() : null;
+
+        LookupElementBuilder builder;
+
+        if (declaredIdentifier != null) {
+            builder = LookupElementBuilder
+                    .create(declaredIdentifier, text);
+        } else {
+            builder = LookupElementBuilder.create(symbol.getName());
+        }
+
+        builder = builder
+                .withLookupString(symbol.getName())
+                .withIcon(icon)
+                .withTypeText(typeText);
+
+        if (compoundLiteralType != null)
+            builder = builder
+                    .withTailText(" → " + compoundLiteralType.getLabel());
+
+        if (insertHandler != null) {
+            builder = builder.withInsertHandler(insertHandler);
+        }
+        return builder;
+    }
+
+    private static void addCompoundLiteralCompletions(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral, OdinContext context) {
+        TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(context, compoundLiteral);
+
+        List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, context);
+        InsertHandler<LookupElement> insertHandler = new ElementEntryInsertHandler();
+
+        for (OdinSymbol symbol : elementSymbols) {
+            LookupElementBuilder element = createTypeElementSymbol(symbol, tsOdinType, insertHandler);
+
+            LookupElement prioritized = withPriority(element, 10000);
+            result.addElement(prioritized);
+        }
+    }
+
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext processingContext,
@@ -199,6 +250,17 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         PsiElement position = parameters.getPosition();
         if (!(position.getParent() instanceof OdinIdentifier identifier))
             return;
+
+        int offset = parameters.getOffset();
+        if (offset > 0) {
+            PsiElement element = parameters.getOriginalFile().findElementAt(offset - 1);
+            if (element != null) {
+                IElementType elementType = element.getNode().getElementType();
+                if (OdinSyntaxHighlighter.NUMERIC_LITERALS.contains(elementType) || OdinSyntaxHighlighter.STRING_LITERAL_ELEMENTS.contains(elementType)) {
+                    return;
+                }
+            }
+        }
 
         OdinLattice lattice = OdinReferenceResolver.computeExplicitKnowledge(new OdinContext(), identifier);
         OdinContext context = lattice.toContext();
@@ -277,6 +339,10 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             case OdinSimpleRefType ignored when parent.getParent() instanceof OdinQualifiedType qualifiedType ->
                     addSelectorTypeCompletions(parameters, result, qualifiedType);
 
+            case OdinSimpleRefType simpleRefType -> {
+                addIdentifierCompletionsWithStubs(parameters, position.getText(), odinFile, result);
+            }
+
             // Expressions like 'a.b.c.<caret>'
             case OdinRefExpression refExpression when refExpression.getExpression() != null -> {
                 TsOdinType inferredType = TsOdinBuiltInTypes.UNKNOWN;
@@ -304,52 +370,18 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
             }
             // Identifiers like '<caret>'
-            case null, default -> {
+            case OdinRefExpression refExpression when refExpression.getExpression() == null -> {
+
                 addIdentifierCompletionsWithStubs(
                         parameters,
                         position.getText(),
                         odinFile,
                         result);
             }
+            default -> {
+                // Do not add completions if we are not inside a ref-expression
+            }
         }
-    }
-
-    private static void addCompoundLiteralCompletions(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral, OdinContext context) {
-        TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(context, compoundLiteral);
-
-        List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, context);
-        InsertHandler<LookupElement> insertHandler = new ElementEntryInsertHandler();
-
-        for (OdinSymbol symbol : elementSymbols) {
-            LookupElementBuilder element = createTypeElementSymbol(symbol, tsOdinType, insertHandler);
-
-            LookupElement prioritized = withPriority(element, 10000);
-            result.addElement(prioritized);
-        }
-    }
-
-    private static @NotNull LookupElementBuilder createTypeElementSymbol(OdinSymbol symbol,
-                                                                         TsOdinType compoundLiteralType,
-                                                                         InsertHandler<LookupElement> insertHandler) {
-        Icon icon = OdinCompletionContributor.getIcon(symbol.getSymbolType());
-        String text = symbol.getSymbolType() == OdinSymbolType.ENUM_FIELD ? "." + symbol.getName() : symbol.getName();
-
-        String typeText = getTypeText(symbol);
-
-        LookupElementBuilder element = LookupElementBuilder
-                .create(symbol.getDeclaredIdentifier(), text)
-                .withLookupString(symbol.getName())
-                .withIcon(icon)
-                .withTypeText(typeText);
-
-        if (compoundLiteralType != null)
-            element = element
-                    .withTailText(" → " + compoundLiteralType.getLabel());
-
-        if (insertHandler != null) {
-            element = element.withInsertHandler(insertHandler);
-        }
-        return element;
     }
 
     private static @Nullable String getTypeText(OdinSymbol symbol) {
@@ -382,7 +414,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             OdinFile thisOdinFile,
             @NotNull CompletionResultSet completionResultSet) {
 
-        OdinFullSymbolTableBuilder builder = new OdinFullSymbolTableBuilder(new OdinContext(), parameters.getOriginalPosition());
+        OdinFullSymbolTableBuilder builder = new OdinFullSymbolTableBuilder(new OdinContext(), parameters.getPosition());
         String typed = text.replaceAll(DUMMY_IDENTIFIER_TRIMMED + "$", "");
         if (typed.isBlank()) {
             completionResultSet.restartCompletionOnAnyPrefixChange();

@@ -19,8 +19,8 @@ import static com.lasagnerd.odin.lang.psi.OdinTypes.DIRECTIVE_IDENTIFIER;
 public class OdinParserUtil extends GeneratedParserUtilBase {
 
     public static final TokenSet WHITESPACE_OR_COMMENT = TokenSet.orSet(
-            OdinParserDefinition.COMMENT_TOKENS,
-            OdinParserDefinition.WHITE_SPACES
+            OdinSyntaxHighlighter.COMMENT_TOKENS,
+            OdinSyntaxHighlighter.WHITE_SPACES
     );
     private static final Key<Object2IntOpenHashMap<String>> MODES_KEY = Key.create("MODES_KEY");
     private static final Key<Stack<Object2IntOpenHashMap<String>>> MODES_STACK_KEY = Key.create("MODES_STACK_KEY");
@@ -39,7 +39,7 @@ public class OdinParserUtil extends GeneratedParserUtilBase {
 
     @Nullable
     private static IElementType lookBehindUntilNoWhitespace(PsiBuilder builder) {
-        return lookbehindWhileSkipping(builder, OdinParserDefinition.WHITE_SPACES);
+        return lookbehindWhileSkipping(builder, OdinSyntaxHighlighter.WHITE_SPACES);
     }
 
     @Nullable

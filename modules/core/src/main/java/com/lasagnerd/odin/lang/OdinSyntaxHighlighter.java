@@ -3,6 +3,7 @@ package com.lasagnerd.odin.lang;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.lasagnerd.odin.colorSettings.OdinSyntaxTextAttributes;
@@ -29,6 +30,9 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
     public static final TextAttributesKey[] ATTRIBUTE_PREFIX = {OdinSyntaxTextAttributes.ODIN_AT};
     public static final TextAttributesKey[] COLON = {OdinSyntaxTextAttributes.ODIN_COLON};
     public static final TextAttributesKey[] OPERATOR_KEYS = {OdinSyntaxTextAttributes.ODIN_OPERATOR};
+    public static final @NotNull TokenSet STRING_LITERAL_ELEMENTS = TokenSet.create(OdinTypes.DQ_STRING_LITERAL, OdinTypes.RAW_STRING_LITERAL, OdinTypes.SQ_STRING_LITERAL);
+    public static final @NotNull TokenSet COMMENT_TOKENS = TokenSet.create(OdinTypes.LINE_COMMENT, OdinTypes.BLOCK_COMMENT, OdinTypes.MULTILINE_BLOCK_COMMENT);
+    public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE, OdinTypes.NEW_LINE);
 
 
     @Override
@@ -104,7 +108,7 @@ public class OdinSyntaxHighlighter extends SyntaxHighlighterBase {
             OdinTypes.BUILD_FLAG_PREFIX_TOKEN
     );
 
-    private static final TokenSet NUMERIC_LITERALS = TokenSet.create(
+    public static final TokenSet NUMERIC_LITERALS = TokenSet.create(
             OdinTypes.INTEGER_DEC_LITERAL,
             OdinTypes.INTEGER_HEX_LITERAL,
             OdinTypes.INTEGER_OCT_LITERAL,

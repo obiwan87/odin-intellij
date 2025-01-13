@@ -1068,7 +1068,6 @@ public class OdinInferenceEngine extends OdinVisitor {
                 this.type = createOptionalOkTuple(expectedUnionType);
             }
         }
-
     }
 
     public static @NotNull TsOdinType resolveTypeOfDeclaredIdentifier(OdinContext context, OdinDeclaredIdentifier declaredIdentifier) {
@@ -1089,27 +1088,28 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
 
             int index = initVariableDeclaration.getDeclaredIdentifierList().indexOf(declaredIdentifier);
-            List<OdinExpression> expressionList = Objects
-                    .requireNonNull(initVariableDeclaration.getRhsExpressions())
-                    .getExpressionList();
+            if (initVariableDeclaration.getRhsExpressions() != null) {
+                List<OdinExpression> expressionList = initVariableDeclaration.getRhsExpressions()
+                        .getExpressionList();
 
-            int lhsValuesCount = initVariableDeclaration.getDeclaredIdentifierList().size();
+                int lhsValuesCount = initVariableDeclaration.getDeclaredIdentifierList().size();
 
-            List<TsOdinType> tsOdinTypes = new ArrayList<>();
-            for (OdinExpression odinExpression : expressionList) {
-                TsOdinType tsOdinType = odinExpression.getInferredType(new OdinInferenceEngineParameters(context,
-                        null,
-                        lhsValuesCount,
-                        false));
-                if (tsOdinType instanceof TsOdinTuple tuple) {
-                    tsOdinTypes.addAll(tuple.getTypes());
-                } else {
-                    tsOdinTypes.add(tsOdinType);
+                List<TsOdinType> tsOdinTypes = new ArrayList<>();
+                for (OdinExpression odinExpression : expressionList) {
+                    TsOdinType tsOdinType = odinExpression.getInferredType(new OdinInferenceEngineParameters(context,
+                            null,
+                            lhsValuesCount,
+                            false));
+                    if (tsOdinType instanceof TsOdinTuple tuple) {
+                        tsOdinTypes.addAll(tuple.getTypes());
+                    } else {
+                        tsOdinTypes.add(tsOdinType);
+                    }
                 }
-            }
 
-            if (tsOdinTypes.size() > index) {
-                return tsOdinTypes.get(index);
+                if (tsOdinTypes.size() > index) {
+                    return tsOdinTypes.get(index);
+                }
             }
             return TsOdinBuiltInTypes.UNKNOWN;
         }
