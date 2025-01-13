@@ -699,11 +699,13 @@ public class OdinTypeResolver extends OdinVisitor {
         TsOdinPointerType tsOdinPointerType = new TsOdinPointerType();
         tsOdinPointerType.setPsiType(odinPointerType);
 
-        TsOdinType elementType = doResolveType(context, Objects.requireNonNull(odinPointerType.getType()));
-        tsOdinPointerType.setDereferencedType(elementType);
-        tsOdinPointerType.getContext().merge(context);
-        tsOdinPointerType.getContext().setPackagePath(context.getPackagePath());
-        this.type = tsOdinPointerType;
+        if (odinPointerType.getType() != null) {
+            TsOdinType elementType = doResolveType(context, odinPointerType.getType());
+            tsOdinPointerType.setDereferencedType(elementType);
+            tsOdinPointerType.getContext().merge(context);
+            tsOdinPointerType.getContext().setPackagePath(context.getPackagePath());
+            this.type = tsOdinPointerType;
+        }
     }
 
     @Override
