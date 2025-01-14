@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

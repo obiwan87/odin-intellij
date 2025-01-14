@@ -1,7 +1,7 @@
 package com.lasagnerd.odin.projectStructure.project;
 
 import com.intellij.platform.GeneratorPeerImpl;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettings;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

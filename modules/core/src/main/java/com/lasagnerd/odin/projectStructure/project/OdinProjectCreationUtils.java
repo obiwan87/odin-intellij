@@ -8,11 +8,11 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
-import com.lasagnerd.odin.projectSettings.OdinProjectConfigurable;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettings;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsState;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootType;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectConfigurable;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 

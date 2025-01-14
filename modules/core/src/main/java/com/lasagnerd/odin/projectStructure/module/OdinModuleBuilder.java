@@ -8,7 +8,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.NlsContexts;
 import com.lasagnerd.odin.OdinIcons;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettings;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

@@ -19,8 +19,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.lasagnerd.odin.ols.OlsConfiguration;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsState;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

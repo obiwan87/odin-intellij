@@ -24,12 +24,12 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.projectSettings.OdinSdkLibraryManager;
-import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootProperties;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
+import com.lasagnerd.odin.settings.projectSettings.OdinSdkLibraryManager;
+import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

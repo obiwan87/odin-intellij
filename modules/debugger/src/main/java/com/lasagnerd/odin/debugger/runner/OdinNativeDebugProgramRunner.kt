@@ -36,12 +36,12 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.lasagnerd.odin.OdinBundle
 import com.lasagnerd.odin.debugger.OdinDebuggerToolchainService
-import com.lasagnerd.odin.projectSettings.OdinProjectConfigurable
 import com.lasagnerd.odin.runConfiguration.OdinBaseCommandLineState
 import com.lasagnerd.odin.runConfiguration.OdinBaseRunConfiguration
 import com.lasagnerd.odin.runConfiguration.build.OdinBuildRunConfiguration
 import com.lasagnerd.odin.runConfiguration.test.OdinTestRunCommandLineState
 import com.lasagnerd.odin.runConfiguration.test.OdinTestRunConfiguration
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectConfigurable
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise

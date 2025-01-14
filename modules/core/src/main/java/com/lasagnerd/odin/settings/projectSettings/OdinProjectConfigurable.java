@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.projectSettings;
+package com.lasagnerd.odin.settings.projectSettings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -23,7 +23,7 @@ public class OdinProjectConfigurable implements Configurable {
 
     @Override
     public @NlsContexts.ConfigurableName String getDisplayName() {
-        return "Odin";
+        return "Compiler & Debugger";
     }
 
     @Override

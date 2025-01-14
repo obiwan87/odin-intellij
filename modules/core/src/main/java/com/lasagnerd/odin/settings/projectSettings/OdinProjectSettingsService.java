@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.projectSettings;
+package com.lasagnerd.odin.settings.projectSettings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
@@ -21,6 +21,8 @@ public interface OdinProjectSettingsService extends PersistentStateComponent<Odi
     boolean isHighlightUnknownReferencesEnabled();
 
     boolean isConditionalSymbolResolutionEnabled();
+
+    boolean isUseBuiltinFormatter();
 
     @NotNull
     OdinProjectSettingsState getState();

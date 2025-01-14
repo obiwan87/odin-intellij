@@ -10,9 +10,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsState;
-import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
+import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import lombok.Getter;
 
 import java.io.ByteArrayOutputStream;

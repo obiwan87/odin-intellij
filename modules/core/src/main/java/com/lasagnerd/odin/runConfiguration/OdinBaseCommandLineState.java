@@ -25,7 +25,8 @@ public abstract class OdinBaseCommandLineState extends CommandLineState {
 
         GeneralCommandLine commandLine = createCommandLine(debug);
 
-        OSProcessHandler processHandler = ProcessHandlerFactory.getInstance().createColoredProcessHandler(commandLine);
+        OSProcessHandler processHandler = ProcessHandlerFactory.getInstance()
+                .createColoredProcessHandler(commandLine);
         ProcessTerminatedListener.attach(processHandler);
 
         return processHandler;

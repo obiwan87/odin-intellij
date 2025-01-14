@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.projectSettings;
+package com.lasagnerd.odin.settings.projectSettings;
 
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -90,5 +90,17 @@ public class OdinProjectSettingsServiceImpl implements OdinProjectSettingsServic
             return state.conditionalSymbolResolutionEnabled.equals("true");
         }
         return false;
+    }
+
+    @Override
+    public boolean isUseBuiltinFormatter() {
+        if (state.useBuiltinFormatter != null) {
+            // Annotator disabled by default
+            if (state.useBuiltinFormatter.isEmpty()) {
+                return true;
+            }
+            return state.useBuiltinFormatter.equals("true");
+        }
+        return true;
     }
 }

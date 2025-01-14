@@ -24,11 +24,11 @@ import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.ols.OlsCollection;
 import com.lasagnerd.odin.ols.OlsConfiguration;
 import com.lasagnerd.odin.ols.OlsProfile;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsState;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootProperties;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootType;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;

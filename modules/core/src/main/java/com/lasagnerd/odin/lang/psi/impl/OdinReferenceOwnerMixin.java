@@ -12,7 +12,7 @@ import com.lasagnerd.odin.codeInsight.dataflow.OdinLattice;
 import com.lasagnerd.odin.codeInsight.symbols.OdinReferenceResolver;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;

@@ -1,7 +1,7 @@
 package com.lasagnerd.odin.lang;
 
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsState;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
 
 public class MockProjectSettingsService implements OdinProjectSettingsService {
@@ -31,6 +31,11 @@ public class MockProjectSettingsService implements OdinProjectSettingsService {
     @Override
     public boolean isConditionalSymbolResolutionEnabled() {
         return true;
+    }
+
+    @Override
+    public boolean isUseBuiltinFormatter() {
+        return false;
     }
 
     @Override

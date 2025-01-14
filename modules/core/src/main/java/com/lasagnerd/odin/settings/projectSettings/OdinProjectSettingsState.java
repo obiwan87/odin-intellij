@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.projectSettings;
+package com.lasagnerd.odin.settings.projectSettings;
 
 import lombok.Data;
 
@@ -14,4 +14,8 @@ public class OdinProjectSettingsState {
     public String highlightUnknownReferencesEnabled = "";
     public String conditionalSymbolResolutionEnabled = "";
     public String cacheEnabled = "";
+
+    public String useBuiltinFormatter = "";
+    public String odinFmtPath = "";
+    public String odinFmtJsonPath = "";
 }

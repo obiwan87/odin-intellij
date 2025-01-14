@@ -12,7 +12,7 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.platform.ProjectGeneratorPeer;
 import com.lasagnerd.odin.OdinIcons;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettings;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

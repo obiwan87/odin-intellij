@@ -5,11 +5,14 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
+import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 public class OdinLibraryProvider extends AdditionalLibraryRootsProvider {
     @Override

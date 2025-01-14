@@ -27,7 +27,7 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
+import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import org.apache.commons.lang3.ArchUtils;
 import org.apache.commons.lang3.arch.Processor;
 import org.jetbrains.annotations.NotNull;

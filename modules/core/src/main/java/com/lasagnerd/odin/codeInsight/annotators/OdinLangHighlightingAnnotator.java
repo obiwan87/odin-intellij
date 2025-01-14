@@ -32,7 +32,7 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.colorSettings.OdinSyntaxTextAttributes;
 import com.lasagnerd.odin.lang.OdinSyntaxHighlighter;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

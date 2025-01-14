@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.projectSettings;
+package com.lasagnerd.odin.settings.projectSettings;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;

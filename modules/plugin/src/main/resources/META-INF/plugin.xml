@@ -317,15 +317,32 @@
 
         <lang.formatter language="Odin" implementationClass="com.lasagnerd.odin.formatting.OdinFormattingBuilder"/>
         <colorSettingsPage implementation="com.lasagnerd.odin.colorSettings.OdinColorSettingsPage"/>
-        <projectConfigurable
+
+        <applicationConfigurable
                 parentId="language"
-                instance="com.lasagnerd.odin.projectSettings.OdinProjectConfigurable"
-                id="com.lasagnerd.odin.projectSettings.OdinProjectConfigurable"
-                displayName="Odin"/>
+                instance="com.lasagnerd.odin.settings.OdinSettingsGroupConfigurable"
+                id="com.lasagnerd.odin.settings"
+                displayName="Odin">
+        </applicationConfigurable>
+
+        <projectConfigurable
+                parentId="com.lasagnerd.odin.settings"
+                id="com.lasagnerd.odin.settings.project"
+                instance="com.lasagnerd.odin.settings.projectSettings.OdinProjectConfigurable"
+                displayName="Project Settings"
+        />
+
+        <projectConfigurable
+                parentId="com.lasagnerd.odin.settings"
+                id="com.lasagnerd.odin.settings.formatter"
+                instance="com.lasagnerd.odin.settings.formatterSettings.OdinFormatterSettingsConfigurable"
+                displayName="Formatter"
+        />
+
 
         <!--suppress PluginXmlValidity -->
-        <projectService serviceImplementation="com.lasagnerd.odin.projectSettings.OdinProjectSettingsServiceImpl"
-                        serviceInterface="com.lasagnerd.odin.projectSettings.OdinProjectSettingsService"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsServiceImpl"
+                        serviceInterface="com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService"/>
         <!--suppress PluginXmlValidity -->
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
         <!--suppress PluginXmlValidity -->
@@ -401,7 +418,7 @@
         <defaultLiveTemplates file="/liveTemplates/Odin.xml"/>
         <liveTemplateContext contextId="ODIN" implementation="com.lasagnerd.odin.liveTemplates.OdinLiveTemplateContextType"/>
 
-        <editorNotificationProvider implementation="com.lasagnerd.odin.projectSettings.OdinEditorNotificationProvider"/>
+        <editorNotificationProvider implementation="com.lasagnerd.odin.settings.projectSettings.OdinEditorNotificationProvider"/>
         <intentionAction>
             <language>Odin</language>
             <className>com.lasagnerd.odin.codeInsight.refactor.OdinIntroduceVariableQuickFix</className>
@@ -442,6 +459,7 @@
                                               providerId="Odin"
                                               bundle="odin.Bundle"/>
         <gotoSymbolContributor implementation="com.lasagnerd.odin.goToSymbol.OdinGoToSymbolContributor"/>
+        <formattingService implementation="com.lasagnerd.odin.externalFormatter.OdinFmtService"/>
     </extensions>
 
     <extensionPoints>

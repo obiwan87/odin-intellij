@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-import static com.lasagnerd.odin.projectSettings.OdinProjectSettings.createGridBagConstraintsForFirstColumn;
+import static com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings.createGridBagConstraintsForFirstColumn;
 
 public class OdinTestRunConfigurationSettingsEditor extends SettingsEditor<OdinTestRunConfiguration> implements CheckableRunConfigurationEditor<OdinTestRunConfiguration> {
 

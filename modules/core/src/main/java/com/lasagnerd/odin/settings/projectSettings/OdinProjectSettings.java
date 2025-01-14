@@ -1,4 +1,4 @@
-package com.lasagnerd.odin.projectSettings;
+package com.lasagnerd.odin.settings.projectSettings;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;

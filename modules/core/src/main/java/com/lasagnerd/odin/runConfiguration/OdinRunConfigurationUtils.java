@@ -20,7 +20,7 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinProcedureType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
+import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

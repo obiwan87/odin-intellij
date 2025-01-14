@@ -13,10 +13,10 @@ import com.intellij.psi.PsiReferenceBase;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinPsiCollection;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
+import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

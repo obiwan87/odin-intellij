@@ -22,9 +22,9 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.lang.psi.OdinConstantInitDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinFile;
-import com.lasagnerd.odin.projectSettings.OdinSdkUtils;
 import com.lasagnerd.odin.runConfiguration.OdinBaseCommandLineState;
 import com.lasagnerd.odin.runConfiguration.OdinRunConfigurationUtils;
+import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;

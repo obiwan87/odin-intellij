@@ -10,8 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.dsl.builder.AlignX;
 import com.intellij.ui.dsl.builder.Panel;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettings;
 import com.lasagnerd.odin.projectStructure.module.OdinModuleType;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

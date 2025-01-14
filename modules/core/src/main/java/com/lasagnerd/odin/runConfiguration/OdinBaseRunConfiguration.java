@@ -7,9 +7,9 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.lasagnerd.odin.projectSettings.OdinProjectConfigurable;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsService;
-import com.lasagnerd.odin.projectSettings.OdinProjectSettingsState;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectConfigurable;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
