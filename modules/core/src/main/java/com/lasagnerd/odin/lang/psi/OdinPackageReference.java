@@ -95,10 +95,13 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
                     }
                 }
             } else {
-                directoryPath = Path.of(
-                        containingVirtualFile.getParent().getPath(),
-                        importPath
-                );
+                VirtualFile parent = containingVirtualFile.getParent();
+                if (parent != null) {
+                    directoryPath = Path.of(
+                            parent.getPath(),
+                            importPath
+                    );
+                }
             }
         }
         return directoryPath;
