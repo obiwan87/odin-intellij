@@ -67,16 +67,22 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
         }
 
         if (declaration instanceof OdinInitVariableDeclaration initVariableDeclaration) {
-            int index = initVariableDeclaration.getDeclaredIdentifiers().indexOf(declaredIdentifier);
-            OdinExpression odinExpression = initVariableDeclaration.getRhsExpressions().getExpressionList().get(index);
-            String type;
-            if (initVariableDeclaration.getType() == null) {
-                TsOdinType tsOdinType = odinExpression.getInferredType();
-                type = tsOdinType.getLabel();
-            } else {
-                type = initVariableDeclaration.getType().getText();
+            if (initVariableDeclaration.getRhsExpressions() != null
+                    && !initVariableDeclaration.getRhsExpressions().getExpressionList().isEmpty()) {
+
+                int index = initVariableDeclaration.getDeclaredIdentifiers().indexOf(declaredIdentifier);
+                List<OdinExpression> expressionList = initVariableDeclaration.getRhsExpressions()
+                        .getExpressionList();
+                OdinExpression odinExpression = expressionList.get(index);
+                String type;
+                if (initVariableDeclaration.getType() == null) {
+                    TsOdinType tsOdinType = odinExpression.getInferredType();
+                    type = tsOdinType.getLabel();
+                } else {
+                    type = initVariableDeclaration.getType().getText();
+                }
+                declarationText += " : " + type + " = " + odinExpression.getText();
             }
-            declarationText += " : " + type + " = " + odinExpression.getText();
         }
 
         if (declaration instanceof OdinShortVariableDeclaration shortVariableDeclaration) {
