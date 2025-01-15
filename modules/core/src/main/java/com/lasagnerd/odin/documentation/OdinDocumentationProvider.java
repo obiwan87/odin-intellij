@@ -58,7 +58,7 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
 
         declarationText += declaredIdentifier.getName();
 
-        if (declaration instanceof OdinFieldDeclaration fieldDeclarationStatement) {
+        if (declaration instanceof OdinFieldDeclaration fieldDeclarationStatement && fieldDeclarationStatement.getType() != null) {
             declarationText += ": " + fieldDeclarationStatement.getType().getText();
         }
 
