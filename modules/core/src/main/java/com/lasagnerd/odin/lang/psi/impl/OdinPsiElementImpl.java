@@ -9,7 +9,6 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
-import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinImportPath;
@@ -21,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 @Setter
 @Getter
 public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiElement {
-    protected OdinSymbolTable fullSymbolTable;
-
     public OdinPsiElementImpl(@NotNull ASTNode node) {
         super(node);
     }
@@ -43,11 +40,6 @@ public class OdinPsiElementImpl extends ASTWrapperPsiElement implements OdinPsiE
             return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES);
         }
         return references;
-    }
-
-    @Override
-    public void subtreeChanged() {
-        fullSymbolTable = null;
     }
 
     @Override

@@ -176,11 +176,12 @@ public class OdinPsiUtil {
         return OdinImportUtils.getImportInfo(importPath);
     }
 
-    public static PsiReference[] getReferences(OdinImportPath importPath) {
+
+    public static PsiReference @NotNull [] getReferences(OdinImportPath importPath) {
         return ReferenceProvidersRegistry.getReferencesFromProviders(importPath, PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES);
     }
 
-    public static PsiReference[] getReferences(OdinImportPath importPath, PsiReferenceService.Hints hints) {
+    public static PsiReference @NotNull [] getReferences(OdinImportPath importPath, PsiReferenceService.Hints hints) {
         return ReferenceProvidersRegistry.getReferencesFromProviders(importPath, hints);
     }
 
