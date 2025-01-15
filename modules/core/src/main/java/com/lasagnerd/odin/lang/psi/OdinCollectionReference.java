@@ -83,19 +83,17 @@ public class OdinCollectionReference extends PsiReferenceBase<OdinImportPath> im
             }
         }
         VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(getElement());
-        if (containingVirtualFile != null) {
-            String basePath = myElement.getProject().getBasePath();
-            if (basePath != null) {
-                Path projectPath = Path.of(basePath);
-                Map<String, Path> collectionPaths = OdinImportUtils.getCollectionPaths(getElement().getProject(), containingVirtualFile.getPath());
-                for (Map.Entry<String, Path> entry : collectionPaths.entrySet()) {
-                    Path collectinPath = entry.getValue();
-                    LookupElementBuilder lookupElement = LookupElementBuilder
-                            .create(collectinPath, entry.getKey())
-                            .withTailText(" " + projectPath.relativize(collectinPath));
+        String basePath = myElement.getProject().getBasePath();
+        if (basePath != null) {
+            Path projectPath = Path.of(basePath);
+            Map<String, Path> collectionPaths = OdinImportUtils.getCollectionPaths(getElement().getProject(), containingVirtualFile.getPath());
+            for (Map.Entry<String, Path> entry : collectionPaths.entrySet()) {
+                Path collectinPath = entry.getValue();
+                LookupElementBuilder lookupElement = LookupElementBuilder
+                        .create(collectinPath, entry.getKey())
+                        .withTailText(" " + projectPath.relativize(collectinPath));
 
-                    collections.add(lookupElement);
-                }
+                collections.add(lookupElement);
             }
         }
         return collections;
