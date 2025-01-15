@@ -102,28 +102,30 @@ public class OdinImportUtils {
                 String sdkPath = validSdkPath.get();
                 Path sdkNioPath = Path.of(sdkPath);
                 if (packagePath.startsWith(sdkNioPath)) {
-                    VirtualFile coreBuiltin = VirtualFileManager.getInstance()
-                            .findFileByNioPath(sdkNioPath.resolve("base/runtime/core_builtin.odin"));
+                    VirtualFileManager virtualFileManager = getVirtualFileManager();
+                    if (virtualFileManager != null) {
+                        VirtualFile coreBuiltin = virtualFileManager
+                                .findFileByNioPath(sdkNioPath.resolve("base/runtime/core_builtin.odin"));
 
-                    VirtualFile coreBuiltinSoa = VirtualFileManager.getInstance()
-                            .findFileByNioPath(sdkNioPath.resolve("base/runtime/core_builtin_soa.odin"));
+                        VirtualFile coreBuiltinSoa = virtualFileManager
+                                .findFileByNioPath(sdkNioPath.resolve("base/runtime/core_builtin_soa.odin"));
 
-                    if (coreBuiltin != null && coreBuiltinSoa != null) {
-                        {
-                            PsiFile psiFile = PsiManager.getInstance(project).findFile(coreBuiltin);
-                            if (psiFile instanceof OdinFile odinFile) {
-                                importedFiles.add(odinFile);
+                        if (coreBuiltin != null && coreBuiltinSoa != null) {
+                            {
+                                PsiFile psiFile = PsiManager.getInstance(project).findFile(coreBuiltin);
+                                if (psiFile instanceof OdinFile odinFile) {
+                                    importedFiles.add(odinFile);
+                                }
                             }
-                        }
 
-                        {
-                            PsiFile psiFile = PsiManager.getInstance(project).findFile(coreBuiltinSoa);
-                            if (psiFile instanceof OdinFile odinFile) {
-                                importedFiles.add(odinFile);
+                            {
+                                PsiFile psiFile = PsiManager.getInstance(project).findFile(coreBuiltinSoa);
+                                if (psiFile instanceof OdinFile odinFile) {
+                                    importedFiles.add(odinFile);
+                                }
                             }
                         }
                     }
-
                 }
             }
 
@@ -186,7 +188,9 @@ public class OdinImportUtils {
 
     public static Map<String, Path> getCollectionPaths(Project project, String sourceFilePath) {
         Map<String, Path> collectionPaths = new HashMap<>();
-        VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+        VirtualFileManager virtualFileManager = getVirtualFileManager();
+        if (virtualFileManager == null)
+            return Collections.emptyMap();
         VirtualFile sourceFile = virtualFileManager.findFileByNioPath(Path.of(sourceFilePath));
         if (sourceFile != null) {
             Module module = ModuleUtilCore.findModuleForFile(sourceFile, project);
@@ -208,6 +212,14 @@ public class OdinImportUtils {
         }
 
         return collectionPaths;
+    }
+
+    private static @Nullable VirtualFileManager getVirtualFileManager() {
+        try {
+            return VirtualFileManager.getInstance();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static Map<String, Path> getSdkCollections(Project project) {
@@ -324,7 +336,10 @@ public class OdinImportUtils {
     }
 
     public static @Nullable PsiDirectory findPsiDirectory(@NotNull Project project, Path importDir) {
-        VirtualFile fileByNioPath = VirtualFileManager.getInstance().findFileByNioPath(importDir);
+        VirtualFileManager virtualFileManager = getVirtualFileManager();
+        if (virtualFileManager == null)
+            return null;
+        VirtualFile fileByNioPath = virtualFileManager.findFileByNioPath(importDir);
         if (fileByNioPath != null) {
             return PsiManager.getInstance(project).findDirectory(fileByNioPath);
         }
@@ -501,12 +516,18 @@ public class OdinImportUtils {
         String path;
         if (packagePath.equals("/")) {
             path = "/" + fileName;
-        } else {
+        } else if (fileName != null) {
             path = Path.of(packagePath, fileName).toString();
+        } else {
+            path = null;
         }
-        String name = importInfo.packageName();
-        Project project = importDeclaration.getProject();
-        return getSymbolsOfImportedPackage(context, getImportsMap(fileScope).get(name), path, project);
+
+        if (path != null) {
+            String name = importInfo.packageName();
+            Project project = importDeclaration.getProject();
+            return getSymbolsOfImportedPackage(context, getImportsMap(fileScope).get(name), path, project);
+        }
+        return OdinSymbolTable.EMPTY;
     }
 
 
