@@ -104,6 +104,8 @@ public class OdinRunConfigurationUtils {
                                     if (structType.getName().equals("T")) {
                                         OdinDeclaration structTypeDeclaration = structType.getDeclaration();
                                         VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(structTypeDeclaration);
+                                        if (containingVirtualFile == null)
+                                            return null;
                                         Path declarationPath = Path.of(containingVirtualFile.getPath());
                                         Optional<String> validSdkPath = OdinSdkUtils.getValidSdkPath(element.getProject());
                                         if (validSdkPath.isPresent()) {

@@ -36,6 +36,9 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
     }
 
     CachedValueProvider.Result<OdinReference> computeReference(OdinContext context) {
+        if (!this.isValid())
+            return null;
+
         OdinSymbol symbol = OdinReferenceResolver.resolve(context, this);
         OdinReference odinReference = new OdinReference(this, symbol);
 
