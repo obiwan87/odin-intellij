@@ -11,11 +11,7 @@ public class OdinTestCreator implements TestCreator {
     @Override
     public boolean isAvailable(Project project, Editor editor, PsiFile file) {
         VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(file);
-        if (containingVirtualFile != null) {
-            return containingVirtualFile.getNameWithoutExtension().endsWith("_test");
-        }
-
-        return false;
+        return containingVirtualFile.getNameWithoutExtension().endsWith("_test");
     }
 
     @Override

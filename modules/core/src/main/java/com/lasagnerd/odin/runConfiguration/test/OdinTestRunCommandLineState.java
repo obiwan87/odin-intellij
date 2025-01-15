@@ -53,7 +53,7 @@ public class OdinTestRunCommandLineState extends OdinBaseCommandLineState {
                     PsiFile file = psiManager.findFile(virtualFile);
                     if (file instanceof OdinFile odinFile) {
                         String packageName = odinFile.getFileScope().getPackageClause().getName();
-                        OdinSymbolTable symbolTable = odinFile.getFileScope().getFullSymbolTable();
+                        OdinSymbolTable symbolTable = odinFile.getFileScope().getSymbolTable();
                         List<String> names = new ArrayList<>();
                         for (OdinSymbol symbol : symbolTable.getSymbols()) {
                             if (symbol.getSymbolType() == OdinSymbolType.PROCEDURE) {

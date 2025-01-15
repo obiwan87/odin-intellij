@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.OdinSymbolTable;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinSymbolValueStore;
@@ -24,6 +25,8 @@ public abstract class OdinFileScopeMixin extends OdinStubbedElementImpl<OdinFile
     protected OdinSymbolTable symbolTable;
 
     private CachedValue<OdinSymbolValueStore> cachedBuildFlagStore;
+
+    private CachedValue<OdinSymbolTable> cachedSymbolTable;
 
     public OdinFileScopeMixin(OdinFileScopeStub stub, IElementType nodeType, ASTNode node) {
         super(stub, nodeType, node);
@@ -51,9 +54,7 @@ public abstract class OdinFileScopeMixin extends OdinStubbedElementImpl<OdinFile
         List<Object> dependencies = new ArrayList<>(this.getBuildFlagClauseList());
         dependencies.add(this);
         PsiFile containingFile = this.getContainingFile();
-        if (containingFile != null) {
-            dependencies.add(containingFile);
-        }
+        dependencies.add(containingFile);
         return CachedValueProvider.Result.create(buildFlagsValues, dependencies);
     }
 
@@ -61,18 +62,22 @@ public abstract class OdinFileScopeMixin extends OdinStubbedElementImpl<OdinFile
         super(node);
     }
 
-    @Override
-    public void subtreeChanged() {
-        symbolTable = null;
-    }
-
-    public OdinSymbolTable getFullSymbolTable() {
-        if (symbolTable == null) {
-            symbolTable = OdinSymbolTableHelper
-                    .buildFileScopeSymbolTable(this,
-                            OdinInsightUtils.getGlobalFileVisibility(this));
+    public OdinSymbolTable getSymbolTable() {
+        if (cachedSymbolTable == null) {
+            cachedSymbolTable = CachedValuesManager.getManager(getProject())
+                    .createCachedValue(this::computeSymbolTable);
         }
 
-        return symbolTable;
+        return cachedSymbolTable.getValue();
+    }
+
+    private CachedValueProvider.Result<OdinSymbolTable> computeSymbolTable() {
+        OdinSymbolTable symbolTable = OdinSymbolTableHelper
+                .buildFileScopeSymbolTable(this,
+                        OdinInsightUtils.getGlobalFileVisibility(this));
+
+        return CachedValueProvider.Result.create(
+                symbolTable, this, PsiModificationTracker.MODIFICATION_COUNT
+        );
     }
 }
