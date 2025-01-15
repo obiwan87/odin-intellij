@@ -928,11 +928,15 @@ public class OdinInsightUtils {
     public static @Nullable Map<OdinExpression, TsOdinParameter> getArgumentToParameterMap(List<TsOdinParameter> parameters,
                                                                                            @NotNull List<OdinArgument> argumentList,
                                                                                            boolean includeDefaultParameters) {
+
         Map<String, TsOdinParameter> parametersByName = parameters.stream()
                 .filter(p -> p.getName() != null)
                 .collect(Collectors.toMap(
                         TsOdinParameter::getName,
-                        v -> v
+                        v -> v,
+                        // NOTE: handles case where there are multiple parameters named "_". This only can happen in procedure
+                        //  type definitions (as opposed to procedure literals).
+                        (v1, v2) -> v1
                 ));
 
         Map<Integer, TsOdinParameter> parametersByIndex = parameters.stream().collect(Collectors.toMap(
