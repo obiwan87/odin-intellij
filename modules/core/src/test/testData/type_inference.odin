@@ -1103,3 +1103,12 @@ testObjc :: proc() {
     cat->do_something(.Hunt)
 
 }
+
+testImplicitSelectorsAsMapKeys :: proc() {
+    os_enum_to_string : map[Direction]string = {
+        .North = "north",
+        .East = "east",
+        .South = "south",
+        .West = "west"
+    }
+}

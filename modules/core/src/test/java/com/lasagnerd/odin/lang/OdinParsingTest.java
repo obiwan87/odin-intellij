@@ -2968,8 +2968,18 @@ public class OdinParsingTest extends UsefulTestCase {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "cat_name");
             assertEquals(TsOdinBuiltInTypes.STRING, tsOdinType);
         }
+    }
 
-
+    public void testImplicitSelectorsAsMapKeys() throws IOException {
+        OdinFile odinFile = loadTypeInference();
+        {
+            OdinProcedureDefinition proc = findFirstProcedure(odinFile, "testImplicitSelectorsAsMapKeys");
+            OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(proc, OdinImplicitSelectorExpression.class);
+            assertNotNull(expression);
+            TsOdinType inferredType = expression.getInferredType();
+            TsOdinEnumType tsOdinEnumType = assertInstanceOf(inferredType, TsOdinEnumType.class);
+            assertEquals("Direction", tsOdinEnumType.getName());
+        }
     }
 
     private OdinFile loadExpressionEval() throws IOException {

@@ -53,6 +53,9 @@ public class OdinExpectedTypeEngine {
                     }
                 }
             }
+            if (tsOdinType instanceof TsOdinMapType mapType) {
+                return mapType.getKeyType();
+            }
         }
 
         if (typeExpectationContext instanceof OdinReturnStatement returnStatement) {
