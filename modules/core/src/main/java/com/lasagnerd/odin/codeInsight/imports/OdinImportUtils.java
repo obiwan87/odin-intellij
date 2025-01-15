@@ -376,8 +376,9 @@ public class OdinImportUtils {
         }
         Path sourcePath = Path.of(sourceFilePath);
         Path currentDir = sourcePath.getParent();
-
-        dirs.add(currentDir);
+        if (currentDir != null) {
+            dirs.add(currentDir);
+        }
 
         List<Path> packagePaths = new ArrayList<>();
         for (Path dir : dirs) {
