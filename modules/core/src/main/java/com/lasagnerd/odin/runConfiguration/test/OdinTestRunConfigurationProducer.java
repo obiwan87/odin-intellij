@@ -35,18 +35,22 @@ public class OdinTestRunConfigurationProducer extends LazyRunConfigurationProduc
     private static void createFileBasedTest(@NotNull OdinTestRunConfiguration configuration, @NotNull ConfigurationContext context, PsiElement psiElement) {
         populatePaths(configuration, context, psiElement);
         VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(psiElement);
-        configuration.setName("Test " + containingVirtualFile.getNameWithoutExtension());
-        configuration.getOptions().setTestKind("File");
-        configuration.getOptions().setTestFilePath(containingVirtualFile.getPath());
+        if (containingVirtualFile != null) {
+            configuration.setName("Test " + containingVirtualFile.getNameWithoutExtension());
+            configuration.getOptions().setTestKind("File");
+            configuration.getOptions().setTestFilePath(containingVirtualFile.getPath());
+        }
     }
 
     private static void populatePaths(@NotNull OdinTestRunConfiguration configuration, @NotNull ConfigurationContext context, PsiElement psiElement) {
         VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(psiElement);
-        VirtualFile parent = containingVirtualFile.getParent();
-        if (parent != null) {
-            configuration.getOptions().setPackageDirectoryPath(parent.getPath());
+        if (containingVirtualFile != null) {
+            VirtualFile parent = containingVirtualFile.getParent();
+            if (parent != null) {
+                configuration.getOptions().setPackageDirectoryPath(parent.getPath());
+            }
+            configuration.getOptions().setWorkingDirectory(context.getProject().getBasePath());
         }
-        configuration.getOptions().setWorkingDirectory(context.getProject().getBasePath());
     }
 
     @Override
@@ -157,13 +161,15 @@ public class OdinTestRunConfigurationProducer extends LazyRunConfigurationProduc
                 boolean packageClause = OdinRunConfigurationUtils.isPackageClause(psiLocation);
                 if (packageClause || psiLocation instanceof OdinFile) {
                     VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(psiLocation);
-                    Path myPath = Path.of(containingVirtualFile.getPath());
-                    String testFilePath = configuration.getOptions().getTestFilePath();
-                    if (testFilePath != null) {
-                        try {
-                            Path theirPath = Path.of(testFilePath);
-                            matchingTestKind = theirPath.equals(myPath);
-                        } catch (Exception ignored) {
+                    if (containingVirtualFile != null) {
+                        Path myPath = Path.of(containingVirtualFile.getPath());
+                        String testFilePath = configuration.getOptions().getTestFilePath();
+                        if (testFilePath != null) {
+                            try {
+                                Path theirPath = Path.of(testFilePath);
+                                matchingTestKind = theirPath.equals(myPath);
+                            } catch (Exception ignored) {
+                            }
                         }
                     }
                 }

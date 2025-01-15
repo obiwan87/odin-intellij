@@ -42,7 +42,6 @@ public class OdinSymbolTable {
         this.packagePath = packagePath;
     }
 
-
     public OdinSymbolTable() {
 
     }
@@ -88,7 +87,6 @@ public class OdinSymbolTable {
     public Collection<OdinSymbol> getSymbols(OdinVisibility minVisibility) {
         return getFilteredSymbols(symbol -> symbol.getVisibility().compareTo(minVisibility) >= 0);
     }
-
 
     public void addAll(Collection<? extends OdinSymbol> symbols) {
         addAll(symbols, true);
@@ -137,7 +135,6 @@ public class OdinSymbolTable {
 
         return newContext;
     }
-
 
     public static OdinSymbolTable from(List<OdinSymbol> identifiers, String packagePath) {
         OdinSymbolTable newContext = from(identifiers);
@@ -188,7 +185,6 @@ public class OdinSymbolTable {
         return this.symbolTable.get(name) != null &&
                 (parentSymbolTable != null && parentSymbolTable.getSymbol(name) != null);
     }
-
 
     public Collection<List<OdinSymbol>> values() {
         return symbolTable.values();

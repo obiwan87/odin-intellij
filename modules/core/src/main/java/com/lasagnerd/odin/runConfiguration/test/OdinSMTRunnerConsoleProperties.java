@@ -46,6 +46,9 @@ public class OdinSMTRunnerConsoleProperties extends SMTRunnerConsoleProperties i
         Map<Path, List<String>> fileToProcedureName = new HashMap<>();
         for (OdinFile file : filesInPackage) {
             VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(file);
+            if (containingVirtualFile == null) {
+                continue;
+            }
             Path virtualFilePath = Path.of(containingVirtualFile.getPath());
             List<OdinConstantInitDeclaration> testProcedures = OdinRunConfigurationUtils.findTestProcedures(file);
             for (OdinConstantInitDeclaration testProcedure : testProcedures) {

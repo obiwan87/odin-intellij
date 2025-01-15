@@ -41,13 +41,18 @@ import java.util.stream.Stream;
 
 public class OdinImportUtils {
 
-    public static @NotNull String getFileName(@NotNull PsiElement psiElement) {
-        return OdinInsightUtils.getContainingVirtualFile(psiElement).getName();
-
+    public static @Nullable String getFileName(@NotNull PsiElement psiElement) {
+        VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(psiElement);
+        if (containingVirtualFile != null) {
+            return containingVirtualFile.getName();
+        }
+        return null;
     }
 
     public static @Nullable String getContainingDirectoryName(@NotNull PsiElement psiElement) {
         VirtualFile virtualFile = OdinInsightUtils.getContainingVirtualFile(psiElement);
+        if (virtualFile == null)
+            return null;
         VirtualFile parent = virtualFile.getParent();
         if (parent != null) {
             return parent.getName();
@@ -483,6 +488,9 @@ public class OdinImportUtils {
     }
 
     public static OdinSymbolTable getSymbolsOfImportedPackage(OdinContext context, String packagePath, @NotNull OdinImportDeclaration importDeclaration) {
+        if (!importDeclaration.isValid())
+            return OdinSymbolTable.EMPTY;
+
         OdinImport importInfo = importDeclaration.getImportInfo();
         OdinFileScope fileScope = ((OdinFile) importDeclaration.getContainingFile()).getFileScope();
         // Check if package is null. If yes log debug

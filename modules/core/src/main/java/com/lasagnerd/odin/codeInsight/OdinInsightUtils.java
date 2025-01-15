@@ -1171,8 +1171,12 @@ public class OdinInsightUtils {
         VirtualFile referenceFile = getContainingVirtualFile(reference);
         VirtualFile declarationFile = getContainingVirtualFile(symbol.getDeclaration());
 
-        if (referenceFile.equals(declarationFile))
+        if (referenceFile != null && referenceFile.equals(declarationFile))
             return true;
+
+        if (referenceFile == null) {
+            throw new RuntimeException("Could not retrieve file of reference element");
+        }
 
         if (symbol.getVisibility() == OdinVisibility.FILE_PRIVATE
                 || symbol.getSymbolType() == PACKAGE_REFERENCE)
@@ -1243,8 +1247,10 @@ public class OdinInsightUtils {
     public static @NotNull String getLocation(PsiElement psiElement) {
         VirtualFile containingVirtualFile = getContainingVirtualFile(psiElement);
         String lineColumn = getLineColumn(psiElement);
-
-        return "%s:%s".formatted(containingVirtualFile.getPath(), lineColumn);
+        if (containingVirtualFile != null) {
+            return "%s:%s".formatted(containingVirtualFile.getPath(), lineColumn);
+        }
+        return "<invalid file>";
     }
 
     public static OdinExpression parenthesesUnwrap(PsiElement element) {
@@ -1431,7 +1437,10 @@ public class OdinInsightUtils {
         return null;
     }
 
-    public static @NotNull VirtualFile getContainingVirtualFile(@NotNull PsiElement psiElement) {
+    public static @Nullable VirtualFile getContainingVirtualFile(@NotNull PsiElement psiElement) {
+        if (!psiElement.isValid())
+            return null;
+
         VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
         if (virtualFile == null) {
             virtualFile = psiElement.getContainingFile().getOriginalFile().getVirtualFile();
