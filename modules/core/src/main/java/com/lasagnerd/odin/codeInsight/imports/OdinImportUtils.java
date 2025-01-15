@@ -365,12 +365,12 @@ public class OdinImportUtils {
                 Path sdkSourceDir = Path.of(sdkPath.get(), importInfo.collection());
                 if (sdkSourceDir.toFile().exists()) {
                     dirs.add(sdkSourceDir);
-                } else {
-                    Map<String, Path> collectionPaths = getCollectionPaths(project, sourceFilePath);
-                    Path collectionPath = collectionPaths.get(library);
-                    if (collectionPath != null) {
-                        dirs.add(collectionPath);
-                    }
+                }
+
+                Map<String, Path> collectionPaths = getCollectionPaths(project, sourceFilePath);
+                Path collectionPath = collectionPaths.get(library);
+                if (collectionPath != null) {
+                    dirs.add(collectionPath);
                 }
             }
         }
