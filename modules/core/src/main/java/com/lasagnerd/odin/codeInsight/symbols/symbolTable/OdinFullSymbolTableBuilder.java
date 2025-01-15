@@ -54,14 +54,6 @@ public class OdinFullSymbolTableBuilder extends OdinSymbolTableBuilderBase {
             return Objects.requireNonNullElseGet(OdinSymbolTableHelper.getRootSymbolTable(context, element, this.packagePath), () -> new OdinSymbolTable(packagePath));
         }
 
-        if (containingScopeBlock.getFullSymbolTable() != null) {
-            // re-using symbol table
-            OdinSymbolTable fullSymbolTable = containingScopeBlock.getFullSymbolTable();
-            OdinSymbolTable parentContext = buildFullContext(containingScopeBlock);
-            fullSymbolTable.setParentSymbolTable(parentContext);
-            return fullSymbolTable;
-        }
-
         OdinSymbolTable parentContext = buildFullContext(containingScopeBlock);
 
         return doBuildFullContext(containingScopeBlock, parentContext);
@@ -70,7 +62,6 @@ public class OdinFullSymbolTableBuilder extends OdinSymbolTableBuilderBase {
     protected @NotNull OdinSymbolTable doBuildFullContext(OdinScopeBlock containingScopeBlock, OdinSymbolTable parentContext) {
         OdinSymbolTable symbolTable = new OdinSymbolTable(packagePath);
         symbolTable.setScopeBlock(containingScopeBlock);
-        containingScopeBlock.setFullSymbolTable(symbolTable);
 
         symbolTable.setParentSymbolTable(parentContext);
 

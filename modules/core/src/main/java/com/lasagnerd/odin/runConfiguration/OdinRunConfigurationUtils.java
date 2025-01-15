@@ -47,7 +47,7 @@ public class OdinRunConfigurationUtils {
 
     public static List<OdinConstantInitDeclaration> findTestProcedures(OdinFile file) {
         List<OdinConstantInitDeclaration> testProcedures = new ArrayList<>();
-        OdinSymbolTable symbolTable = file.getFileScope().getFullSymbolTable();
+        OdinSymbolTable symbolTable = file.getFileScope().getSymbolTable();
         for (OdinSymbol symbol : symbolTable.getSymbols()) {
             OdinConstantInitDeclaration testProcedure = getTestProcedure(symbol.getDeclaration());
             if (testProcedure != null) {
@@ -64,7 +64,7 @@ public class OdinRunConfigurationUtils {
 
     public static Optional<OdinConstantInitDeclaration> findMainProcedure(OdinFile file) {
 
-        OdinSymbolTable symbolTable = file.getFileScope().getFullSymbolTable();
+        OdinSymbolTable symbolTable = file.getFileScope().getSymbolTable();
         for (OdinSymbol symbol : symbolTable.getSymbols()) {
             OdinDeclaration declaration = symbol.getDeclaration();
             if (symbol.getSymbolType() != OdinSymbolType.PROCEDURE)
@@ -104,8 +104,6 @@ public class OdinRunConfigurationUtils {
                                     if (structType.getName().equals("T")) {
                                         OdinDeclaration structTypeDeclaration = structType.getDeclaration();
                                         VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(structTypeDeclaration);
-                                        if (containingVirtualFile == null)
-                                            return null;
                                         Path declarationPath = Path.of(containingVirtualFile.getPath());
                                         Optional<String> validSdkPath = OdinSdkUtils.getValidSdkPath(element.getProject());
                                         if (validSdkPath.isPresent()) {

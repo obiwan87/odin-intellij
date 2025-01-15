@@ -14,6 +14,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -39,8 +40,8 @@ public interface OdinSdkService {
         if (instance == null)
             return false;
 
-        VirtualFile containingFile = OdinInsightUtils.getContainingVirtualFile(element);
-        if (containingFile != null && !Objects.equals(instance.getBuiltinVirtualFile(), containingFile)) {
+        @NotNull VirtualFile containingFile = OdinInsightUtils.getContainingVirtualFile(element);
+        if (!Objects.equals(instance.getBuiltinVirtualFile(), containingFile)) {
             VirtualFile intrinsicsFile = instance.getIntrinsicsFile();
             return Objects.equals(intrinsicsFile, containingFile);
         }
@@ -52,10 +53,10 @@ public interface OdinSdkService {
         if (instance == null)
             return false;
 
-        VirtualFile containingFile = OdinInsightUtils.getContainingVirtualFile(element);
-        VirtualFile builtinVirtualFile = instance.getBuiltinVirtualFile();
+        @NotNull VirtualFile containingFile = OdinInsightUtils.getContainingVirtualFile(element);
 
-        return containingFile != null && Objects.equals(builtinVirtualFile, containingFile);
+        VirtualFile builtinVirtualFile = instance.getBuiltinVirtualFile();
+        return Objects.equals(builtinVirtualFile, containingFile);
     }
 
     List<OdinSymbol> getRuntimeCoreSymbols();

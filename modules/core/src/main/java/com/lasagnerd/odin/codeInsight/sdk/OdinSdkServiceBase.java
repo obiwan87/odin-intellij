@@ -452,7 +452,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
             OdinFile odinFile = createOdinFileFromResource(project, resource);
             syntheticFiles.add(odinFile);
             if (odinFile != null) {
-                OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getFullSymbolTable();
+                OdinSymbolTable fileScopeDeclarations = odinFile.getFileScope().getSymbolTable();
                 fileScopeDeclarations
                         .getSymbolTable()
                         .values()
@@ -502,7 +502,7 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                 if (fileScope == null) {
                     log.error("File scope is null for file %s".formatted(odinFile.getVirtualFile().getPath()));
                 } else {
-                    OdinSymbolTable fileScopeDeclarations = fileScope.getFullSymbolTable();
+                    OdinSymbolTable fileScopeDeclarations = fileScope.getSymbolTable();
                     fileScopeDeclarations
                             .getSymbolTable()
                             .values()

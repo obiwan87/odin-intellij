@@ -25,9 +25,6 @@ public class OdinImportServiceImpl implements OdinImportService {
 
     @Override
     public String getPackagePath(PsiElement psiElement) {
-        if (!psiElement.isValid())
-            return null;
-
         OdinFile containingFile = (OdinFile) psiElement.getContainingFile();
         if (containingFile == null)
             return null;
@@ -37,9 +34,6 @@ public class OdinImportServiceImpl implements OdinImportService {
             return containingDirectory.getVirtualFile().getPath();
         }
         VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(psiElement);
-        if (containingVirtualFile != null) {
-            return null;
-        }
         VirtualFile parent = containingVirtualFile.getParent();
         if (parent != null) {
             return parent.getPath();

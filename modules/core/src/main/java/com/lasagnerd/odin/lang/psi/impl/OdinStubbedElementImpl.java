@@ -28,21 +28,6 @@ public class OdinStubbedElementImpl<T extends StubBase<?>> extends StubBasedPsiE
     }
 
     @Override
-    public OdinSymbolTable getFullSymbolTable() {
-        return this.fullSymbolTable;
-    }
-
-    @Override
-    public void setFullSymbolTable(OdinSymbolTable symbolTable) {
-        this.fullSymbolTable = symbolTable;
-    }
-
-    @Override
-    public void subtreeChanged() {
-        this.fullSymbolTable = null;
-    }
-
-    @Override
     public OdinExpression parenthesesUnwrap() {
         return OdinInsightUtils.parenthesesUnwrap(this);
     }

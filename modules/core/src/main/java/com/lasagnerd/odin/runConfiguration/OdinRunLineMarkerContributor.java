@@ -28,7 +28,7 @@ public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
         if (element.getParent().getParent() instanceof OdinPackageClause) {
             AnAction[] actions = ExecutorAction.getActions(0);
             VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(element);
-            if (containingVirtualFile != null && containingVirtualFile.getNameWithoutExtension().endsWith("_test")) {
+            if (containingVirtualFile.getNameWithoutExtension().endsWith("_test")) {
                 return new Info(
                         AllIcons.Actions.RunAll,
                         new AnAction[]{actions[0], actions[1], actions[actions.length - 1]},
@@ -38,7 +38,7 @@ public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
 
             OdinFileScope fileScope = PsiTreeUtil.getParentOfType(element, OdinFileScope.class);
             if (fileScope != null) {
-                OdinSymbolTable symbolTable = fileScope.getFullSymbolTable();
+                OdinSymbolTable symbolTable = fileScope.getSymbolTable();
                 boolean hasAnyTestProcedures = symbolTable.getSymbols().stream()
                         .filter(s -> s.getDeclaredIdentifier() != null)
                         .anyMatch(s -> OdinRunConfigurationUtils.getTestProcedure(s.getDeclaredIdentifier()) != null);
@@ -75,7 +75,7 @@ public class OdinRunLineMarkerContributor extends RunLineMarkerContributor {
             );
         } else if (element.getText().equals("main")) {
             VirtualFile containingVirtualFile = OdinInsightUtils.getContainingVirtualFile(element);
-            if (containingVirtualFile != null && !containingVirtualFile.getNameWithoutExtension().endsWith("_test")) {
+            if (!containingVirtualFile.getNameWithoutExtension().endsWith("_test")) {
                 AnAction[] actions = ExecutorAction.getActions(0);
                 return new Info(
                         AllIcons.RunConfigurations.TestState.Run,

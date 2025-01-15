@@ -175,7 +175,7 @@ public class OdinSymbolTableHelper {
                 }
 
                 Collection<OdinSymbol> fileScopeDeclarations = odinFile.getFileScope()
-                        .getFullSymbolTable()
+                        .getSymbolTable()
                         .getSymbolTable()
                         .values()
                         .stream()
