@@ -11,7 +11,7 @@ plugins {
     `maven-publish`
     `java-library`
 
-    id("org.jetbrains.kotlin.jvm") version ("1.9.25")
+    id("org.jetbrains.kotlin.jvm") version ("2.0.21")
     id("org.jetbrains.intellij.platform") version ("2.0.1")
     id("org.jetbrains.changelog") version ("2.2.1")
     id("org.jetbrains.grammarkit") version ("2022.3.2.2")
@@ -140,6 +140,7 @@ allprojects {
     configure<JavaPluginExtension> {
         toolchain {
             languageVersion.set(javaLangVersion)
+            @Suppress("UnstableApiUsage")
             vendor = JvmVendorSpec.JETBRAINS
         }
         sourceCompatibility = javaVersion
