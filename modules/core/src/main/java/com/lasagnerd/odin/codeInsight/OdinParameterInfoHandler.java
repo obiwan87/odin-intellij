@@ -1,13 +1,14 @@
 package com.lasagnerd.odin.codeInsight;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.tree.TokenSet;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -15,138 +16,141 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-// TODO needs to be reimplemented completely. Type parameters are wrong
-//  should be OdinProcedureType, OdinParamEntry (?)
-public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinCallExpression, OdinProcedureType> {
+public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinPsiElement, TsOdinParameterOwner> {
 
     private static final String DELIMITER = ", ";
 
+    private static OdinPsiElement findCallExpression(PsiFile file, int offset) {
+        PsiElement element = file.findElementAt(offset);
+
+        return OdinInsightUtils.getCallInfo(new OdinContext(), element).callingElement();
+    }
+
+    private static @Nullable TextRange getArgumentListTextRange(@NotNull OdinPsiElement callingElement) {
+
+        if (callingElement instanceof OdinCallExpression callExpression) {
+            int startOfList = callExpression.getLparen().getTextOffset() + 1;
+            int endOfList = callExpression.getRparen().getTextOffset();
+            return TextRange.create(startOfList, endOfList);
+        }
+
+        if (callingElement instanceof OdinCallType callType) {
+            int startOfList = callType.getLparen().getTextOffset() + 1;
+            int endOfList = callType.getRparen().getTextOffset();
+            return TextRange.create(startOfList, endOfList);
+        }
+
+        return null;
+    }
+
     @Override
-    public @Nullable OdinCallExpression findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
-        OdinCallExpression callExpression = findCallExpression(context.getFile(), context.getOffset());
+    public @Nullable OdinPsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
+        PsiElement elementAtOffset = context.getFile().findElementAt(context.getOffset());
+        OdinInsightUtils.OdinCallInfo callInfo = OdinInsightUtils.getCallInfo(new OdinContext(), elementAtOffset);
+        if (callInfo.callingElement() != null && callInfo.callingType() != null) {
+            List<TsOdinParameterOwner> parameterOwners = new ArrayList<>();
+            TsOdinType tsOdinType = callInfo.callingType();
 
-        if (callExpression != null) {
+            if (tsOdinType.dereference() instanceof TsOdinProcedureType procedureType) {
+                parameterOwners.add(procedureType);
+            }
 
-            List<PsiElement> procedures = new ArrayList<>();
-            OdinExpression expression = callExpression.getExpression();
-            TsOdinType tsOdinType = expression.getInferredType();
-            if (tsOdinType instanceof TsOdinTypeReference tsOdinTypeReference) {
-                if (tsOdinTypeReference.getTargetTypeKind() == TsOdinTypeKind.PROCEDURE) {
-                    OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(tsOdinType.getDeclaration());
-                    if (procedureType != null) {
-                        //                    OdinParamEntries paramEntries = declaration.getProcedureDefinition().getProcedureType().getParamEntries();
-                        //                    if (paramEntries != null && !paramEntries.getParamEntryList().isEmpty()) {
-                        procedures.add(procedureType);
-                        //                    }
-                    }
-                }
+            if (tsOdinType.dereference() instanceof TsOdinProcedureGroup procedureGroup) {
+                parameterOwners.addAll(procedureGroup.getProcedures());
+            }
 
-                if (tsOdinTypeReference.getTargetTypeKind() == TsOdinTypeKind.PROCEDURE_GROUP) {
-                    OdinDeclaration declaration = tsOdinTypeReference.getDeclaration();
-                    OdinProcedureGroupType procedureGroupType = OdinInsightUtils.getDeclaredType(declaration, OdinProcedureGroupType.class);
-                    Objects.requireNonNull(procedureGroupType);
-                    for (var procedureRef : procedureGroupType.getProcedureRefList()) {
-                        OdinIdentifier odinIdentifier = OdinPsiUtil.getIdentifier(procedureRef);
-                        if (odinIdentifier == null)
-                            continue;
-                        PsiReference identifierReference = odinIdentifier.getReference();
-                        PsiElement resolve = identifierReference.resolve();
-                        OdinProcedureType procedureType = OdinInsightUtils.getProcedureType(resolve);
-                        if (resolve != null && procedureType != null) {
-                            procedures.add(procedureType);
-                        }
-                    }
-                }
+            if (tsOdinType.dereference() instanceof TsOdinObjcMember objcMember) {
+                parameterOwners.add(objcMember);
             }
 
             if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
-                OdinType procedureType = tsOdinProcedureType.getPsiType();
-                procedures.add(procedureType);
+                parameterOwners.add(tsOdinProcedureType);
             }
 
             if (tsOdinType instanceof TsOdinPseudoMethodType tsOdinPseudoMethodType) {
-                OdinType procedureType = tsOdinPseudoMethodType.getProcedureType().getPsiType();
-                procedures.add(procedureType);
+                parameterOwners.add(tsOdinPseudoMethodType);
             }
 
-            if (!procedures.isEmpty()) {
-                context.setItemsToShow(procedures.toArray(new PsiElement[0]));
-                return callExpression;
+            if (tsOdinType.dereference() instanceof TsOdinStructType tsOdinStructType) {
+                parameterOwners.add(tsOdinStructType);
+            }
+
+            if (tsOdinType.dereference() instanceof TsOdinUnionType tsOdinUnionType) {
+                parameterOwners.add(tsOdinUnionType);
+            }
+
+            if (!parameterOwners.isEmpty()) {
+                context.setItemsToShow(parameterOwners.toArray(new TsOdinType[0]));
+                return callInfo.callingElement();
             }
         }
         return null;
     }
 
-    @Nullable
-    private static OdinCallExpression findCallExpression(PsiFile file, int offset) {
-        PsiElement element = file.findElementAt(offset);
-
-        OdinCallExpression callExpression = null;
-        if (element != null) {
-            callExpression = PsiTreeUtil.getParentOfType(element, false, OdinCallExpression.class);
-        }
-        return callExpression;
-    }
-
     @Override
-    public void showParameterInfo(@NotNull OdinCallExpression element, @NotNull CreateParameterInfoContext context) {
+    public void showParameterInfo(@NotNull OdinPsiElement element, @NotNull CreateParameterInfoContext context) {
         context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
     }
 
     @Override
-    public OdinCallExpression findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
+    public OdinPsiElement findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
 
-        OdinCallExpression callExpression = findCallExpression(context.getFile(), context.getOffset());
-        if (callExpression != null) {
+        OdinPsiElement callingElement = findCallExpression(context.getFile(), context.getOffset());
+        if (callingElement != null) {
             PsiElement currentParameterOwner = context.getParameterOwner();
-            if (currentParameterOwner == callExpression || currentParameterOwner == null)
-                return callExpression;
+            if (currentParameterOwner == callingElement || currentParameterOwner == null)
+                return callingElement;
         }
         return null;
     }
 
     @Override
-    public void updateParameterInfo(@NotNull OdinCallExpression odinCallExpression, @NotNull UpdateParameterInfoContext context) {
-        int startOfList = odinCallExpression.getLparen().getTextOffset() + 1;
-        int offset = context.getOffset();
-
-
-        if (startOfList >= offset) {
-            context.setCurrentParameter(0);
+    public void updateParameterInfo(@NotNull OdinPsiElement callingElement, @NotNull UpdateParameterInfoContext context) {
+        TextRange textRange = getArgumentListTextRange(callingElement);
+        if (textRange == null)
             return;
+
+        ASTNode[] commas = callingElement.getNode().getChildren(TokenSet.create(OdinTypes.COMMA));
+        int paramNum = 0;
+        for (ASTNode comma : commas) {
+            int commaStartOffset = comma.getStartOffset();
+            if (textRange.contains(commaStartOffset) && context.getOffset() > commaStartOffset) {
+                paramNum++;
+            }
         }
-
-        int start = startOfList - odinCallExpression.getTextOffset();
-        int end = offset - odinCallExpression.getTextOffset();
-
-        String text = odinCallExpression.getText().substring(start, end);
-        int commas = text.length() - text.replace(",", "").length();
-
-        context.setCurrentParameter(commas);
+        context.setCurrentParameter(paramNum);
     }
 
     @Override
-    public void updateUI(OdinProcedureType p, @NotNull ParameterInfoUIContext context) {
-        List<OdinParamEntry> parameters = p.getParamEntryList();
+    public void updateUI(TsOdinParameterOwner p, @NotNull ParameterInfoUIContext context) {
+        List<TsOdinParameter> parameters = p.getParameters();
         // Each entry can declare several parameters. In order to make navigation easier we flatten the list.
 
         List<String> params = new ArrayList<>();
         List<Integer> lengths = new ArrayList<>();
         int length = 0;
         lengths.add(length);
-        for (OdinParamEntry odinParamEntry : parameters) {
-            OdinType typeDefinition = odinParamEntry.getParameterDeclaration().getTypeDefinition();
-            for (OdinParameter odinParamDeclaration : odinParamEntry.getParameterDeclaration().getParameterList()) {
-                String param = odinParamDeclaration.getDeclaredIdentifier().getText();
-                if (typeDefinition != null) {
-                    param += ": " + typeDefinition.getText();
-                }
-                params.add(param);
-                length += param.length() + DELIMITER.length();
-                lengths.add(length);
+        int skip = 0;
+        if (!parameters.isEmpty()) {
+            if (p instanceof TsOdinObjcMember objcMember && !objcMember.isClassMethod()) {
+                skip = 1;
+            } else if (p instanceof TsOdinPseudoMethodType) {
+                skip = 1;
             }
+        }
+
+        parameters = parameters.subList(skip, parameters.size());
+        for (var parameter : parameters) {
+            OdinType typeDefinition = parameter.getParameterDeclaration().getTypeDefinition();
+            String paramLabel = (parameter.isExplicitPolymorphicParameter() ? "$" : "") + parameter.getName();
+
+            if (typeDefinition != null) {
+                paramLabel += ": " + typeDefinition.getText();
+            }
+            params.add(paramLabel);
+            length += paramLabel.length() + DELIMITER.length();
+            lengths.add(length);
         }
         if (params.isEmpty()) {
             context.setupUIComponentPresentation("<no parameters>",

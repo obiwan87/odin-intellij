@@ -1109,7 +1109,7 @@ public class OdinInsightUtils {
         return getStructFields(tsOdinStructType.getContext(), (OdinStructType) tsOdinStructType.getPsiType());
     }
 
-    public static @NotNull OdinCallInfo getCallInfo(OdinContext context, OdinArgument argument) {
+    public static @NotNull OdinCallInfo getCallInfo(OdinContext context, PsiElement argument) {
         @Nullable OdinPsiElement callingElement = PsiTreeUtil.getParentOfType(argument, OdinCallExpression.class, OdinCallType.class);
         TsOdinType tsOdinType = TsOdinBuiltInTypes.UNKNOWN;
         List<OdinArgument> argumentList = Collections.emptyList();
