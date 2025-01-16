@@ -1,10 +1,10 @@
 package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
@@ -51,9 +51,10 @@ public abstract class OdinExpressionMixin extends OdinPsiElementImpl implements 
         return CachedValuesManager.getManager(getProject()).createParameterizedCachedValue(this::inferType, false);
     }
 
-    public @NotNull Set<PsiElement> createTypeDependencies(TsOdinType tsOdinType) {
-        Set<PsiElement> dependencies = new HashSet<>();
+    public @NotNull Set<Object> createTypeDependencies(TsOdinType tsOdinType) {
+        Set<Object> dependencies = new HashSet<>();
         dependencies.add(OdinExpressionMixin.this);
+        dependencies.add(PsiModificationTracker.MODIFICATION_COUNT);
         if (OdinExpressionMixin.this instanceof OdinRefExpression refExpression) {
             List<OdinRefExpression> refExpressions = OdinInsightUtils.unfoldRefExpressions(refExpression);
             dependencies.addAll(refExpressions);
@@ -79,7 +80,7 @@ public abstract class OdinExpressionMixin extends OdinPsiElementImpl implements 
             tsOdinType = originalType;
         }
 
-        Set<PsiElement> dependencies = createTypeDependencies(tsOdinType);
+        Set<Object> dependencies = createTypeDependencies(tsOdinType);
 
         return CachedValueProvider.Result.create(originalType, dependencies);
     }

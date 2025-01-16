@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.dataflow.OdinLattice;
@@ -41,6 +42,7 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
 
         List<Object> dependencies = new ArrayList<>();
         dependencies.add(this);
+        dependencies.add(PsiModificationTracker.MODIFICATION_COUNT);
         if (symbol != null) {
             if (symbol.getDeclaration() != null) {
                 dependencies.add(symbol.getDeclaration());

@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
@@ -47,6 +48,7 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(typeResolverParameters, this);
         Set<Object> dependencies = new HashSet<>();
         dependencies.add(this);
+        dependencies.add(PsiModificationTracker.MODIFICATION_COUNT);
         if (this instanceof OdinQualifiedType qualifiedType) {
 
             dependencies.add(qualifiedType.getTypeIdentifier());
