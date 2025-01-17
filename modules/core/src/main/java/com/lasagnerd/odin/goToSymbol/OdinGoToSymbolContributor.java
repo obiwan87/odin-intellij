@@ -15,24 +15,20 @@ import org.jetbrains.annotations.Nullable;
 public class OdinGoToSymbolContributor implements ChooseByNameContributorEx {
     @Override
     public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
-        Processor<? super String> p = new Processor<String>() {
-            @Override
-            public boolean process(String s) {
-                return processor.process(s);
-            }
-        };
-        StubIndex.getInstance().processAllKeys(OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES, p, scope, filter);
+        StubIndex.getInstance().processAllKeys(OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES,
+                (Processor<? super String>) (Processor<String>) processor::process,
+                scope,
+                filter);
     }
 
     @Override
     public void processElementsWithName(@NotNull String name, @NotNull Processor<? super NavigationItem> processor, @NotNull FindSymbolParameters parameters) {
-        Processor<NavigationItem> p = new Processor<NavigationItem>() {
-            @Override
-            public boolean process(NavigationItem navigationItem) {
-                return processor.process(navigationItem);
-            }
-        };
-        StubIndex.getInstance().processElements(OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES, name,
-                parameters.getProject(), parameters.getSearchScope(), parameters.getIdFilter(), OdinDeclaration.class, p);
+        StubIndex.getInstance().processElements(OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES,
+                name,
+                parameters.getProject(),
+                parameters.getSearchScope(),
+                parameters.getIdFilter(),
+                OdinDeclaration.class,
+                (Processor<NavigationItem>) processor::process);
     }
 }
