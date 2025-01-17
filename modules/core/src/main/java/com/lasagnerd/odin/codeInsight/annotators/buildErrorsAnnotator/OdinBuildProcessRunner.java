@@ -142,12 +142,12 @@ public class OdinBuildProcessRunner {
             try {
                 return GSON.fromJson(stdErr, OdinBuildErrorResult.class);
             } catch (JsonSyntaxException e) {
-                LOG.error("Failed to parse errors json", e);
+                LOG.warn("Failed to parse errors json", e);
                 return null;
             }
 
         } catch (InterruptedException | IOException e) {
-            LOG.error(e);
+            LOG.warn(e);
             return null;
         }
     }
