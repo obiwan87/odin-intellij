@@ -298,7 +298,7 @@ public class OdinExpressionEvaluator extends OdinVisitor {
             if (left.type == null || right.type == null) {
                 return;
             }
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(left.type, right.type);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(left.type, right.type, operatorType);
             if (!tsOdinType.isUnknown()) {
                 if (TsOdinBuiltInTypes.getIntegerTypes().contains(tsOdinType)) {
                     this.value = evaluateBinaryIntegerOperation(operatorType, left, right, tsOdinType);

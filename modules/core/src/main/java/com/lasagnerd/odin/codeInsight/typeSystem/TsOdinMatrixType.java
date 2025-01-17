@@ -29,4 +29,8 @@ public class TsOdinMatrixType extends TsOdinTypeBase implements TsOdinElementOwn
     public boolean isSquare() {
         return rows != null && rows.equals(columns);
     }
+
+    public boolean sizeKnown() {
+        return rows != null && columns != null;
+    }
 }

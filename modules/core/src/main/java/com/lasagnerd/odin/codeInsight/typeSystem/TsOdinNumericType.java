@@ -12,6 +12,10 @@ public class TsOdinNumericType extends TsOdinBuiltInType {
     private final boolean signed;
     private final Endian endian;
 
+    public boolean isScalar() {
+        return !complex && !quaternion;
+    }
+
     public enum Endian {
         UNSPECIFIED,
         LE,

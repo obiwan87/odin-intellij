@@ -1,6 +1,9 @@
 package com.lasagnerd.odin.codeInsight.typeInference;
 
+import com.intellij.psi.tree.IElementType;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
+import com.lasagnerd.odin.lang.psi.OdinPsiUtil;
+import com.lasagnerd.odin.lang.psi.OdinTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +45,9 @@ public class OdinTypeConverter {
 
     }
 
-    public static @NotNull TsOdinType inferTypeOfSymmetricalBinaryExpression(@NotNull TsOdinType a, @NotNull TsOdinType b) {
+    public static @NotNull TsOdinType inferTypeOfSymmetricalBinaryExpression(@NotNull TsOdinType a,
+                                                                             @NotNull TsOdinType b,
+                                                                             IElementType operator) {
         if (a.isUnknown() || b.isUnknown())
             return TsOdinBuiltInTypes.UNKNOWN;
 
@@ -50,41 +55,108 @@ public class OdinTypeConverter {
         a = a.baseType();
         b = b.baseType();
 
-        // Easy case: the type kind is the same
+        // The type kind is the same
         if (a.getTypeReferenceKind() == b.getTypeReferenceKind()) {
-            if (OdinTypeChecker.checkTypesStrictly(a, b)) {
+            // typed types which match exactly
+            if (!a.isUntyped() && !b.isUntyped()
+                    && OdinTypeChecker.checkTypesStrictly(a, b)) {
                 TsOdinType baseTypeA = a.baseType(true);
                 TsOdinType baseTypeB = b.baseType(true);
-                if (baseTypeA instanceof TsOdinBitSetType && baseTypeB instanceof TsOdinBitSetType) {
-                    return a;
-                }
 
-                if (baseTypeA instanceof TsOdinArrayType && baseTypeB instanceof TsOdinArrayType) {
+                if (baseTypeA instanceof TsOdinBitSetType && baseTypeB instanceof TsOdinBitSetType) {
+                    if (OdinPsiUtil.ENUM_BITWISE_OPERATORS.contains(operator)) {
+                        return a;
+                    }
+                    return TsOdinBuiltInTypes.UNKNOWN;
+                } else if (baseTypeA instanceof TsOdinEnumType && baseTypeB instanceof TsOdinEnumType) {
+                    if (OdinPsiUtil.ENUM_BITWISE_OPERATORS.contains(operator) || OdinPsiUtil.ENUM_ARITHMETIC_OPERATORS.contains(operator)) {
+                        return a;
+                    }
+                    return TsOdinBuiltInTypes.UNKNOWN;
+                } else if (baseTypeA instanceof TsOdinArrayType arrayTypeA && baseTypeB instanceof TsOdinArrayType arrayTypeB) {
+                    if (OdinPsiUtil.ARRAY_ARITHMETIC_OPERATORS.contains(operator)) {
+                        // For well-defined arrays only return value if their size matches
+                        if (arrayTypeA.getSize() != null && arrayTypeB.getSize() != null) {
+                            if (arrayTypeA.getSize().equals(arrayTypeB.getSize())) {
+                                return a;
+                            }
+
+                        }
+                        // Otherwise, we are missing size information. Return just the left operand
+                        else {
+                            return a;
+                        }
+                    }
+                    return TsOdinBuiltInTypes.UNKNOWN;
+                } else if (baseTypeA instanceof TsOdinMatrixType matrixTypeA && baseTypeB instanceof TsOdinMatrixType matrixTypeB) {
+                    if (OdinPsiUtil.MATRIX_ARITHMETIC_OPERATORS.contains(operator)) {
+                        if (matrixTypeA.sizeKnown() && matrixTypeB.sizeKnown()) {
+                            if (matrixTypeA.getRows().equals(matrixTypeB.getRows()) && matrixTypeA.getColumns().equals(matrixTypeB.getColumns())) {
+                                return matrixTypeA;
+                            }
+                        } else {
+                            return matrixTypeA;
+                        }
+                    }
+                    return TsOdinBuiltInTypes.UNKNOWN;
+                } else {
+                    if (baseTypeA.getTypeReferenceKind() == TsOdinTypeKind.STRING) {
+                        if (OdinPsiUtil.STRING_ARITHMETIC_OPERATORS.contains(operator)) {
+                            return a;
+                        }
+                    } else if (baseTypeA instanceof TsOdinNumericType numericType) {
+                        if (numericType.isInteger()) {
+                            if (OdinPsiUtil.INTEGER_ARITHMETIC_OPERATORS.contains(operator)
+                                    || OdinPsiUtil.INTEGER_BITWISE_OPERATORS.contains(operator)) {
+                                return a;
+                            }
+                        } else if (numericType.isFloatingPoint() && numericType.isScalar()) {
+                            if (OdinPsiUtil.FLOAT_ARITHMETIC_OPERATORS.contains(operator)) {
+                                return a;
+                            }
+                        } else if (!numericType.isScalar()) {
+                            if (OdinPsiUtil.ARRAY_ARITHMETIC_OPERATORS.contains(operator)) {
+                                return a;
+                            }
+                        }
+                    }
+
                     return a;
                 }
-                if (!a.isUntyped() && !b.isUntyped())
-                    return a;
             }
-            return convertToTyped(a, b);
+            // Here we know that the referenced type is the same but one of the types must be untyped
+
+            // Find common typed type and check if that is compatible with the passed operator
+            TsOdinType typedType = convertToTyped(a, b);
+            if (!typedType.isUnknown()) {
+                return inferTypeOfSymmetricalBinaryExpression(typedType, typedType, operator);
+            }
+            return typedType;
         }
 
         // Give array-l the precedence
-        TsOdinType arrayType = tryConvertToArray(a, b);
+        TsOdinType arrayType = tryConvertToArray(a, b, operator);
         if (arrayType != null) return arrayType;
 
-        TsOdinType matrixType = tryConvertToMatrix(a, b);
+        TsOdinType matrixType = tryConvertToMatrix(a, b, operator);
         if (matrixType != null) return matrixType;
 
 
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private static @Nullable TsOdinType tryConvertToMatrix(@NotNull TsOdinType a, @NotNull TsOdinType b) {
+    private static @Nullable TsOdinType tryConvertToMatrix(@NotNull TsOdinType a,
+                                                           @NotNull TsOdinType b,
+                                                           IElementType operator) {
+        if (!OdinPsiUtil.MATRIX_ARITHMETIC_OPERATORS.contains(operator))
+            return null;
+
         TsOdinType baseTypeA = a.baseType(true);
-        // m * v
         if (baseTypeA.getTypeReferenceKind() == TsOdinTypeKind.MATRIX) {
             TsOdinMatrixType matrixType = (TsOdinMatrixType) baseTypeA;
-            if (b.baseType() instanceof TsOdinArrayType arrayType) {
+
+            // Matrix * Vector
+            if (operator == OdinTypes.STAR && b.baseType() instanceof TsOdinArrayType arrayType) {
                 if (matrixType.isSquare()) {
                     TsOdinType tsOdinType = convertToMatchingArrayType(arrayType, matrixType.getColumns());
                     if (!tsOdinType.isUnknown()) {
@@ -100,7 +172,7 @@ public class OdinTypeConverter {
                     }
                 }
             }
-
+            // M op Scalar -> When one of the operands is an element type, the result type is always the matrix type
             TsOdinType tsOdinType = convertToElementType(matrixType, b);
             if (!tsOdinType.isUnknown()) {
                 return a;
@@ -110,7 +182,9 @@ public class OdinTypeConverter {
         TsOdinType baseTypeB = b.baseType(true);
         if (baseTypeB.getTypeReferenceKind() == TsOdinTypeKind.MATRIX) {
             TsOdinMatrixType matrixType = (TsOdinMatrixType) baseTypeB;
-            if (a.baseType() instanceof TsOdinArrayType arrayType) {
+
+            // Matrix * Vector
+            if (operator == OdinTypes.STAR && a.baseType() instanceof TsOdinArrayType arrayType) {
                 if (matrixType.isSquare()) {
                     TsOdinType tsOdinType = convertToMatchingArrayType(arrayType, matrixType.getRows());
                     if (!tsOdinType.isUnknown()) {
@@ -127,6 +201,7 @@ public class OdinTypeConverter {
                 }
             }
 
+            // Scalar op Matrix -> When one of the operands is an element type, the result type is always the matrix type
             TsOdinType tsOdinType = convertToElementType(matrixType, a);
             if (!tsOdinType.isUnknown()) {
                 return b;
@@ -145,7 +220,10 @@ public class OdinTypeConverter {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private static @Nullable TsOdinType tryConvertToArray(@NotNull TsOdinType a, @NotNull TsOdinType b) {
+    private static @Nullable TsOdinType tryConvertToArray(@NotNull TsOdinType a, @NotNull TsOdinType b, IElementType operator) {
+        if (!OdinPsiUtil.ARRAY_ARITHMETIC_OPERATORS.contains(operator))
+            return null;
+
         TsOdinType baseTypeA = a.baseType(true);
         if (baseTypeA.getTypeReferenceKind() == TsOdinTypeKind.ARRAY) {
             TsOdinType tsOdinType = convertToElementType((TsOdinArrayType) baseTypeA, b);

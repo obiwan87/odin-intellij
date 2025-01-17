@@ -1063,8 +1063,6 @@ public class OdinParsingTest extends UsefulTestCase {
         }
 
 
-
-
     }
 
     public void testScoping_params() throws IOException {
@@ -1570,24 +1568,24 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testTypeConversion() {
         {
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.I32, null);
             assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
         }
 
         {
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.F32);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_INT, TsOdinBuiltInTypes.F32, null);
             assertEquals(TsOdinBuiltInTypes.F32, tsOdinType);
         }
 
         {
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(TsOdinBuiltInTypes.UNTYPED_STRING, TsOdinBuiltInTypes.STRING, null);
             assertEquals(TsOdinBuiltInTypes.STRING, tsOdinType);
         }
 
         {
             TsOdinArrayType arrayType = new TsOdinArrayType();
             arrayType.setElementType(TsOdinBuiltInTypes.I32);
-            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(arrayType, TsOdinBuiltInTypes.UNTYPED_INT);
+            TsOdinType tsOdinType = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(arrayType, TsOdinBuiltInTypes.UNTYPED_INT, OdinTypes.PLUS);
             assertEquals(tsOdinType, arrayType);
         }
     }

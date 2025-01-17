@@ -193,39 +193,23 @@ public class OdinInferenceEngine extends OdinVisitor {
         }
     }
 
-    @Override
-    public void visitBinaryExpression(@NotNull OdinBinaryExpression o) {
-        TsOdinType leftType = inferTypeInExplicitMode(this.context, o.getLeft());
-        TsOdinType rightType;
-        if (o.getRight() instanceof OdinCompoundLiteralExpression literalExpression
-                && literalExpression.getCompoundLiteral() instanceof OdinCompoundLiteralUntyped) {
-            rightType = leftType;
-        } else {
-            rightType = inferTypeInExplicitMode(this.context, Objects.requireNonNull(o.getRight()));
-        }
+    private static @NotNull TsOdinType resolveTypeOfNamedElement(PsiNamedElement namedElement, OdinContext context) {
+        OdinImportStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
+        if (importDeclarationStatement != null) {
+            return createPackageReferenceType(OdinImportService
+                    .getInstance(namedElement.getProject())
+                    .getPackagePath(importDeclarationStatement), importDeclarationStatement);
+        } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
+            TsOdinType tsOdinType = doResolveTypeOfDeclaredIdentifier(declaredIdentifier, context);
+            OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
 
-        if (!explicitMode) {
-            if (leftType.isUndecided() && rightType.isUndecided()) {
-                this.type = OdinExpectedTypeEngine.inferExpectedType(context, o);
-                return;
+            // Constants stay untyped
+            if (!(declaration instanceof OdinConstantInitDeclaration)) {
+                return OdinTypeConverter.convertToTyped(tsOdinType);
             }
-
-            if (leftType.isUndecided()) {
-                this.type = TsOdinBuiltInTypes.UNKNOWN;
-                return;
-            }
-
-            if (rightType.isUndecided()) {
-                this.type = leftType;
-                return;
-            }
+            return tsOdinType;
         }
-
-
-        PsiElement operator = o.getOperator();
-        if (operator != null) {
-            this.type = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(leftType, rightType);
-        }
+        return TsOdinBuiltInTypes.UNKNOWN;
     }
 
     @Override
@@ -591,21 +575,41 @@ public class OdinInferenceEngine extends OdinVisitor {
         return TsOdinBuiltInTypes.UNKNOWN;
     }
 
-    private static @NotNull TsOdinType resolveTypeOfNamedElement(PsiNamedElement namedElement, OdinContext context) {
-        OdinImportStatement importDeclarationStatement = getImportDeclarationStatement(namedElement);
-        if (importDeclarationStatement != null) {
-            return createPackageReferenceType(OdinImportService
-                    .getInstance(namedElement.getProject())
-                    .getPackagePath(importDeclarationStatement), importDeclarationStatement);
-        } else if (namedElement instanceof OdinDeclaredIdentifier declaredIdentifier) {
-            TsOdinType tsOdinType = doResolveTypeOfDeclaredIdentifier(declaredIdentifier, context);
-            OdinDeclaration declaration = PsiTreeUtil.getParentOfType(declaredIdentifier, OdinDeclaration.class);
-            if (!(declaration instanceof OdinConstantInitDeclaration)) {
-                return OdinTypeConverter.convertToTyped(tsOdinType);
-            }
-            return tsOdinType;
+    @Override
+    public void visitBinaryExpression(@NotNull OdinBinaryExpression o) {
+        TsOdinType leftType = inferTypeInExplicitMode(this.context, o.getLeft());
+        TsOdinType rightType;
+        if (o.getRight() instanceof OdinCompoundLiteralExpression literalExpression
+                && literalExpression.getCompoundLiteral() instanceof OdinCompoundLiteralUntyped) {
+            rightType = leftType;
+        } else {
+            rightType = inferTypeInExplicitMode(this.context, Objects.requireNonNull(o.getRight()));
         }
-        return TsOdinBuiltInTypes.UNKNOWN;
+
+        if (!explicitMode) {
+            if (leftType.isUndecided() && rightType.isUndecided()) {
+                this.type = OdinExpectedTypeEngine.inferExpectedType(context, o);
+                return;
+            }
+
+            if (leftType.isUndecided()) {
+                this.type = TsOdinBuiltInTypes.UNKNOWN;
+                return;
+            }
+
+            if (rightType.isUndecided()) {
+                this.type = leftType;
+                return;
+            }
+        }
+
+
+        PsiElement operator = o.getOperator();
+        if (operator != null) {
+            this.type = OdinTypeConverter.inferTypeOfSymmetricalBinaryExpression(leftType, rightType, operator
+                    .getNode()
+                    .getElementType());
+        }
     }
 
     private static OdinImportStatement getImportDeclarationStatement(PsiNamedElement namedElement) {
