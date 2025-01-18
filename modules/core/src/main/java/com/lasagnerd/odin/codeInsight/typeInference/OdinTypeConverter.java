@@ -94,6 +94,15 @@ public class OdinTypeConverter {
                             if (matrixTypeA.getRows().equals(matrixTypeB.getRows()) && matrixTypeA.getColumns().equals(matrixTypeB.getColumns())) {
                                 return matrixTypeA;
                             }
+                            if (operator == OdinTypes.STAR) {
+                                if (matrixTypeA.getColumns().equals(matrixTypeB.getRows())) {
+                                    TsOdinMatrixType matrixType = new TsOdinMatrixType();
+                                    matrixType.setElementType(matrixTypeA.getElementType());
+                                    matrixType.setRows(matrixTypeA.getRows());
+                                    matrixType.setColumns(matrixTypeB.getColumns());
+                                    return matrixType;
+                                }
+                            }
                         } else {
                             return matrixTypeA;
                         }
