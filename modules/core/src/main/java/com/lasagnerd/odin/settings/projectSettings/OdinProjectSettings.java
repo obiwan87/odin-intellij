@@ -343,7 +343,7 @@ public class OdinProjectSettings implements Disposable {
                 return null;
 
             sdkVersion = new SimpleColoredComponent();
-
+            sdkVersion.setFont(JBUI.Fonts.smallFont());
             FormBuilder formBuilder = FormBuilder.createFormBuilder()
                     .addLabeledComponent(
                             new JBLabel("Path to SDK: "),

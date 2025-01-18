@@ -28,6 +28,7 @@ import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping
 import com.lasagnerd.odin.debugger.driverConfigurations.LLDBDAPDriverConfiguration
 import com.lasagnerd.odin.debugger.runConfiguration.ExecutableProvisioning
 import com.lasagnerd.odin.debugger.runConfiguration.OdinRemoteDebugRunConfiguration
+import com.lasagnerd.odin.debugger.runner.OdinRemoteDebuggerUtils.autoDetectLldbServer
 import com.lasagnerd.odin.runConfiguration.OdinRunConfigurationUtils
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
@@ -48,7 +49,7 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         if (runProfile !is OdinRemoteDebugRunConfiguration) {
             return resolvedPromise()
         }
-        val debuggerPath = runProfile.options.debuggerPath ?: return resolvedPromise()
+        val debuggerPath = getDebuggerPath(runProfile) ?: return resolvedPromise()
         val sshConfig =
             SshConfigManager.getInstance(runProfile.project).configs.find { it.id == runProfile.options.sshConfigId } ?: return resolvedPromise()
 
@@ -67,10 +68,9 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         cidrRemoteDebugParameters.pathMappings = listOf(
             CidrRemotePathMapping(runProfile.options.localPackageDirectoryPath, runProfile.options.remotePackageDirectoryPath)
         )
-        cidrRemoteDebugParameters.remoteCommand = """gdb-remote ${sshConfig.host}:1234"""
+        cidrRemoteDebugParameters.remoteCommand =
+            """gdb-remote ${sshConfig.host}:${OdinRemoteDebuggerUtils.extractPortGdbRemoteArgs(runProfile.options.gdbRemoteArgs, 1234)}"""
 
-
-        val copyToCredentials = sshConfig.copyToCredentials()
 
         val runContentDescriptorPromise = AsyncPromise<RunContentDescriptor?>()
         runBackgroundableTask("Preparing remote debug session") {
@@ -79,6 +79,7 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
             val debugRunnerParameters = OdinRemoteDebugParameters(cidrRemoteDebugParameters, driverConfiguration)
 
+            val copyToCredentials = sshConfig.copyToCredentials()
             @Suppress("UnstableApiUsage") val connectionBuilder = copyToCredentials.connectionBuilder()
 
 
@@ -100,8 +101,21 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             }
 
 
+            var lldbServerArgs = runProfile.options.lldbServerArgs
+            if (lldbServerArgs == null || lldbServerArgs.isBlank()) {
+                lldbServerArgs = "g 0.0.0.0:${
+                    OdinRemoteDebuggerUtils.extractPortGdbRemoteArgs(
+                        runProfile.options.gdbRemoteArgs,
+                        1234
+                    )
+                } $remoteExecutablePathString"
+            }
+            var lldbServerPath = runProfile.options.lldbServerPath
+            if (lldbServerPath.isBlank()) {
+                lldbServerPath = autoDetectLldbServer(connectionBuilder)
+            }
             val command =
-                """chmod +x $remoteExecutablePathString && ${runProfile.options.lldbServerPath} ${runProfile.options.lldbServerArgs}"""
+                """chmod +x $remoteExecutablePathString && $lldbServerPath $lldbServerArgs"""
             val execBuilder = connectionBuilder.execBuilder(command)
             val sshExecProcess: SshExecProcess = execBuilder.execute()
             val sshProcessHandler = CapturingSshProcessHandler(sshExecProcess, StandardCharsets.UTF_8, command)
@@ -133,6 +147,17 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
         return runContentDescriptorPromise
     }
+
+    private fun getDebuggerPath(runProfile: OdinRemoteDebugRunConfiguration): String? {
+        val debuggerPath = runProfile.options.debuggerPath
+        if (debuggerPath == null || debuggerPath.isBlank()) {
+            val autoDetected = OdinRemoteDebuggerUtils.autoDetectLldbDap()
+            if (autoDetected != null)
+                return autoDetected
+        }
+        return debuggerPath
+    }
+
 
     private fun prepareProvidedAtTarget(
         connectionBuilder: ConnectionBuilder,

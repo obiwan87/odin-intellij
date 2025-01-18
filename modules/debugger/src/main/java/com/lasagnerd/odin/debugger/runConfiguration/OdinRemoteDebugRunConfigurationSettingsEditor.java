@@ -2,6 +2,8 @@ package com.lasagnerd.odin.debugger.runConfiguration;
 
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
@@ -10,24 +12,33 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.remote.RemoteCredentials;
+import com.intellij.ssh.ConnectionBuilder;
+import com.intellij.ssh.RemoteCredentialsUtil;
 import com.intellij.ssh.config.unified.SshConfig;
 import com.intellij.ssh.config.unified.SshConfigManager;
 import com.intellij.ssh.ui.unified.SshConfigComboBox;
 import com.intellij.ssh.ui.unified.SshConfigVisibility;
 import com.intellij.ssh.ui.unified.SshUiData;
+import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
 import com.jetbrains.plugins.webDeployment.config.AccessType;
 import com.jetbrains.plugins.webDeployment.config.FileTransferConfig;
 import com.jetbrains.plugins.webDeployment.config.ServerPasswordSafeDeployable;
 import com.jetbrains.plugins.webDeployment.config.WebServerConfig;
 import com.jetbrains.plugins.webDeployment.ui.ServerBrowserDialog;
+import com.lasagnerd.odin.debugger.runner.OdinRemoteDebuggerUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -42,6 +53,7 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
     private final JPanel executableProvisioningPanel;
     private final CardLayout cardLayout;
     private final ComboBox<ExecutableProvisioning> executableProvisioningComboBox;
+    private final @NotNull SimpleColoredComponent sshConnectionState;
     private TextFieldWithBrowseButton targetProvisionedExecutableDownloadDirPath;
 
     public static final FileChooserDescriptor CHOOSE_FOLDER = new FileChooserDescriptor(false, true, false, false, false, false);
@@ -58,31 +70,89 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
     private TextFieldWithBrowseButton localPackageDirectoryPathField;
     private TextFieldWithBrowseButton remotePackageDirectoryPathField;
     private TextFieldWithBrowseButton odinExecutablePathField;
-    private TextFieldWithBrowseButton debuggerPathField;
+    private TextFieldWithBrowseButton lldbDapPath;
     private TextFieldWithBrowseButton targetExecutableDownloadPathField;
     private TextFieldWithBrowseButton localExecutablePathField;
     private TextFieldWithBrowseButton targetExecutableUploadDirPathField;
     private TextFieldWithBrowseButton lldbServerPathField;
 
     public OdinRemoteDebugRunConfigurationSettingsEditor(Project project) {
-        SshConfigManager sshConfigManager = SshConfigManager.getInstance(project);
-        for (SshConfig config : sshConfigManager.getConfigs()) {
-            System.out.println(config.getPresentableFullName());
-        }
-
-        debuggerPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
-                new OpenLocalFileSystemBrowserDialogAction(s -> debuggerPathField.setText(s))
+        lldbDapPath = new TextFieldWithBrowseButton(new ExtendableTextField(10),
+                new OpenLocalFileSystemBrowserDialogAction(s -> lldbDapPath.setText(s))
         );
+        updateAutoLldbDapPath();
+        lldbDapPath.getTextField().getDocument().addDocumentListener(
+                new DocumentAdapter() {
+                    @Override
+                    protected void textChanged(@NotNull DocumentEvent documentEvent) {
+                        updateAutoLldbDapPath();
+                    }
+                }
+        );
+
+
         gdbRemoteArgsField = new JBTextField();
+        gdbRemoteArgsField.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent documentEvent) {
+                updateAutoLldbServerArgs();
+            }
+        });
         localPackageDirectoryPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
                 new OpenLocalFileSystemBrowserDialogAction(s -> localPackageDirectoryPathField.setText(s), CHOOSE_FOLDER));
 
         sshComboBox = new SshConfigComboBox(project, this, SshConfigVisibility.App);
         sshComboBox.reload();
+
+        sshComboBox.getComboBox().addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                SshConfig selectedSshConfig = sshComboBox.getSelectedSshConfig();
+                if (selectedSshConfig != null) {
+                    String host = selectedSshConfig.getHost();
+                    gdbRemoteArgsField.setText(host + ":1234");
+                }
+            }
+        });
+        sshConnectionState = new SimpleColoredComponent();
+        sshConnectionState.setFont(JBUI.Fonts.smallFont());
+        sshComboBox.getComboBox().addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                SshConfig selectedSshConfig = sshComboBox.getSelectedSshConfig();
+                if (selectedSshConfig != null) {
+                    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            sshConnectionState.setIcon(AnimatedIcon.Default.INSTANCE);
+                            RemoteCredentials remoteCredentials = selectedSshConfig.copyToCredentials();
+                            ConnectionBuilder connectionBuilder = RemoteCredentialsUtil.connectionBuilder(remoteCredentials);
+                            boolean checkedAndAuthenticated = connectionBuilder.checkCanAuthenticate();
+                            if (checkedAndAuthenticated) {
+                                sshConnectionState.clear();
+                                sshConnectionState.setIcon(AllIcons.General.GreenCheckmark);
+                                sshConnectionState.append("Connected");
+                            } else {
+                                sshConnectionState.clear();
+                                sshConnectionState.setIcon(AllIcons.General.Error);
+                                sshConnectionState.append("Cannot establish connection");
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
         lldbServerPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
                 new OpenServerBrowserDialogActionListener(project, s -> lldbServerPathField.setText(s)));
-        lldbServerArgsField = new JBTextField();
 
+        setEmptyText(lldbServerPathField.getTextField(), "/usr/bin/lldb-server-18");
+
+        lldbServerArgsField = new JBTextField();
+        lldbServerArgsField.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent documentEvent) {
+                updateAutoLldbServerArgs();
+            }
+        });
         programArgumentsField = new RawCommandLineEditor();
         remoteWorkingDirectory = new TextFieldWithBrowseButton(new ExtendableTextField(10),
                 new OpenServerBrowserDialogActionListener(project, s -> remoteWorkingDirectory.setText(s)));
@@ -94,10 +164,12 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
         remoteCompilerOptions = new RawCommandLineEditor();
         targetExecutableOutputPath = new TextFieldWithBrowseButton(new ExtendableTextField(10),
                 new OpenServerBrowserDialogActionListener(project, s -> targetExecutableOutputPath.setText(s)));
+        targetExecutableOutputPath.getTextField().getDocument().addDocumentListener(new ExecutablePathChangeListener());
         environmentVariables = new EnvironmentVariablesTextFieldWithBrowseButton();
 
         targetExecutableUploadDirPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
                 new OpenServerBrowserDialogActionListener(project, s -> targetExecutableUploadDirPathField.setText(s)));
+        targetExecutableUploadDirPathField.getTextField().getDocument().addDocumentListener(new ExecutablePathChangeListener());
         targetExecutableDownloadPathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
                 new OpenLocalFileSystemBrowserDialogAction(s -> targetExecutableDownloadPathField.setText(s), CHOOSE_FOLDER));
         localExecutablePathField = new TextFieldWithBrowseButton(new ExtendableTextField(10),
@@ -106,7 +178,7 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
 
         targetProvisionedExecutablePath = new TextFieldWithBrowseButton(new ExtendableTextField(10),
                 new OpenServerBrowserDialogActionListener(project, s -> targetProvisionedExecutablePath.setText(s)));
-
+        targetProvisionedExecutablePath.getTextField().getDocument().addDocumentListener(new ExecutablePathChangeListener());
         targetProvisionedExecutableDownloadDirPath = new TextFieldWithBrowseButton(new ExtendableTextField(10),
                 new OpenLocalFileSystemBrowserDialogAction(s -> targetProvisionedExecutableDownloadDirPath.setText(s)));
 
@@ -152,14 +224,22 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
             }
         });
 
+        executableProvisioningComboBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                ExecutableProvisioning item = (ExecutableProvisioning) e.getItem();
+                createLldbServerArgsEmptyText(item, 1234);
+            }
+        });
+
         cardLayout.show(executableProvisioningPanel, ExecutableProvisioning.LOCAL_EXECUTABLE.name());
 
         panel = FormBuilder.createFormBuilder()
-                .addLabeledComponent("'lldb-dap' path", debuggerPathField)
+                .addLabeledComponent("'lldb-dap' path", lldbDapPath)
                 .addLabeledComponent("'gdb-remote' args", gdbRemoteArgsField)
                 .addLabeledComponent("Package directory", localPackageDirectoryPathField)
                 .addSeparator()
                 .addLabeledComponent("Credentials", sshComboBox)
+                .addComponentToRightColumn(sshConnectionState)
                 .addLabeledComponent("LLDB server", lldbServerPathField)
                 .addLabeledComponent("LLDB server args", lldbServerArgsField)
                 .addSeparator()
@@ -170,6 +250,24 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
                 .addLabeledComponent("Executable provisioning", executableProvisioningComboBox)
                 .addComponent(executableProvisioningPanel)
                 .getPanel();
+    }
+
+    private static void setEmptyText(@NotNull JTextField jTextField, String text) {
+        if (text == null)
+            return;
+        if (jTextField instanceof JBTextField jbTextField) {
+            jbTextField.getEmptyText().setText(text);
+        }
+    }
+
+    private void updateAutoLldbDapPath() {
+        setEmptyText(lldbDapPath.getTextField(), OdinRemoteDebuggerUtils.INSTANCE.autoDetectLldbDap());
+    }
+
+    private void updateAutoLldbServerArgs() {
+        int port = OdinRemoteDebuggerUtils.INSTANCE.extractPortGdbRemoteArgs(gdbRemoteArgsField.getText(), 1234);
+        ExecutableProvisioning executableProvisioning = (ExecutableProvisioning) executableProvisioningComboBox.getSelectedItem();
+        OdinRemoteDebugRunConfigurationSettingsEditor.this.createLldbServerArgsEmptyText(executableProvisioning, port);
     }
 
     private JPanel wrapPanelWithTopAlignment(JPanel panel) {
@@ -186,16 +284,23 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
     @Override
     protected void resetEditorFrom(@NotNull OdinRemoteDebugRunConfiguration s) {
         OdinRemoteDebugRunConfigurationOptions options = s.getOptions();
-        debuggerPathField.setText(options.getDebuggerPath());
+        lldbDapPath.setText(options.getDebuggerPath());
         odinExecutablePathField.setText(options.getRemoteOdinSdkPath());
         localExecutablePathField.setText(options.getLocalExecutablePath());
         targetExecutableUploadDirPathField.setText(options.getTargetExecutableUploadDirPath());
-        String executableProvisioning = options.getExecutableProvisioning();
-        if (executableProvisioning != null && !executableProvisioning.isBlank()) {
-            executableProvisioningComboBox.setSelectedItem(ExecutableProvisioning.valueOf(executableProvisioning));
+        String executableProvisioningString = options.getExecutableProvisioning();
+        ExecutableProvisioning executableProvisioning;
+        if (executableProvisioningString != null && !executableProvisioningString.isBlank()) {
+            executableProvisioning = ExecutableProvisioning.valueOf(executableProvisioningString);
+            executableProvisioningComboBox.setSelectedItem(executableProvisioning);
+        } else {
+            executableProvisioning = null;
         }
+
         lldbServerPathField.setText(options.getLldbServerPath());
+
         targetExecutableDownloadPathField.setText(options.getTargetExecutableDownloadPath());
+
         lldbServerArgsField.setText(options.getLldbServerArgs());
         gdbRemoteArgsField.setText(options.getGdbRemoteArgs());
         List<SshConfig> configs = SshConfigManager.getInstance(s.getProject()).getConfigs();
@@ -220,12 +325,29 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
 
         targetProvisionedExecutablePath.setText(options.getTargetProvisionedExecutablePath());
         targetProvisionedExecutableDownloadDirPath.setText(options.getTargetProvisionedExecutableDownloadDirPath());
+
+        createLldbServerArgsEmptyText(executableProvisioning, 1234);
+    }
+
+    private void createLldbServerArgsEmptyText(ExecutableProvisioning executableProvisioning, int port) {
+        String emptyText = "g 0.0.0.0:" + port;
+        if (executableProvisioning == ExecutableProvisioning.LOCAL_EXECUTABLE) {
+            emptyText += " " + targetExecutableUploadDirPathField.getText();
+        } else if (executableProvisioning == ExecutableProvisioning.PROVIDED_AT_TARGET) {
+            emptyText += " " + targetProvisionedExecutablePath.getText();
+        } else if (executableProvisioning == ExecutableProvisioning.BUILD_AT_TARGET) {
+            emptyText += " " + targetExecutableOutputPath.getText();
+        }
+
+        if (lldbServerArgsField.getText().isBlank()) {
+            lldbServerArgsField.getEmptyText().setText(emptyText);
+        }
     }
 
     @Override
     protected void applyEditorTo(@NotNull OdinRemoteDebugRunConfiguration s) throws ConfigurationException {
         OdinRemoteDebugRunConfigurationOptions options = s.getOptions();
-        options.setDebuggerPath(debuggerPathField.getText());
+        options.setDebuggerPath(lldbDapPath.getText());
         options.setRemoteOdinSdkPath(odinExecutablePathField.getText());
         options.setLocalExecutablePath(localExecutablePathField.getText());
         SshConfig selectedSshConfig = sshComboBox.getSelectedSshConfig();
@@ -294,6 +416,18 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
         }
     }
 
+    @Override
+    protected void disposeEditor() {
+        super.disposeEditor();
+    }
+
+    private class ExecutablePathChangeListener extends DocumentAdapter {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent documentEvent) {
+            createLldbServerArgsEmptyText((ExecutableProvisioning) executableProvisioningComboBox.getSelectedItem(), 1234);
+        }
+    }
+
     private class OpenServerBrowserDialogActionListener implements ActionListener {
         private final Project project;
         private final Consumer<String> setter;
@@ -329,7 +463,6 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
                     }
                 }
             }
-
         }
     }
 }
