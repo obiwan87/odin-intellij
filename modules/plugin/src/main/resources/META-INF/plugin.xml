@@ -3,6 +3,20 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>0.11.0</h3>
+        <h4>Bug Fixes</h4>
+        <ul>
+            <li>Fix bug where auto-completion would be triggered after literals</li>
+            <li>Fix many unhandled NPEs</li>
+            <li>Attempt fix at <code>PsiInvalidAccessException</code></li>
+            <li>Fix bug in collection path resolution</li>
+            <li>Parameter hints for Objective-C and pseudo methods are now display correctly</li>
+        </ul>
+
+        <h4>Improvements & Features</h4>
+        <li>Add support for integrated <code>odinfmt</code></li>
+        <li>Improve UX of remote debugger configuration</li>
+
         <h3>0.10.0</h3>
         <h4>Bug Fixes</h4>
         <ul>
