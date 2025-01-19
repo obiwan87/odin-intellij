@@ -73,15 +73,17 @@ public class OdinDocumentationProvider extends AbstractDocumentationProvider {
                 int index = initVariableDeclaration.getDeclaredIdentifiers().indexOf(declaredIdentifier);
                 List<OdinExpression> expressionList = initVariableDeclaration.getRhsExpressions()
                         .getExpressionList();
-                OdinExpression odinExpression = expressionList.get(index);
-                String type;
-                if (initVariableDeclaration.getType() == null) {
-                    TsOdinType tsOdinType = odinExpression.getInferredType();
-                    type = tsOdinType.getLabel();
-                } else {
-                    type = initVariableDeclaration.getType().getText();
+                if (!expressionList.isEmpty()) {
+                    OdinExpression odinExpression = expressionList.get(index);
+                    String type;
+                    if (initVariableDeclaration.getType() == null) {
+                        TsOdinType tsOdinType = odinExpression.getInferredType();
+                        type = tsOdinType.getLabel();
+                    } else {
+                        type = initVariableDeclaration.getType().getText();
+                    }
+                    declarationText += " : " + type + " = " + odinExpression.getText();
                 }
-                declarationText += " : " + type + " = " + odinExpression.getText();
             }
         }
 
