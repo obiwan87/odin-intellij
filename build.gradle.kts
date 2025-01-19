@@ -94,6 +94,11 @@ allprojects {
                     includeModule("com.jetbrains.intellij.rider", "riderRD")
                 }
             }
+            releases {
+                content {
+                    includeModule("com.jetbrains.intellij.rider", "riderRD")
+                }
+            }
         }
     }
     dependencies {
@@ -104,6 +109,7 @@ allprojects {
                 intellijIdeaCommunity(ideaVersion, useInstaller = false)
             }
         }
+
     }
     tasks {
         runIde { enabled = false }
@@ -177,6 +183,8 @@ project(":rider") {
         implementation(project(":debugger"))
         intellijPlatform {
             rider(riderVersion, useInstaller = false)
+            bundledModule("intellij.rider")
+            jetbrainsRuntime()
             for (p in riderPlugins) {
                 bundledPlugin(p)
             }
@@ -191,7 +199,7 @@ project(":core") {
     dependencies {
         lsp4ijDep()
         intellijPlatform {
-            testFramework(TestFrameworkType.Platform)
+            testFramework(TestFrameworkType.Platform, version = "243.22562.220")
             testImplementation("junit:junit:4.13.2")
             testCompileOnly("org.projectlombok:lombok:1.18.34")
             testCompileOnly("org.junit.jupiter:junit-jupiter-api:5.4.2")
@@ -307,8 +315,10 @@ project(":plugin") {
 dependencies {
     intellijPlatform {
         when (baseIDE) {
-            "idea" -> intellijIdeaCommunity(ideaVersion, useInstaller = false)
+            "ideaC" -> intellijIdeaCommunity(ideaVersion, useInstaller = false)
+            "ideaU" -> intellijIdeaUltimate(ideaVersion, useInstaller = false)
             "clion" -> clion(clionVersion, useInstaller = false)
+            "rider" -> rider(riderVersion, useInstaller = false)
         }
     }
 }

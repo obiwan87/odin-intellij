@@ -10,6 +10,8 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.lasagnerd.odin.rider.OdinRiderInteropService;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -20,7 +22,20 @@ public class OdinSdkLibraryManager {
 
     public static final String ODIN_SDK_LIBRARY_NAME = "Odin SDK";
 
-    public static void addOrUpdateOdinSdkLibrary(Project project, String sdkPath) {
+    public static void addOrUpdateOdinSdkLibrary(Project project,
+                                                 @Nullable String previousPath,
+                                                 @NotNull String sdkPath) {
+        if (OdinRiderInteropService.isRider(project)) {
+            if (previousPath != null && !previousPath.isBlank()) {
+                OdinRiderInteropService.getInstance(project).detachSdkRoot(previousPath);
+            }
+            OdinRiderInteropService.getInstance(project).attachSdkRoot(sdkPath);
+        } else {
+            doAddLibrary(project, sdkPath);
+        }
+    }
+
+    private static void doAddLibrary(Project project, String sdkPath) {
         LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
         Library existingLibrary = libraryTable.getLibraryByName(ODIN_SDK_LIBRARY_NAME);
 
@@ -71,7 +86,7 @@ public class OdinSdkLibraryManager {
 
         if (LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(ODIN_SDK_LIBRARY_NAME) != null) {
             Library libraryByName = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(ODIN_SDK_LIBRARY_NAME);
-            if(libraryByName != null) {
+            if (libraryByName != null) {
                 LibraryOrderEntry libraryOrderEntry = rootModel.addLibraryEntry(libraryByName);
                 libraryOrderEntry.setScope(DependencyScope.COMPILE);
             }

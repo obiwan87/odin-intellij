@@ -40,18 +40,6 @@ public class OdinEditorNotificationProvider implements EditorNotificationProvide
         };
     }
 
-    private static @NotNull EditorNotificationPanel createSetupSDKasLibrary(@NotNull Project project, @NotNull VirtualFile file, FileEditor fileEditor, Optional<String> sdkPath) {
-        EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning);
-        panel.setText("Odin SDK is not configured as project collection");
-        panel.createActionLabel("Set collection", () -> {
-            if (!project.isDisposed()) {
-                file.refresh(false, false);
-                OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project, sdkPath.get());
-            }
-        });
-        return panel;
-    }
-
     private static @NotNull EditorNotificationPanel createSetupSdkPanel(@NotNull Project project, @NotNull VirtualFile file, FileEditor fileEditor) {
         EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning);
         panel.setText("No Odin SDK has been setup for this project");

@@ -1,29 +1,35 @@
 <idea-plugin package="com.lasagnerd.odin.rider">
     <depends>com.intellij.modules.rider</depends>
-<!--    <actions>-->
+    <!--    <actions>-->
 
-<!--        <group id="OdinGroup"-->
-<!--               text="Odin"-->
-<!--               class="com.lasagnerd.odin.rider.OdinMarkRootGroup"-->
-<!--               popup="true"-->
-<!--               description="Mark directories as roots">-->
-<!--            <add-to-group group-id="SolutionExplorerPopupMenu" anchor="last"/>-->
-<!--            <action-->
-<!--                    id="com.lasagnerd.odin.rider.OdinRiderMarkSourceRootAction"-->
-<!--                    class="com.lasagnerd.odin.rider.OdinRiderMarkSourceRootAction"-->
-<!--                    text="Odin Source Directory"-->
-<!--                    icon="AllIcons.Modules.SourceRoot"-->
-<!--                    description="Marks a directory as an Odin source"/>-->
-<!--            <action id="com.lasagnerd.odin.rider.OdinRiderMarkCollectionRootAction"-->
-<!--                    class="com.lasagnerd.odin.rider.OdinRiderMarkCollectionRootAction"-->
-<!--                    text="Odin Collection Directory"-->
-<!--                    icon="AllIcons.Nodes.PpLibFolder"-->
-<!--                    description="Marks a directory as an Odin collection" />-->
-<!--            <action id="com.lasagnerd.odin.rider.OdinRiderUnmarkRootAction"-->
-<!--                    class="com.lasagnerd.odin.rider.OdinRiderUnmarkRootAction"-->
-<!--                    text="Unmark Odin Source Directory"-->
-<!--                    description="Unmarks a Odin source directory"/>-->
-<!--        </group>-->
+    <!--        <group id="OdinGroup"-->
+    <!--               text="Odin"-->
+    <!--               class="com.lasagnerd.odin.rider.OdinMarkRootGroup"-->
+    <!--               popup="true"-->
+    <!--               description="Mark directories as roots">-->
+    <!--            <add-to-group group-id="SolutionExplorerPopupMenu" anchor="last"/>-->
+    <!--            <action-->
+    <!--                    id="com.lasagnerd.odin.rider.OdinRiderMarkSourceRootAction"-->
+    <!--                    class="com.lasagnerd.odin.rider.OdinRiderMarkSourceRootAction"-->
+    <!--                    text="Odin Source Directory"-->
+    <!--                    icon="AllIcons.Modules.SourceRoot"-->
+    <!--                    description="Marks a directory as an Odin source"/>-->
+    <!--            <action id="com.lasagnerd.odin.rider.OdinRiderMarkCollectionRootAction"-->
+    <!--                    class="com.lasagnerd.odin.rider.OdinRiderMarkCollectionRootAction"-->
+    <!--                    text="Odin Collection Directory"-->
+    <!--                    icon="AllIcons.Nodes.PpLibFolder"-->
+    <!--                    description="Marks a directory as an Odin collection" />-->
+    <!--            <action id="com.lasagnerd.odin.rider.OdinRiderUnmarkRootAction"-->
+    <!--                    class="com.lasagnerd.odin.rider.OdinRiderUnmarkRootAction"-->
+    <!--                    text="Unmark Odin Source Directory"-->
+    <!--                    description="Unmarks a Odin source directory"/>-->
+    <!--        </group>-->
 
-<!--    </actions>-->
+    <!--    </actions>-->
+    <extensions defaultExtensionNs="com.intellij">
+
+        <projectService serviceInterface="com.lasagnerd.odin.rider.OdinRiderInteropService"
+                        serviceImplementation="com.lasagnerd.odin.rider.OdinRiderInteropServiceImpl"/>
+    </extensions>
+
 </idea-plugin>

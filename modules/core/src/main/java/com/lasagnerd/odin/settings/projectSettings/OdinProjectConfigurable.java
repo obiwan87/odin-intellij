@@ -84,9 +84,13 @@ public class OdinProjectConfigurable implements Configurable {
             }
         }
 
+        String previousSdkPath = state.getSdkPath();
         apply(state, projectSettings);
 
-        OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project, projectSettings.getSdkPath());
+        OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project,
+                previousSdkPath,
+                projectSettings.getSdkPath()
+        );
     }
 
     public static void apply(OdinProjectSettingsState state, OdinProjectSettings sdkSettings) {
