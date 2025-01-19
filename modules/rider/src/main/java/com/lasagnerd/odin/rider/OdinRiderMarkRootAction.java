@@ -1,58 +1,85 @@
 package com.lasagnerd.odin.rider;
 
-import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.projectView.actions.MarkSourceRootAction;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.rider.projectView.views.ProjectViewUtilsKt;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.Iterator;
+import java.util.Locale;
 
-public abstract class OdinRiderMarkRootAction extends MarkSourceRootAction {
-    private final JpsModuleSourceRootType<?> rootType;
+public abstract class OdinRiderMarkRootAction extends DumbAwareAction {
+    private static final Logger LOG = Logger.getInstance(OdinRiderMarkSourceRootAction.class);
+    @Getter
+    protected final JpsModuleSourceRootType<?> rootType;
 
     public OdinRiderMarkRootAction(@NotNull JpsModuleSourceRootType<?> rootType) {
-        super(rootType);
+        super();
+        ModuleSourceRootEditHandler<?> editHandler = ModuleSourceRootEditHandler.getEditHandler(rootType);
+
+        LOG.assertTrue(editHandler != null);
+
+        Presentation presentation = this.getTemplatePresentation();
+        presentation.setIcon(editHandler.getRootIcon());
+        presentation.setText(editHandler.getFullRootTypeName());
+        presentation.setDescription(ProjectBundle.messagePointer("module.toggle.sources.action.description",
+                editHandler.getFullRootTypeName().toLowerCase(Locale.getDefault())));
         this.rootType = rootType;
     }
 
-    @Override
-    protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
-        ModuleType<?> moduleType = ModuleType.get(module);
-        if (ModuleSourceRootEditHandler.getEditHandler(this.rootType) != null && (!selection.myHaveSelectedFilesUnderSourceRoots || moduleType.isMarkInnerSupportedFor(this.rootType))) {
-            if (selection.mySelectedDirectories.isEmpty()) {
-                Iterator<SourceFolder> iterator = selection.mySelectedRoots.iterator();
-                SourceFolder root;
-                do {
-                    if (!iterator.hasNext()) {
-                        return false;
-                    }
+    public static VirtualFile getSelection(@NotNull AnActionEvent e) {
+        VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+        if (files == null)
+            return null;
 
-                    root = iterator.next();
-                } while (this.rootType.equals(root.getRootType()));
+        if (files.length != 1)
+            return null;
 
-            }
-            return true;
-        } else {
-            return false;
+        VirtualFile firstFile = files[0];
+        if (!firstFile.isDirectory()) {
+            return null;
         }
+
+        return firstFile;
+    }
+
+    public static void refresh() {
+
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        super.actionPerformed(e);
-        refresh();
+        Project project = getEventProject(e);
+        if (project == null)
+            return;
+        VirtualFile selection = getSelection(e);
+        if (selection != null) {
+            markRoot(e, selection);
+            ProjectView projectView = ProjectView.getInstance(project);
+            if (projectView != null) {
+                ProjectViewUtilsKt.updateAllFromRoot(projectView);
+            }
+        }
     }
 
-    public static void refresh() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        SaveAndSyncHandler.getInstance().refreshOpenFiles();
-        VirtualFileManager.getInstance().refreshWithoutFileWatcher(true);
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+
+        VirtualFile selection = getSelection(e);
+        if (selection != null) {
+            e.getPresentation().setEnabled(true);
+        }
     }
+
+    protected abstract void markRoot(AnActionEvent e, VirtualFile selection);
 }

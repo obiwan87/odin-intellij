@@ -28,10 +28,12 @@ import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootProperties;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
+import com.lasagnerd.odin.rider.OdinRiderInteropService;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkLibraryManager;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -55,6 +57,28 @@ public class OdinImportUtils {
         return null;
     }
 
+    public static OdinCollection getCollection(Project project, VirtualFile directoryFile) {
+        if (OdinRiderInteropService.isRider(project)) {
+            return OdinRiderInteropService.getInstance(project).getCollection(directoryFile);
+        }
+
+        Module module = ModuleUtilCore.findModuleForFile(directoryFile, project);
+        if (module == null) {
+            return null;
+        }
+
+        SourceFolder sourceFolder = OdinRootTypeUtils.getCollectionFolder(directoryFile,
+                ModuleRootManager.getInstance(module).getModifiableModel());
+        if (sourceFolder != null) {
+            JpsElement properties = sourceFolder.getJpsElement().getProperties();
+            if (properties instanceof OdinCollectionRootProperties collectionRootProperties) {
+
+                return new OdinCollection(collectionRootProperties.getCollectionName(), directoryFile.getPath());
+            }
+        }
+
+        return null;
+    }
 
     public static OdinSymbolTable getSymbolsOfImportedPackage(OdinContext context, OdinImportStatement importStatement) {
         OdinImport importInfo = importStatement.getImportDeclaration().getImportInfo();

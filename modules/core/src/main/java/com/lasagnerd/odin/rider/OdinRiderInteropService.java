@@ -1,6 +1,8 @@
 package com.lasagnerd.odin.rider;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.lasagnerd.odin.codeInsight.imports.OdinCollection;
 
 public interface OdinRiderInteropService {
     static OdinRiderInteropService getInstance(Project project) {
@@ -14,4 +16,8 @@ public interface OdinRiderInteropService {
     void attachSdkRoot(String path);
 
     void detachSdkRoot(String path);
+
+    OdinCollection getCollection(VirtualFile directoryFile);
+
+    boolean isSourceRoot(VirtualFile directoryFile);
 }
