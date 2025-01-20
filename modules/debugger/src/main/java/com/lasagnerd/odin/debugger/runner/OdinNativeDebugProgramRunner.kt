@@ -42,6 +42,7 @@ import com.lasagnerd.odin.runConfiguration.build.OdinBuildRunConfiguration
 import com.lasagnerd.odin.runConfiguration.test.OdinTestRunCommandLineState
 import com.lasagnerd.odin.runConfiguration.test.OdinTestRunConfiguration
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectConfigurable
+import com.lasagnerd.odin.utils.CLIUtils
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -92,7 +93,10 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
         val expandedOutputPath = expandPath(environment.project, outputPath)
 
-        val runExecutable = GeneralCommandLine(expandedOutputPath)
+        var runExecutable = GeneralCommandLine(expandedOutputPath)
+        val programArguments = runProfile.options.programArguments
+        val argsList = CLIUtils.translateCommandline(programArguments)
+        runExecutable.addParameters(argsList.toList())
         runExecutable.setWorkDirectory(expandedWorkingDirectory)
         val debugCompiledExeRunParameters = OdinDebugRunParameters(runExecutable, debuggerDriverConfiguration)
 

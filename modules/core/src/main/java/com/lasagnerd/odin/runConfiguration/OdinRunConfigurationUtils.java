@@ -21,6 +21,7 @@ import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinStructType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
+import com.lasagnerd.odin.utils.CLIUtils;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -202,7 +203,8 @@ public class OdinRunConfigurationUtils {
 
         if (programArguments != null && !programArguments.isEmpty()) {
             OdinSdkUtils.addCommandPart(command, "--");
-            Collections.addAll(command, programArguments.split(" +"));
+            var argsList = CLIUtils.translateCommandline(programArguments);
+            Collections.addAll(command, argsList);
         }
 
         GeneralCommandLine commandLine = new GeneralCommandLine(command);
@@ -212,9 +214,6 @@ public class OdinRunConfigurationUtils {
         return commandLine;
     }
 
-    public static @Nullable OdinFile getFirstOdinFile(PsiDirectory psiDirectory, Project project) {
-        return getFirstOdinFile(psiDirectory, project, f -> true);
-    }
 
     public static @Nullable OdinFile getFirstOdinFile(PsiDirectory psiDirectory, Project project, Predicate<OdinFile> filePredicate) {
         OdinFile odinFile;

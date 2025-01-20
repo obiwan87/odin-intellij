@@ -6,7 +6,6 @@ import com.intellij.execution.process.CapturingAnsiEscapesAwareProcessHandler;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.io.BaseOutputReader;
@@ -52,7 +51,7 @@ public class CLIUtils {
      * @return the command line broken into strings.
      * An empty or null toProcess parameter results in a zero sized array.
      */
-    public static String[] translateCommandline(String toProcess) throws ConfigurationException {
+    public static String[] translateCommandline(String toProcess) throws RuntimeException {
         if (toProcess == null || toProcess.isEmpty()) {
             //no command? no string
             return new String[0];
@@ -107,7 +106,7 @@ public class CLIUtils {
             result.add(current.toString());
         }
         if (state == inQuote || state == inDoubleQuote) {
-            throw new ConfigurationException("unbalanced quotes in " + toProcess);
+            throw new RuntimeException("unbalanced quotes in " + toProcess);
         }
         return result.toArray(new String[0]);
     }

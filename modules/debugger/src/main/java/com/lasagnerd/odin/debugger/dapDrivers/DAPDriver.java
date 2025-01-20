@@ -16,6 +16,7 @@ package com.lasagnerd.odin.debugger.dapDrivers;/*
 
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,12 +35,12 @@ import com.jetbrains.cidr.execution.debugger.memory.AddressRange;
 import com.jetbrains.cidr.system.HostMachine;
 import com.jetbrains.cidr.system.LocalHost;
 import com.lasagnerd.odin.debugger.OdinDebuggerLanguage;
-import lombok.val;
 import org.eclipse.lsp4j.debug.Module;
 import org.eclipse.lsp4j.debug.Thread;
 import org.eclipse.lsp4j.debug.*;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolClient;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolServer;
+import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 import org.eclipse.lsp4j.jsonrpc.debug.DebugLauncher;
 import org.eclipse.lsp4j.jsonrpc.messages.Either3;
@@ -52,6 +53,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -80,7 +82,7 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         driverName = config.getDriverName();
         processHandler = createDebugProcessHandler(config.createDriverCommandLine(this, ArchitectureType.forVmCpuArch(CpuArch.CURRENT)), config);
         this.language = language;
-        val pipeOutput = new PipedOutputStream();
+        PipedOutputStream pipeOutput = new PipedOutputStream();
         PipedInputStream pipeInput;
         try {
             pipeInput = new BlockingPipedInputStream(pipeOutput, 1024 * 1024);
@@ -95,7 +97,7 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
 
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-                val text = event.getText();
+                String text = event.getText();
                 if (text == null) return;
                 if (ProcessOutputType.isStdout(outputType)) {
                     try {
@@ -116,12 +118,12 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
             }
         });
         client = createDebuggerClient();
-        val executorServer = Executors.newSingleThreadExecutor();
-        val launcher = DebugLauncher.createLauncher(client, getServerInterface(), pipeInput, processHandler.getProcessInput(), executorServer, this::wrapMessageConsumer);
+        ExecutorService executorServer = Executors.newSingleThreadExecutor();
+        Launcher<Server> launcher = DebugLauncher.createLauncher(client, getServerInterface(), pipeInput, processHandler.getProcessInput(), executorServer, this::wrapMessageConsumer);
         server = wrapDebugServer(launcher.getRemoteProxy());
         launcher.startListening();
 
-        val initArgs = new InitializeRequestArguments();
+        InitializeRequestArguments initArgs = new InitializeRequestArguments();
 
         //Identification
         initArgs.setClientID(getClientID());
@@ -181,7 +183,7 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     public void writeMemory(@NotNull Address address, byte[] bytes) throws ExecutionException, DebuggerCommandException {
         if (!capabilities.getSupportsWriteMemoryRequest()) throw new DebuggerCommandException("Memory write is not supported");
 
-        val args = new WriteMemoryArguments();
+        WriteMemoryArguments args = new WriteMemoryArguments();
         args.setMemoryReference(DAPDriverUtils.stringifyAddress(address.getUnsignedLongValue()));
         args.setData(Base64.getEncoder().encodeToString(bytes));
         server.writeMemoryNow(args);
@@ -208,37 +210,13 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
 
     }
 
-    protected class DAPInferior extends Inferior {
-        @Override
-        protected long startImpl() {
-            try {
-                server.configurationDone(new ConfigurationDoneArguments()).get();
-            } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-            return -1;
-        }
-
-        @Override
-        protected void detachImpl() {
-            val args = new DisconnectArguments();
-            server.disconnect(args);
-        }
-
-        @Override
-        protected boolean destroyImpl() {
-            detachImpl();
-            return true;
-        }
-    }
-
     @Override
     public @NotNull Inferior loadForLaunch(@NotNull Installer installer, @Nullable String s) throws ExecutionException {
         if (initializeFuture == null) {
             throw new IllegalStateException("DAPDriver$postConstructor wasn't called!");
         }
-        val cli = installer.install();
-        val args = new HashMap<String, Object>();
+        GeneralCommandLine cli = installer.install();
+        HashMap<String, Object> args = new HashMap<String, Object>();
         String exePath = FileUtil.toSystemDependentName(cli.getExePath());
         args.put("program", exePath);
         args.put("cwd", cli.getWorkDirectory().toString());
@@ -246,13 +224,25 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         args.put("type", getType());
         args.put("request", "launch");
         addArgsForLaunch(args);
-        val params = cli.getParametersList().getArray();
+        String[] params = cli.getParametersList().getArray();
         if (params.length > 0) {
             args.put("args", params);
         }
         doStartDebugging(args);
         DAPDriverUtils.get(initializeFuture);
         return new DAPInferior();
+    }
+
+    /**
+     * User presses "Pause Program" button.
+     * {@link #handleInterrupted} supposed to be called asynchronously when actual pause happened
+     */
+    @Override
+    public boolean interrupt() {
+        PauseArguments pause = new PauseArguments();
+        pause.setThreadId(-1);
+        server.pause(pause);
+        return true;
     }
 
     @Override
@@ -288,23 +278,23 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         throw new ExecutionException("Not supported");
     }
 
-    /**
-     * User presses "Pause Program" button.
-     * {@link #handleInterrupted} supposed to be called asynchronously when actual pause happened
-     */
     @Override
-    public boolean interrupt() {
-        val pause = new PauseArguments();
-        pause.setThreadId(-1);
-        server.pause(pause);
+    public boolean resume() {
+        ContinueArguments args = new ContinueArguments();
+        server.continue_(args);
         return true;
     }
 
     @Override
-    public boolean resume() {
-        val args = new ContinueArguments();
-        server.continue_(args);
-        return true;
+    public void stepOver(@NotNull LLThread thread, boolean stepByInstruction) {
+        NextArguments args = new NextArguments();
+        args.setThreadId(Math.toIntExact(thread.getId()));
+        if (stepByInstruction) {
+            args.setGranularity(SteppingGranularity.INSTRUCTION);
+        } else {
+            args.setGranularity(SteppingGranularity.LINE);
+        }
+        server.next(args);
     }
 
     @Override
@@ -326,20 +316,8 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     }
 
     @Override
-    public void stepOver(@NotNull LLThread thread, boolean stepByInstruction) {
-        val args = new NextArguments();
-        args.setThreadId(Math.toIntExact(thread.getId()));
-        if (stepByInstruction) {
-            args.setGranularity(SteppingGranularity.INSTRUCTION);
-        } else {
-            args.setGranularity(SteppingGranularity.LINE);
-        }
-        server.next(args);
-    }
-
-    @Override
     public void stepInto(@NotNull LLThread thread, boolean forceStepIntoFramesWithNoDebugInfo, boolean stepByInstruction) {
-        val args = new StepInArguments();
+        StepInArguments args = new StepInArguments();
         args.setThreadId(Math.toIntExact(thread.getId()));
         if (stepByInstruction) {
             args.setGranularity(SteppingGranularity.INSTRUCTION);
@@ -351,7 +329,7 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
 
     @Override
     public void stepOut(@NotNull LLThread thread, boolean stopInFramesWithNoDebugInfo) {
-        val args = new StepOutArguments();
+        StepOutArguments args = new StepOutArguments();
         args.setThreadId(Math.toIntExact(thread.getId()));
         server.stepOut(args);
     }
@@ -363,13 +341,13 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
      */
     @Override
     public void runTo(@NotNull String path, int line) {
-        val targetArgs = new GotoTargetsArguments();
-        val src = DAPDriverUtils.toSource(path);
+        GotoTargetsArguments targetArgs = new GotoTargetsArguments();
+        Source src = DAPDriverUtils.toSource(path);
         targetArgs.setSource(src);
         targetArgs.setLine(line);
         server.gotoTargets(targetArgs).thenAccept(locations -> {
-            val args = new GotoArguments();
-            val target = Arrays.stream(locations.getTargets()).findFirst().orElse(null);
+            GotoArguments args = new GotoArguments();
+            GotoTarget target = Arrays.stream(locations.getTargets()).findFirst().orElse(null);
             if (target == null) {
                 throw new RuntimeException("Could not find runTo target!");
             }
@@ -377,6 +355,19 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
             args.setThreadId(-1);
             server.goto_(args);
         });
+    }
+
+    /**
+     * Perform debugger exit
+     *
+     * @see #stepOver
+     */
+    @Override
+    protected boolean doExit() {
+        DisconnectArguments disconnectArgs = new DisconnectArguments();
+        disconnectArgs.setTerminateDebuggee(true);
+        server.disconnect(disconnectArgs);
+        return true;
     }
 
     /**
@@ -390,16 +381,27 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     }
 
     /**
-     * Perform debugger exit
-     *
-     * @see #stepOver
+     * User adds a breakpoint
+     * {@link #handleBreakpointAdded} supposed to be called asynchronously when done
      */
+    @NotNull
     @Override
-    protected boolean doExit() {
-        val disconnectArgs = new DisconnectArguments();
-        disconnectArgs.setTerminateDebuggee(true);
-        server.disconnect(disconnectArgs);
-        return true;
+    public AddBreakpointResult addBreakpoint(@NotNull String path, int line, @Nullable String condition, boolean ignoreSourceHash) throws ExecutionException {
+        line = line + 1;
+        SourceBreakpoint bp = new SourceBreakpoint();
+        bp.setLine(line);
+        bp.setCondition(condition);
+        ArrayList<@NotNull SourceBreakpoint> bps = new ArrayList<>(breakpoints.values().stream().filter(b -> b.ref.isFirst() && b.ref.getFirst().path.equals(path)).map(b -> b.ref.getFirst().src).toList());
+        bps.add(bp);
+        Breakpoint[] bpsRes = updateSourceBreakpoints(path, bps);
+
+        Breakpoint dapBP = bpsRes[bpsRes.length - 1];
+
+        MappedBreakpoint mbp = new MappedBreakpoint(dapBP, Either3.forFirst(new PathedSourceBreakpoint(path, bp)));
+
+        breakpoints.compute(dapBP.getId(), (id, old) -> mbp);
+
+        return new AddBreakpointResult(mbp.java, mbp.loc == null ? List.of() : List.of(mbp.loc));
     }
 
     /**
@@ -474,37 +476,13 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
 
     protected final Map<Integer, MappedModule> modules = new HashMap<>();
 
-    /**
-     * User adds a breakpoint
-     * {@link #handleBreakpointAdded} supposed to be called asynchronously when done
-     */
-    @NotNull
-    @Override
-    public AddBreakpointResult addBreakpoint(@NotNull String path, int line, @Nullable String condition, boolean ignoreSourceHash) throws ExecutionException {
-        line = line + 1;
-        val bp = new SourceBreakpoint();
-        bp.setLine(line);
-        bp.setCondition(condition);
-        val bps = new ArrayList<>(breakpoints.values().stream().filter(b -> b.ref.isFirst() && b.ref.getFirst().path.equals(path)).map(b -> b.ref.getFirst().src).toList());
-        bps.add(bp);
-        val bpsRes = updateSourceBreakpoints(path, bps);
-
-        val dapBP = bpsRes[bpsRes.length - 1];
-
-        val mbp = new MappedBreakpoint(dapBP, Either3.forFirst(new PathedSourceBreakpoint(path, bp)));
-
-        breakpoints.compute(dapBP.getId(), (id, old) -> mbp);
-
-        return new AddBreakpointResult(mbp.java, mbp.loc == null ? List.of() : List.of(mbp.loc));
-    }
-
     public Breakpoint[] updateSourceBreakpoints(String path, List<SourceBreakpoint> bps) throws ExecutionException {
-        val args = new SetBreakpointsArguments();
-        val src = DAPDriverUtils.toSource(path);
+        SetBreakpointsArguments args = new SetBreakpointsArguments();
+        Source src = DAPDriverUtils.toSource(path);
         args.setSource(src);
         args.setBreakpoints(bps.toArray(SourceBreakpoint[]::new));
         args.setSourceModified(false);
-        val res = server.setBreakpointsNow(args);
+        SetBreakpointsResponse res = server.setBreakpointsNow(args);
         return res.getBreakpoints();
     }
 
@@ -514,17 +492,17 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     @Override
     public @Nullable LLSymbolicBreakpoint addSymbolicBreakpoint(@NotNull SymbolicBreakpoint symBreakpoint) throws ExecutionException, DebuggerCommandException {
         if (!capabilities.getSupportsFunctionBreakpoints()) throw new DebuggerCommandException("Server doesn't support function breakpoints!");
-        val fbp = new FunctionBreakpoint();
+        FunctionBreakpoint fbp = new FunctionBreakpoint();
         fbp.setName(symBreakpoint.getPattern());
         fbp.setCondition(symBreakpoint.getCondition());
-        val bps = new ArrayList<>(breakpoints.values().stream().filter(b -> b.ref.isSecond()).map(b -> b.ref.getSecond()).toList());
+        ArrayList<FunctionBreakpoint> bps = new ArrayList<>(breakpoints.values().stream().filter(b -> b.ref.isSecond()).map(b -> b.ref.getSecond()).toList());
         bps.add(fbp);
 
-        val bpsRes = updateSymbolicBreakpoints(bps);
+        Breakpoint[] bpsRes = updateSymbolicBreakpoints(bps);
 
-        val dapBP = bpsRes[bpsRes.length - 1];
+        Breakpoint dapBP = bpsRes[bpsRes.length - 1];
 
-        val mbp = new MappedBreakpoint(dapBP, Either3.forSecond(fbp));
+        MappedBreakpoint mbp = new MappedBreakpoint(dapBP, Either3.forSecond(fbp));
 
         breakpoints.compute(dapBP.getId(), (id, old) -> mbp);
 
@@ -532,9 +510,9 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     }
 
     private Breakpoint[] updateSymbolicBreakpoints(List<FunctionBreakpoint> bps) throws ExecutionException {
-        val args = new SetFunctionBreakpointsArguments();
+        SetFunctionBreakpointsArguments args = new SetFunctionBreakpointsArguments();
         args.setBreakpoints(bps.toArray(FunctionBreakpoint[]::new));
-        val res = server.setFunctionBreakpointsNow(args);
+        SetFunctionBreakpointsResponse res = server.setFunctionBreakpointsNow(args);
         return res.getBreakpoints();
     }
 
@@ -545,16 +523,16 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     @Override
     public AddBreakpointResult addAddressBreakpoint(@NotNull Address address, @Nullable String condition) throws ExecutionException, DebuggerCommandException {
         if (!capabilities.getSupportsInstructionBreakpoints()) throw new DebuggerCommandException("Server doesn't support instruction breakpoints!");
-        val ibp = new InstructionBreakpoint();
+        InstructionBreakpoint ibp = new InstructionBreakpoint();
         ibp.setInstructionReference(DAPDriverUtils.stringifyAddress(address.getUnsignedLongValue()));
         ibp.setCondition(condition);
-        val bps = new ArrayList<>(breakpoints.values().stream().filter(b -> b.ref.isThird()).map(b -> b.ref.getThird()).toList());
+        ArrayList<InstructionBreakpoint> bps = new ArrayList<>(breakpoints.values().stream().filter(b -> b.ref.isThird()).map(b -> b.ref.getThird()).toList());
         bps.add(ibp);
-        val bpsRes = updateAddressBreakpoints(bps);
+        Breakpoint[] bpsRes = updateAddressBreakpoints(bps);
 
-        val dapBP = bpsRes[bpsRes.length - 1];
+        Breakpoint dapBP = bpsRes[bpsRes.length - 1];
 
-        val mbp = new MappedBreakpoint(dapBP, Either3.forThird(ibp));
+        MappedBreakpoint mbp = new MappedBreakpoint(dapBP, Either3.forThird(ibp));
 
         breakpoints.compute(dapBP.getId(), (id, old) -> mbp);
 
@@ -562,9 +540,9 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     }
 
     private Breakpoint[] updateAddressBreakpoints(List<InstructionBreakpoint> bps) throws ExecutionException {
-        val args = new SetInstructionBreakpointsArguments();
+        SetInstructionBreakpointsArguments args = new SetInstructionBreakpointsArguments();
         args.setBreakpoints(bps.toArray(InstructionBreakpoint[]::new));
-        val res = server.setInstructionBreakpointsNow(args);
+        SetInstructionBreakpointsResponse res = server.setInstructionBreakpointsNow(args);
         return res.getBreakpoints();
     }
 
@@ -574,15 +552,15 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
      */
     @Override
     public void removeCodepoints(@NotNull Collection<Integer> ids) throws ExecutionException {
-        val removed = new ArrayList<MappedBreakpoint>();
-        for (val id : ids) {
+        ArrayList<MappedBreakpoint> removed = new ArrayList<MappedBreakpoint>();
+        for (Integer id : ids) {
             removed.add(breakpoints.remove(id));
         }
-        val sources = removed.stream().filter(bp -> bp.ref.isFirst()).map(bp -> bp.ref.getFirst().path).distinct().toList();
-        val anyFunc = removed.stream().anyMatch(bp -> bp.ref.isSecond());
-        val anyAddr = removed.stream().anyMatch(bp -> bp.ref.isThird());
-        for (val source : sources) {
-            val bps = breakpoints.values().stream().filter(bp -> bp.ref.isFirst()).map(bp -> bp.ref.getFirst().src).toList();
+        List<@NotNull String> sources = removed.stream().filter(bp -> bp.ref.isFirst()).map(bp -> bp.ref.getFirst().path).distinct().toList();
+        boolean anyFunc = removed.stream().anyMatch(bp -> bp.ref.isSecond());
+        boolean anyAddr = removed.stream().anyMatch(bp -> bp.ref.isThird());
+        for (@NotNull String source : sources) {
+            List<@NotNull SourceBreakpoint> bps = breakpoints.values().stream().filter(bp -> bp.ref.isFirst()).map(bp -> bp.ref.getFirst().src).toList();
             updateSourceBreakpoints(source, bps);
         }
         if (anyFunc) {
@@ -591,6 +569,24 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         if (anyAddr) {
             updateAddressBreakpoints(breakpoints.values().stream().filter(bp -> bp.ref.isThird()).map(bp -> bp.ref.getThird()).toList());
         }
+    }
+
+    /**
+     * Stack trace for a thread
+     */
+    @Override
+    public @NotNull ResultList<LLFrame> getFrames(@NotNull LLThread thread, int from, int count, boolean untilFirstLineWithCode) throws ExecutionException {
+        StackTraceArguments args = new StackTraceArguments();
+        args.setThreadId(Math.toIntExact(thread.getId()));
+        args.setStartFrame(from);
+        args.setLevels(count);
+        StackTraceResponse stackTrace = server.stackTraceNow(args);
+        StackFrame[] stackFrames = stackTrace.getStackFrames();
+        ArrayList<LLFrame> resultList = new ArrayList<LLFrame>(stackFrames.length);
+        for (StackFrame stackFrame : stackFrames) {
+            resultList.add(DAPDriverUtils.frameJBFromDAP(stackFrame, null, modules, this::functionParser, language));
+        }
+        return ResultList.create(resultList, false);
     }
 
     /**
@@ -614,22 +610,21 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         throw new DebuggerCommandException("cancelSymbolsDownload not implemented");
     }
 
-    /**
-     * Stack trace for a thread
-     */
-    @Override
-    public @NotNull ResultList<LLFrame> getFrames(@NotNull LLThread thread, int from, int count, boolean untilFirstLineWithCode) throws ExecutionException {
-        val args = new StackTraceArguments();
-        args.setThreadId(Math.toIntExact(thread.getId()));
-        args.setStartFrame(from);
-        args.setLevels(count);
-        val stackTrace = server.stackTraceNow(args);
-        val stackFrames = stackTrace.getStackFrames();
-        val resultList = new ArrayList<LLFrame>(stackFrames.length);
-        for (val stackFrame : stackFrames) {
-            resultList.add(DAPDriverUtils.frameJBFromDAP(stackFrame, null, modules, this::functionParser, language));
+    protected List<LLValue> getWrappedScopes(@NotNull LLFrame frame) throws ExecutionException {
+        ScopesArguments scopeArgs = new ScopesArguments();
+        int frameID = frame.getIndex();
+        scopeArgs.setFrameId(frameID);
+        ScopesResponse scopes = server.scopesNow(scopeArgs);
+        ArrayList<LLValue> result = new ArrayList<LLValue>();
+        for (Scope scope : scopes.getScopes()) {
+            int ref = scope.getVariablesReference();
+            if ("registers".equalsIgnoreCase(scope.getName())) {
+                updateRegisters(frameID, ref);
+                continue;
+            }
+            result.addAll(getVariables(frameID, scope.getVariablesReference()));
         }
-        return ResultList.create(resultList, false);
+        return result;
     }
 
     /**
@@ -675,60 +670,84 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         return registerSets.entrySet().stream().map(entry -> new LLRegisterSet(entry.getKey(), entry.getValue().stream().map(LLValue::getName).toList())).toList();
     }
 
-    protected List<LLValue> getWrappedScopes(@NotNull LLFrame frame) throws ExecutionException {
-        val scopeArgs = new ScopesArguments();
-        val frameID = frame.getIndex();
-        scopeArgs.setFrameId(frameID);
-        val scopes = server.scopesNow(scopeArgs);
-        val result = new ArrayList<LLValue>();
-        for (val scope : scopes.getScopes()) {
-            val ref = scope.getVariablesReference();
-            if ("registers".equalsIgnoreCase(scope.getName())) {
-                updateRegisters(frameID, ref);
-                continue;
-            }
-            result.addAll(getVariables(frameID, scope.getVariablesReference()));
-        }
-        return result;
-    }
-
-    private static final Pattern HEX_REGEX = Pattern.compile("[0-9a-fA-F]+");
-
     private void updateRegisters(int frameID, int rootRef) throws ExecutionException {
-        val registerGroups = getVariables(frameID, rootRef);
+        List<LLValue> registerGroups = getVariables(frameID, rootRef);
         registerSets.clear();
         int c = 0;
-        for (val registerGroup : registerGroups) {
-            val name = (c++) + " - " + registerGroup.getName();
-            val ref = registerGroup.getUserData(LLVALUE_CHILDREN_REF);
+        for (LLValue registerGroup : registerGroups) {
+            String name = (c++) + " - " + registerGroup.getName();
+            Integer ref = registerGroup.getUserData(LLVALUE_CHILDREN_REF);
             if (ref == null || ref == 0) continue;
-            val registers = getVariables(frameID, ref);
-            val renamedRegisters = new ArrayList<LLValue>();
-            for (val register : registers) {
-                val renamedRegister = new LLValue(register.getName().toLowerCase(), register.getType(), register.getDisplayType(), register.getAddress(), register.getTypeClass(), register.getReferenceExpression());
+            List<LLValue> registers = getVariables(frameID, ref);
+            ArrayList<LLValue> renamedRegisters = new ArrayList<LLValue>();
+            for (LLValue register : registers) {
+                LLValue renamedRegister = new LLValue(register.getName().toLowerCase(), register.getType(), register.getDisplayType(), register.getAddress(), register.getTypeClass(), register.getReferenceExpression());
                 register.copyUserDataTo(renamedRegister);
-                val oldData = renamedRegister.getUserData(LLVALUE_DATA);
+                LLValueData oldData = renamedRegister.getUserData(LLVALUE_DATA);
                 if (oldData != null && HEX_REGEX.matcher(oldData.getValue()).matches()) {
-                    val newData = new LLValueData("0x" + oldData.getValue().toLowerCase(), oldData.getDescription(), oldData.hasLongerDescription(), oldData.mayHaveChildren(), oldData.isSynthetic());
+                    LLValueData newData = new LLValueData("0x" + oldData.getValue().toLowerCase(), oldData.getDescription(), oldData.hasLongerDescription(), oldData.mayHaveChildren(), oldData.isSynthetic());
                     renamedRegister.putUserData(LLVALUE_DATA, newData);
                 }
                 renamedRegisters.add(renamedRegister);
             }
             registerSets.put(name, renamedRegisters);
         }
-        val arch = getArchitecture();
+        String arch = getArchitecture();
         if (arch == null) {
             return;
         }
-        val toggles = new HashMap<String, Boolean>();
+        HashMap<String, Boolean> toggles = new HashMap<String, Boolean>();
         boolean first = true;
-        for (val registerSet : registerSets.keySet()) {
+        for (String registerSet : registerSets.keySet()) {
             toggles.put(registerSet, first);
             first = false;
         }
-        val settings = CidrDebuggerSettings.getInstance().getRegisterSetSettings(arch, driverName);
+        Map<String, Boolean> settings = CidrDebuggerSettings.getInstance().getRegisterSetSettings(arch, driverName);
         if (settings == null || !settings.keySet().containsAll(toggles.keySet()))
             CidrDebuggerSettings.getInstance().setRegisterSetSettings(getArchitecture(), driverName, toggles);
+    }
+
+    private static final Pattern HEX_REGEX = Pattern.compile("[0-9a-fA-F]+");
+
+    /**
+     * Read value of a variable
+     */
+    @Override
+    public @NotNull LLValueData getData(@NotNull LLValue value) throws ExecutionException {
+        String result = "";
+        int childrenRef = 0;
+        boolean failed = false;
+        if (value.getReferenceExpression().isBlank()) {
+            failed = true;
+        } else {
+            EvaluateArguments args = new EvaluateArguments();
+            args.setContext(EvaluateArgumentsContext.VARIABLES);
+            args.setExpression(value.getReferenceExpression());
+            args.setFrameId(value.getUserData(LLVALUE_FRAME));
+            EvaluateResponse res = server.evaluateNow(args);
+            childrenRef = res.getVariablesReference();
+            if (childrenRef > 0) value.putUserData(LLVALUE_CHILDREN_REF, childrenRef);
+            VariablePresentationHint hint = res.getPresentationHint();
+            if (hint != null) {
+                String[] attribs = hint.getAttributes();
+                if (attribs != null) {
+                    for (String attrib : attribs) {
+                        if ("failedEvaluation".equals(attrib)) {
+                            failed = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            result = res.getResult();
+        }
+        if (failed) {
+            LLValueData known = value.getUserData(LLVALUE_DATA);
+            if (known != null) return known;
+            Integer cRef = value.getUserData(LLVALUE_CHILDREN_REF);
+            if (cRef != null) childrenRef = cRef;
+        }
+        return new LLValueData(result, null, false, childrenRef > 0, false);
     }
 
     @Override
@@ -770,54 +789,30 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     }
 
     /**
-     * Read value of a variable
-     */
-    @Override
-    public @NotNull LLValueData getData(@NotNull LLValue value) throws ExecutionException {
-        String result = "";
-        int childrenRef = 0;
-        boolean failed = false;
-        if (value.getReferenceExpression().isBlank()) {
-            failed = true;
-        } else {
-            val args = new EvaluateArguments();
-            args.setContext(EvaluateArgumentsContext.VARIABLES);
-            args.setExpression(value.getReferenceExpression());
-            args.setFrameId(value.getUserData(LLVALUE_FRAME));
-            val res = server.evaluateNow(args);
-            childrenRef = res.getVariablesReference();
-            if (childrenRef > 0) value.putUserData(LLVALUE_CHILDREN_REF, childrenRef);
-            val hint = res.getPresentationHint();
-            if (hint != null) {
-                val attribs = hint.getAttributes();
-                if (attribs != null) {
-                    for (val attrib : attribs) {
-                        if ("failedEvaluation".equals(attrib)) {
-                            failed = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            result = res.getResult();
-        }
-        if (failed) {
-            val known = value.getUserData(LLVALUE_DATA);
-            if (known != null) return known;
-            val cRef = value.getUserData(LLVALUE_CHILDREN_REF);
-            if (cRef != null) childrenRef = cRef;
-        }
-        return new LLValueData(result, null, false, childrenRef > 0, false);
-    }
-
-    /**
      * Read description of a variable
      */
     @Override
     public @Nullable String getDescription(@NotNull LLValue value, int maxLength) {
-        val type = value.getType();
-        val length = Math.min(type.length(), maxLength);
+        String type = value.getType();
+        int length = Math.min(type.length(), maxLength);
         return type.substring(0, length);
+    }
+
+    /**
+     * Unions, structures, or classes are hierarchical. This method help to obtain the hierarchy
+     */
+    @Override
+    public @NotNull ResultList<LLValue> getVariableChildren(@NotNull LLValue value, int from, int count) throws ExecutionException {
+        Integer size = getChildrenCount(value);
+        List<LLValue> children = value.getUserData(LLVALUE_CHILDREN);
+        if (children == null || size == null || from > size) {
+            return new ResultList<>(List.of(), false);
+        }
+        if (from + count >= size) {
+            return new ResultList<>(children.subList(from, size), false);
+        } else {
+            return new ResultList<>(children.subList(from, from + count), true);
+        }
     }
 
     /**
@@ -838,23 +833,6 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     }
 
     /**
-     * Unions, structures, or classes are hierarchical. This method help to obtain the hierarchy
-     */
-    @Override
-    public @NotNull ResultList<LLValue> getVariableChildren(@NotNull LLValue value, int from, int count) throws ExecutionException {
-        val size = getChildrenCount(value);
-        val children = value.getUserData(LLVALUE_CHILDREN);
-        if (children == null || size == null || from > size) {
-            return new ResultList<>(List.of(), false);
-        }
-        if (from + count >= size) {
-            return new ResultList<>(children.subList(from, size), false);
-        } else {
-            return new ResultList<>(children.subList(from, from + count), true);
-        }
-    }
-
-    /**
      * Expression evaluation
      */
     @Deprecated
@@ -864,7 +842,7 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         evalArgs.setFrameId(frameIndex);
         evalArgs.setExpression(expression);
         final EvaluateResponse res = server.evaluateNow(evalArgs);
-        var type = res.getType();
+        String type = res.getType();
         type = type == null ? "unknown" : type;
         final String mRef = res.getMemoryReference();
         Long addr = mRef == null ? null : DAPDriverUtils.parseAddress(mRef);
@@ -880,36 +858,26 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     }
 
     @Override
-    public @NotNull LLValue evaluate(@NotNull LLThread thread, @NotNull LLFrame frame, @NotNull String expression, @Nullable DebuggerDriver.DebuggerLanguage language) throws ExecutionException, DebuggerCommandException {
-        return super.evaluate(thread, frame, expression, language);
-    }
-
-    @Override
-    public @NotNull List<LLInstruction> disassembleFunction(@NotNull Address address, @NotNull AddressRange fallbackRange) throws ExecutionException, DebuggerCommandException {
-        return disassemble(fallbackRange);
-    }
-
-    @Override
     public @NotNull List<LLInstruction> disassemble(@NotNull AddressRange range) throws ExecutionException, DebuggerCommandException {
         if (!capabilities.getSupportsDisassembleRequest()) throw new DebuggerCommandException("disassemble is not supported by debugger!");
-        val args = new DisassembleArguments();
+        DisassembleArguments args = new DisassembleArguments();
         args.setMemoryReference(Long.toHexString(range.getStart().getUnsignedLongValue()));
         args.setInstructionCount(Math.toIntExact(range.getSize()));
         args.setResolveSymbols(true);
-        val disassembly = server.disassembleNow(args);
-        val dapInstructions = disassembly.getInstructions();
-        val jbInstructions = new ArrayList<LLInstruction>(dapInstructions.length);
+        DisassembleResponse disassembly = server.disassembleNow(args);
+        DisassembledInstruction[] dapInstructions = disassembly.getInstructions();
+        ArrayList<LLInstruction> jbInstructions = new ArrayList<LLInstruction>(dapInstructions.length);
         Source loc = null;
         Integer startLine = null;
         Integer endLine = null;
         String symbol = null;
         long baseOffset = 0;
-        for (val dapInstruction : dapInstructions) {
-            val dapLoc = dapInstruction.getLocation();
-            val dapStartLine = dapInstruction.getLine();
-            val dapEndLine = dapInstruction.getEndLine();
-            val dapSymbol = dapInstruction.getSymbol();
-            val dapAddr = DAPDriverUtils.parseAddress(dapInstruction.getAddress());
+        for (DisassembledInstruction dapInstruction : dapInstructions) {
+            Source dapLoc = dapInstruction.getLocation();
+            Integer dapStartLine = dapInstruction.getLine();
+            Integer dapEndLine = dapInstruction.getEndLine();
+            String dapSymbol = dapInstruction.getSymbol();
+            long dapAddr = DAPDriverUtils.parseAddress(dapInstruction.getAddress());
             boolean uniq = true;
             if (dapLoc != null) {
                 loc = dapLoc;
@@ -925,7 +893,7 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
                 baseOffset = dapAddr;
             }
 
-            val llSymbol = symbol == null ? null : new LLSymbolOffset(symbol, dapAddr - baseOffset);
+            LLSymbolOffset llSymbol = symbol == null ? null : new LLSymbolOffset(symbol, dapAddr - baseOffset);
 
             jbInstructions.add(DAPDriverUtils.instructionJBFromDAP(dapInstruction, loc, startLine, endLine, uniq, llSymbol));
         }
@@ -933,14 +901,24 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
     }
 
     @Override
+    public @NotNull LLValue evaluate(@NotNull LLThread thread, @NotNull LLFrame frame, @NotNull String expression, @Nullable DebuggerDriver.DebuggerLanguage language) throws ExecutionException, DebuggerCommandException {
+        return super.evaluate(thread, frame, expression, language);
+    }
+
+    @Override
+    public @NotNull List<LLInstruction> disassembleFunction(@NotNull Address address, @NotNull AddressRange fallbackRange) throws ExecutionException, DebuggerCommandException {
+        return disassemble(fallbackRange);
+    }
+
+    @Override
     public @NotNull List<LLMemoryHunk> dumpMemory(@NotNull AddressRange range) throws ExecutionException, DebuggerCommandException {
         if (!capabilities.getSupportsReadMemoryRequest()) throw new DebuggerCommandException("dumpMemory is0 not supported by debugger!");
-        val start = range.getStart().getUnsignedLongValue();
-        val length = range.getSize();
-        val hunks = new ArrayList<LLMemoryHunk>((int) (length / (long) Integer.MAX_VALUE + 1));
+        long start = range.getStart().getUnsignedLongValue();
+        long length = range.getSize();
+        ArrayList<LLMemoryHunk> hunks = new ArrayList<LLMemoryHunk>((int) (length / (long) Integer.MAX_VALUE + 1));
         for (long offset = 0; offset < length; offset += Integer.MAX_VALUE) {
-            val blockLength = Math.toIntExact(Math.min(Integer.MAX_VALUE, length - offset));
-            val args = new ReadMemoryArguments();
+            int blockLength = Math.toIntExact(Math.min(Integer.MAX_VALUE, length - offset));
+            ReadMemoryArguments args = new ReadMemoryArguments();
             args.setMemoryReference(DAPDriverUtils.stringifyAddress(start + offset));
             args.setCount(blockLength);
             hunks.add(DAPDriverUtils.memoryJBFromDAP(server.readMemoryNow(args)));
@@ -948,18 +926,25 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         return hunks;
     }
 
-
     @Override
     public @NotNull List<LLModule> getLoadedModules() throws ExecutionException, DebuggerCommandException {
         if (!capabilities.getSupportsModulesRequest()) throw new DebuggerCommandException("getLoadedModules is not supported by debugger!");
-        val args = new ModulesArguments();
-        val modulesResponse = server.modulesNow(args);
-        val modules = modulesResponse.getModules();
-        val javaModules = new ArrayList<LLModule>(modules.length);
-        for (val module : modules) {
+        ModulesArguments args = new ModulesArguments();
+        ModulesResponse modulesResponse = server.modulesNow(args);
+        Module[] modules = modulesResponse.getModules();
+        ArrayList<LLModule> javaModules = new ArrayList<LLModule>(modules.length);
+        for (Module module : modules) {
             javaModules.add(DAPDriverUtils.moduleJBFromDAP(module));
         }
         return javaModules;
+    }
+
+    @Override
+    public @NotNull String executeInterpreterCommand(long threadId, int frameIndex, @NotNull String text) throws ExecutionException {
+        EvaluateArguments args = new EvaluateArguments();
+        args.setExpression(text);
+        args.setFrameId(frameIndex);
+        return server.evaluateNow(args).getResult();
     }
 
     @Override
@@ -978,12 +963,28 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         return executeInterpreterCommand(-1, -1, command);
     }
 
-    @Override
-    public @NotNull String executeInterpreterCommand(long threadId, int frameIndex, @NotNull String text) throws ExecutionException {
-        val args = new EvaluateArguments();
-        args.setExpression(text);
-        args.setFrameId(frameIndex);
-        return server.evaluateNow(args).getResult();
+    protected class DAPInferior extends Inferior {
+        @Override
+        protected long startImpl() {
+            try {
+                server.configurationDone(new ConfigurationDoneArguments()).get();
+            } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+            return -1;
+        }
+
+        @Override
+        protected void detachImpl() {
+            DisconnectArguments args = new DisconnectArguments();
+            server.disconnect(args);
+        }
+
+        @Override
+        protected boolean destroyImpl() {
+            detachImpl();
+            return true;
+        }
     }
 
     @Override
@@ -1073,11 +1074,11 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
 
         @Override
         public CompletableFuture<RunInTerminalResponse> runInTerminal(RunInTerminalRequestArguments args) {
-            val result = new CompletableFuture<RunInTerminalResponse>();
+            CompletableFuture<RunInTerminalResponse> result = new CompletableFuture<RunInTerminalResponse>();
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                val cli = new PtyCommandLine(List.of(args.getArgs()));
+                PtyCommandLine cli = new PtyCommandLine(List.of(args.getArgs()));
                 cli.setCharset(StandardCharsets.UTF_8);
-                val cwd = args.getCwd();
+                String cwd = args.getCwd();
                 if (cwd != null && !cwd.isBlank()) {
                     cli.withWorkDirectory(cwd);
                 }
@@ -1102,7 +1103,7 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
                     });
                     childProcess.startNotify();
                     processInput = childProcess.getProcessInput();
-                    val resp = new RunInTerminalResponse();
+                    RunInTerminalResponse resp = new RunInTerminalResponse();
                     resp.setShellProcessId((int) childProcess.getProcess().pid());
                     result.complete(resp);
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -1132,15 +1133,15 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
 
         @Override
         public void breakpoint(BreakpointEventArguments args) {
-            val bp = args.getBreakpoint();
+            Breakpoint bp = args.getBreakpoint();
             switch (args.getReason()) {
                 case BreakpointEventArgumentsReason.CHANGED -> {
-                    val mbp = updateBP(bp);
+                    MappedBreakpoint mbp = updateBP(bp);
                     handleBreakpointUpdated(mbp.java);
                     handleBreakpointLocationsReplaced(mbp.id, mbp.loc == null ? List.of() : List.of(mbp.loc));
                 }
                 case BreakpointEventArgumentsReason.NEW -> {
-                    val mbp = updateBP(bp);
+                    MappedBreakpoint mbp = updateBP(bp);
                     handleBreakpointAdded(mbp.java);
                     handleBreakpointLocationsReplaced(mbp.id, mbp.loc == null ? List.of() : List.of(mbp.loc));
                 }
@@ -1154,7 +1155,7 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         private MappedBreakpoint updateBP(Breakpoint bp) {
             return breakpoints.compute(bp.getId(), (id, mbp$) -> {
                 if (mbp$ == null) {
-                    val ins = new InstructionBreakpoint();
+                    InstructionBreakpoint ins = new InstructionBreakpoint();
                     ins.setInstructionReference(bp.getInstructionReference());
                     return new MappedBreakpoint(bp, Either3.forThird(ins));
                 } else {
@@ -1173,16 +1174,16 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         @Override
         public void stopped(StoppedEventArguments args) {
             server.threads().thenAccept(threadsResponse -> {
-                val threads = threadsResponse.getThreads();
+                Thread[] threads = threadsResponse.getThreads();
                 Thread thread;
                 if (args.getThreadId() != null) {
-                    val id = args.getThreadId();
+                    Integer id = args.getThreadId();
                     thread = Arrays.stream(threads).filter(t -> t.getId() == id).findFirst().orElseThrow();
                 } else {
                     thread = Arrays.stream(threads).min(Comparator.comparingInt(Thread::getId)).orElseThrow();
                 }
-                val jbThread = DAPDriverUtils.threadJBFromDAP(thread);
-                val stArgs = new StackTraceArguments();
+                LLThread jbThread = DAPDriverUtils.threadJBFromDAP(thread);
+                StackTraceArguments stArgs = new StackTraceArguments();
                 stArgs.setThreadId(thread.getId());
                 stArgs.setStartFrame(0);
                 stArgs.setLevels(1);
@@ -1192,9 +1193,9 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
                     if (isBreakpoint) {
                         helperBreakpoint = breakpoints.get(args.getHitBreakpointIds()[0]);
                     }
-                    val frame = DAPDriverUtils.frameJBFromDAP(st.getStackFrames()[0], helperBreakpoint, modules, DAPDriver.this::functionParser, OdinDebuggerLanguage.INSTANCE);
+                    LLFrame frame = DAPDriverUtils.frameJBFromDAP(st.getStackFrames()[0], helperBreakpoint, modules, DAPDriver.this::functionParser, OdinDebuggerLanguage.INSTANCE);
 
-                    val stopPlace = new StopPlace(jbThread, frame);
+                    StopPlace stopPlace = new StopPlace(jbThread, frame);
                     if (isBreakpoint) {
                         handleBreakpoint(stopPlace, args.getHitBreakpointIds()[0]);
                     } else {
@@ -1211,23 +1212,23 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
 
         @Override
         public void module(ModuleEventArguments args) {
-            val module = args.getModule();
+            Module module = args.getModule();
             switch (args.getReason()) {
                 case NEW -> {
-                    val mm = MappedModule.of(module);
+                    MappedModule mm = MappedModule.of(module);
                     modules.put(module.getId().getLeft(), mm);
                     handleModulesLoaded(List.of(mm.java));
                 }
                 case CHANGED -> {
-                    val newModule = MappedModule.of(module);
-                    val oldModule = modules.put(module.getId().getLeft(), newModule);
+                    MappedModule newModule = MappedModule.of(module);
+                    MappedModule oldModule = modules.put(module.getId().getLeft(), newModule);
                     if (oldModule != null) {
                         handleModulesUnloaded(List.of(oldModule.java));
                     }
                     handleModulesLoaded(List.of(newModule.java));
                 }
                 case REMOVED -> {
-                    val oldModule = modules.remove(module.getId().getLeft());
+                    MappedModule oldModule = modules.remove(module.getId().getLeft());
                     if (oldModule != null) {
                         handleModulesUnloaded(List.of(oldModule.java));
                     }
