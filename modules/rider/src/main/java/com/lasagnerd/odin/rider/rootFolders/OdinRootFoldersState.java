@@ -1,23 +1,17 @@
 package com.lasagnerd.odin.rider.rootFolders;
 
 import com.intellij.util.xmlb.annotations.MapAnnotation;
+import lombok.Data;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@Data
 public class OdinRootFoldersState {
-    private final Set<String> sourceRoots = new HashSet<>();
+    public final Set<String> sourceRoots = new HashSet<>();
 
     @MapAnnotation(keyAttributeName = "path", valueAttributeName = "name")
-    private final Map<String, String> collectionRoots = new HashMap<>();
-
-    public Set<String> getSourceRoots() {
-        return sourceRoots;
-    }
-
-    public Map<String, String> getCollectionRoots() {
-        return collectionRoots;
-    }
+    public final Map<String, String> collectionRoots = new HashMap<>();
 }

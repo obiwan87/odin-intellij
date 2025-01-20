@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
 import com.lasagnerd.odin.rider.rootFolders.OdinRootFoldersService;
+import com.lasagnerd.odin.rider.rootFolders.OdinRootFoldersState;
 
 public class OdinRiderMarkCollectionRootAction extends OdinRiderMarkRootAction {
     public OdinRiderMarkCollectionRootAction() {
@@ -18,6 +19,8 @@ public class OdinRiderMarkCollectionRootAction extends OdinRiderMarkRootAction {
             return;
 
         OdinRootFoldersService rootFoldersService = OdinRootFoldersService.getInstance(project);
-        rootFoldersService.getState().getCollectionRoots().put(selection.getPath(), selection.getName());
+        OdinRootFoldersState state = rootFoldersService.getState();
+        state.getCollectionRoots().put(selection.getPath(), selection.getName());
+        rootFoldersService.loadState(state);
     }
 }

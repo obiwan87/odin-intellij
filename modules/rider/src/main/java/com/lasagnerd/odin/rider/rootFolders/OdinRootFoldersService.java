@@ -13,8 +13,12 @@ import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Getter
@@ -35,6 +39,33 @@ public class OdinRootFoldersService implements PersistentStateComponent<OdinRoot
 
     public static OdinRootFoldersService getInstance(Project project) {
         return project.getService(OdinRootFoldersService.class);
+    }
+
+    public Set<Path> getRootPaths() {
+        Set<Path> paths = new HashSet<>();
+        for (String path : state.getCollectionRoots().keySet()) {
+            Path nioPath = tryParsePath(path);
+            if (nioPath != null) {
+                paths.add(nioPath);
+            }
+        }
+
+        for (String path : state.getSourceRoots()) {
+            Path nioPath = tryParsePath(path);
+            if (nioPath != null) {
+                paths.add(nioPath);
+            }
+        }
+
+        return paths;
+    }
+
+    public Path tryParsePath(String p) {
+        try {
+            return Path.of(p);
+        } catch (InvalidPathException e) {
+            return null;
+        }
     }
 
     @Override

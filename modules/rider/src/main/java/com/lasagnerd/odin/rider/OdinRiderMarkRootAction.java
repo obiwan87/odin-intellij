@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.rider;
 
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -8,13 +9,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.rider.projectView.views.ProjectViewUtilsKt;
+import com.lasagnerd.odin.rider.rootFolders.OdinRootFoldersService;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.nio.file.Path;
 import java.util.Locale;
 
 public abstract class OdinRiderMarkRootAction extends DumbAwareAction {
@@ -52,10 +56,6 @@ public abstract class OdinRiderMarkRootAction extends DumbAwareAction {
         return firstFile;
     }
 
-    public static void refresh() {
-
-    }
-
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         Project project = getEventProject(e);
@@ -76,9 +76,35 @@ public abstract class OdinRiderMarkRootAction extends DumbAwareAction {
         super.update(e);
 
         VirtualFile selection = getSelection(e);
-        if (selection != null) {
+        if (selection != null && isValidSelection(e, selection)) {
             e.getPresentation().setEnabled(true);
+            e.getPresentation().setVisible(true);
+        } else {
+            e.getPresentation().setEnabled(false);
+            e.getPresentation().setVisible(false);
         }
+    }
+
+    private boolean isValidSelection(@NotNull AnActionEvent e, VirtualFile selection) {
+        Project project = getEventProject(e);
+        if (project == null)
+            return false;
+
+        boolean parentIsInProject = ProjectFileIndex.getInstance(project).isInProject(selection.getParent());
+        if (!parentIsInProject)
+            return false;
+
+        OdinRootFoldersService rootFoldersService = OdinRootFoldersService.getInstance(project);
+        Path selectionPath = selection.toNioPath();
+        boolean isDescendantOrAncestorOfPaths = rootFoldersService.getRootPaths().stream().anyMatch(
+                p -> selectionPath.startsWith(p) || p.startsWith(selectionPath)
+        );
+        return !isDescendantOrAncestorOfPaths;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
     }
 
     protected abstract void markRoot(AnActionEvent e, VirtualFile selection);
