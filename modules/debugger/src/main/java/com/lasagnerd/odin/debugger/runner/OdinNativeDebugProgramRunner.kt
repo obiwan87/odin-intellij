@@ -93,12 +93,13 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
         val expandedOutputPath = expandPath(environment.project, outputPath)
 
-        var runExecutable = GeneralCommandLine(expandedOutputPath)
+        var debuggeeCommandLine = GeneralCommandLine(expandedOutputPath)
         val programArguments = runProfile.options.programArguments
         val argsList = CLIUtils.translateCommandline(programArguments)
-        runExecutable.addParameters(argsList.toList())
-        runExecutable.setWorkDirectory(expandedWorkingDirectory)
-        val debugCompiledExeRunParameters = OdinDebugRunParameters(runExecutable, debuggerDriverConfiguration)
+        debuggeeCommandLine.addParameters(argsList.toList())
+        debuggeeCommandLine.setWorkDirectory(expandedWorkingDirectory)
+
+        val debuggeeRunParameters = OdinDebugRunParameters(debuggeeCommandLine, debuggerDriverConfiguration)
 
         // This is the console to be shared with the debug process
 
@@ -144,7 +145,7 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
                             // Since the debug process only accepts a console builder, give it a console builder that will return the
                             // console that we used for the build process.
                             val textConsoleBuilder: TextConsoleBuilder = SharedConsoleBuilder(console)
-                            val debugProcess = OdinLocalDebugProcess(debugCompiledExeRunParameters, session, textConsoleBuilder)
+                            val debugProcess = OdinLocalDebugProcess(debuggeeRunParameters, session, textConsoleBuilder)
                             ProcessTerminatedListener.attach(debugProcess.processHandler, project)
                             debugProcess.start()
                             return debugProcess
