@@ -16,8 +16,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
+import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import lombok.EqualsAndHashCode;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +88,7 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
                 }
 
                 if (directoryPath == null) {
-                    Map<String, Path> collectionPaths = OdinImportUtils.getCollectionPaths(project, containingVirtualFile.getPath());
+                    Map<String, Path> collectionPaths = OdinRootsService.Companion.getInstance(project).getCollectionPaths(containingVirtualFile.getPath());
                     Path path = collectionPaths.get(importInfo.collection());
                     if (path != null) {
                         directoryPath = path.resolve(importPath);
@@ -154,8 +154,8 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
 
                 Path newDirPath = Path.of(psiTargetDirectory.getVirtualFile().getPath());
 
-                OdinRootTypeResult odinCollection = OdinRootTypeUtils
-                        .findContainingCollection(project, psiTargetDirectory.getVirtualFile());
+                OdinRootTypeResult odinCollection = OdinRootsService.Companion.getInstance(project)
+                        .findContainingCollection(psiTargetDirectory.getVirtualFile());
 
                 String newCollection;
                 if (odinCollection != null && odinCollection.isCollectionRoot()) {
@@ -186,7 +186,7 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
                 if (Objects.equals(newCollection, importInfo.collection())) {
                     newRootPath = rootPath;
                 } else if (odinCollection != null) {
-                    VirtualFile file = odinCollection.sourceFolder().getFile();
+                    VirtualFile file = odinCollection.directory();
                     if (file != null) {
                         newRootPath = file.toNioPath();
                     } else {

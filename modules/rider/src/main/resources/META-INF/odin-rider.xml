@@ -31,7 +31,9 @@
         <projectService serviceInterface="com.lasagnerd.odin.rider.OdinRiderInteropService"
                         serviceImplementation="com.lasagnerd.odin.rider.OdinRiderInteropServiceImpl"/>
 
-        <projectService serviceImplementation="com.lasagnerd.odin.rider.rootFolders.OdinRootFoldersService"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.rider.rootFolders.OdinRiderRootFoldersService"/>
+
+        <solutionExplorerCustomization implementation="com.lasagnerd.odin.rider.projectStructure.OdinSolutionExplorerCustomization"/>
     </extensions>
 
 </idea-plugin>

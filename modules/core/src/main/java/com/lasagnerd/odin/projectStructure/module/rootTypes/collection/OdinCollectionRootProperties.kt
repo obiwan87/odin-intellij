@@ -1,20 +1,14 @@
-package com.lasagnerd.odin.projectStructure.module.rootTypes.collection;
+package com.lasagnerd.odin.projectStructure.module.rootTypes.collection
 
-import lombok.Getter;
-import lombok.Setter;
-import org.jetbrains.jps.model.ex.JpsElementBase;
+import org.jetbrains.jps.model.ex.JpsElementBase
 
+class OdinCollectionRootProperties : JpsElementBase<OdinCollectionRootProperties?> {
+    var collectionName: String? = null
 
-@Setter
-@Getter
-public class OdinCollectionRootProperties extends JpsElementBase<OdinCollectionRootProperties> {
-    private String collectionName;
-
-    public OdinCollectionRootProperties(String collectionName) {
-        this.collectionName = collectionName;
+    constructor(collectionName: String?) {
+        this.collectionName = collectionName
     }
 
 
-    public OdinCollectionRootProperties() {
-    }
+    constructor()
 }

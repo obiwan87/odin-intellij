@@ -13,9 +13,9 @@ import com.intellij.psi.PsiReferenceBase;
 import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
 import com.lasagnerd.odin.codeInsight.imports.OdinImport;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinPsiCollection;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
+import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,9 +52,10 @@ public class OdinCollectionReference extends PsiReferenceBase<OdinImportPath> im
                     return new OdinPsiCollection(importInfo.collection(), directory);
                 }
             }
-            OdinRootTypeResult odinRootTypeResult = OdinRootTypeUtils.findCollectionRoot(getElement(), importInfo.collection());
+            OdinRootTypeResult odinRootTypeResult = OdinRootsService.Companion.getInstance(getElement().getProject())
+                    .findCollectionRoot(getElement(), importInfo.collection());
             if (odinRootTypeResult != null && odinRootTypeResult.isCollectionRoot()) {
-                VirtualFile collectionDir = odinRootTypeResult.sourceFolder().getFile();
+                VirtualFile collectionDir = odinRootTypeResult.directory();
                 if (collectionDir != null) {
                     PsiDirectory directory = PsiManager.getInstance(getElement().getProject()).findDirectory(collectionDir);
                     return new OdinPsiCollection(odinRootTypeResult.collectionName(), directory);
@@ -86,7 +87,8 @@ public class OdinCollectionReference extends PsiReferenceBase<OdinImportPath> im
         String basePath = myElement.getProject().getBasePath();
         if (basePath != null) {
             Path projectPath = Path.of(basePath);
-            Map<String, Path> collectionPaths = OdinImportUtils.getCollectionPaths(getElement().getProject(), containingVirtualFile.getPath());
+            Map<String, Path> collectionPaths = OdinRootsService.Companion.getInstance(getElement().getProject())
+                    .getCollectionPaths(containingVirtualFile.getPath());
             for (Map.Entry<String, Path> entry : collectionPaths.entrySet()) {
                 Path collectinPath = entry.getValue();
                 LookupElementBuilder lookupElement = LookupElementBuilder

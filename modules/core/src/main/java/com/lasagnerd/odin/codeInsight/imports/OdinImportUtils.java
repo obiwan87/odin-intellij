@@ -1,11 +1,8 @@
 package com.lasagnerd.odin.codeInsight.imports;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -24,16 +21,15 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.lang.OdinFileType;
 import com.lasagnerd.odin.lang.psi.*;
-import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
-import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootProperties;
+import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
+import com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootType;
 import com.lasagnerd.odin.rider.OdinRiderInteropService;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkLibraryManager;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsElement;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -41,11 +37,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.lasagnerd.odin.projectStructure.collection.OdinJpsRootsService.OdinJpsRootTypeUtils.getVirtualFileManager;
+
 public class OdinImportUtils {
 
     public static @NotNull String getFileName(@NotNull PsiElement psiElement) {
         return OdinInsightUtils.getContainingVirtualFile(psiElement).getName();
-
     }
 
     public static @Nullable String getContainingDirectoryName(@NotNull PsiElement psiElement) {
@@ -54,29 +51,6 @@ public class OdinImportUtils {
         if (parent != null) {
             return parent.getName();
         }
-        return null;
-    }
-
-    public static OdinCollection getCollection(Project project, VirtualFile directoryFile) {
-        if (OdinRiderInteropService.isRider(project)) {
-            return OdinRiderInteropService.getInstance(project).getCollection(directoryFile);
-        }
-
-        Module module = ModuleUtilCore.findModuleForFile(directoryFile, project);
-        if (module == null) {
-            return null;
-        }
-
-        SourceFolder sourceFolder = OdinRootTypeUtils.getCollectionFolder(directoryFile,
-                ModuleRootManager.getInstance(module).getModifiableModel());
-        if (sourceFolder != null) {
-            JpsElement properties = sourceFolder.getJpsElement().getProperties();
-            if (properties instanceof OdinCollectionRootProperties collectionRootProperties) {
-
-                return new OdinCollection(collectionRootProperties.getCollectionName(), directoryFile.getPath());
-            }
-        }
-
         return null;
     }
 
@@ -205,42 +179,6 @@ public class OdinImportUtils {
         return packagePath;
     }
 
-    public static Map<String, Path> getCollectionPaths(Project project, String sourceFilePath) {
-        Map<String, Path> collectionPaths = new HashMap<>();
-        VirtualFileManager virtualFileManager = getVirtualFileManager();
-        if (virtualFileManager == null)
-            return Collections.emptyMap();
-        VirtualFile sourceFile = virtualFileManager.findFileByNioPath(Path.of(sourceFilePath));
-        if (sourceFile != null) {
-            Module module = ModuleUtilCore.findModuleForFile(sourceFile, project);
-            if (module != null) {
-                ModuleRootManager model = ModuleRootManager.getInstance(module);
-                List<SourceFolder> sourceFolders = Arrays.stream(model.getContentEntries())
-                        .flatMap(c -> c.getSourceFolders(OdinCollectionRootType.INSTANCE).stream())
-                        .toList();
-
-                for (SourceFolder sourceFolder : sourceFolders) {
-                    OdinCollectionRootProperties properties = (OdinCollectionRootProperties) sourceFolder.getJpsElement().getProperties();
-                    String collectionName = properties.getCollectionName();
-                    VirtualFile collectionDirectory = sourceFolder.getFile();
-                    if (collectionDirectory != null) {
-                        collectionPaths.put(collectionName, collectionDirectory.toNioPath());
-                    }
-                }
-            }
-        }
-
-        return collectionPaths;
-    }
-
-    private static @Nullable VirtualFileManager getVirtualFileManager() {
-        try {
-            return VirtualFileManager.getInstance();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     public static Map<String, Path> getSdkCollections(Project project) {
         Optional<String> validSdkPath = OdinSdkUtils.getValidSdkPath(project);
         if (validSdkPath.isPresent()) {
@@ -254,19 +192,6 @@ public class OdinImportUtils {
         }
 
         return Collections.emptyMap();
-    }
-
-    @Nullable
-    public static Path getCollectionPath(@NotNull String collectionName, @NotNull PsiElement psiElement) {
-        PsiFile containingFile = psiElement.getOriginalElement().getContainingFile();
-        if (containingFile != null) {
-            VirtualFile virtualFile = containingFile.getVirtualFile();
-            if (virtualFile != null) {
-                Map<String, Path> collectionPaths = getCollectionPaths(psiElement.getProject(), virtualFile.getPath());
-                return collectionPaths.get(collectionName);
-            }
-        }
-        return null;
     }
 
     /**
@@ -383,16 +308,12 @@ public class OdinImportUtils {
         return Collections.emptyMap();
     }
 
-    public String getCollectionName(Project project, String path) {
-        Path nioPath = Path.of(path);
-        Map<String, Path> collectionPaths = getCollectionPaths(project, path);
-        for (Map.Entry<String, Path> entry : collectionPaths.entrySet()) {
-            if (entry.getValue().equals(nioPath)) {
-                return entry.getKey();
-            }
+    public static boolean isUnderSourceRoot(@NotNull Project project, @NotNull VirtualFile file) {
+        if (OdinRiderInteropService.isRider(project)) {
+            return OdinRiderInteropService.getInstance(project).isUnderRoot(file);
         }
-
-        return null;
+        ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
+        return projectFileIndex.isUnderSourceRootOfType(file, Set.of(OdinSourceRootType.INSTANCE, OdinCollectionRootType.INSTANCE));
     }
 
     public static @NotNull List<Path> getAbsoluteImportPaths(OdinImport importInfo, String sourceFilePath, Project project) {
@@ -406,7 +327,8 @@ public class OdinImportUtils {
                     dirs.add(sdkSourceDir);
                 }
 
-                Map<String, Path> collectionPaths = getCollectionPaths(project, sourceFilePath);
+                Map<String, Path> collectionPaths = OdinRootsService.Companion.getInstance(project)
+                        .getCollectionPaths(sourceFilePath);
                 Path collectionPath = collectionPaths.get(library);
                 if (collectionPath != null) {
                     dirs.add(collectionPath);
@@ -454,8 +376,9 @@ public class OdinImportUtils {
         }
 
         // Case 1: files under same source root
-        OdinRootTypeResult sourceFileRoot = OdinRootTypeUtils.findContainingRoot(project, sourceFile);
-        OdinRootTypeResult targetFileRoot = OdinRootTypeUtils.findContainingRoot(project, targetFile);
+        OdinRootsService rootsService = OdinRootsService.Companion.getInstance(project);
+        OdinRootTypeResult sourceFileRoot = rootsService.findContainingRoot(sourceFile);
+        OdinRootTypeResult targetFileRoot = rootsService.findContainingRoot(targetFile);
         if (sourceFileRoot != null && targetFileRoot != null) {
             String packageName = targetDir.getFileName().toString();
 

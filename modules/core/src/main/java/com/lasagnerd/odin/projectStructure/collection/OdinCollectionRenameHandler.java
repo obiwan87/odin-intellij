@@ -10,8 +10,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
-import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
 import org.jetbrains.annotations.NotNull;
 
 public class OdinCollectionRenameHandler implements RenameHandler {
@@ -20,26 +18,15 @@ public class OdinCollectionRenameHandler implements RenameHandler {
     public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
         PsiElement[] psiElementArray = CommonRefactoringUtil.getPsiElementArray(dataContext);
 
-        return psiElementArray.length == 1 &&
-                psiElementArray[0] instanceof OdinPsiCollectionDirectory &&
-                isCollectionRoot(dataContext.getData(CommonDataKeys.PROJECT),
-                        dataContext.getData(CommonDataKeys.VIRTUAL_FILE)
-                );
-    }
+        Project project = dataContext.getData(CommonDataKeys.PROJECT);
+        if (project == null || psiElementArray.length != 1 ||
+                !(psiElementArray[0] instanceof OdinPsiCollectionDirectory)) return false;
 
-    public static boolean isCollectionRoot(Project project, VirtualFile file) {
-        if (project == null)
-            return false;
-
-        if (file == null)
-            return false;
-
-        if (file.isDirectory()) {
-            OdinRootTypeResult result = OdinRootTypeUtils.findCollectionRoot(project, file);
-            if (result == null)
-                return false;
-            return result.sourceFolder().getRootType() == OdinCollectionRootType.INSTANCE;
-        }
+        VirtualFile virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
+        if (virtualFile != null)
+            return OdinRootsService.Companion.getInstance(project).isCollectionRoot(
+                    virtualFile
+            );
 
         return false;
     }
@@ -58,7 +45,7 @@ public class OdinCollectionRenameHandler implements RenameHandler {
                        DataContext dataContext) {
 
         PsiElement element = elements[0];
-        if(element instanceof OdinPsiCollectionDirectory psiCollectionDirectory) {
+        if (element instanceof OdinPsiCollectionDirectory psiCollectionDirectory) {
             PsiElementRenameHandler.rename(psiCollectionDirectory.getPsiCollection(),
                     project,
                     element,

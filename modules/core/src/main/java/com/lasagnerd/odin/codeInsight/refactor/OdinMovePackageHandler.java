@@ -13,8 +13,8 @@ import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.lasagnerd.odin.lang.OdinLanguage;
-import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
+import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootType;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,8 @@ public class OdinMovePackageHandler extends MoveFilesOrDirectoriesHandler {
 
         VirtualFile targetFile = psiDirectory.getVirtualFile();
 
-        OdinRootTypeResult containingRoot = OdinRootTypeUtils.findContainingRoot(project, targetFile);
+        OdinRootTypeResult containingRoot = OdinRootsService.Companion.getInstance(project)
+                .findContainingRoot(targetFile);
         if (containingRoot == null)
             return false;
 
@@ -57,7 +58,9 @@ public class OdinMovePackageHandler extends MoveFilesOrDirectoriesHandler {
                     // Must be strictly under a root
                     if (underSourceRootOfType) {
                         // Must be contained in a root
-                        OdinRootTypeResult sourceRootResult = OdinRootTypeUtils.findContainingRoot(project, sourceDirFile);
+                        OdinRootTypeResult sourceRootResult = OdinRootsService.Companion
+                                .getInstance(project)
+                                .findContainingRoot(sourceDirFile);
                         if (sourceRootResult == null) {
                             return false;
                         }

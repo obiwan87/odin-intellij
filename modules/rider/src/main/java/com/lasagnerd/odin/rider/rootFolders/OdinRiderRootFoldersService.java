@@ -27,18 +27,18 @@ import java.util.stream.Collectors;
         name = "com.lasagnerd.odin.settings.OdinRootFoldersState",
         storages = @Storage("OdinRootFolders.xml")
 )
-public class OdinRootFoldersService implements PersistentStateComponent<OdinRootFoldersState> {
+public class OdinRiderRootFoldersService implements PersistentStateComponent<OdinRootFoldersState> {
 
     private final Project project;
     @Getter(AccessLevel.NONE)
     private OdinRootFoldersState state = new OdinRootFoldersState();
 
-    public OdinRootFoldersService(Project project) {
+    public OdinRiderRootFoldersService(Project project) {
         this.project = project;
     }
 
-    public static OdinRootFoldersService getInstance(Project project) {
-        return project.getService(OdinRootFoldersService.class);
+    public static OdinRiderRootFoldersService getInstance(Project project) {
+        return project.getService(OdinRiderRootFoldersService.class);
     }
 
     public Set<Path> getRootPaths() {

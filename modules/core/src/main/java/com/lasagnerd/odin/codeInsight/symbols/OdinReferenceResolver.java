@@ -72,6 +72,13 @@ public class OdinReferenceResolver {
         String name = identifier.getIdentifierToken().getText();
         OdinSymbolTable identifierSymbols = getIdentifierSymbolTable(new OdinContext(), identifier, symbolTableBuilder);
         List<OdinSymbol> symbols = identifierSymbols.getSymbols(name);
+        boolean anyInvalidIdentifiers = symbols.stream()
+                .filter(symbol -> symbol.getDeclaredIdentifier() != null)
+                .anyMatch(symbol -> !symbol.getDeclaredIdentifier().isValid());
+
+        if (anyInvalidIdentifiers)
+            return null;
+
         symbols = symbols.stream()
                 .filter(s -> OdinInsightUtils.isVisible(identifier, s) || s.getSymbolType() != OdinSymbolType.PACKAGE_REFERENCE)
                 .collect(MoreCollectors.distinctBy(OdinSymbol::getDeclaredIdentifier));

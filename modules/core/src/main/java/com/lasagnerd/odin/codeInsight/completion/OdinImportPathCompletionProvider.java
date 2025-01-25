@@ -15,8 +15,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.lang.psi.OdinImportPath;
-import com.lasagnerd.odin.projectStructure.OdinRootTypeUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
+import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -47,7 +47,9 @@ public class OdinImportPathCompletionProvider extends CompletionProvider<Complet
         result = result.withPrefixMatcher(prefix);
 
         Map<String, Path> sdkCollectionPaths = OdinImportUtils.getSdkCollections(project);
-        Map<String, Path> collectionPaths = OdinImportUtils.getCollectionPaths(project, filePath);
+        Map<String, Path> collectionPaths = OdinRootsService.Companion
+                .getInstance(project)
+                .getCollectionPaths(filePath);
         PsiDirectory directory = originalFile.getParent();
 
         addCollectionPaths(project, result, sdkCollectionPaths);
@@ -63,7 +65,9 @@ public class OdinImportPathCompletionProvider extends CompletionProvider<Complet
             }
             addResultsRecursively(result, directory, null);
             if (prefix.startsWith("..")) {
-                OdinRootTypeResult sourceRoot = OdinRootTypeUtils.findContainingRoot(project, originalFile.getVirtualFile());
+                OdinRootTypeResult sourceRoot = OdinRootsService.Companion
+                        .getInstance(project)
+                        .findContainingRoot(originalFile.getVirtualFile());
                 if (sourceRoot != null) {
                     VirtualFile sourceRootDirectory = sourceRoot.directory();
                     PsiDirectory parentDirectory = directory.getParent();

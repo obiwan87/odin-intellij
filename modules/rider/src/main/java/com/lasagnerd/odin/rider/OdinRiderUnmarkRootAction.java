@@ -6,7 +6,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.rider.projectView.views.ProjectViewUtilsKt;
-import com.lasagnerd.odin.rider.rootFolders.OdinRootFoldersService;
+import com.lasagnerd.odin.rider.rootFolders.OdinRiderRootFoldersService;
 import org.jetbrains.annotations.NotNull;
 
 public class OdinRiderUnmarkRootAction extends DumbAwareAction {
@@ -18,7 +18,7 @@ public class OdinRiderUnmarkRootAction extends DumbAwareAction {
             return;
 
         VirtualFile selection = OdinRiderMarkRootAction.getSelection(e);
-        OdinRootFoldersService rootFoldersService = OdinRootFoldersService.getInstance(project);
+        OdinRiderRootFoldersService rootFoldersService = OdinRiderRootFoldersService.getInstance(project);
         if (selection != null && rootFoldersService.isRoot(selection)) {
             e.getPresentation().setEnabled(true);
             e.getPresentation().setVisible(true);
@@ -41,7 +41,7 @@ public class OdinRiderUnmarkRootAction extends DumbAwareAction {
         if (project == null)
             return;
         VirtualFile selection = OdinRiderMarkSourceRootAction.getSelection(e);
-        OdinRootFoldersService rootFoldersService = OdinRootFoldersService.getInstance(project);
+        OdinRiderRootFoldersService rootFoldersService = OdinRiderRootFoldersService.getInstance(project);
         if (selection != null) {
             if (rootFoldersService.isSourceRoot(selection)) {
                 rootFoldersService.getState().getSourceRoots().remove(selection.getPath());

@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiFile;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
+import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
@@ -88,7 +88,7 @@ public class OdinBuildProcessRunner {
     }
 
     public static void addCollectionPaths(Project project, String filePath, List<String> command) {
-        Map<String, Path> collectionPaths = OdinImportUtils.getCollectionPaths(project, filePath);
+        Map<String, Path> collectionPaths = OdinRootsService.Companion.getInstance(project).getCollectionPaths(filePath);
         for (Map.Entry<String, Path> entry : collectionPaths.entrySet()) {
             command.add("-collection:%s=%s".formatted(entry.getKey(), FileUtil.toSystemDependentName(entry.getValue().toString())));
         }

@@ -1,6 +1,5 @@
 package com.lasagnerd.odin.projectStructure;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
@@ -12,10 +11,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
 import com.intellij.ui.SimpleTextAttributes;
 import com.lasagnerd.odin.codeInsight.imports.OdinCollection;
-import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinPsiCollection;
 import com.lasagnerd.odin.projectStructure.collection.OdinPsiCollectionDirectory;
-import com.lasagnerd.odin.rider.OdinRiderInteropService;
+import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -55,8 +53,7 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
         return newDirectoryNode;
     }
 
-    @Override
-    public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
+    public static @NotNull List<AbstractTreeNode<?>> modifyTreeStructureNodes(@NotNull Collection<AbstractTreeNode<?>> children) {
         List<AbstractTreeNode<?>> newChildren = new ArrayList<>(children.size() + 1);
 
         for (AbstractTreeNode<?> child : children) {
@@ -67,22 +64,21 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
 
             VirtualFile directoryFile = directoryNode.getVirtualFile();
             Project project = child.getProject();
-            OdinCollection collection = OdinImportUtils.getCollection(project, directoryFile);
+            OdinCollection collection = OdinRootsService.Companion.getInstance(project).getCollection(directoryFile);
             if (collection != null) {
                 PsiDirectoryNode newDirectoryNode = createCollectionDirectoryNode(directoryNode, collection, directoryFile);
                 newChildren.add(newDirectoryNode);
                 continue;
             }
 
-            if (OdinRiderInteropService.isRider(project)) {
-                if (OdinRiderInteropService.getInstance(project).isSourceRoot(directoryFile)) {
-                    directoryNode.setIcon(AllIcons.Modules.SourceRoot);
-                }
-            }
-
             newChildren.add(child);
         }
         return newChildren;
+    }
+
+    @Override
+    public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
+        return modifyTreeStructureNodes(children);
     }
 
     @Override

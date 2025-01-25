@@ -3,8 +3,14 @@ package com.lasagnerd.odin.rider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.lasagnerd.odin.codeInsight.imports.OdinCollection;
+import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface OdinRiderInteropService {
+import java.nio.file.Path;
+import java.util.Map;
+
+public interface OdinRiderInteropService extends OdinRootsService {
     static OdinRiderInteropService getInstance(Project project) {
         return project.getService(OdinRiderInteropService.class);
     }
@@ -17,7 +23,11 @@ public interface OdinRiderInteropService {
 
     void detachSdkRoot(String path);
 
-    OdinCollection getCollection(VirtualFile directoryFile);
+    @Nullable OdinCollection getCollection(@NotNull VirtualFile directoryFile);
 
     boolean isSourceRoot(VirtualFile directoryFile);
+
+    boolean isUnderRoot(VirtualFile virtualFile);
+
+    Map<String, Path> getCollectionPaths();
 }
