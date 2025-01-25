@@ -37,8 +37,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.lasagnerd.odin.projectStructure.collection.OdinJpsRootsService.OdinJpsRootTypeUtils.getVirtualFileManager;
-
 public class OdinImportUtils {
 
     public static @NotNull String getFileName(@NotNull PsiElement psiElement) {
@@ -566,5 +564,13 @@ public class OdinImportUtils {
         if (importDeclarationStatement == null)
             return null;
         return importDeclarationStatement.getImportDeclaration().getImportInfo();
+    }
+
+    public static VirtualFileManager getVirtualFileManager() {
+        try {
+            return VirtualFileManager.getInstance();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
