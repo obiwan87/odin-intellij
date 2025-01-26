@@ -139,6 +139,7 @@ class OdinJpsRootsService(val project: Project) : OdinRootsService {
     }
 
     override fun renameCollection(collectionDirPath: VirtualFile, newName: String) {
+        // TODO(lasagnerd): Check if new name is already taken
         val module = ModuleUtilCore.findModuleForFile(collectionDirPath, project) ?: return
 
         val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel

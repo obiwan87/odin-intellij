@@ -23,6 +23,11 @@
                     class="com.lasagnerd.odin.rider.OdinRiderUnmarkRootAction"
                     text="Unmark Odin Source Directory"
                     description="Unmarks a Odin source directory"/>
+
+            <action id="com.lasagnerd.odin.rider.OdinRiderRenameCollectionAction"
+                    class="com.lasagnerd.odin.rider.OdinRiderRenameCollectionAction"
+                    text="Rename Odin Collection"
+                    description="Renames an Odin collection"/>
         </group>
 
     </actions>
