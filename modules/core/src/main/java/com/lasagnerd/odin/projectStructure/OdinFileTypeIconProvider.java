@@ -19,13 +19,8 @@ public class OdinFileTypeIconProvider implements FileIconProvider {
         if (project == null)
             return null;
 
-        boolean underSourceRootOfType = OdinImportUtils.isUnderSourceRoot(project, file);
-        if (underSourceRootOfType) {
-            return AllIcons.Nodes.Package;
-        }
-
         if (OdinRiderInteropService.isRider(project)) {
-            if (OdinRiderInteropService.getInstance(project).getCollection(file) != null) {
+            if (OdinRiderInteropService.getInstance(project).isCollectionRoot(file)) {
                 return AllIcons.Nodes.PpLibFolder;
             }
 
@@ -33,6 +28,12 @@ public class OdinFileTypeIconProvider implements FileIconProvider {
                 return AllIcons.Modules.SourceRoot;
             }
         }
+
+        boolean underSourceRootOfType = OdinImportUtils.isUnderSourceRoot(project, file);
+        if (underSourceRootOfType) {
+            return AllIcons.Nodes.Package;
+        }
+
 
         return null;
     }

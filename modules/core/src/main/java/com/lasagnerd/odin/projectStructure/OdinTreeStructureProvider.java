@@ -36,7 +36,16 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
                 // view setting is enabled. So to allow for correct work, we just do not hide middle packages.
                 ViewSettings.DEFAULT
         );
+        modifyPresentation(newDirectoryNode, directoryName, collectionName);
+        return newDirectoryNode;
+    }
+
+    public static void modifyPresentation(AbstractTreeNode<?> newDirectoryNode, String directoryName, String collectionName) {
         PresentationData presentation = newDirectoryNode.getPresentation();
+        modifyPresentation(presentation, directoryName, collectionName);
+    }
+
+    public static void modifyPresentation(PresentationData presentation, String directoryName, String collectionName) {
         Color foreground = presentation.getForcedTextForeground();
 
         if (directoryName.equals(collectionName)) {
@@ -50,7 +59,6 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
             presentation.addText(" [%s]".formatted(collectionName),
                     new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, Gray._150));
         }
-        return newDirectoryNode;
     }
 
     public static @NotNull List<AbstractTreeNode<?>> modifyTreeStructureNodes(@NotNull Collection<AbstractTreeNode<?>> children) {
