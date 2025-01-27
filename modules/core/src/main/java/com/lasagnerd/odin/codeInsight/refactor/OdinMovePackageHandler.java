@@ -113,15 +113,10 @@ public class OdinMovePackageHandler extends MoveFilesOrDirectoriesHandler {
     private static boolean isPsiDirectoryUnderSource(Project project, PsiElement psiElement) {
         if (psiElement instanceof PsiDirectory psiDirectory) {
             VirtualFile dirFile = psiDirectory.getVirtualFile();
-            return isUnderPackageCompatibleSource(project, dirFile);
+            return OdinRootsService.Companion.getInstance(project).findContainingRoot(dirFile) != null;
         } else {
             return false;
         }
-    }
-
-    private static boolean isUnderPackageCompatibleSource(Project project, VirtualFile dirFile) {
-        return ProjectFileIndex.getInstance(project).isUnderSourceRootOfType(dirFile,
-                Set.of(OdinSourceRootType.INSTANCE, OdinCollectionRootType.INSTANCE));
     }
 
 

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -48,6 +47,7 @@ import static com.intellij.codeInsight.completion.CompletionInitializationContex
 import static com.intellij.codeInsight.completion.PrioritizedLookupElement.withPriority;
 import static com.lasagnerd.odin.codeInsight.completion.OdinCompletionContributor.*;
 
+@SuppressWarnings("SameParameterValue")
 class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     private final OdinSymbolFilter symbolFilter;
 
@@ -122,7 +122,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                                                    TsOdinEnumType tsOdinEnumType,
                                                    Project project,
                                                    int priority) {
-        // TODO context
+        // TODO(lasagnerd) does context need any knowledge information?
         OdinSymbolTable typeElements = OdinInsightUtils.getTypeElements(new OdinContext(), project, tsOdinEnumType);
         // Sort by definition order
         List<OdinSymbol> symbols = typeElements.getSymbols().stream()
@@ -242,6 +242,62 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         }
     }
 
+    private static @NotNull Set<String> collectAllNames(PrefixMatcher matcher, OdinFile thisOdinFile) {
+        Set<String> aliases = OdinImportUtils.getImports(thisOdinFile.getFileScope()).stream()
+                .filter(i -> i.alias() != null)
+                .map(OdinImport::canonicalName)
+                .collect(Collectors.toSet());
+
+        String prefix = matcher.getPrefix();
+        boolean prefixIsEmpty = prefix.isEmpty();
+
+        Set<String> allNames = new HashSet<>();
+        CancellableCollectProcessor<String> processor = new CancellableCollectProcessor<>(allNames) {
+            @Override
+            protected boolean accept(String s) {
+                return prefixIsEmpty || matcher.prefixMatches(s) || matcher.prefixMatches(substringAfter(s, '.')) || aliases.contains(substringBefore(s, '.'));
+            }
+        };
+
+        // TODO(lasagnerd) add production filter and scope
+        StubIndex.getInstance().processAllKeys(
+                OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES,
+                processor,
+                GlobalSearchScope.allScope(thisOdinFile.getProject()),
+                null
+        );
+
+        List<String> sorted = ContainerUtil.sorted(allNames, String.CASE_INSENSITIVE_ORDER);
+        ProgressManager.checkCanceled();
+
+        LinkedHashSet<String> result = new LinkedHashSet<>();
+        for (String name : sorted) {
+            ProgressManager.checkCanceled();
+            if (matcher.isStartMatch(name)) {
+                result.add(name);
+            }
+        }
+        result.addAll(sorted);
+        return result;
+    }
+
+    private static @Nullable String getTypeText(OdinSymbol symbol) {
+        String typeText = null;
+        if (symbol.getPsiType() != null) {
+            if (symbol.getSymbolType() == OdinSymbolType.ENUM_FIELD) {
+                OdinDeclaration declaration = PsiTreeUtil.getParentOfType(symbol.getPsiType(), OdinDeclaration.class);
+                if (declaration != null) {
+                    OdinDeclaredIdentifier declaredIdentifier = declaration.getDeclaredIdentifiers().getFirst();
+                    typeText = declaredIdentifier.getName();
+                }
+            }
+            if (symbol.getSymbolType() == OdinSymbolType.STRUCT_FIELD) {
+                typeText = symbol.getPsiType().getText();
+            }
+        }
+        return typeText;
+    }
+
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   @NotNull ProcessingContext processingContext,
@@ -339,9 +395,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             case OdinSimpleRefType ignored when parent.getParent() instanceof OdinQualifiedType qualifiedType ->
                     addSelectorTypeCompletions(parameters, result, qualifiedType);
 
-            case OdinSimpleRefType ignored -> {
-                addIdentifierCompletionsWithStubs(parameters, position.getText(), odinFile, result);
-            }
+            case OdinSimpleRefType ignored -> addIdentifierCompletionsWithStubs(parameters, position.getText(), odinFile, result);
 
             // Expressions like 'a.b.c.<caret>'
             case OdinRefExpression refExpression when refExpression.getExpression() != null -> {
@@ -370,42 +424,15 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
             }
             // Identifiers like '<caret>'
-            case OdinRefExpression refExpression when refExpression.getExpression() == null -> {
-
-                addIdentifierCompletionsWithStubs(
-                        parameters,
-                        position.getText(),
-                        odinFile,
-                        result);
-            }
+            case OdinRefExpression refExpression when refExpression.getExpression() == null -> addIdentifierCompletionsWithStubs(
+                    parameters,
+                    position.getText(),
+                    odinFile,
+                    result);
             default -> {
                 // Do not add completions if we are not inside a ref-expression
             }
         }
-    }
-
-    private static @Nullable String getTypeText(OdinSymbol symbol) {
-        String typeText = null;
-        if (symbol.getPsiType() != null) {
-            if (symbol.getSymbolType() == OdinSymbolType.ENUM_FIELD) {
-                OdinDeclaration declaration = PsiTreeUtil.getParentOfType(symbol.getPsiType(), OdinDeclaration.class);
-                if (declaration != null) {
-                    OdinDeclaredIdentifier declaredIdentifier = declaration.getDeclaredIdentifiers().getFirst();
-                    typeText = declaredIdentifier.getName();
-                }
-            }
-            if (symbol.getSymbolType() == OdinSymbolType.STRUCT_FIELD) {
-                typeText = symbol.getPsiType().getText();
-            }
-        }
-        return typeText;
-    }
-
-    // TODO
-    //  Look for "src" whenever we don't have a source root.
-    //  Otherwise, look for topmost directory that contains at least one .odin file
-    private static @Nullable VirtualFile getSourceRootForFile(ProjectFileIndex projectFileIndex, VirtualFile thisFile) {
-        return projectFileIndex.getSourceRootForFile(thisFile);
     }
 
     private void addIdentifierCompletionsWithStubs(
@@ -459,8 +486,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
         Map<Path, OdinImport> importPathMap = OdinImportUtils.getImportPathMap(thisOdinFile);
 
-        VirtualFile sourceRootForFile = getSourceRootForFile(ProjectFileIndex.getInstance(project), thisVirtualFile);
-        CompletionsProcessor processor = new CompletionsProcessor(thisOdinFile, this.symbolFilter, thisPackagePath, sourceRootForFile, parameters);
+        CompletionsProcessor processor = new CompletionsProcessor(thisOdinFile, this.symbolFilter, thisPackagePath, parameters);
 
         for (String name : allNamesSorted) {
             if (name.equals("_"))
@@ -493,19 +519,25 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         }
     }
 
+    interface ElementProcessor {
+        boolean process(@NotNull String name,
+                        @NotNull OdinDeclaration element,
+                        @NotNull OdinImport importData,
+                        @NotNull CompletionResultSet result);
+
+    }
+
     static class CompletionsProcessor implements ElementProcessor {
 
         private final OdinFile sourceFile;
         private final OdinSymbolFilter symbolFilter;
         private final String sourcePackagePath;
-        private final VirtualFile sourceRoot;
-        private CompletionParameters parameters;
+        private final CompletionParameters parameters;
 
-        public CompletionsProcessor(OdinFile sourceFile, OdinSymbolFilter symbolFilter, String sourcePackagePath, VirtualFile sourceRoot, CompletionParameters parameters) {
+        public CompletionsProcessor(OdinFile sourceFile, OdinSymbolFilter symbolFilter, String sourcePackagePath, CompletionParameters parameters) {
             this.sourceFile = sourceFile;
             this.symbolFilter = symbolFilter;
             this.sourcePackagePath = sourcePackagePath;
-            this.sourceRoot = sourceRoot;
             this.parameters = parameters;
         }
 
@@ -529,59 +561,6 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             return true;
         }
 
-        @Override
-        public boolean isMine(@NotNull String name, @NotNull OdinImport element) {
-            return false;
-        }
-    }
-
-    interface ElementProcessor {
-        boolean process(@NotNull String name,
-                        @NotNull OdinDeclaration element,
-                        @NotNull OdinImport importData,
-                        @NotNull CompletionResultSet result);
-
-        boolean isMine(@NotNull String name, @NotNull OdinImport element);
-    }
-
-
-    private static @NotNull Set<String> collectAllNames(PrefixMatcher matcher, OdinFile thisOdinFile) {
-        Set<String> aliases = OdinImportUtils.getImports(thisOdinFile.getFileScope()).stream()
-                .filter(i -> i.alias() != null)
-                .map(OdinImport::canonicalName)
-                .collect(Collectors.toSet());
-
-        String prefix = matcher.getPrefix();
-        boolean prefixIsEmpty = prefix.isEmpty();
-
-        Set<String> allNames = new HashSet<>();
-        CancellableCollectProcessor<String> processor = new CancellableCollectProcessor<>(allNames) {
-            @Override
-            protected boolean accept(String s) {
-                return prefixIsEmpty || matcher.prefixMatches(s) || matcher.prefixMatches(substringAfter(s, '.')) || aliases.contains(substringBefore(s, '.'));
-            }
-        };
-
-        // TODO add production filter and scope
-        StubIndex.getInstance().processAllKeys(
-                OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES,
-                processor,
-                GlobalSearchScope.allScope(thisOdinFile.getProject()),
-                null
-        );
-
-        List<String> sorted = ContainerUtil.sorted(allNames, String.CASE_INSENSITIVE_ORDER);
-        ProgressManager.checkCanceled();
-
-        LinkedHashSet<String> result = new LinkedHashSet<>();
-        for (String name : sorted) {
-            ProgressManager.checkCanceled();
-            if (matcher.isStartMatch(name)) {
-                result.add(name);
-            }
-        }
-        result.addAll(sorted);
-        return result;
     }
 
     private static String substringBefore(@NotNull String s, char c) {

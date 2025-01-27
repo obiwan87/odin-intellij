@@ -485,7 +485,7 @@ public class OdinPsiUtil {
         return Collections.emptyList();
     }
 
-    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinUsingStatement usingStatement) {
+    public static List<OdinDeclaredIdentifier> getDeclaredIdentifiers(OdinUsingStatement ignore) {
         throw new UnsupportedOperationException("This method must not be used. Use getTypeElements() with a context object.");
     }
 
@@ -553,7 +553,7 @@ public class OdinPsiUtil {
         return null;
     }
 
-    public static PsiElement setName(OdinForeignImportDeclarationStatement foreignImportDeclarationStatement, String name) {
+    public static PsiElement setName(OdinForeignImportDeclarationStatement foreignImportDeclarationStatement, String ignore) {
         return foreignImportDeclarationStatement;
     }
 
@@ -676,7 +676,7 @@ public class OdinPsiUtil {
         return constantInitializationStatement.getConstantInitDeclaration();
     }
 
-    public static Icon getIcon(OdinDeclaration declaration, int flags) {
+    public static Icon getIcon(OdinDeclaration declaration, int ignoredFlags) {
         Icon baseIcon = null;
         if (declaration instanceof OdinVariableDeclaration) {
             baseIcon = AllIcons.Nodes.Variable;
@@ -688,9 +688,8 @@ public class OdinPsiUtil {
         }
 
         if (baseIcon != null) {
-            OdinVisibility visibility = null;
             OdinAttributesOwner attributesOwner = (OdinAttributesOwner) declaration;
-            visibility = OdinInsightUtils.computeVisibility(attributesOwner);
+            OdinVisibility visibility = OdinInsightUtils.computeVisibility(attributesOwner);
 
             if (visibility != null) {
                 return switch (visibility) {
