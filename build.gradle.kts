@@ -97,6 +97,9 @@ allprojects {
             releases {
                 content {
                     includeModule("com.jetbrains.intellij.rider", "riderRD")
+                    includeModule("com.jetbrains.intellij.clion", "clion")
+                    includeModule("com.jetbrains.intellij.idea", "ideaIC")
+                    includeModule("com.jetbrains.intellij.idea", "ideaIU")
                 }
             }
         }
@@ -199,7 +202,7 @@ project(":core") {
     dependencies {
         lsp4ijDep()
         intellijPlatform {
-            testFramework(TestFrameworkType.Platform, version = "243.22562.220")
+            testFramework(TestFrameworkType.Platform, version = "243.23654.166")
             testImplementation("junit:junit:4.13.2")
             testCompileOnly("org.projectlombok:lombok:1.18.34")
             testCompileOnly("org.junit.jupiter:junit-jupiter-api:5.4.2")
