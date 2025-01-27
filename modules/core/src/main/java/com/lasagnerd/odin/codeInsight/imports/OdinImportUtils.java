@@ -325,7 +325,7 @@ public class OdinImportUtils {
                     dirs.add(sdkSourceDir);
                 }
 
-                Map<String, Path> collectionPaths = OdinRootsService.Companion.getInstance(project)
+                Map<String, Path> collectionPaths = OdinRootsService.getInstance(project)
                         .getCollectionPaths(sourceFilePath);
                 Path collectionPath = collectionPaths.get(library);
                 if (collectionPath != null) {
@@ -374,7 +374,7 @@ public class OdinImportUtils {
         }
 
         // Case 1: files under same source root
-        OdinRootsService rootsService = OdinRootsService.Companion.getInstance(project);
+        OdinRootsService rootsService = OdinRootsService.getInstance(project);
         OdinRootTypeResult sourceFileRoot = rootsService.findContainingRoot(sourceFile);
         OdinRootTypeResult targetFileRoot = rootsService.findContainingRoot(targetFile);
         if (sourceFileRoot != null && targetFileRoot != null) {

@@ -12,6 +12,7 @@ interface OdinRootsService {
 
         var instance: OdinRootsService? = null
 
+        @JvmStatic
         fun getInstance(project: Project): OdinRootsService {
             if (instance != null)
                 return instance!!

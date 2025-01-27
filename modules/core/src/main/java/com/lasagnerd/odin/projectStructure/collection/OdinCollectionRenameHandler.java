@@ -24,7 +24,7 @@ public class OdinCollectionRenameHandler implements RenameHandler {
 
         VirtualFile virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
         if (virtualFile != null)
-            return OdinRootsService.Companion.getInstance(project).isCollectionRoot(
+            return OdinRootsService.getInstance(project).isCollectionRoot(
                     virtualFile
             );
 

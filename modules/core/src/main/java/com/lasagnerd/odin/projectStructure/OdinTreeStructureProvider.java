@@ -72,7 +72,7 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
 
             VirtualFile directoryFile = directoryNode.getVirtualFile();
             Project project = child.getProject();
-            OdinCollection collection = OdinRootsService.Companion.getInstance(project).getCollection(directoryFile);
+            OdinCollection collection = OdinRootsService.getInstance(project).getCollection(directoryFile);
             if (collection != null) {
                 PsiDirectoryNode newDirectoryNode = createCollectionDirectoryNode(directoryNode, collection, directoryFile);
                 newChildren.add(newDirectoryNode);

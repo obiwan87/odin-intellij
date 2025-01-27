@@ -32,7 +32,7 @@ public class OdinRiderRenameCollectionAction extends DumbAwareAction {
         LOG.assertTrue(selection != null);
         LOG.assertTrue(project != null);
 
-        OdinRootsService rootsService = OdinRootsService.Companion.getInstance(project);
+        OdinRootsService rootsService = OdinRootsService.getInstance(project);
         OdinCollection collection = rootsService.getCollection(selection);
 
         LOG.assertTrue(collection != null);
@@ -77,7 +77,7 @@ public class OdinRiderRenameCollectionAction extends DumbAwareAction {
         Project project = getEventProject(e);
         VirtualFile selection = OdinRiderMarkRootAction.getSelection(e);
         if (selection != null && project != null) {
-            OdinRootsService rootsService = OdinRootsService.Companion.getInstance(project);
+            OdinRootsService rootsService = OdinRootsService.getInstance(project);
             if (rootsService.isCollectionRoot(selection)) {
                 e.getPresentation().setEnabled(true);
                 e.getPresentation().setVisible(true);

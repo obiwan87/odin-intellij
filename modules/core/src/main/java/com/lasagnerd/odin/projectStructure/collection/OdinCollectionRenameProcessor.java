@@ -16,7 +16,7 @@ public class OdinCollectionRenameProcessor extends RenamePsiElementProcessor {
                                      PsiDirectory psiDirectory,
                                      String newName) {
         VirtualFile virtualFile = psiDirectory.getVirtualFile();
-        OdinRootsService.Companion.getInstance(project).renameCollection(virtualFile, newName);
+        OdinRootsService.getInstance(project).renameCollection(virtualFile, newName);
     }
 
     @Override

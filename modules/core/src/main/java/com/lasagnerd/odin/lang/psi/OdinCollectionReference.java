@@ -52,7 +52,7 @@ public class OdinCollectionReference extends PsiReferenceBase<OdinImportPath> im
                     return new OdinPsiCollection(importInfo.collection(), directory);
                 }
             }
-            OdinRootTypeResult odinRootTypeResult = OdinRootsService.Companion.getInstance(getElement().getProject())
+            OdinRootTypeResult odinRootTypeResult = OdinRootsService.getInstance(getElement().getProject())
                     .findCollectionRoot(getElement(), importInfo.collection());
             if (odinRootTypeResult != null && odinRootTypeResult.isCollectionRoot()) {
                 VirtualFile collectionDir = odinRootTypeResult.directory();
@@ -87,7 +87,7 @@ public class OdinCollectionReference extends PsiReferenceBase<OdinImportPath> im
         String basePath = myElement.getProject().getBasePath();
         if (basePath != null) {
             Path projectPath = Path.of(basePath);
-            Map<String, Path> collectionPaths = OdinRootsService.Companion.getInstance(getElement().getProject())
+            Map<String, Path> collectionPaths = OdinRootsService.getInstance(getElement().getProject())
                     .getCollectionPaths(containingVirtualFile.getPath());
             for (Map.Entry<String, Path> entry : collectionPaths.entrySet()) {
                 Path collectinPath = entry.getValue();

@@ -88,7 +88,7 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
                 }
 
                 if (directoryPath == null) {
-                    Map<String, Path> collectionPaths = OdinRootsService.Companion.getInstance(project).getCollectionPaths(containingVirtualFile.getPath());
+                    Map<String, Path> collectionPaths = OdinRootsService.getInstance(project).getCollectionPaths(containingVirtualFile.getPath());
                     Path path = collectionPaths.get(importInfo.collection());
                     if (path != null) {
                         directoryPath = path.resolve(importPath);
@@ -154,7 +154,7 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
 
                 Path newDirPath = Path.of(psiTargetDirectory.getVirtualFile().getPath());
 
-                OdinRootTypeResult odinCollection = OdinRootsService.Companion.getInstance(project)
+                OdinRootTypeResult odinCollection = OdinRootsService.getInstance(project)
                         .findContainingCollection(psiTargetDirectory.getVirtualFile());
 
                 String newCollection;

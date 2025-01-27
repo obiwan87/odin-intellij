@@ -29,61 +29,13 @@ public class OdinMovePackageHandler extends MoveFilesOrDirectoriesHandler {
         return isValidTarget(targetContainer, elements);
     }
 
-    @Override
-    public boolean isValidTarget(@Nullable PsiElement targetElement, PsiElement[] sources) {
-        if (!(targetElement instanceof PsiDirectory psiDirectory))
-            return false;
-
-        Project project = targetElement.getProject();
-        ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
-
-        VirtualFile targetFile = psiDirectory.getVirtualFile();
-
-        OdinRootTypeResult containingRoot = OdinRootsService.Companion.getInstance(project)
-                .findContainingRoot(targetFile);
-        if (containingRoot == null)
-            return false;
-
-        if (sources.length == 0) {
+    private static boolean isPsiDirectoryUnderSource(Project project, PsiElement psiElement) {
+        if (psiElement instanceof PsiDirectory psiDirectory) {
+            VirtualFile dirFile = psiDirectory.getVirtualFile();
+            return OdinRootsService.getInstance(project).findContainingRoot(dirFile) != null;
+        } else {
             return false;
         }
-
-        for (PsiElement sourcePsiElement : sources) {
-            if (sourcePsiElement instanceof PsiDirectory sourcePsiDirectory) {
-                VirtualFile sourceDirFile = sourcePsiDirectory.getVirtualFile();
-                if (projectFileIndex.isInProject(sourceDirFile)) {
-                    boolean underSourceRootOfType = projectFileIndex.isUnderSourceRootOfType(sourceDirFile,
-                            Set.of(OdinSourceRootType.INSTANCE, OdinCollectionRootType.INSTANCE));
-
-                    // Must be strictly under a root
-                    if (underSourceRootOfType) {
-                        // Must be contained in a root
-                        OdinRootTypeResult sourceRootResult = OdinRootsService.Companion
-                                .getInstance(project)
-                                .findContainingRoot(sourceDirFile);
-                        if (sourceRootResult == null) {
-                            return false;
-                        }
-
-                        // Not allowed to move to a different source root than the target
-                        if (containingRoot.isSourceRoot() && !Objects.equals(containingRoot
-                                .directory(), sourceRootResult.directory())) {
-                            return false;
-                        }
-
-                        // Allowed to move to any other collection or same source root
-                    } else {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     @Override
@@ -110,13 +62,61 @@ public class OdinMovePackageHandler extends MoveFilesOrDirectoriesHandler {
         return true;
     }
 
-    private static boolean isPsiDirectoryUnderSource(Project project, PsiElement psiElement) {
-        if (psiElement instanceof PsiDirectory psiDirectory) {
-            VirtualFile dirFile = psiDirectory.getVirtualFile();
-            return OdinRootsService.Companion.getInstance(project).findContainingRoot(dirFile) != null;
-        } else {
+    @Override
+    public boolean isValidTarget(@Nullable PsiElement targetElement, PsiElement[] sources) {
+        if (!(targetElement instanceof PsiDirectory psiDirectory))
+            return false;
+
+        Project project = targetElement.getProject();
+        ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
+
+        VirtualFile targetFile = psiDirectory.getVirtualFile();
+
+        OdinRootTypeResult containingRoot = OdinRootsService.getInstance(project)
+                .findContainingRoot(targetFile);
+        if (containingRoot == null)
+            return false;
+
+        if (sources.length == 0) {
             return false;
         }
+
+        for (PsiElement sourcePsiElement : sources) {
+            if (sourcePsiElement instanceof PsiDirectory sourcePsiDirectory) {
+                VirtualFile sourceDirFile = sourcePsiDirectory.getVirtualFile();
+                if (projectFileIndex.isInProject(sourceDirFile)) {
+                    boolean underSourceRootOfType = projectFileIndex.isUnderSourceRootOfType(sourceDirFile,
+                            Set.of(OdinSourceRootType.INSTANCE, OdinCollectionRootType.INSTANCE));
+
+                    // Must be strictly under a root
+                    if (underSourceRootOfType) {
+                        // Must be contained in a root
+                        OdinRootTypeResult sourceRootResult = OdinRootsService
+                                .getInstance(project)
+                                .findContainingRoot(sourceDirFile);
+                        if (sourceRootResult == null) {
+                            return false;
+                        }
+
+                        // Not allowed to move to a different source root than the target
+                        if (containingRoot.isSourceRoot() && !Objects.equals(containingRoot
+                                .directory(), sourceRootResult.directory())) {
+                            return false;
+                        }
+
+                        // Allowed to move to any other collection or same source root
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 

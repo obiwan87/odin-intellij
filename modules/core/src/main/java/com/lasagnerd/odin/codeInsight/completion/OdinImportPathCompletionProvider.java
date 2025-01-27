@@ -47,7 +47,7 @@ public class OdinImportPathCompletionProvider extends CompletionProvider<Complet
         result = result.withPrefixMatcher(prefix);
 
         Map<String, Path> sdkCollectionPaths = OdinImportUtils.getSdkCollections(project);
-        Map<String, Path> collectionPaths = OdinRootsService.Companion
+        Map<String, Path> collectionPaths = OdinRootsService
                 .getInstance(project)
                 .getCollectionPaths(filePath);
         PsiDirectory directory = originalFile.getParent();
@@ -65,7 +65,7 @@ public class OdinImportPathCompletionProvider extends CompletionProvider<Complet
             }
             addResultsRecursively(result, directory, null);
             if (prefix.startsWith("..")) {
-                OdinRootTypeResult sourceRoot = OdinRootsService.Companion
+                OdinRootTypeResult sourceRoot = OdinRootsService
                         .getInstance(project)
                         .findContainingRoot(originalFile.getVirtualFile());
                 if (sourceRoot != null) {

@@ -88,7 +88,7 @@ public class OdinBuildProcessRunner {
     }
 
     public static void addCollectionPaths(Project project, String filePath, List<String> command) {
-        Map<String, Path> collectionPaths = OdinRootsService.Companion.getInstance(project).getCollectionPaths(filePath);
+        Map<String, Path> collectionPaths = OdinRootsService.getInstance(project).getCollectionPaths(filePath);
         for (Map.Entry<String, Path> entry : collectionPaths.entrySet()) {
             command.add("-collection:%s=%s".formatted(entry.getKey(), FileUtil.toSystemDependentName(entry.getValue().toString())));
         }
