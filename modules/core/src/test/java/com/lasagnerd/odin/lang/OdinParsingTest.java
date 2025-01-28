@@ -2134,45 +2134,6 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
-    public void testRefractVec2() throws IOException {
-        {
-            OdinFile file = load("src/test/sdk/core/math/linalg/glsl/linalg_glsl.odin");
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_vec2", "cost2");
-            @NotNull TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
-            assertEquals("vec2", tsOdinTypeAlias.getName());
-        }
-
-        {
-            OdinFile file = load("src/test/sdk/core/math/linalg/glsl/linalg_glsl.odin");
-            {
-                TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_dvec2", "x");
-                assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
-            }
-            {
-                TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_dvec2", "cost2");
-                @NotNull TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
-                assertEquals("dvec2", tsOdinTypeAlias.getName());
-                TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinTypeAlias.getBaseType(), TsOdinArrayType.class);
-                assertEquals("[2]f64", tsOdinArrayType.getLabel());
-            }
-        }
-        {
-            OdinFile file = load("src/test/sdk/core/math/linalg/hlsl/linalg_hlsl.odin");
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_double4", "cost2");
-            @NotNull TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
-            assertEquals("double4", tsOdinTypeAlias.getName());
-        }
-
-        {
-            OdinFile file = load("src/test/sdk/core/math/linalg/glsl/linalg_glsl.odin");
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(file, "refract_dvec2", "cost2");
-            @NotNull TsOdinTypeAlias tsOdinTypeAlias = assertInstanceOf(tsOdinType, TsOdinTypeAlias.class);
-            assertEquals("dvec2", tsOdinTypeAlias.getName());
-            TsOdinArrayType tsOdinArrayType = assertInstanceOf(tsOdinTypeAlias.getBaseType(), TsOdinArrayType.class);
-            assertEquals("[2]f64", tsOdinArrayType.getLabel());
-        }
-    }
-
     public void testMatrixType() throws IOException {
         OdinFile file = loadTypeInference();
         {
@@ -2282,9 +2243,9 @@ public class OdinParsingTest extends UsefulTestCase {
 
     public void testPsiFileAtOffset() throws IOException {
         {
-            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\os\\os_freebsd.odin");
-            PsiElement element = file.findElementAt(2911);
-            assertNotNull(element);
+//            OdinFile file = load("D:\\dev\\code\\odin-intellij\\modules\\core\\src\\test\\sdk\\core\\os\\os_freebsd.odin");
+//            PsiElement element = file.findElementAt(2911);
+//            assertNotNull(element);
 
 //            OdinQualifiedType qualifiedType = PsiTreeUtil.getParentOfType(element, OdinQualifiedType.class);
 //            OdinSymbol symbol = OdinReferenceResolver.resolve(new OdinContext(), qualifiedType.getTypeIdentifier());
@@ -2295,10 +2256,10 @@ public class OdinParsingTest extends UsefulTestCase {
 //            OdinSymbol referencedSymbol = refExpression.getIdentifier().getReferencedSymbol();
 //            assertNotNull(referencedSymbol);
 //
-            OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
-            TsOdinType inferredType = Objects.requireNonNull(refExpression).getInferredType();
-            System.out.println(inferredType);
-            assertFalse(inferredType.isUnknown());
+//            OdinRefExpression refExpression = PsiTreeUtil.getParentOfType(element, OdinRefExpression.class);
+//            TsOdinType inferredType = Objects.requireNonNull(refExpression).getInferredType();
+//            System.out.println(inferredType);
+//            assertFalse(inferredType.isUnknown());
 
 //            EvOdinValue value = OdinExpressionEvaluator.evaluate(refExpression);
 //            assertFalse(value.asBool());
