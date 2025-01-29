@@ -96,12 +96,13 @@ class OdinRiderInteropServiceImpl(private val project: Project) : OdinRiderInter
         val rootFoldersService = OdinRiderRootFoldersService.getInstance(project)
         val collectionPath = rootFoldersService.state.collectionRoots.reverse()[collectionName]?.toNioPathOrNull()
 
-        return collectionPath?.takeIf { element.containingFile.virtualFile.toNioPath().startsWith(it) }
-            ?.let { path ->
-                VirtualFileManager.getInstance().findFileByNioPath(path)?.let { collectionFile ->
-                    OdinRiderRootTypeResult(project, collectionFile, collectionName)
-                }
+        if (collectionPath != null) {
+            val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(collectionPath)
+            if (virtualFile != null) {
+                return OdinRiderRootTypeResult(project, virtualFile, collectionName)
             }
+        }
+        return null
     }
 
 

@@ -100,7 +100,7 @@ public class OdinRiderRootFoldersService implements PersistentStateComponent<Odi
         if (collectionRoots != null) {
             return collectionRoots.entrySet().stream().collect(Collectors.toMap(
                     Map.Entry::getKey,
-                    e -> Collection.parse(e.getValue())
+                    e -> new Collection(e.getKey(), e.getValue())
             ));
         }
         return Collections.emptyMap();
