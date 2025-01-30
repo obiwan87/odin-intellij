@@ -16,12 +16,7 @@ public class OdinProjectSettingsStep extends ProjectSettingsStepBase<OdinProject
 
     @Override
     protected JPanel createBasePanel() {
-        JPanel basePanel = super.createBasePanel();
-        OdinProjectSettings projectSettings = new OdinProjectSettings();
-        JComponent component = projectSettings.getComponent();
-        basePanel.add(component);
-
-        return basePanel;
+        return super.createBasePanel();
     }
 
     @Override

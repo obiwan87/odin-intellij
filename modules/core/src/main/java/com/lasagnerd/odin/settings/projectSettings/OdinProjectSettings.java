@@ -603,4 +603,11 @@ public class OdinProjectSettings implements Disposable {
             }
         }
     }
+
+    public void initializeWithDefaultValues() {
+        getComponent();
+        setOdinCheckerEnabled(true);
+        setSemanticAnnotatorEnabled(true);
+        setCacheEnabled(true);
+    }
 }

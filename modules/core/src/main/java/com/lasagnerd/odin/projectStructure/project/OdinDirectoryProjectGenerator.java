@@ -13,6 +13,7 @@ import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.platform.ProjectGeneratorPeer;
 import com.lasagnerd.odin.OdinIcons;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
+import lombok.Getter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 
-public class OdinDirectoryProjectGenerator extends DirectoryProjectGeneratorBase<OdinProjectSettings> implements CustomStepProjectGenerator<OdinProjectSettings> {
+@Getter
+public class OdinDirectoryProjectGenerator
+        extends DirectoryProjectGeneratorBase<OdinProjectSettings>
+        implements CustomStepProjectGenerator<OdinProjectSettings> {
+
+    private OdinProjectGeneratorPeer peer;
+
     @Override
     public @NotNull @NlsContexts.Label String getName() {
         return "Odin";
@@ -55,9 +62,9 @@ public class OdinDirectoryProjectGenerator extends DirectoryProjectGeneratorBase
 
     @Override
     public @NotNull ProjectGeneratorPeer<OdinProjectSettings> createPeer() {
-        return new OdinProjectGeneratorPeer();
+        peer = new OdinProjectGeneratorPeer();
+        return peer;
     }
-
 
     @Override
     public AbstractActionWithPanel createStep(DirectoryProjectGenerator<OdinProjectSettings> projectGenerator, AbstractNewProjectStep.AbstractCallback<OdinProjectSettings> callback) {

@@ -1,5 +1,7 @@
 package com.lasagnerd.odin.projectStructure.project;
 
+import com.intellij.ide.util.projectWizard.SettingsStep;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.platform.GeneratorPeerImpl;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
 import org.jetbrains.annotations.NotNull;
@@ -14,9 +16,7 @@ public class OdinProjectGeneratorPeer extends GeneratorPeerImpl<OdinProjectSetti
     }
 
     private void setDefaultValues() {
-        projectSettings.getComponent();
-        projectSettings.setOdinCheckerEnabled(true);
-        projectSettings.setSemanticAnnotatorEnabled(true);
+        projectSettings.initializeWithDefaultValues();
     }
 
     @Override
@@ -24,9 +24,13 @@ public class OdinProjectGeneratorPeer extends GeneratorPeerImpl<OdinProjectSetti
         return projectSettings;
     }
 
+    @Override
+    public void buildUI(@NotNull SettingsStep settingsStep) {
+        super.buildUI(settingsStep);
+    }
 
     @Override
-    public @NotNull JComponent getComponent() {
+    public @NotNull JComponent getComponent(@NotNull TextFieldWithBrowseButton myLocationField, @NotNull Runnable checkValid) {
         return projectSettings.getComponent();
     }
 }

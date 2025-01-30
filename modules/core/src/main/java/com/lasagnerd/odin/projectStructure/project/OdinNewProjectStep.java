@@ -27,6 +27,7 @@ public class OdinNewProjectStep extends AbstractNewProjectWizardStep {
 
     @Override
     public void setupUI(@NotNull Panel builder) {
+        projectSettings.initializeWithDefaultValues();
         JComponent component = projectSettings.getComponent();
         builder.row((JLabel) null, r -> {
             r.cell(component).align(AlignX.FILL);
