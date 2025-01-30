@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.projectStructure.collection
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -14,16 +15,11 @@ interface OdinRootsService {
 
         @JvmStatic
         fun getInstance(project: Project): OdinRootsService {
-            if (instance != null)
-                return instance!!
-
-            if (OdinRiderInteropService.getInstance(project) != null) {
-                return OdinRiderInteropService.getInstance(project)
+            return if (OdinRiderInteropService.getInstance(project) != null) {
+                OdinRiderInteropService.getInstance(project)
             } else {
-                instance = OdinJpsRootsService(project)
+                project.service<OdinJpsRootsService>()
             }
-
-            throw NullPointerException("OdinRootsService must not be null")
         }
     }
 

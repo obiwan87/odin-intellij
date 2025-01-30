@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.projectStructure.collection
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
@@ -16,6 +17,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.stream.Collectors
 
+@Service(Service.Level.PROJECT)
 class OdinJpsRootsService(val project: Project) : OdinRootsService {
     companion object {
         fun getCollectionFolder(directoryFile: VirtualFile, model: ModifiableRootModel): SourceFolder? {
@@ -104,7 +106,7 @@ class OdinJpsRootsService(val project: Project) : OdinRootsService {
         if (sourceFolder != null) {
             val properties = sourceFolder.jpsElement.properties
             if (properties is OdinCollectionRootProperties) {
-                return OdinCollection(properties.collectionName, directoryFile.path)
+                return OdinCollection(directoryFile.path, properties.collectionName)
             }
         }
 
