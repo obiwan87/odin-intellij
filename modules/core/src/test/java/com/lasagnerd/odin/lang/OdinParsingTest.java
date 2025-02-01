@@ -2215,8 +2215,20 @@ public class OdinParsingTest extends UsefulTestCase {
             assertNotNull(context.getSymbol("x"));
             assertNotNull(context.getSymbol("y"));
         }
-
     }
+
+    public void testBitFieldImplicitExpression() throws IOException {
+        var file = loadTypeInference();
+        {
+            OdinInitVariableStatement variable = findFirstVariableDeclarationStatement(file, "testImplicitEnumExpression", "bitfield");
+            OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(variable, OdinImplicitSelectorExpression.class);
+            assertNotNull(expression);
+            TsOdinType inferredType = expression.getInferredType();
+            TsOdinEnumType enumType = assertInstanceOf(inferredType, TsOdinEnumType.class);
+            assertEquals("Direction", enumType.getName());
+        }
+    }
+
 
     public void testPositionalInitialization() throws IOException {
         OdinFile file = loadTypeInference();

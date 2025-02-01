@@ -122,13 +122,19 @@ public class OdinExpectedTypeEngine {
 
             if (tsOdinType != null) {
                 TsOdinType tsOdinBaseType = tsOdinType.baseType(true);
-                if (tsOdinBaseType instanceof TsOdinStructType tsOdinStructType) {
+                if (tsOdinBaseType instanceof TsOdinStructType || tsOdinBaseType instanceof TsOdinBitFieldType) {
 
-                    List<OdinSymbol> structFields = OdinInsightUtils.getStructFields(tsOdinStructType);
+                    List<OdinSymbol> fields;
+                    if (tsOdinBaseType instanceof TsOdinStructType tsOdinStructType) {
+                        fields = OdinInsightUtils.getStructFields(tsOdinStructType);
+                    } else {
+                        TsOdinBitFieldType tsOdinBitFieldType = (TsOdinBitFieldType) tsOdinBaseType;
+                        fields = OdinInsightUtils.getBitFieldFields(tsOdinBitFieldType);
+                    }
                     // Named element entry
                     if (elemEntry.getLhs() != null) {
                         String fieldName = elemEntry.getLhs().getText();
-                        OdinSymbol symbol = structFields.stream().filter(s -> s.getName().equals(fieldName))
+                        OdinSymbol symbol = fields.stream().filter(s -> s.getName().equals(fieldName))
                                 .findFirst()
                                 .orElse(null);
                         if (symbol == null || symbol.getPsiType() == null) {
@@ -144,8 +150,8 @@ public class OdinExpectedTypeEngine {
                                 .getElementEntryList()
                                 .indexOf(elemEntry);
 
-                        if (structFields.size() > index) {
-                            OdinSymbol symbol = structFields.get(index);
+                        if (fields.size() > index) {
+                            OdinSymbol symbol = fields.get(index);
                             if (symbol == null || symbol.getPsiType() == null) {
                                 return TsOdinBuiltInTypes.UNKNOWN;
                             }

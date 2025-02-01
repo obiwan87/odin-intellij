@@ -330,6 +330,13 @@ public class OdinInsightUtils {
         return new ObjcClassInfo(attributes, objcType, objcName, isClassMethod);
     }
 
+    public static List<OdinSymbol> getBitFieldFields(TsOdinBitFieldType tsOdinBitFieldType) {
+        if (tsOdinBitFieldType.getPsiType() instanceof OdinBitFieldType bitFieldType) {
+            return getBitFieldFields(bitFieldType);
+        }
+        return Collections.emptyList();
+    }
+
     private record ObjcClassInfo(List<OdinAttributesDefinition> attributes, EvOdinValue objcType, EvOdinValue objcName, EvOdinValue isClassMethod) {
         public boolean isValidInstanceMember() {
             return this.objcType() != null
@@ -573,6 +580,7 @@ public class OdinInsightUtils {
         symbol.setScope(OdinScope.TYPE);
         symbol.setVisibility(OdinVisibility.NONE);
         symbol.setHasUsing(false);
+        symbol.setPsiType(odinBitFieldFieldDeclaration.getType());
         return symbol;
     }
 

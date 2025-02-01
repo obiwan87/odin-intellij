@@ -651,6 +651,16 @@ testImplicitEnumExpression :: proc() {
             return Directions{ }
         }
     }
+
+    {
+        Bitfield :: bit_field u8 {
+            kind: Direction | 1
+        }
+
+        bitfield := Bitfield{
+            kind = .North
+        }
+    }
 }
 
 testPositionalInitialization :: proc() {
