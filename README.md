@@ -38,7 +38,7 @@ auto-completion, and free usage options.
 <td>❌</td>
 </tr>
 <tr>
-<td>Rider</td>
+<td>Rider**</td>
 <td>✅</td>
 <td>❌</td>
 <td>✅</td>
@@ -69,6 +69,7 @@ auto-completion, and free usage options.
 
 \* Requires installing the free plugin "Native Debugging Support" (see section **Debugger Settings**).
 
+\*\* Full auto-completion features added for "Rider" in plugin version >= 0.12.0
 ## Getting Started
 
 To begin, ensure you have installed the plugin using the steps mentioned above.
@@ -81,6 +82,13 @@ Download the Odin SDK [here](https://github.com/odin-lang/Odin/releases) or buil
 Odin [Install page](https://odin-lang.org/docs/install/).
 
 ### Creating a New Project
+
+[!IMPORTANT]
+Rider does not support creating new projects. If you're using Rider, create a new empty solution and manually add a folder for your Odin "project."
+
+[!WARNING]
+If you open an Odin project created with an IDE other than Rider in Rider, you may encounter unexpected behavior related to source and collection
+roots. You can still open such projects in Rider, but first, unmark all source and collection roots in a non-Rider IDE to avoid issues.
 
 Use the "New Project..." wizard in IntelliJ to create a blank Odin project. The default project structure will look like this:
 
