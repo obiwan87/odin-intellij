@@ -83,12 +83,12 @@ Odin [Install page](https://odin-lang.org/docs/install/).
 
 ### Creating a New Project
 
-[!IMPORTANT]
-Rider does not support creating new projects. If you're using Rider, create a new empty solution and manually add a folder for your Odin "project."
+> [!IMPORTANT]
+> Rider does not support creating new projects. If you're using Rider, create a new empty solution and manually add a folder for your Odin "project."
 
-[!WARNING]
-If you open an Odin project created with an IDE other than Rider in Rider, you may encounter unexpected behavior related to source and collection
-roots. You can still open such projects in Rider, but first, unmark all source and collection roots in a non-Rider IDE to avoid issues.
+> [!WARNING]
+> If you open an Odin project created with an IDE other than Rider in Rider, you may encounter unexpected behavior related to source and collection
+> roots. You can still open such projects in Rider, but first, unmark all source and collection roots in a non-Rider IDE to avoid issues.
 
 Use the "New Project..." wizard in IntelliJ to create a blank Odin project. The default project structure will look like this:
 
