@@ -54,29 +54,15 @@ public class OdinParameterInfoHandler implements ParameterInfoHandler<OdinPsiEle
 
             if (tsOdinType.dereference() instanceof TsOdinProcedureType procedureType) {
                 parameterOwners.add(procedureType);
-            }
-
-            if (tsOdinType.dereference() instanceof TsOdinProcedureGroup procedureGroup) {
+            } else if (tsOdinType.dereference() instanceof TsOdinProcedureGroup procedureGroup) {
                 parameterOwners.addAll(procedureGroup.getProcedures());
-            }
-
-            if (tsOdinType.dereference() instanceof TsOdinObjcMember objcMember) {
+            } else if (tsOdinType.dereference() instanceof TsOdinObjcMember objcMember) {
                 parameterOwners.add(objcMember);
-            }
-
-            if (tsOdinType instanceof TsOdinProcedureType tsOdinProcedureType) {
-                parameterOwners.add(tsOdinProcedureType);
-            }
-
-            if (tsOdinType instanceof TsOdinPseudoMethodType tsOdinPseudoMethodType) {
+            } else if (tsOdinType instanceof TsOdinPseudoMethodType tsOdinPseudoMethodType) {
                 parameterOwners.add(tsOdinPseudoMethodType);
-            }
-
-            if (tsOdinType.dereference() instanceof TsOdinStructType tsOdinStructType) {
+            } else if (tsOdinType.dereference() instanceof TsOdinStructType tsOdinStructType) {
                 parameterOwners.add(tsOdinStructType);
-            }
-
-            if (tsOdinType.dereference() instanceof TsOdinUnionType tsOdinUnionType) {
+            } else if (tsOdinType.dereference() instanceof TsOdinUnionType tsOdinUnionType) {
                 parameterOwners.add(tsOdinUnionType);
             }
 
