@@ -5,7 +5,7 @@ import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
-import com.lasagnerd.odin.rider.OdinRiderInteropService;
+import com.lasagnerd.odin.riderInterop.OdinRiderInteropService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

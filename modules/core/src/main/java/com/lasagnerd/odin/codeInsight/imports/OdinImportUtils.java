@@ -25,7 +25,7 @@ import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.collection.OdinCollectionRootType;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootType;
-import com.lasagnerd.odin.rider.OdinRiderInteropService;
+import com.lasagnerd.odin.riderInterop.OdinRiderInteropService;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkLibraryManager;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;

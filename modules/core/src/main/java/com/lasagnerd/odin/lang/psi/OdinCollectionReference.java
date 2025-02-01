@@ -16,7 +16,7 @@ import com.lasagnerd.odin.codeInsight.imports.OdinImportUtils;
 import com.lasagnerd.odin.projectStructure.collection.OdinPsiCollection;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
-import com.lasagnerd.odin.rider.OdinRiderInteropService;
+import com.lasagnerd.odin.riderInterop.OdinRiderInteropService;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -33,7 +33,7 @@
     </actions>
     <extensions defaultExtensionNs="com.intellij">
 
-        <projectService serviceInterface="com.lasagnerd.odin.rider.OdinRiderInteropService"
+        <projectService serviceInterface="com.lasagnerd.odin.riderInterop.OdinRiderInteropService"
                         serviceImplementation="com.lasagnerd.odin.rider.OdinRiderInteropServiceImpl"/>
 
         <projectService serviceImplementation="com.lasagnerd.odin.rider.rootFolders.OdinRiderRootFoldersService"/>
