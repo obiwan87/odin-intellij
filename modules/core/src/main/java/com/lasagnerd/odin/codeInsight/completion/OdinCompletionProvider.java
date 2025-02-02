@@ -331,10 +331,21 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
 
         // Stuff inside arrays, struct init blocks, etc.
         OdinRefExpression topMostRefExpression = OdinInsightUtils.findTopMostRefExpression(identifier);
-        if (topMostRefExpression != null && (topMostRefExpression.getParent() instanceof OdinLhs || topMostRefExpression.getParent() instanceof OdinRhs)) {
-            OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(topMostRefExpression, OdinCompoundLiteral.class);
-            if (compoundLiteral != null) {
-                addCompoundLiteralCompletions(result, compoundLiteral, context);
+        if (topMostRefExpression != null) {
+            PsiElement refExpressionParent = topMostRefExpression.getParent();
+            if (refExpressionParent instanceof OdinLhs || refExpressionParent instanceof OdinRhs) {
+                boolean lhsAlreadySet = false;
+                if (refExpressionParent instanceof OdinRhs odinRhs) {
+                    OdinLhs lhs = PsiTreeUtil.getChildOfType(odinRhs.getParent(), OdinLhs.class);
+                    lhsAlreadySet = lhs != null;
+                }
+
+                if (!lhsAlreadySet) {
+                    OdinCompoundLiteral compoundLiteral = PsiTreeUtil.getParentOfType(topMostRefExpression, OdinCompoundLiteral.class);
+                    if (compoundLiteral != null) {
+                        addCompoundLiteralCompletions(result, compoundLiteral, context);
+                    }
+                }
             }
         }
 
