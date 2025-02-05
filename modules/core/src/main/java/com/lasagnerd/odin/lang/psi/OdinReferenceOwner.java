@@ -3,20 +3,29 @@ package com.lasagnerd.odin.lang.psi;
 import com.lasagnerd.odin.codeInsight.OdinContext;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface OdinReferenceOwner extends OdinPsiElement {
 
-    @NotNull
+    @Nullable
     OdinReference getReference();
 
     default OdinSymbol getReferencedSymbol() {
-        return getReference().getSymbol();
+        OdinReference reference = getReference();
+        if (reference != null) {
+            return reference.getSymbol();
+        }
+        return null;
     }
 
-    @NotNull
+    @Nullable
     OdinReference getReference(OdinContext context);
 
     default OdinSymbol getReferencedSymbol(@NotNull OdinContext context) {
-        return getReference(context).getSymbol();
+        OdinReference reference = getReference(context);
+        if (reference != null) {
+            return reference.getSymbol();
+        }
+        return null;
     }
 }

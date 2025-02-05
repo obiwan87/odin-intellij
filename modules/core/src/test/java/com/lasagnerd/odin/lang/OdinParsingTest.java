@@ -2220,6 +2220,14 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testBitFieldImplicitExpression() throws IOException {
         var file = loadTypeInference();
         {
+            OdinInitVariableStatement variable = findFirstVariableDeclarationStatement(file, "testImplicitEnumExpression", "bitfield_from_proc");
+            OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(variable, OdinImplicitSelectorExpression.class);
+            assertNotNull(expression);
+            TsOdinType inferredType = expression.getInferredType();
+            TsOdinEnumType enumType = assertInstanceOf(inferredType, TsOdinEnumType.class);
+            assertEquals("Direction", enumType.getName());
+        }
+        {
             OdinInitVariableStatement variable = findFirstVariableDeclarationStatement(file, "testImplicitEnumExpression", "bitfield");
             OdinImplicitSelectorExpression expression = PsiTreeUtil.findChildOfType(variable, OdinImplicitSelectorExpression.class);
             assertNotNull(expression);

@@ -117,6 +117,8 @@ public abstract class OdinDeclaredIdentifierMixin extends OdinStubbedElementImpl
     private ParameterizedCachedValue<TsOdinType, OdinContext> cachedValue;
 
     public TsOdinType getType(OdinContext context) {
+        if (!this.isValid())
+            return null;
         if (!OdinReferenceOwnerMixin.shouldUseCache(context, this)) {
             return resolveType(context);
         }

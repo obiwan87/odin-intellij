@@ -1,9 +1,10 @@
 package com.lasagnerd.odin.codeInsight.imports;
 
+import java.nio.file.Path;
+
 /**
  * Represents either an import destination or an import source.
  *
- * @param packageName The name of the package
  * @param path        The relative path to the directory containing the package
  * @param collection  Special case: Name of the collection that is defined in the SDK folder
  *
@@ -27,5 +28,9 @@ public record OdinImport(
             return alias;
         }
         return canonicalName;
+    }
+
+    public Path fullImportNioPath() {
+        return Path.of(path);
     }
 }

@@ -1170,6 +1170,10 @@ public class OdinInferenceEngine extends OdinVisitor {
             return TsOdinBuiltInTypes.UNKNOWN;
         }
 
+        if (odinDeclaration instanceof OdinBitFieldFieldDeclaration bitFieldFieldDeclaration) {
+            return bitFieldFieldDeclaration.getType().getResolvedType(context);
+        }
+
         if (odinDeclaration instanceof OdinParameterDeclarator parameterDeclaration) {
             OdinTypeDefinitionContainer typeDefinitionContainer = parameterDeclaration
                     .getTypeDefinitionContainer();

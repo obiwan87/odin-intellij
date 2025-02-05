@@ -51,7 +51,10 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
         dependencies.add(PsiModificationTracker.MODIFICATION_COUNT);
         if (this instanceof OdinQualifiedType qualifiedType) {
 
-            dependencies.add(qualifiedType.getTypeIdentifier());
+            if (qualifiedType.getTypeIdentifier() != null) {
+                dependencies.add(qualifiedType.getTypeIdentifier());
+            }
+
             if (tsOdinType.getDeclaration() != null) {
                 dependencies.add(tsOdinType.getDeclaration());
             }

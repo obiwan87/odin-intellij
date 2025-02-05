@@ -17,6 +17,7 @@ import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +31,7 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
         super(node);
     }
 
-    @NotNull
+    @Nullable
     @Override
     public OdinReference getReference() {
         return getReference(new OdinContext());
@@ -64,14 +65,17 @@ public abstract class OdinReferenceOwnerMixin extends OdinPsiElementImpl impleme
         return CachedValueProvider.Result.create(odinReference, dependencies);
     }
 
-    public @NotNull OdinReference getReference(OdinContext context) {
+    public OdinReference getReference(OdinContext context) {
         if (OdinProjectSettingsService.getInstance(getProject()).isConditionalSymbolResolutionEnabled()) {
             return doGetReferenceWithKnowledge(context);
         }
         return doGetReferenceWithoutKnowledge(context);
     }
 
-    private @NotNull OdinReference doGetReferenceWithoutKnowledge(OdinContext context) {
+    private @Nullable OdinReference doGetReferenceWithoutKnowledge(OdinContext context) {
+        if (!this.isValid())
+            return null;
+
         if (!shouldUseCache(context, this)) {
             OdinSymbol symbol = OdinReferenceResolver.resolve(context, this);
             return new OdinReference(this, symbol);

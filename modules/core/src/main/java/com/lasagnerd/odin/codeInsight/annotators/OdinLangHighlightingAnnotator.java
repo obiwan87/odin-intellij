@@ -144,8 +144,6 @@ public class OdinLangHighlightingAnnotator implements Annotator {
             "unreachable"
     );
 
-    public static final String ALL_ESCAPE_SEQUENCES =
-            "\\\\n|\\\\r|\\\\v|\\\\t|\\\\e|\\\\a|\\\\b|\\\\f|\\\\[0-7]{2}|\\\\x[0-9a-fA-F]{2}|\\\\u[0-9a-fA-F]{4}|\\\\U[0-9a-fA-F]{8}|\\\\\"|\\\\\\\\";
     private static final Key<OdinAnnotationSessionState> ANNOTATION_SESSION_STATE = Key.create("annotationSessionState");
     public static Pattern ESCAPE_SEQUENCES_PATTERN = Pattern.compile("\\\\n|\\\\r|\\\\v|\\\\t|\\\\e|\\\\a|\\\\b|\\\\f|\\\\[0-7]{2}|\\\\x[0-9a-fA-F]{2}|\\\\u[0-9a-fA-F]{4}|\\\\U[0-9a-fA-F]{8}|\\\\\"|\\\\\\\\");
 
@@ -325,7 +323,6 @@ public class OdinLangHighlightingAnnotator implements Annotator {
                         for (PsiReference reference : references) {
                             PsiElement element = reference.getElement();
                             if (element instanceof OdinIdentifier odinIdentifier) {
-                                annotationSessionState.usages.put(odinIdentifier, symbol);
                                 if (odinIdentifier.getParent() instanceof OdinRefExpression refExpression) {
                                     if (refExpression.getParent() instanceof OdinLhsExpressions lhsExpressions) {
                                         if (lhsExpressions.getParent() instanceof OdinAssignmentStatement) {
@@ -364,7 +361,6 @@ public class OdinLangHighlightingAnnotator implements Annotator {
     private static class OdinAnnotationSessionState {
         Map<PsiElement, OdinRefExpression> refExpressionMap = new HashMap<>();
         Set<OdinRefExpression> aborted = new HashSet<>();
-        Map<OdinIdentifier, OdinSymbol> usages = new HashMap<>();
         HashMap<OdinDeclaredIdentifier, Integer> reassignmentCount = new HashMap<>();
     }
 
@@ -576,20 +572,21 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
     }
 
-    private void highlightPackageReference(@NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange, OdinIdentifier
-            identifier) {
-        PsiReference reference = identifier.getReference();
-        PsiElement resolveReference = reference.resolve();
-        if (resolveReference instanceof PsiDirectory) {
-            highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE_REF);
-        } else {
-            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
-            if (odinDeclaration == null) {
-                highlightError(identifier.getProject(), identifier, annotationHolder, identifierText, textRange, UNRESOLVED_REFERENCE_ERROR_MESSAGE);
-            } else if (odinDeclaration instanceof OdinImportDeclaration) {
-                highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE_REF);
-            }
+    private static OdinSymbol resolveSymbol(PsiElement psiElement) {
+        if (!(psiElement instanceof OdinIdentifier identifier)) {
+            return null;
         }
+
+        try {
+            OdinReference reference = identifier.getReference();
+            if (reference != null)
+                return reference.getSymbol();
+            return null;
+        } catch (StackOverflowError e) {
+            OdinInsightUtils.logStackOverFlowError(identifier, LOG);
+            return null;
+        }
+
     }
 
     private static void highlight(@NotNull AnnotationHolder annotationHolder, TextRange textRange, TextAttributesKey constant) {
@@ -625,18 +622,23 @@ public class OdinLangHighlightingAnnotator implements Annotator {
         }
     }
 
-    private static OdinSymbol resolveSymbol(PsiElement psiElement) {
-        if (!(psiElement instanceof OdinIdentifier identifier)) {
-            return null;
-        }
+    private void highlightPackageReference(@NotNull AnnotationHolder annotationHolder, String identifierText, TextRange textRange, OdinIdentifier
+            identifier) {
+        PsiReference reference = identifier.getReference();
+        if (reference == null)
+            return;
 
-        try {
-            return identifier.getReference().getSymbol();
-        } catch (StackOverflowError e) {
-            OdinInsightUtils.logStackOverFlowError(identifier, LOG);
-            return null;
+        PsiElement resolveReference = reference.resolve();
+        if (resolveReference instanceof PsiDirectory) {
+            highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE_REF);
+        } else {
+            OdinDeclaration odinDeclaration = PsiTreeUtil.getParentOfType(resolveReference, OdinDeclaration.class, false);
+            if (odinDeclaration == null) {
+                highlightError(identifier.getProject(), identifier, annotationHolder, identifierText, textRange, UNRESOLVED_REFERENCE_ERROR_MESSAGE);
+            } else if (odinDeclaration instanceof OdinImportDeclaration) {
+                highlight(annotationHolder, textRange, OdinSyntaxTextAttributes.ODIN_PACKAGE_REF);
+            }
         }
-
     }
 
 }

@@ -481,12 +481,12 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                 .toList(), 20, parameters);
 
         Project project = thisOdinFile.getProject();
-        GlobalSearchScope globalSearchScope;
+        GlobalSearchScope searchScope;
 
         if (typed.contains(".") || parameters.getInvocationCount() > 1) {
-            globalSearchScope = GlobalSearchScope.allScope(project);
+            searchScope = GlobalSearchScope.allScope(project);
         } else {
-            globalSearchScope = GlobalSearchScope.projectScope(project);
+            searchScope = GlobalSearchScope.projectScope(project);
         }
         Set<String> allNamesSorted = collectAllNames(completionResultSet.getPrefixMatcher(), thisOdinFile);
         VirtualFile thisVirtualFile = thisOdinFile.getVirtualFile();
@@ -495,15 +495,18 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         String thisPackagePath = thisParentPath.getPath();
         String sourceFilePath = thisVirtualFile.getPath();
 
-        Map<Path, OdinImport> importPathMap = OdinImportUtils.getImportPathMap(thisOdinFile);
 
-        CompletionsProcessor processor = new CompletionsProcessor(thisOdinFile, this.symbolFilter, thisPackagePath, parameters);
+        CompletionsProcessor processor = new CompletionsProcessor(thisOdinFile, this.symbolFilter, thisPackagePath, parameters, true);
 
         for (String name : allNamesSorted) {
             if (name.equals("_"))
                 continue;
 
-            Collection<OdinDeclaration> declarations = StubIndex.getElements(OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES, name, project, globalSearchScope, OdinDeclaration.class);
+            Collection<OdinDeclaration> declarations = StubIndex.getElements(OdinAllPublicNamesIndex.ALL_PUBLIC_NAMES,
+                    name,
+                    project,
+                    searchScope,
+                    OdinDeclaration.class);
 
             for (OdinDeclaration declaration : declarations) {
                 if (OdinSdkService.isInBuiltinOdinFile(declaration))
@@ -518,10 +521,7 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                         declarationVirtualFile
                 );
 
-                if (odinImport != null) {
-                    Path path = OdinImportUtils.getFirstAbsoluteImportPath(project, sourceFilePath, odinImport);
-                    odinImport = importPathMap.getOrDefault(path, odinImport);
-                } else if (!samePackage) {
+                if (odinImport == null && !samePackage) {
                     continue;
                 }
                 processor.process(name, declaration, odinImport, completionResultSet);
@@ -544,19 +544,28 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
         private final OdinSymbolFilter symbolFilter;
         private final String sourcePackagePath;
         private final CompletionParameters parameters;
+        private final boolean forceAlias;
+        private final @NotNull Map<Path, OdinImport> importPathMap;
 
-        public CompletionsProcessor(OdinFile sourceFile, OdinSymbolFilter symbolFilter, String sourcePackagePath, CompletionParameters parameters) {
+        public CompletionsProcessor(OdinFile sourceFile,
+                                    OdinSymbolFilter symbolFilter,
+                                    String sourcePackagePath,
+                                    CompletionParameters parameters,
+                                    boolean forceImport) {
             this.sourceFile = sourceFile;
             this.symbolFilter = symbolFilter;
             this.sourcePackagePath = sourcePackagePath;
             this.parameters = parameters;
+            this.forceAlias = forceImport;
+            this.importPathMap = OdinImportUtils.getImportPathMap(sourceFile);
         }
 
         @Override
         public boolean process(@NotNull String name,
                                @NotNull OdinDeclaration element,
-                               @Nullable OdinImport importData,
+                               @Nullable OdinImport relativeImport,
                                @NotNull CompletionResultSet result) {
+
             String identifierName = substringAfter(name, '.');
             OdinSymbol symbol = OdinInsightUtils.createSymbol(element, identifierName);
             if (symbol == null)
@@ -568,7 +577,42 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
             if (!OdinInsightUtils.isVisible(sourceFile, symbol))
                 return false;
 
-            addLookUpElement(sourceFile, importData, sourcePackagePath, result, symbol, 0, parameters);
+            if (relativeImport != null) {
+                OdinImport alreadyImported = importPathMap.get(relativeImport.fullImportNioPath());
+                if (alreadyImported != null) {
+                    relativeImport = alreadyImported;
+                } else {
+                    List<String> usedNames = new ArrayList<>();
+                    for (OdinImport anImport : importPathMap.values()) {
+                        usedNames.add(anImport.packageName());
+                    }
+                    if (forceAlias || usedNames.contains(relativeImport.packageName())) {
+
+                        String proposedName;
+                        String originalName = relativeImport.packageName();
+                        if (usedNames.contains(originalName)) {
+                            String chosenName = originalName;
+                            for (int i = 1; i <= 256 && usedNames.contains(chosenName); i++) {
+                                chosenName = originalName + i;
+                            }
+                            proposedName = chosenName;
+                        } else {
+                            proposedName = originalName;
+                        }
+
+                        if (!proposedName.equals(relativeImport.alias())) {
+                            relativeImport = new OdinImport(relativeImport.fullImportPath(),
+                                    relativeImport.canonicalName(),
+                                    relativeImport.path(),
+                                    relativeImport.collection(),
+                                    proposedName);
+                        }
+                    }
+                }
+            }
+
+
+            addLookUpElement(sourceFile, relativeImport, sourcePackagePath, result, symbol, 0, parameters);
             return true;
         }
 

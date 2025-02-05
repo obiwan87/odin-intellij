@@ -660,6 +660,13 @@ testImplicitEnumExpression :: proc() {
         bitfield := Bitfield{
             kind = .North
         }
+
+        get_bit_field :: proc() -> Bitfield {
+            return Bitfield {}
+        }
+
+        bitfield_from_proc := get_bit_field().kind == .North
+
     }
 }
 

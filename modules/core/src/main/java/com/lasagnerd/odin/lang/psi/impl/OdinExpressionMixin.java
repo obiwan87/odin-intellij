@@ -32,6 +32,9 @@ public abstract class OdinExpressionMixin extends OdinPsiElementImpl implements 
     }
 
     public TsOdinType getInferredType(OdinInferenceEngineParameters parameters) {
+        if (!this.isValid())
+            return null;
+
         if (!OdinReferenceOwnerMixin.shouldUseCache(parameters.context(), this)) {
             return OdinInferenceEngine.inferType(parameters, this);
         }
