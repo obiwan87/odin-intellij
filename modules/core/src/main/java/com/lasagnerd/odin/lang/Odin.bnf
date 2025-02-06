@@ -778,9 +778,9 @@ compoundValueTyped                   ::= (( <<isModeOn "PAR">> | <<isModeOff "NO
 compoundValueStart                   ::= LBRACE
 compoundValueEnd                     ::= RBRACE
 compoundValueBody                    ::= elementEntry (COMMA elementEntry)* (EOS_TOKEN|COMMA|&RBRACE)
-elementEntry                         ::= lhs EQ rhs
-                                         | rhs {pin(".*")=2 recoverWhile=elemEntryRecover}
-private elemEntryRecover             ::= !(COMMA | EOS_TOKEN | RBRACE)
+elementEntry                         ::= elementAssignment
+                                         | rhs
+private elementAssignment ::= lhs EQ rhs {pin=2}
 lhs                                  ::= expression
 rhs                                  ::= expression
 
