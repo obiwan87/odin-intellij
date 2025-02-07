@@ -753,7 +753,7 @@ orContinueExpression                 ::= expression OR_CONTINUE [IDENTIFIER_TOKE
 
 stringLiteral                        ::= DQ_STRING_LITERAL
                                          | SQ_STRING_LITERAL
-                                         | RAW_STRING_LITERAL  {extends=basicLiteral}
+                                         | RAW_STRING_LITERAL  {extends=basicLiteral mixin="OdinStringLiteralMixin"}
 
 numericLiteral                       ::= INTEGER_DEC_LITERAL
                                          | INTEGER_HEX_LITERAL

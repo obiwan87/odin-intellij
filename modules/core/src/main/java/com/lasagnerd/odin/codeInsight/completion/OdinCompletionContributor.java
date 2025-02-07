@@ -292,11 +292,11 @@ public class OdinCompletionContributor extends CompletionContributor {
                             continue;
 
                         PsiReference resolvedReference = odinIdentifier.getReference();
-                        PsiElement resolved = resolvedReference.resolve();
-                        if (resolved instanceof OdinDeclaredIdentifier) {
 
+                        PsiElement resolved = resolvedReference != null ? resolvedReference.resolve() : null;
+                        if (resolved instanceof OdinDeclaredIdentifier) {
                             OdinProcedureType declaringProcedure = OdinInsightUtils.getProcedureType(resolved);
-                            if (declaringProcedure != null) {
+                            if (declaringProcedure != null && declaringProcedure.isValid()) {
                                 LookupElementBuilder element = LookupElementBuilder
                                         .create(resolved, lookupString)
                                         .withLookupString(unprefixedLookupString)

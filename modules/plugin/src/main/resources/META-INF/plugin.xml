@@ -489,6 +489,7 @@
                                               bundle="odin.Bundle"/>
         <gotoSymbolContributor implementation="com.lasagnerd.odin.goToSymbol.OdinGoToSymbolContributor"/>
         <formattingService implementation="com.lasagnerd.odin.externalFormatter.OdinFmtService"/>
+        <languageInjectionPerformer language="Odin" implementationClass="com.lasagnerd.odin.languageInjection.OdinLanguageInjectionPerformer"/>
     </extensions>
 
     <extensionPoints>
@@ -534,4 +535,5 @@
     <depends optional="true" config-file="odin-debugger.xml">com.intellij.modules.cidr.debugger</depends>
     <depends optional="true" config-file="odin-rider.xml">com.intellij.modules.rider</depends>
     <depends optional="true" config-file="odin-clion.xml">com.intellij.modules.clion.ide</depends>
+    <depends optional="true" config-file="core-plugin.xml">org.intellij.intelliLang</depends>
 </idea-plugin>

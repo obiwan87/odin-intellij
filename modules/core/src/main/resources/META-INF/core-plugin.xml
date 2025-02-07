@@ -1,0 +1,7 @@
+<idea-plugin package="com.lasagnerd.odin">
+    <depends>org.intellij.intelliLang</depends>
+    <extensions defaultExtensionNs="org.intellij.intelliLang">
+        <languageSupport implementation="com.lasagnerd.odin.languageInjection.OdinLanguageInjectionSupport"/>
+    </extensions>
+
+</idea-plugin>
