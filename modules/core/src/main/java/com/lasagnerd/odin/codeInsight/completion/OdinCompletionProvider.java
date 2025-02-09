@@ -578,7 +578,11 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
                 return false;
 
             if (relativeImport != null) {
-                OdinImport alreadyImported = importPathMap.get(relativeImport.fullImportNioPath());
+                Path path = OdinImportUtils.getFirstAbsoluteImportPath(element.getProject(),
+                        sourceFile.getVirtualFile().getPath(),
+                        relativeImport
+                );
+                OdinImport alreadyImported = importPathMap.get(path);
                 if (alreadyImported != null) {
                     relativeImport = alreadyImported;
                 } else {
