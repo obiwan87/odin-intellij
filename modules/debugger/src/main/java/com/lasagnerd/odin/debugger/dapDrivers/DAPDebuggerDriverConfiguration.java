@@ -53,7 +53,11 @@ public abstract class DAPDebuggerDriverConfiguration extends DebuggerDriverConfi
     }
 
     private static class MyEvaluationContext extends EvaluationContext {
-        public MyEvaluationContext(@NotNull DebuggerDriver debuggerDriver, @Nullable Expirable expirable, @NotNull LLThread llThread, @NotNull LLFrame llFrame, @NotNull UserDataHolderEx userDataHolderEx) {
+        public MyEvaluationContext(@NotNull DebuggerDriver debuggerDriver,
+                                   @Nullable Expirable expirable,
+                                   @NotNull LLThread llThread,
+                                   @NotNull LLFrame llFrame,
+                                   @NotNull UserDataHolderEx userDataHolderEx) {
             super(debuggerDriver, expirable, llThread, llFrame, userDataHolderEx);
         }
 

@@ -4,7 +4,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.jetbrains.cidr.ArchitectureType;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
-import com.lasagnerd.odin.debugger.OdinDebuggerLanguage;
 import com.lasagnerd.odin.debugger.dapDrivers.DAPDebuggerDriverConfiguration;
 import com.lasagnerd.odin.debugger.dapDrivers.LLDBDAPDriver;
 import org.eclipse.lsp4j.debug.InitializeRequestArguments;
@@ -44,7 +43,7 @@ public class LLDBDAPDriverConfiguration extends DAPDebuggerDriverConfiguration {
 
     @Override
     public @NotNull DebuggerDriver createDriver(DebuggerDriver.@NotNull Handler handler, @NotNull ArchitectureType architectureType) throws ExecutionException {
-        return new LLDBDAPDriver(handler, this, OdinDebuggerLanguage.INSTANCE);
+        return new LLDBDAPDriver(handler, this, DebuggerDriver.StandardDebuggerLanguage.C);
     }
 
     @Override

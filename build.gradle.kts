@@ -37,7 +37,7 @@ val riderVersion = properties("riderVersion").get()
 val debuggerPlugins = listOf("com.intellij.cidr.lang", "com.intellij.cidr.base", "com.intellij.nativeDebug", "com.jetbrains.plugins.webDeployment")
 val indexViewer = "com.jetbrains.hackathon.indices.viewer:1.29"
 val idePerf = "com.google.ide-perf:1.3.2"
-val nativeDebuggerSupportPlugin = "com.intellij.nativeDebug:243.23654.117"
+val nativeDebuggerSupportPlugin = "com.intellij.nativeDebug:243.21565.129"
 val riderPlugins = emptyList<String>()
 val corePlugins = listOf("org.intellij.intelliLang")
 

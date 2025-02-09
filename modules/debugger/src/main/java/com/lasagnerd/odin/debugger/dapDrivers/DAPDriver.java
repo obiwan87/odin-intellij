@@ -34,7 +34,6 @@ import com.jetbrains.cidr.execution.debugger.memory.Address;
 import com.jetbrains.cidr.execution.debugger.memory.AddressRange;
 import com.jetbrains.cidr.system.HostMachine;
 import com.jetbrains.cidr.system.LocalHost;
-import com.lasagnerd.odin.debugger.OdinDebuggerLanguage;
 import org.eclipse.lsp4j.debug.Module;
 import org.eclipse.lsp4j.debug.Thread;
 import org.eclipse.lsp4j.debug.*;
@@ -912,7 +911,7 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
 
     @Override
     public @NotNull List<LLMemoryHunk> dumpMemory(@NotNull AddressRange range) throws ExecutionException, DebuggerCommandException {
-        if (!capabilities.getSupportsReadMemoryRequest()) throw new DebuggerCommandException("dumpMemory is0 not supported by debugger!");
+        if (!capabilities.getSupportsReadMemoryRequest()) throw new DebuggerCommandException("dumpMemory is not supported by debugger!");
         long start = range.getStart().getUnsignedLongValue();
         long length = range.getSize();
         ArrayList<LLMemoryHunk> hunks = new ArrayList<LLMemoryHunk>((int) (length / (long) Integer.MAX_VALUE + 1));
@@ -1193,7 +1192,11 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
                     if (isBreakpoint) {
                         helperBreakpoint = breakpoints.get(args.getHitBreakpointIds()[0]);
                     }
-                    LLFrame frame = DAPDriverUtils.frameJBFromDAP(st.getStackFrames()[0], helperBreakpoint, modules, DAPDriver.this::functionParser, OdinDebuggerLanguage.INSTANCE);
+                    LLFrame frame = DAPDriverUtils.frameJBFromDAP(st.getStackFrames()[0],
+                            helperBreakpoint,
+                            modules,
+                            DAPDriver.this::functionParser,
+                            StandardDebuggerLanguage.C);
 
                     StopPlace stopPlace = new StopPlace(jbThread, frame);
                     if (isBreakpoint) {
