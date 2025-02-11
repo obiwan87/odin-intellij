@@ -746,7 +746,11 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
             Integer cRef = value.getUserData(LLVALUE_CHILDREN_REF);
             if (cRef != null) childrenRef = cRef;
         }
-        return new LLValueData(result, null, false, childrenRef > 0, false);
+        return new LLValueData(result,
+                null,
+                false,
+                childrenRef > 0,
+                false);
     }
 
     @Override

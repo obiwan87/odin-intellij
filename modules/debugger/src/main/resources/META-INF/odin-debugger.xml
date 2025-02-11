@@ -29,8 +29,9 @@
 
     <extensions defaultExtensionNs="cidr.debugger">
         <languageSupport language="Odin" implementationClass="com.lasagnerd.odin.debugger.OdinDebuggerLanguageSupport"/>
-        <editorsExtension language="Odin" implementationClass="com.lasagnerd.odin.debugger.OdinDebuggerEditorsExtension" />
+        <editorsExtension language="Odin" implementationClass="com.lasagnerd.odin.debugger.OdinDebuggerEditorsExtension"/>
         <lineBreakpointFileTypesProvider implementation="com.lasagnerd.odin.debugger.OdinLineBreakpointFileTypesProvider"/>
+        <valueRendererFactory implementation="com.lasagnerd.odin.debugger.renderers.OdinRendererFactory"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.lasagnerd.odin">

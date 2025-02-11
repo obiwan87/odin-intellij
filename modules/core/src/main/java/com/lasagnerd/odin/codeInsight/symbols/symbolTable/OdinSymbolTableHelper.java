@@ -25,7 +25,17 @@ import java.util.stream.Collectors;
 public class OdinSymbolTableHelper {
 
     public static OdinSymbolTable buildFullSymbolTable(@NotNull PsiElement element, OdinContext context) {
-        return buildFullSymbolTable(context, element);
+        String packagePath = OdinImportService.getInstance(element.getProject()).getPackagePath(element);
+
+        // 3. Import symbols from the scope tree
+        OdinSymbolTable symbolTable = doBuildFullSymbolTable(packagePath,
+                element,
+                OdinSymbolTableBuilderBase.ALWAYS_FALSE,
+                context);
+
+        symbolTable.setPackagePath(packagePath);
+
+        return symbolTable;
     }
 
     public static OdinSymbolTable buildFileScopeSymbolTable(@NotNull OdinFileScope fileScope, @NotNull OdinVisibility globalVisibility) {
@@ -209,20 +219,6 @@ public class OdinSymbolTableHelper {
     @TestOnly
     public static OdinSymbolTable doBuildFullSymbolTable(@NotNull PsiElement position, OdinSymbolTableBuilderListener listener) {
         return doBuildFullSymbolTable(null, position, listener, new OdinContext());
-    }
-
-    public static OdinSymbolTable buildFullSymbolTable(OdinContext context, PsiElement element) {
-        String packagePath = OdinImportService.getInstance(element.getProject()).getPackagePath(element);
-
-        // 3. Import symbols from the scope tree
-        OdinSymbolTable symbolTable = doBuildFullSymbolTable(packagePath,
-                element,
-                OdinSymbolTableBuilderBase.ALWAYS_FALSE,
-                context);
-
-        symbolTable.setPackagePath(packagePath);
-
-        return symbolTable;
     }
 
     public static OdinSymbolTable doBuildFullSymbolTable(String packagePath,

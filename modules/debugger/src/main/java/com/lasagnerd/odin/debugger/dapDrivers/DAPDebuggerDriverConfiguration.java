@@ -19,7 +19,6 @@ package com.lasagnerd.odin.debugger.dapDrivers;
 import com.intellij.execution.ExecutionException;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Expirable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.jetbrains.cidr.ArchitectureType;
 import com.jetbrains.cidr.execution.debugger.backend.*;
@@ -49,23 +48,7 @@ public abstract class DAPDebuggerDriverConfiguration extends DebuggerDriverConfi
                                                      @NotNull LLThread llThread,
                                                      @NotNull LLFrame llFrame,
                                                      @NotNull UserDataHolderEx userDataHolderEx) {
-        return new MyEvaluationContext(debuggerDriver, expirable, llThread, llFrame, userDataHolderEx);
+        return new OdinEvaluationContext(debuggerDriver, expirable, llThread, llFrame, userDataHolderEx);
     }
 
-    private static class MyEvaluationContext extends EvaluationContext {
-        public MyEvaluationContext(@NotNull DebuggerDriver debuggerDriver,
-                                   @Nullable Expirable expirable,
-                                   @NotNull LLThread llThread,
-                                   @NotNull LLFrame llFrame,
-                                   @NotNull UserDataHolderEx userDataHolderEx) {
-            super(debuggerDriver, expirable, llThread, llFrame, userDataHolderEx);
-        }
-
-        @Override
-        public @NotNull String convertToRValue(@NotNull LLValueData llValueData, @NotNull Pair<LLValue, String> pair) throws DebuggerCommandException, ExecutionException {
-            return cast(pair.getSecond(), pair.getFirst().getType());
-        }
-
-
-    }
 }
