@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.debugger.renderers;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -29,13 +30,23 @@ import com.lasagnerd.odin.lang.psi.OdinFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
 public class OdinRendererFactory implements ValueRendererFactory {
+
+    public static final @NotNull Key<String> ODIN_TYPE = Key.create("OdinType");
+    public static final String SLICE_ELEMENTS = "SliceElements";
+
     @Override
     public @Nullable ValueRenderer createRenderer(@NotNull FactoryContext factoryContext) {
         CidrPhysicalValue physicalValue = factoryContext.getPhysicalValue();
+
+        if (Objects.equals(physicalValue.getVar().getUserData(ODIN_TYPE), SLICE_ELEMENTS)) {
+            return new OdinSliceElements(physicalValue);
+        }
+
         XSourcePosition sourcePosition = physicalValue.getSourcePosition();
 
         if (sourcePosition == null) {
@@ -83,6 +94,18 @@ public class OdinRendererFactory implements ValueRendererFactory {
         return null;
     }
 
+    private static class OdinSliceElements extends ValueRenderer {
+
+        public OdinSliceElements(@NotNull CidrPhysicalValue value) {
+            super(value);
+        }
+
+        @Override
+        public @Nullable Icon getIcon(boolean hasChildren) {
+            return AllIcons.Debugger.Db_array;
+        }
+    }
+
     private static class OdinSliceRenderer extends ValueRenderer {
 
         private final TsOdinSliceType sliceType;
@@ -119,6 +142,8 @@ public class OdinRendererFactory implements ValueRendererFactory {
                 Object userData = results.getUserData(key);
                 llValue.putUserData(key, userData);
             }
+
+            llValue.putUserData(ODIN_TYPE, SLICE_ELEMENTS);
 
             this.addChildrenTo(List.of(llValue),
                     context,
