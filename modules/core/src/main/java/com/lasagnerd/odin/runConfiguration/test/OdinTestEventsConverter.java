@@ -4,10 +4,12 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,11 +18,19 @@ import java.util.regex.Pattern;
 
 public class OdinTestEventsConverter extends OutputToGeneralTestEventsConverter {
 
+    public static final Pattern TEST_STATE = Pattern.compile("Test #([0-9]+) (\\S+) changed state to (\\S+?)\\.");
+    public static final Pattern TEST_FINISHED = Pattern.compile("Finished .*? tests in");
+    public static final Pattern ONE_TEST_FINISHED = Pattern.compile("Finished 1 test in");
+    private final OdinTestProceduresLocations testProceduresLocations;
+    Map<String, Long> durations = new HashMap<>();
     private String previousPackageName;
 
     public OdinTestEventsConverter(@NotNull String testFrameworkName,
+                                   OdinTestProceduresLocations testProceduresLocations,
                                    @NotNull TestConsoleProperties consoleProperties) {
         super(testFrameworkName, consoleProperties);
+        this.testProceduresLocations = testProceduresLocations;
+
     }
 
     @Override
@@ -28,12 +38,13 @@ public class OdinTestEventsConverter extends OutputToGeneralTestEventsConverter 
         super.process(text, outputType);
     }
 
-
-    public static final Pattern TEST_STATE = Pattern.compile("Test #([0-9]+) (\\S+) changed state to (\\S+?)\\.");
-    public static final Pattern TEST_FINISHED = Pattern.compile("Finished .*? tests in");
-    public static final Pattern ONE_TEST_FINISHED = Pattern.compile("Finished 1 test in");
-
-    Map<String, Long> durations = new HashMap<>();
+    private static @Nullable String createLocation(Path path, String procedure) {
+        String location = path != null ? "odin://" + FileUtil.toSystemIndependentName(path.toString()) : null;
+        if (location != null) {
+            location += "#" + procedure;
+        }
+        return location;
+    }
 
     @Override
     protected boolean processServiceMessages(@NotNull String text, @NotNull Key<?> outputType, @NotNull ServiceMessageVisitor visitor) throws ParseException {
@@ -54,7 +65,9 @@ public class OdinTestEventsConverter extends OutputToGeneralTestEventsConverter 
                     previousPackageName = packageName;
                 }
 
-                TestStarted testStartedEvent = new TestStarted(procedure, true, null);
+                Path path = testProceduresLocations.procedureToFilePath().get(procedure);
+                String location = createLocation(path, procedure);
+                TestStarted testStartedEvent = new TestStarted(procedure, true, location);
                 visitor.visitTestStarted(testStartedEvent);
             }
 
