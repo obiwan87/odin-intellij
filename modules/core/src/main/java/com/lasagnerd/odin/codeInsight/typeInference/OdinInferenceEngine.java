@@ -509,12 +509,15 @@ public class OdinInferenceEngine extends OdinVisitor {
             if (symbol.getSymbolType() == OdinSymbolType.SWIZZLE_FIELD) {
                 int swizzleArraySize = symbol.getName().length();
                 if (tsOdinRefExpressionType instanceof TsOdinArrayType tsOdinArrayType) {
+                    TsOdinType elementType = tsOdinArrayType.getElementType();
                     if (swizzleArraySize == 1) {
-                        return tsOdinArrayType.getElementType();
+                        if (elementType == null)
+                            return TsOdinBuiltInTypes.UNKNOWN;
+                        return elementType;
                     } else {
                         TsOdinArrayType swizzleArray = new TsOdinArrayType();
                         swizzleArray.setContext(tsOdinArrayType.getContext());
-                        swizzleArray.setElementType(tsOdinArrayType.getElementType());
+                        swizzleArray.setElementType(elementType);
                         swizzleArray.setSize(swizzleArraySize);
                         return swizzleArray;
                     }
@@ -536,7 +539,10 @@ public class OdinInferenceEngine extends OdinVisitor {
                 // SOA fields
             } else if (symbol.getSymbolType() == OdinSymbolType.SOA_FIELD) {
                 if (tsOdinRefExpressionType instanceof TsOdinSoaStructType soaStructType) {
-                    return soaStructType.getFields().get(symbol.getName());
+                    if (soaStructType.getFields().containsKey(symbol.getName())) {
+                        return soaStructType.getFields().get(symbol.getName());
+                    }
+                    return TsOdinBuiltInTypes.UNKNOWN;
                 }
             }
             // Built-in symbols
