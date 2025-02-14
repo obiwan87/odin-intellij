@@ -128,13 +128,15 @@ public class OdinReferenceResolver {
 
             List<OdinSymbol> validSymbols = new ArrayList<>();
             for (OdinSymbol symbol : symbols) {
-
                 if (symbol.getDeclaredIdentifier() == null || symbol.isImplicitlyDeclared()) {
                     validSymbols.add(symbol);
                     continue;
                 }
 
                 OdinPsiElement declaredIdentifier = (OdinPsiElement) symbol.getDeclaredIdentifier();
+                if (!declaredIdentifier.isValid())
+                    continue;
+
                 OdinLattice explicitTargetKnowledge = computeExplicitKnowledge(context, declaredIdentifier);
                 boolean targetInducesExplicitKnowledge = !explicitTargetKnowledge.getValues().isEmpty();
 

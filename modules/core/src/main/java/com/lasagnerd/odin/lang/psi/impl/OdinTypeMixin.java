@@ -1,15 +1,14 @@
 package com.lasagnerd.odin.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.*;
 import com.lasagnerd.odin.codeInsight.OdinContext;
+import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinQualifiedType;
 import com.lasagnerd.odin.lang.psi.OdinType;
+import io.lacuna.bifurcan.List;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -17,6 +16,7 @@ import java.util.Set;
 
 public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinType {
     ParameterizedCachedValue<TsOdinType, OdinTypeResolver.OdinTypeResolverParameters> cachedType;
+    CachedValue<List<OdinSymbol>> cachedObjcClassMembers;
 
     public OdinTypeMixin(@NotNull ASTNode node) {
         super(node);
@@ -43,6 +43,9 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
         return getResolvedType(typeResolverParameters);
     }
 
+    public List<OdinSymbol> getObjcClassMembers() {
+
+    }
 
     private CachedValueProvider.@NotNull Result<TsOdinType> resolveType(OdinTypeResolver.OdinTypeResolverParameters typeResolverParameters) {
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(typeResolverParameters, this);
