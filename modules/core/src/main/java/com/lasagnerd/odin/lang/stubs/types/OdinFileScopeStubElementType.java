@@ -15,9 +15,6 @@ import java.io.IOException;
 
 public class OdinFileScopeStubElementType extends OdinStubElementType<OdinFileScopeStub, OdinFileScope> {
 
-
-    public static final OdinFileScopeStubElementType INSTANCE = new OdinFileScopeStubElementType();
-
     public OdinFileScopeStubElementType() {
         super(OdinStubElementTypeFactory.FILE_SCOPE);
     }

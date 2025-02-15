@@ -5,11 +5,11 @@ import com.lasagnerd.odin.lang.stubs.types.*;
 @SuppressWarnings("unused")
 public interface OdinStubElementTypes {
 
-    Class<OdinPackageClauseStubElementType> PACKAGE_CLAUSE = OdinPackageClauseStubElementType.class;
-    Class<OdinFileScopeStubElementType> FILE_SCOPE = OdinFileScopeStubElementType.class;
-    Class<OdinImportDeclarationStubElementType> IMPORT_DECLARATION = OdinImportDeclarationStubElementType.class;
-    Class<OdinShortVariableDeclarationStubElementType> SHORT_VARIABLE_DECLARATION = OdinShortVariableDeclarationStubElementType.class;
-    Class<OdinInitVariableDeclarationStubElementType> INIT_VARIABLE_DECLARATION = OdinInitVariableDeclarationStubElementType.class;
-    Class<OdinDeclaredIdentifierStubElementType> DECLARED_IDENTIFIER = OdinDeclaredIdentifierStubElementType.class;
-    Class<OdinConstantInitDeclarationStubElementType> CONSTANT_INIT_DECLARATION = OdinConstantInitDeclarationStubElementType.class;
+    OdinPackageClauseStubElementType PACKAGE_CLAUSE = new OdinPackageClauseStubElementType();
+    OdinFileScopeStubElementType FILE_SCOPE = new OdinFileScopeStubElementType();
+    OdinImportDeclarationStubElementType IMPORT_DECLARATION = new OdinImportDeclarationStubElementType();
+    OdinShortVariableDeclarationStubElementType SHORT_VARIABLE_DECLARATION = new OdinShortVariableDeclarationStubElementType();
+    OdinInitVariableDeclarationStubElementType INIT_VARIABLE_DECLARATION = new OdinInitVariableDeclarationStubElementType();
+    OdinDeclaredIdentifierStubElementType DECLARED_IDENTIFIER = new OdinDeclaredIdentifierStubElementType();
+    OdinConstantInitDeclarationStubElementType CONSTANT_INIT_DECLARATION = new OdinConstantInitDeclarationStubElementType();
 }

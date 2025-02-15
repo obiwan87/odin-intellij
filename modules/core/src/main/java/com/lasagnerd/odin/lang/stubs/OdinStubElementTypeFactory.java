@@ -1,7 +1,6 @@
 package com.lasagnerd.odin.lang.stubs;
 
 import com.intellij.psi.stubs.IStubElementType;
-import com.lasagnerd.odin.lang.stubs.types.*;
 import org.jetbrains.annotations.NotNull;
 
 public class OdinStubElementTypeFactory {
@@ -20,13 +19,13 @@ public class OdinStubElementTypeFactory {
 
     public static IStubElementType<?, ?> create(@NotNull String name) {
         return switch (name) {
-            case FILE_SCOPE -> OdinFileScopeStubElementType.INSTANCE;
-            case PACKAGE_CLAUSE -> OdinPackageClauseStubElementType.INSTANCE;
-            case IMPORT_DECLARATION -> new OdinImportDeclarationStubElementType();
-            case SHORT_VARIABLE_DECLARATION -> new OdinShortVariableDeclarationStubElementType();
-            case INIT_VARIABLE_DECLARATION -> new OdinInitVariableDeclarationStubElementType();
-            case DECLARED_IDENTIFIER -> new OdinDeclaredIdentifierStubElementType();
-            case CONSTANT_INIT_DECLARATION -> new OdinConstantInitDeclarationStubElementType();
+            case FILE_SCOPE -> OdinStubElementTypes.FILE_SCOPE;
+            case PACKAGE_CLAUSE -> OdinStubElementTypes.PACKAGE_CLAUSE;
+            case IMPORT_DECLARATION -> OdinStubElementTypes.IMPORT_DECLARATION;
+            case SHORT_VARIABLE_DECLARATION -> OdinStubElementTypes.SHORT_VARIABLE_DECLARATION;
+            case INIT_VARIABLE_DECLARATION -> OdinStubElementTypes.INIT_VARIABLE_DECLARATION;
+            case DECLARED_IDENTIFIER -> OdinStubElementTypes.DECLARED_IDENTIFIER;
+            case CONSTANT_INIT_DECLARATION -> OdinStubElementTypes.CONSTANT_INIT_DECLARATION;
             default -> null;
         };
     }

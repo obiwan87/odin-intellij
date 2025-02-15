@@ -5,8 +5,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinPackageClause;
-import com.lasagnerd.odin.lang.stubs.types.OdinFileScopeStubElementType;
-import com.lasagnerd.odin.lang.stubs.types.OdinPackageClauseStubElementType;
 import org.jetbrains.annotations.Nullable;
 
 public class OdinFileStub extends PsiFileStubImpl<OdinFile> {
@@ -38,9 +36,9 @@ public class OdinFileStub extends PsiFileStubImpl<OdinFile> {
     }
 
     private StubElement<OdinPackageClause> getPackageClauseStub() {
-        OdinFileScopeStub fileScopeStub = findChildStubByType(OdinFileScopeStubElementType.INSTANCE);
+        OdinFileScopeStub fileScopeStub = findChildStubByType(OdinStubElementTypes.FILE_SCOPE);
         if (fileScopeStub != null) {
-            return fileScopeStub.findChildStubByType(OdinPackageClauseStubElementType.INSTANCE);
+            return fileScopeStub.findChildStubByType(OdinStubElementTypes.PACKAGE_CLAUSE);
         }
         return null;
     }

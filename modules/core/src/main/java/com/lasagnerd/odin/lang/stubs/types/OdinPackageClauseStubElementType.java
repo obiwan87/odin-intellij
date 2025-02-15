@@ -13,8 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public class OdinPackageClauseStubElementType extends OdinStubElementType<OdinPackageClauseStub, OdinPackageClause> {
-    public static final OdinPackageClauseStubElementType INSTANCE = new OdinPackageClauseStubElementType();
-
     public OdinPackageClauseStubElementType() {
         super(OdinStubElementTypeFactory.PACKAGE_CLAUSE);
     }
