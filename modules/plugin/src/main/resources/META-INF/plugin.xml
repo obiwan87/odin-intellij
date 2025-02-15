@@ -490,6 +490,7 @@
         <gotoSymbolContributor implementation="com.lasagnerd.odin.goToSymbol.OdinGoToSymbolContributor"/>
         <formattingService implementation="com.lasagnerd.odin.externalFormatter.OdinFmtService"/>
         <languageInjectionPerformer language="Odin" implementationClass="com.lasagnerd.odin.languageInjection.OdinLanguageInjectionPerformer"/>
+        <stubElementTypeHolder class="com.lasagnerd.odin.lang.stubs.OdinStubElementTypes" externalIdPrefix="odin."/>
     </extensions>
 
     <extensionPoints>
