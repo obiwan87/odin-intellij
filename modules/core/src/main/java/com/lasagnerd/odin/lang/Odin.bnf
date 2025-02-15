@@ -365,7 +365,7 @@ type                                 ::= mapType
                                          | ellipsisType
                                          | variadicType
                                          | simpleRefType
-{mixin="com.lasagnerd.odin.lang.psi.impl.OdinTypeMixin" methods=[getResolvedType]}
+{mixin="com.lasagnerd.odin.lang.psi.impl.OdinTypeMixin" methods=[getResolvedType getObjcClassMembers]}
 
 relativeType                         ::= <<relativeTypeRule relativeDef>> type
 private relativeDef                  ::= qualifiedType|simpleRefType

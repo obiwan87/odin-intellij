@@ -165,8 +165,7 @@ public class OdinInsightUtils {
 
         if (!(type instanceof TsOdinTypeReference typeReference)) {
             if (type.baseType(true) instanceof TsOdinObjcClass tsOdinObjcClass) {
-                Predicate<ObjcClassInfo> predicate = ObjcClassInfo::isValidInstanceMember;
-                symbolTable.merge(getObjcClassMembers(tsOdinObjcClass, predicate));
+                symbolTable.merge(getObjcClassMembers(tsOdinObjcClass, TsOdinObjcMemberInfo::isValidInstanceMember));
                 return symbolTable;
             } else if (type.getPsiType() instanceof OdinStructType structType) {
                 var structFields = OdinInsightUtils.getStructFields(type.getContext()
@@ -256,59 +255,82 @@ public class OdinInsightUtils {
             }
 
         } else if (typeReference.referencedType().baseType() instanceof TsOdinObjcClass tsOdinObjcClass) {
-            symbolTable.merge(getObjcClassMembers(tsOdinObjcClass, ObjcClassInfo::isValidClassMethod));
+            symbolTable.merge(getObjcClassMembers(tsOdinObjcClass, TsOdinObjcMemberInfo::isValidClassMethod));
         }
         return symbolTable;
     }
 
-    private static OdinSymbolTable getObjcClassMembers(TsOdinObjcClass tsOdinObjcClass, Predicate<ObjcClassInfo> predicate) {
-        OdinSymbolTable symbolTable = new OdinSymbolTable();
+    public static List<TsOdinObjcMemberInfo> getObjcClassMembers(TsOdinObjcClass tsOdinObjcClass) {
         OdinSymbolTable fileScopeSymbolTable = getObjcClassSearchScope(tsOdinObjcClass);
         if (fileScopeSymbolTable == null)
-            return symbolTable;
+            return Collections.emptyList();
 
+        List<TsOdinObjcMemberInfo> members = new ArrayList<>();
         // Add the members of this class
         for (OdinSymbol symbol : fileScopeSymbolTable.flatten().getSymbols()) {
             if (symbol.getDeclaration() instanceof OdinConstantInitDeclaration odinConstantInitDeclaration) {
-                ObjcClassInfo objcClassInfo = getObjcClassInfo(odinConstantInitDeclaration);
-                if (predicate.test(objcClassInfo)) {
-                    TsOdinType referencedType = objcClassInfo.objcType().asType();
-                    String name = objcClassInfo.objcName().asString();
-                    if (referencedType != null && name != null) {
-                        if (referencedType.getPsiType() == tsOdinObjcClass.getPsiType()) {
-                            OdinAttributeNamedValue namedValue = OdinInsightUtils.getAttributeNamedValue(objcClassInfo.attributes(), "objc_name");
-                            OdinSymbol odinSymbol = symbol
-                                    .withName(name)
-                                    .withSymbolType(OBJC_MEMBER)
-                                    .withDeclaredIdentifier(namedValue);
-                            symbolTable.add(odinSymbol);
-                        }
+                TsOdinObjcMemberInfo objcMemberInfo = getObjcClassInfo(odinConstantInitDeclaration);
+                if (objcMemberInfo.objcName() == null)
+                    continue;
+
+                if (objcMemberInfo.objcType() == null)
+                    continue;
+
+                if (!objcMemberInfo.isValidInstanceMember() && !objcMemberInfo.isValidClassMethod())
+                    continue;
+
+                TsOdinType referencedType = objcMemberInfo.objcType().asType();
+                String name = objcMemberInfo.objcName().asString();
+                if (referencedType != null && name != null) {
+                    if (referencedType.getPsiType() == tsOdinObjcClass.getPsiType()) {
+                        members.add(objcMemberInfo);
                     }
                 }
             }
         }
 
-        // Add the members of superclasses
         TsOdinStructType structType = tsOdinObjcClass.getStructType();
         OdinStructType psiStruct = structType.type();
         List<OdinFieldDeclaration> fields = OdinInsightUtils.getStructFieldsDeclarationStatements(psiStruct);
         for (OdinFieldDeclaration field : fields) {
             if (field.getUsing() != null && field.getType() != null) {
-                TsOdinType tsOdinType = field.getType().getResolvedType();
-                if (tsOdinType instanceof TsOdinObjcClass objcSuperClass) {
-                    OdinSymbolTable typeElements = getObjcClassMembers(objcSuperClass, predicate);
-                    for (OdinSymbol symbol : typeElements.getSymbols()) {
-                        if (symbolTable.getSymbol(symbol.getName()) == null) {
-                            symbolTable.add(symbol);
-                        }
-                    }
-                }
+                List<TsOdinObjcMemberInfo> objcClassMembers = field.getType().getObjcClassMembers();
+                members.addAll(objcClassMembers);
             }
         }
+
+        return members;
+    }
+
+    private static OdinSymbolTable getObjcClassMembers(TsOdinObjcClass tsOdinObjcClass, Predicate<TsOdinObjcMemberInfo> predicate) {
+        OdinSymbolTable symbolTable = new OdinSymbolTable();
+        List<TsOdinObjcMemberInfo> objcClassMembers = getObjcClassMembers(tsOdinObjcClass);
+        List<TsOdinObjcMemberInfo> filtered = objcClassMembers.stream().filter(predicate).toList();
+
+        for (TsOdinObjcMemberInfo objcMemberInfo : filtered) {
+            TsOdinType referencedType = objcMemberInfo.objcType().asType();
+            String name = objcMemberInfo.objcName().asString();
+            OdinAttributeNamedValue namedValue = OdinInsightUtils.getAttributeNamedValue(objcMemberInfo.attributes(), "objc_name");
+            List<OdinSymbol> symbols = OdinDeclarationSymbolResolver.getSymbols(objcMemberInfo.declaration());
+            if (symbols.size() == 1) {
+                OdinSymbol symbol = symbols.getFirst();
+                // Prioritize more specialized classes
+                if (symbolTable.getSymbol(name) != null)
+                    continue;
+                OdinSymbol odinSymbol = symbol
+                        .withName(name)
+                        .withSymbolType(OBJC_MEMBER)
+                        .withDeclaredIdentifier(namedValue);
+                symbolTable.add(odinSymbol);
+            }
+        }
+
         return symbolTable;
     }
 
     private static @Nullable OdinSymbolTable getObjcClassSearchScope(TsOdinObjcClass tsOdinObjcClass) {
+        if (!tsOdinObjcClass.getPsiType().isValid())
+            return OdinSymbolTable.EMPTY;
         OdinFileScope fileScope = PsiTreeUtil.getParentOfType(tsOdinObjcClass.getPsiType(), OdinFileScope.class);
         OdinSymbolTable fileScopeSymbolTable;
         if (fileScope != null) {
@@ -319,15 +341,15 @@ public class OdinInsightUtils {
         return fileScopeSymbolTable;
     }
 
-    private static @NotNull ObjcClassInfo getObjcClassInfo(OdinConstantInitDeclaration odinConstantInitDeclaration) {
-        List<OdinAttributesDefinition> attributes = odinConstantInitDeclaration.getAttributesDefinitionList();
+    private static @NotNull TsOdinObjcMemberInfo getObjcClassInfo(OdinConstantInitDeclaration declaration) {
+        List<OdinAttributesDefinition> attributes = declaration.getAttributesDefinitionList();
         EvOdinValue objcType = OdinInsightUtils.getAttributeValue(attributes,
                 "objc_type");
         EvOdinValue objcName = OdinInsightUtils.getAttributeValue(attributes,
                 "objc_name");
         EvOdinValue isClassMethod = OdinInsightUtils.getAttributeValue(attributes,
                 "objc_is_class_method");
-        return new ObjcClassInfo(attributes, objcType, objcName, isClassMethod);
+        return new TsOdinObjcMemberInfo(declaration, attributes, objcType, objcName, isClassMethod);
     }
 
     public static List<OdinSymbol> getBitFieldFields(TsOdinBitFieldType tsOdinBitFieldType) {
@@ -335,20 +357,6 @@ public class OdinInsightUtils {
             return getBitFieldFields(bitFieldType);
         }
         return Collections.emptyList();
-    }
-
-    private record ObjcClassInfo(List<OdinAttributesDefinition> attributes, EvOdinValue objcType, EvOdinValue objcName, EvOdinValue isClassMethod) {
-        public boolean isValidInstanceMember() {
-            return this.objcType() != null
-                    && this.objcName() != null
-                    && (this.isClassMethod() == null || this.isClassMethod().asBool() != Boolean.TRUE);
-        }
-
-        public boolean isValidClassMethod() {
-            return this.objcType() != null
-                    && this.objcName() != null
-                    && (this.isClassMethod() != null && this.isClassMethod().asBool() == Boolean.TRUE);
-        }
     }
 
     public static @NotNull OdinSymbolTable getPackageReferenceSymbols(

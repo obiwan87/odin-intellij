@@ -2912,6 +2912,11 @@ public class OdinParsingTest extends UsefulTestCase {
     public void testObjc() throws IOException {
         OdinFile odinFile = loadTypeInference();
         {
+            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "lion_milk");
+            assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
+        }
+
+        {
             OdinImplicitSelectorExpression implicitSelectorExpression = PsiTreeUtil.findChildOfType(findFirstProcedure(odinFile, "testObjc"), OdinImplicitSelectorExpression.class);
             TsOdinType inferredType = implicitSelectorExpression.getInferredType();
             TsOdinEnumType tsOdinEnumType = assertInstanceOf(inferredType, TsOdinEnumType.class);
@@ -2926,10 +2931,7 @@ public class OdinParsingTest extends UsefulTestCase {
             assertEquals("Dog", tsOdinObjcClass.getStructType().getName());
         }
 
-        {
-            TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "lion_milk");
-            assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);
-        }
+
         {
             TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testObjc", "lion_roar");
             assertEquals(TsOdinBuiltInTypes.F64, tsOdinType);

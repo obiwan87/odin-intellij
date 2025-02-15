@@ -3,20 +3,23 @@ package com.lasagnerd.odin.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.*;
 import com.lasagnerd.odin.codeInsight.OdinContext;
-import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
+import com.lasagnerd.odin.codeInsight.OdinInsightUtils;
+import com.lasagnerd.odin.codeInsight.TsOdinObjcMemberInfo;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeResolver;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinObjcClass;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.OdinQualifiedType;
 import com.lasagnerd.odin.lang.psi.OdinType;
-import io.lacuna.bifurcan.List;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinType {
     ParameterizedCachedValue<TsOdinType, OdinTypeResolver.OdinTypeResolverParameters> cachedType;
-    CachedValue<List<OdinSymbol>> cachedObjcClassMembers;
+    CachedValue<List<TsOdinObjcMemberInfo>> cachedObjcClassMembers;
 
     public OdinTypeMixin(@NotNull ASTNode node) {
         super(node);
@@ -43,8 +46,34 @@ public abstract class OdinTypeMixin extends OdinPsiElementImpl implements OdinTy
         return getResolvedType(typeResolverParameters);
     }
 
-    public List<OdinSymbol> getObjcClassMembers() {
+    public List<TsOdinObjcMemberInfo> getObjcClassMembers() {
+        if (this.cachedObjcClassMembers == null) {
+            this.cachedObjcClassMembers = createCachedObjcClassMembers();
+        }
+        return cachedObjcClassMembers.getValue();
+    }
 
+    private CachedValue<List<TsOdinObjcMemberInfo>> createCachedObjcClassMembers() {
+        return CachedValuesManager.getManager(getProject()).createCachedValue(this::computeObjcClassMembers);
+    }
+
+    private CachedValueProvider.Result<List<TsOdinObjcMemberInfo>> computeObjcClassMembers() {
+        TsOdinType tsOdinType = getResolvedType();
+        if (tsOdinType instanceof TsOdinObjcClass objcClass) {
+
+            List<TsOdinObjcMemberInfo> objcClassMembers = OdinInsightUtils.getObjcClassMembers(objcClass);
+            // TODO add dependencies
+            Set<Object> dependencies = new HashSet<>();
+            dependencies.add(PsiModificationTracker.MODIFICATION_COUNT);
+            dependencies.add(this);
+            for (TsOdinObjcMemberInfo objcClassMember : objcClassMembers) {
+                if (objcClassMember.declaration() != null) {
+                    dependencies.add(objcClassMember.declaration());
+                }
+            }
+            return CachedValueProvider.Result.create(objcClassMembers, dependencies);
+        }
+        return CachedValueProvider.Result.create(Collections.emptyList(), PsiModificationTracker.MODIFICATION_COUNT);
     }
 
     private CachedValueProvider.@NotNull Result<TsOdinType> resolveType(OdinTypeResolver.OdinTypeResolverParameters typeResolverParameters) {
