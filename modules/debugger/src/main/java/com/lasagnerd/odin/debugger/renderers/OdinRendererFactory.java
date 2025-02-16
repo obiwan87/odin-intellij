@@ -25,6 +25,7 @@ import com.lasagnerd.odin.codeInsight.symbols.symbolTable.OdinSymbolTableHelper;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinSliceType;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.debugger.dapDrivers.OdinEvaluationContext;
+import com.lasagnerd.odin.debugger.dapDrivers.WinDAPDriver;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import org.jetbrains.annotations.NotNull;
@@ -124,6 +125,12 @@ public class OdinRendererFactory implements ValueRendererFactory {
             if (!(context instanceof OdinEvaluationContext odinEvaluationContext)) {
                 return;
             }
+
+            if (!(odinEvaluationContext.getDebuggerDriver() instanceof WinDAPDriver)) {
+                super.doComputeChildren(context, container, fromIndex, totalCount);
+                return;
+            }
+
 
             String sliceOperator = ",";
             LLValue lengthValue = context.evaluate(myValue.getName() + ".len");
