@@ -3,8 +3,30 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
-        <h3>Version 0.12.0</h3>
+        <h3>Version 0.13.0</h3>
+        <h4>Improvements & Features</h4>
+        <ul>
+            <li>Added a slice renderer for the Windows debugger.</li>
+            <li>Objective-C class members are now cached, improving code completion performance.</li>
+            <li>Added support for language injection: You can now inject other languages into Odin using the
+                "Inject Language" feature or by adding a comment in the form
+                <code>//language=html</code>. See the IntelliJ documentation for more details on
+                language injection.
+            </li>
+        </ul>
 
+        <h4>Bug Fixes</h4>
+        <ul>
+            <li>Fixed a bug in index initialization.</li>
+            <li>Fixed a bug in type inference for fields within bitfields.</li>
+            <li>Fixed a parser bug (#133).</li>
+            <li>Fixed a bug where an equals sign was unnecessarily inserted when initializing an
+                element of a compound literal.
+            </li>
+        </ul>
+
+
+        <h3>Version 0.12.0</h3>
         <h4>Improvements & Features</h4>
         <ul>
             <li>🔥 Rider now allows marking directories as source or collection, unlocking full auto-completion capabilities.</li>
