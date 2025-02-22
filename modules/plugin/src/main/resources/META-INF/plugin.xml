@@ -19,7 +19,7 @@
         <ul>
             <li>Fixed a bug in index initialization.</li>
             <li>Fixed a bug in type inference for fields within bitfields.</li>
-            <li>Fixed a parser bug (#133).</li>
+            <li>Fixed a parser bug (#132).</li>
             <li>Fixed a bug where an equals sign was unnecessarily inserted when initializing an
                 element of a compound literal.
             </li>
