@@ -5,6 +5,7 @@ import com.lasagnerd.odin.lang.psi.OdinDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinDeclaredIdentifier;
 import com.lasagnerd.odin.lang.psi.OdinExpression;
 import com.lasagnerd.odin.lang.psi.OdinType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,8 +53,10 @@ public interface TsOdinType {
 
     boolean isNillable();
 
+    @Nullable
     TsOdinType baseType();
 
+    @Nullable
     TsOdinType baseType(boolean ignoreDistinct);
 
     boolean isNumeric();

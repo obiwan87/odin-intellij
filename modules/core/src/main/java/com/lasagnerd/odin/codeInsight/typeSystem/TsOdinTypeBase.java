@@ -73,10 +73,12 @@ public abstract class TsOdinTypeBase implements TsOdinType {
                 || this instanceof TsOdinMultiPointerType;
     }
 
+    @Nullable
     public TsOdinType baseType() {
         return baseType(false);
     }
 
+    @Nullable
     public TsOdinType baseType(boolean ignoreDistinct) {
         if (this instanceof TsOdinTypeAlias alias) {
             if (ignoreDistinct) {

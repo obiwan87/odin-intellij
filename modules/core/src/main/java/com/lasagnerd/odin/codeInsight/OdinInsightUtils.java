@@ -469,18 +469,20 @@ public class OdinInsightUtils {
         }
 
         TsOdinType tsOdinType = OdinTypeResolver.resolveType(context, field.getType());
-        TsOdinStructType structType = unwrapStructType(tsOdinType.baseType(true));
-
-        if (structType != null) {
-            OdinType psiType = structType.getPsiType();
-            if (psiType instanceof OdinStructType psiStructType) {
-                List<OdinSymbol> structFields = getStructFields(structType.getContext(), psiStructType);
-                symbols.addAll(structFields);
+        TsOdinType baseType = tsOdinType.baseType(true);
+        if (baseType != null) {
+            TsOdinStructType structType = unwrapStructType(baseType);
+            if (structType != null) {
+                OdinType psiType = structType.getPsiType();
+                if (psiType instanceof OdinStructType psiStructType) {
+                    List<OdinSymbol> structFields = getStructFields(structType.getContext(), psiStructType);
+                    symbols.addAll(structFields);
+                }
             }
         }
     }
 
-    private static @Nullable TsOdinStructType unwrapStructType(TsOdinType tsOdinType) {
+    private static @Nullable TsOdinStructType unwrapStructType(@NotNull TsOdinType tsOdinType) {
         TsOdinStructType structType;
         TsOdinType baseType = tsOdinType.baseType(true);
         if (baseType instanceof TsOdinPointerType tsOdinPointerType) {
