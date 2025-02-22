@@ -183,7 +183,8 @@ public class OdinRunConfigurationUtils {
         OdinSdkUtils.addCommandPart(command, projectDirectoryPath);
 
         if (compilerOptions != null) {
-            Collections.addAll(command, compilerOptions.split(" +"));
+            String[] compilerOptionsArgs = CLIUtils.translateCommandline(compilerOptions);
+            Collections.addAll(command, compilerOptionsArgs);
         }
 
         if (debug && !command.contains("-debug")) {
