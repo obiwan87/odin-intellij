@@ -28,7 +28,10 @@ public class OdinBuildRunConfigurationOptions extends OdinBaseRunConfigurationOp
 
     private final StoredProperty<String> programArguments = string("").provideDelegate(this, "programArguments");
 
+    private final StoredProperty<Boolean> buildAsFile = property(false).provideDelegate(this, "buildKind");
+
     private final StoredProperty<Boolean> runAfterBuild = property(true).provideDelegate(this, "runAfterBuild");
+
 
     @Override
     public String getWorkingDirectory() {
@@ -94,5 +97,13 @@ public class OdinBuildRunConfigurationOptions extends OdinBaseRunConfigurationOp
 
     public void setRunAfterBuild(boolean runAfterBuild) {
         this.runAfterBuild.setValue(this, runAfterBuild);
+    }
+
+    public Boolean getBuildAsFile() {
+        return buildAsFile.getValue(this);
+    }
+
+    public void setBuildAsFile(Boolean buildAsFile) {
+        this.buildAsFile.setValue(this, buildAsFile);
     }
 }

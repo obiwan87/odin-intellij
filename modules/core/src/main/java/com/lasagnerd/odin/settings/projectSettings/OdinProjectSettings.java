@@ -265,7 +265,7 @@ public class OdinProjectSettings implements Disposable {
         return odinCheckerCheckbox;
     }
 
-    private JComponent createComment(final @NlsContexts.Label String text) {
+    public static JComponent createComment(final @NlsContexts.Label String text) {
         final JBLabel label = new JBLabel(text, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
         label.setBorder(JBUI.Borders.emptyLeft(3));
         label.setCopyable(true);

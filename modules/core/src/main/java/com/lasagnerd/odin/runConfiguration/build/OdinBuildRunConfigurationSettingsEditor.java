@@ -13,6 +13,8 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.FormBuilder;
+import com.lasagnerd.odin.lang.OdinFileType;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,6 +28,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
     private final ExtendableTextField packageRootPathTextField;
     private final ExtendableTextField outputPath;
     private final JBCheckBox runAfterBuildCheckbox;
+    private final JBCheckBox buildAsFileCheckbox;
 
     public OdinBuildRunConfigurationSettingsEditor(@NotNull Project project) {
         // Get project
@@ -50,8 +53,14 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
 
         runAfterBuildCheckbox = new JBCheckBox();
 
+        buildAsFileCheckbox = new JBCheckBox();
+
         panel = FormBuilder.createFormBuilder()
-                .addLabeledComponent("Package root path", packageRootPath)
+                .addLabeledComponent("Build as file", buildAsFileCheckbox)
+                .addComponentToRightColumn(
+                        OdinProjectSettings.createComment("Prepends '-file' to compiler options.")
+                )
+                .addLabeledComponent("Build path", packageRootPath)
                 .addLabeledComponent("Program arguments", programArguments)
                 .addLabeledComponent("Working directory", extendableWorkingDirectory)
                 .addLabeledComponent("Compiler options", compilerOptions, 15)
@@ -66,7 +75,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
     private TextFieldWithBrowseButton createDirectoryChooser(@NotNull Project project, JTextField textField) {
         return new TextFieldWithBrowseButton(textField, e -> {
             VirtualFile virtualFile = FileChooser.chooseFile(
-                    FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+                    FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(OdinFileType.INSTANCE),
                     project,
                     null);
             if (virtualFile == null) return;
@@ -82,6 +91,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
         workingDirectory.setText(s.getOptions().getWorkingDirectory());
         programArguments.setText(s.getOptions().getProgramArguments());
         runAfterBuildCheckbox.setSelected(s.getOptions().isRunAfterBuild());
+        buildAsFileCheckbox.setSelected(s.getOptions().getBuildAsFile());
     }
 
     @Override
@@ -92,6 +102,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
         s.getOptions().setWorkingDirectory(workingDirectory.getText());
         s.getOptions().setProgramArguments(programArguments.getText());
         s.getOptions().setRunAfterBuild(runAfterBuildCheckbox.isSelected());
+        s.getOptions().setBuildAsFile(buildAsFileCheckbox.isSelected());
     }
 
 

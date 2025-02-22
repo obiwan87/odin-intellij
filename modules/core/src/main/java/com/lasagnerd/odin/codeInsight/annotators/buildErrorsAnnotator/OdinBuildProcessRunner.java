@@ -3,16 +3,20 @@ package com.lasagnerd.odin.codeInsight.annotators.buildErrorsAnnotator;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
 import com.lasagnerd.odin.settings.projectSettings.OdinSdkUtils;
+import com.lasagnerd.odin.utils.CLIUtils;
 import lombok.Getter;
 
 import java.io.ByteArrayOutputStream;
@@ -71,17 +75,25 @@ public class OdinBuildProcessRunner {
 
     private static ProcessBuilder launchProcessBuilder(Project project, String filePath, String odinBinaryPath, String extraBuildFlags) {
 
-        File fileParentDirPath = Path.of(filePath).getParent().toFile();
+        Path fileNioPath = Path.of(filePath);
+        VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByNioPath(fileNioPath);
+        File fileParentDirPath = fileNioPath.getParent().toFile();
+
         List<String> command = new ArrayList<>();
         command.add(odinBinaryPath);
         command.add("check");
-        command.add(fileParentDirPath.toString());
+        if (ScratchUtil.isScratch(virtualFile)) {
+            command.add(fileNioPath.toString());
+            command.add("-file");
+        } else {
+            command.add(fileParentDirPath.toString());
+        }
         command.add("-json-errors");
         command.add("-no-entry-point");
         addCollectionPaths(project, filePath, command);
 
         if (!extraBuildFlags.isEmpty()) {
-            Collections.addAll(command, extraBuildFlags.split(" +"));
+            Collections.addAll(command, CLIUtils.translateCommandline(extraBuildFlags));
         }
 
         return new ProcessBuilder(command).directory(fileParentDirPath);

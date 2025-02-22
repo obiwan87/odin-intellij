@@ -4,8 +4,10 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,13 +27,19 @@ public class OdinBuildRunConfigurationProducer extends LazyRunConfigurationProdu
         return ConfigurationTypeUtil.findConfigurationType(OdinBuildRunConfigurationType.class).getConfigurationFactories()[0];
     }
 
-    private static void createBuildPackageRunConfiguration(@NotNull OdinBuildRunConfiguration configuration,
-                                                           OdinFile odinFile,
-                                                           PsiDirectory containingDirectory,
-                                                           Project project) {
-        OdinBaseRunConfigurationOptions options = configuration.getOptions();
-        String packagePath = containingDirectory.getVirtualFile().getPath();
-        options.setPackageDirectoryPath(packagePath);
+    private static void createBuildRunConfiguration(@NotNull OdinBuildRunConfiguration configuration,
+                                                    OdinFile odinFile,
+                                                    PsiDirectory containingDirectory,
+                                                    Project project) {
+        OdinBuildRunConfigurationOptions options = configuration.getOptions();
+        VirtualFile virtualFile = odinFile.getVirtualFile();
+        if (ScratchUtil.isScratch(virtualFile)) {
+            options.setPackageDirectoryPath(virtualFile.getPath());
+            options.setBuildAsFile(true);
+        } else {
+            String packagePath = containingDirectory.getVirtualFile().getPath();
+            options.setPackageDirectoryPath(packagePath);
+        }
         options.setWorkingDirectory(project.getBasePath());
 
         String outputPath = OdinBuildRunConfigurationOptions.OUTPUT_PATH_DEFAULT;
@@ -53,7 +61,7 @@ public class OdinBuildRunConfigurationProducer extends LazyRunConfigurationProdu
             Project project = configuration.getProject();
             OdinFile odinFile = OdinRunConfigurationUtils.getFirstOdinFile(psiDirectory, project, OdinRunConfigurationUtils::hasMainProcedure);
             if (odinFile != null) {
-                createBuildPackageRunConfiguration(configuration, odinFile, psiDirectory, odinFile.getProject());
+                createBuildRunConfiguration(configuration, odinFile, psiDirectory, odinFile.getProject());
                 return true;
             }
             return false;
@@ -83,7 +91,7 @@ public class OdinBuildRunConfigurationProducer extends LazyRunConfigurationProdu
 
         if (containingDirectory == null) return false;
 
-        createBuildPackageRunConfiguration(configuration, odinFile, containingDirectory, project);
+        createBuildRunConfiguration(configuration, odinFile, containingDirectory, project);
         return true;
     }
 
