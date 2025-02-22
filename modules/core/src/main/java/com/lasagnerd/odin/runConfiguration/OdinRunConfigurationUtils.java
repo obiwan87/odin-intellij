@@ -66,6 +66,9 @@ public class OdinRunConfigurationUtils {
     public static Optional<OdinConstantInitDeclaration> findMainProcedure(OdinFile file) {
 
         OdinSymbolTable symbolTable = file.getFileScope().getSymbolTable();
+        if (symbolTable == null)
+            return Optional.empty();
+
         for (OdinSymbol symbol : symbolTable.getSymbols()) {
             OdinDeclaration declaration = symbol.getDeclaration();
             if (symbol.getSymbolType() != OdinSymbolType.PROCEDURE)
