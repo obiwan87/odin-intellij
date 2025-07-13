@@ -49,7 +49,7 @@ auto-completion, and free usage options.
 <td>✅</td>
 <td>✅</td>
 <td>✅</td>
-<td>❌</td>
+<td>✅</td>
 </tr>
 <tr>
 <td><strong>RustRover</strong></td>
