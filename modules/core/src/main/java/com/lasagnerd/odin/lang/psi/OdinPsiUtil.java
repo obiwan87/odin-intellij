@@ -348,6 +348,10 @@ public class OdinPsiUtil {
 
 
         String fullPathWithQuotes = importDeclaration.getPath().getText();
+
+        if (fullPathWithQuotes.length() < 2) {
+           throw new RuntimeException("Invalid import path: " + fullPathWithQuotes);
+        }
         String fullPath = fullPathWithQuotes.substring(1, fullPathWithQuotes.length() - 1);
         String path = fullPath;
 
