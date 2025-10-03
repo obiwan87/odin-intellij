@@ -11,9 +11,9 @@ plugins {
     `maven-publish`
     `java-library`
 
-    id("org.jetbrains.kotlin.jvm") version ("2.0.21")
-    id("org.jetbrains.intellij.platform") version ("2.1.0")
-    id("org.jetbrains.changelog") version ("2.2.1")
+    id("org.jetbrains.kotlin.jvm") version ("2.2.20")
+    id("org.jetbrains.intellij.platform") version ("2.9.0")
+    id("org.jetbrains.changelog") version ("2.4.0")
     id("org.jetbrains.grammarkit") version ("2022.3.2.2")
     id("de.undercouch.download") version ("5.6.0")
 }
@@ -35,14 +35,13 @@ val clionVersion = properties("clionVersion").get()
 val riderVersion = properties("riderVersion").get()
 
 val debuggerPlugins = listOf(
-    "com.intellij.cidr.lang",
-    "com.intellij.cidr.base",
+    "com.intellij.clion",
     "com.intellij.nativeDebug",
     "com.jetbrains.plugins.webDeployment",
 )
-val indexViewer = "com.jetbrains.hackathon.indices.viewer:1.29"
+val indexViewer = "com.jetbrains.hackathon.indices.viewer:1.30"
 val idePerf = "com.google.ide-perf:1.3.2"
-val nativeDebuggerSupportPlugin = "com.intellij.nativeDebug:243.21565.129"
+val nativeDebuggerSupportPlugin = "com.intellij.nativeDebug:252.26830.84"
 val riderPlugins = emptyList<String>()
 val corePlugins = listOf("org.intellij.intelliLang")
 
@@ -208,7 +207,7 @@ project(":core") {
     dependencies {
         lsp4ijDep()
         intellijPlatform {
-            testFramework(TestFrameworkType.Platform, version = "243.23654.166")
+            testFramework(TestFrameworkType.Platform, version = "252.26199.158")
             testImplementation("junit:junit:4.13.2")
             testCompileOnly("org.projectlombok:lombok:1.18.34")
             testCompileOnly("org.junit.jupiter:junit-jupiter-api:5.4.2")

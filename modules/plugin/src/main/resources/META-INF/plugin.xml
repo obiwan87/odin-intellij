@@ -3,6 +3,12 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>Version 0.13.1</h3>
+        <h4>Improvements & Features</h4>
+        <ul>
+            <li>The upper limit of supported jetbrains ide's has been increased to 252.*</li>
+        </ul>
+
         <h3>Version 0.13.0</h3>
         <h4>Improvements & Features</h4>
         <ul>
