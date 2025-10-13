@@ -326,10 +326,21 @@ project(":plugin") {
 dependencies {
     intellijPlatform {
         when (baseIDE) {
-            "ideaC" -> intellijIdeaCommunity(ideaVersion, useInstaller = false)
-            "ideaU" -> intellijIdeaUltimate(ideaVersion, useInstaller = false)
-            "clion" -> clion(clionVersion, useInstaller = false)
-            "rider" -> rider(riderVersion, useInstaller = false)
+            "ideaC" -> intellijIdea(ideaVersion, configure = {
+                useInstaller = false
+            })
+
+            "ideaU" -> intellijIdea(ideaVersion, configure = {
+                useInstaller = false
+            })
+
+            "clion" -> clion(clionVersion, configure = {
+                useInstaller = false
+            })
+
+            "rider" -> rider(riderVersion, configure = {
+                useInstaller = false
+            })
         }
     }
 }

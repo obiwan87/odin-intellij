@@ -561,7 +561,7 @@
     </actions>
 
 
-    <depends optional="true" config-file="odin-debugger.xml">com.intellij.modules.cidr.debugger</depends>
+    <depends optional="true" config-file="odin-debugger.xml">com.intellij.nativeDebug</depends>
     <depends optional="true" config-file="odin-rider.xml">com.intellij.modules.rider</depends>
     <depends optional="true" config-file="odin-clion.xml">com.intellij.modules.clion.ide</depends>
     <depends optional="true" config-file="core-plugin.xml">org.intellij.intelliLang</depends>
