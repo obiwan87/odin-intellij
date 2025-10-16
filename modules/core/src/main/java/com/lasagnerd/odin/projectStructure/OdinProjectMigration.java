@@ -124,17 +124,19 @@ public class OdinProjectMigration {
             }
             VirtualFileManager virtualFileManager1 = VirtualFileManager.getInstance();
             String olsDir = olsFile.getParent().getPath();
-            for (OlsCollection collection : olsConfiguration.getCollections()) {
-                String collectionName = collection.getName();
-                String collectionPath = collection.getPath();
-                Path collectionNioPath = Path.of(olsDir, collectionPath);
-                VirtualFile collectionDir = virtualFileManager1.findFileByNioPath(collectionNioPath);
-                if (collectionDir != null) {
-                    contentEntry.addSourceFolder(
-                            collectionDir,
-                            OdinCollectionRootType.INSTANCE,
-                            new OdinCollectionRootProperties(collectionName)
-                    );
+            if (olsConfiguration.getCollections() != null) {
+                for (OlsCollection collection : olsConfiguration.getCollections()) {
+                    String collectionName = collection.getName();
+                    String collectionPath = collection.getPath();
+                    Path collectionNioPath = Path.of(olsDir, collectionPath);
+                    VirtualFile collectionDir = virtualFileManager1.findFileByNioPath(collectionNioPath);
+                    if (collectionDir != null) {
+                        contentEntry.addSourceFolder(
+                                collectionDir,
+                                OdinCollectionRootType.INSTANCE,
+                                new OdinCollectionRootProperties(collectionName)
+                        );
+                    }
                 }
             }
 
