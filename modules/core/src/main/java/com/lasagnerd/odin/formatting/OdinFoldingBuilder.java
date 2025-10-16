@@ -4,11 +4,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.lasagnerd.odin.lang.psi.OdinPsiElement;
-import com.lasagnerd.odin.lang.psi.OdinTypes;
-import com.lasagnerd.odin.lang.psi.OdinVisitor;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilCore;
+import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,17 +26,41 @@ public class OdinFoldingBuilder extends FoldingBuilderEx {
         OdinVisitor odinVisitor = new OdinVisitor() {
 
             @Override
+            public void visitElement(@NotNull PsiElement psiElement) {
+                if (psiElement instanceof PsiComment) {
+                    IElementType elementType = PsiUtilCore.getElementType(psiElement);
+                    if (elementType == OdinTypes.MULTILINE_BLOCK_COMMENT) {
+                        descriptors.add(new FoldingDescriptor(psiElement.getNode(), psiElement.getTextRange(), null));
+                    }
+                }
+            }
+
+            @Override
             public void visitPsiElement(@NotNull OdinPsiElement psiElement) {
+
                 if (psiElement.getChildren().length >= 2) {
-                    if (psiElement.getFirstChild().getNode().getElementType() == OdinTypes.BLOCK_START) {
-                        if (psiElement.getLastChild().getNode().getElementType() == OdinTypes.BLOCK_END) {
-                            descriptors.add(new FoldingDescriptor(psiElement.getNode(), psiElement.getTextRange(), null));
-                        }
+
+                    if (psiElement instanceof OdinBlock
+                            || psiElement instanceof OdinCompoundValue
+                            || psiElement instanceof OdinProcedureGroupBlock
+                            || psiElement instanceof OdinSwitchBody
+                            || psiElement instanceof OdinForeignBlock
+                            || psiElement instanceof OdinStructBlock
+                            || psiElement instanceof OdinEnumBlock
+                            || psiElement instanceof OdinUnionBlock
+                            || psiElement instanceof OdinBitFieldBlock
+
+                    ) {
+                        descriptors.add(new FoldingDescriptor(psiElement.getNode(), psiElement.getTextRange(), null));
                     }
                 }
 
-                for (PsiElement child : psiElement.getChildren()) {
-                    child.accept(this);
+                PsiElement elem = psiElement.getFirstChild();
+                while (elem != null) {
+                    if (!(elem instanceof PsiWhiteSpace)) {
+                        elem.accept(this);
+                    }
+                    elem = elem.getNextSibling();
                 }
             }
 
@@ -53,6 +79,9 @@ public class OdinFoldingBuilder extends FoldingBuilderEx {
 
     @Override
     public @Nullable String getPlaceholderText(@NotNull ASTNode node) {
+        if (node.getElementType() == OdinTypes.MULTILINE_BLOCK_COMMENT) {
+            return "/*...*/";
+        }
         return "{...}";
     }
 
