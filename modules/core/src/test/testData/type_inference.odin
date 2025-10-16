@@ -1129,3 +1129,15 @@ testImplicitSelectorsAsMapKeys :: proc() {
         .West = "west"
     }
 }
+
+testSoaPointers :: proc() {
+    SoaPoint2D :: #soa^ #soa [dynamic]Point2D
+    d: #soa^ #soa [dynamic]Point2D
+    s: #soa^ #soa []Point2D
+    a: #soa^ #soa [10]Point2D
+    b: SoaPoint2D
+    dx := d.x
+    sx := s.x
+    ax := a.x
+    bx := b.x
+}

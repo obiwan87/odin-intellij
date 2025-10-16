@@ -339,7 +339,7 @@ procedureRef                       ::= qualifiedType | simpleRefType
 // TYPES
 
 // Variables and constants
-typeDefinitionExpression             ::= DISTINCT? [directive] type
+typeDefinitionExpression             ::= DISTINCT? (type | ([directive] type))
 
 //noinspection BnfUnreachableChoiceBranch
 type                                 ::= mapType
@@ -378,7 +378,7 @@ simpleRefType                        ::= identifier
 qualifiedType                        ::= identifier DOT simpleRefType {methods=[getPackageIdentifier getTypeIdentifier]}
 
 
-pointerType                          ::= CARET type
+pointerType                          ::= directiveIdentifier? CARET type
 multiPointerType                     ::= LBRACKET CARET RBRACKET type
 
 bitSetType                           ::= BIT_SET bitSetDef {pin=1}

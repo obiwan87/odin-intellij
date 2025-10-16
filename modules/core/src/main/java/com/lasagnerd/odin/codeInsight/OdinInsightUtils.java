@@ -131,6 +131,24 @@ public class OdinInsightUtils {
         OdinSymbolTable symbolTable = new OdinSymbolTable();
         switch (type) {
             case TsOdinPointerType pointerType -> {
+                if (pointerType.isSoa()) {
+                    // Addresses stuff like #soa^ #soa ARRAY_LIKE_TYPE
+                    TsOdinType dereferencedType = pointerType.getDereferencedType().baseType(true);
+
+                    boolean isSoaPointerToSoaElement =
+                            (dereferencedType instanceof TsOdinArrayType tsOdinArrayType && tsOdinArrayType.isSoa()) ||
+                                    (dereferencedType instanceof TsOdinSliceType tsOdinSliceType && tsOdinSliceType.isSoa()) ||
+                                    (dereferencedType instanceof TsOdinDynamicArray tsOdinDynamicArray && tsOdinDynamicArray.isSoa());
+
+                    if (isSoaPointerToSoaElement) {
+                        TsOdinElementOwner elementOwner = (TsOdinElementOwner) dereferencedType;
+                        return getTypeElements(context,
+                                project,
+                                elementOwner.getElementType(),
+                                includeReferenceableSymbols);
+                    }
+                    return OdinSymbolTable.EMPTY;
+                }
                 return getTypeElements(context, project, pointerType.getDereferencedType(), includeReferenceableSymbols);
             }
             case TsOdinConstrainedType constrainedType -> {

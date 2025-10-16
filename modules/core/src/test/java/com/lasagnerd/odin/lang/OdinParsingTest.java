@@ -2963,6 +2963,32 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testSoaPointers() throws IOException {
+        OdinFile odinFile = loadTypeInference();
+        {
+            OdinProcedureDefinition proc = findFirstProcedure(odinFile, "testImplicitSelectorsAsMapKeys");
+            {
+                TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaPointers", "bx");
+                assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
+            }
+
+            {
+                TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaPointers", "dx");
+                assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
+            }
+
+            {
+                TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaPointers", "sx");
+                assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
+            }
+
+            {
+                TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile, "testSoaPointers", "ax");
+                assertEquals(TsOdinBuiltInTypes.I32, tsOdinType);
+            }
+        }
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
         String filePath = "expression_eval.odin";
         return loadTestData(filePath);

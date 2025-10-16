@@ -704,6 +704,10 @@ public class OdinTypeResolver extends OdinVisitor {
             tsOdinPointerType.setDereferencedType(elementType);
             tsOdinPointerType.getContext().merge(context);
             tsOdinPointerType.getContext().setPackagePath(context.getPackagePath());
+            OdinDirectiveIdentifier directiveIdentifier = odinPointerType.getDirectiveIdentifier();
+            boolean soa = directiveIdentifier != null && checkDirective(directiveIdentifier, "#soa");
+
+            tsOdinPointerType.setSoa(soa);
             this.type = tsOdinPointerType;
         }
     }

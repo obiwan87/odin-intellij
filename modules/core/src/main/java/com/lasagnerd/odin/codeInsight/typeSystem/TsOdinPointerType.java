@@ -10,6 +10,8 @@ import lombok.Setter;
 public class TsOdinPointerType extends TsOdinTypeBase {
     private TsOdinType dereferencedType;
 
+    private boolean soa;
+
     @Override
     public String getLabel() {
         return "^" + (dereferencedType != null ? dereferencedType.getLabel() : "<undefined>");
