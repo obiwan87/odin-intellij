@@ -3,6 +3,7 @@ package com.lasagnerd.odin.formatting;
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
+import com.intellij.lang.Language;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
@@ -32,6 +33,11 @@ public class OdinCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
                 return new OdinCodeStyleMainPanel(getCurrentSettings(), settings);
             }
         };
+    }
+
+    @Override
+    public @Nullable Language getLanguage() {
+        return OdinLanguage.INSTANCE;
     }
 
     private static class OdinCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
