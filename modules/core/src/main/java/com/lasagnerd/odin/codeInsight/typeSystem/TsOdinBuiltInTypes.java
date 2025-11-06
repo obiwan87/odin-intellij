@@ -64,7 +64,10 @@ public class TsOdinBuiltInTypes {
 
     public static final TsOdinBuiltInType RUNE = new TsOdinRuneType();
     public static final TsOdinBuiltInType STRING = new TsOdinStringType("string");
+    public static final TsOdinBuiltInType STRING16 = new TsOdinStringType("string16");
+
     public static final TsOdinBuiltInType C_STRING = new TsOdinStringType("cstring");
+    public static final TsOdinBuiltInType C_STRING16 = new TsOdinStringType("cstring16");
 
     public static final TsOdinBuiltInType RAW_PTR = new TsOdinRawPointerType();
 
@@ -160,7 +163,9 @@ public class TsOdinBuiltInTypes {
             "quaternion256",
             "rune",
             "string",
+            "string16",
             "cstring",
+            "cstring16",
             "rawptr",
             "typeid",
             "nil"
@@ -240,7 +245,9 @@ public class TsOdinBuiltInTypes {
 
         // String types
         builtInTypeMap.put(STRING.getName(), STRING);
+        builtInTypeMap.put(STRING16.getName(), STRING16);
         builtInTypeMap.put(C_STRING.getName(), C_STRING);
+        builtInTypeMap.put(C_STRING16.getName(), C_STRING16);
 
         // Raw pointer
         builtInTypeMap.put(RAW_PTR.getName(), RAW_PTR);
@@ -311,7 +318,7 @@ public class TsOdinBuiltInTypes {
 
     public static Collection<TsOdinType> getStringTypes() {
         if (stringTypes == null) {
-            stringTypes = List.of(STRING, C_STRING, RUNE);
+            stringTypes = List.of(STRING, C_STRING, C_STRING16, STRING16, RUNE);
         }
         return stringTypes;
     }
