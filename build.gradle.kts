@@ -43,7 +43,7 @@ val indexViewer = "com.jetbrains.hackathon.indices.viewer:1.30"
 val idePerf = "com.google.ide-perf:1.3.2"
 val nativeDebuggerSupportPlugin = "com.intellij.nativeDebug:252.26830.84"
 val riderPlugins = emptyList<String>()
-val corePlugins = listOf("org.intellij.intelliLang")
+val coreModules = listOf("intellij.platform.langInjection")
 
 val lsp4jVersion = "0.23.0"
 
@@ -96,6 +96,7 @@ allprojects {
                     includeModule("com.jetbrains.intellij.clion", "clion")
                     includeModule("com.jetbrains.intellij.idea", "ideaIC")
                     includeModule("com.jetbrains.intellij.idea", "ideaIU")
+                    includeModule("com.jetbrains.intellij.rider", "riderRD")
                     includeModule("com.jetbrains.intellij.rider", "riderRD")
                 }
             }
@@ -211,8 +212,8 @@ project(":core") {
             testImplementation("junit:junit:4.13.2")
             testCompileOnly("org.projectlombok:lombok:1.18.34")
             testCompileOnly("org.junit.jupiter:junit-jupiter-api:5.4.2")
-            for (p in corePlugins) {
-                bundledPlugin(p)
+            for (p in coreModules) {
+                bundledModule(p)
             }
         }
     }
@@ -266,9 +267,10 @@ project(":plugin") {
 
         pluginVerification {
             ides {
-                ide(IntelliJPlatformType.IntellijIdeaCommunity, ideaVersion)
-                ide(IntelliJPlatformType.IntellijIdeaUltimate, ideaVersion)
-                ide(IntelliJPlatformType.CLion, clionVersion)
+                create(IntelliJPlatformType.IntellijIdea, ideaVersion)
+                create(IntelliJPlatformType.CLion, clionVersion)
+                create(IntelliJPlatformType.Rider, riderVersion)
+
             }
         }
     }
