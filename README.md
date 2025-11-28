@@ -39,7 +39,7 @@ auto-completion, and free usage options.
 </tr>
 <tr>
 <td>Rider**</td>
-<td>✅</td>
+<td>❌</td>
 <td>❌</td>
 <td>✅</td>
 <td>✅</td>
@@ -69,7 +69,7 @@ auto-completion, and free usage options.
 
 \* Requires installing the free plugin "Native Debugging Support" (see section **Debugger Settings**).
 
-\*\* Full auto-completion features added for "Rider" in plugin version >= 0.12.0
+\*\* Full auto-completion features added for "Rider" in plugin version >= 0.12.0. Rider >= 2025.2 no longer supports debugging
 ## Getting Started
 
 To begin, ensure you have installed the plugin using the steps mentioned above.
