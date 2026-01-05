@@ -1141,3 +1141,20 @@ testSoaPointers :: proc() {
     ax := a.x
     bx := b.x
 }
+
+testPartialSparseEnum :: proc() {
+    EntityType :: enum {
+        Arrow   = 6,
+        Zombie  = 145,
+        OakBoat = 85,
+        Player  = 149,
+    }
+
+    BoundingBox :: [2]f64
+
+    BOUNDING_BOXES := #partial #sparse[EntityType]BoundingBox {
+    // <- this comma gets underlined
+        .OakBoat = { 1.375, 0.5625 },
+        .Player  = {
+            0.6, 1.8}, }
+}

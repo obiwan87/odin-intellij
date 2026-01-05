@@ -691,7 +691,7 @@ compoundLiteralExpression            ::= compoundLiteralTyped | compoundLiteralU
 fake compoundValue                   ::= {methods=[getCompoundValueBody]}
 fake compoundLiteral                 ::= typeContainer (compoundValueTyped | compoundValueUntyped)
 
-compoundLiteralTyped                 ::= !procedureType typeContainer compoundValueTyped {extends=compoundLiteral implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"}
+compoundLiteralTyped                 ::= !procedureType directiveIdentifier? typeContainer compoundValueTyped {extends=compoundLiteral implements="com.lasagnerd.odin.lang.psi.OdinScopeBlock"}
 typeContainer ::= sliceType
                 | dynamicArrayType
                 | arrayType
