@@ -11,26 +11,66 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.lasagnerd.odin.lang.psi.*;
+import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class OdinFoldingBuilder extends FoldingBuilderEx {
+
+    public static final Pattern REGION_PATTERN = Pattern.compile("region \\[([^]]+?)]");
+
     @Override
     public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
 
         List<FoldingDescriptor> descriptors = new ArrayList<>();
+        List<CodeRegion> codeRegions = new ArrayList<>();
 
         OdinVisitor odinVisitor = new OdinVisitor() {
-
             @Override
             public void visitElement(@NotNull PsiElement psiElement) {
                 if (psiElement instanceof PsiComment) {
                     IElementType elementType = PsiUtilCore.getElementType(psiElement);
                     if (elementType == OdinTypes.MULTILINE_BLOCK_COMMENT) {
                         descriptors.add(new FoldingDescriptor(psiElement.getNode(), psiElement.getTextRange(), null));
+                    }
+
+                    if (elementType == OdinTypes.LINE_COMMENT) {
+                        String region = psiElement.getText().trim().replaceAll("^//", "").trim();
+
+                        if (region.equals("endregion")) {
+                            if (!codeRegions.isEmpty()) {
+                                CodeRegion last = codeRegions.getLast();
+                                Objects.requireNonNull(last.getStart());
+                                if (last.getEnd() != null) {
+                                    throw new IllegalStateException("Region with set end found in code regions");
+                                }
+
+                                last.setEnd(psiElement);
+                                FoldingDescriptor foldingDescriptor = new FoldingDescriptor(
+                                        last.start,
+                                        last.start.getTextRange().getStartOffset(),
+                                        psiElement.getTextRange().getEndOffset(),
+                                        null,
+                                        "// " + last.getName()
+                                );
+
+                                codeRegions.remove(last);
+                                descriptors.add(foldingDescriptor);
+                            }
+                        } else {
+                            Matcher matcher = REGION_PATTERN.matcher(region);
+                            if (matcher.find()) {
+                                String regionName = matcher.group(1);
+                                CodeRegion codeRegion = new CodeRegion(regionName, psiElement);
+                                codeRegions.add(codeRegion);
+                            }
+                        }
                     }
                 }
             }
@@ -75,6 +115,22 @@ public class OdinFoldingBuilder extends FoldingBuilderEx {
         root.accept(odinVisitor);
 
         return descriptors.toArray(new FoldingDescriptor[0]);
+    }
+
+    @Data
+    static class CodeRegion {
+        String name;
+        PsiElement start;
+        PsiElement end;
+
+        public CodeRegion(String name, PsiElement start) {
+            this.name = name;
+            this.start = start;
+        }
+
+        boolean isValid() {
+            return name != null && start != null && end != null;
+        }
     }
 
     @Override
