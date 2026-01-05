@@ -3,6 +3,21 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin Support</name>
     <change-notes><![CDATA[
+        <h3>Version 1.0.2</h3>
+        <h4>Bug Fixes</h4>
+        <ul>
+            <li>Fixed a parsing error involving <code>#partial #sparse</code> arrays</li>
+        </ul>
+
+        <h4>Improvements & Features</h4>
+        <ul>
+            <li>Improved documentation for symbols that use type aliases (Ctrl+Q)</li>
+            <li>Added support for code regions. The plugin now automatically creates a foldable region
+                for everything between <code>//region [region name]</code> and <code>//endregion</code>
+            </li>
+        </ul>
+
+
         <h3>Version 1.0.1</h3>
         <h4>Improvements & Features</h4>
         <ul>
