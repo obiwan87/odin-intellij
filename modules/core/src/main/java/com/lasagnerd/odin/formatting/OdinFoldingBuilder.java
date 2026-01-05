@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 
 public class OdinFoldingBuilder extends FoldingBuilderEx {
 
-    public static final Pattern REGION_PATTERN = Pattern.compile("region \\[([^]]+?)]");
+    public static final Pattern REGION_PATTERN = Pattern.compile("^region (.*)$");
 
     @Override
     public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
@@ -57,7 +57,7 @@ public class OdinFoldingBuilder extends FoldingBuilderEx {
                                         last.start.getTextRange().getStartOffset(),
                                         psiElement.getTextRange().getEndOffset(),
                                         null,
-                                        "// " + last.getName()
+                                        "// region " + last.getName()
                                 );
 
                                 codeRegions.remove(last);
@@ -67,7 +67,7 @@ public class OdinFoldingBuilder extends FoldingBuilderEx {
                             Matcher matcher = REGION_PATTERN.matcher(region);
                             if (matcher.find()) {
                                 String regionName = matcher.group(1);
-                                CodeRegion codeRegion = new CodeRegion(regionName, psiElement);
+                                CodeRegion codeRegion = new CodeRegion(regionName.trim(), psiElement);
                                 codeRegions.add(codeRegion);
                             }
                         }

@@ -13,7 +13,7 @@
         <ul>
             <li>Improved documentation for symbols that use type aliases (Ctrl+Q)</li>
             <li>Added support for code regions. The plugin now automatically creates a foldable region
-                for everything between <code>//region [region name]</code> and <code>//endregion</code>
+                for everything between <code>//region region_name</code> and <code>//endregion</code>
             </li>
         </ul>
 

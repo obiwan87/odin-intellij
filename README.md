@@ -201,7 +201,7 @@ your IntelliJ project.
 You can define foldable code regions in Odin source files using line comments:
 
 ```odin
-//region [Initialization]
+//region Initialization
 // Your code here
 //endregion
 ```
@@ -210,7 +210,7 @@ Everything between `//region` and `//endregion` is treated as a single foldable 
 as they don't overlap with other folding regions, such as structs, enums, if-blocks etc. In that case, the latter will take
 precedence.
 
-The text in square brackets following `//region` is used as the region name.
+The text following `//region` is used as the region name.
 
 * Region markers must use line comments (`//`).
 * Regions may span any number of lines.
