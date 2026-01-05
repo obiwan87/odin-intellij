@@ -16,15 +16,15 @@ public class TsOdinTypeAlias extends TsOdinTypeBase {
     }
 
     public TsOdinType getBaseType() {
-        if(aliasedType instanceof TsOdinTypeAlias typeAlias) {
+        if (aliasedType instanceof TsOdinTypeAlias typeAlias) {
             return typeAlias.getBaseType();
         }
         return aliasedType;
     }
 
-    public TsOdinType getDistinctBaseType () {
-        if(!isDistinct()) {
-            if(aliasedType instanceof TsOdinTypeAlias typeAlias) {
+    public TsOdinType getDistinctBaseType() {
+        if (!isDistinct()) {
+            if (aliasedType instanceof TsOdinTypeAlias typeAlias) {
                 return typeAlias.getDistinctBaseType();
             }
             return aliasedType;
@@ -35,7 +35,7 @@ public class TsOdinTypeAlias extends TsOdinTypeBase {
     @Override
     public String getLabel() {
         if (aliasedType != null) {
-            return (isDistinct() ? "distinct " : "") + aliasedType.getLabel();
+            return isDistinct() ? getName() : (getName() + " aka " + aliasedType.getLabel());
         }
         return "";
     }
