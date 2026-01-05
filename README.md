@@ -196,6 +196,26 @@ your IntelliJ project.
 
 ![Result of importing Ols Config](img/import_ols_result.png)
 
+## Code Regions
+
+You can define foldable code regions in Odin source files using line comments:
+
+```odin
+//region [Initialization]
+// Your code here
+//endregion
+```
+
+Everything between `//region` and `//endregion` is treated as a single foldable block by the IDE, as long
+as they don't overlap with other folding regions, such as structs, enums, if-blocks etc. In that case, the latter will take
+precedence.
+
+The text in square brackets following `//region` is used as the region name.
+
+* Region markers must use line comments (`//`).
+* Regions may span any number of lines.
+* Nested regions are supported if properly balanced.
+* Code regions affect editor folding only and have no impact on compilation or runtime behavior.
 
 ## Resources
 
