@@ -145,7 +145,8 @@ public class OdinRendererFactory implements ValueRendererFactory {
                     results.getReferenceExpression(),
                     results.getFullExpression());
 
-            for (@NotNull Key key : results.get().getKeys()) {
+            //noinspection UnstableApiUsage
+            for (@NotNull Key key : results.getUserMap().getKeys()) {
                 Object userData = results.getUserData(key);
                 llValue.putUserData(key, userData);
             }
