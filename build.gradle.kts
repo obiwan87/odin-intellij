@@ -3,6 +3,7 @@ import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.tasks.PatchPluginXmlTask
 
+
 fun properties(key: String) = providers.gradleProperty(key)
 fun environment(key: String) = providers.environmentVariable(key)
 
@@ -11,9 +12,9 @@ plugins {
     `maven-publish`
     `java-library`
 
-    id("org.jetbrains.kotlin.jvm") version ("2.2.20")
-    id("org.jetbrains.intellij.platform") version ("2.9.0")
-    id("org.jetbrains.changelog") version ("2.4.0")
+    id("org.jetbrains.kotlin.jvm") version ("2.2.21")
+    id("org.jetbrains.intellij.platform") version ("2.10.5")
+    id("org.jetbrains.changelog") version ("2.5.0")
     id("org.jetbrains.grammarkit") version ("2022.3.2.2")
     id("de.undercouch.download") version ("5.6.0")
 }
@@ -29,10 +30,10 @@ val rootPackagePath = rootPackage.replace('.', '/')
 val javaLangVersion: JavaLanguageVersion = JavaLanguageVersion.of(21)
 val javaVersion = JavaVersion.VERSION_21
 
-val baseIDE = properties("baseIDE").get()
-val ideaVersion = properties("ideaVersion").get()
-val clionVersion = properties("clionVersion").get()
-val riderVersion = properties("riderVersion").get()
+val baseIDE: String = properties("baseIDE").get()
+val ideaVersion: String = properties("ideaVersion").get()
+val clionVersion: String = properties("clionVersion").get()
+val riderVersion: String = properties("riderVersion").get()
 
 val debuggerPlugins = listOf(
     "com.intellij.clion",
@@ -91,23 +92,8 @@ allprojects {
                     includeGroup("nightly.com.jetbrains.plugins")
                 }
             }
-            snapshots {
-                content {
-                    includeModule("com.jetbrains.intellij.clion", "clion")
-                    includeModule("com.jetbrains.intellij.idea", "ideaIC")
-                    includeModule("com.jetbrains.intellij.idea", "ideaIU")
-                    includeModule("com.jetbrains.intellij.rider", "riderRD")
-                    includeModule("com.jetbrains.intellij.rider", "riderRD")
-                }
-            }
-            releases {
-                content {
-                    includeModule("com.jetbrains.intellij.rider", "riderRD")
-                    includeModule("com.jetbrains.intellij.clion", "clion")
-                    includeModule("com.jetbrains.intellij.idea", "ideaIC")
-                    includeModule("com.jetbrains.intellij.idea", "ideaIU")
-                }
-            }
+            defaultRepositories()
+            snapshots()
         }
     }
     dependencies {
@@ -115,7 +101,7 @@ allprojects {
         annotationProcessor("org.projectlombok:lombok:1.18.34")
         if (path !in listOf(":", ":plugin", ":debugger", ":rider")) {
             intellijPlatform {
-                intellijIdeaCommunity(ideaVersion, useInstaller = false)
+                intellijIdea(ideaVersion, { useInstaller = false })
             }
         }
 
@@ -127,6 +113,7 @@ allprojects {
         verifyPlugin { enabled = false }
         buildPlugin { enabled = false }
         signPlugin { enabled = false }
+        publishPlugin { enabled = false }
         verifyPluginProjectConfiguration { enabled = false }
 
         withType<PatchPluginXmlTask> {
@@ -178,7 +165,7 @@ project(":debugger") {
             exclude("com.google.code.gson", "gson")
         }
         intellijPlatform {
-            clion(clionVersion, useInstaller = false)
+            clion(clionVersion, { useInstaller = false })
             for (p in debuggerPlugins) {
                 bundledPlugin(p)
             }
@@ -191,7 +178,7 @@ project(":rider") {
         implementation(project(":core"))
         implementation(project(":debugger"))
         intellijPlatform {
-            rider(riderVersion, useInstaller = false)
+            rider(riderVersion, { useInstaller = false })
             bundledModule("intellij.rider")
             jetbrainsRuntime()
             for (p in riderPlugins) {
@@ -241,10 +228,10 @@ project(":plugin") {
             zipSigner()
             pluginVerifier()
             when (baseIDE) {
-                "ideaC" -> intellijIdeaCommunity(ideaVersion, useInstaller = false)
-                "ideaU" -> intellijIdeaUltimate(ideaVersion, useInstaller = false)
-                "clion" -> clion(clionVersion, useInstaller = false)
-                "rider" -> rider(riderVersion, useInstaller = false)
+                "ideaC" -> create(IntelliJPlatformType.IntellijIdeaCommunity, ideaVersion) { useInstaller = false }
+                "ideaU" -> create(IntelliJPlatformType.IntellijIdea, ideaVersion) { useInstaller = false }
+                "clion" -> clion(clionVersion, { useInstaller = false })
+                "rider" -> rider(riderVersion, { useInstaller = false })
             }
         }
     }
@@ -262,6 +249,7 @@ project(":plugin") {
         }
 
         publishing {
+
 
         }
 
@@ -312,15 +300,10 @@ project(":plugin") {
         buildPlugin {
             enabled = true
         }
+
         publishPlugin {
-            val tokenFile = File("../../secrets/token")
-            if (tokenFile.exists()) {
-                val myToken = tokenFile.readText()
-                token.set(myToken)
-                enabled = true
-            } else {
-                enabled = false
-            }
+            enabled = true
+            token = providers.gradleProperty("TOKEN")
         }
     }
 }
@@ -354,6 +337,7 @@ tasks {
     generateParser {
         enabled = false
     }
+
 }
 
 
