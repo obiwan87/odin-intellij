@@ -15,7 +15,7 @@ We welcome contributions to improve the Odin IntelliJ Plugin! Follow the steps b
    Execute `./gradlew build`
 
 5. **Create plugin**  
-   Execute `$ ./gradlew plugin:publishPlugin`
+   Execute `$ ./gradlew plugin:buildPlugin`
    This will result in a zip file being created in `plugin/build/distributions`
 
 That's it! You're now ready to start making contributions. Be sure to test your changes thoroughly before submitting a pull request. If you encounter
