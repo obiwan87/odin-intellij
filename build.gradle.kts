@@ -1,25 +1,23 @@
-import groovy.xml.XmlParser
+import groovy.lang.Closure
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
-import org.jetbrains.intellij.platform.gradle.tasks.PatchPluginXmlTask
 
 
-fun properties(key: String) = providers.gradleProperty(key)
-fun environment(key: String) = providers.environmentVariable(key)
+fun properties(key: String): Provider<String> = providers.gradleProperty(key)
+fun environment(key: String): Provider<String> = providers.environmentVariable(key)
 
 plugins {
     java
     `maven-publish`
     `java-library`
 
-    id("org.jetbrains.kotlin.jvm") version ("2.2.21")
-    id("org.jetbrains.intellij.platform") version ("2.10.5")
-    id("org.jetbrains.changelog") version ("2.5.0")
-    id("org.jetbrains.grammarkit") version ("2022.3.2.2")
+    alias(libs.plugins.kotlin) // Kotlin support
+    alias(libs.plugins.intelliJPlatform) // IntelliJ Platform Gradle Plugin
+    alias(libs.plugins.changelog) // Gradle Changelog Plugin
     id("de.undercouch.download") version ("5.6.0")
 }
 
-val gitVersion: groovy.lang.Closure<String> by extra
+val gitVersion: Closure<String> by extra
 
 val grammarKitGenDir = "src/main/gen"
 val rootPackage = "com.lasagnerd.odin"
@@ -42,7 +40,7 @@ val debuggerPlugins = listOf(
 )
 val indexViewer = "com.jetbrains.hackathon.indices.viewer:1.30"
 val idePerf = "com.google.ide-perf:1.3.2"
-val nativeDebuggerSupportPlugin = "com.intellij.nativeDebug:252.26830.84"
+val nativeDebuggerSupportPlugin = "com.intellij.nativeDebug:253.29346.138"
 val riderPlugins = emptyList<String>()
 val coreModules = listOf("intellij.platform.langInjection")
 
@@ -56,16 +54,13 @@ tasks {
     wrapper {
         gradleVersion = properties("gradleVersion").get()
     }
+
 }
 
 fun pluginVersion(): Provider<String> {
     return provider {
         System.getenv("RELEASE_VERSION")
     }.orElse(properties("pluginVersion"))
-}
-
-fun pluginVersionFull(): Provider<String> {
-    return pluginVersion().map { it + "-" + properties("pluginSinceBuild").get() }
 }
 
 allprojects {
@@ -116,7 +111,7 @@ allprojects {
         publishPlugin { enabled = false }
         verifyPluginProjectConfiguration { enabled = false }
 
-        withType<PatchPluginXmlTask> {
+        patchPluginXml {
             sinceBuild = properties("pluginSinceBuild")
             untilBuild = properties("pluginUntilBuild")
         }
@@ -125,9 +120,6 @@ allprojects {
         instrumentCode = false
     }
     if (path in listOf(":core")) {
-        apply {
-            plugin("org.jetbrains.grammarkit")
-        }
         sourceSets {
             main {
                 java {
@@ -203,18 +195,7 @@ project(":core") {
                 bundledModule(p)
             }
         }
-    }
-    tasks {
-        generateLexer {
-            sourceFile = file("src/main/grammar/Odin.flex")
-            targetOutputDir = file("${grammarKitGenDir}/lexer/${rootPackagePath}/odin/lexer")
-        }
 
-        generateParser {
-            sourceFile = file("src/main/grammar/Odin.bnf")
-            pathToParser = "${rootPackagePath}/odin/psi/OdinParser.java"
-            pathToPsiRoot = "${rootPackagePath}/odin/psi"
-        }
     }
 }
 
@@ -229,7 +210,7 @@ project(":plugin") {
             pluginVerifier()
             when (baseIDE) {
                 "ideaC" -> create(IntelliJPlatformType.IntellijIdeaCommunity, ideaVersion) { useInstaller = false }
-                "ideaU" -> create(IntelliJPlatformType.IntellijIdea, ideaVersion) { useInstaller = false }
+                "ideaU" -> create(IntelliJPlatformType.IntellijIdeaUltimate, ideaVersion) { useInstaller = false }
                 "clion" -> clion(clionVersion, { useInstaller = false })
                 "rider" -> rider(riderVersion, { useInstaller = false })
             }
@@ -328,33 +309,4 @@ dependencies {
             })
         }
     }
-}
-
-tasks {
-    generateLexer {
-        enabled = false
-    }
-    generateParser {
-        enabled = false
-    }
-
-}
-
-
-fun File.isPluginJar(): Boolean {
-    if (!isFile) return false
-    if (extension != "jar") return false
-    return zipTree(this).files.any { it.isManifestFile() }
-}
-
-fun File.isManifestFile(): Boolean {
-    if (extension != "xml") return false
-    val rootNode = try {
-        val parser = XmlParser()
-        parser.parse(this)
-    } catch (e: Exception) {
-        logger.error("Failed to parse $path", e)
-        return false
-    }
-    return rootNode.name() == "idea-plugin"
 }
