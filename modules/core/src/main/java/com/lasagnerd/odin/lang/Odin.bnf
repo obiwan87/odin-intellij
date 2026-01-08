@@ -722,8 +722,6 @@ autoCastExpression                   ::= AUTO_CAST expression
 uninitializedExpression              ::= TRIPLE_DASH
 
 
-// TODO this is a duplicate of compoundLiteralValue but without the non-consuming <<>>-rules
-// --> fix this
 compoundValueUntyped                 ::= ((<<isModeOn "OPERAND">> | <<isModeOn "PAR">> | <<isModeOff "NO_BLOCK">>) compoundValueStart [compoundValueBody] compoundValueEnd)
                                          | (compoundValueStart [compoundValueBody] compoundValueEnd <<beforeOperator>>) {extends=compoundValue elementType=compoundValue}
 maybeExpression                      ::= expression DOT_QUESTION
@@ -764,9 +762,6 @@ numericLiteral                       ::= INTEGER_DEC_LITERAL
                                          | QUAT_INTEGER_DEC_LITERAL
                                          | COMPLEX_FLOAT_LITERAL
                                          | QUAT_FLOAT_LITERAL  {extends=basicLiteral}
-// TODO there is no such thing as a boolean literal in Odin, true and false are just
-//  identifiers that have the type bool and the respective values. Things as
-//  true :: false are allowed
 
 basicLiteral                         ::= stringLiteral
                                          | numericLiteral
