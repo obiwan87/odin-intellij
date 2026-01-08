@@ -57,7 +57,7 @@ public class OdinFoldingBuilder extends FoldingBuilderEx {
                                         last.start.getTextRange().getStartOffset(),
                                         psiElement.getTextRange().getEndOffset(),
                                         null,
-                                        "// region " + last.getName()
+                                        "// " + last.getName()
                                 );
 
                                 codeRegions.remove(last);
