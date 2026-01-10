@@ -1,7 +1,8 @@
 package scoping
 
-import "core:fmt"
 import p "../mypackage"
+import "core:fmt"
+
 main :: proc() {
 }
 

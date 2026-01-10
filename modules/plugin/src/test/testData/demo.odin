@@ -1,16 +1,15 @@
 #+vet !using-stmt !using-param
 package main
 
+import "base:intrinsics"
+import "base:runtime"
 import "core:fmt"
+import "core:math/big"
 import "core:mem"
 import "core:os"
+import "core:reflect"
 import "core:thread"
 import "core:time"
-import "core:reflect"
-import "base:runtime"
-import "base:intrinsics"
-import "core:math/big"
-
 /*
 	Odin is a general-purpose programming language with distinct typing built
 	for high performance, modern systems and data-oriented programming.

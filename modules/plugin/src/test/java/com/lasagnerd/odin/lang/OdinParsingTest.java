@@ -118,9 +118,9 @@ public class OdinParsingTest extends UsefulTestCase {
         // This makes sure that tasks launched in the shared project are properly cancelled,
         // so they don't leak into the mock app of ParsingTestCase.
         LightPlatformTestCase.closeAndDeleteProject();
-        MockApplication app = MockApplication.setUp(getTestRootDisposable());
-        this.app = app;
+        this.app = MockApplication.setUp(getTestRootDisposable());
         MutablePicoContainer appContainer = app.getPicoContainer();
+
         ComponentAdapter component = appContainer.getComponentAdapter(ProgressManager.class.getName());
         if (component == null) {
             appContainer.registerComponentInstance(ProgressManager.class.getName(), new ProgressManagerImpl());

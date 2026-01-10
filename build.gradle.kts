@@ -194,6 +194,7 @@ project(":core") {
             for (p in coreModules) {
                 bundledModule(p)
             }
+            bundledPlugin("com.intellij.java")
         }
 
     }
@@ -206,6 +207,8 @@ project(":plugin") {
         implementation(project(":rider"))
 
         intellijPlatform {
+            testFramework(TestFrameworkType.Platform)
+            testImplementation("junit:junit:4.13.2")
             zipSigner()
             pluginVerifier()
             when (baseIDE) {

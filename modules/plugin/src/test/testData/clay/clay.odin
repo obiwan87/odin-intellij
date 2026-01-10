@@ -1,7 +1,6 @@
 package clay
 
 import "../c"
-import "core:strings"
 
 when ODIN_OS == .Windows {
     foreign import Clay "windows/clay.lib"

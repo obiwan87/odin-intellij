@@ -44,7 +44,8 @@ public class OdinSdkServiceImpl extends OdinSdkServiceBase {
 
     @Override
     public void refreshCache() {
-
+        if (ApplicationManager.getApplication().isUnitTestMode())
+            return;
         ProgressManager.getInstance().run(new Backgroundable(project, "Loading odin built-in symbols", false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {

@@ -1,6 +1,7 @@
 package runtime
 
 import "base:intrinsics"
+
 _ :: intrinsics
 
 /*

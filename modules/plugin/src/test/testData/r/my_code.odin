@@ -1,11 +1,9 @@
 package r
 
+import clay "../clay"
 import "base:runtime"
-
 import "core:log"
 import "core:math/linalg"
-
-import clay "../clay"
 
 @(private="file")
 g_clay_font_renderer: ^Font_Renderer
