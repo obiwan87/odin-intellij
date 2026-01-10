@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
@@ -175,7 +174,7 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
 
             }
             try {
-                FileUtil.deleteRecursively(downloadDir);
+                FileUtils.deleteDirectory(downloadDir.toFile());
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }

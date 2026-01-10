@@ -24,7 +24,7 @@ public class OdinSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
     @Override
     public @Nullable NonCodeUsageSearchInfo findUsages(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete, @NotNull List<? super UsageInfo> result) {
         if(element instanceof OdinDeclaredIdentifier declaredIdentifier) {
-            ReferencesSearch.search(declaredIdentifier).forEach(reference -> {
+            ReferencesSearch.search(declaredIdentifier).findAll().forEach(reference -> {
                 result.add(new UsageInfo(reference));
             });
         }
