@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerCommandException;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
 
@@ -88,8 +91,8 @@ public class OdinRendererFactory implements ValueRendererFactory {
             return declaredIdentifier.getType(new OdinContext());
         });
 
-        if (identifierType != null && identifierType.baseType() instanceof TsOdinSliceType sliceType) {
-            return new OdinSliceRenderer(physicalValue, sliceType);
+        if (identifierType != null && identifierType.baseType() instanceof TsOdinSliceType) {
+            return new OdinSliceRenderer(physicalValue);
         }
 
         return null;
@@ -108,12 +111,8 @@ public class OdinRendererFactory implements ValueRendererFactory {
     }
 
     private static class OdinSliceRenderer extends ValueRenderer {
-
-        private final TsOdinSliceType sliceType;
-
-        public OdinSliceRenderer(@NotNull CidrPhysicalValue value, TsOdinSliceType sliceType) {
+        public OdinSliceRenderer(@NotNull CidrPhysicalValue value) {
             super(value);
-            this.sliceType = sliceType;
         }
 
         @SuppressWarnings({"unchecked", "rawtypes"})
@@ -145,11 +144,17 @@ public class OdinRendererFactory implements ValueRendererFactory {
                     results.getReferenceExpression(),
                     results.getFullExpression());
 
-            //noinspection UnstableApiUsage
-            for (@NotNull Key key : results.getUserMap().getKeys()) {
-                Object userData = results.getUserData(key);
-                llValue.putUserData(key, userData);
+            try {
+                Method getUserMap = LLValue.class.getMethod("getUserMap");
+                KeyFMap userMap = (KeyFMap) getUserMap.invoke(results);
+                for (@NotNull Key key : userMap.getKeys()) {
+                    Object userData = results.getUserData(key);
+                    llValue.putUserData(key, userData);
+                }
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
             }
+
 
             llValue.putUserData(ODIN_TYPE, SLICE_ELEMENTS);
 
