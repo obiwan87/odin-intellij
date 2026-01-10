@@ -38,7 +38,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -281,7 +280,7 @@ public class OdinProjectSettings implements Disposable {
         panel.add(sdkPathTextField, constraints);
 
         // Components initialization
-        ComponentValidator componentValidator = new ComponentValidator(this)
+        new ComponentValidator(this)
                 .withValidator(sdkPathValidator())
                 .andStartOnFocusLost()
                 .andRegisterOnDocumentListener(sdkPathTextField.getTextField())
@@ -510,34 +509,30 @@ public class OdinProjectSettings implements Disposable {
             if (toolchainProvider == null)
                 return;
 
-            FileChooserDescriptor descriptor = new FileChooserDescriptor(
-                    true,
-                    false,
-                    false,
-                    false,
-                    false,
-                    false
-            ) {
-                @Override
-                public boolean isFileSelectable(@Nullable VirtualFile file) {
 
-                    boolean fileSelectable = super.isFileSelectable(file);
-                    if (fileSelectable) {
-                        String fileName = file.getName();
-                        return Arrays.stream(toolchainProvider.getExecutableNames())
-                                .anyMatch(exeMatcher(fileName));
-                    }
-                    return false;
-                }
+            FileChooserDescriptor descriptor = FileChooserDescriptorFactory.singleFile();
 
-                @Override
-                public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-                    String fileName = file.getName();
-
-                    return file.isDirectory() || Arrays.stream(toolchainProvider.getExecutableNames())
-                            .anyMatch(exeMatcher(fileName));
-                }
-            };
+//            {
+//                @Override
+//                public boolean isFileSelectable(@Nullable VirtualFile file) {
+//
+//                    boolean fileSelectable = super.isFileSelectable(file);
+//                    if (fileSelectable) {
+//                        String fileName = file.getName();
+//                        return Arrays.stream(toolchainProvider.getExecutableNames())
+//                                .anyMatch(exeMatcher(fileName));
+//                    }
+//                    return false;
+//                }
+//
+//                @Override
+//                public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+//                    String fileName = file.getName();
+//
+//                    return file.isDirectory() || Arrays.stream(toolchainProvider.getExecutableNames())
+//                            .anyMatch(exeMatcher(fileName));
+//                }
+//            };
 
 
             VirtualFile virtualFile = FileChooser.chooseFile(

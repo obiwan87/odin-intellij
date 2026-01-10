@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -19,8 +20,7 @@ public class OdinCollectionRenameHandler implements RenameHandler {
         PsiElement[] psiElementArray = CommonRefactoringUtil.getPsiElementArray(dataContext);
 
         Project project = dataContext.getData(CommonDataKeys.PROJECT);
-        if (project == null || psiElementArray.length != 1 ||
-                !(psiElementArray[0] instanceof OdinPsiCollectionDirectory)) return false;
+        if (project == null || psiElementArray.length != 1) return false;
 
         VirtualFile virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
         if (virtualFile != null)
@@ -45,8 +45,15 @@ public class OdinCollectionRenameHandler implements RenameHandler {
                        DataContext dataContext) {
 
         PsiElement element = elements[0];
-        if (element instanceof OdinPsiCollectionDirectory psiCollectionDirectory) {
-            PsiElementRenameHandler.rename(psiCollectionDirectory.getPsiCollection(),
+        if (element instanceof PsiDirectory psiCollectionDirectory) {
+            VirtualFile virtualFile = psiCollectionDirectory.getVirtualFile();
+            var collectionRoot = OdinRootsService.getInstance(project).getCollection(
+                    virtualFile
+            );
+            if (collectionRoot == null)
+                return;
+            OdinPsiCollection odinPsiCollection = new OdinPsiCollection(collectionRoot.name(), psiCollectionDirectory);
+            PsiElementRenameHandler.rename(odinPsiCollection,
                     project,
                     element,
                     null);

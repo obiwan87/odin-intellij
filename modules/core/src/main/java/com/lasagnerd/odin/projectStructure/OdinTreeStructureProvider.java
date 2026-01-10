@@ -11,8 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Gray;
 import com.intellij.ui.SimpleTextAttributes;
 import com.lasagnerd.odin.codeInsight.imports.OdinCollection;
-import com.lasagnerd.odin.projectStructure.collection.OdinPsiCollection;
-import com.lasagnerd.odin.projectStructure.collection.OdinPsiCollectionDirectory;
 import com.lasagnerd.odin.projectStructure.collection.OdinRootsService;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,18 +24,8 @@ public class OdinTreeStructureProvider implements TreeStructureProvider {
         String collectionName = collection.name();
         String directoryName = directoryFile.getName();
 
-        OdinPsiCollection odinPsiCollection = new OdinPsiCollection(collectionName, directoryNode.getValue());
-        OdinPsiCollectionDirectory odinPsiCollectionDirectory
-                = new OdinPsiCollectionDirectory(directoryNode.getValue(), odinPsiCollection);
-        PsiDirectoryNode newDirectoryNode = new PsiDirectoryNode(directoryNode.getProject(),
-                odinPsiCollectionDirectory,
-                // This is a workaround to #98: Compact middle packages hides content of collections
-                // I am not sure why contents of collection roots are not rendered correctly when that
-                // view setting is enabled. So to allow for correct work, we just do not hide middle packages.
-                ViewSettings.DEFAULT
-        );
-        modifyPresentation(newDirectoryNode, directoryName, collectionName);
-        return newDirectoryNode;
+        modifyPresentation(directoryNode, directoryName, collectionName);
+        return directoryNode;
     }
 
     public static void modifyPresentation(AbstractTreeNode<?> newDirectoryNode, String directoryName, String collectionName) {
