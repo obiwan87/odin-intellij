@@ -107,33 +107,9 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
 
     private final String originalText;
     private final SmartPsiElementPointer<OdinInitVariableStatement> initVariableStatement;
-    private boolean replaceAllOccurrences;
     private final @NotNull PsiIntroduceTarget<OdinExpression> target;
-    public OdinVariableIntroducer(@NotNull Project project,
-                                  @NotNull Editor editor,
-                                  String originalText,
-                                  SmartPsiElementPointer<OdinInitVariableStatement> initVariableStatement,
-                                  SmartPsiElementPointer<OdinDeclaredIdentifier> declaredIdentifier,
-                                  @NotNull PsiIntroduceTarget<OdinExpression> target,
-                                  OdinExpression[] occurrences,
-                                  boolean replaceAllOccurrences,
-                                  String[] nameSuggestions) {
-        super(project,
-                editor,
-                null,
-                declaredIdentifier.getElement(),
-                occurrences,
-                "Introduce Variable",
-                OdinFileType.INSTANCE);
-
-        this.originalText = originalText;
-        this.initVariableStatement = initVariableStatement;
-        this.declaredIdentifier = declaredIdentifier;
-        this.target = target;
-        this.replaceAllOccurrences = replaceAllOccurrences;
-        this.nameSuggestions = nameSuggestions;
-    }
     private final String[] nameSuggestions;
+    private boolean replaceAllOccurrences;
 
     public static @NotNull OdinVariableIntroducer createVariableIntroducer(@NotNull PsiIntroduceTarget<OdinExpression> target,
                                                                            @NotNull List<UsageInfo> usages,
@@ -181,11 +157,6 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
                 .getDeclaredIdentifiers().getFirst();
 
 
-        // AFAIK it is used for the template
-        OdinDeclaredIdentifier templateIdentifier = OdinPsiElementFactory.getInstance(project)
-                .createDeclaredIdentifier(nameSuggestions.getFirst());
-
-
         SmartPsiElementPointer<OdinDeclaredIdentifier> pointer = SmartPointerManager.createPointer(declaredIdentifier);
         return new OdinVariableIntroducer(project,
                 editor,
@@ -196,6 +167,31 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
                 occurrences,
                 true,
                 nameSuggestions.toArray(new String[0]));
+    }
+
+    public OdinVariableIntroducer(@NotNull Project project,
+                                  @NotNull Editor editor,
+                                  String originalText,
+                                  SmartPsiElementPointer<OdinInitVariableStatement> initVariableStatement,
+                                  SmartPsiElementPointer<OdinDeclaredIdentifier> declaredIdentifier,
+                                  @NotNull PsiIntroduceTarget<OdinExpression> target,
+                                  OdinExpression[] occurrences,
+                                  boolean replaceAllOccurrences,
+                                  String[] nameSuggestions) {
+        super(project,
+                editor,
+                null,
+                declaredIdentifier.getElement(),
+                occurrences,
+                "Introduce Variable",
+                OdinFileType.INSTANCE);
+
+        this.originalText = originalText;
+        this.initVariableStatement = initVariableStatement;
+        this.declaredIdentifier = declaredIdentifier;
+        this.target = target;
+        this.replaceAllOccurrences = replaceAllOccurrences;
+        this.nameSuggestions = nameSuggestions;
     }
 
 
