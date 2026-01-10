@@ -1,7 +1,6 @@
 package com.lasagnerd.odin.codeInsight.refactor;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo;
@@ -38,11 +37,6 @@ public class OdinSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
 
     @Override
     public @Nullable Collection<PsiElement> getAdditionalElementsToDelete(@NotNull PsiElement element, @NotNull Collection<? extends PsiElement> allElementsToDelete, boolean askUser) {
-        return List.of();
-    }
-
-    @Override
-    public @Nullable Collection<@NlsContexts.DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete) {
         return List.of();
     }
 

@@ -18,7 +18,10 @@ package com.lasagnerd.odin.debugger.dapDrivers;/*
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.BaseProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -34,9 +37,9 @@ import com.jetbrains.cidr.execution.debugger.memory.Address;
 import com.jetbrains.cidr.execution.debugger.memory.AddressRange;
 import com.jetbrains.cidr.system.HostMachine;
 import com.jetbrains.cidr.system.LocalHost;
+import org.eclipse.lsp4j.debug.*;
 import org.eclipse.lsp4j.debug.Module;
 import org.eclipse.lsp4j.debug.Thread;
-import org.eclipse.lsp4j.debug.*;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolClient;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolServer;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -88,12 +91,7 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        processHandler.addProcessListener(new ProcessAdapter() {
-            @Override
-            public void startNotified(@NotNull ProcessEvent event) {
-                super.startNotified(event);
-            }
-
+        processHandler.addProcessListener(new ProcessListener() {
             @Override
             public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
                 String text = event.getText();
