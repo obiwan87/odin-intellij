@@ -17,6 +17,7 @@ import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import com.lasagnerd.odin.debugger.dapDrivers.WinDAPDriver;
 import com.lasagnerd.odin.debugger.driverConfigurations.WinDAPDriverConfiguration;
 import com.lasagnerd.odin.extensions.OdinDebuggerToolchain;
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,7 +141,7 @@ public class WinDAPToolchain implements OdinDebuggerToolchain, DebuggerDriverCon
         Path downloadDir = Path.of(PathManager.getTempPath())
                 .resolve("odin/debuggers/" + getId());
         try {
-            FileUtil.deleteRecursively(downloadDir);
+            FileUtils.deleteDirectory(downloadDir.toFile());
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
