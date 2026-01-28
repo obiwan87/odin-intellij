@@ -5,16 +5,19 @@ We welcome contributions to improve the Odin IntelliJ Plugin! Follow the steps b
 1. **Fork this repository**  
    Create your own copy of this repository by clicking the "Fork" button in the top-right corner of this page.
 
-2. **Generate the Parser Code**  
+2. **Create generated sources folder**
+   Create the `modules/core/src/main/gen` folder, so the following steps guess their destination correctly.
+
+3. **Generate the Parser Code**  
    Navigate to the `Odin.bnf` file, right-click on it, and select **"Generate Parser Code"** or use the shortcut `Ctrl+Shift+G`.
 
-3. **Generate the Lexer Code**  
+4. **Generate the Lexer Code**  
    Navigate to the `Odin.flex` file, right-click on it, and select **"Run JFlex Generator"** or use the shortcut `Ctrl+Shift+G`.
  
-4. **Build**  
+5. **Build**  
    Execute `./gradlew build`
 
-5. **Create plugin**  
+6. **Create plugin**  
    Execute `$ ./gradlew plugin:buildPlugin`
    This will result in a zip file being created in `plugin/build/distributions`
 
