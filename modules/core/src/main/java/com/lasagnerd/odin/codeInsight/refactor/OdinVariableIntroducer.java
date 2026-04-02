@@ -27,6 +27,7 @@ import com.lasagnerd.odin.lang.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
@@ -38,23 +39,31 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
 
     private final SmartPsiElementPointer<OdinDeclaredIdentifier> declaredIdentifier;
 
-    private static OdinExpression @NotNull [] skipNOccurrences(List<UsageInfo> sortedUsages, int n) {
-        OdinExpression[] occurrences;
-        // Occurrences are only needed when expression needs to be replaced with newly introduced variable
-        occurrences = sortedUsages.stream()
-                .skip(n)
-                .map(UsageInfo::getElement)
-                .map(e -> (OdinExpression) e)
-                .toList()
-                .toArray(new OdinExpression[0]);
-        return occurrences;
+    private static @NotNull List<OdinExpression> toExpressions(@NotNull List<UsageInfo> sortedUsages) {
+        List<OdinExpression> result = new ArrayList<>(sortedUsages.size());
+        for (UsageInfo usage : sortedUsages) {
+            PsiElement el = usage.getElement();
+            if (el instanceof OdinExpression expr) {
+                result.add(expr);
+            }
+        }
+        return result;
     }
 
-    private static SmartPsiElementPointer<OdinInitVariableStatement> performReplaceWithNewStatement(@NotNull Project project, UsageInfo topMostUsage, OdinExpression targetExpression, String name) {
+    private static OdinExpression @NotNull [] skipNOccurrences(@NotNull List<OdinExpression> occurrences, int n) {
+        return occurrences.stream()
+                .skip(n)
+                .toArray(OdinExpression[]::new);
+    }
+
+    private static SmartPsiElementPointer<OdinInitVariableStatement> performReplaceWithNewStatement(@NotNull Project project,
+                                                                                                    @NotNull OdinExpression firstOccurrenceExpression,
+                                                                                                    @NotNull OdinExpression targetExpression,
+                                                                                                    @NotNull String name) {
         AtomicReference<SmartPsiElementPointer<OdinInitVariableStatement>> newElementRef = new AtomicReference<>();
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
-            OdinStatement odinStatement = PsiTreeUtil.getParentOfType(topMostUsage.getElement(), OdinStatement.class);
+            OdinStatement odinStatement = PsiTreeUtil.getParentOfType(firstOccurrenceExpression, OdinStatement.class);
             OdinStatementList statementList = PsiTreeUtil.getParentOfType(odinStatement, OdinStatementList.class);
 
             Objects.requireNonNull(odinStatement);
@@ -90,7 +99,6 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
                     .getInstance(project)
                     .createInitVariableStatement(name, "1");
 
-            // Your PSI modification logic here
             var expressionList = refactoringVar.getRhsExpressions();
             Objects.requireNonNull(expressionList);
             expressionList.getExpressionList().getFirst()
@@ -104,13 +112,13 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         return newElementRef.get();
     }
 
-
     private final String originalText;
     private final SmartPsiElementPointer<OdinInitVariableStatement> initVariableStatement;
     private final @NotNull PsiIntroduceTarget<OdinExpression> target;
     private final String[] nameSuggestions;
     private boolean replaceAllOccurrences;
 
+    // Existing interface/signature MUST remain unchanged.
     public static @NotNull OdinVariableIntroducer createVariableIntroducer(@NotNull PsiIntroduceTarget<OdinExpression> target,
                                                                            @NotNull List<UsageInfo> usages,
                                                                            OccurrencesChooser.@NotNull ReplaceChoice replaceChoice,
@@ -118,37 +126,35 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
                                                                            @NotNull Project project) {
         String originalText = editor.getDocument().getText();
 
-        // The chosen expression
         OdinExpression targetExpression = target.getPlace();
         Objects.requireNonNull(targetExpression);
 
-        // If there is more than one occurrence find the one that is top-most
         var sortedUsages = usages.stream().sorted(Comparator.comparing(UsageInfo::getNavigationOffset)).toList();
-        UsageInfo firstUsage = sortedUsages.getFirst();
+        List<OdinExpression> sortedExpressions = toExpressions(sortedUsages);
 
-        Objects.requireNonNull(firstUsage.getElement());
+        // If usages were provided, we expect at least one expression occurrence.
+        OdinExpression firstOccurrenceExpression = sortedExpressions.isEmpty()
+                ? targetExpression
+                : sortedExpressions.getFirst();
 
-        // Perform replace of the expression with variable initialization
         SmartPsiElementPointer<OdinInitVariableStatement> varInitStatement;
         OdinExpression[] occurrences;
 
         List<String> nameSuggestions = OdinNameSuggester.getNameSuggestions(targetExpression);
-        if (firstUsage.getElement().getParent() instanceof OdinExpressionStatement) {
-            // This means we can replace the first occurrence with the variable initialization
-            varInitStatement = performReplace(project, (OdinExpression) firstUsage.getElement(), nameSuggestions.getFirst());
+
+        if (firstOccurrenceExpression.getParent() instanceof OdinExpressionStatement) {
+            varInitStatement = performReplace(project, firstOccurrenceExpression, nameSuggestions.getFirst());
             if (replaceChoice.isAll()) {
-                occurrences = skipNOccurrences(sortedUsages, 1);
+                occurrences = skipNOccurrences(sortedExpressions, 1);
             } else {
                 occurrences = new OdinExpression[0];
             }
         } else {
-            // When the expression is not directly under an expression statement, we have to create
-            // new local variable before the first usage
-            varInitStatement = performReplaceWithNewStatement(project, firstUsage, targetExpression, nameSuggestions.getFirst());
+            varInitStatement = performReplaceWithNewStatement(project, firstOccurrenceExpression, targetExpression, nameSuggestions.getFirst());
             if (!replaceChoice.isAll()) {
                 occurrences = new OdinExpression[]{targetExpression};
             } else {
-                occurrences = skipNOccurrences(sortedUsages, 0);
+                occurrences = skipNOccurrences(sortedExpressions, 0);
             }
         }
 
@@ -156,6 +162,45 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
                 .getDeclaration()
                 .getDeclaredIdentifiers().getFirst();
 
+        SmartPsiElementPointer<OdinDeclaredIdentifier> pointer = SmartPointerManager.createPointer(declaredIdentifier);
+        return new OdinVariableIntroducer(project,
+                editor,
+                originalText,
+                varInitStatement,
+                pointer,
+                target,
+                occurrences,
+                true,
+                nameSuggestions.toArray(new String[0]));
+    }
+
+    // Variant without usages (the target itself is the occurrence). Does not break the existing method signature.
+    @TestOnly
+    public static @NotNull OdinVariableIntroducer createVariableIntroducer(@NotNull PsiIntroduceTarget<OdinExpression> target,
+                                                                           OccurrencesChooser.@NotNull ReplaceChoice replaceChoice,
+                                                                           @NotNull Editor editor,
+                                                                           @NotNull Project project) {
+        String originalText = editor.getDocument().getText();
+
+        OdinExpression targetExpression = target.getPlace();
+        Objects.requireNonNull(targetExpression);
+
+        List<String> nameSuggestions = OdinNameSuggester.getNameSuggestions(targetExpression);
+
+        SmartPsiElementPointer<OdinInitVariableStatement> varInitStatement;
+        OdinExpression[] occurrences;
+
+        if (targetExpression.getParent() instanceof OdinExpressionStatement) {
+            varInitStatement = performReplace(project, targetExpression, nameSuggestions.getFirst());
+            occurrences = new OdinExpression[0];
+        } else {
+            varInitStatement = performReplaceWithNewStatement(project, targetExpression, targetExpression, nameSuggestions.getFirst());
+            occurrences = new OdinExpression[]{targetExpression};
+        }
+
+        OdinDeclaredIdentifier declaredIdentifier = Objects.requireNonNull(varInitStatement.getElement())
+                .getDeclaration()
+                .getDeclaredIdentifiers().getFirst();
 
         SmartPsiElementPointer<OdinDeclaredIdentifier> pointer = SmartPointerManager.createPointer(declaredIdentifier);
         return new OdinVariableIntroducer(project,
@@ -194,7 +239,6 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
         this.nameSuggestions = nameSuggestions;
     }
 
-
     @Override
     protected @Nullable @NonNls String getActionName() {
         return null;
@@ -212,8 +256,6 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
 
     @Override
     protected void performIntroduce() {
-        // NOTE Here we don't do anything, because renaming is constrained to a local scope in the same file, meaning
-        //  it will be done after the user is done refactoring.
         System.out.println("performIntroduce() called");
     }
 
@@ -299,10 +341,8 @@ public class OdinVariableIntroducer extends AbstractInplaceIntroducer<OdinDeclar
                 TYPE_VARIABLE);
     }
 
-
     @Override
     protected void performCleanup() {
-        // restore document
         System.out.println("performCleanup() called");
         WriteCommandAction.writeCommandAction(myProject).run(() -> myEditor.getDocument().setText(originalText));
     }

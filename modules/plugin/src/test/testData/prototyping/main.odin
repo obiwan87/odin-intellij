@@ -44,4 +44,13 @@ main :: proc() {
 
         fmt.printfln("a: %v", a)
     }
+
+    s : S = {
+        a
+    }
+}
+
+S :: struct {
+    a: int,
+    b: string
 }

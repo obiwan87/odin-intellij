@@ -246,7 +246,7 @@ public class OdinTypeSpecializer {
                                           @NotNull TsOdinType parameterType,
                                           @NotNull Map<String, TsOdinType> resolvedTypes, Map<String, EvOdinValue> values) {
         // When dealing with non-distinct type aliases, we substitute the alias with its base type
-        // However, distinct types shall not be substituted. This behaviour has been tested using the odin compiler
+        // However, distinct types shall not be substituted. This behavior has been tested using the odin compiler
         if (argumentType instanceof TsOdinTypeAlias typeAlias && !typeAlias.isDistinct()) {
             doSubstituteTypes(typeAlias.getBaseType(), parameterType, resolvedTypes, values);
             return;

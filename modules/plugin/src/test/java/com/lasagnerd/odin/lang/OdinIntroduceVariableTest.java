@@ -8,8 +8,6 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.lasagnerd.odin.codeInsight.refactor.OdinVariableIntroducer;
 import com.lasagnerd.odin.lang.psi.OdinMulExpression;
 
-import java.util.Collections;
-
 public class OdinIntroduceVariableTest extends AbstractInplaceIntroduceTest {
     public OdinIntroduceVariableTest() {
         myTestDataPath = "src/test/";
@@ -33,7 +31,6 @@ public class OdinIntroduceVariableTest extends AbstractInplaceIntroduceTest {
         if (mulExpression != null) {
             return OdinVariableIntroducer.createVariableIntroducer(
                     new PsiIntroduceTarget<>(mulExpression),
-                    Collections.emptyList(),
                     OccurrencesChooser.ReplaceChoice.NO,
                     getEditor(),
                     getProject()
@@ -49,4 +46,8 @@ public class OdinIntroduceVariableTest extends AbstractInplaceIntroduceTest {
         });
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
 }

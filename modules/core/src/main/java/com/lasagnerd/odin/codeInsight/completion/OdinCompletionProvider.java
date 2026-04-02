@@ -231,10 +231,25 @@ class OdinCompletionProvider extends CompletionProvider<CompletionParameters> {
     private static void addCompoundLiteralCompletions(@NotNull CompletionResultSet result, OdinCompoundLiteral compoundLiteral, OdinContext context) {
         TsOdinType tsOdinType = OdinInferenceEngine.inferTypeOfCompoundLiteral(context, compoundLiteral);
 
+        // TODO Skip already defined struct literals
+        Set<String> alreadyDefined = new HashSet<>();
+        for (OdinElementEntry odinElementEntry : compoundLiteral.getCompoundValue().getCompoundValueBody().getElementEntryList()) {
+            if (odinElementEntry.getLhs() == null)
+                continue;
+            if (odinElementEntry.getLhs().getExpression() instanceof OdinRefExpression refExpression) {
+                String text = refExpression.getText();
+                if (text != null && !text.contains(".")) {
+                    alreadyDefined.add(text);
+                }
+            }
+        }
+
         List<OdinSymbol> elementSymbols = OdinInsightUtils.getElementSymbols(tsOdinType, context);
         InsertHandler<LookupElement> insertHandler = new ElementEntryInsertHandler();
 
         for (OdinSymbol symbol : elementSymbols) {
+            if (alreadyDefined.contains(symbol.getName()))
+                continue;
             LookupElementBuilder element = createTypeElementSymbol(symbol, tsOdinType, insertHandler);
 
             LookupElement prioritized = withPriority(element, 10000);
