@@ -44,7 +44,7 @@ val nativeDebuggerSupportPlugin = "com.intellij.nativeDebug:253.29346.138"
 val riderPlugins = emptyList<String>()
 val coreModules = listOf("intellij.platform.langInjection")
 
-val lsp4jVersion = "0.23.0"
+val lsp4jVersion = "1.0.0"
 
 val lsp4ijDep: DependencyHandler.() -> Unit = {
     compileOnlyApi("org.eclipse.lsp4j:org.eclipse.lsp4j:$lsp4jVersion")

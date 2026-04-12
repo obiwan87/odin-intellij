@@ -15,7 +15,8 @@ import com.lasagnerd.odin.projectStructure.collection.OdinRootTypeResult
 import com.lasagnerd.odin.rider.rootFolders.OdinRiderRootFoldersService
 import com.lasagnerd.odin.rider.rootFolders.OdinRiderRootTypeResult
 import com.lasagnerd.odin.riderInterop.OdinRiderInteropService
-import okio.FileNotFoundException
+import java.io.FileNotFoundException
+
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 

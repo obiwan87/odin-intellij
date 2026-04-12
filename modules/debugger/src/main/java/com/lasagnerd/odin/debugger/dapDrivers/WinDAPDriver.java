@@ -26,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 import org.eclipse.lsp4j.debug.Capabilities;
 import org.eclipse.lsp4j.debug.OutputEventArguments;
 import org.eclipse.lsp4j.debug.services.IDebugProtocolServer;
-import org.eclipse.lsp4j.debug.util.ToStringBuilder;
 import org.eclipse.lsp4j.jsonrpc.JsonRpcException;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 import org.eclipse.lsp4j.jsonrpc.MessageIssueException;
@@ -173,9 +172,7 @@ public class WinDAPDriver extends DAPDriver<
 
         @Override
         public String toString() {
-            ToStringBuilder b = new ToStringBuilder(this);
-            b.add("value", this.value);
-            return b.toString();
+            return value;
         }
     }
 
@@ -188,9 +185,7 @@ public class WinDAPDriver extends DAPDriver<
 
         @Override
         public String toString() {
-            ToStringBuilder b = new ToStringBuilder(this);
-            b.add("signature", this.signature);
-            return b.toString();
+            return signature;
         }
     }
 
