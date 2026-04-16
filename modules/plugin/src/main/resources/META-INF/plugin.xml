@@ -1,8 +1,14 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.lasagnerd.odin</id>
-    <name>Odin Support</name>
+    <name>Odin</name>
     <change-notes><![CDATA[
+        <h3>Version 1.0.4</h3>
+        <h4>Improvements & Features</h4>
+        <ul>
+            <li>Add support for dynamic arrays with fixed capacity</li>
+        </ul>
+
         <h3>Version 1.0.3</h3>
         <h4>Improvements & Features</h4>
         <ul>

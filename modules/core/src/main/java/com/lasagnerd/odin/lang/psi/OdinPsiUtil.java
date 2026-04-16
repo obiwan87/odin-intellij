@@ -164,7 +164,7 @@ public class OdinPsiUtil {
 
 
     public static boolean shouldAskParentForReferences(OdinImportPath ignored,
-                                                       @NotNull PsiReferenceService.Hints ignored2) {
+                                                       PsiReferenceService.Hints ignored2) {
         return true;
     }
 

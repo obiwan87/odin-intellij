@@ -145,7 +145,7 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(PsiManager.class, myPsiManager);
         project.registerService(PsiFileFactory.class, myFileFactory);
         project.registerService(TreeAspect.class, new TreeAspect());
-        project.registerService(SmartPointerManager.class, new MockSmartPointerManager());
+        project.registerService(SmartPointerManager.class, new MockSmartPointerManager(project));
         project.registerService(OdinProjectSettingsService.class, new MockProjectSettingsService());
 
         registerExtensionPoint(project.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);

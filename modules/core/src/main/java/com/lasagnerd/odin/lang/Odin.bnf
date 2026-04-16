@@ -392,7 +392,7 @@ private matrixDef                    ::= LBRACKET arraySize COMMA arraySize RBRA
 arrayType                            ::= [directiveIdentifier] LBRACKET arraySize RBRACKET type {methods=[getTypeDefinition]}
 arraySize                            ::= QUESTION|expression
 
-dynamicArrayType                     ::= [directiveIdentifier] LBRACKET DYNAMIC RBRACKET type {methods=[getTypeDefinition]}
+dynamicArrayType                     ::= [directiveIdentifier] LBRACKET DYNAMIC [SEMICOLON expression] RBRACKET type {methods=[getTypeDefinition]}
 
 sliceType                            ::= [directiveIdentifier] LBRACKET RBRACKET type
 constantInitializationStatement      ::= constantInitDeclaration { methods=[getExpressionList] implements="com.lasagnerd.odin.lang.psi.OdinDeclarationProvidingStatement<com.lasagnerd.odin.lang.psi.OdinConstantInitDeclaration>"}

@@ -10,6 +10,7 @@ import lombok.Setter;
 public class TsOdinDynamicArray extends TsOdinTypeBase implements TsOdinElementOwner {
     private TsOdinType elementType;
     private boolean soa;
+    private Integer size;
 
     @Override
     public TsOdinTypeKind getTypeReferenceKind() {
