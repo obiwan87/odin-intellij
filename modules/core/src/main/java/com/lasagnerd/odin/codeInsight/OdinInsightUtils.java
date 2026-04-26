@@ -222,7 +222,11 @@ public class OdinInsightUtils {
                 return OdinSymbolTable.from(getSwizzleFields(arrayType));
             }
 
-            if (includeReferenceableSymbols && (type instanceof TsOdinDynamicArray || type instanceof TsOdinMapType)) {
+            if (includeReferenceableSymbols && (
+                    (type instanceof TsOdinDynamicArray dynamicArray && dynamicArray.getDynamicArraySizeExpression() == null)
+                            || type instanceof TsOdinMapType)
+            ) {
+
                 OdinSymbol implicitStructSymbol = OdinSdkService.createAllocatorSymbol(project);
                 return OdinSymbolTable.from(Collections.singletonList(implicitStructSymbol));
             }

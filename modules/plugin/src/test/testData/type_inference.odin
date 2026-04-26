@@ -1158,3 +1158,9 @@ testPartialSparseEnum :: proc() {
         .Player  = {
             0.6, 1.8}, }
 }
+
+testDynamicArrayWithFixedCapacity :: proc() {
+    arr : [dynamic; 1024]int
+
+    x := arr
+}

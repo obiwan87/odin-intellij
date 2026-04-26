@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.codeInsight.typeSystem;
 
+import com.lasagnerd.odin.lang.psi.OdinExpression;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +12,7 @@ public class TsOdinDynamicArray extends TsOdinTypeBase implements TsOdinElementO
     private TsOdinType elementType;
     private boolean soa;
     private Integer size;
+    private OdinExpression dynamicArraySizeExpression;
 
     @Override
     public TsOdinTypeKind getTypeReferenceKind() {

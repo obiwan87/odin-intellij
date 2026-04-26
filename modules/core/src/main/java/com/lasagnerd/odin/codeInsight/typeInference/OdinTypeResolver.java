@@ -587,6 +587,12 @@ public class OdinTypeResolver extends OdinVisitor {
             tsOdinDynamicArray.setContext(context);
             tsOdinDynamicArray.setPsiType(o);
             tsOdinDynamicArray.setSoa(checkDirective(o.getDirectiveIdentifier(), "#soa"));
+            if (o.getDynamicArraySize() != null) {
+                OdinExpression expression = o.getDynamicArraySize().getExpression();
+                Integer sizeValue = OdinExpressionEvaluator.evaluate(context, expression).asInt();
+                tsOdinDynamicArray.setSize(sizeValue);
+                tsOdinDynamicArray.setDynamicArraySizeExpression(expression);
+            }
             this.type = tsOdinDynamicArray;
         }
     }

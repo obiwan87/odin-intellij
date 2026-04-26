@@ -2989,6 +2989,21 @@ public class OdinParsingTest extends UsefulTestCase {
         }
     }
 
+    public void testDynamicArrayWithFixedCapacity() throws IOException {
+        OdinFile odinFile = loadTypeInference();
+        TsOdinType tsOdinType = inferFirstRightHandExpressionOfVariable(odinFile,
+                "testDynamicArrayWithFixedCapacity",
+                "x");
+
+        assertInstanceOf(tsOdinType, TsOdinDynamicArray.class);
+        TsOdinDynamicArray tsOdinDynamicArray = (TsOdinDynamicArray) tsOdinType;
+        assertNotNull(tsOdinDynamicArray.getDynamicArraySizeExpression());
+        assertEquals((Integer) 1024, tsOdinDynamicArray.getSize());
+
+        List<OdinSymbol> typeElements = OdinInsightUtils.getTypeElements(new OdinContext(), tsOdinDynamicArray);
+        assertDoesntContain(typeElements.stream().map(OdinSymbol::getName).toList(), "allocator");
+    }
+
     private OdinFile loadExpressionEval() throws IOException {
         String filePath = "expression_eval.odin";
         return loadTestData(filePath);
