@@ -5,8 +5,8 @@ opentest4j = "1.3.0"
 
 # plugins
 changelog = "2.5.0"
-intelliJPlatform = "2.10.5"
-kotlin = "2.2.21"
+intelliJPlatform = "2.11.0"
+kotlin = "2.3.20"
 grammarKit = "2023.3.0.1"
 
 kover = "0.9.3"
