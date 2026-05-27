@@ -1118,7 +1118,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 }
 
                 if (tsOdinTypes.size() > index) {
-                    return tsOdinTypes.get(index);
+                    return tsOdinTypes.get(index).typed();
                 }
             }
             return TsOdinBuiltInTypes.UNKNOWN;
@@ -1231,6 +1231,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                 List<OdinDeclaredIdentifier> identifiers = forInParameterDeclaration.getForInParameterDeclaratorList().stream().map(OdinForInParameterDeclarator::getDeclaredIdentifier).toList();
                 int index = identifiers.indexOf(declaredIdentifier);
                 var odinDeclaredIdentifier = forInParameterDeclaration.getForInParameterDeclaratorList().get(index);
+                // TODO how are reference types different?
                 boolean isReference = odinDeclaredIdentifier.getAnd() != null;
 
                 // TODO Range expression should be treated differently. For now, just take the type the expression resolves to
@@ -1241,16 +1242,16 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 if (tsOdinType instanceof TsOdinMapType mapType) {
                     if (index == 0) {
-                        return createReferenceType(mapType.getKeyType(), isReference);
+                        return mapType.getKeyType();
                     }
                     if (index == 1) {
-                        return createReferenceType(mapType.getValueType(), isReference);
+                        return mapType.getValueType();
                     }
                 }
 
                 if (tsOdinType instanceof TsOdinArrayType arrayType) {
                     if (index == 0) {
-                        return createReferenceType(arrayType.getElementType(), isReference);
+                        return arrayType.getElementType();
                     }
 
                     if (index == 1) {
@@ -1270,7 +1271,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 if (tsOdinType instanceof TsOdinSliceType sliceType) {
                     if (index == 0) {
-                        return createReferenceType(sliceType.getElementType(), isReference);
+                        return sliceType.getElementType();
                     }
 
                     if (index == 1) {
@@ -1280,7 +1281,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 if (tsOdinType instanceof TsOdinDynamicArray dynamicArray) {
                     if (index == 0) {
-                        return createReferenceType(dynamicArray.getElementType(), isReference);
+                        return dynamicArray.getElementType();
                     }
 
                     if (index == 1) {
@@ -1290,7 +1291,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 if (tsOdinType instanceof TsOdinMultiPointerType multiPointerType) {
                     if (index == 0) {
-                        return createReferenceType(multiPointerType.getDereferencedType(), isReference);
+                        return multiPointerType.getDereferencedType();
                     }
 
                     if (index == 1) {
@@ -1304,7 +1305,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 if (tsOdinType instanceof TsOdinSoaSliceType soaSliceType) {
                     if (index == 0) {
-                        return createReferenceType(soaSliceType.getSoaStructType(), isReference);
+                        return soaSliceType.getSoaStructType();
                     }
 
                     if (index == 1) {
@@ -1314,7 +1315,7 @@ public class OdinInferenceEngine extends OdinVisitor {
 
                 if (tsOdinType instanceof TsOdinBitSetType bitSetType) {
                     if (index == 0) {
-                        return createReferenceType(bitSetType.getElementType(), isReference);
+                        return bitSetType.getElementType();
                     }
                     if (index == 1) {
                         return TsOdinBuiltInTypes.INT;
@@ -1332,7 +1333,7 @@ public class OdinInferenceEngine extends OdinVisitor {
                     }
                 }
 
-                if (expression instanceof OdinRangeExclusiveExpression || expression instanceof OdinRangeInclusiveExpression) {
+                if (tsOdinType != null && (expression instanceof OdinRangeExclusiveExpression || expression instanceof OdinRangeInclusiveExpression)) {
                     return tsOdinType;
                 }
                 return TsOdinBuiltInTypes.UNKNOWN;
@@ -1498,11 +1499,6 @@ public class OdinInferenceEngine extends OdinVisitor {
             }
             this.type = inferTypeOfProcedureCall(context, objcMember.getProcedureType(), arguments);
         }
-    }
-
-    @SuppressWarnings("unused")
-    public static TsOdinType createReferenceType(TsOdinType dereferencedType, boolean isReference) {
-        return dereferencedType;
     }
 
     @Override

@@ -177,12 +177,15 @@ public class OdinExpectedTypeEngine {
 
             if (!callInfo.callingType().isUnknown()) {
                 TsOdinTypeKind typeReferenceKind = callInfo.callingType().getTypeReferenceKind();
+                TsOdinType tsOdinCallingType = callInfo.callingType().baseType(true);
                 if (typeReferenceKind == ALIAS) {
-                    typeReferenceKind = callInfo.callingType().baseType(true).getTypeReferenceKind();
+                    if (tsOdinCallingType != null) {
+                        typeReferenceKind = tsOdinCallingType.getTypeReferenceKind();
+                    }
                 }
 
                 if (typeReferenceKind == PROCEDURE || typeReferenceKind == PSEUDO_METHOD || typeReferenceKind == OBJC_MEMBER) {
-                    TsOdinParameterOwner parameterOwner = (TsOdinParameterOwner) callInfo.callingType().baseType(true);
+                    TsOdinParameterOwner parameterOwner = (TsOdinParameterOwner) tsOdinCallingType;
                     if (parameterOwner instanceof TsOdinProcedureType procedureType) {
                         parameterOwner = OdinTypeSpecializer.specializeProcedure(context, callInfo.argumentList(), procedureType);
                     }
@@ -192,7 +195,7 @@ public class OdinExpectedTypeEngine {
                         return propagateTypeDown(tsOdinParameter.getType(), topMostExpression, expression);
                     }
                 } else if (typeReferenceKind == PROCEDURE_GROUP) {
-                    TsOdinProcedureGroup callingProcedureGroup = (TsOdinProcedureGroup) callInfo.callingType().baseType(true);
+                    TsOdinProcedureGroup callingProcedureGroup = (TsOdinProcedureGroup) tsOdinCallingType;
                     OdinInferenceEngine.ProcedureRankingResult result = OdinProcedureRanker
                             .findBestProcedure(context, callingProcedureGroup, callInfo.argumentList());
 
@@ -240,14 +243,14 @@ public class OdinExpectedTypeEngine {
                         return argumentType == null ? TsOdinBuiltInTypes.UNKNOWN : argumentType;
                     }
                 } else if (typeReferenceKind == STRUCT) {
-                    TsOdinStructType structType = (TsOdinStructType) callInfo.callingType().baseType(true);
+                    TsOdinStructType structType = (TsOdinStructType) tsOdinCallingType;
                     Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(structType.getParameters(), callInfo.argumentList());
                     if (argumentToParameterMap != null) {
                         TsOdinParameter tsOdinParameter = argumentToParameterMap.get(topMostExpression);
                         return propagateTypeDown(tsOdinParameter.getType(), topMostExpression, expression);
                     }
                 } else if (typeReferenceKind == UNION) {
-                    TsOdinUnionType unionType = (TsOdinUnionType) callInfo.callingType().baseType(true);
+                    TsOdinUnionType unionType = (TsOdinUnionType) tsOdinCallingType;
                     Map<OdinExpression, TsOdinParameter> argumentToParameterMap = OdinInsightUtils.getArgumentToParameterMap(unionType.getParameters(), callInfo.argumentList());
                     if (argumentToParameterMap != null) {
                         TsOdinParameter tsOdinParameter = argumentToParameterMap.get(topMostExpression);

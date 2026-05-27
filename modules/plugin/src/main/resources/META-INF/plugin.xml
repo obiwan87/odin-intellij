@@ -556,6 +556,20 @@
                                               nameKey="odin.whenEval"
                                               providerId="Odin"
                                               bundle="odin.Bundle"/>
+        <codeInsight.declarativeInlayProvider implementationClass="com.lasagnerd.odin.codeInsight.inlayHints.OdinParameterNameInlayHintsProvider"
+                                              language="Odin"
+                                              group="PARAMETERS_GROUP"
+                                              isEnabledByDefault="true"
+                                              nameKey="odin.parameterNames"
+                                              providerId="Odin.ParameterNames"
+                                              bundle="odin.Bundle"/>
+        <codeInsight.declarativeInlayProvider implementationClass="com.lasagnerd.odin.codeInsight.inlayHints.OdinInferredTypeNameInlayHintsProvider"
+                                              language="Odin"
+                                              group="TYPES_GROUP"
+                                              isEnabledByDefault="true"
+                                              nameKey="odin.inferredTypeNames"
+                                              providerId="Odin.InferredTypeNames"
+                                              bundle="odin.Bundle"/>
         <gotoSymbolContributor implementation="com.lasagnerd.odin.goToSymbol.OdinGoToSymbolContributor"/>
         <formattingService implementation="com.lasagnerd.odin.externalFormatter.OdinFmtService"/>
         <languageInjectionPerformer language="Odin" implementationClass="com.lasagnerd.odin.languageInjection.OdinLanguageInjectionPerformer"/>
