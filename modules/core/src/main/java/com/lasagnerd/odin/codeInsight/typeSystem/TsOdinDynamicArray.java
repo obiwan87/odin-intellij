@@ -21,6 +21,8 @@ public class TsOdinDynamicArray extends TsOdinTypeBase implements TsOdinElementO
 
     @Override
     public String getLabel() {
-        return "[dynamic]" + label(elementType);
+        if (size == null)
+            return "[dynamic]" + label(elementType);
+        return "[dynamic; %d]".formatted(size) + label(elementType);
     }
 }
