@@ -65,7 +65,11 @@ public class OdinRunConfigurationUtils {
 
     public static Optional<OdinConstantInitDeclaration> findMainProcedure(OdinFile file) {
 
-        OdinSymbolTable symbolTable = file.getFileScope().getSymbolTable();
+        OdinFileScope fileScope = file.getFileScope();
+        if (fileScope == null)
+            return Optional.empty();
+
+        OdinSymbolTable symbolTable = fileScope.getSymbolTable();
         if (symbolTable == null)
             return Optional.empty();
 
@@ -98,7 +102,7 @@ public class OdinRunConfigurationUtils {
                     && OdinInsightUtils.isProcedureDeclaration(constantInitDeclaration)
             ) {
                 if (OdinInsightUtils.containsAttribute(constantInitDeclaration.getAttributesDefinitionList(), "test")) {
-                    OdinDeclaredIdentifier first = ((OdinConstantInitDeclaration) declaration).getDeclaredIdentifierList().getFirst();
+                    OdinDeclaredIdentifier first = constantInitDeclaration.getDeclaredIdentifierList().getFirst();
                     TsOdinType type = first.getType(new OdinContext());
                     if (type.dereference().baseType(true) instanceof TsOdinProcedureType procedureType) {
                         if (procedureType.getParameters().size() == 1 && procedureType.getReturnParameters().isEmpty()) {
