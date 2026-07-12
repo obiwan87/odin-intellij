@@ -271,6 +271,8 @@ circular_reference_test :: proc(render_commands: ^ClaryArray(RenderCommand)) {
     x := command.config
 }
 
+PROCEDURE_GROUP_WHERE :: true
+
 typeInference_procedureGroup :: proc() {
     PointDistinctAlias :: distinct Point
     PointAlias :: Point
@@ -309,7 +311,7 @@ typeInference_procedureGroup :: proc() {
 
     add_one :: proc {
         add_one_string,
-        add_one_integer,
+        add_one_integer where PROCEDURE_GROUP_WHERE,
         add_one_struct,
         add_one_distinct_alias,
         add_one_alias,

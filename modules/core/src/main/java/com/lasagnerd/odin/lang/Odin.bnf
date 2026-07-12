@@ -332,7 +332,7 @@ directiveStatement                   ::= directive
 // Procedure overloading
 procedureGroupType                 ::= &procedureGroupHead PROC EOS_TOKEN? procedureGroupBlock {pin=2 methods=[getProcedureRefList]}
 procedureGroupBlock                ::= blockStart procedureGroupBody blockEnd
-procedureGroupBody                 ::= procedureRef (COMMA procedureRef)* (COMMA | EOS_TOKEN | &RBRACE)
+procedureGroupBody                 ::= procedureRef [WHERE expression] (COMMA procedureRef [WHERE expression])* (COMMA | EOS_TOKEN | &RBRACE)
 private procedureGroupHead         ::= PROC EOS_TOKEN? blockStart
 procedureRef                       ::= qualifiedType | simpleRefType
 
