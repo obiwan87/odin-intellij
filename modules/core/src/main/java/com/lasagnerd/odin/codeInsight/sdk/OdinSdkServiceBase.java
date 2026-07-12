@@ -206,6 +206,18 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
 
     private void setOdinOs(Map<OdinSymbol, EvOdinValue> valueMap) {
         TsOdinType odinOsType = getType("Odin_OS_Type");
+
+        EvEnumValue enumValue = getOdinOsEnumValue();
+        EvOdinValue value = new EvOdinValue(enumValue, odinOsType);
+        valueMap.put(getBuiltinSymbol("ODIN_OS"), value);
+
+        EvOdinValue stringValue = new EvOdinValue(enumValue
+                .getName()
+                .toLowerCase(), TsOdinBuiltInTypes.STRING);
+        valueMap.put(getBuiltinSymbol("ODIN_OS_STRING"), stringValue);
+    }
+
+    protected EvEnumValue getOdinOsEnumValue() {
         /*
         	    Unknown,
                 Windows,
@@ -220,21 +232,13 @@ public abstract class OdinSdkServiceBase implements OdinSdkService {
                 Freestanding,
          */
 
-        EvEnumValue enumValue;
         if (SystemInfo.isWindows) {
-            enumValue = new EvEnumValue("Windows", 1);
+            return new EvEnumValue("Windows", 1);
         } else if (SystemInfo.isLinux || SystemInfo.isMac) {
-            enumValue = new EvEnumValue("Linux", 3);
+            return new EvEnumValue("Linux", 3);
         } else {
-            enumValue = new EvEnumValue("Unknown", 0);
+            return new EvEnumValue("Unknown", 0);
         }
-        EvOdinValue value = new EvOdinValue(enumValue, odinOsType);
-        valueMap.put(getBuiltinSymbol("ODIN_OS"), value);
-
-        EvOdinValue stringValue = new EvOdinValue(enumValue
-                .getName()
-                .toLowerCase(), TsOdinBuiltInTypes.STRING);
-        valueMap.put(getBuiltinSymbol("ODIN_OS_STRING"), stringValue);
     }
 
     @Override

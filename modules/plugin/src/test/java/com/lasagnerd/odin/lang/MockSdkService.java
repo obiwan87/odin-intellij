@@ -3,6 +3,7 @@ package com.lasagnerd.odin.lang;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
+import com.lasagnerd.odin.codeInsight.evaluation.EvEnumValue;
 import com.lasagnerd.odin.codeInsight.imports.OdinImportService;
 import com.lasagnerd.odin.codeInsight.sdk.OdinSdkServiceBase;
 import com.lasagnerd.odin.lang.psi.OdinFile;
@@ -16,6 +17,13 @@ public class MockSdkService extends OdinSdkServiceBase {
     public MockSdkService(Project project, PsiFileFactory fileFactory) {
         super(project);
         this.fileFactory = fileFactory;
+    }
+
+    @Override
+    protected EvEnumValue getOdinOsEnumValue() {
+        // Test data (e.g. expression_eval.odin) is written assuming Windows,
+        // regardless of the OS the test suite actually runs on.
+        return new EvEnumValue("Windows", 1);
     }
 
     @Override
