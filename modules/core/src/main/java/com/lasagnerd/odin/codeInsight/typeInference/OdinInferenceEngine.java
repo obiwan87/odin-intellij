@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static com.lasagnerd.odin.codeInsight.typeSystem.TsOdinTypeKind.*;
 
@@ -589,7 +588,11 @@ public class OdinInferenceEngine extends OdinVisitor {
                 && literalExpression.getCompoundLiteral() instanceof OdinCompoundLiteralUntyped) {
             rightType = leftType;
         } else {
-            rightType = inferTypeInExplicitMode(this.context, Objects.requireNonNull(o.getRight()));
+            if (o.getRight() != null) {
+                rightType = inferTypeInExplicitMode(this.context, o.getRight());
+            } else {
+                rightType = TsOdinBuiltInTypes.UNKNOWN;
+            }
         }
 
         if (!explicitMode) {
