@@ -76,10 +76,24 @@ To begin, ensure you have installed the plugin using the steps mentioned above.
 
 
 
-## SDK Setup
+## Toolchain Setup
 
 Download the Odin SDK [here](https://github.com/odin-lang/Odin/releases) or build it from source by following the instructions on the official
 Odin [Install page](https://odin-lang.org/docs/install/).
+
+Toolchains are configured once at the application level and can be reused across multiple projects. A toolchain contains the Odin compiler,
+libraries, and optional debugger configuration.
+
+### Add a Toolchain
+
+1. Open the IDE settings and navigate to **Languages & Frameworks** > **Odin** > **Odin Toolchains**.
+2. Click **Add** and give the toolchain a descriptive name.
+3. Set **Odin executable** to the `odin` executable (`odin.exe` on Windows).
+4. Set **Odin libraries** to the Odin SDK directory that contains the `base`, `core`, and `vendor` collections.
+5. Optionally select and configure a debugger.
+6. Click **Apply** to save the toolchain.
+
+![Odin toolchain configuration](img/odin-toolchain.png)
 
 ### Creating a New Project
 
@@ -104,24 +118,33 @@ If you are importing an existing Odin project, refer to the **Advanced Settings*
 
 ### Project Settings
 
-To configure the project:
+After adding a toolchain, assign it to the project:
 
-1. Open the settings panel and navigate to **Languages & Frameworks** > **Odin**.
-2. Set the following fields:
+1. Open the IDE settings and navigate to **Languages & Frameworks** > **Odin** > **Project Settings**.
+2. Select the desired **Toolchain**. You can also click **Add...** to create one without leaving the project settings.
+3. Optionally set **Checker arguments**. These command-line arguments control the warnings and errors displayed in the editor. Run
+   `odin check --help` for a list of available options.
+4. Click **Apply**.
 
-- **Path to SDK**: The location of the Odin SDK folder, where the Odin binary resides.
-- **Checker Arguments**: Command-line arguments for the Odin checker. These arguments control the warnings and errors displayed in the editor. Run
-  `odin checker --help` for a list of available options.
+![Selecting an Odin toolchain in the project settings](img/odin-project-settings-toolchain.png)
+
+> [!NOTE]
+> Existing project-level SDK and debugger settings are migrated to a reusable toolchain when the project is first opened after upgrading. Check the
+> selected toolchain if the project does not open or behave as expected after the upgrade.
 
 ### Debugger Settings
 
-Debugger support is available in IntelliJ IDEA Ultimate, GoLand, CLion, PyCharm Professional, and RustRover. If you don't see the
-**Debugger Settings** section in the Odin settings, you need to install
-the [Native Debugging Support plugin](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) from the JetBrains marketplace.
+Debugger support is available in IntelliJ IDEA Ultimate, GoLand, CLion, PyCharm Professional, and RustRover. If debugger options are not available
+for your toolchain, install the
+[Native Debugging Support plugin](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) from the JetBrains marketplace.
 
-Here’s an example of what the settings panel will look like when properly configured:
+> [!WARNING]
+> If the Native Debugging Support plugin is not available in the marketplace for your IDE, that IDE does not support debugging with the Odin plugin.
+> Refer to the [compatibility table](#compatibility-with-jetbrains-products) to see which IDEs support debugging.
 
-![Debugger Settings](debugger-settings.png)
+Debugger configuration is part of each reusable toolchain under **Languages & Frameworks** > **Odin** > **Odin Toolchains**.
+
+![Odin toolchain debugger configuration](img/odin-toolchain-debuggers.png)
 
 The following sections outline the setup for various debuggers.
 
@@ -130,7 +153,7 @@ The following sections outline the setup for various debuggers.
 To set up LLDB-DAP:
 
 1. Download the [LLVM 18.1.x binaries](https://github.com/llvm/llvm-project/releases/tag/llvmorg-18.1.8) for your platform
-2. In the Odin settings page, select the `lldb-dap` executable from the `bin` directory.
+2. In **Odin Toolchains**, select **LLDB-DAP** as the toolchain's debugger and choose the `lldb-dap` executable from the `bin` directory.
 
 > [!IMPORTANT]
 > LLDB-DAP requires Python 3.10. Ensure Python 3.10 is installed and accessible by LLDB-DAP. On Windows, the easiest approach is to download the
