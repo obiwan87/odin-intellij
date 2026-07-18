@@ -63,8 +63,7 @@ import com.lasagnerd.odin.codeInsight.typeInference.OdinTypeConverter;
 import com.lasagnerd.odin.codeInsight.typeSystem.*;
 import com.lasagnerd.odin.lang.psi.*;
 import com.lasagnerd.odin.lang.psi.impl.OdinAssignmentStatementImpl;
-import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
-import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsServiceImpl;
+import com.lasagnerd.odin.settings.projectSettings.*;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
@@ -147,6 +146,10 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(TreeAspect.class, new TreeAspect());
         project.registerService(SmartPointerManager.class, new MockSmartPointerManager(project));
         project.registerService(OdinProjectSettingsService.class, new MockProjectSettingsService());
+        if (app.getService(OdinToolchainService.class) == null) {
+            app.registerService(OdinToolchainService.class, new OdinToolchainServiceImpl());
+        }
+        project.registerService(OdinProjectToolchainService.class, new OdinProjectToolchainService(project));
 
         registerExtensionPoint(project.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
         registerExtensionPoint(app.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
@@ -160,7 +163,7 @@ public class OdinParsingTest extends UsefulTestCase {
         project.registerService(OdinProjectSettingsServiceImpl.class, new OdinProjectSettingsServiceImpl());
         registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
         registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
-
+        registerExtensionPoint(MetaLanguage.PROVIDER_EP_NAME, MetaLanguageProvider.class);
         myLangParserDefinition = app.getExtensionArea().registerFakeBeanPoint(LanguageParserDefinitions.INSTANCE.getName(), getPluginDescriptor());
 
         if (myDefinitions.length > 0) {
