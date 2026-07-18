@@ -19,4 +19,6 @@ public interface OdinToolchainService extends PersistentStateComponent<OdinToolc
     @NotNull OdinToolchainState add(@NotNull OdinToolchainState toolchain);
 
     @NotNull OdinToolchainState findOrAddEquivalent(@NotNull OdinToolchainState toolchain);
+
+    void replaceToolchains(@NotNull List<OdinToolchainState> toolchains);
 }

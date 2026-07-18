@@ -441,6 +441,13 @@
                 displayName="Project Settings"
         />
 
+        <applicationConfigurable
+                parentId="com.lasagnerd.odin.settings"
+                id="com.lasagnerd.odin.settings.toolchains"
+                instance="com.lasagnerd.odin.settings.projectSettings.OdinToolchainsConfigurable"
+                displayName="Odin Toolchains"
+        />
+
         <projectConfigurable
                 parentId="com.lasagnerd.odin.settings"
                 id="com.lasagnerd.odin.settings.formatter"

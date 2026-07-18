@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -315,7 +316,6 @@ public class OdinProjectSettings implements Disposable {
                 if (StringUtil.isNotEmpty(sdkPath) && !Path.of(sdkPath).toFile().isDirectory())
                     return new ValidationInfo("Library directory does not exist", sdkPathTextField.getTextField());
             }
-            toolchainNameTextField = null;
             return null;
         };
     }
@@ -337,22 +337,37 @@ public class OdinProjectSettings implements Disposable {
 
     private JComponent createToolchainComboBox() {
         toolchainComboBox = new ComboBox<>();
-        toolchainComboBox.addItem(new ToolchainItem("", "New toolchain"));
+        toolchainComboBox.addItem(new ToolchainItem("", "Not configured"));
         for (OdinToolchainState toolchain : OdinToolchainService.getInstance().getToolchains())
             toolchainComboBox.addItem(new ToolchainItem(toolchain.id, toolchain.name));
-        toolchainComboBox.addItemListener(event -> {
-            if (event.getStateChange() != java.awt.event.ItemEvent.SELECTED) return;
-            ToolchainItem item = (ToolchainItem) event.getItem();
-            OdinToolchainState toolchain = OdinToolchainService.getInstance().find(item.id);
-            if (toolchain != null) {
-                setCompilerPath(toolchain.compilerPath);
-                setSdkPath(toolchain.libraryPath);
-                setToolchainName(toolchain.name);
-                setDebuggerId(toolchain.debuggerId);
-                setDebuggerPath(toolchain.debuggerPath);
-            }
-        });
         return toolchainComboBox;
+    }
+
+    private JComponent createToolchainSelector() {
+        JPanel panel = new JPanel(new BorderLayout(JBUI.scale(5), 0));
+        panel.add(createToolchainComboBox(), BorderLayout.CENTER);
+        JButton addButton = new JButton("Add...");
+        addButton.addActionListener(event -> {
+            String selectedId = getToolchainId();
+            java.util.Set<String> previousIds = OdinToolchainService.getInstance().getToolchains().stream()
+                    .map(toolchain -> toolchain.id).collect(java.util.stream.Collectors.toSet());
+            ShowSettingsUtil.getInstance().showSettingsDialog(null, OdinToolchainsConfigurable.class);
+            reloadToolchains(selectedId, previousIds);
+        });
+        panel.add(addButton, BorderLayout.EAST);
+        return panel;
+    }
+
+    private void reloadToolchains(String selectedId, java.util.Set<String> previousIds) {
+        toolchainComboBox.removeAllItems();
+        toolchainComboBox.addItem(new ToolchainItem("", "Not configured"));
+        String addedId = "";
+        for (OdinToolchainState toolchain : OdinToolchainService.getInstance().getToolchains()) {
+            toolchainComboBox.addItem(new ToolchainItem(toolchain.id, toolchain.name));
+            if (!previousIds.contains(toolchain.id)) addedId = toolchain.id;
+        }
+        if (!addedId.isBlank()) setToolchainId(addedId);
+        else setToolchainId(selectedId);
     }
 
     private JComponent createToolchainNameField() {
@@ -384,18 +399,8 @@ public class OdinProjectSettings implements Disposable {
             if (disposed)
                 return null;
 
-            sdkVersion = new SimpleColoredComponent();
-            sdkVersion.setFont(JBUI.Fonts.smallFont());
             FormBuilder formBuilder = FormBuilder.createFormBuilder()
-                    .addLabeledComponent(new JBLabel("Toolchain: "), createToolchainComboBox(), 1, false)
-                    .addLabeledComponent(new JBLabel("Toolchain name: "), createToolchainNameField(), 1, false)
-                    .addLabeledComponent(
-                            new JBLabel("Odin executable: "),
-                            createCompilerPathField(), 1, false)
-                    .addComponentToRightColumn(sdkVersion)
-                    .addLabeledComponent(
-                            new JBLabel("Odin libraries: "),
-                            createSdkPathTextFieldWithBrowseButton(), 1, false)
+                    .addLabeledComponent(new JBLabel("Toolchain: "), createToolchainSelector(), 1, false)
                     .addVerticalGap(10)
                     .addLabeledComponent(
                             new JBLabel("Checker arguments: "),
@@ -406,14 +411,6 @@ public class OdinProjectSettings implements Disposable {
                                     "<li>-vet -vet-cast -strict-style (for more checks)</li>" +
                                     "<li>-max-error-count:999 (to report more errors)</li>" +
                                     "</ul>"), 0);
-            if (extensions.length > 0) {
-                formBuilder
-                        .addComponent(new TitledSeparator("Debugger"))
-                        .addLabeledComponent(new JBLabel("Debugger"), createDebuggerComboBox())
-                        .addLabeledComponent(new JBLabel("Debugger path"), createDebuggerPathField())
-                        .addComponentToRightColumn(createDownloadButton());
-            }
-
             component = formBuilder
                     .addComponent(new TitledSeparator("Miscellaneous"))
                     .addLabeledComponent(new JBLabel("Semantic annotator"), createCustomAnnotatorCheckbox(), 1)
@@ -438,17 +435,17 @@ public class OdinProjectSettings implements Disposable {
 
     @NotNull
     public String getSdkPath() {
-        return sdkPathTextField.getText();
+        return sdkPathTextField == null ? "" : sdkPathTextField.getText();
     }
 
-    @NotNull public String getCompilerPath() { return compilerPathTextField.getText(); }
+    @NotNull public String getCompilerPath() { return compilerPathTextField == null ? "" : compilerPathTextField.getText(); }
 
     @NotNull public String getToolchainId() {
         Object selected = toolchainComboBox.getSelectedItem();
         return selected instanceof ToolchainItem item ? item.id : "";
     }
 
-    @NotNull public String getToolchainName() { return toolchainNameTextField.getText(); }
+    @NotNull public String getToolchainName() { return toolchainNameTextField == null ? "" : toolchainNameTextField.getText(); }
 
     @NotNull
     public String getBuildFlags() {
@@ -473,10 +470,10 @@ public class OdinProjectSettings implements Disposable {
     }
 
     public void setSdkPath(@NotNull String newText) {
-        sdkPathTextField.setText(newText);
+        if (sdkPathTextField != null) sdkPathTextField.setText(newText);
     }
 
-    public void setCompilerPath(@NotNull String path) { compilerPathTextField.setText(path); }
+    public void setCompilerPath(@NotNull String path) { if (compilerPathTextField != null) compilerPathTextField.setText(path); }
 
     public void setToolchainId(String id) {
         for (int i = 0; i < toolchainComboBox.getItemCount(); i++) {
@@ -488,7 +485,7 @@ public class OdinProjectSettings implements Disposable {
         }
     }
 
-    public void setToolchainName(String name) { toolchainNameTextField.setText(name); }
+    public void setToolchainName(String name) { if (toolchainNameTextField != null) toolchainNameTextField.setText(name); }
 
     public void setBuildFlags(@NotNull String newBuildFlags) {
         buildFlagsTextField.setText(newBuildFlags);

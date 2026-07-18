@@ -21,7 +21,7 @@ import java.io.IOException;
 public class OdinProjectCreationUtils {
     public static void saveProjectSettings(@NotNull Project project, @NotNull OdinProjectSettings settings) {
         OdinProjectSettingsState state = new OdinProjectSettingsState();
-        OdinProjectConfigurable.applyToolchain(project, state, settings);
+        state.toolchainId = settings.getToolchainId();
         OdinProjectConfigurable.apply(state, settings);
         OdinProjectSettingsService.getInstance(project).loadState(state);
     }

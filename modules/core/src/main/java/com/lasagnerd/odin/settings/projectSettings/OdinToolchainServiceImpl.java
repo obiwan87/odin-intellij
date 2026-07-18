@@ -59,6 +59,11 @@ public class OdinToolchainServiceImpl implements OdinToolchainService {
         return existing == null ? add(candidate) : existing;
     }
 
+    @Override
+    public synchronized void replaceToolchains(@NotNull List<OdinToolchainState> toolchains) {
+        state.toolchains = new ArrayList<>(toolchains);
+    }
+
     private static boolean equivalent(OdinToolchainState left, OdinToolchainState right) {
         return normalize(left.compilerPath).equals(normalize(right.compilerPath))
                 && normalize(left.libraryPath).equals(normalize(right.libraryPath))
