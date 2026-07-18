@@ -65,6 +65,6 @@ public class OdinImportServiceImpl implements OdinImportService {
 
     @Override
     public Optional<String> getSdkPath() {
-        return OdinSdkUtils.getSdkPath(project);
+        return OdinSdkUtils.getLibraryPath(project);
     }
 }

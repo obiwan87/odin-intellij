@@ -46,6 +46,9 @@ public class OdinProjectSettings implements Disposable {
     private JComponent component;
     private final OdinDebuggerToolchain[] extensions;
     private TextFieldWithBrowseButton sdkPathTextField;
+    private TextFieldWithBrowseButton compilerPathTextField;
+    private ComboBox<ToolchainItem> toolchainComboBox;
+    private JBTextField toolchainNameTextField;
     private JBTextField buildFlagsTextField;
     private JBCheckBox semanticAnnotatorEnabled;
     private JBCheckBox odinCheckerCheckbox;
@@ -81,6 +84,10 @@ public class OdinProjectSettings implements Disposable {
                 }
                 sdkPathTextField.dispose();
                 sdkPathTextField = null;
+            }
+            if (compilerPathTextField != null) {
+                compilerPathTextField.dispose();
+                compilerPathTextField = null;
             }
             if (buildFlagsTextField != null) {
                 buildFlagsTextField = null; // JBTextField does not require explicit dispose
@@ -178,6 +185,18 @@ public class OdinProjectSettings implements Disposable {
             String path = virtualFile.getPath();
             setSdkPath(path);
         }
+    }
+
+    class BrowseToCompilerFileChooserAction extends AbstractAction {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.singleFile(), null, null);
+            if (file != null) setCompilerPath(file.getPath());
+        }
+    }
+
+    record ToolchainItem(String id, String name) {
+        @Override public String toString() { return name; }
     }
 
     public OdinProjectSettings() {
@@ -281,40 +300,64 @@ public class OdinProjectSettings implements Disposable {
 
         // Components initialization
         new ComponentValidator(this)
-                .withValidator(sdkPathValidator())
+                .withValidator(libraryPathValidator())
                 .andStartOnFocusLost()
                 .andRegisterOnDocumentListener(sdkPathTextField.getTextField())
                 .installOn(sdkPathTextField.getTextField());
 
-        sdkPathTextField.getTextField().getDocument().addDocumentListener(new VersionListener());
-
         return panel;
     }
 
-    private @NotNull Supplier<ValidationInfo> sdkPathValidator() {
+    private @NotNull Supplier<ValidationInfo> libraryPathValidator() {
         return () -> {
             if (sdkPathTextField != null) {
                 String sdkPath = sdkPathTextField.getText();
-                return validateSdkPath(sdkPath);
+                if (StringUtil.isNotEmpty(sdkPath) && !Path.of(sdkPath).toFile().isDirectory())
+                    return new ValidationInfo("Library directory does not exist", sdkPathTextField.getTextField());
             }
+            toolchainNameTextField = null;
             return null;
         };
     }
 
-    private @Nullable ValidationInfo validateSdkPath(String sdkPath) {
-        if (StringUtil.isNotEmpty(sdkPath)) {
-            Path nioPath = Path.of(sdkPath);
-            if (!nioPath.toFile().exists()) {
-                return new ValidationInfo("Path does not exist", sdkPathTextField.getTextField());
-            }
+    private JComponent createCompilerPathField() {
+        compilerPathTextField = new TextFieldWithBrowseButton(new ExtendableTextField(10), new BrowseToCompilerFileChooserAction());
+        new ComponentValidator(this).withValidator(() -> validateCompilerPath(compilerPathTextField.getText()))
+                .andStartOnFocusLost().andRegisterOnDocumentListener(compilerPathTextField.getTextField())
+                .installOn(compilerPathTextField.getTextField());
+        compilerPathTextField.getTextField().getDocument().addDocumentListener(new VersionListener());
+        return compilerPathTextField;
+    }
 
-            String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(nioPath.toString());
-            File binaryFile = new File(odinBinaryPath);
-            if (!binaryFile.exists() || !binaryFile.isFile()) {
-                return new ValidationInfo("Odin binary not found", sdkPathTextField.getTextField());
-            }
-        }
+    private @Nullable ValidationInfo validateCompilerPath(String path) {
+        if (StringUtil.isNotEmpty(path) && !Path.of(path).toFile().isFile())
+            return new ValidationInfo("Odin executable does not exist", compilerPathTextField.getTextField());
         return null;
+    }
+
+    private JComponent createToolchainComboBox() {
+        toolchainComboBox = new ComboBox<>();
+        toolchainComboBox.addItem(new ToolchainItem("", "New toolchain"));
+        for (OdinToolchainState toolchain : OdinToolchainService.getInstance().getToolchains())
+            toolchainComboBox.addItem(new ToolchainItem(toolchain.id, toolchain.name));
+        toolchainComboBox.addItemListener(event -> {
+            if (event.getStateChange() != java.awt.event.ItemEvent.SELECTED) return;
+            ToolchainItem item = (ToolchainItem) event.getItem();
+            OdinToolchainState toolchain = OdinToolchainService.getInstance().find(item.id);
+            if (toolchain != null) {
+                setCompilerPath(toolchain.compilerPath);
+                setSdkPath(toolchain.libraryPath);
+                setToolchainName(toolchain.name);
+                setDebuggerId(toolchain.debuggerId);
+                setDebuggerPath(toolchain.debuggerPath);
+            }
+        });
+        return toolchainComboBox;
+    }
+
+    private JComponent createToolchainNameField() {
+        toolchainNameTextField = new JBTextField(20);
+        return toolchainNameTextField;
     }
 
     private JComponent createBuildFlagsTextField() {
@@ -344,10 +387,15 @@ public class OdinProjectSettings implements Disposable {
             sdkVersion = new SimpleColoredComponent();
             sdkVersion.setFont(JBUI.Fonts.smallFont());
             FormBuilder formBuilder = FormBuilder.createFormBuilder()
+                    .addLabeledComponent(new JBLabel("Toolchain: "), createToolchainComboBox(), 1, false)
+                    .addLabeledComponent(new JBLabel("Toolchain name: "), createToolchainNameField(), 1, false)
                     .addLabeledComponent(
-                            new JBLabel("Path to SDK: "),
-                            createSdkPathTextFieldWithBrowseButton(), 1, false)
+                            new JBLabel("Odin executable: "),
+                            createCompilerPathField(), 1, false)
                     .addComponentToRightColumn(sdkVersion)
+                    .addLabeledComponent(
+                            new JBLabel("Odin libraries: "),
+                            createSdkPathTextFieldWithBrowseButton(), 1, false)
                     .addVerticalGap(10)
                     .addLabeledComponent(
                             new JBLabel("Checker arguments: "),
@@ -393,6 +441,15 @@ public class OdinProjectSettings implements Disposable {
         return sdkPathTextField.getText();
     }
 
+    @NotNull public String getCompilerPath() { return compilerPathTextField.getText(); }
+
+    @NotNull public String getToolchainId() {
+        Object selected = toolchainComboBox.getSelectedItem();
+        return selected instanceof ToolchainItem item ? item.id : "";
+    }
+
+    @NotNull public String getToolchainName() { return toolchainNameTextField.getText(); }
+
     @NotNull
     public String getBuildFlags() {
         return buildFlagsTextField.getText();
@@ -418,6 +475,20 @@ public class OdinProjectSettings implements Disposable {
     public void setSdkPath(@NotNull String newText) {
         sdkPathTextField.setText(newText);
     }
+
+    public void setCompilerPath(@NotNull String path) { compilerPathTextField.setText(path); }
+
+    public void setToolchainId(String id) {
+        for (int i = 0; i < toolchainComboBox.getItemCount(); i++) {
+            ToolchainItem item = toolchainComboBox.getItemAt(i);
+            if (Objects.equals(item.id, id)) {
+                toolchainComboBox.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
+    public void setToolchainName(String name) { toolchainNameTextField.setText(name); }
 
     public void setBuildFlags(@NotNull String newBuildFlags) {
         buildFlagsTextField.setText(newBuildFlags);
@@ -578,14 +649,14 @@ public class OdinProjectSettings implements Disposable {
     private class VersionListener extends DocumentAdapter {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
-            if (validateSdkPath(sdkPathTextField.getText()) == null) {
+            if (validateCompilerPath(compilerPathTextField.getText()) == null) {
                 sdkVersion.clear();
-                if (sdkPathTextField.getText().isBlank())
+                if (compilerPathTextField.getText().isBlank())
                     return;
 
                 sdkVersion.setIcon(AnimatedIcon.Default.INSTANCE);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    String odinSdkVersion = OdinSdkUtils.getOdinSdkVersion(sdkPathTextField.getText());
+                    String odinSdkVersion = OdinSdkUtils.getOdinCompilerVersion(compilerPathTextField.getText());
                     sdkVersion.clear();
                     sdkVersion.setIcon(AllIcons.General.GreenCheckmark);
                     sdkVersion.append("Version: " + odinSdkVersion);

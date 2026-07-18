@@ -8,8 +8,7 @@ import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectConfigurable;
-import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
-import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectToolchainService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,17 +25,16 @@ public abstract class OdinBaseRunConfiguration<T extends OdinBaseRunConfiguratio
         expandAndCheck(getOptions().getWorkingDirectory(), "Working directory");
         checkSet(getOptions().getOutputPath(), "Output path");
 
-        OdinProjectSettingsState state = OdinProjectSettingsService.getInstance(getProject()).getState();
-        String sdkPath = state.sdkPath;
-        if (sdkPath == null || sdkPath.isEmpty()) {
-            throw new RuntimeConfigurationError("Odin SDK path is not set",
+        String compilerPath = OdinProjectToolchainService.getInstance(getProject()).getCompilerPath().orElse(null);
+        if (compilerPath == null) {
+            throw new RuntimeConfigurationError("Odin executable path is not set",
                     () -> ShowSettingsUtil.getInstance().showSettingsDialog(getProject(),
                             OdinProjectConfigurable.class, null));
         }
 
-        File sdkFile = new File(sdkPath);
-        if (!sdkFile.exists()) {
-            throw new RuntimeConfigurationError("Odin SDK path does not exist");
+        File compilerFile = new File(compilerPath);
+        if (!compilerFile.isFile()) {
+            throw new RuntimeConfigurationError("Odin executable does not exist");
         }
     }
 

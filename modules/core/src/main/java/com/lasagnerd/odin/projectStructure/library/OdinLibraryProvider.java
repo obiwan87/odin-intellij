@@ -19,16 +19,12 @@ public class OdinLibraryProvider extends AdditionalLibraryRootsProvider {
     public @NotNull Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
         List<SyntheticLibrary> libraries = new ArrayList<>();
 
-        Optional<String> sdkPathOptional = OdinSdkUtils.getSdkPath(project);
+        Optional<String> sdkPathOptional = OdinSdkUtils.getLibraryPath(project);
         if (sdkPathOptional.isPresent()) {
-            String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(project);
-            if (odinBinaryPath != null) {
-                // Path is valid
-                VirtualFile baseDir = VirtualFileManager.getInstance().findFileByNioPath(Path.of(sdkPathOptional.get()));
-                if(baseDir != null) {
-                    OdinSdkLibrary odinSdkLibrary = new OdinSdkLibrary(baseDir);
-                    libraries.add(odinSdkLibrary);
-                }
+            VirtualFile baseDir = VirtualFileManager.getInstance().findFileByNioPath(Path.of(sdkPathOptional.get()));
+            if(baseDir != null) {
+                OdinSdkLibrary odinSdkLibrary = new OdinSdkLibrary(baseDir);
+                libraries.add(odinSdkLibrary);
             }
         }
 

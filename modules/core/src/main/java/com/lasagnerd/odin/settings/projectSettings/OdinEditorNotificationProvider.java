@@ -30,7 +30,7 @@ public class OdinEditorNotificationProvider implements EditorNotificationProvide
             if(!file.getPath().endsWith(".odin"))
                 return null;
 
-            Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
+            Optional<String> sdkPath = OdinSdkUtils.getLibraryPath(project);
 
             if(sdkPath.isPresent()) {
                 return null;

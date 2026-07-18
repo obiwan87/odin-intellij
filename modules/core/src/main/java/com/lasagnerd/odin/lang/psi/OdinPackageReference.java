@@ -79,7 +79,7 @@ public class OdinPackageReference extends PsiReferenceBase<OdinImportPath> imple
 
         if (containingVirtualFile != null) {
             if (importInfo.collection() != null) {
-                Optional<String> sdkPath = OdinSdkUtils.getSdkPath(project);
+                Optional<String> sdkPath = OdinSdkUtils.getLibraryPath(project);
                 if (sdkPath.isPresent()) {
                     Path absolutePath = Path.of(sdkPath.get(), importInfo.collection(), importPath).toAbsolutePath();
                     if (absolutePath.toFile().exists()) {

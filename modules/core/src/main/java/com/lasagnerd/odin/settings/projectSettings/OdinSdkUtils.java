@@ -5,14 +5,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -26,14 +24,7 @@ public class OdinSdkUtils {
         if (project == null) {
             return null;
         }
-        OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
-        OdinProjectSettingsState state = settingsService.getState();
-
-        String sdkPath = state.getSdkPath();
-        if (sdkPath == null)
-            return null;
-
-        return getOdinBinaryPath(sdkPath);
+        return OdinProjectToolchainService.getInstance(project).getCompilerPath().orElse(null);
     }
 
     public static @NotNull String getOdinBinaryPath(String sdkPath) {
@@ -44,13 +35,16 @@ public class OdinSdkUtils {
     }
 
     public static String getOdinSdkVersion(Project project) {
-        Optional<String> sdkPath = getSdkPath(project);
-        return sdkPath.map(OdinSdkUtils::getOdinSdkVersion).orElse(null);
+        return OdinProjectToolchainService.getInstance(project).getCompilerPath()
+                .map(OdinSdkUtils::getOdinCompilerVersion).orElse(null);
     }
 
     public static @NotNull String getOdinSdkVersion(@NotNull String sdkHome) {
-        Path path = Path.of(sdkHome, "odin");
-        ProcessBuilder processBuilder = new ProcessBuilder(path.toString(), "version");
+        return getOdinCompilerVersion(getOdinBinaryPath(sdkHome));
+    }
+
+    public static @NotNull String getOdinCompilerVersion(@NotNull String compilerPath) {
+        ProcessBuilder processBuilder = new ProcessBuilder(compilerPath, "version");
 
         try {
             Process start = processBuilder.start();
@@ -74,40 +68,28 @@ public class OdinSdkUtils {
     }
 
     public static @Nullable OdinDebuggerSettings getDebuggerSettings(Project project) {
-        OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
-        OdinProjectSettingsState state = settingsService.getState();
-        if (StringUtils.isBlank(state.debuggerId))
-            return null;
-        return new OdinDebuggerSettings(state.debuggerId, state.debuggerPath);
+        return OdinProjectToolchainService.getInstance(project).getDebuggerSettings();
     }
 
+    public static Optional<String> getCompilerPath(Project project) {
+        return OdinProjectToolchainService.getInstance(project).getCompilerPath();
+    }
+
+    public static Optional<String> getLibraryPath(Project project) {
+        return OdinProjectToolchainService.getInstance(project).getLibraryPath();
+    }
+
+    /** @deprecated The old SDK path is the library root in the split toolchain model. */
+    @Deprecated
     public static Optional<String> getSdkPath(Project project) {
-        OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
-        if (settingsService == null) {
-            return Optional.empty();
-        }
-
-        OdinProjectSettingsState sdkConfig = settingsService.getState();
-
-        String sdkPath = sdkConfig.getSdkPath();
-        if (sdkPath == null || sdkPath.isBlank()) {
-            return Optional.empty();
-        }
-
-        try {
-            Path ignore = Path.of(sdkPath);
-        } catch (InvalidPathException e) {
-            return Optional.empty();
-        }
-
-        return Optional.of(sdkPath);
+        return getLibraryPath(project);
     }
 
     public static Optional<String> getValidSdkPath(Project project) {
         String odinBinaryPath = getOdinBinaryPath(project);
         if (odinBinaryPath != null) {
             if (new File(odinBinaryPath).exists()) {
-                return getSdkPath(project);
+                return getLibraryPath(project);
             }
         }
         return Optional.empty();

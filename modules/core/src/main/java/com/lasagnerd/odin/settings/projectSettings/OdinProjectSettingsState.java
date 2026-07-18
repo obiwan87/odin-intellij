@@ -5,6 +5,8 @@ import lombok.Data;
 @SuppressWarnings("unused")
 @Data
 public class OdinProjectSettingsState {
+    public String toolchainId = "";
+    // Legacy toolchain fields. Keep these as a recovery snapshot for backwards compatibility.
     public String sdkPath = "";
     public String extraBuildFlags = "";
     public String semanticAnnotatorEnabled = "";

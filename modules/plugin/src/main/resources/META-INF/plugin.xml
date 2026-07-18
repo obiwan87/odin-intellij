@@ -452,6 +452,10 @@
         <!--suppress PluginXmlValidity -->
         <projectService serviceImplementation="com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsServiceImpl"
                         serviceInterface="com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService"/>
+        <applicationService serviceImplementation="com.lasagnerd.odin.settings.projectSettings.OdinToolchainServiceImpl"
+                            serviceInterface="com.lasagnerd.odin.settings.projectSettings.OdinToolchainService"/>
+        <projectService serviceImplementation="com.lasagnerd.odin.settings.projectSettings.OdinProjectToolchainService"/>
+        <postStartupActivity implementation="com.lasagnerd.odin.settings.projectSettings.OdinToolchainMigrationActivity"/>
         <!--suppress PluginXmlValidity -->
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
         <!--suppress PluginXmlValidity -->

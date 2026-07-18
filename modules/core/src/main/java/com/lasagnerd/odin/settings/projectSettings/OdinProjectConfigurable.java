@@ -28,6 +28,8 @@ public class OdinProjectConfigurable implements Configurable {
 
     @Override
     public @Nullable JComponent createComponent() {
+        // Ensure a legacy project is represented in the application registry before the selector is populated.
+        OdinProjectToolchainService.getInstance(project).getToolchain();
         OdinProjectSettings odinProjectSettings = new OdinProjectSettings();
         this.projectSettings = odinProjectSettings;
         return odinProjectSettings.getComponent();
@@ -38,8 +40,11 @@ public class OdinProjectConfigurable implements Configurable {
         OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
         OdinProjectSettingsState state = settingsService.getState();
 
-        boolean sdkPathModified = !projectSettings.getSdkPath()
-                .equals(state.sdkPath);
+        OdinToolchainState toolchain = OdinProjectToolchainService.getInstance(project).getToolchain();
+        boolean sdkPathModified = toolchain == null || !projectSettings.getSdkPath().equals(toolchain.libraryPath);
+        boolean compilerPathModified = toolchain == null || !projectSettings.getCompilerPath().equals(toolchain.compilerPath);
+        boolean toolchainModified = !projectSettings.getToolchainId().equals(state.toolchainId);
+        boolean toolchainNameModified = toolchain == null || !projectSettings.getToolchainName().equals(toolchain.name);
 
         boolean buildFlagsModified = !projectSettings.getBuildFlags()
                 .equals(state.extraBuildFlags);
@@ -47,8 +52,8 @@ public class OdinProjectConfigurable implements Configurable {
         boolean semanticAnnotatorEnabledModified = !projectSettings.isSemanticAnnotatorEnabled()
                 == settingsService.isSemanticAnnotatorEnabled();
 
-        boolean debuggerIdModified = !projectSettings.getDebuggerId().equals(state.getDebuggerId());
-        boolean debuggerPathModified = !projectSettings.getDebuggerPath().equals(state.getDebuggerPath());
+        boolean debuggerIdModified = toolchain == null || !projectSettings.getDebuggerId().equals(toolchain.debuggerId);
+        boolean debuggerPathModified = toolchain == null || !projectSettings.getDebuggerPath().equals(toolchain.debuggerPath);
         boolean odinCheckerEnabledModified = projectSettings.isOdinCheckerEnabled() != settingsService.isOdinCheckerEnabled();
         boolean highlightUnknownReferencesEnabledModified = projectSettings.isHighlightUnknownReferencesEnabled() != settingsService.isHighlightUnknownReferencesEnabled();
         boolean conditionalSymbolResolutionEnabledModified = projectSettings.isConditionalSymbolResolutionCheckboxEnabled() != settingsService.isConditionalSymbolResolutionEnabled();
@@ -57,6 +62,9 @@ public class OdinProjectConfigurable implements Configurable {
 
         return sdkPathModified
                 || buildFlagsModified
+                || compilerPathModified
+                || toolchainModified
+                || toolchainNameModified
                 || semanticAnnotatorEnabledModified
                 || debuggerIdModified
                 || debuggerPathModified
@@ -72,33 +80,54 @@ public class OdinProjectConfigurable implements Configurable {
         OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
         OdinProjectSettingsState state = settingsService.getState();
 
-        if (!Objects.equals(state.getSdkPath(), projectSettings.getSdkPath())) {
+        OdinProjectToolchainService projectToolchains = OdinProjectToolchainService.getInstance(project);
+        String previousLibraryPath = projectToolchains.getLibraryPath().orElse("");
+        String previousCompilerPath = projectToolchains.getCompilerPath().orElse("");
+        if (!Objects.equals(previousCompilerPath, projectSettings.getCompilerPath())
+                || !Objects.equals(previousLibraryPath, projectSettings.getSdkPath())) {
             OdinSdkService.getInstance(project).refreshCache();
         }
 
-        if (StringUtil.isNotEmpty(projectSettings.getSdkPath())) {
-            String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(projectSettings.getSdkPath());
-            File odinBinaryFile = new File(odinBinaryPath);
+        if (StringUtil.isNotEmpty(projectSettings.getCompilerPath())) {
+            File odinBinaryFile = new File(projectSettings.getCompilerPath());
             if (!odinBinaryFile.exists() || !odinBinaryFile.isFile()) {
-                throw new ConfigurationException("SDK path is not valid");
+                throw new ConfigurationException("Odin executable path is not valid");
             }
         }
 
-        String previousSdkPath = state.getSdkPath();
+        if (StringUtil.isNotEmpty(projectSettings.getSdkPath()) && !new File(projectSettings.getSdkPath()).isDirectory())
+            throw new ConfigurationException("Odin library path is not valid");
+
+        OdinToolchainState toolchain = applyToolchain(project, state, projectSettings);
+        state.toolchainId = toolchain.id;
         apply(state, projectSettings);
 
         OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project,
-                previousSdkPath,
+                previousLibraryPath,
                 projectSettings.getSdkPath()
         );
     }
 
+    public static OdinToolchainState applyToolchain(Project project, OdinProjectSettingsState state, OdinProjectSettings projectSettings) {
+        OdinToolchainService registry = OdinToolchainService.getInstance();
+        OdinToolchainState toolchain = registry.find(projectSettings.getToolchainId());
+        if (toolchain == null) {
+            toolchain = new OdinToolchainState();
+            registry.add(toolchain);
+        }
+        toolchain.name = projectSettings.getToolchainName().isBlank()
+                ? "Odin Toolchain (" + project.getName() + ")" : projectSettings.getToolchainName();
+        toolchain.compilerPath = projectSettings.getCompilerPath();
+        toolchain.libraryPath = projectSettings.getSdkPath();
+        toolchain.debuggerId = projectSettings.getDebuggerId();
+        toolchain.debuggerPath = projectSettings.getDebuggerPath();
+        state.toolchainId = toolchain.id;
+        return toolchain;
+    }
+
     public static void apply(OdinProjectSettingsState state, OdinProjectSettings sdkSettings) {
-        state.setSdkPath(sdkSettings.getSdkPath());
         state.setExtraBuildFlags(sdkSettings.getBuildFlags());
         state.setSemanticAnnotatorEnabled(sdkSettings.isSemanticAnnotatorEnabled() ? "true" : "false");
-        state.setDebuggerId(sdkSettings.getDebuggerId());
-        state.setDebuggerPath(sdkSettings.getDebuggerPath());
         state.setOdinCheckerEnabled(sdkSettings.isOdinCheckerEnabled() ? "true" : "false");
         state.setHighlightUnknownReferencesEnabled(sdkSettings.isHighlightUnknownReferencesEnabled() ? "true" : "false");
         state.setConditionalSymbolResolutionEnabled(sdkSettings.isConditionalSymbolResolutionCheckboxEnabled() ? "true" : "false");
@@ -110,13 +139,17 @@ public class OdinProjectConfigurable implements Configurable {
         OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
         OdinProjectSettingsState state = settingsService.getState();
 
-        String sdkPath = state.getSdkPath();
+        OdinToolchainState toolchain = OdinProjectToolchainService.getInstance(project).getToolchain();
+        String sdkPath = toolchain == null ? "" : Objects.requireNonNullElse(toolchain.libraryPath, "");
         String extraBuildFlags = state.getExtraBuildFlags();
+        projectSettings.setToolchainId(state.toolchainId);
+        projectSettings.setToolchainName(toolchain == null ? "" : Objects.requireNonNullElse(toolchain.name, ""));
+        projectSettings.setCompilerPath(toolchain == null ? "" : Objects.requireNonNullElse(toolchain.compilerPath, ""));
         projectSettings.setSdkPath(sdkPath);
         projectSettings.setBuildFlags(extraBuildFlags);
         projectSettings.setSemanticAnnotatorEnabled(settingsService.isSemanticAnnotatorEnabled());
-        projectSettings.setDebuggerPath(state.getDebuggerPath());
-        projectSettings.setDebuggerId(state.getDebuggerId());
+        projectSettings.setDebuggerPath(toolchain == null ? "" : Objects.requireNonNullElse(toolchain.debuggerPath, ""));
+        projectSettings.setDebuggerId(toolchain == null ? "" : Objects.requireNonNullElse(toolchain.debuggerId, ""));
         projectSettings.setOdinCheckerEnabled(settingsService.isOdinCheckerEnabled());
         projectSettings.setHighlightUnknownReferences(settingsService.isHighlightUnknownReferencesEnabled());
         projectSettings.setConditionalSymbolResolutionEnabledCheckboxEnabled(settingsService.isConditionalSymbolResolutionEnabled());

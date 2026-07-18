@@ -39,7 +39,7 @@ public class OdinSdkServiceImpl extends OdinSdkServiceBase {
 
     @Override
     public Optional<String> getSdkPath() {
-        return OdinSdkUtils.getSdkPath(project);
+        return OdinSdkUtils.getLibraryPath(project);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class OdinSdkServiceImpl extends OdinSdkServiceBase {
     }
 
     private @Nullable VirtualFile findSdkFile(Path path) {
-        Optional<String> validSdkPathOptional = OdinSdkUtils.getSdkPath(project);
+        Optional<String> validSdkPathOptional = OdinSdkUtils.getLibraryPath(project);
         VirtualFile virtualFile;
         if (validSdkPathOptional.isPresent()) {
             String validSdkPath = validSdkPathOptional.get();

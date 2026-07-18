@@ -59,12 +59,6 @@ public class OdinBuildProcessRunner {
     }
 
     public static boolean canRunOdinBuild(Project project) {
-        OdinProjectSettingsService settingsService = OdinProjectSettingsService.getInstance(project);
-        OdinProjectSettingsState config = settingsService.getState();
-
-        if (config.sdkPath.isEmpty()) {
-            return false;
-        }
         String odinBinaryPath = OdinSdkUtils.getOdinBinaryPath(project);
 
         if (odinBinaryPath == null)
