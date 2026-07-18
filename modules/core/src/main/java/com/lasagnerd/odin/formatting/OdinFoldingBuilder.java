@@ -1,5 +1,6 @@
 package com.lasagnerd.odin.formatting;
 
+import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -143,6 +144,8 @@ public class OdinFoldingBuilder extends FoldingBuilderEx {
 
     @Override
     public boolean isCollapsedByDefault(@NotNull ASTNode node) {
+        if (node.getElementType() == OdinTypes.LINE_COMMENT || node.getElementType() == OdinTypes.MULTILINE_BLOCK_COMMENT)
+            return CodeFoldingSettings.getInstance().COLLAPSE_CUSTOM_FOLDING_REGIONS;
         return false;
     }
 }
