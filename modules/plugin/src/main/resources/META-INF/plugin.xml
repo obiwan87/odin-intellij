@@ -3,6 +3,23 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin</name>
     <change-notes><![CDATA[
+        <h3>Version 1.0.7</h3>
+        <h4>Improvements & Features</h4>
+        <ul>
+            <li>Automatically detects matching compiler and library paths for standard Odin installations</li>
+            <li>Added support for toolchains with separate compiler and library locations, including package-manager
+                installations
+            </li>
+        </ul>
+        <h4>Bug Fixes</h4>
+        <ul>
+            <li>Odin SDK libraries are now attached correctly when assigning a toolchain to an existing or newly created
+                project
+            </li>
+            <li>Restored automatic Windows debugger downloads in the toolchain settings</li>
+            <li>Fixed automatic migration of project settings created by earlier plugin versions</li>
+        </ul>
+
         <h3>Version 1.0.6</h3>
         <h4>Improvements & Features</h4>
         <ul>
