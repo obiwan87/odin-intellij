@@ -93,10 +93,10 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_PKG_PRIVATE_BIT_FIELD = createTextAttributesKey("ODIN_PKG_PRIVATE_BIT_FIELD", DefaultLanguageHighlighterColors.CLASS_NAME);
     public static final TextAttributesKey ODIN_LOCAL_BIT_FIELD = createTextAttributesKey("ODIN_LOCAL_BIT_FIELD", DefaultLanguageHighlighterColors.CLASS_NAME);
 
-//    public static final TextAttributesKey ODIN_PKG_EXP_TYPE_ALIAS = createTextAttributesKey("ODIN_PKG_EXP_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
-//    public static final TextAttributesKey ODIN_FILE_PRIVATE_TYPE_ALIAS = createTextAttributesKey("ODIN_FILE_PRIVATE_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
-//    public static final TextAttributesKey ODIN_PKG_PRIVATE_TYPE_ALIAS = createTextAttributesKey("ODIN_PKG_PRIVATE_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
-//    public static final TextAttributesKey ODIN_LOCAL_TYPE_ALIAS = createTextAttributesKey("ODIN_LOCAL_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
+    public static final TextAttributesKey ODIN_PKG_EXP_TYPE_ALIAS = createTextAttributesKey("ODIN_PKG_EXP_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
+    public static final TextAttributesKey ODIN_FILE_PRIVATE_TYPE_ALIAS = createTextAttributesKey("ODIN_FILE_PRIVATE_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
+    public static final TextAttributesKey ODIN_PKG_PRIVATE_TYPE_ALIAS = createTextAttributesKey("ODIN_PKG_PRIVATE_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
+    public static final TextAttributesKey ODIN_LOCAL_TYPE_ALIAS = createTextAttributesKey("ODIN_LOCAL_TYPE_ALIAS", DefaultLanguageHighlighterColors.CLASS_NAME);
 
     // Variables
 
@@ -171,11 +171,11 @@ public class OdinSyntaxTextAttributes {
     public static final TextAttributesKey ODIN_BUILTIN_CONSTANT = createTextAttributesKey("ODIN_BUILTIN_CONSTANT", DefaultLanguageHighlighterColors.CONSTANT);
     public static final TextAttributesKey ODIN_BUILTIN_TYPE = createTextAttributesKey("ODIN_BUILTIN_TYPE", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
 
-    // TODO Maybe implement
-//    public static final TextAttributesKey ODIN_PKG_EXP_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_PKG_EXP_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
-//    public static final TextAttributesKey ODIN_FILE_PRIVATE_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_FILE_PRIVATE_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
-//    public static final TextAttributesKey ODIN_PKG_PRIVATE_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_PKG_PRIVATE_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
-//    public static final TextAttributesKey ODIN_LOCAL_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_LOCAL_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    // TODO add to set
+    public static final TextAttributesKey ODIN_PKG_EXP_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_PKG_EXP_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    public static final TextAttributesKey ODIN_FILE_PRIVATE_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_FILE_PRIVATE_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    public static final TextAttributesKey ODIN_PKG_PRIVATE_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_PKG_PRIVATE_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+    public static final TextAttributesKey ODIN_LOCAL_TYPE_ALIAS_REF = createTextAttributesKey("ODIN_LOCAL_TYPE_ALIAS_REF", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
 
     public static final TextAttributesKey ODIN_LOCAL_VAR_CALL = createTextAttributesKey("ODIN_LOCAL_VAR_CALL", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
     public static final TextAttributesKey ODIN_PKG_EXP_VAR_CALL = createTextAttributesKey("ODIN_PKG_EXP_VAR_CALL", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
@@ -279,10 +279,10 @@ public class OdinSyntaxTextAttributes {
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.CONSTANT, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.DECLARATION, ODIN_LOCAL_CONSTANT);
 
         // Type Alias
-//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.DECLARATION, ODIN_PKG_EXP_TYPE_ALIAS);
-//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_PKG_PRIVATE_TYPE_ALIAS);
-//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_FILE_PRIVATE_TYPE_ALIAS);
-//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.DECLARATION, ODIN_LOCAL_TYPE_ALIAS);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.DECLARATION, ODIN_PKG_EXP_TYPE_ALIAS);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_PKG_PRIVATE_TYPE_ALIAS);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.DECLARATION, ODIN_FILE_PRIVATE_TYPE_ALIAS);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.DECLARATION, ODIN_LOCAL_TYPE_ALIAS);
 
 
         // Fields
@@ -395,10 +395,10 @@ public class OdinSyntaxTextAttributes {
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.CONSTANT, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_CONSTANT_REF);
 
         // Type Alias
-//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, ODIN_PKG_EXP_TYPE_ALIAS);
-//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_PKG_PRIVATE_TYPE_ALIAS);
-//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_TYPE_ALIAS);
-//        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_TYPE_ALIAS);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.REFERENCE, ODIN_PKG_EXP_TYPE_ALIAS_REF);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_PKG_PRIVATE_TYPE_ALIAS_REF);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.GLOBAL, OdinVisibility.FILE_PRIVATE, OdinIdentifierType.REFERENCE, ODIN_FILE_PRIVATE_TYPE_ALIAS_REF);
+        TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.TYPE_ALIAS, OdinScope.LOCAL, OdinVisibility.NONE, OdinIdentifierType.REFERENCE, ODIN_LOCAL_TYPE_ALIAS_REF);
 
         // Objective-C
         TEXT_ATTRIBUTES_MAP.addTextAttribute(OdinSymbolType.OBJC_CLASS, OdinScope.GLOBAL, OdinVisibility.PACKAGE_EXPORTED, OdinIdentifierType.DECLARATION, ODIN_OBJC_CLASS);

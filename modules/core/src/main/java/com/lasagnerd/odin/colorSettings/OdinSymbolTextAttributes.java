@@ -17,6 +17,23 @@ public class OdinSymbolTextAttributes
         return getStyle(symbol, identifierType);
     }
 
+    public TextAttributesKey getTextAttributesKey(OdinSymbolType symbolType, OdinScope scope, OdinVisibility visibility, OdinSymbolOrigin origin, OdinIdentifierType identifierType) {
+        var map1 = get(symbolType);
+        if (map1 != null) {
+            var map2 = map1.get(scope);
+            if (map2 != null) {
+                var map3 = map2.get(visibility);
+                if (map3 != null) {
+                    var map4 = map3.get(origin);
+                    if (map4 != null) {
+                        return map4.get(identifierType);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     private @Nullable TextAttributesKey getStyle(@NotNull OdinSymbol symbol, @NotNull OdinIdentifierType identifierType) {
         var map1 = get(symbol.getSymbolType());
         if (map1 != null) {

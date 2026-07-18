@@ -403,10 +403,10 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("Declarations//Bit field//Package private bit field", ODIN_PKG_PRIVATE_BIT_FIELD),
             new AttributesDescriptor("Declarations//Bit field//Local bit field", ODIN_LOCAL_BIT_FIELD),
 
-//            new AttributesDescriptor("Declarations//Type alias//Package exported type alias", ODIN_PKG_EXP_TYPE_ALIAS),
-//            new AttributesDescriptor("Declarations//Type alias//File private type alias", ODIN_FILE_PRIVATE_TYPE_ALIAS),
-//            new AttributesDescriptor("Declarations//Type alias//Package private type alias", ODIN_PKG_PRIVATE_TYPE_ALIAS),
-//            new AttributesDescriptor("Declarations//Type alias//Local type alias", ODIN_LOCAL_TYPE_ALIAS),
+            new AttributesDescriptor("Declarations//Type alias//Package exported type alias", ODIN_PKG_EXP_TYPE_ALIAS),
+            new AttributesDescriptor("Declarations//Type alias//File private type alias", ODIN_FILE_PRIVATE_TYPE_ALIAS),
+            new AttributesDescriptor("Declarations//Type alias//Package private type alias", ODIN_PKG_PRIVATE_TYPE_ALIAS),
+            new AttributesDescriptor("Declarations//Type alias//Local type alias", ODIN_LOCAL_TYPE_ALIAS),
 
             new AttributesDescriptor("Declarations//Polymorphic parameter", ODIN_POLY_PARAMETER),
 
@@ -487,10 +487,10 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             new AttributesDescriptor("References//Variables//Variable reassignment", ODIN_VAR_REASSIGNMENT),
             new AttributesDescriptor("References//Variables//Shadowing variable", ODIN_SHADOWING_VARIABLE_REF),
 
-//            new AttributesDescriptor("References//Type alias//Package exported type alias reference", OdinSyntaxTextAttributes.ODIN_PKG_EXP_TYPE_ALIAS_REF),
-//            new AttributesDescriptor("References//Type alias//File private type alias reference", OdinSyntaxTextAttributes.ODIN_FILE_PRIVATE_TYPE_ALIAS_REF),
-//            new AttributesDescriptor("References//Type alias//Package private type alias reference", OdinSyntaxTextAttributes.ODIN_PKG_PRIVATE_TYPE_ALIAS_REF),
-//            new AttributesDescriptor("References//Type alias//Local type alias reference", OdinSyntaxTextAttributes.ODIN_LOCAL_TYPE_ALIAS_REF),
+            new AttributesDescriptor("References//Type alias//Package exported type alias reference", OdinSyntaxTextAttributes.ODIN_PKG_EXP_TYPE_ALIAS_REF),
+            new AttributesDescriptor("References//Type alias//File private type alias reference", OdinSyntaxTextAttributes.ODIN_FILE_PRIVATE_TYPE_ALIAS_REF),
+            new AttributesDescriptor("References//Type alias//Package private type alias reference", OdinSyntaxTextAttributes.ODIN_PKG_PRIVATE_TYPE_ALIAS_REF),
+            new AttributesDescriptor("References//Type alias//Local type alias reference", OdinSyntaxTextAttributes.ODIN_LOCAL_TYPE_ALIAS_REF),
 
             new AttributesDescriptor("References//Polymorphic parameter", ODIN_POLY_PARAMETER_REF),
             new AttributesDescriptor("References//Procedure parameter", ODIN_PARAMETER_REF),
@@ -582,10 +582,10 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             ADDITIONAL_TAGS.put("ODIN_FILE_PRIVATE_BIT_FIELD", ODIN_FILE_PRIVATE_BIT_FIELD);
             ADDITIONAL_TAGS.put("ODIN_PKG_PRIVATE_BIT_FIELD", ODIN_PKG_PRIVATE_BIT_FIELD);
             ADDITIONAL_TAGS.put("ODIN_LOCAL_BIT_FIELD", ODIN_LOCAL_BIT_FIELD);
-//            ADDITIONAL_TAGS.put("ODIN_PKG_EXP_TYPE_ALIAS", ODIN_PKG_EXP_TYPE_ALIAS);
-//            ADDITIONAL_TAGS.put("ODIN_FILE_PRIVATE_TYPE_ALIAS", ODIN_FILE_PRIVATE_TYPE_ALIAS);
-//            ADDITIONAL_TAGS.put("ODIN_PKG_PRIVATE_TYPE_ALIAS", ODIN_PKG_PRIVATE_TYPE_ALIAS);
-//            ADDITIONAL_TAGS.put("ODIN_LOCAL_TYPE_ALIAS", ODIN_LOCAL_TYPE_ALIAS);
+            ADDITIONAL_TAGS.put("ODIN_PKG_EXP_TYPE_ALIAS", ODIN_PKG_EXP_TYPE_ALIAS);
+            ADDITIONAL_TAGS.put("ODIN_FILE_PRIVATE_TYPE_ALIAS", ODIN_FILE_PRIVATE_TYPE_ALIAS);
+            ADDITIONAL_TAGS.put("ODIN_PKG_PRIVATE_TYPE_ALIAS", ODIN_PKG_PRIVATE_TYPE_ALIAS);
+            ADDITIONAL_TAGS.put("ODIN_LOCAL_TYPE_ALIAS", ODIN_LOCAL_TYPE_ALIAS);
             ADDITIONAL_TAGS.put("ODIN_LOCAL_VARIABLE", ODIN_LOCAL_VARIABLE);
             ADDITIONAL_TAGS.put("ODIN_PKG_EXP_VARIABLE", ODIN_PKG_EXP_VARIABLE);
             ADDITIONAL_TAGS.put("ODIN_FILE_PRIVATE_VARIABLE", ODIN_FILE_PRIVATE_VARIABLE);
@@ -628,10 +628,10 @@ public class OdinColorSettingsPage implements ColorSettingsPage {
             ADDITIONAL_TAGS.put("ODIN_BUILTIN_VAR", ODIN_BUILTIN_VAR);
             ADDITIONAL_TAGS.put("ODIN_BUILTIN_CONSTANT", ODIN_BUILTIN_CONSTANT);
             ADDITIONAL_TAGS.put("ODIN_BUILTIN_TYPE", ODIN_BUILTIN_TYPE);
-//        ADDITIONAL_TAGS.put("ODIN_PKG_EXP_TYPE_ALIAS_REF", ODIN_PKG_EXP_TYPE_ALIAS_REF);
-//        ADDITIONAL_TAGS.put("ODIN_FILE_PRIVATE_TYPE_ALIAS_REF", ODIN_FILE_PRIVATE_TYPE_ALIAS_REF);
-//        ADDITIONAL_TAGS.put("ODIN_PKG_PRIVATE_TYPE_ALIAS_REF", ODIN_PKG_PRIVATE_TYPE_ALIAS_REF);
-//        ADDITIONAL_TAGS.put("ODIN_LOCAL_TYPE_ALIAS_REF", ODIN_LOCAL_TYPE_ALIAS_REF);
+            ADDITIONAL_TAGS.put("ODIN_PKG_EXP_TYPE_ALIAS_REF", ODIN_PKG_EXP_TYPE_ALIAS_REF);
+            ADDITIONAL_TAGS.put("ODIN_FILE_PRIVATE_TYPE_ALIAS_REF", ODIN_FILE_PRIVATE_TYPE_ALIAS_REF);
+            ADDITIONAL_TAGS.put("ODIN_PKG_PRIVATE_TYPE_ALIAS_REF", ODIN_PKG_PRIVATE_TYPE_ALIAS_REF);
+            ADDITIONAL_TAGS.put("ODIN_LOCAL_TYPE_ALIAS_REF", ODIN_LOCAL_TYPE_ALIAS_REF);
             ADDITIONAL_TAGS.put("ODIN_LOCAL_VAR_CALL", ODIN_LOCAL_VAR_CALL);
             ADDITIONAL_TAGS.put("ODIN_PKG_EXP_VAR_CALL", ODIN_PKG_EXP_VAR_CALL);
             ADDITIONAL_TAGS.put("ODIN_PKG_PRIVATE_VAR_CALL", ODIN_PKG_PRIVATE_VAR_CALL);
