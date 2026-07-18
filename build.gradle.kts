@@ -25,7 +25,7 @@ val rootPackage = "com.lasagnerd.odin"
 val rootPackagePath = rootPackage.replace('.', '/')
 
 // Keep these in sync with whatever the oldest IDE version we're targeting in gradle.properties needs
-val javaLangVersion: JavaLanguageVersion = JavaLanguageVersion.of(21)
+val javaLangVersion: JavaLanguageVersion = JavaLanguageVersion.of(25)
 val javaVersion = JavaVersion.VERSION_21
 
 val baseIDE: String = properties("baseIDE").get()
@@ -92,8 +92,8 @@ allprojects {
         }
     }
     dependencies {
-        compileOnly("org.projectlombok:lombok:1.18.34")
-        annotationProcessor("org.projectlombok:lombok:1.18.34")
+        compileOnly("org.projectlombok:lombok:1.18.46")
+        annotationProcessor("org.projectlombok:lombok:1.18.46")
         if (path !in listOf(":", ":plugin", ":debugger", ":rider")) {
             intellijPlatform {
                 intellijIdea(ideaVersion, { useInstaller = false })
