@@ -1,5 +1,7 @@
 package com.lasagnerd.odin.settings.projectSettings;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
@@ -8,14 +10,20 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
 import com.lasagnerd.odin.extensions.OdinDebuggerToolchain;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
@@ -29,16 +37,18 @@ public final class OdinToolchainsConfigurable implements Configurable {
     private JBList<OdinToolchainState> toolchainList;
     private JBTextField nameField;
     private TextFieldWithBrowseButton compilerField;
+    private SimpleColoredComponent compilerVersion;
     private TextFieldWithBrowseButton librariesField;
     private ComboBox<DebuggerItem> debuggerCombo;
     private TextFieldWithBrowseButton debuggerPathField;
     private JButton downloadDebuggerButton;
     private JPanel component;
     private int selectedIndex = -1;
+    private int versionRequest;
     private boolean updating;
 
-    private record DebuggerItem(String id, String label) {
-        @Override public String toString() { return label; }
+    private static String value(String value) {
+        return Objects.requireNonNullElse(value, "");
     }
 
     @Override
@@ -75,6 +85,14 @@ public final class OdinToolchainsConfigurable implements Configurable {
         nameField = new JBTextField();
         compilerField = new TextFieldWithBrowseButton();
         compilerField.addActionListener(event -> chooseCompiler());
+        compilerField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent event) {
+                if (!updating) checkCompilerVersion();
+            }
+        });
+        compilerVersion = new SimpleColoredComponent();
+        compilerVersion.setFont(JBUI.Fonts.smallFont());
         librariesField = new TextFieldWithBrowseButton();
         librariesField.addActionListener(event -> chooseLibraries());
         debuggerCombo = new ComboBox<>();
@@ -96,6 +114,7 @@ public final class OdinToolchainsConfigurable implements Configurable {
         JComponent editor = FormBuilder.createFormBuilder()
                 .addLabeledComponent("Name:", nameField)
                 .addLabeledComponent("Odin executable:", compilerField)
+                .addComponentToRightColumn(compilerVersion)
                 .addLabeledComponent("Odin libraries:", librariesField)
                 .addLabeledComponent("Debugger:", debuggerCombo)
                 .addLabeledComponent("Debugger path:", debuggerPathPanel)
@@ -121,7 +140,39 @@ public final class OdinToolchainsConfigurable implements Configurable {
         selectDebugger(selected == null ? "" : selected.debuggerId);
         setEditorEnabled(selected != null);
         updating = false;
+        checkCompilerVersion();
         updateDebuggerControls();
+    }
+
+    private void checkCompilerVersion() {
+        int request = ++versionRequest;
+        compilerVersion.clear();
+        if (selectedIndex < 0 || compilerField.getText().isBlank()) return;
+
+        String compilerPath = compilerField.getText();
+        if (!new File(compilerPath).isFile()) {
+            showCompilerVersionError("Invalid path");
+            return;
+        }
+
+        compilerVersion.setIcon(AnimatedIcon.Default.INSTANCE);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            String version = OdinSdkUtils.getOdinCompilerVersion(compilerPath);
+            if (request != versionRequest || component == null || !compilerPath.equals(compilerField.getText())) return;
+            compilerVersion.clear();
+            if ("Unknown".equals(version)) {
+                showCompilerVersionError("Unable to determine Odin version");
+            } else {
+                compilerVersion.setIcon(AllIcons.General.GreenCheckmark);
+                compilerVersion.append("Version: " + version);
+            }
+        });
+    }
+
+    private void showCompilerVersionError(String message) {
+        compilerVersion.clear();
+        compilerVersion.setIcon(AllIcons.General.Error);
+        compilerVersion.append(message);
     }
 
     private void flushSelected() {
@@ -242,7 +293,8 @@ public final class OdinToolchainsConfigurable implements Configurable {
     public void apply() throws ConfigurationException {
         flushSelected();
         for (OdinToolchainState toolchain : toolchains) {
-            if (toolchain.name == null || toolchain.name.isBlank()) throw new ConfigurationException("Toolchain name must not be empty");
+            if (toolchain.name == null || toolchain.name.isBlank())
+                throw new ConfigurationException("Toolchain name must not be empty");
             if (toolchain.compilerPath != null && !toolchain.compilerPath.isBlank() && !new File(toolchain.compilerPath).isFile())
                 throw new ConfigurationException("Odin executable does not exist: " + toolchain.compilerPath);
             if (toolchain.libraryPath != null && !toolchain.libraryPath.isBlank() && !new File(toolchain.libraryPath).isDirectory())
@@ -279,13 +331,20 @@ public final class OdinToolchainsConfigurable implements Configurable {
         return copy;
     }
 
-    private static String value(String value) { return Objects.requireNonNullElse(value, ""); }
-
     @Override
     public void disposeUIResources() {
+        versionRequest++;
         component = null;
+        compilerVersion = null;
         toolchainList = null;
         listModel = null;
         selectedIndex = -1;
+    }
+
+    private record DebuggerItem(String id, String label) {
+        @Override
+        public String toString() {
+            return label;
+        }
     }
 }
