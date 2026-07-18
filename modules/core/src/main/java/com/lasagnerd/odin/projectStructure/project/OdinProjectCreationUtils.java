@@ -13,6 +13,8 @@ import com.lasagnerd.odin.settings.projectSettings.OdinProjectConfigurable;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
+import com.lasagnerd.odin.settings.projectSettings.OdinSdkLibraryManager;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectToolchainService;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,5 +60,8 @@ public class OdinProjectCreationUtils {
         ContentEntry contentEntry = modifiableModuleModel.addContentEntry(baseDir);
         contentEntry.addSourceFolder(srcDir, OdinSourceRootType.INSTANCE);
         modifiableModuleModel.commit();
+        Project project = odinModule.getProject();
+        OdinProjectToolchainService.getInstance(project).getLibraryPath()
+                .ifPresent(path -> OdinSdkLibraryManager.addOrUpdateOdinSdkLibrary(project, null, path));
     }
 }

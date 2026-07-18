@@ -29,9 +29,10 @@ public class OdinSdkLibraryManager {
             if (previousPath != null && !previousPath.isBlank()) {
                 OdinRiderInteropService.getInstance(project).detachSdkRoot(previousPath);
             }
-            OdinRiderInteropService.getInstance(project).attachSdkRoot(sdkPath);
+            if (!sdkPath.isBlank()) OdinRiderInteropService.getInstance(project).attachSdkRoot(sdkPath);
         } else {
-            doAddLibrary(project, sdkPath);
+            if (sdkPath.isBlank()) removeLibrary(project);
+            else doAddLibrary(project, sdkPath);
         }
     }
 
@@ -78,21 +79,31 @@ public class OdinSdkLibraryManager {
     }
 
     private static void addLibraryToModule(Project project) {
-        Module module = ModuleManager.getInstance(project).getModules()[0];
-        if (module == null) return;
-
-        ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        ModifiableRootModel rootModel = rootManager.getModifiableModel();
-
-        if (LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(ODIN_SDK_LIBRARY_NAME) != null) {
-            Library libraryByName = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(ODIN_SDK_LIBRARY_NAME);
-            if (libraryByName != null) {
-                LibraryOrderEntry libraryOrderEntry = rootModel.addLibraryEntry(libraryByName);
-                libraryOrderEntry.setScope(DependencyScope.COMPILE);
-            }
+        Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(ODIN_SDK_LIBRARY_NAME);
+        if (library == null) return;
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+            ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+            boolean alreadyAttached = java.util.Arrays.stream(rootManager.getOrderEntries())
+                    .filter(LibraryOrderEntry.class::isInstance)
+                    .map(LibraryOrderEntry.class::cast)
+                    .anyMatch(entry -> java.util.Objects.equals(entry.getLibrary(), library));
+            if (alreadyAttached) continue;
+            ModifiableRootModel rootModel = rootManager.getModifiableModel();
+            LibraryOrderEntry entry = rootModel.addLibraryEntry(library);
+            entry.setScope(DependencyScope.COMPILE);
+            ApplicationManager.getApplication().runWriteAction(rootModel::commit);
         }
+    }
 
-        ApplicationManager.getApplication().runWriteAction(rootModel::commit);
+    private static void removeLibrary(Project project) {
+        LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
+        Library library = table.getLibraryByName(ODIN_SDK_LIBRARY_NAME);
+        if (library == null) return;
+        ApplicationManager.getApplication().runWriteAction(() -> {
+            LibraryTable.ModifiableModel model = table.getModifiableModel();
+            model.removeLibrary(library);
+            model.commit();
+        });
     }
 
     public static boolean isSdkLibraryConfigured(Project project) {
