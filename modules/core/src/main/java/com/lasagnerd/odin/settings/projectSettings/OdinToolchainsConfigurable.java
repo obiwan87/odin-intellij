@@ -26,6 +26,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -46,6 +47,7 @@ public final class OdinToolchainsConfigurable implements Configurable {
     private int selectedIndex = -1;
     private int versionRequest;
     private boolean updating;
+    private boolean inferringPaths;
 
     private static String value(String value) {
         return Objects.requireNonNullElse(value, "");
@@ -88,13 +90,22 @@ public final class OdinToolchainsConfigurable implements Configurable {
         compilerField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
             @Override
             protected void textChanged(@NotNull DocumentEvent event) {
-                if (!updating) checkCompilerVersion();
+                if (!updating) {
+                    inferLibrariesFromCompiler(false);
+                    checkCompilerVersion();
+                }
             }
         });
         compilerVersion = new SimpleColoredComponent();
         compilerVersion.setFont(JBUI.Fonts.smallFont());
         librariesField = new TextFieldWithBrowseButton();
         librariesField.addActionListener(event -> chooseLibraries());
+        librariesField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            protected void textChanged(@NotNull DocumentEvent event) {
+                if (!updating) inferCompilerFromLibraries(false);
+            }
+        });
         debuggerCombo = new ComboBox<>();
         debuggerCombo.addItem(new DebuggerItem("", "None"));
         for (OdinDebuggerToolchain debugger : OdinDebuggerToolchain.DEBUGGER_TOOLCHAIN.getExtensions()) {
@@ -270,12 +281,65 @@ public final class OdinToolchainsConfigurable implements Configurable {
 
     private void chooseCompiler() {
         VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.singleFile(), null, null);
-        if (file != null) compilerField.setText(file.getPath());
+        if (file != null) {
+            compilerField.setText(file.getPath());
+            inferLibrariesFromCompiler(true);
+        }
     }
 
     private void chooseLibraries() {
         VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), null, null);
-        if (file != null) librariesField.setText(file.getPath());
+        if (file != null) {
+            librariesField.setText(file.getPath());
+            inferCompilerFromLibraries(true);
+        }
+    }
+
+    private void inferLibrariesFromCompiler(boolean overwrite) {
+        if (inferringPaths || (!overwrite && !librariesField.getText().isBlank())) return;
+        String inferred = inferLibraryPath(compilerField.getText());
+        if (inferred == null) return;
+        inferringPaths = true;
+        librariesField.setText(inferred);
+        inferringPaths = false;
+    }
+
+    private void inferCompilerFromLibraries(boolean overwrite) {
+        if (inferringPaths || (!overwrite && !compilerField.getText().isBlank())) return;
+        String inferred = inferCompilerPath(librariesField.getText());
+        if (inferred == null) return;
+        inferringPaths = true;
+        compilerField.setText(inferred);
+        inferringPaths = false;
+    }
+
+    static @Nullable String inferLibraryPath(String compilerPath) {
+        if (compilerPath == null || compilerPath.isBlank()) return null;
+        try {
+            Path compiler = Path.of(compilerPath);
+            Path parent = compiler.getParent();
+            if (parent != null && compiler.toFile().isFile() && looksLikeOdinLibraryRoot(parent)) {
+                return parent.toString();
+            }
+        } catch (RuntimeException ignored) {
+        }
+        return null;
+    }
+
+    static @Nullable String inferCompilerPath(String libraryPath) {
+        if (libraryPath == null || libraryPath.isBlank()) return null;
+        try {
+            Path root = Path.of(libraryPath);
+            if (!looksLikeOdinLibraryRoot(root)) return null;
+            Path executable = root.resolve(com.intellij.openapi.util.SystemInfo.isWindows ? "odin.exe" : "odin");
+            if (executable.toFile().isFile()) return executable.toString();
+        } catch (RuntimeException ignored) {
+        }
+        return null;
+    }
+
+    private static boolean looksLikeOdinLibraryRoot(Path root) {
+        return root.toFile().isDirectory() && root.resolve("base").toFile().isDirectory();
     }
 
     private void chooseDebugger() {
