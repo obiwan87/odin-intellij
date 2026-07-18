@@ -5,7 +5,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.lasagnerd.odin.lang.OdinFileType;
-import groovy.json.StringEscapeUtils;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 

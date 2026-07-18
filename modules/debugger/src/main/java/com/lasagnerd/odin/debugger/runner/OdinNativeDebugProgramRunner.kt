@@ -138,20 +138,26 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
                 // Switch back to EDT to start debug process
                 ApplicationManager.getApplication().invokeLater {
                     val debuggerManager = XDebuggerManager.getInstance(environment.project)
-                    val xDebugSession = debuggerManager.startSession(environment, object : XDebugProcessStarter() {
-                        @Throws(ExecutionException::class)
-                        override fun start(session: XDebugSession): XDebugProcess {
-                            val project = session.project
-                            // Since the debug process only accepts a console builder, give it a console builder that will return the
-                            // console that we used for the build process.
-                            val textConsoleBuilder: TextConsoleBuilder = SharedConsoleBuilder(console)
-                            val debugProcess = OdinLocalDebugProcess(debuggeeRunParameters, session, textConsoleBuilder)
-                            ProcessTerminatedListener.attach(debugProcess.processHandler, project)
-                            debugProcess.start()
-                            return debugProcess
-                        }
-                    })
-                    runContentDescriptorPromise.setResult(xDebugSession.runContentDescriptor)
+                    val builder = debuggerManager
+                        .newSessionBuilder(object : XDebugProcessStarter() {
+                            @Throws(ExecutionException::class)
+                            override fun start(session: XDebugSession): XDebugProcess {
+                                val project = session.project
+                                // Since the debug process only accepts a console builder, give it a console builder that will return the
+                                // console that we used for the build process.
+                                val textConsoleBuilder: TextConsoleBuilder = SharedConsoleBuilder(console)
+                                val debugProcess =
+                                    OdinLocalDebugProcess(debuggeeRunParameters, session, textConsoleBuilder)
+                                ProcessTerminatedListener.attach(debugProcess.processHandler, project)
+                                debugProcess.start()
+                                return debugProcess
+                            }
+                        })
+                        .environment(environment);
+
+                    val session = builder.startSession()
+
+                    runContentDescriptorPromise.setResult(session.runContentDescriptor)
                 }
             }
         }
@@ -199,7 +205,7 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
         }
     }
 
-    public class SharedConsoleBuilder(private val console: ConsoleView) : TextConsoleBuilder() {
+    class SharedConsoleBuilder(private val console: ConsoleView) : TextConsoleBuilder() {
         override fun getConsole(): ConsoleView {
             return this.console
         }
