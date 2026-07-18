@@ -3,6 +3,19 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin</name>
     <change-notes><![CDATA[
+        <h3>Version 1.0.6</h3>
+        <h4>Improvements & Features</h4>
+        <ul>
+            <li>Added reusable Odin toolchains and moved toolchain management to the application settings</li>
+            <li>Added custom syntax highlighting for type aliases</li>
+            <li>Custom regions now respect the IDE setting for automatic code folding</li>
+            <li>Added support for JetBrains IDEs based on the 262.* platform</li>
+        </ul>
+        <h4>Bug Fixes</h4>
+        <ul>
+            <li>Fixed a crash when inferring the type of an incomplete bit-shift expression</li>
+        </ul>
+
         <h3>Version 1.0.5</h3>
         <h4>Improvements & Features</h4>
         <ul>
