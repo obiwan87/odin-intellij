@@ -68,10 +68,15 @@ public class OdinBuildFlagEvaluator {
     private static @NotNull OdinSymbolValue getSdkEnumValue(Project project, String constantName, String enumName, String value) {
         OdinSdkService sdkService = OdinSdkService.getInstance(project);
         TsOdinType type = sdkService.getType(enumName);
-        TsOdinEnumType enumType = (TsOdinEnumType) type.dereference().baseType(true);
-        EvEnumValue enumValue = OdinExpressionEvaluator.getEnumValue(enumType, value);
-        OdinSymbol symbol = sdkService.getBuiltinSymbol(constantName);
-        return new OdinSymbolValue(symbol, new EvOdinValue(enumValue, enumType));
+
+        TsOdinType tsOdinType = type.dereference().baseType(true);
+        if (tsOdinType instanceof TsOdinEnumType enumType) {
+
+            EvEnumValue enumValue = OdinExpressionEvaluator.getEnumValue(enumType, value);
+            OdinSymbol symbol = sdkService.getBuiltinSymbol(constantName);
+            return new OdinSymbolValue(symbol, new EvOdinValue(enumValue, enumType));
+        }
+        return new OdinSymbolValue(null, EvOdinValues.nullValue());
     }
 
     public Map<OdinSymbol, EvOdinValueSet> evaluate(List<OdinBuildFlagClause> buildFlagClauses) {
@@ -116,8 +121,6 @@ public class OdinBuildFlagEvaluator {
         String[] splits = fileName.split("_");
 
         Map<OdinSymbol, EvOdinValueSet> values = new HashMap<>();
-        String os;
-        String arch;
 
         if (splits.length > 1) {
             for (int i = 1; i < splits.length; i++) {
