@@ -36,6 +36,7 @@ public final class OdinDebuggersConfigurable implements Configurable {
     private JBTextField name;
     private TextFieldWithBrowseButton path;
     private ComboBox<ProviderItem> provider;
+    private JButton downloadButton;
     private JPanel component;
     private int selected = -1;
     private boolean updating;
@@ -64,8 +65,11 @@ public final class OdinDebuggersConfigurable implements Configurable {
         path.addBrowseFolderListener(new TextBrowseFolderListener(executableDescriptor));
         provider = new ComboBox<>();
         for (OdinDebuggerToolchain ep : extensions) if (ep.isAvailable()) provider.addItem(new ProviderItem(ep.getId(), ep.getLabel()));
-        JButton download = new JButton("Download"); download.addActionListener(e -> download());
-        JComponent editor = createEditor(download);
+        provider.addItemListener(e -> {
+            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED && !updating) updateDownloadButton();
+        });
+        downloadButton = new JButton("Download"); downloadButton.addActionListener(e -> download());
+        JComponent editor = createEditor(downloadButton);
 
         Splitter splitter = new Splitter(false, 0.3f);
         splitter.setHonorComponentsMinimumSize(false);
@@ -102,6 +106,13 @@ public final class OdinDebuggersConfigurable implements Configurable {
         if (value != null) for (int i = 0; i < provider.getItemCount(); i++)
             if (Objects.equals(provider.getItemAt(i).id, value.implementationId)) provider.setSelectedIndex(i);
         name.setEnabled(value != null); path.setEnabled(value != null); provider.setEnabled(value != null); updating = false;
+        updateDownloadButton();
+    }
+    private void updateDownloadButton() {
+        if (downloadButton == null) return;
+        ProviderItem item = (ProviderItem) provider.getSelectedItem();
+        OdinDebuggerToolchain debugger = item == null ? null : find(item.id);
+        downloadButton.setVisible(selected >= 0 && debugger != null && debugger.isDownloadable());
     }
     private void flush() {
         if (updating || selected < 0 || selected >= items.size()) return;
