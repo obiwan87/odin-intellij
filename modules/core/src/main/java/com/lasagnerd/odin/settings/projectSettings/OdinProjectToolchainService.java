@@ -35,17 +35,42 @@ public final class OdinProjectToolchainService {
     }
 
     public Optional<String> getCompilerPath() {
-        return nonBlank(getToolchain(), true);
+        OdinToolchainState toolchain = getToolchain();
+        OdinSdkState sdk = getSdk();
+        if (sdk != null) {
+            String compiler = sdk.compilerPath == null || sdk.compilerPath.isBlank()
+                    ? sdk.homePath == null || sdk.homePath.isBlank() ? "" : OdinSdkUtils.getOdinBinaryPath(sdk.homePath) : sdk.compilerPath;
+            if (compiler != null && !compiler.isBlank()) return Optional.of(compiler);
+        }
+        if (toolchain != null && toolchain.sdkId != null && !toolchain.sdkId.isBlank()) return Optional.empty();
+        return nonBlank(toolchain, true);
     }
 
     public Optional<String> getLibraryPath() {
-        return nonBlank(getToolchain(), false);
+        OdinToolchainState toolchain = getToolchain();
+        OdinSdkState sdk = getSdk();
+        if (sdk != null) {
+            String libraries = sdk.libraryPath == null || sdk.libraryPath.isBlank() ? sdk.homePath : sdk.libraryPath;
+            if (libraries != null && !libraries.isBlank()) return Optional.of(libraries);
+        }
+        if (toolchain != null && toolchain.sdkId != null && !toolchain.sdkId.isBlank()) return Optional.empty();
+        return nonBlank(toolchain, false);
     }
 
     public @Nullable OdinDebuggerSettings getDebuggerSettings() {
         OdinToolchainState toolchain = getToolchain();
+        if (toolchain != null && toolchain.debuggerConfigId != null && !toolchain.debuggerConfigId.isBlank()) {
+            OdinDebuggerState debugger = OdinDebuggerRegistryService.getInstance().find(toolchain.debuggerConfigId);
+            if (debugger != null && debugger.implementationId != null && !debugger.implementationId.isBlank())
+                return new OdinDebuggerSettings(debugger.implementationId, debugger.executablePath);
+        }
         if (toolchain == null || toolchain.debuggerId == null || toolchain.debuggerId.isBlank()) return null;
         return new OdinDebuggerSettings(toolchain.debuggerId, toolchain.debuggerPath);
+    }
+
+    public @Nullable OdinSdkState getSdk() {
+        OdinToolchainState toolchain = getToolchain();
+        return toolchain == null ? null : OdinSdkRegistryService.getInstance().find(toolchain.sdkId);
     }
 
     private static Optional<String> nonBlank(OdinToolchainState toolchain, boolean compiler) {

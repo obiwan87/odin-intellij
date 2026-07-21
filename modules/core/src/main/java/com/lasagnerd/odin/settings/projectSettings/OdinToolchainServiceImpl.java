@@ -65,6 +65,8 @@ public class OdinToolchainServiceImpl implements OdinToolchainService {
     }
 
     private static boolean equivalent(OdinToolchainState left, OdinToolchainState right) {
+        if ((left.sdkId != null && !left.sdkId.isBlank()) || (right.sdkId != null && !right.sdkId.isBlank()))
+            return Objects.equals(left.sdkId, right.sdkId) && Objects.equals(left.debuggerConfigId, right.debuggerConfigId);
         return normalize(left.compilerPath).equals(normalize(right.compilerPath))
                 && normalize(left.libraryPath).equals(normalize(right.libraryPath))
                 && Objects.equals(left.debuggerId, right.debuggerId)

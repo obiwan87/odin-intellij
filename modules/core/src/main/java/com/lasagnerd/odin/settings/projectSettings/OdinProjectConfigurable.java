@@ -21,7 +21,7 @@ public class OdinProjectConfigurable implements Configurable {
 
     @Override
     public @NlsContexts.ConfigurableName String getDisplayName() {
-        return "Compiler & Debugger";
+        return "Project Settings";
     }
 
     @Override
@@ -70,8 +70,16 @@ public class OdinProjectConfigurable implements Configurable {
         String previousLibraryPath = projectToolchains.getLibraryPath().orElse("");
         String previousCompilerPath = projectToolchains.getCompilerPath().orElse("");
         OdinToolchainState selected = OdinToolchainService.getInstance().find(projectSettings.getToolchainId());
-        String selectedCompilerPath = selected == null ? "" : Objects.requireNonNullElse(selected.compilerPath, "");
-        String selectedLibraryPath = selected == null ? "" : Objects.requireNonNullElse(selected.libraryPath, "");
+        OdinSdkState selectedSdk = selected == null ? null : OdinSdkRegistryService.getInstance().find(selected.sdkId);
+        boolean missingSelectedSdk = selected != null && selected.sdkId != null && !selected.sdkId.isBlank() && selectedSdk == null;
+        String selectedCompilerPath = selectedSdk != null
+                ? selectedSdk.compilerPath == null || selectedSdk.compilerPath.isBlank()
+                    ? selectedSdk.homePath == null || selectedSdk.homePath.isBlank() ? "" : OdinSdkUtils.getOdinBinaryPath(selectedSdk.homePath)
+                    : selectedSdk.compilerPath
+                : selected == null || missingSelectedSdk ? "" : Objects.requireNonNullElse(selected.compilerPath, "");
+        String selectedLibraryPath = selectedSdk != null
+                ? selectedSdk.libraryPath == null || selectedSdk.libraryPath.isBlank() ? Objects.requireNonNullElse(selectedSdk.homePath, "") : selectedSdk.libraryPath
+                : selected == null || missingSelectedSdk ? "" : Objects.requireNonNullElse(selected.libraryPath, "");
         if (!Objects.equals(previousCompilerPath, selectedCompilerPath)
                 || !Objects.equals(previousLibraryPath, selectedLibraryPath)) {
             OdinSdkService.getInstance(project).refreshCache();

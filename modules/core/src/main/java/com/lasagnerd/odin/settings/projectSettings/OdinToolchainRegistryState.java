@@ -7,6 +7,6 @@ import java.util.List;
 
 @Data
 public class OdinToolchainRegistryState {
-    public int version = 1;
+    public int version = 2;
     public List<OdinToolchainState> toolchains = new ArrayList<>();
 }

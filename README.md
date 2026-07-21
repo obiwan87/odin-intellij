@@ -142,7 +142,8 @@ for your toolchain, install the
 > If the Native Debugging Support plugin is not available in the marketplace for your IDE, that IDE does not support debugging with the Odin plugin.
 > Refer to the [compatibility table](#compatibility-with-jetbrains-products) to see which IDEs support debugging.
 
-Debugger configuration is part of each reusable toolchain under **Languages & Frameworks** > **Odin** > **Odin Toolchains**.
+Debugger installations are managed under **Languages & Frameworks** > **Odin** > **Debuggers**. Reusable toolchains combine one managed Odin SDK
+with one managed debugger under **Languages & Frameworks** > **Odin** > **Toolchains**. Changing a toolchain applies to every project using it.
 
 ![Odin toolchain debugger configuration](img/odin-toolchain-debuggers.png)
 
@@ -153,7 +154,8 @@ The following sections outline the setup for various debuggers.
 To set up LLDB-DAP:
 
 1. Download the [LLVM 18.1.x binaries](https://github.com/llvm/llvm-project/releases/tag/llvmorg-18.1.8) for your platform
-2. In **Odin Toolchains**, select **LLDB-DAP** as the toolchain's debugger and choose the `lldb-dap` executable from the `bin` directory.
+2. In **Debuggers**, add **LLDB-DAP** and choose the `lldb-dap` executable from the `bin` directory.
+3. Select that debugger in the appropriate **Toolchain**.
 
 > [!IMPORTANT]
 > LLDB-DAP requires Python 3.10. Ensure Python 3.10 is installed and accessible by LLDB-DAP. On Windows, the easiest approach is to download the

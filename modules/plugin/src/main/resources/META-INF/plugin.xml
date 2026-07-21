@@ -477,6 +477,10 @@
                 instance="com.lasagnerd.odin.settings.projectSettings.OdinToolchainsConfigurable"
                 displayName="Odin Toolchains"
         />
+        <applicationConfigurable parentId="com.lasagnerd.odin.settings" id="com.lasagnerd.odin.settings.sdks"
+                instance="com.lasagnerd.odin.settings.projectSettings.OdinSdksConfigurable" displayName="Odin SDKs"/>
+        <applicationConfigurable parentId="com.lasagnerd.odin.settings" id="com.lasagnerd.odin.settings.debuggers"
+                instance="com.lasagnerd.odin.settings.projectSettings.OdinDebuggersConfigurable" displayName="Debuggers"/>
 
         <projectConfigurable
                 parentId="com.lasagnerd.odin.settings"
@@ -491,8 +495,13 @@
                         serviceInterface="com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService"/>
         <applicationService serviceImplementation="com.lasagnerd.odin.settings.projectSettings.OdinToolchainServiceImpl"
                             serviceInterface="com.lasagnerd.odin.settings.projectSettings.OdinToolchainService"/>
+        <applicationService serviceImplementation="com.lasagnerd.odin.settings.projectSettings.OdinSdkRegistryServiceImpl"
+                            serviceInterface="com.lasagnerd.odin.settings.projectSettings.OdinSdkRegistryService"/>
+        <applicationService serviceImplementation="com.lasagnerd.odin.settings.projectSettings.OdinDebuggerRegistryServiceImpl"
+                            serviceInterface="com.lasagnerd.odin.settings.projectSettings.OdinDebuggerRegistryService"/>
         <projectService serviceImplementation="com.lasagnerd.odin.settings.projectSettings.OdinProjectToolchainService"/>
         <postStartupActivity implementation="com.lasagnerd.odin.settings.projectSettings.OdinToolchainMigrationActivity"/>
+        <postStartupActivity implementation="com.lasagnerd.odin.settings.projectSettings.OdinReleaseCheckActivity"/>
         <!--suppress PluginXmlValidity -->
         <projectService serviceImplementation="com.lasagnerd.odin.lang.psi.OdinPsiElementFactory"/>
         <!--suppress PluginXmlValidity -->
