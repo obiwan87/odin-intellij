@@ -1,19 +1,21 @@
 package com.lasagnerd.odin.settings.projectSettings;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.ui.FormBuilder;
+import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.ui.JBUI;
 import com.lasagnerd.odin.extensions.OdinDebuggerToolchain;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,7 @@ public final class OdinDebuggersConfigurable implements Configurable {
     private DebuggerListPanel debuggerListPanel;
     private JBList<OdinDebuggerState> list;
     private JBTextField name;
-    private JBTextField path;
+    private TextFieldWithBrowseButton path;
     private ComboBox<ProviderItem> provider;
     private JPanel component;
     private int selected = -1;
@@ -56,27 +58,33 @@ public final class OdinDebuggersConfigurable implements Configurable {
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.addListSelectionListener(e -> { if (!e.getValueIsAdjusting() && !updating) select(list.getSelectedIndex()); });
 
-        name = new JBTextField(); path = new JBTextField(); provider = new ComboBox<>();
+        name = new JBTextField();
+        path = new TextFieldWithBrowseButton(new ExtendableTextField(10));
+        FileChooserDescriptor executableDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor();
+        path.addBrowseFolderListener(new TextBrowseFolderListener(executableDescriptor));
+        provider = new ComboBox<>();
         for (OdinDebuggerToolchain ep : extensions) if (ep.isAvailable()) provider.addItem(new ProviderItem(ep.getId(), ep.getLabel()));
-        JButton browse = new JButton("Browse…"); browse.addActionListener(e -> browse());
         JButton download = new JButton("Download"); download.addActionListener(e -> download());
-        JPanel pathPanel = new JPanel(new BorderLayout(5, 0)); pathPanel.add(path);
-        JPanel pathActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0)); pathActions.add(browse); pathActions.add(download);
-        pathPanel.add(pathActions, BorderLayout.EAST);
-        JComponent editor = FormBuilder.createFormBuilder().addLabeledComponent("Name:", name)
-                .addLabeledComponent("Debugger:", provider).addLabeledComponent("Executable:", pathPanel)
-                .addComponentFillVertically(new JPanel(), 0).getPanel();
+        JComponent editor = createEditor(download);
 
         Splitter splitter = new Splitter(false, 0.3f);
+        splitter.setHonorComponentsMinimumSize(false);
         splitter.setFirstComponent(debuggerListPanel); splitter.setSecondComponent(editor);
         component = new JPanel(new BorderLayout()); component.add(splitter);
         load(); return component;
     }
-
-    private void browse() {
-        VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.singleFile(), null, null);
-        if (file != null) path.setText(file.getPath());
+    private JComponent createEditor(JButton download) {
+        JPanel panel=new JPanel(new GridBagLayout());addRow(panel,0,"Name:",name);addRow(panel,1,"Debugger:",provider);addRow(panel,2,"Executable:",path);
+        GridBagConstraints action=new GridBagConstraints();action.gridx=1;action.gridy=3;action.anchor=GridBagConstraints.WEST;action.insets=JBUI.insetsBottom(8);panel.add(download,action);
+        GridBagConstraints filler=new GridBagConstraints();filler.gridx=0;filler.gridy=4;filler.gridwidth=2;filler.weightx=1;filler.weighty=1;filler.fill=GridBagConstraints.BOTH;
+        panel.add(new JPanel(),filler);panel.setMinimumSize(new Dimension(0,0));return panel;
     }
+    private static void addRow(JPanel panel,int row,String text,JComponent field){
+        GridBagConstraints label=new GridBagConstraints();label.gridx=0;label.gridy=row;label.anchor=GridBagConstraints.WEST;label.insets=JBUI.insets(0,0,8,8);panel.add(new JLabel(text),label);
+        GridBagConstraints value=new GridBagConstraints();value.gridx=1;value.gridy=row;value.weightx=1;value.fill=GridBagConstraints.HORIZONTAL;value.insets=JBUI.insetsBottom(8);
+        field.setMinimumSize(new Dimension(0,field.getPreferredSize().height));panel.add(field,value);
+    }
+
     private void download() {
         ProviderItem item = (ProviderItem) provider.getSelectedItem();
         OdinDebuggerToolchain ep = item == null ? null : find(item.id);

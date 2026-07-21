@@ -9,7 +9,7 @@ import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
@@ -38,16 +38,26 @@ public final class OdinToolchainsConfigurable implements Configurable {
         list.addListSelectionListener(e -> { if (!e.getValueIsAdjusting() && !updating) select(list.getSelectedIndex()); });
         name = new JBTextField(); sdk = new ComboBox<>(); debugger = new ComboBox<>();
         reloadRegistryItems();
-        JComponent editor = FormBuilder.createFormBuilder()
-                .addLabeledComponent("Name:", name)
-                .addLabeledComponent("Odin SDK:", sdk)
-                .addLabeledComponent("Debugger:", debugger)
-                .addComponent(new JLabel("Changes to this toolchain apply to all projects that use it."))
-                .addComponentFillVertically(new JPanel(), 0).getPanel();
+        JComponent editor = createEditor();
         Splitter splitter = new Splitter(false, 0.3f);
+        splitter.setHonorComponentsMinimumSize(false);
         splitter.setFirstComponent(toolchainListPanel); splitter.setSecondComponent(editor);
         component = new JPanel(new BorderLayout()); component.add(splitter);
         load(); return component;
+    }
+    private JComponent createEditor() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        addRow(panel, 0, "Name:", name); addRow(panel, 1, "Odin SDK:", sdk); addRow(panel, 2, "Debugger:", debugger);
+        GridBagConstraints note = new GridBagConstraints(); note.gridx=0; note.gridy=3; note.gridwidth=2; note.weightx=1; note.fill=GridBagConstraints.HORIZONTAL;
+        note.anchor=GridBagConstraints.WEST; note.insets=JBUI.insetsTop(4); panel.add(new JLabel("Changes to this toolchain apply to all projects that use it."), note);
+        GridBagConstraints filler = new GridBagConstraints(); filler.gridx=0; filler.gridy=4; filler.gridwidth=2; filler.weightx=1; filler.weighty=1; filler.fill=GridBagConstraints.BOTH;
+        panel.add(new JPanel(), filler); panel.setMinimumSize(new Dimension(0, 0)); return panel;
+    }
+    private static void addRow(JPanel panel, int row, String text, JComponent field) {
+        GridBagConstraints label = new GridBagConstraints(); label.gridx=0; label.gridy=row; label.anchor=GridBagConstraints.WEST; label.insets=JBUI.insets(0,0,8,8);
+        panel.add(new JLabel(text), label);
+        GridBagConstraints value = new GridBagConstraints(); value.gridx=1; value.gridy=row; value.weightx=1; value.fill=GridBagConstraints.HORIZONTAL; value.insets=JBUI.insetsBottom(8);
+        field.setMinimumSize(new Dimension(0, field.getPreferredSize().height)); panel.add(field, value);
     }
     private void reloadRegistryItems() {
         sdk.removeAllItems(); sdk.addItem(new RegistryItem("", "None"));

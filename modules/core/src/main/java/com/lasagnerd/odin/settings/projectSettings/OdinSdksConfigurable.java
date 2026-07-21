@@ -14,7 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.*;
-import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
@@ -49,16 +49,24 @@ public final class OdinSdksConfigurable implements Configurable {
         libraries.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
         version = new JLabel();
         check = new JBCheckBox("Automatically check for new Odin releases");
-        JComponent editor = FormBuilder.createFormBuilder().addLabeledComponent("Name:", name)
-                .addLabeledComponent("Odin executable:", compiler)
-                .addLabeledComponent("Odin libraries:", libraries)
-                .addLabeledComponent("Version:", version)
-                .addComponentFillVertically(new JPanel(), 0).getPanel();
+        JComponent editor = createEditor();
         Splitter splitter = new Splitter(false, 0.3f);
+        splitter.setHonorComponentsMinimumSize(false);
         splitter.setFirstComponent(sdkListPanel);
         splitter.setSecondComponent(editor);
         component = new JPanel(new BorderLayout(0, 12)); component.add(splitter, BorderLayout.CENTER); component.add(check, BorderLayout.SOUTH);
         load(); return component;
+    }
+    private JComponent createEditor() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        addRow(panel,0,"Name:",name); addRow(panel,1,"Odin executable:",compiler); addRow(panel,2,"Odin libraries:",libraries); addRow(panel,3,"Version:",version);
+        GridBagConstraints filler=new GridBagConstraints();filler.gridx=0;filler.gridy=4;filler.gridwidth=2;filler.weightx=1;filler.weighty=1;filler.fill=GridBagConstraints.BOTH;
+        panel.add(new JPanel(),filler);panel.setMinimumSize(new Dimension(0,0));return panel;
+    }
+    private static void addRow(JPanel panel,int row,String text,JComponent field){
+        GridBagConstraints label=new GridBagConstraints();label.gridx=0;label.gridy=row;label.anchor=GridBagConstraints.WEST;label.insets=JBUI.insets(0,0,8,8);panel.add(new JLabel(text),label);
+        GridBagConstraints value=new GridBagConstraints();value.gridx=1;value.gridy=row;value.weightx=1;value.fill=GridBagConstraints.HORIZONTAL;value.insets=JBUI.insetsBottom(8);
+        field.setMinimumSize(new Dimension(0,field.getPreferredSize().height));panel.add(field,value);
     }
 
     private void showAddMenu(com.intellij.ui.AnActionButton button) {
