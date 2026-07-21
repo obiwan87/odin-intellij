@@ -1,6 +1,7 @@
 package com.lasagnerd.odin.runConfiguration;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -166,6 +167,20 @@ public class OdinRunConfigurationUtils {
                                                                 String projectDirectoryPath,
                                                                 String programArguments,
                                                                 String workingDirectory) {
+        return createCommandLine(project, odinBinaryPath, debug, mode, compilerOptions, outputPathString,
+                projectDirectoryPath, programArguments, workingDirectory, false);
+    }
+
+    public static @NotNull GeneralCommandLine createCommandLine(Project project,
+                                                                String odinBinaryPath,
+                                                                boolean debug,
+                                                                OdinToolMode mode,
+                                                                String compilerOptions,
+                                                                String outputPathString,
+                                                                String projectDirectoryPath,
+                                                                String programArguments,
+                                                                String workingDirectory,
+                                                                boolean emulateTerminal) {
         ProgramParametersConfigurator configurator = new ProgramParametersConfigurator();
         Function<String, String> expandPath = s -> configurator.expandPathAndMacros(s, null, project);
 
@@ -215,7 +230,9 @@ public class OdinRunConfigurationUtils {
             Collections.addAll(command, argsList);
         }
 
-        GeneralCommandLine commandLine = new GeneralCommandLine(command);
+        GeneralCommandLine commandLine = emulateTerminal
+                ? new PtyCommandLine(command).withConsoleMode(false)
+                : new GeneralCommandLine(command);
 
         commandLine.setWorkDirectory(workingDirectory);
 

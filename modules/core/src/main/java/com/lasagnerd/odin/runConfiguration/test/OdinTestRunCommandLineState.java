@@ -110,7 +110,8 @@ public class OdinTestRunCommandLineState extends OdinBaseCommandLineState {
                 options.getOutputPath(),
                 options.getPackageDirectoryPath(),
                 null,
-                options.getWorkingDirectory());
+                options.getWorkingDirectory(),
+                options.isEmulateTerminal() && !debug);
 
 
         String testNames = getTestNames();

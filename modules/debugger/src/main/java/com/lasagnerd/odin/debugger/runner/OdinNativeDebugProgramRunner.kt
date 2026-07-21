@@ -3,6 +3,7 @@ package com.lasagnerd.odin.debugger.runner
 import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
@@ -91,12 +92,16 @@ class OdinNativeDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
             outputPath = Path.of(expandedWorkingDirectory).resolve(nioPath).toString()
         }
 
-        val expandedOutputPath = expandPath(environment.project, outputPath)
+        val expandedOutputPath = expandPath(environment.project, outputPath) ?: return resolvedPromise()
 
-        var debuggeeCommandLine = GeneralCommandLine(expandedOutputPath)
         val programArguments = runProfile.options.programArguments
         val argsList = CLIUtils.translateCommandline(programArguments)
-        debuggeeCommandLine.addParameters(argsList.toList())
+        val command = listOf(expandedOutputPath, *argsList)
+        val debuggeeCommandLine = if (runProfile.options.isEmulateTerminal) {
+            PtyCommandLine(command).withConsoleMode(false)
+        } else {
+            GeneralCommandLine(command)
+        }
         debuggeeCommandLine.setWorkDirectory(expandedWorkingDirectory)
 
         val debuggeeRunParameters = OdinDebugRunParameters(debuggeeCommandLine, debuggerDriverConfiguration)

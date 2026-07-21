@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -36,6 +37,7 @@ public class OdinTestRunConfigurationSettingsEditor extends SettingsEditor<OdinT
     private final TextFieldWithBrowseButton fileField;
     private final JPanel fileTestPanel;
     private final JPanel testNamesPanel;
+    private final JBCheckBox emulateTerminalCheckbox;
 
     public OdinTestRunConfigurationSettingsEditor(@NotNull Project project) {
         // Get project
@@ -85,6 +87,7 @@ public class OdinTestRunConfigurationSettingsEditor extends SettingsEditor<OdinT
 
         programArguments = new RawCommandLineEditor();
         MacrosDialog.addMacroSupport(programArguments.getEditorField(), (x) -> true, () -> false);
+        emulateTerminalCheckbox = new JBCheckBox();
 
 
         JLabel label = new JLabel(UIUtil.replaceMnemonicAmpersand("File"));
@@ -98,6 +101,7 @@ public class OdinTestRunConfigurationSettingsEditor extends SettingsEditor<OdinT
                 .addLabeledComponent("Working directory", extendableWorkingDirectory)
                 .addLabeledComponent("Compiler options", compilerOptions, 15)
                 .addLabeledComponent("Output path", outputPath)
+                .addLabeledComponent("Emulate terminal", emulateTerminalCheckbox)
                 .addLabeledComponent("Environment variables", environmentVariables)
                 .setFormLeftIndent(20)
                 .getPanel();
@@ -140,6 +144,7 @@ public class OdinTestRunConfigurationSettingsEditor extends SettingsEditor<OdinT
         outputPath.setText(s.getOptions().getOutputPath());
         workingDirectory.setText(s.getOptions().getWorkingDirectory());
         programArguments.setText(s.getOptions().getProgramArguments());
+        emulateTerminalCheckbox.setSelected(s.getOptions().isEmulateTerminal());
     }
 
     @Override
@@ -155,6 +160,7 @@ public class OdinTestRunConfigurationSettingsEditor extends SettingsEditor<OdinT
         s.getOptions().setOutputPath(outputPath.getText());
         s.getOptions().setWorkingDirectory(workingDirectory.getText());
         s.getOptions().setProgramArguments(programArguments.getText());
+        s.getOptions().setEmulateTerminal(emulateTerminalCheckbox.isSelected());
 
     }
 

@@ -221,6 +221,9 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
         args.put("type", getType());
         args.put("request", "launch");
         addArgsForLaunch(args);
+        if (cli instanceof PtyCommandLine) {
+            args.put("console", "integratedTerminal");
+        }
         String[] params = cli.getParametersList().getArray();
         if (params.length > 0) {
             args.put("args", params);
@@ -1078,25 +1081,26 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
             CompletableFuture<RunInTerminalResponse> result = new CompletableFuture<RunInTerminalResponse>();
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 PtyCommandLine cli = new PtyCommandLine(List.of(args.getArgs()));
+                cli.withConsoleMode(false);
                 cli.setCharset(StandardCharsets.UTF_8);
                 String cwd = args.getCwd();
                 if (cwd != null && !cwd.isBlank()) {
                     cli.withWorkDirectory(cwd);
                 }
                 try {
-                    childProcess = new DAPProcessHandler(cli);
-                    childProcess.addProcessListener(new ProcessListener() {
-                        @Override
-                        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-                            if (ProcessOutputType.isStdout(outputType)) {
-                                handleTargetOutput(event.getText(), ProcessOutputType.STDOUT);
-                            } else if (ProcessOutputType.isStderr(outputType)) {
-                                handleTargetOutput(event.getText(), ProcessOutputType.STDERR);
-                            } else {
-                                handleTargetOutput(event.getText(), ProcessOutputType.SYSTEM);
-                            }
+                    DAPProcessHandler terminalProcessHandler = new DAPProcessHandler(cli);
+                    childProcess = terminalProcessHandler;
+                    terminalProcessHandler.addRawTextListener((text, outputType) -> {
+                        String terminalOutput = terminalProcessHandler.prepareTerminalOutput(text);
+                        if (ProcessOutputType.isStdout(outputType)) {
+                            handleTargetOutput(terminalOutput, ProcessOutputType.STDOUT);
+                        } else if (ProcessOutputType.isStderr(outputType)) {
+                            handleTargetOutput(terminalOutput, ProcessOutputType.STDERR);
+                        } else {
+                            handleTargetOutput(terminalOutput, ProcessOutputType.SYSTEM);
                         }
-
+                    });
+                    terminalProcessHandler.addProcessListener(new ProcessListener() {
                         @Override
                         public void processTerminated(@NotNull ProcessEvent event) {
                             handleExited(event.getExitCode());

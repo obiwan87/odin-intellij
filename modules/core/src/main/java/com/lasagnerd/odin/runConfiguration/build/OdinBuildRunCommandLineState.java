@@ -66,6 +66,7 @@ public class OdinBuildRunCommandLineState extends OdinBaseCommandLineState {
                 outputPathString,
                 buildPath,
                 programArguments,
-                workingDirectory);
+                workingDirectory,
+                options.isEmulateTerminal() && mode == OdinRunConfigurationUtils.OdinToolMode.RUN);
     }
 }

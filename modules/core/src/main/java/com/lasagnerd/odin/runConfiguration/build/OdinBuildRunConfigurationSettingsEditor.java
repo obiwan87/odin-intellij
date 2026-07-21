@@ -29,6 +29,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
     private final ExtendableTextField outputPath;
     private final JBCheckBox runAfterBuildCheckbox;
     private final JBCheckBox buildAsFileCheckbox;
+    private final JBCheckBox emulateTerminalCheckbox;
 
     public OdinBuildRunConfigurationSettingsEditor(@NotNull Project project) {
         // Get project
@@ -54,6 +55,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
         runAfterBuildCheckbox = new JBCheckBox();
 
         buildAsFileCheckbox = new JBCheckBox();
+        emulateTerminalCheckbox = new JBCheckBox();
 
         panel = FormBuilder.createFormBuilder()
                 .addLabeledComponent("Build as file", buildAsFileCheckbox)
@@ -66,6 +68,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
                 .addLabeledComponent("Compiler options", compilerOptions, 15)
                 .addLabeledComponent("Output path", outputPath)
                 .addLabeledComponent("Run after build?", runAfterBuildCheckbox)
+                .addLabeledComponent("Emulate terminal", emulateTerminalCheckbox)
                 .addLabeledComponent("Environment variables", environmentVariables)
 
                 .getPanel();
@@ -92,6 +95,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
         programArguments.setText(s.getOptions().getProgramArguments());
         runAfterBuildCheckbox.setSelected(s.getOptions().isRunAfterBuild());
         buildAsFileCheckbox.setSelected(s.getOptions().getBuildAsFile());
+        emulateTerminalCheckbox.setSelected(s.getOptions().isEmulateTerminal());
     }
 
     @Override
@@ -103,6 +107,7 @@ public class OdinBuildRunConfigurationSettingsEditor extends SettingsEditor<Odin
         s.getOptions().setProgramArguments(programArguments.getText());
         s.getOptions().setRunAfterBuild(runAfterBuildCheckbox.isSelected());
         s.getOptions().setBuildAsFile(buildAsFileCheckbox.isSelected());
+        s.getOptions().setEmulateTerminal(emulateTerminalCheckbox.isSelected());
     }
 
 
