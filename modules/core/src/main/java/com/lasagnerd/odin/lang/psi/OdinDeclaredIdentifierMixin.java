@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -23,6 +24,7 @@ import com.lasagnerd.odin.codeInsight.symbols.OdinSymbol;
 import com.lasagnerd.odin.codeInsight.symbols.OdinSymbolType;
 import com.lasagnerd.odin.codeInsight.symbols.OdinVisibility;
 import com.lasagnerd.odin.codeInsight.typeInference.OdinInferenceEngine;
+import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinBuiltInTypes;
 import com.lasagnerd.odin.codeInsight.typeSystem.TsOdinType;
 import com.lasagnerd.odin.lang.psi.impl.OdinReferenceOwnerMixin;
 import com.lasagnerd.odin.lang.psi.impl.OdinStubbedElementImpl;
@@ -119,6 +121,16 @@ public abstract class OdinDeclaredIdentifierMixin extends OdinStubbedElementImpl
     public TsOdinType getType(OdinContext context) {
         if (!this.isValid())
             return null;
+
+        TsOdinType result = RecursionManager.doPreventingRecursion(
+                this,
+                false,
+                () -> getTypeInternal(context)
+        );
+        return result != null ? result : TsOdinBuiltInTypes.UNKNOWN;
+    }
+
+    private TsOdinType getTypeInternal(OdinContext context) {
         if (!OdinReferenceOwnerMixin.shouldUseCache(context, this)) {
             return resolveType(context);
         }
