@@ -9,12 +9,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.lasagnerd.odin.projectStructure.module.rootTypes.source.OdinSourceRootType;
-import com.lasagnerd.odin.settings.projectSettings.OdinProjectConfigurable;
-import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
-import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
-import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsState;
-import com.lasagnerd.odin.settings.projectSettings.OdinSdkLibraryManager;
-import com.lasagnerd.odin.settings.projectSettings.OdinProjectToolchainService;
+import com.lasagnerd.odin.settings.projectSettings.*;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +33,7 @@ public class OdinProjectCreationUtils {
                 import "core:fmt"
                 
                 main :: proc() {
-                    fmt.println("Hi, mom!");
+                    fmt.println("Hi, mom!")
                 }
                 """;
         VirtualFileUtil.writeText(mainOdin, mainOdinContent);
