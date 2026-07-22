@@ -1,24 +1,24 @@
 package com.lasagnerd.odin.settings.projectSettings;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileChooser.*;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.options.*;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.AddDeleteListPanel;
-import com.intellij.ui.AnimatedIcon;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.components.*;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +26,10 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 public final class OdinSdksConfigurable implements Configurable {
     private final List<OdinSdkState> items = new ArrayList<>();
@@ -204,7 +206,7 @@ public final class OdinSdksConfigurable implements Configurable {
         version.clear();
         if (selected < 0 || selected >= items.size()) return;
         String compilerPath = compiler.getText();
-        if (compilerPath == null || compilerPath.isBlank()) return;
+        if (compilerPath.isBlank()) return;
         if (!new File(compilerPath).isFile()) {
             version.setIcon(AllIcons.General.Error);
             version.append("Invalid executable path");
@@ -267,7 +269,10 @@ public final class OdinSdksConfigurable implements Configurable {
     public boolean isModified() {
         flush();
         OdinSdkRegistryState state = OdinSdkRegistryService.getInstance().getState();
-        return !items.equals(state.sdks) || check.isSelected() != state.automaticallyCheckForReleases;
+        if (state != null) {
+            return !items.equals(state.sdks) || check.isSelected() != state.automaticallyCheckForReleases;
+        }
+        return false;
     }
 
     @Override

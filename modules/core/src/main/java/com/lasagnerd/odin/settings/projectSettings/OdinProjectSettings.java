@@ -6,11 +6,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,7 +37,6 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -424,7 +423,7 @@ public class OdinProjectSettings implements Disposable {
                     .addComponentToRightColumn(createComment("Enable/disable highlighting of unknown references"))
                     .addLabeledComponent(new JBLabel("Use cache"), createCacheEnabledCheckbox(), 1)
                     .addComponentToRightColumn(createComment("Enable/disable caching for type inference and symbol resolution"))
-                    .addLabeledComponent(new JBLabel("Conditional symbol resolution (experimental)"), createConditionalSymbolResolutionCheckbox(), 1)
+                    .addLabeledComponent(new JBLabel("Conditional symbol resolution"), createConditionalSymbolResolutionCheckbox(), 1)
                     .addComponentToRightColumn(createComment("Enable/disable symbol resolution that is sensitive to <br/> when statement conditions"))
                     .addComponentFillVertically(new JPanel(), 1)
                     .getPanel();
