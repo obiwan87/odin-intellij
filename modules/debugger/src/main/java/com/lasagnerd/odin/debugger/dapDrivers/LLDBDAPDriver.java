@@ -1,9 +1,12 @@
 package com.lasagnerd.odin.debugger.dapDrivers;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.system.CpuArch;
 import com.jetbrains.cidr.ArchitectureType;
+import com.jetbrains.cidr.execution.Installer;
 import lombok.val;
 import org.eclipse.lsp4j.debug.Capabilities;
 import org.eclipse.lsp4j.debug.ConfigurationDoneArguments;
@@ -21,6 +24,9 @@ public class LLDBDAPDriver extends DAPDriver<
         IDebugProtocolServer, WrappedDebugServer<IDebugProtocolServer>,
         LLDBDAPDriver.LldbDapClient
         > {
+    private final CompletableFuture<Void> initializedEventFuture = new CompletableFuture<>();
+    private CompletableFuture<Void> startDebuggingFuture;
+
     public LLDBDAPDriver(@NotNull Handler handler, DAPDebuggerDriverConfiguration config, DebuggerLanguage language) throws ExecutionException {
         super(handler, config, language);
     }
@@ -73,11 +79,10 @@ public class LLDBDAPDriver extends DAPDriver<
         args.put("attachCommands", new String[]{connectionString});
 
         addArgsForLaunch(args);
-        server.attachNow(args);
-
         DAPDriverUtils.get(initializeFuture);
+        startDebuggingFuture = server.attach(args);
 
-        return new DAPInferior();
+        return new LLDBDAPInferior();
     }
 
     @Override
@@ -101,8 +106,33 @@ public class LLDBDAPDriver extends DAPDriver<
     }
 
     @Override
-    protected void doStartDebugging(HashMap<String, Object> args) throws ExecutionException {
-        server.launchNow(args);
+    protected void doStartDebugging(HashMap<String, Object> args) {
+        startDebuggingFuture = server.launch(args);
+    }
+
+    @Override
+    public @NotNull Inferior loadForLaunch(@NotNull Installer installer, @Nullable String s) throws ExecutionException {
+        if (initializeFuture == null) {
+            throw new IllegalStateException("DAPDriver$postConstructor wasn't called!");
+        }
+        GeneralCommandLine cli = installer.install();
+        HashMap<String, Object> args = new HashMap<>();
+        args.put("program", FileUtil.toSystemDependentName(cli.getExePath()));
+        args.put("cwd", cli.getWorkDirectory().toString());
+        args.put("name", "CPP Debug");
+        args.put("type", getType());
+        args.put("request", "launch");
+        addArgsForLaunch(args);
+        if (cli instanceof PtyCommandLine) {
+            args.put("console", "integratedTerminal");
+        }
+        String[] params = cli.getParametersList().getArray();
+        if (params.length > 0) {
+            args.put("args", params);
+        }
+        DAPDriverUtils.get(initializeFuture);
+        doStartDebugging(args);
+        return new LLDBDAPInferior();
     }
 
     @Override
@@ -130,9 +160,11 @@ public class LLDBDAPDriver extends DAPDriver<
         @Override
         protected long startImpl() {
             try {
-                server.configurationDone(new ConfigurationDoneArguments()).get();
+                DAPDriverUtils.get(initializedEventFuture);
+                server.configurationDoneNow(new ConfigurationDoneArguments());
+                DAPDriverUtils.get(startDebuggingFuture);
                 start.run();
-            } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+            } catch (ExecutionException e) {
                 throw new RuntimeException(e);
             }
             return -1;
@@ -151,7 +183,24 @@ public class LLDBDAPDriver extends DAPDriver<
         }
     }
 
-    protected class LldbDapClient extends DAPDebuggerClient {
+    protected class LLDBDAPInferior extends DAPInferior {
+        @Override
+        protected long startImpl() {
+            try {
+                DAPDriverUtils.get(initializedEventFuture);
+                server.configurationDoneNow(new ConfigurationDoneArguments());
+                DAPDriverUtils.get(startDebuggingFuture);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+            return -1;
+        }
+    }
 
+    protected class LldbDapClient extends DAPDebuggerClient {
+        @Override
+        public void initialized() {
+            initializedEventFuture.complete(null);
+        }
     }
 }

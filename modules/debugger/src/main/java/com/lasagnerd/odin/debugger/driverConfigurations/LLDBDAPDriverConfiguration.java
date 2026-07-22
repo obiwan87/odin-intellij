@@ -53,6 +53,6 @@ public class LLDBDAPDriverConfiguration extends DAPDebuggerDriverConfiguration {
 
     @Override
     public void customizeInitializeArguments(InitializeRequestArguments initArgs) {
-
+        initArgs.setAdapterID("lldb-dap");
     }
 }
