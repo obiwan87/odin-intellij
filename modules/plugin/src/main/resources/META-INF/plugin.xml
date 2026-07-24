@@ -3,6 +3,25 @@
     <id>com.lasagnerd.odin</id>
     <name>Odin</name>
     <change-notes><![CDATA[
+        <h3>Version 1.1.0-rc.1</h3>
+        <p>This is a prerelease for testing the upcoming Odin Support 1.1.0 release.</p>
+        <h4>Improvements & Features</h4>
+        <ul>
+            <li>Added reusable Odin toolchains with application-level SDK and debugger management</li>
+            <li>Added terminal emulation for Odin run configurations</li>
+            <li>Added support for LLDB-DAP from LLVM 19 and newer</li>
+            <li>Added a standalone LLDB-DAP diagnostics tool for troubleshooting adapter communication</li>
+            <li>Improved toolchain settings layouts and automatic Odin compiler and library detection</li>
+            <li>Added custom syntax highlighting for type aliases</li>
+        </ul>
+        <h4>Bug Fixes</h4>
+        <ul>
+            <li>Fixed the LLDB-DAP initialization and launch handshake for newer LLVM versions</li>
+            <li>Handled unsupported LLDB renderer expressions without interrupting variable display</li>
+            <li>Fixed recursive declared-identifier type inference</li>
+            <li>Fixed Odin SDK attachment and migration behavior for managed toolchains</li>
+        </ul>
+
         <h3>Version 1.0.7</h3>
         <h4>Improvements & Features</h4>
         <ul>

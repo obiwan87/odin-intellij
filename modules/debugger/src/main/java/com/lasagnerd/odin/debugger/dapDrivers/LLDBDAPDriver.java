@@ -45,7 +45,7 @@ public class LLDBDAPDriver extends DAPDriver<
         int beginIndex = name.indexOf(".");
         if (beginIndex >= 0)
             return name.substring(beginIndex);
-        return "<unknown function label>";
+        return name;
     }
 
     @Override

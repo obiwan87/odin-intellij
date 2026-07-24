@@ -27,6 +27,8 @@ import lombok.val;
 import org.eclipse.lsp4j.debug.Module;
 import org.eclipse.lsp4j.debug.Thread;
 import org.eclipse.lsp4j.debug.*;
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,6 +188,11 @@ public class DAPDriverUtils {
         } catch (InterruptedException | TimeoutException e) {
             throw new ExecutionException(e);
         } catch (java.util.concurrent.ExecutionException e) {
+            if(e.getCause() instanceof ResponseErrorException responseErrorException) {
+                ResponseError responseError = responseErrorException.getResponseError();
+                String message = responseError.getMessage();
+                throw new ExecutionException(message, e);
+            }
             throw new ExecutionException(e.getCause());
         }
     }

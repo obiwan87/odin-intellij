@@ -724,22 +724,28 @@ public abstract class DAPDriver<Server extends IDebugProtocolServer, ServerWrapp
             args.setContext(EvaluateArgumentsContext.VARIABLES);
             args.setExpression(value.getReferenceExpression());
             args.setFrameId(value.getUserData(LLVALUE_FRAME));
-            EvaluateResponse res = server.evaluateNow(args);
-            childrenRef = res.getVariablesReference();
-            if (childrenRef > 0) value.putUserData(LLVALUE_CHILDREN_REF, childrenRef);
-            VariablePresentationHint hint = res.getPresentationHint();
-            if (hint != null) {
-                String[] attribs = hint.getAttributes();
-                if (attribs != null) {
-                    for (String attrib : attribs) {
-                        if ("failedEvaluation".equals(attrib)) {
-                            failed = true;
-                            break;
+            try {
+                EvaluateResponse res = server.evaluateNow(args);
+                childrenRef = res.getVariablesReference();
+                if (childrenRef > 0) value.putUserData(LLVALUE_CHILDREN_REF, childrenRef);
+                VariablePresentationHint hint = res.getPresentationHint();
+                if (hint != null) {
+                    String[] attribs = hint.getAttributes();
+                    if (attribs != null) {
+                        for (String attrib : attribs) {
+                            if ("failedEvaluation".equals(attrib)) {
+                                failed = true;
+                                break;
+                            }
                         }
                     }
                 }
+                result = res.getResult();
+            } catch (ExecutionException ignored) {
+                // Renderer probes can contain expressions unsupported by the current
+                // debug adapter. Fall back to the value returned by variables instead.
+                failed = true;
             }
-            result = res.getResult();
         }
         if (failed) {
             LLValueData known = value.getUserData(LLVALUE_DATA);
