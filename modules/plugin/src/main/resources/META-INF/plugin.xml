@@ -8,6 +8,8 @@
         <h4>Improvements & Features</h4>
         <ul>
             <li>Added reusable Odin toolchains with application-level SDK and debugger management</li>
+            <li>Added an integrated Odin SDK downloader</li>
+            <li>Added automatic detection and notification of new Odin compiler versions</li>
             <li>Added terminal emulation for Odin run configurations</li>
             <li>Added support for LLDB-DAP from LLVM 19 and newer</li>
             <li>Added a standalone LLDB-DAP diagnostics tool for troubleshooting adapter communication</li>
