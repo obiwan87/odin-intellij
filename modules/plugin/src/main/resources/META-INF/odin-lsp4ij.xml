@@ -1,0 +1,10 @@
+<idea-plugin package="com.lasagnerd.odin.ols">
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <server id="odinOls"
+                name="Odin Language Server (OLS)"
+                factoryClass="com.lasagnerd.odin.ols.OlsLanguageServerFactory"/>
+        <languageMapping language="Odin"
+                         serverId="odinOls"
+                         languageId="odin"/>
+    </extensions>
+</idea-plugin>

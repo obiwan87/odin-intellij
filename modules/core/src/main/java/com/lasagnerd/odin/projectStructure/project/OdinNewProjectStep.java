@@ -2,16 +2,20 @@ package com.lasagnerd.odin.projectStructure.project;
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep;
 import com.intellij.ide.wizard.NewProjectWizardStep;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.dsl.builder.AlignX;
 import com.intellij.ui.dsl.builder.Panel;
 import com.lasagnerd.odin.projectStructure.module.OdinModuleType;
 import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettings;
+import com.lasagnerd.odin.settings.projectSettings.OdinProjectSettingsService;
+import com.lasagnerd.odin.settings.projectSettings.OdinStandardSetup;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,6 +24,7 @@ import java.nio.file.Path;
 
 public class OdinNewProjectStep extends AbstractNewProjectWizardStep {
     private final OdinProjectSettings projectSettings = new OdinProjectSettings();
+    private final JBCheckBox advancedSettings = new JBCheckBox("Advanced settings");
 
     public OdinNewProjectStep(@NotNull NewProjectWizardStep parentStep) {
         super(parentStep);
@@ -29,6 +34,12 @@ public class OdinNewProjectStep extends AbstractNewProjectWizardStep {
     public void setupUI(@NotNull Panel builder) {
         projectSettings.initializeWithDefaultValues();
         JComponent component = projectSettings.getComponent();
+        component.setVisible(false);
+        advancedSettings.addActionListener(e -> component.setVisible(advancedSettings.isSelected()));
+        builder.row((JLabel) null, r -> {
+            r.cell(advancedSettings);
+            return null;
+        });
         builder.row((JLabel) null, r -> {
             r.cell(component).align(AlignX.FILL);
             return null;
@@ -40,6 +51,11 @@ public class OdinNewProjectStep extends AbstractNewProjectWizardStep {
         super.setupProject(project);
 
         OdinProjectCreationUtils.saveProjectSettings(project, projectSettings);
+        if (!advancedSettings.isSelected()) {
+            ApplicationManager.getApplication().invokeAndWait(() ->
+                    OdinProjectSettingsService.getInstance(project).getState().toolchainId =
+                            OdinStandardSetup.resolveToolchainId());
+        }
 
         ModuleManager moduleManager = ModuleManager.getInstance(project);
         VirtualFile workspaceFile = project.getWorkspaceFile();

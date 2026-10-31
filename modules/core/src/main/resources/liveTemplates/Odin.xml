@@ -8,4 +8,25 @@
             <option name="ODIN" value="true"/>
         </context>
     </template>
+    <template
+            name="trackmem"
+            value="when ODIN_DEBUG {&#10;    track: mem.Tracking_Allocator&#10;    mem.tracking_allocator_init(&amp;track, context.allocator)&#10;    context.allocator = mem.tracking_allocator(&amp;track)&#10;    defer {&#10;        for _, entry in track.allocation_map {&#10;            fmt.eprintf(&quot;%v leaked %v bytes\n&quot;, entry.location, entry.size)&#10;        }&#10;        for entry in track.bad_free_array {&#10;            fmt.eprintf(&quot;%v bad free\n&quot;, entry.location)&#10;        }&#10;        mem.tracking_allocator_destroy(&amp;track)&#10;    }&#10;}&#10;$END$"
+            description="Report leaks and bad frees when the program exits (needs core:fmt and core:mem)"
+            toReformat="true"
+            toShortenFQNames="false">
+        <context>
+            <option name="ODIN" value="true"/>
+        </context>
+    </template>
+    <template
+            name="testp"
+            value="@(test)&#10;$NAME$ :: proc(t: ^testing.T) {&#10;    $END$&#10;}"
+            description="Test procedure (needs core:testing)"
+            toReformat="true"
+            toShortenFQNames="false">
+        <variable name="NAME" expression="" defaultValue="&quot;test_name&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="ODIN" value="true"/>
+        </context>
+    </template>
 </templateSet>

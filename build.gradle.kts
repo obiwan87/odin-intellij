@@ -1,4 +1,5 @@
 import groovy.lang.Closure
+import org.jetbrains.grammarkit.tasks.GenerateLexerTask
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
@@ -15,6 +16,7 @@ plugins {
     alias(libs.plugins.intelliJPlatform) // IntelliJ Platform Gradle Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
     id("de.undercouch.download") version ("5.6.0")
+    alias(libs.plugins.grammarKit) apply false
 }
 
 val gitVersion: Closure<String> by extra
@@ -142,8 +144,7 @@ allprojects {
     }
 
     tasks.withType(JavaCompile::class) {
-        options.encoding = "UTF-8"
-    }
+        options.encoding = "UTF-8"    }
 
     group = properties("pluginGroup").get()
     version = properties("pluginVersion").get()
@@ -183,6 +184,23 @@ project(":rider") {
 project(":core") {
     apply {
         plugin("java-library")
+        plugin("org.jetbrains.grammarkit")
+    }
+    dependencies {
+        compileOnly("org.jspecify:jspecify:1.0.0")
+    }
+    repositories {
+        maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
+    }
+    val generateOdinLexer = tasks.named<GenerateLexerTask>("generateLexer") {
+        sourceFile.set(file("src/main/java/$rootPackagePath/lang/Odin.flex"))
+        targetOutputDir.set(file("$grammarKitGenDir/$rootPackagePath/lang"))
+        purgeOldFiles.set(false)
+    }
+    // The parser stays an IDE action (Generate Parser Code): Odin.bnf uses hand-written PSI helpers
+    // that the command-line generator can only see once compiled, and they need the parser to compile.
+    tasks.matching { it.name in listOf("compileJava", "compileKotlin", "sourcesJar", "processResources") }.configureEach {
+        dependsOn(generateOdinLexer)
     }
     dependencies {
         lsp4ijDep()
@@ -195,6 +213,7 @@ project(":core") {
                 bundledModule(p)
             }
             bundledPlugin("com.intellij.java")
+            plugin("com.redhat.devtools.lsp4ij:0.21.0")
         }
 
     }
@@ -240,8 +259,6 @@ project(":plugin") {
         pluginVerification {
             ides {
                 create(IntelliJPlatformType.IntellijIdea, ideaVersion)
-                create(IntelliJPlatformType.CLion, clionVersion)
-                create(IntelliJPlatformType.Rider, riderVersion)
 
             }
         }
@@ -254,6 +271,7 @@ project(":plugin") {
                 intellijPlatform {
                     plugin(idePerf)
                     plugin(indexViewer)
+                    plugin("com.redhat.devtools.lsp4ij:0.21.0")
                     if (baseIDE == "ideaU") {
                         plugin(nativeDebuggerSupportPlugin)
                     }

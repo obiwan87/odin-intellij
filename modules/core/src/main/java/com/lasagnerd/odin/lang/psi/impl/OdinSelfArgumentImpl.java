@@ -16,6 +16,11 @@ public class OdinSelfArgumentImpl extends ASTDelegatePsiElement implements OdinS
     }
 
     @Override
+    public com.intellij.psi.PsiElement getParent() {
+        return odinExpression.getParent();
+    }
+
+    @Override
     public @NotNull ASTNode getNode() {
         if (odinExpression instanceof OdinExpressionImpl odinExpressionImpl)
             return odinExpressionImpl.getNode();
