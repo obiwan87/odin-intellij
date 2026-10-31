@@ -16,7 +16,7 @@ import com.lasagnerd.odin.lang.psi.OdinConstantInitDeclaration;
 import com.lasagnerd.odin.lang.psi.OdinFile;
 import com.lasagnerd.odin.lang.psi.OdinFileScope;
 import com.lasagnerd.odin.runConfiguration.OdinRunConfigurationUtils;
-import org.apache.commons.lang3.Strings;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,7 +148,7 @@ public class OdinTestRunConfigurationProducer extends LazyRunConfigurationProduc
                 if (testProcedure != null) {
                     String packageClauseName = OdinInsightUtils.getPackageClauseName(testProcedure);
                     String myTestName = testProcedure.getName() + "." + packageClauseName;
-                    String testNames = Strings.CS.removeEnd(configuration.getOptions().getTestNames(), ",");
+                    String testNames = StringUtil.trimEnd(StringUtil.notNullize(configuration.getOptions().getTestNames()), ",");
                     matchingTestKind = Objects.equals(myTestName, testNames);
                 }
             }

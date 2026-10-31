@@ -206,6 +206,11 @@ public class OdinRunConfigurationUtils {
             Collections.addAll(command, compilerOptionsArgs);
         }
 
+        OdinBuildProfile.current(project).addTo(command);
+        if (OdinBuildProfile.sanitizeAddress(project) && !command.contains("-sanitize:address")) {
+            command.add("-sanitize:address");
+        }
+
         if (debug && !command.contains("-debug")) {
             OdinSdkUtils.addCommandPart(command, "-debug");
         }

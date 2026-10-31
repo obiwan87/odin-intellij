@@ -576,6 +576,25 @@
 
         <lang.psiStructureViewFactory language="Odin"
                                       implementationClass="com.lasagnerd.odin.structureView.OdinStructureViewFactory"/>
+        <localInspection language="Odin"
+                         shortName="OdinMemorySafety"
+                         displayName="Unsafe memory usage"
+                         groupName="Odin"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="com.lasagnerd.odin.codeInsight.memory.OdinMemorySafetyInspection"/>
+        <localInspection language="Odin"
+                         shortName="OdinMissingImport"
+                         displayName="Missing import"
+                         groupName="Odin"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="com.lasagnerd.odin.codeInsight.memory.OdinMissingImportInspection"/>
+        <statusBarWidgetFactory id="OdinOlsStatus"
+                                implementation="com.lasagnerd.odin.ols.OlsStatusBarWidgetFactory"/>
+        <toolWindow id="Odin" anchor="right" secondary="true"
+                    icon="com.lasagnerd.odin.OdinIcons.OdinFileType"
+                    factoryClass="com.lasagnerd.odin.ols.OdinToolWindowFactory"/>
         <notificationGroup id="Odin Notifications"
                            displayType="BALLOON"
                            bundle="odin.Bundle"
@@ -698,8 +717,18 @@
     </actions>
 
 
+    <actions>
+        <action id="com.lasagnerd.odin.runConfiguration.OdinBuildProfileAction"
+                class="com.lasagnerd.odin.runConfiguration.OdinBuildProfileAction"
+                text="Odin Build Profile"
+                description="Selects dev, release or aggressive compiler flags">
+            <add-to-group group-id="MainToolbarRight" anchor="first"/>
+        </action>
+    </actions>
+
     <depends optional="true" config-file="odin-debugger.xml">com.intellij.nativeDebug</depends>
     <depends optional="true" config-file="odin-rider.xml">com.intellij.modules.rider</depends>
     <depends optional="true" config-file="odin-clion.xml">com.intellij.modules.clion.ide</depends>
     <depends optional="true" config-file="core-plugin.xml">org.intellij.intelliLang</depends>
+    <depends optional="true" config-file="odin-lsp4ij.xml">com.redhat.devtools.lsp4ij</depends>
 </idea-plugin>

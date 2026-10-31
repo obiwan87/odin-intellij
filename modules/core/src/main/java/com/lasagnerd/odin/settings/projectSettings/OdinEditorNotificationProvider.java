@@ -45,6 +45,11 @@ public class OdinEditorNotificationProvider implements EditorNotificationProvide
         panel.setText("No Odin SDK has been setup for this project");
         String label = "Setup SDK";
         addOpenSettingsAction(project, panel, label, file);
+        panel.createActionLabel("Download SDK...", () -> {
+            if (!project.isDisposed()) {
+                ShowSettingsUtil.getInstance().showSettingsDialog(project, OdinSdksConfigurable.class, null);
+            }
+        });
         return panel;
     }
 

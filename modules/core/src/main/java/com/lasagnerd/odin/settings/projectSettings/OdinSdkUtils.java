@@ -5,7 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import org.apache.commons.lang3.Strings;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +30,7 @@ public class OdinSdkUtils {
     public static @NotNull String getOdinBinaryPath(String sdkPath) {
         String systemIndependentPath = FileUtil.toSystemIndependentName(sdkPath);
 
-        String s = Strings.CS.removeEnd(systemIndependentPath, "/");
+        String s = StringUtil.trimEnd(systemIndependentPath, "/");
         return s + "/" + "odin" + (SystemInfo.isWindows ? ".exe" : "");
     }
 
