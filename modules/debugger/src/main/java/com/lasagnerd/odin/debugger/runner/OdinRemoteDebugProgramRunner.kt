@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ssh.ConnectionBuilder
 import com.intellij.ssh.config.unified.SshConfigManager
-import com.intellij.ssh.connectionBuilder
 import com.intellij.ssh.process.CapturingSshProcessHandler
 import com.intellij.ssh.process.SshExecProcess
 import com.intellij.xdebugger.XDebugProcess
@@ -79,8 +78,8 @@ class OdinRemoteDebugProgramRunner : AsyncProgramRunner<RunnerSettings>() {
 
             val debugRunnerParameters = OdinRemoteDebugParameters(cidrRemoteDebugParameters, driverConfiguration)
 
-            val copyToCredentials = sshConfig.copyToCredentials()
-            @Suppress("UnstableApiUsage") val connectionBuilder = copyToCredentials.connectionBuilder()
+            val connectionBuilder =
+                OdinRemoteDebuggerUtils.createConnectionBuilder(sshConfig.copyToCredentials())
 
 
             val remoteExecutablePathString: @NonNls String = when (executableProvisioning) {

@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.RemoteCredentials;
 import com.intellij.ssh.ConnectionBuilder;
-import com.intellij.ssh.RemoteCredentialsUtil;
 import com.intellij.ssh.config.unified.SshConfig;
 import com.intellij.ssh.config.unified.SshConfigManager;
 import com.intellij.ssh.ui.unified.SshConfigComboBox;
@@ -124,7 +123,7 @@ public class OdinRemoteDebugRunConfigurationSettingsEditor extends SettingsEdito
                         public void run() {
                             sshConnectionState.setIcon(AnimatedIcon.Default.INSTANCE);
                             RemoteCredentials remoteCredentials = selectedSshConfig.copyToCredentials();
-                            ConnectionBuilder connectionBuilder = RemoteCredentialsUtil.connectionBuilder(remoteCredentials);
+                            ConnectionBuilder connectionBuilder = OdinRemoteDebuggerUtils.createConnectionBuilder(remoteCredentials);
                             boolean checkedAndAuthenticated = connectionBuilder.checkCanAuthenticate();
                             if (checkedAndAuthenticated) {
                                 sshConnectionState.clear();
