@@ -1,7 +1,5 @@
 package com.lasagnerd.odin.projectStructure;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -115,12 +113,9 @@ public class OdinProjectMigration {
         Document document = FileDocumentManager.getInstance().getDocument(olsFile);
         if (document != null) {
             String olsFileContent = document.getText();
-            ObjectMapper objectMapper = new ObjectMapper();
-            OlsConfiguration olsConfiguration;
-            try {
-                olsConfiguration = objectMapper.readValue(olsFileContent, OlsConfiguration.class);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+            OlsConfiguration olsConfiguration = OlsConfiguration.read(olsFileContent);
+            if (olsConfiguration == null) {
+                return;
             }
             VirtualFileManager virtualFileManager1 = VirtualFileManager.getInstance();
             String olsDir = olsFile.getParent().getPath();
